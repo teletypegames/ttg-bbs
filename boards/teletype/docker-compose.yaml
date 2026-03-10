@@ -1,0 +1,15 @@
+services:
+  bbs:
+    build:
+      context: .
+      dockerfile: Dockerfile.development
+    container_name: teletype-bbs
+    ports:
+      - "2323:2323"
+    volumes:
+      - ./:/app/:ro
+    environment:
+      - WEBAPP_WIKIJS_TOKEN=${WEBAPP_WIKIJS_TOKEN:-}
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
