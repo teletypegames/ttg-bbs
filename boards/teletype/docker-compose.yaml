@@ -7,7 +7,7 @@ services:
     ports:
       - "2323:2323"
     volumes:
-      - ./:/app/:ro
+      - ./:/app/
     environment:
       - WEBAPP_WIKIJS_TOKEN=${WEBAPP_WIKIJS_TOKEN:-}
     restart: unless-stopped
