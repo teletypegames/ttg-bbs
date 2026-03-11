@@ -1,22 +1,15 @@
-package lib
+package engine
 
+// T is the i18n dictionary type
 type T map[string]string
 
+// En is the default English dictionary
 var En = T{
-	"Welcome":          "Welcome to Teletype's Bulletin Board System!",
 	"AskName":          "Enter your name:",
 	"Greeting":         "Hello, %s%s%s! Welcome to Teletype BBS!",
-	"MainMenuTitle":    "MAIN MENU",
-	"MenuUzenopal":     "Message Board",
-	"MenuBlog":         "Blog Posts",
-	"MenuHowto":        "HowTo Guides",
-	"MenuCatalog":      "Game Catalog",
-	"MenuOnline":       "Online Users",
-	"MenuSysinfo":      "System Info",
-	"MenuExit":         "Exit",
-	"Choice":           "Choice: ",
-	"Pause":            "Press ENTER...",
 	"Goodbye":          "Goodbye, %s! 👋",
+	"Pause":            "Press ENTER...",
+	"Choice":           "Choice: ",
 	"MsgBoardTitle":    "📋  MESSAGE BOARD",
 	"MsgNoMessages":    "(No messages yet — be the first!)",
 	"MsgNew":           "Write new message",
@@ -44,6 +37,4 @@ var En = T{
 	"SysWikiURL":       "Wiki URL",
 	"SysGamesAPI":      "Games API",
 	"SysPlatform":      "Platform",
-	"SysYes":           "yes",
-	"SysNo":            "no",
 }

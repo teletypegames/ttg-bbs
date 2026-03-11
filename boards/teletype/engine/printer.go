@@ -1,4 +1,4 @@
-package lib
+package engine
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"unicode/utf8"
 )
 
-// ANSI Colors
+// ANSI color codes
 const (
 	R   = "\033[0m"
 	B   = "\033[1m"
@@ -25,13 +25,8 @@ const (
 	GY  = "\033[0;37m"
 )
 
+// W is the default terminal width
 const W = 70
-
-type Message struct {
-	User      string
-	Timestamp string
-	Text      string
-}
 
 type Printer struct {
 	Conn net.Conn
@@ -152,7 +147,7 @@ func (p *Printer) StripMD(text string) string {
 	reImg := regexp.MustCompile(`!\[.*?\]\(.*?\)|\[(.*?)\]\(.*?\)|#{1,6}\s*|[*_` + "`" + `~>|]`)
 	text = reImg.ReplaceAllStringFunc(text, func(s string) string {
 		if strings.HasPrefix(s, "[") {
-			sub := regexp.MustCompile(`\[(.*?)\]\(.*?\)` )
+			sub := regexp.MustCompile(`\[(.*?)\]\(.*?\)`)
 			matches := sub.FindStringSubmatch(s)
 			if len(matches) > 1 {
 				return matches[1]
@@ -181,12 +176,12 @@ func (p *Printer) Wrapped(text string, indent int, maxChars int) string {
 			lines = append(lines, "")
 			continue
 		}
-		
+
 		words := strings.Fields(para)
 		if len(words) == 0 {
 			continue
 		}
-		
+
 		currentLine := prefix + words[0]
 		for _, word := range words[1:] {
 			if len(currentLine)+1+len(word) > W {

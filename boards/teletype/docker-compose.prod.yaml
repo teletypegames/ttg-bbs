@@ -8,6 +8,9 @@ services:
       - "2323:2323"
     environment:
       - WEBAPP_WIKIJS_TOKEN=${WEBAPP_WIKIJS_TOKEN}
+      - MESSAGES_PATH=/data/messages.dat
+    volumes:
+      - bbs-messages:/data
     restart: always
     read_only: true
     tmpfs:
@@ -16,3 +19,6 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+
+volumes:
+  bbs-messages:

@@ -8,8 +8,10 @@ services:
       - "2323:2323"
     volumes:
       - ./:/app/
+      - ./data:/data
     environment:
       - WEBAPP_WIKIJS_TOKEN=${WEBAPP_WIKIJS_TOKEN:-}
+      - MESSAGES_PATH=/data/messages.dat
     restart: unless-stopped
     stdin_open: true
     tty: true
