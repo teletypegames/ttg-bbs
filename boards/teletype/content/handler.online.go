@@ -6,8 +6,14 @@ import (
 	"sort"
 )
 
-// Online displays currently logged-in users
-func Online(s *engine.Session) {
+// OnlineHandler displays currently logged-in users
+type OnlineHandler struct{}
+
+func NewOnlineHandler() *OnlineHandler {
+	return &OnlineHandler{}
+}
+
+func (h *OnlineHandler) Handle(s *engine.Session) {
 	s.Printer.BoxHeader(s.Lang["OnlineTitle"], engine.CY)
 
 	snap := s.State.Snapshot()
