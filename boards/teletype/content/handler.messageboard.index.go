@@ -15,7 +15,7 @@ func NewMessageBoardIndexHandler(board *MessageBoard) *MessageBoardIndexHandler 
 }
 
 func (h *MessageBoardIndexHandler) Handle(s *engine.Session) {
-	s.Printer.BoxHeader(s.Lang["MsgBoardTitle"], engine.GR)
+	s.Printer.BoxHeader(s.Lang["MsgBoardTitle"], engine.COLOR_GRAY)
 
 	h.board.mu.Lock()
 	snap := make([]message, len(h.board.messages))
@@ -23,7 +23,7 @@ func (h *MessageBoardIndexHandler) Handle(s *engine.Session) {
 	h.board.mu.Unlock()
 
 	if len(snap) == 0 {
-		s.Printer.Send(fmt.Sprintf("  %s%s%s\r\n", engine.GY, s.Lang["MsgNoMessages"], engine.R))
+		s.Printer.Send(fmt.Sprintf("  %s%s%s\r\n", engine.COLOR_GRAY, s.Lang["MsgNoMessages"], engine.COLOR_RESET))
 	} else {
 		start := 0
 		if len(snap) > 30 {
@@ -31,9 +31,9 @@ func (h *MessageBoardIndexHandler) Handle(s *engine.Session) {
 		}
 		for i, msg := range snap[start:] {
 			s.Printer.Send(fmt.Sprintf("  %s%02d%s %s%s%s  %s%s:%s %s\r\n",
-				engine.GR, i+1, engine.R,
-				engine.GY, msg.Timestamp, engine.R,
-				engine.WH, msg.User, engine.R, msg.Text))
+				engine.COLOR_GRAY, i+1, engine.COLOR_RESET,
+				engine.COLOR_GRAY, msg.Timestamp, engine.COLOR_RESET,
+				engine.COLOR_WHITE, msg.User, engine.COLOR_RESET, msg.Text))
 		}
 	}
 	s.Printer.Pause(s.Lang)

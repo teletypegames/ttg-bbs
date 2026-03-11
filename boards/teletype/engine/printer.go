@@ -12,17 +12,17 @@ import (
 
 // ANSI color codes
 const (
-	R   = "\033[0m"
-	B   = "\033[1m"
-	DIM = "\033[2m"
-	CY  = "\033[1;36m"
-	YL  = "\033[1;33m"
-	GR  = "\033[1;32m"
-	RD  = "\033[1;31m"
-	MG  = "\033[1;35m"
-	WH  = "\033[1;37m"
-	BL  = "\033[1;34m"
-	GY  = "\033[0;37m"
+	COLOR_RESET   = "\033[0m"
+	COLOR_BOLD    = "\033[1m"
+	COLOR_DIM     = "\033[2m"
+	COLOR_CYAN    = "\033[1;36m"
+	COLOR_YELLOW  = "\033[1;33m"
+	COLOR_GREEN   = "\033[1;32m"
+	COLOR_RED     = "\033[1;31m"
+	COLOR_MAGENTA = "\033[1;35m"
+	COLOR_WHITE   = "\033[1;37m"
+	COLOR_BLUE    = "\033[1;34m"
+	COLOR_GRAY    = "\033[0;37m"
 )
 
 // W is the default terminal width
@@ -94,7 +94,7 @@ func (p *Printer) ReadLine() (string, error) {
 }
 
 func (p *Printer) Pause(lang T) {
-	p.Send(fmt.Sprintf("\r\n%s  [ %s ]%s ", GY, lang["Pause"], R))
+	p.Send(fmt.Sprintf("\r\n%s  [ %s ]%s ", COLOR_GRAY, lang["Pause"], COLOR_RESET))
 	p.ReadLine()
 }
 
@@ -122,14 +122,14 @@ func (p *Printer) BoxHeader(title string, color string) {
 	inner := strings.Repeat(" ", padding) + title + strings.Repeat(" ", W-2-titleLen-padding)
 	p.Send(fmt.Sprintf(
 		"\n%s%s%s\n%s║%s %s%s%s %s║%s\n%s%s%s\n",
-		color, line, R,
-		color, R, B, inner, R, color, R,
-		color, line, R,
+		color, line, COLOR_RESET,
+		color, COLOR_RESET, COLOR_BOLD, inner, COLOR_RESET, color, COLOR_RESET,
+		color, line, COLOR_RESET,
 	))
 }
 
 func (p *Printer) HR(char string, color string) {
-	p.Send(fmt.Sprintf("%s%s%s", color, strings.Repeat(char, W), R))
+	p.Send(fmt.Sprintf("%s%s%s", color, strings.Repeat(char, W), COLOR_RESET))
 }
 
 func (p *Printer) FmtDate(s string) string {

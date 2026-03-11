@@ -53,26 +53,26 @@ func (m *Menu) Dispatch(s *Session, key string) {
 // Render returns the rendered menu string
 func (m *Menu) Render(p *Printer, lang T, username string) string {
 	headerLine := strings.Repeat("═", W)
-	l1 := p.PadLine(fmt.Sprintf("  %s%s%s  %s@%s%s", YL, m.title, R, GY, username, R), W)
+	l1 := p.PadLine(fmt.Sprintf("  %s%s%s  %s@%s%s", COLOR_YELLOW, m.title, COLOR_RESET, COLOR_GRAY, username, COLOR_RESET), W)
 
 	var rows []string
 	for i := 0; i < len(m.items); i += 2 {
 		if i+1 < len(m.items) {
-			left := p.PadLine(fmt.Sprintf("  %s[%s]%s %s", m.items[i].Color, m.items[i].Key, R, m.items[i].Label), W/2)
-			right := p.PadLine(fmt.Sprintf("  %s[%s]%s %s", m.items[i+1].Color, m.items[i+1].Key, R, m.items[i+1].Label), W/2)
+			left := p.PadLine(fmt.Sprintf("  %s[%s]%s %s", m.items[i].Color, m.items[i].Key, COLOR_RESET, m.items[i].Label), W/2)
+			right := p.PadLine(fmt.Sprintf("  %s[%s]%s %s", m.items[i+1].Color, m.items[i+1].Key, COLOR_RESET, m.items[i+1].Label), W/2)
 			rows = append(rows, left+right)
 		} else {
-			rows = append(rows, p.PadLine(fmt.Sprintf("  %s[%s]%s %s", m.items[i].Color, m.items[i].Key, R, m.items[i].Label), W))
+			rows = append(rows, p.PadLine(fmt.Sprintf("  %s[%s]%s %s", m.items[i].Color, m.items[i].Key, COLOR_RESET, m.items[i].Label), W))
 		}
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("\n%s╔%s╗%s\n", WH, headerLine, R))
-	sb.WriteString(fmt.Sprintf("%s║%s%s║%s\n", WH, l1, WH, R))
-	sb.WriteString(fmt.Sprintf("%s╠%s╣%s\n", WH, headerLine, R))
+	sb.WriteString(fmt.Sprintf("\n%s╔%s╗%s\n", COLOR_WHITE, headerLine, COLOR_RESET))
+	sb.WriteString(fmt.Sprintf("%s║%s%s║%s\n", COLOR_WHITE, l1, COLOR_WHITE, COLOR_RESET))
+	sb.WriteString(fmt.Sprintf("%s╠%s╣%s\n", COLOR_WHITE, headerLine, COLOR_RESET))
 	for _, row := range rows {
-		sb.WriteString(fmt.Sprintf("%s║%s%s║%s\n", WH, row, WH, R))
+		sb.WriteString(fmt.Sprintf("%s║%s%s║%s\n", COLOR_WHITE, row, COLOR_WHITE, COLOR_RESET))
 	}
-	sb.WriteString(fmt.Sprintf("%s╚%s╝%s\n%s", WH, headerLine, R, lang["Choice"]))
+	sb.WriteString(fmt.Sprintf("%s╚%s╝%s\n%s", COLOR_WHITE, headerLine, COLOR_RESET, lang["Choice"]))
 	return sb.String()
 }

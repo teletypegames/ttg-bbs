@@ -17,7 +17,7 @@ func NewMessageBoardNewHandler(board *MessageBoard) *MessageBoardNewHandler {
 }
 
 func (h *MessageBoardNewHandler) Handle(s *engine.Session) {
-	s.Printer.Send(fmt.Sprintf("\r\n%s%s%s ", engine.WH, s.Lang["MsgEnterText"], engine.R))
+	s.Printer.Send(fmt.Sprintf("\r\n%s%s%s ", engine.COLOR_WHITE, s.Lang["MsgEnterText"], engine.COLOR_RESET))
 	msgText, _ := s.Printer.ReadLine()
 	msgText = strings.TrimSpace(msgText)
 	if msgText != "" {
@@ -30,9 +30,9 @@ func (h *MessageBoardNewHandler) Handle(s *engine.Session) {
 		h.board.messages = append(h.board.messages, msg)
 		h.board.mu.Unlock()
 		h.board.append(msg)
-		s.Printer.Send(fmt.Sprintf("\r\n%s%s%s\r\n", engine.GR, s.Lang["MsgSent"], engine.R))
+		s.Printer.Send(fmt.Sprintf("\r\n%s%s%s\r\n", engine.COLOR_GREEN, s.Lang["MsgSent"], engine.COLOR_RESET))
 	} else {
-		s.Printer.Send(fmt.Sprintf("\r\n%s%s%s\r\n", engine.GY, s.Lang["MsgEmpty"], engine.R))
+		s.Printer.Send(fmt.Sprintf("\r\n%s%s%s\r\n", engine.COLOR_GRAY, s.Lang["MsgEmpty"], engine.COLOR_RESET))
 	}
 	s.Printer.Pause(s.Lang)
 }

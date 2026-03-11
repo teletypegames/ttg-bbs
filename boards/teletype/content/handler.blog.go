@@ -17,17 +17,17 @@ func NewBlogHandler(token string) *BlogHandler {
 }
 
 func (h *BlogHandler) Handle(s *engine.Session) {
-	renderWikiList(s, h.repo, "blog", "Blog Posts", engine.BL)
+	renderWikiList(s, h.repo, "blog", "Blog Posts", engine.COLOR_BLUE)
 }
 
 // renderWikiList is a helper used by wiki-based handlers
 func renderWikiList(s *engine.Session, repo *wikiRepository, tag, title, color string) {
 	s.Printer.BoxHeader(title, color)
-	s.Printer.Send(fmt.Sprintf("  %s%s%s\r\n", engine.GY, s.Lang["WikiLoading"], engine.R))
+	s.Printer.Send(fmt.Sprintf("  %s%s%s\r\n", engine.COLOR_GRAY, s.Lang["WikiLoading"], engine.COLOR_RESET))
 
 	pages, err := repo.fetchList(tag)
 	if err != nil {
-		s.Printer.Send(fmt.Sprintf("\r\n%s%s: %v%s\r\n", engine.RD, s.Lang["WikiConnError"], err, engine.R))
+		s.Printer.Send(fmt.Sprintf("\r\n%s%s: %v%s\r\n", engine.COLOR_RED, s.Lang["WikiConnError"], err, engine.COLOR_RESET))
 		s.Printer.Pause(s.Lang)
 		return
 	}
@@ -35,7 +35,7 @@ func renderWikiList(s *engine.Session, repo *wikiRepository, tag, title, color s
 	s.Printer.Send("\r\033[A\033[2K")
 
 	if len(pages) == 0 {
-		s.Printer.Send(fmt.Sprintf("  %s%s%s\r\n", engine.GY, fmt.Sprintf(s.Lang["WikiNoResults"], tag), engine.R))
+		s.Printer.Send(fmt.Sprintf("  %s%s%s\r\n", engine.COLOR_GRAY, fmt.Sprintf(s.Lang["WikiNoResults"], tag), engine.COLOR_RESET))
 		s.Printer.Pause(s.Lang)
 		return
 	}
@@ -61,15 +61,15 @@ func renderWikiList(s *engine.Session, repo *wikiRepository, tag, title, color s
 		if len(desc) > 60 {
 			desc = desc[:60]
 		}
-		s.Printer.Send(fmt.Sprintf("  %s%2d%s  %s%s%s\r\n", color, i+1, engine.R, engine.WH, titleP, engine.R))
+		s.Printer.Send(fmt.Sprintf("  %s%2d%s  %s%s%s\r\n", color, i+1, engine.COLOR_RESET, engine.COLOR_WHITE, titleP, engine.COLOR_RESET))
 		if desc != "" {
-			s.Printer.Send(fmt.Sprintf("      %s%s  %s%s%s\r\n", engine.GY, date, engine.DIM, desc, engine.R))
+			s.Printer.Send(fmt.Sprintf("      %s%s  %s%s%s\r\n", engine.COLOR_GRAY, date, engine.COLOR_DIM, desc, engine.COLOR_RESET))
 		} else {
-			s.Printer.Send(fmt.Sprintf("      %s%s%s\r\n", engine.GY, date, engine.R))
+			s.Printer.Send(fmt.Sprintf("      %s%s%s\r\n", engine.COLOR_GRAY, date, engine.COLOR_RESET))
 		}
 	}
 
-	s.Printer.Send(fmt.Sprintf("\r\n%s%s%s ", engine.GY, s.Lang["WikiEnterNum"], engine.R))
+	s.Printer.Send(fmt.Sprintf("\r\n%s%s%s ", engine.COLOR_GRAY, s.Lang["WikiEnterNum"], engine.COLOR_RESET))
 	choice, _ := s.Printer.ReadLine()
 	choice = strings.TrimSpace(choice)
 	idx, err := strconv.Atoi(choice)
@@ -78,10 +78,10 @@ func renderWikiList(s *engine.Session, repo *wikiRepository, tag, title, color s
 	}
 
 	page := pages[idx-1]
-	s.Printer.Send(fmt.Sprintf("\r\n%s%s%s", engine.GY, s.Lang["WikiFetchContent"], engine.R))
+	s.Printer.Send(fmt.Sprintf("\r\n%s%s%s", engine.COLOR_GRAY, s.Lang["WikiFetchContent"], engine.COLOR_RESET))
 	pageContent, err := repo.fetchContent(page.ID)
 	if err != nil {
-		s.Printer.Send(fmt.Sprintf("\r\n%sHiba: %v%s\r\n", engine.RD, err, engine.R))
+		s.Printer.Send(fmt.Sprintf("\r\n%sHiba: %v%s\r\n", engine.COLOR_RED, err, engine.COLOR_RESET))
 		s.Printer.Pause(s.Lang)
 		return
 	}
@@ -90,10 +90,10 @@ func renderWikiList(s *engine.Session, repo *wikiRepository, tag, title, color s
 	s.Printer.Send("\r\n")
 	s.Printer.HR("═", color)
 	s.Printer.Send("\r\n")
-	s.Printer.Send(fmt.Sprintf("  %s%s%s%s\r\n", engine.WH, engine.B, page.Title, engine.R))
+	s.Printer.Send(fmt.Sprintf("  %s%s%s%s\r\n", engine.COLOR_WHITE, engine.COLOR_BOLD, page.Title, engine.COLOR_RESET))
 	url := fmt.Sprintf("%s/%s/%s", WikiJSBaseURL, page.Locale, page.Path)
-	s.Printer.Send(fmt.Sprintf("  %s%s   %s%s%s\r\n", engine.GY, s.Printer.FmtDate(page.CreatedAt), engine.DIM, url, engine.R))
-	s.Printer.HR("─", engine.GY)
+	s.Printer.Send(fmt.Sprintf("  %s%s   %s%s%s\r\n", engine.COLOR_GRAY, s.Printer.FmtDate(page.CreatedAt), engine.COLOR_DIM, url, engine.COLOR_RESET))
+	s.Printer.HR("─", engine.COLOR_GRAY)
 	s.Printer.Send("\r\n\r\n")
 
 	body := s.Printer.Wrapped(pageContent, 2, 5000)
@@ -102,7 +102,7 @@ func renderWikiList(s *engine.Session, repo *wikiRepository, tag, title, color s
 	}
 
 	s.Printer.Send("\r\n")
-	s.Printer.HR("─", engine.GY)
+	s.Printer.HR("─", engine.COLOR_GRAY)
 	s.Printer.Send("\r\n")
 	s.Printer.Pause(s.Lang)
 }

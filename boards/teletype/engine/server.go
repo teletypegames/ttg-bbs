@@ -73,8 +73,8 @@ func (b *BBS) handleClient(conn net.Conn) {
 	// Telnet negotiation (IAC WILL ECHO, IAC WILL SGA, IAC WONT LINEMODE)
 	printer.Send("\xff\xfb\x01\xff\xfb\x03\xff\xfe\x22")
 
-	printer.Send(CY + b.config.Banner + R)
-	printer.Send(fmt.Sprintf("\n%s%s%s ", WH, lang["AskName"], R))
+	printer.Send(COLOR_CYAN + b.config.Banner + COLOR_RESET)
+	printer.Send(fmt.Sprintf("\n%s%s%s ", COLOR_WHITE, lang["AskName"], COLOR_RESET))
 
 	username, err := printer.ReadLine()
 	if err != nil {
@@ -98,7 +98,7 @@ func (b *BBS) handleClient(conn net.Conn) {
 		b.state.Mu.Unlock()
 	}()
 
-	printer.Send(fmt.Sprintf("\r\n%s%s%s\r\n", GR, fmt.Sprintf(lang["Greeting"], WH, username, GR), R))
+	printer.Send(fmt.Sprintf("\r\n%s%s%s\r\n", COLOR_GREEN, fmt.Sprintf(lang["Greeting"], COLOR_WHITE, username, COLOR_GREEN), COLOR_RESET))
 
 	session := &Session{
 		State:    b.state,
@@ -118,6 +118,6 @@ func (b *BBS) handleClient(conn net.Conn) {
 	}
 
 	if session.Quit {
-		printer.Send(fmt.Sprintf("\r\n%s%s%s\r\n\r\n", RD, fmt.Sprintf(lang["Goodbye"], username), R))
+		printer.Send(fmt.Sprintf("\r\n%s%s%s\r\n\r\n", COLOR_RED, fmt.Sprintf(lang["Goodbye"], username), COLOR_RESET))
 	}
 }

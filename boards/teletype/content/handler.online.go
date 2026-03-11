@@ -14,7 +14,7 @@ func NewOnlineHandler() *OnlineHandler {
 }
 
 func (h *OnlineHandler) Handle(s *engine.Session) {
-	s.Printer.BoxHeader(s.Lang["OnlineTitle"], engine.CY)
+	s.Printer.BoxHeader(s.Lang["OnlineTitle"], engine.COLOR_YELLOW)
 
 	snap := s.State.Snapshot()
 	keys := make([]string, 0, len(snap))
@@ -27,12 +27,12 @@ func (h *OnlineHandler) Handle(s *engine.Session) {
 		user := snap[addr]
 		marker := ""
 		if addr == s.Addr {
-			marker = fmt.Sprintf("  %s%s%s", engine.GR, s.Lang["OnlineYou"], engine.R)
+			marker = fmt.Sprintf("  %s%s%s", engine.COLOR_GREEN, s.Lang["OnlineYou"], engine.COLOR_RESET)
 		}
-		s.Printer.Send(fmt.Sprintf("  %s•%s  %s%s%s%s\r\n", engine.CY, engine.R, engine.WH, user, engine.R, marker))
+		s.Printer.Send(fmt.Sprintf("  %s•%s  %s%s%s%s\r\n", engine.COLOR_YELLOW, engine.COLOR_RESET, engine.COLOR_WHITE, user, engine.COLOR_RESET, marker))
 	}
 
-	s.Printer.Send(fmt.Sprintf("\r\n  %s%s\r\n", engine.GY,
-		fmt.Sprintf(s.Lang["OnlineTotal"], engine.WH, len(snap), engine.GY, engine.R)))
+	s.Printer.Send(fmt.Sprintf("\r\n  %s%s\r\n", engine.COLOR_GRAY,
+		fmt.Sprintf(s.Lang["OnlineTotal"], engine.COLOR_WHITE, len(snap), engine.COLOR_GRAY, engine.COLOR_RESET)))
 	s.Printer.Pause(s.Lang)
 }

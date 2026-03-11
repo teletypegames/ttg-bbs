@@ -60,14 +60,14 @@ func main() {
 
 	bbs.Menu(func(m *engine.Menu) {
 		m.Title("MAIN MENU")
-		m.Item("1", "Message Board", engine.GR, messageBoardIndexHandler.Handle)
-		m.Item("N", "New Message", engine.WH, messageBoardNewHandler.Handle)
-		m.Item("2", "Blog Posts", engine.BL, blogHandler.Handle)
-		m.Item("3", "HowTo Guides", engine.MG, howtoHandler.Handle)
-		m.Item("4", "Game Catalog", engine.YL, catalogHandler.Handle)
-		m.Item("5", "Online Users", engine.CY, onlineHandler.Handle)
-		m.Item("6", "System Info", engine.GY, sysinfoHandler.Handle)
-		m.Item("Q", "Exit", engine.RD, engine.Exit)
+		m.Item("1", "Message Board", engine.COLOR_GREEN, messageBoardIndexHandler.Handle)
+		m.Item("N", "New Message", engine.COLOR_WHITE, messageBoardNewHandler.Handle)
+		m.Item("2", "Blog Posts", engine.COLOR_BLUE, blogHandler.Handle)
+		m.Item("3", "HowTo Guides", engine.COLOR_MAGENTA, howtoHandler.Handle)
+		m.Item("4", "Game Catalog", engine.COLOR_YELLOW, catalogHandler.Handle)
+		m.Item("5", "Online Users", engine.COLOR_CYAN, onlineHandler.Handle)
+		m.Item("6", "System Info", engine.COLOR_GRAY, sysinfoHandler.Handle)
+		m.Item("Q", "Exit", engine.COLOR_RED, engine.Exit)
 	})
 
 	bbs.Start()

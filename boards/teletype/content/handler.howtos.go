@@ -12,5 +12,5 @@ func NewHowToHandler(token string) *HowToHandler {
 }
 
 func (h *HowToHandler) Handle(s *engine.Session) {
-	renderWikiList(s, h.repo, "howto", "HowTo Guides", engine.MG)
+	renderWikiList(s, h.repo, "howto", "HowTo Guides", engine.COLOR_MAGENTA)
 }

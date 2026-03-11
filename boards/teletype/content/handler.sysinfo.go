@@ -16,12 +16,12 @@ func NewSysinfoHandler(board *MessageBoard) *SysinfoHandler {
 }
 
 func (h *SysinfoHandler) Handle(s *engine.Session) {
-	s.Printer.BoxHeader(s.Lang["SysTitle"], engine.GY)
+	s.Printer.BoxHeader(s.Lang["SysTitle"], engine.COLOR_GRAY)
 
-	s.Printer.Send(fmt.Sprintf("  %s%-15s%s %d\r\n", engine.GY, s.Lang["SysUsers"], engine.WH, s.State.UserCount()))
-	s.Printer.Send(fmt.Sprintf("  %s%-15s%s %d\r\n", engine.GY, s.Lang["SysMessages"], engine.WH, h.board.Count()))
-	s.Printer.Send(fmt.Sprintf("  %s%-15s%s %s\r\n", engine.GY, s.Lang["SysOS"], engine.WH, runtime.GOOS))
-	s.Printer.Send(fmt.Sprintf("  %s%-15s%s %s\r\n", engine.GY, s.Lang["SysArch"], engine.WH, runtime.GOARCH))
+	s.Printer.Send(fmt.Sprintf("  %s%-15s%s %d\r\n", engine.COLOR_GRAY, s.Lang["SysUsers"], engine.COLOR_RESET, s.State.UserCount()))
+	s.Printer.Send(fmt.Sprintf("  %s%-15s%s %d\r\n", engine.COLOR_GRAY, s.Lang["SysMessages"], engine.COLOR_RESET, h.board.Count()))
+	s.Printer.Send(fmt.Sprintf("  %s%-15s%s %s\r\n", engine.COLOR_GRAY, s.Lang["SysOS"], engine.COLOR_RESET, runtime.GOOS))
+	s.Printer.Send(fmt.Sprintf("  %s%-15s%s %s\r\n", engine.COLOR_GRAY, s.Lang["SysArch"], engine.COLOR_RESET, runtime.GOARCH))
 
 	s.Printer.Pause(s.Lang)
 }
