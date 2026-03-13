@@ -59,6 +59,15 @@ func (r *wikiRepository) fetchList(tag string) ([]wikiPage, error) {
 		return nil, err
 	}
 
+	if errorsRaw, ok := res["errors"].([]interface{}); ok && len(errorsRaw) > 0 {
+		if firstErr, ok := errorsRaw[0].(map[string]interface{}); ok {
+			if msg, ok := firstErr["message"].(string); ok {
+				return nil, fmt.Errorf("wiki error: %s", msg)
+			}
+		}
+		return nil, fmt.Errorf("wiki returned an error")
+	}
+
 	data, ok := res["data"].(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("invalid response format")
@@ -95,8 +104,30 @@ func (r *wikiRepository) fetchContent(pageID interface{}) (string, error) {
 		return "", err
 	}
 
-	data := res["data"].(map[string]interface{})
-	pages := data["pages"].(map[string]interface{})
-	single := pages["single"].(map[string]interface{})
-	return single["content"].(string), nil
+	if errorsRaw, ok := res["errors"].([]interface{}); ok && len(errorsRaw) > 0 {
+		if firstErr, ok := errorsRaw[0].(map[string]interface{}); ok {
+			if msg, ok := firstErr["message"].(string); ok {
+				return "", fmt.Errorf("wiki error: %s", msg)
+			}
+		}
+		return "", fmt.Errorf("wiki returned an error")
+	}
+
+	data, ok := res["data"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid response format: missing data")
+	}
+	pages, ok := data["pages"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid response format: missing pages")
+	}
+	single, ok := pages["single"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("page not found")
+	}
+	content, ok := single["content"].(string)
+	if !ok {
+		return "", fmt.Errorf("invalid response format: missing content")
+	}
+	return content, nil
 }
