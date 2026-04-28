@@ -5,7 +5,6 @@ WORKDIR /app
 COPY bbs.rb ./
 COPY Gemfile Gemfile.lock ./
 COPY lib/ ./lib/
-COPY gems/ ./gems/
 COPY screens/ ./screens/
 
 RUN bundle install && mkdir -p /app/data
