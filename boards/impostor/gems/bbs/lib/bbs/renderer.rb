@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'erb'
+require 'artii'
 
 module BBS
   class Renderer
@@ -17,6 +18,21 @@ module BBS
       end
 
       def ctx_binding = binding
+
+      def banner(text, padding: 2)
+        inner = "#{' ' * padding}#{text}#{' ' * padding}"
+        bar   = '═' * inner.length
+        "#{green}╔#{bar}╗#{reset}\n" \
+        "#{green}║#{inner}║#{reset}\n" \
+        "#{green}╚#{bar}╝#{reset}"
+      end
+
+      def big_banner(text, font: 'slant')
+        Artii::Base.new(font: font).asciify(text)
+          .split("\n")
+          .map { |l| "  #{green}#{l}#{reset}" }
+          .join("\n")
+      end
 
       def clr       = "\e[2J\e[H"
       def reset     = "\e[0m"

@@ -25,13 +25,18 @@ module BBS
     private
 
     def execute(steps)
-      steps.each { |step| return :halt if dispatch(step) == :halt }
+      steps.each do |step|
+        result = dispatch(step)
+        return result if result == :halt || result == :exit_menu
+      end
       nil
     end
 
     def dispatch(step)
       case step[:type]
       when :screen        then run_screen(step)
+      when :banner        then run_banner(step)
+      when :big_banner    then run_big_banner(step)
       when :say           then run_say(step)
       when :set           then run_set(step)
       when :ask           then run_ask(step)
@@ -40,12 +45,26 @@ module BBS
       when :gate          then run_gate(step)
       when :confirm_halt  then run_confirm_halt(step)
       when :confirm_block then run_confirm_block(step)
+      when :menu          then run_menu(step)
+      when :exit_menu     then :exit_menu
       end
     end
+
+    # ── step handlers ──────────────────────────────────────────────────────────
 
     def run_screen(step)
       vars = step[:vars].transform_values { |v| v.is_a?(Symbol) ? @ctx[v] : v }
       write Renderer.render(step[:name].to_s, @ctx.merge(vars))
+    end
+
+    def run_banner(step)
+      color = STYLES.fetch(step[:style], STYLES[:success])
+      write Banner.render(step[:text], color: color)
+    end
+
+    def run_big_banner(step)
+      color = STYLES.fetch(step[:style], STYLES[:success])
+      write Banner.render_big(step[:text], color: color, font: step[:font])
     end
 
     def run_say(step)
@@ -113,6 +132,34 @@ module BBS
         nil
       end
     end
+
+    def run_menu(step)
+      loop do
+        write "\r\n"
+        step[:options].each_with_index do |opt, i|
+          write "  #{STYLES[:muted]}#{i + 1}.  #{opt[:label]}\e[0m\r\n"
+        end
+        write "\r\n  #{STYLES[:prompt]}#{step[:prompt]}\e[0m "
+
+        input = readline&.strip
+        return :halt if input.nil?
+
+        index = input.to_i - 1
+        unless (0...step[:options].length).include?(index)
+          write "\r\n  #{STYLES[:error]}Enter a number between 1 and #{step[:options].length}.\e[0m\r\n"
+          next
+        end
+
+        result = execute(step[:options][index][:steps])
+        return :halt if result == :halt
+        return nil   if result == :exit_menu
+
+        break unless step[:loop]
+      end
+      nil
+    end
+
+    # ── helpers ────────────────────────────────────────────────────────────────
 
     def apply_transform(value, transform)
       case transform

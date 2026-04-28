@@ -6,4 +6,5 @@ Gem::Specification.new do |s|
   s.files       = Dir['lib/**/*.rb']
   s.require_paths = ['lib']
   s.required_ruby_version = '>= 3.0'
+  s.add_dependency 'artii', '~> 2.1'
 end

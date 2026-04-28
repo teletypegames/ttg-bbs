@@ -18,6 +18,14 @@ module BBS
       @steps << { type: :screen, name: name, vars: vars }
     end
 
+    def banner(text, style: :success)
+      @steps << { type: :banner, text: text, style: style }
+    end
+
+    def big_banner(text, style: :success, font: 'slant')
+      @steps << { type: :big_banner, text: text, style: style, font: font }
+    end
+
     def say(text, style: :muted)
       @steps << { type: :say, text: text, style: style }
     end
@@ -52,6 +60,30 @@ module BBS
       else
         @steps << step.merge(type: :confirm_halt)
       end
+    end
+
+    def menu(prompt, loop: false, &block)
+      builder = MenuBuilder.new
+      builder.instance_eval(&block)
+      @steps << { type: :menu, prompt: prompt, loop: loop, options: builder.options }
+    end
+
+    def exit_menu
+      @steps << { type: :exit_menu }
+    end
+  end
+
+  class MenuBuilder
+    attr_reader :options
+
+    def initialize
+      @options = []
+    end
+
+    def option(label, &block)
+      sub = Flow.new
+      sub.instance_eval(&block) if block_given?
+      @options << { label: label, steps: sub.steps }
     end
   end
 end

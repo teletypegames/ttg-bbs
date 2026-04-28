@@ -15,6 +15,8 @@ BBS.configure do |c|
   c.flow = BBS::Flow.define do
     screen :welcome
 
+    banner "IDENTITY VERIFICATION", style: :info
+
     ask :player_name, prompt: "Player Name", transform: :upcase
     ask :code,        prompt: "Code"
     persist :player_name, :code, store: sessions
@@ -28,14 +30,22 @@ BBS.configure do |c|
     confirm "Norman, is that you?", denied: "Very well. Goodbye." do
       screen :congrats
 
-      ask :feedback, prompt: "Any feedback about the game?"
-      persist :feedback, store: sessions
+      menu ">", loop: true do
+        option "Leave feedback" do
+          ask :feedback, prompt: "Feedback"
+          persist :feedback, store: sessions
+          say "Feedback recorded. Thank you.", style: :success
+        end
 
-      confirm "Would you like to receive updates about the next game?",
-        denied: "Understood. Farewell, and well played." do
-        ask :email, prompt: "Your email address", validate: :email
-        persist :email, store: sessions
-        say "Perfect. We'll be in touch.", style: :success
+        option "Subscribe to updates" do
+          ask :email, prompt: "Email address", validate: :email
+          persist :email, store: sessions
+          say "Perfect. We'll be in touch.", style: :success
+        end
+
+        option "Exit" do
+          exit_menu
+        end
       end
     end
   end

@@ -2,10 +2,12 @@ PATH
   remote: gems/bbs
   specs:
     bbs (0.1.0)
+      artii (~> 2.1)
 
 GEM
   remote: https://rubygems.org/
   specs:
+    artii (2.1.2)
 
 PLATFORMS
   arm64-darwin-22
