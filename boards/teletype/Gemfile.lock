@@ -1,0 +1,21 @@
+GIT
+  remote: https://git.teletype.hu/tools/rubbs.git
+  revision: d9232eabb4ddba2b860921657cf20fe7f3cbd830
+  specs:
+    bbs (0.1.0)
+      artii (~> 2.1)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    artii (2.1.2)
+
+PLATFORMS
+  arm64-darwin-22
+  ruby
+
+DEPENDENCIES
+  bbs!
+
+BUNDLED WITH
+   2.5.9

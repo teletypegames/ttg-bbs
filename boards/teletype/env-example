@@ -1,1 +1,2 @@
 WEBAPP_WIKIJS_TOKEN=
+MESSAGES_PATH=data/messages.dat
