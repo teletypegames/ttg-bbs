@@ -1,5 +1,7 @@
 FROM ruby:3.3-alpine
 
+RUN apk add --no-cache git openssh-client
+
 WORKDIR /app
 
 COPY bbs.rb ./
