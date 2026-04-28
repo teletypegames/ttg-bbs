@@ -5,14 +5,14 @@ require 'bbs'
 require_relative 'lib/code_generator'
 
 BBS.configure do |c|
-  c.templates_dir = File.expand_path('templates', __dir__)
+  c.screens_dir = File.expand_path('screens', __dir__)
 
   sessions = BBS::Store.new(
     path:    File.expand_path('data/sessions.csv', __dir__),
     headers: %w[session_id timestamp player_name code feedback email]
   )
 
-  c.entry_flow = BBS::Flow.define do
+  c.flow = BBS::Flow.define do
     screen :welcome
 
     ask :player_name, prompt: "Player Name", transform: :upcase

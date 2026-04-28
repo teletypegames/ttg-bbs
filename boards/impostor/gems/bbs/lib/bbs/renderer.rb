@@ -5,7 +5,7 @@ require 'erb'
 module BBS
   class Renderer
     def self.render(name, vars = {})
-      dir  = BBS.config.templates_dir or raise "BBS.config.templates_dir is not set"
+      dir  = BBS.config.screens_dir or raise "BBS.config.screens_dir is not set"
       path = File.join(dir, "#{name}.erb")
       ctx  = Context.new(vars)
       ERB.new(File.read(path), trim_mode: '-').result(ctx.ctx_binding).gsub("\n", "\r\n")

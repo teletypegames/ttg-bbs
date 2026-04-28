@@ -14,12 +14,16 @@ module BBS
       @steps = []
     end
 
-    def screen(name)
-      @steps << { type: :screen, name: name }
+    def screen(name, **vars)
+      @steps << { type: :screen, name: name, vars: vars }
     end
 
     def say(text, style: :muted)
       @steps << { type: :say, text: text, style: style }
+    end
+
+    def set(name, value)
+      @steps << { type: :set, name: name, value: value }
     end
 
     def ask(name, prompt:, transform: nil, validate: nil)

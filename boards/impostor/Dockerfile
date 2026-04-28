@@ -6,7 +6,7 @@ COPY bbs.rb ./
 COPY Gemfile Gemfile.lock ./
 COPY lib/ ./lib/
 COPY gems/ ./gems/
-COPY templates/ ./templates/
+COPY screens/ ./screens/
 
 RUN bundle install && mkdir -p /app/data
 

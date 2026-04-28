@@ -33,6 +33,7 @@ module BBS
       case step[:type]
       when :screen        then run_screen(step)
       when :say           then run_say(step)
+      when :set           then run_set(step)
       when :ask           then run_ask(step)
       when :persist       then run_persist(step)
       when :pause         then run_pause(step)
@@ -43,12 +44,18 @@ module BBS
     end
 
     def run_screen(step)
-      write Renderer.render(step[:name].to_s, @ctx)
+      vars = step[:vars].transform_values { |v| v.is_a?(Symbol) ? @ctx[v] : v }
+      write Renderer.render(step[:name].to_s, @ctx.merge(vars))
     end
 
     def run_say(step)
       color = STYLES.fetch(step[:style], STYLES[:muted])
       write "\r\n  #{color}#{step[:text]}\e[0m\r\n\r\n"
+    end
+
+    def run_set(step)
+      @ctx[step[:name]] = step[:value]
+      nil
     end
 
     def run_ask(step)

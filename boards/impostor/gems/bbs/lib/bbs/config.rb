@@ -2,6 +2,6 @@
 
 module BBS
   class Config
-    attr_accessor :templates_dir, :entry_flow
+    attr_accessor :screens_dir, :flow
   end
 end

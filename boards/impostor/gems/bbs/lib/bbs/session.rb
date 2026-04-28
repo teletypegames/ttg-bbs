@@ -13,7 +13,7 @@ module BBS
 
     def run
       negotiate
-      flow = BBS.config.entry_flow or raise "BBS.config.entry_flow is not set"
+      flow = BBS.config.flow or raise "BBS.config.flow is not set"
       FlowRunner.new(self, @session_id, flow).run
     ensure
       @client.close rescue nil
