@@ -1,6 +1,9 @@
 services:
   bbs:
-    build: .
+    build:
+      context: .
+      ssh:
+        - default
     ports:
       - "${BBS_PORT:-2323}:${BBS_PORT:-2323}"
     environment:
