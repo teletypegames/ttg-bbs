@@ -1,3 +1,3 @@
 source 'https://rubygems.org'
 
-gem 'bbs', git: 'ssh://git@git.teletype.hu:2222/tools/rubbs.git'
+gem 'bbs', git: 'https://git.teletype.hu/tools/rubbs.git'
