@@ -3,10 +3,13 @@ FROM ruby:3.3-alpine
 WORKDIR /app
 
 COPY bbs.rb ./
-COPY bbs/ ./bbs/
+COPY Gemfile Gemfile.lock ./
+COPY lib/ ./lib/
+COPY gems/ ./gems/
+COPY templates/ ./templates/
 
-RUN mkdir -p /app/data
+RUN bundle install && mkdir -p /app/data
 
 EXPOSE 2323
 
-CMD ["ruby", "bbs.rb"]
+CMD ["bundle", "exec", "ruby", "bbs.rb"]

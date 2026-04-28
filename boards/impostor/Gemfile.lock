@@ -1,0 +1,18 @@
+PATH
+  remote: gems/bbs
+  specs:
+    bbs (0.1.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+
+PLATFORMS
+  arm64-darwin-22
+  ruby
+
+DEPENDENCIES
+  bbs!
+
+BUNDLED WITH
+   2.5.9

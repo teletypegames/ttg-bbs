@@ -27,21 +27,18 @@ module BBS
                   transform: transform, validate: validate }
     end
 
-    def persist(*fields)
-      @steps << { type: :persist, fields: fields.flatten }
+    def persist(*fields, store:)
+      @steps << { type: :persist, fields: fields.flatten, store: store }
     end
 
     def pause(message, seconds: 1.0)
       @steps << { type: :pause, message: message, seconds: seconds }
     end
 
-    # Halts the flow unless the block returns truthy.
     def gate(denied:, &check)
       @steps << { type: :gate, check: check, denied: denied }
     end
 
-    # Without block: halts if the user answers no.
-    # With block:    runs the block if yes, skips it (with optional message) if no.
     def confirm(message, denied: nil, &block)
       step = { message: message, denied: denied }
       if block_given?

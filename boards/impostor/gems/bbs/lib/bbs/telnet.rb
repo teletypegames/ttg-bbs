@@ -34,12 +34,12 @@ module BBS
           next
         end
 
-        if byte == 13   # CR — wait for LF or NUL
+        if byte == 13
           last_cr = true
           next
         end
 
-        if byte == 10 || (byte == 0 && last_cr)  # LF or CR+NUL
+        if byte == 10 || (byte == 0 && last_cr)
           write "\r\n"
           return line
         end
@@ -47,7 +47,7 @@ module BBS
         last_cr = false
         next if byte == 0
 
-        if byte == 8 || byte == 127  # backspace / DEL
+        if byte == 8 || byte == 127
           unless line.empty?
             line.chop!
             write "\b \b"

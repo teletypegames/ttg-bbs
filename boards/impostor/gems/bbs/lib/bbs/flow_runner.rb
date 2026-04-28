@@ -42,8 +42,6 @@ module BBS
       end
     end
 
-    # ── step handlers ──────────────────────────────────────────────────────────
-
     def run_screen(step)
       write Renderer.render(step[:name].to_s, @ctx)
     end
@@ -71,7 +69,7 @@ module BBS
 
     def run_persist(step)
       fields = step[:fields].filter_map { |f| [f, @ctx[f]] if @ctx.key?(f) }.to_h
-      Store.upsert(session_id: @session_id, **fields) unless fields.empty?
+      step[:store].upsert(session_id: @session_id, **fields) unless fields.empty?
       nil
     end
 
@@ -108,8 +106,6 @@ module BBS
         nil
       end
     end
-
-    # ── helpers ────────────────────────────────────────────────────────────────
 
     def apply_transform(value, transform)
       case transform
