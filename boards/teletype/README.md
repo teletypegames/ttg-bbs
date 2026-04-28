@@ -1,69 +1,63 @@
 # Teletype BBS Server
 
-A modern, Go-based Bulletin Board System (BBS) server designed for Telnet access. It features community tools, wiki integration, and a game catalog, all rendered with retro-style ANSI graphics.
+Telnet-accessible community BBS server built on the [rubbs](https://git.teletype.hu/tools/rubbs) gem. ANSI-rendered retro terminal interface with a message board, wiki integration, and a game catalog.
 
-## Quick Start
+## Running
 
-### Prerequisites
-- [Go](https://go.dev/dl/) 1.26 or higher
-- A [Wiki.js](https://wiki.js.org/) instance (optional, for Wiki features)
+**Docker Compose (recommended):**
 
-### Installation
+```bash
+docker compose up --build
+```
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd bbs-server
-   ```
+**Directly (requires Ruby 3.x):**
 
-2. Install dependencies:
-   ```bash
-   go mod download
-   ```
+```bash
+bundle install
+ruby bbs.rb
+```
 
-3. Set up environment variables (optional but recommended for Wiki access):
-   ```bash
-   export WEBAPP_WIKIJS_TOKEN="your-wiki-js-api-token"
-   ```
+Connect with:
 
-4. Run the server:
-   ```bash
-   go run main.go
-   ```
-
-The server starts on `0.0.0.0:2323` by default.
-
-### Connecting
-You can connect to the BBS using any standard Telnet client:
 ```bash
 telnet localhost 2323
 ```
 
 ## Configuration
 
-- **Host/Port:** Currently hardcoded in `main.go` for simplicity.
-- **Wiki API:** Configured in `lib/repository.wiki.go`.
-- **Games API:** Configured in `lib/repository.catalog.go`.
-- **Internationalization:** Text is managed in `lib/sys.i18n.go` using a map-based system.
+Copy `env-example` to `.env` and fill in the values:
 
-## Project Structure
+| Variable | Default | Description |
+|---|---|---|
+| `WEBAPP_WIKIJS_TOKEN` | — | Bearer token for Wiki.js API (optional) |
+| `MESSAGES_PATH` | `data/messages.dat` | Path to the messages CSV file |
 
-- `main.go`: Entry point and network listener.
-- `lib/`: Core logic and modules.
-  - `repository.*.go`: Data fetching from external APIs (Wiki, Games).
-  - `menu.*.go`: Logic for individual BBS sections.
-  - `sys.print.go`: Telnet-specific I/O and ANSI rendering.
-  - `sys.header.go`: Core state and UI layouts.
-  - `sys.i18n.go`: Translation maps.
+## Menu
 
-## Development
+| Option | Description |
+|---|---|
+| Message Board | View the last 30 messages |
+| New Message | Post a message (max 200 chars) |
+| Blog Posts | Browse blog entries from Wiki.js |
+| HowTo Guides | Browse how-to articles from Wiki.js |
+| Game Catalog | Browse the Teletype game catalog |
+| Online Users | List of currently connected users |
+| System Info | Server stats |
 
-To build a production binary:
-```bash
-go build -o bbs-server main.go
+## Project structure
+
+```
+bbs.rb              Entry point — BBS configuration and flow definition
+lib/
+  online_users.rb   Thread-safe connected-users map
+  message_board.rb  CSV-backed message store
+  wiki.rb           Wiki.js GraphQL client
+  catalog.rb        Games API client
+  display.rb        ANSI rendering helpers and content handlers
+data/
+  messages.dat      Message board records (auto-created)
 ```
 
-To run with Docker:
-```bash
-docker-compose up --build
-```
+## Data
+
+Messages are stored in `data/messages.dat` (plain CSV, auto-created on first post). The `data/` directory is mounted as a Docker volume so records survive container restarts.
