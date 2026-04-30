@@ -24,6 +24,10 @@ module C
   RED     = "\e[1;31m"
 end
 
+def c(color, text)
+  "#{C.const_get(color.to_s.upcase)}#{text}#{C::RESET}"
+end
+
 def fmt_date(iso)
   Time.parse(iso.to_s).strftime('%Y-%m-%d')
 rescue
@@ -63,8 +67,7 @@ BBS.configure do |c|
         section 'Message Board', color: :cyan
         rows(empty: 'No messages yet.') do |ctx|
           MESSAGES.last(30).map.with_index(1) do |msg, i|
-            "#{C::GRAY}[#{i}]#{C::RESET} #{C::YELLOW}#{msg.timestamp}#{C::RESET} " \
-            "#{C::WHITE}#{msg.username}#{C::RESET}: #{C::GRAY}#{msg.text}#{C::RESET}"
+            "#{c(:gray, "[#{i}]")} #{c(:yellow, msg.timestamp)} #{c(:white, msg.username)}: #{c(:gray, msg.text)}"
           end
         end
         wait_enter
@@ -84,7 +87,7 @@ BBS.configure do |c|
         pick from: :pages,
              empty: 'No results.',
              prompt: 'Enter number to read (blank to go back)',
-             item:  ->(p, i) { "#{C::GRAY}#{i}.#{C::RESET} #{C::BLUE}#{p.title}#{C::RESET}  #{C::GRAY}#{fmt_date(p.created_at)}#{C::RESET}" },
+             item:  ->(p, i) { "#{c(:gray, "#{i}.")} #{c(:blue, p.title)}  #{c(:gray, fmt_date(p.created_at))}" },
              hint:  ->(p, i) { p.description.to_s.strip[0...65] } do
           fetch :page_body, loading: 'Loading page...' do |ctx|
             WIKI.content(ctx[:picked].id)
@@ -106,7 +109,7 @@ BBS.configure do |c|
         pick from: :pages,
              empty: 'No results.',
              prompt: 'Enter number to read (blank to go back)',
-             item:  ->(p, i) { "#{C::GRAY}#{i}.#{C::RESET} #{C::MAGENTA}#{p.title}#{C::RESET}  #{C::GRAY}#{fmt_date(p.created_at)}#{C::RESET}" },
+             item:  ->(p, i) { "#{c(:gray, "#{i}.")} #{c(:magenta, p.title)}  #{c(:gray, fmt_date(p.created_at))}" },
              hint:  ->(p, i) { p.description.to_s.strip[0...65] } do
           fetch :page_body, loading: 'Loading page...' do |ctx|
             WIKI.content(ctx[:picked].id)
@@ -127,27 +130,26 @@ BBS.configure do |c|
         end
         output do |ctx|
           games = Array(ctx[:games])
-          next "  #{C::RED}Could not load catalog.#{C::RESET}\r\n\r\n" unless games.any?
+          next "  #{c(:red, 'Could not load catalog.')}\r\n\r\n" unless games.any?
 
           out = +''
           games.each_with_index do |game, i|
-            out << "\r\n  #{C::GRAY}#{'─' * 66}#{C::RESET}\r\n"
-            out << "  #{C::CYAN}#{i + 1}. #{game.title}#{C::RESET}  " \
-                   "#{C::GRAY}#{game.platform}  #{game.author}#{C::RESET}\r\n"
+            out << "\r\n  #{c(:gray, '─' * 66)}\r\n"
+            out << "  #{c(:cyan, "#{i + 1}. #{game.title}")}  #{c(:gray, "#{game.platform}  #{game.author}")}\r\n"
             out << wrap_text(game.desc) unless game.desc.empty?
 
             badges = []
-            badges << "#{C::GREEN}[▶ Play]#{C::RESET}"      unless game.play_path.empty?
-            badges << "#{C::YELLOW}[⬇ Download]#{C::RESET}" unless game.download_path.empty?
-            badges << "#{C::BLUE}[Source]#{C::RESET}"        unless game.source_path.empty?
-            badges << "#{C::MAGENTA}[Docs]#{C::RESET}"       unless game.docs_path.empty?
+            badges << c(:green,   '[▶ Play]')      unless game.play_path.empty?
+            badges << c(:yellow,  '[⬇ Download]')  unless game.download_path.empty?
+            badges << c(:blue,    '[Source]')       unless game.source_path.empty?
+            badges << c(:magenta, '[Docs]')         unless game.docs_path.empty?
             out << "  #{badges.join('  ')}\r\n" unless badges.empty?
-            out << "  #{C::GRAY}#{CATALOG.play_url(game.play_path)}#{C::RESET}\r\n" unless game.play_path.empty?
-            out << "  #{C::GRAY}#{game.release_count} versions available#{C::RESET}\r\n" if game.release_count > 1
+            out << "  #{c(:gray, CATALOG.play_url(game.play_path))}\r\n" unless game.play_path.empty?
+            out << "  #{c(:gray, "#{game.release_count} versions available")}\r\n" if game.release_count > 1
           end
 
-          out << "\r\n  #{C::GRAY}#{'─' * 66}#{C::RESET}\r\n"
-          out << "  #{C::GRAY}#{CatalogRepository::GAMES_URL}#{C::RESET}\r\n\r\n"
+          out << "\r\n  #{c(:gray, '─' * 66)}\r\n"
+          out << "  #{c(:gray, CatalogRepository::GAMES_URL)}\r\n\r\n"
           out
         end
         wait_enter
@@ -157,8 +159,8 @@ BBS.configure do |c|
         section 'Online Users', color: :yellow
         rows do |ctx|
           ONLINE.snapshot.sort.map do |sid, name|
-            marker = sid == ctx[:session_id] ? "  #{C::GRAY}← you#{C::RESET}" : ''
-            "#{C::WHITE}#{name}#{C::RESET}#{marker}"
+            marker = sid == ctx[:session_id] ? "  #{c(:gray, '← you')}" : ''
+            "#{c(:white, name)}#{marker}"
           end
         end
         text(style: :muted) { |ctx| "#{ONLINE.count} user(s) online" }
