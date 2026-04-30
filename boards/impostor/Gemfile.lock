@@ -1,6 +1,6 @@
 GIT
   remote: https://git.teletype.hu/tools/rubbs.git
-  revision: 4690ade51052a75cffb88f69413635b4478614fc
+  revision: 15cd593b3326661dd01e3d9199f178e86e37ae5e
   specs:
     bbs (0.1.0)
       artii (~> 2.1)
