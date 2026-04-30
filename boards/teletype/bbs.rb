@@ -12,20 +12,14 @@ MESSAGES = MessageBoardRepository.new(ENV.fetch('MESSAGES_PATH', 'data/messages.
 WIKI     = WikiRepository.new(token: ENV['WEBAPP_WIKIJS_TOKEN'])
 CATALOG  = CatalogRepository.new
 
-module C
-  RESET   = "\e[0m"
-  GRAY    = "\e[0;37m"
-  YELLOW  = "\e[0;33m"
-  WHITE   = "\e[1;37m"
-  BLUE    = "\e[0;34m"
-  CYAN    = "\e[0;36m"
-  GREEN   = "\e[1;32m"
-  MAGENTA = "\e[0;35m"
-  RED     = "\e[1;31m"
-end
+COLORS = {
+  reset: "\e[0m",    gray:    "\e[0;37m", yellow:  "\e[0;33m",
+  white: "\e[1;37m", blue:    "\e[0;34m", cyan:    "\e[0;36m",
+  green: "\e[1;32m", magenta: "\e[0;35m", red:     "\e[1;31m"
+}.freeze
 
 def c(color, text)
-  "#{C.const_get(color.to_s.upcase)}#{text}#{C::RESET}"
+  "#{COLORS.fetch(color)}#{text}#{COLORS[:reset]}"
 end
 
 class OutputBuilder
@@ -58,7 +52,7 @@ class OutputBuilder
 
   private
 
-  def c(color, text) = "#{C.const_get(color.to_s.upcase)}#{text}#{C::RESET}"
+  def c(color, text) = "#{COLORS.fetch(color)}#{text}#{COLORS[:reset]}"
 
   def flush_badges
     return if @badges.empty?
