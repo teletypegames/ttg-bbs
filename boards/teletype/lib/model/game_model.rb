@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Game
+class GameModel
   attr_reader :title, :platform, :author, :desc,
               :play_path, :download_path, :source_path, :docs_path,
               :release_count

@@ -3,9 +3,9 @@
 require 'csv'
 require 'time'
 require 'fileutils'
-require_relative '../model/message'
+require_relative '../model/message_model'
 
-class MessageBoard
+class MessageBoardRepository
   def initialize(path)
     @path     = path
     @messages = []
@@ -14,7 +14,7 @@ class MessageBoard
   end
 
   def append(username, text)
-    msg = Message.new(Time.now.strftime('%m-%d %H:%M'), username, text)
+    msg = MessageModel.new(Time.now.strftime('%m-%d %H:%M'), username, text)
     @mu.synchronize do
       @messages << msg
       FileUtils.mkdir_p(File.dirname(@path))
@@ -35,8 +35,8 @@ class MessageBoard
 
   def load_csv
     return unless File.exist?(@path)
-    CSV.foreach(@path) { |row| @messages << Message.new(*row) }
+    CSV.foreach(@path) { |row| @messages << MessageModel.new(*row) }
   rescue => e
-    warn "MessageBoard load error: #{e}"
+    warn "MessageBoardRepository load error: #{e}"
   end
 end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class OnlineUsers
+class OnlineUsersRepository
   def initialize
     @users = {}
     @mu    = Mutex.new

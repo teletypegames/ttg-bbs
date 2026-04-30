@@ -3,9 +3,9 @@
 require 'net/http'
 require 'json'
 require 'uri'
-require_relative '../model/wiki_page'
+require_relative '../model/wiki_page_model'
 
-class WikiClient
+class WikiRepository
   BASE_URL = 'https://wiki.teletype.hu'
 
   def initialize(token: nil)
@@ -19,7 +19,7 @@ class WikiClient
       }}}
     GQL
     (graphql(query).dig('data', 'pages', 'list') || []).map do |p|
-      WikiPage.new(
+      WikiPageModel.new(
         id:          p['id'],
         path:        p['path'],
         title:       p['title'],
@@ -29,7 +29,7 @@ class WikiClient
       )
     end
   rescue => e
-    warn "Wiki list error: #{e}"
+    warn "WikiRepository list error: #{e}"
     []
   end
 
@@ -37,7 +37,7 @@ class WikiClient
     query = "{ pages { single(id: #{page_id}) { content } } }"
     graphql(query).dig('data', 'pages', 'single', 'content') || ''
   rescue => e
-    warn "Wiki content error: #{e}"
+    warn "WikiRepository content error: #{e}"
     ''
   end
 

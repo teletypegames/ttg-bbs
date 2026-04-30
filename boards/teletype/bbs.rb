@@ -2,15 +2,15 @@
 
 require 'bbs'
 require 'time'
-require_relative 'lib/repository/online_users'
-require_relative 'lib/repository/message_board'
-require_relative 'lib/repository/wiki'
-require_relative 'lib/repository/catalog'
+require_relative 'lib/repository/online_users_repository'
+require_relative 'lib/repository/message_board_repository'
+require_relative 'lib/repository/wiki_repository'
+require_relative 'lib/repository/catalog_repository'
 
-ONLINE   = OnlineUsers.new
-MESSAGES = MessageBoard.new(ENV.fetch('MESSAGES_PATH', 'data/messages.dat'))
-WIKI     = WikiClient.new(token: ENV['WEBAPP_WIKIJS_TOKEN'])
-CATALOG  = CatalogClient.new
+ONLINE   = OnlineUsersRepository.new
+MESSAGES = MessageBoardRepository.new(ENV.fetch('MESSAGES_PATH', 'data/messages.dat'))
+WIKI     = WikiRepository.new(token: ENV['WEBAPP_WIKIJS_TOKEN'])
+CATALOG  = CatalogRepository.new
 
 module C
   RESET   = "\e[0m"
@@ -147,7 +147,7 @@ BBS.configure do |c|
           end
 
           out << "\r\n  #{C::GRAY}#{'─' * 66}#{C::RESET}\r\n"
-          out << "  #{C::GRAY}#{CatalogClient::GAMES_URL}#{C::RESET}\r\n\r\n"
+          out << "  #{C::GRAY}#{CatalogRepository::GAMES_URL}#{C::RESET}\r\n\r\n"
           out
         end
         wait_enter
