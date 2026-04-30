@@ -7,20 +7,12 @@ require_relative 'lib/repository/message_board_repository'
 require_relative 'lib/repository/wiki_repository'
 require_relative 'lib/repository/catalog_repository'
 
+include BBS::Color
+
 ONLINE   = OnlineUsersRepository.new
 MESSAGES = MessageBoardRepository.new(ENV.fetch('MESSAGES_PATH', 'data/messages.dat'))
 WIKI     = WikiRepository.new(token: ENV['WEBAPP_WIKIJS_TOKEN'])
 CATALOG  = CatalogRepository.new
-
-COLORS = {
-  reset: "\e[0m",    gray:    "\e[0;37m", yellow:  "\e[0;33m",
-  white: "\e[1;37m", blue:    "\e[0;34m", cyan:    "\e[0;36m",
-  green: "\e[1;32m", magenta: "\e[0;35m", red:     "\e[1;31m"
-}.freeze
-
-def c(color, text)
-  "#{COLORS.fetch(color)}#{text}#{COLORS[:reset]}"
-end
 
 class OutputBuilder
   def initialize = (@buf = +''; @badges = [])
@@ -51,8 +43,6 @@ class OutputBuilder
   end
 
   private
-
-  def c(color, text) = "#{COLORS.fetch(color)}#{text}#{COLORS[:reset]}"
 
   def flush_badges
     return if @badges.empty?
