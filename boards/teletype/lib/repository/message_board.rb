@@ -3,10 +3,9 @@
 require 'csv'
 require 'time'
 require 'fileutils'
+require_relative '../model/message'
 
 class MessageBoard
-  Message = Struct.new(:timestamp, :username, :text)
-
   def initialize(path)
     @path     = path
     @messages = []
@@ -36,9 +35,7 @@ class MessageBoard
 
   def load_csv
     return unless File.exist?(@path)
-    CSV.foreach(@path) do |row|
-      @messages << Message.new(*row)
-    end
+    CSV.foreach(@path) { |row| @messages << Message.new(*row) }
   rescue => e
     warn "MessageBoard load error: #{e}"
   end

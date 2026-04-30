@@ -2,10 +2,10 @@
 
 require 'bbs'
 require 'time'
-require_relative 'lib/online_users'
-require_relative 'lib/message_board'
-require_relative 'lib/wiki'
-require_relative 'lib/catalog'
+require_relative 'lib/repository/online_users'
+require_relative 'lib/repository/message_board'
+require_relative 'lib/repository/wiki'
+require_relative 'lib/repository/catalog'
 
 ONLINE   = OnlineUsers.new
 MESSAGES = MessageBoard.new(ENV.fetch('MESSAGES_PATH', 'data/messages.dat'))
@@ -84,14 +84,14 @@ BBS.configure do |c|
         pick from: :pages,
              empty: 'No results.',
              prompt: 'Enter number to read (blank to go back)',
-             item:  ->(p, i) { "#{C::GRAY}#{i}.#{C::RESET} #{C::BLUE}#{p['title']}#{C::RESET}  #{C::GRAY}#{fmt_date(p['createdAt'])}#{C::RESET}" },
-             hint:  ->(p, i) { p['description'].to_s.strip[0...65] } do
+             item:  ->(p, i) { "#{C::GRAY}#{i}.#{C::RESET} #{C::BLUE}#{p.title}#{C::RESET}  #{C::GRAY}#{fmt_date(p.created_at)}#{C::RESET}" },
+             hint:  ->(p, i) { p.description.to_s.strip[0...65] } do
           fetch :page_body, loading: 'Loading page...' do |ctx|
-            WIKI.content(ctx[:picked]['id'])
+            WIKI.content(ctx[:picked].id)
           end
           line color: :blue
-          text(style: :white) { |ctx| ctx[:picked]['title'] }
-          text(style: :muted) { |ctx| "#{fmt_date(ctx[:picked]['createdAt'])}  #{WIKI.page_url(ctx[:picked]['locale'], ctx[:picked]['path'])}" }
+          text(style: :white) { |ctx| ctx[:picked].title }
+          text(style: :muted) { |ctx| "#{fmt_date(ctx[:picked].created_at)}  #{WIKI.page_url(ctx[:picked].locale, ctx[:picked].path)}" }
           line color: :blue
           body { |ctx| ctx[:page_body] }
           wait_enter
@@ -106,14 +106,14 @@ BBS.configure do |c|
         pick from: :pages,
              empty: 'No results.',
              prompt: 'Enter number to read (blank to go back)',
-             item:  ->(p, i) { "#{C::GRAY}#{i}.#{C::RESET} #{C::MAGENTA}#{p['title']}#{C::RESET}  #{C::GRAY}#{fmt_date(p['createdAt'])}#{C::RESET}" },
-             hint:  ->(p, i) { p['description'].to_s.strip[0...65] } do
+             item:  ->(p, i) { "#{C::GRAY}#{i}.#{C::RESET} #{C::MAGENTA}#{p.title}#{C::RESET}  #{C::GRAY}#{fmt_date(p.created_at)}#{C::RESET}" },
+             hint:  ->(p, i) { p.description.to_s.strip[0...65] } do
           fetch :page_body, loading: 'Loading page...' do |ctx|
-            WIKI.content(ctx[:picked]['id'])
+            WIKI.content(ctx[:picked].id)
           end
           line color: :magenta
-          text(style: :white) { |ctx| ctx[:picked]['title'] }
-          text(style: :muted) { |ctx| "#{fmt_date(ctx[:picked]['createdAt'])}  #{WIKI.page_url(ctx[:picked]['locale'], ctx[:picked]['path'])}" }
+          text(style: :white) { |ctx| ctx[:picked].title }
+          text(style: :muted) { |ctx| "#{fmt_date(ctx[:picked].created_at)}  #{WIKI.page_url(ctx[:picked].locale, ctx[:picked].path)}" }
           line color: :magenta
           body { |ctx| ctx[:page_body] }
           wait_enter
@@ -130,26 +130,20 @@ BBS.configure do |c|
           next "  #{C::RED}Could not load catalog.#{C::RESET}\r\n\r\n" unless games.any?
 
           out = +''
-          games.each_with_index do |entry, i|
-            next unless entry.is_a?(Hash)
-            sw     = entry['software']      || {}
-            latest = entry['latestRelease'] || {}
-            count  = (entry['releases']     || []).length
-            desc   = sw['desc'].to_s.strip
-
+          games.each_with_index do |game, i|
             out << "\r\n  #{C::GRAY}#{'─' * 66}#{C::RESET}\r\n"
-            out << "  #{C::CYAN}#{i + 1}. #{sw['title']}#{C::RESET}  " \
-                   "#{C::GRAY}#{sw['platform']}  #{sw['author']}#{C::RESET}\r\n"
-            out << wrap_text(desc) unless desc.empty?
+            out << "  #{C::CYAN}#{i + 1}. #{game.title}#{C::RESET}  " \
+                   "#{C::GRAY}#{game.platform}  #{game.author}#{C::RESET}\r\n"
+            out << wrap_text(game.desc) unless game.desc.empty?
 
             badges = []
-            badges << "#{C::GREEN}[▶ Play]#{C::RESET}"      if latest['htmlFolderPath'].to_s != ''
-            badges << "#{C::YELLOW}[⬇ Download]#{C::RESET}" if latest['cartridgePath'].to_s  != ''
-            badges << "#{C::BLUE}[Source]#{C::RESET}"        if latest['sourcePath'].to_s     != ''
-            badges << "#{C::MAGENTA}[Docs]#{C::RESET}"       if latest['docsFolderPath'].to_s != ''
+            badges << "#{C::GREEN}[▶ Play]#{C::RESET}"      unless game.play_path.empty?
+            badges << "#{C::YELLOW}[⬇ Download]#{C::RESET}" unless game.download_path.empty?
+            badges << "#{C::BLUE}[Source]#{C::RESET}"        unless game.source_path.empty?
+            badges << "#{C::MAGENTA}[Docs]#{C::RESET}"       unless game.docs_path.empty?
             out << "  #{badges.join('  ')}\r\n" unless badges.empty?
-            out << "  #{C::GRAY}#{CATALOG.play_url(latest['htmlFolderPath'])}#{C::RESET}\r\n" if latest['htmlFolderPath'].to_s != ''
-            out << "  #{C::GRAY}#{count} versions available#{C::RESET}\r\n" if count > 1
+            out << "  #{C::GRAY}#{CATALOG.play_url(game.play_path)}#{C::RESET}\r\n" unless game.play_path.empty?
+            out << "  #{C::GRAY}#{game.release_count} versions available#{C::RESET}\r\n" if game.release_count > 1
           end
 
           out << "\r\n  #{C::GRAY}#{'─' * 66}#{C::RESET}\r\n"

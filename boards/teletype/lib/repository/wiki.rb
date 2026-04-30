@@ -3,6 +3,7 @@
 require 'net/http'
 require 'json'
 require 'uri'
+require_relative '../model/wiki_page'
 
 class WikiClient
   BASE_URL = 'https://wiki.teletype.hu'
@@ -17,7 +18,16 @@ class WikiClient
         id path title description createdAt locale
       }}}
     GQL
-    graphql(query).dig('data', 'pages', 'list') || []
+    (graphql(query).dig('data', 'pages', 'list') || []).map do |p|
+      WikiPage.new(
+        id:          p['id'],
+        path:        p['path'],
+        title:       p['title'],
+        description: p['description'],
+        created_at:  p['createdAt'],
+        locale:      p['locale']
+      )
+    end
   rescue => e
     warn "Wiki list error: #{e}"
     []

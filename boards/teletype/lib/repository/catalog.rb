@@ -3,6 +3,7 @@
 require 'net/http'
 require 'json'
 require 'uri'
+require_relative '../model/game'
 
 class CatalogClient
   API_URL   = 'https://games.teletype.hu/api/software'
@@ -14,8 +15,9 @@ class CatalogClient
     http.use_ssl      = uri.scheme == 'https'
     http.open_timeout = 12
     http.read_timeout = 12
-    data = JSON.parse(http.get(uri.path).body)
-    data.is_a?(Hash) ? (data['softwares'] || []) : data
+    data    = JSON.parse(http.get(uri.path).body)
+    entries = data.is_a?(Hash) ? (data['softwares'] || []) : data
+    entries.filter_map { |e| Game.new(e) if e.is_a?(Hash) }
   rescue => e
     warn "Catalog fetch error: #{e}"
     []
