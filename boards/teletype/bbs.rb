@@ -28,6 +28,49 @@ def c(color, text)
   "#{C.const_get(color.to_s.upcase)}#{text}#{C::RESET}"
 end
 
+class OutputBuilder
+  def initialize = (@buf = +''; @badges = [])
+  def to_s       = (flush_badges; @buf)
+
+  def sep(color = :gray)
+    flush_badges
+    @buf << "\r\n  #{c(color, '─' * 66)}\r\n"
+  end
+
+  def line(text, color = nil)
+    flush_badges
+    @buf << "  #{color ? c(color, text) : text}\r\n"
+  end
+
+  def cols(**pairs)
+    flush_badges
+    @buf << "  #{pairs.map { |color, text| c(color, text.to_s) }.join('  ')}\r\n"
+  end
+
+  def para(text)
+    flush_badges
+    @buf << wrap_text(text) unless text.to_s.strip.empty?
+  end
+
+  def badge(color, text)
+    @badges << c(color, text)
+  end
+
+  private
+
+  def c(color, text) = "#{C.const_get(color.to_s.upcase)}#{text}#{C::RESET}"
+
+  def flush_badges
+    return if @badges.empty?
+    @buf << "  #{@badges.join('  ')}\r\n"
+    @badges = []
+  end
+end
+
+def render(&block)
+  OutputBuilder.new.tap { |b| b.instance_eval(&block) }.to_s
+end
+
 def fmt_date(iso)
   Time.parse(iso.to_s).strftime('%Y-%m-%d')
 rescue
@@ -130,27 +173,23 @@ BBS.configure do |c|
         end
         output do |ctx|
           games = Array(ctx[:games])
-          next "  #{c(:red, 'Could not load catalog.')}\r\n\r\n" unless games.any?
+          next "  #{c(:red, 'Could not load catalog.')}\r\n" unless games.any?
 
-          out = +''
-          games.each_with_index do |game, i|
-            out << "\r\n  #{c(:gray, '─' * 66)}\r\n"
-            out << "  #{c(:cyan, "#{i + 1}. #{game.title}")}  #{c(:gray, "#{game.platform}  #{game.author}")}\r\n"
-            out << wrap_text(game.desc) unless game.desc.empty?
-
-            badges = []
-            badges << c(:green,   '[▶ Play]')      unless game.play_path.empty?
-            badges << c(:yellow,  '[⬇ Download]')  unless game.download_path.empty?
-            badges << c(:blue,    '[Source]')       unless game.source_path.empty?
-            badges << c(:magenta, '[Docs]')         unless game.docs_path.empty?
-            out << "  #{badges.join('  ')}\r\n" unless badges.empty?
-            out << "  #{c(:gray, CATALOG.play_url(game.play_path))}\r\n" unless game.play_path.empty?
-            out << "  #{c(:gray, "#{game.release_count} versions available")}\r\n" if game.release_count > 1
+          render do
+            games.each_with_index do |game, i|
+              sep
+              cols cyan: "#{i + 1}. #{game.title}", gray: "#{game.platform}  #{game.author}"
+              para game.desc
+              badge :green,   '[▶ Play]'     unless game.play_path.empty?
+              badge :yellow,  '[⬇ Download]' unless game.download_path.empty?
+              badge :blue,    '[Source]'     unless game.source_path.empty?
+              badge :magenta, '[Docs]'       unless game.docs_path.empty?
+              line CATALOG.play_url(game.play_path), :gray unless game.play_path.empty?
+              line "#{game.release_count} versions available", :gray if game.release_count > 1
+            end
+            sep
+            line CatalogRepository::GAMES_URL, :gray
           end
-
-          out << "\r\n  #{c(:gray, '─' * 66)}\r\n"
-          out << "  #{c(:gray, CatalogRepository::GAMES_URL)}\r\n\r\n"
-          out
         end
         wait_enter
       end
