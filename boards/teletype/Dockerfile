@@ -4,8 +4,8 @@ RUN apk add --no-cache git build-base
 
 WORKDIR /app
 
-COPY Gemfile Gemfile.lock ./
-RUN bundle install
+COPY Gemfile ./
+RUN bundle update bbs
 
 COPY bbs.rb ./
 COPY lib/ ./lib/
