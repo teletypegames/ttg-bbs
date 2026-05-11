@@ -1,21 +1,25 @@
 # frozen_string_literal: true
 
 class GameModel
-  attr_reader :title, :platform, :author, :desc,
+  attr_reader :title, :platform, :author, :desc, :story,
               :play_path, :download_path, :source_path, :docs_path,
-              :release_count
+              :release_count, :external_links
 
   def initialize(entry)
     sw     = entry['software']      || {}
     latest = entry['latestRelease'] || {}
-    @title         = sw['title'].to_s
-    @platform      = sw['platform'].to_s
-    @author        = sw['author'].to_s
-    @desc          = sw['desc'].to_s
-    @play_path     = latest['htmlFolderPath'].to_s
-    @download_path = latest['cartridgePath'].to_s
-    @source_path   = latest['sourcePath'].to_s
-    @docs_path     = latest['docsFolderPath'].to_s
-    @release_count = (entry['releases'] || []).length
+    @title          = sw['title'].to_s
+    @platform       = sw['platform'].to_s
+    @author         = sw['author'].to_s
+    @desc           = sw['desc'].to_s
+    @story          = sw['story'].to_s
+    @play_path      = latest['htmlFolderPath'].to_s
+    @download_path  = latest['cartridgePath'].to_s
+    @source_path    = latest['sourcePath'].to_s
+    @docs_path      = latest['docsFolderPath'].to_s
+    @release_count  = (entry['releases'] || []).length
+    @external_links = (sw['externalLinks'] || []).filter_map do |l|
+      { label: l['label'].to_s, url: l['url'].to_s } unless l['url'].to_s.empty?
+    end
   end
 end

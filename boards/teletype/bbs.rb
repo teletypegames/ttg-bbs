@@ -221,8 +221,7 @@ MAIN_TUI = BBS::TUI.define do
         @status = 'Message cannot be empty.'
       else
         MESSAGES.append(@username, @input.strip[0...200])
-        @status = 'Sent!'
-        @input  = +''
+        go :idle
       end
     end
     key(:backspace) { @input.chop! unless @input.empty? }
@@ -275,20 +274,25 @@ MAIN_TUI = BBS::TUI.define do
       if @items.empty?
         text 'No games found.', x: CONT_X, y: CONT_Y, style: THEME[:normal]
       else
-        game = @items[@item_sel]
+        game  = @items[@item_sel]
+        links = game.external_links
+
         text "#{@item_sel + 1}/#{@items.size}  #{game.title}"[0, cont_w],
              x: CONT_X, y: CONT_Y, style: THEME[:bright]
-        text "#{game.platform}  #{game.author}"[0, cont_w],
+        text "#{game.platform}  ·  #{game.author}"[0, cont_w],
              x: CONT_X, y: CONT_Y + 1, style: THEME[:normal]
-        wordwrap(game.desc.to_s, cont_w).first(cont_h - 8).each_with_index do |l, i|
+
+        story_rows = cont_h - 4 - links.size
+        wordwrap(game.story, cont_w).first(story_rows).each_with_index do |l, i|
           text l, x: CONT_X, y: CONT_Y + 3 + i, style: THEME[:normal]
         end
-        badges = []
-        badges << tc(:success, '[▶ Play]')     unless game.play_path.empty?
-        badges << tc(:label,   '[⬇ Download]') unless game.download_path.empty?
-        badges << tc(:bright,  '[Source]')     unless game.source_path.empty?
-        badges << tc(:header,  '[Docs]')       unless game.docs_path.empty?
-        text badges.join('  '), x: CONT_X, y: CONT_Y + cont_h - 3
+
+        link_y = CONT_Y + cont_h - links.size
+        links.each_with_index do |lnk, i|
+          text "#{tc(:label, lnk[:label])}  #{lnk[:url]}"[0, cont_w],
+               x: CONT_X, y: link_y + i
+        end
+
         text '↑↓ navigate  q back', x: CONT_X, y: CONT_Y + cont_h, style: THEME[:normal]
       end
     end
