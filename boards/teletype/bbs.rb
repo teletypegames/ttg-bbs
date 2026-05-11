@@ -27,17 +27,17 @@ CONT_Y = 2     # content start y inside panels       (top border + 1)
 # ── DOS Navigator color theme ────────────────────────────────────────────────
 
 THEME = {
-  bg:       "\e[0;44m",    # blue background
-  normal:   "\e[0;37;44m", # white on blue
-  bright:   "\e[1;37;44m", # bright white on blue
-  border:   "\e[1;36;44m", # bright cyan on blue
+  bg:       "\e[0;40m",    # black background
+  normal:   "\e[0;37m",    # white
+  bright:   "\e[1;37m",    # bright white
+  border:   "\e[0;36m",    # cyan
   selected: "\e[0;30;46m", # black on cyan  (highlighted menu item)
-  header:   "\e[1;36;44m", # bright cyan on blue  (section titles)
-  label:    "\e[1;33;44m", # yellow on blue  (timestamps, labels)
+  header:   "\e[1;36m",    # bright cyan  (section titles)
+  label:    "\e[0;33m",    # yellow  (timestamps, labels)
   status:   "\e[0;30;46m", # black on cyan  (bottom status bar)
-  input:    "\e[1;33;44m", # yellow on blue  (text input)
-  success:  "\e[1;32;44m", # green on blue
-  error:    "\e[1;31;44m", # red on blue
+  input:    "\e[0;33m",    # yellow  (text input)
+  success:  "\e[1;32m",    # green
+  error:    "\e[1;31m",    # red
   reset:    "\e[0m",
 }.freeze
 
@@ -130,16 +130,16 @@ MAIN_TUI = BBS::TUI.define do
   end
 
   chrome do
-    screen_fill bg: :blue
+    screen_fill bg: :black
 
     panel_h = term_rows - 1
 
     box x: 1,          y: 1, w: LEFT_W,             h: panel_h,
-        style: THEME[:border], bg: :blue
+        style: THEME[:border], bg: :black
 
     box x: LEFT_W + 1, y: 1, w: term_cols - LEFT_W, h: panel_h,
         title: " #{@page_title}  │  #{@username}  │  #{ONLINE.count} online ",
-        style: THEME[:border], bg: :blue
+        style: THEME[:border], bg: :black
 
     list MENU_ITEMS.map { |i| i[0, LEFT_W - 4] },
          x: 2, y: CONT_Y,
