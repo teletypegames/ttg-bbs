@@ -32,17 +32,17 @@ CONT_X = 23
 CONT_Y = 2
 
 THEME = {
-  bg:       "\e[0;40m",
-  normal:   "\e[0;37m",
-  bright:   "\e[1;37m",
-  border:   "\e[0;36m",
-  selected: "\e[0;30;46m",
-  header:   "\e[1;36m",
-  label:    "\e[0;33m",
-  status:   "\e[0;30;46m",
-  input:    "\e[0;33m",
-  success:  "\e[1;32m",
-  error:    "\e[1;31m",
+  bg:       "\e[0;40m",     # #0A0800 ≈ black
+  normal:   "\e[0;33m",     # #FFB000 amber (body text)
+  bright:   "\e[1;33m",     # #FFD880 bright amber (headings)
+  border:   "\e[0;33m",     # amber borders
+  selected: "\e[0;30;43m",  # #0A0800 fg on #C88000 bg (inverse)
+  header:   "\e[1;33m",     # bright amber
+  label:    "\e[2;33m",     # #6B4800 dim amber (secondary)
+  status:   "\e[0;30;43m",  # #0A0800 fg on #C88000 bg
+  input:    "\e[1;33m",     # bright amber for typed text
+  success:  "\e[1;32m",     # green
+  error:    "\e[1;31m",     # red
   reset:    "\e[0m",
 }.freeze
 
@@ -79,8 +79,8 @@ MAIN_TUI = BBS::TUI.define do
          style: THEME[:normal], highlight: THEME[:selected]
 
     bar y: term_rows,
-        content: "  \e[1;37;46m↑↓\e[0;30;46m Navigate  \e[1;37;46mEnter\e[0;30;46m Select  " \
-                 "\e[1;37;46mQ\e[0;30;46m Back  \e[1;37;46mR\e[0;30;46m Refresh",
+        content: "  \e[1;37;43m↑↓\e[0;30;43m Navigate  \e[1;37;43mEnter\e[0;30;43m Select  " \
+                 "\e[1;37;43mQ\e[0;30;43m Back  \e[1;37;43mR\e[0;30;43m Refresh",
         style: THEME[:status]
   end
 
