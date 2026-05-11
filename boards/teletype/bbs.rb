@@ -7,8 +7,6 @@ require_relative 'lib/repository/message_board_repository'
 require_relative 'lib/repository/wiki_repository'
 require_relative 'lib/repository/catalog_repository'
 
-include BBS::Color
-
 ONLINE   = OnlineUsersRepository.new
 MESSAGES = MessageBoardRepository.new(ENV.fetch('MESSAGES_PATH', 'data/messages.dat'))
 WIKI     = WikiRepository.new(token: ENV['WEBAPP_WIKIJS_TOKEN'])
@@ -20,14 +18,37 @@ MENU_ITEMS = [
   'System Info', 'Exit'
 ].freeze
 
-SEP_X  = 21
-CONT_X = 23
-CONT_Y = 3
+# ── Layout ──────────────────────────────────────────────────────────────────
+
+LEFT_W = 21    # left panel outer width
+CONT_X = 23    # content start x inside right panel  (LEFT_W + 2)
+CONT_Y = 2     # content start y inside panels       (top border + 1)
+
+# ── DOS Navigator color theme ────────────────────────────────────────────────
+
+THEME = {
+  bg:       "\e[0;44m",    # blue background
+  normal:   "\e[0;37;44m", # white on blue
+  bright:   "\e[1;37;44m", # bright white on blue
+  border:   "\e[1;36;44m", # bright cyan on blue
+  selected: "\e[0;30;46m", # black on cyan  (highlighted menu item)
+  header:   "\e[1;36;44m", # bright cyan on blue  (section titles)
+  label:    "\e[1;33;44m", # yellow on blue  (timestamps, labels)
+  status:   "\e[0;30;46m", # black on cyan  (bottom status bar)
+  input:    "\e[1;33;44m", # yellow on blue  (text input)
+  success:  "\e[1;32;44m", # green on blue
+  error:    "\e[1;31;44m", # red on blue
+  reset:    "\e[0m",
+}.freeze
+
+# ── TUI definition ───────────────────────────────────────────────────────────
 
 MAIN_TUI = BBS::TUI.define do
   helpers do
+    def tc(style, str) = "#{THEME.fetch(style, THEME[:normal])}#{str}#{THEME[:reset]}"
+
     def cont_w = term_cols - CONT_X - 1
-    def cont_h = term_rows - CONT_Y - 4
+    def cont_h = term_rows - 4
 
     def fmt_date(iso)
       Time.parse(iso.to_s).strftime('%Y-%m-%d')
@@ -44,7 +65,7 @@ MAIN_TUI = BBS::TUI.define do
                   .split
       lines, line = [], +''
       words.each do |w|
-        if    line.empty?                        then line << w
+        if    line.empty?                         then line << w
         elsif line.length + 1 + w.length <= width then line << ' ' << w
         else  lines << line.dup; line = +w
         end
@@ -53,22 +74,23 @@ MAIN_TUI = BBS::TUI.define do
       lines
     end
 
-    def wiki_list_render(color:, title:)
-      text c(color, title), x: CONT_X, y: CONT_Y
+    def wiki_list_render(title)
+      text title, x: CONT_X, y: CONT_Y, style: THEME[:header]
       if @items.empty?
-        text c(:gray, 'No items found.'), x: CONT_X, y: CONT_Y + 2
+        text 'No items found.', x: CONT_X, y: CONT_Y + 2, style: THEME[:normal]
         return
       end
       list_h  = cont_h - 5
       visible = @items[@scroll, list_h] || []
       list visible.map { |p| p.title[0, cont_w - 2] },
            x: CONT_X, y: CONT_Y + 2,
-           selected: @item_sel - @scroll, style: :gray, highlight: :white
+           selected: @item_sel - @scroll,
+           style: THEME[:normal], highlight: THEME[:selected]
       if (page = @items[@item_sel])
         hint = page.description.to_s.strip[0, cont_w]
-        text c(:gray, hint), x: CONT_X, y: CONT_Y + cont_h - 2 unless hint.empty?
+        text hint, x: CONT_X, y: CONT_Y + cont_h - 2, style: THEME[:normal] unless hint.empty?
       end
-      text c(:gray, '↑↓ navigate  Enter read  q back'), x: CONT_X, y: CONT_Y + cont_h
+      text '↑↓ navigate  Enter read  q back', x: CONT_X, y: CONT_Y + cont_h, style: THEME[:normal]
     end
 
     def scroll_list_up
@@ -97,6 +119,7 @@ MAIN_TUI = BBS::TUI.define do
 
   init do
     @menu_sel    = 0
+    @page_title  = 'TELETYPE BBS'
     @items       = []
     @item_sel    = 0
     @scroll      = 0
@@ -109,23 +132,36 @@ MAIN_TUI = BBS::TUI.define do
   end
 
   chrome do
-    bar y: 1,
-        content: "  TELETYPE BBS  │  #{@username}  │  #{ONLINE.count} online",
-        style: :success
-    list MENU_ITEMS.map { |i| i[0, 15] }, x: 2, y: CONT_Y,
-         selected: @menu_sel, style: :gray, highlight: :white
-    (CONT_Y..CONT_Y + cont_h).each { |r| text c(:gray, '│'), x: SEP_X, y: r }
+    screen_fill bg: :blue
+
+    panel_h = term_rows - 1
+
+    box x: 1,          y: 1, w: LEFT_W,             h: panel_h,
+        style: THEME[:border], bg: :blue
+
+    box x: LEFT_W + 1, y: 1, w: term_cols - LEFT_W, h: panel_h,
+        title: " #{@page_title}  │  #{@username}  │  #{ONLINE.count} online ",
+        style: THEME[:border], bg: :blue
+
+    list MENU_ITEMS.map { |i| i[0, LEFT_W - 4] },
+         x: 2, y: CONT_Y,
+         selected: @menu_sel,
+         style: THEME[:normal], highlight: THEME[:selected]
+
     bar y: term_rows,
-        content: '  ↑↓ Navigate  Enter Select  q Back/Quit  r Refresh',
-        style: :muted
+        content: "  \e[1;37;46m↑↓\e[0;30;46m Navigate  \e[1;37;46mEnter\e[0;30;46m Select  " \
+                 "\e[1;37;46mQ\e[0;30;46m Back  \e[1;37;46mR\e[0;30;46m Refresh",
+        style: THEME[:status]
   end
 
   # ── Pages ───────────────────────────────────────────────────────────────────
 
   page :idle do
+    enter { @page_title = 'TELETYPE BBS' }
+
     render do
-      text c(:gray, 'Navigate with ↑↓, select with Enter'),
-           x: CONT_X, y: CONT_Y + cont_h / 2
+      text 'Navigate the menu with ↑↓, select with Enter.',
+           x: CONT_X, y: CONT_Y + cont_h / 2, style: THEME[:normal]
     end
 
     key(:up)    { @menu_sel = (@menu_sel - 1) % MENU_ITEMS.size }
@@ -148,17 +184,18 @@ MAIN_TUI = BBS::TUI.define do
 
   page :messages do
     enter do
-      @items  = MESSAGES.last(30).map { |m| "#{c(:yellow, m.timestamp)} #{c(:white, m.username)}: #{m.text}" }
+      @page_title = 'MESSAGES'
+      @items  = MESSAGES.last(30).map { |m| "#{tc(:label, m.timestamp)} #{tc(:bright, m.username)}: #{m.text}" }
       @scroll = 0
     end
 
     render do
-      text c(:cyan, '── Message Board ──'), x: CONT_X, y: CONT_Y
+      text '── Message Board ──', x: CONT_X, y: CONT_Y, style: THEME[:header]
       (@items[@scroll, cont_h - 2] || []).each_with_index do |line, i|
         text line[0, cont_w], x: CONT_X, y: CONT_Y + 2 + i
       end
-      text c(:gray, "#{@items.size} msg(s)  ↑↓ scroll  q back"),
-           x: CONT_X, y: CONT_Y + cont_h
+      text "#{@items.size} msg(s)  ↑↓ scroll  q back",
+           x: CONT_X, y: CONT_Y + cont_h, style: THEME[:normal]
     end
 
     key(:up)     { @scroll = [@scroll - 1, 0].max }
@@ -169,13 +206,16 @@ MAIN_TUI = BBS::TUI.define do
   end
 
   page :new_msg do
-    enter { @input = ''; @status = '' }
+    enter { @page_title = 'POST MESSAGE'; @input = ''; @status = '' }
 
     render do
-      text c(:cyan,  '── Post Message ──'), x: CONT_X, y: CONT_Y
-      text c(:gray,  'Type message and press Enter.  Esc cancels.'), x: CONT_X, y: CONT_Y + 2
-      text c(:white, "#{@username}: #{@input}_"), x: CONT_X, y: CONT_Y + 4
-      text c(:green, @status), x: CONT_X, y: CONT_Y + 6 unless @status.empty?
+      text '── Post Message ──', x: CONT_X, y: CONT_Y, style: THEME[:header]
+      text 'Type your message and press Enter.  Esc cancels.',
+           x: CONT_X, y: CONT_Y + 2, style: THEME[:normal]
+      text "#{tc(:bright, @username)}: #{tc(:input, @input)}_",
+           x: CONT_X, y: CONT_Y + 4
+      text @status, x: CONT_X, y: CONT_Y + 6,
+           style: @status.start_with?('Sent') ? THEME[:success] : THEME[:error] unless @status.empty?
     end
 
     key(:enter) do
@@ -193,8 +233,8 @@ MAIN_TUI = BBS::TUI.define do
   end
 
   page :blog do
-    enter  { @items = WIKI.list('blog'); @item_sel = 0; @scroll = 0 }
-    render { wiki_list_render(color: :blue, title: '── Blog Posts ──') }
+    enter  { @page_title = 'BLOG'; @items = WIKI.list('blog'); @item_sel = 0; @scroll = 0 }
+    render { wiki_list_render('── Blog Posts ──') }
     key(:up)     { scroll_list_up }
     key(:down)   { scroll_list_down }
     key(:enter)  { open_wiki_page(back: :blog) }
@@ -204,8 +244,8 @@ MAIN_TUI = BBS::TUI.define do
   end
 
   page :howto do
-    enter  { @items = WIKI.list('howto'); @item_sel = 0; @scroll = 0 }
-    render { wiki_list_render(color: :magenta, title: '── HowTo Guides ──') }
+    enter  { @page_title = 'HOWTO'; @items = WIKI.list('howto'); @item_sel = 0; @scroll = 0 }
+    render { wiki_list_render('── HowTo Guides ──') }
     key(:up)     { scroll_list_up }
     key(:down)   { scroll_list_down }
     key(:enter)  { open_wiki_page(back: :howto) }
@@ -216,13 +256,13 @@ MAIN_TUI = BBS::TUI.define do
 
   page :page_view do
     render do
-      text c(:cyan, @page_header[0, cont_w]), x: CONT_X, y: CONT_Y
-      text c(:gray, @page_meta[0, cont_w]),   x: CONT_X, y: CONT_Y + 1
+      text @page_header[0, cont_w], x: CONT_X, y: CONT_Y,     style: THEME[:bright]
+      text @page_meta[0, cont_w],   x: CONT_X, y: CONT_Y + 1, style: THEME[:normal]
       (@detail[@scroll, cont_h - 3] || []).each_with_index do |l, i|
-        text c(:gray, l[0, cont_w]), x: CONT_X, y: CONT_Y + 3 + i
+        text l[0, cont_w], x: CONT_X, y: CONT_Y + 3 + i, style: THEME[:normal]
       end
-      text c(:gray, "#{@scroll + 1}/#{@detail.size}  ↑↓ scroll  q back"),
-           x: CONT_X, y: CONT_Y + cont_h
+      text "#{@scroll + 1}/#{@detail.size}  ↑↓ scroll  q back",
+           x: CONT_X, y: CONT_Y + cont_h, style: THEME[:normal]
     end
 
     key(:up)     { @scroll = [@scroll - 1, 0].max }
@@ -232,28 +272,28 @@ MAIN_TUI = BBS::TUI.define do
   end
 
   page :games do
-    enter { @items = CATALOG.fetch; @item_sel = 0 }
+    enter { @page_title = 'GAME CATALOG'; @items = CATALOG.fetch; @item_sel = 0 }
 
     render do
-      text c(:cyan, '── Game Catalog ──'), x: CONT_X, y: CONT_Y
+      text '── Game Catalog ──', x: CONT_X, y: CONT_Y, style: THEME[:header]
       if @items.empty?
-        text c(:gray, 'No games found.'), x: CONT_X, y: CONT_Y + 2
+        text 'No games found.', x: CONT_X, y: CONT_Y + 2, style: THEME[:normal]
       else
         game = @items[@item_sel]
-        text c(:white, "#{@item_sel + 1}/#{@items.size}  #{game.title}"[0, cont_w]),
-             x: CONT_X, y: CONT_Y + 1
-        text c(:gray,  "#{game.platform}  #{game.author}"[0, cont_w]),
-             x: CONT_X, y: CONT_Y + 2
+        text "#{@item_sel + 1}/#{@items.size}  #{game.title}"[0, cont_w],
+             x: CONT_X, y: CONT_Y + 1, style: THEME[:bright]
+        text "#{game.platform}  #{game.author}"[0, cont_w],
+             x: CONT_X, y: CONT_Y + 2, style: THEME[:normal]
         wordwrap(game.desc.to_s, cont_w).first(cont_h - 10).each_with_index do |l, i|
-          text c(:gray, l), x: CONT_X, y: CONT_Y + 4 + i
+          text l, x: CONT_X, y: CONT_Y + 4 + i, style: THEME[:normal]
         end
         badges = []
-        badges << c(:green,   '[▶ Play]')     unless game.play_path.empty?
-        badges << c(:yellow,  '[⬇ Download]') unless game.download_path.empty?
-        badges << c(:blue,    '[Source]')     unless game.source_path.empty?
-        badges << c(:magenta, '[Docs]')       unless game.docs_path.empty?
+        badges << tc(:success, '[▶ Play]')     unless game.play_path.empty?
+        badges << tc(:label,   '[⬇ Download]') unless game.download_path.empty?
+        badges << tc(:bright,  '[Source]')     unless game.source_path.empty?
+        badges << tc(:header,  '[Docs]')       unless game.docs_path.empty?
         text badges.join('  '), x: CONT_X, y: CONT_Y + cont_h - 5
-        text c(:gray, '↑↓ navigate  q back'), x: CONT_X, y: CONT_Y + cont_h
+        text '↑↓ navigate  q back', x: CONT_X, y: CONT_Y + cont_h, style: THEME[:normal]
       end
     end
 
@@ -265,16 +305,16 @@ MAIN_TUI = BBS::TUI.define do
   end
 
   page :online do
-    enter { @items = ONLINE.snapshot.sort.map { |_, name| name } }
+    enter { @page_title = 'ONLINE USERS'; @items = ONLINE.snapshot.sort.map { |_, name| name } }
 
     render do
-      text c(:yellow, '── Online Users ──'), x: CONT_X, y: CONT_Y
+      text '── Online Users ──', x: CONT_X, y: CONT_Y, style: THEME[:header]
       @items.each_with_index do |uname, i|
-        you = uname == @username ? c(:gray, ' ← you') : ''
-        text c(:white, uname) + you, x: CONT_X, y: CONT_Y + 2 + i
+        you  = uname == @username ? tc(:normal, ' ← you') : ''
+        text tc(:bright, uname) + you, x: CONT_X, y: CONT_Y + 2 + i
       end
-      text c(:gray, "#{@items.size} user(s) online  q back"),
-           x: CONT_X, y: CONT_Y + cont_h
+      text "#{@items.size} user(s) online  q back",
+           x: CONT_X, y: CONT_Y + cont_h, style: THEME[:normal]
     end
 
     key('r')     { reload }
@@ -284,6 +324,7 @@ MAIN_TUI = BBS::TUI.define do
 
   page :sysinfo do
     enter do
+      @page_title = 'SYSTEM INFO'
       @items = [
         "Online users  #{ONLINE.count}",
         "Messages      #{MESSAGES.count}",
@@ -295,11 +336,11 @@ MAIN_TUI = BBS::TUI.define do
     end
 
     render do
-      text c(:magenta, '── System Info ──'), x: CONT_X, y: CONT_Y
+      text '── System Info ──', x: CONT_X, y: CONT_Y, style: THEME[:header]
       @items.each_with_index do |row, i|
-        text c(:gray, row[0, cont_w]), x: CONT_X, y: CONT_Y + 2 + i
+        text row[0, cont_w], x: CONT_X, y: CONT_Y + 2 + i, style: THEME[:normal]
       end
-      text c(:gray, 'q back'), x: CONT_X, y: CONT_Y + cont_h
+      text 'q back', x: CONT_X, y: CONT_Y + cont_h, style: THEME[:normal]
     end
 
     key('q')     { go :idle }
@@ -308,6 +349,8 @@ MAIN_TUI = BBS::TUI.define do
 
   start :idle
 end
+
+# ── App config ───────────────────────────────────────────────────────────────
 
 BBS.configure do |c|
   c.on_session_end = ->(session) { ONLINE.remove(session.session_id) }
