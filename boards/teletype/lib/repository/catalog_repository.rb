@@ -6,8 +6,8 @@ require 'uri'
 require_relative '../model/game_model'
 
 class CatalogRepository
-  API_URL   = 'https://games.teletype.hu/api/software'
-  GAMES_URL = 'https://games.teletype.hu'
+  API_URL   = 'https://teletypegames.org/api/software'
+  GAMES_URL = 'https://teletypegames.org'
 
   def fetch
     uri  = URI(API_URL)

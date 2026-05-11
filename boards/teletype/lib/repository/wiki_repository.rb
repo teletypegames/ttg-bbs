@@ -6,7 +6,7 @@ require 'uri'
 require_relative '../model/wiki_page_model'
 
 class WikiRepository
-  BASE_URL = 'https://wiki.teletype.hu'
+  BASE_URL = 'https://wiki.teletypegames.org'
 
   def initialize(token: nil)
     @token = token
