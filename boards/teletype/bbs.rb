@@ -48,28 +48,65 @@ MAIN_TUI = BBS::TUI.define do
   chrome { render_chrome }
 
   page :idle do
-    enter { @page_title = 'TELETYPE BBS' }
+    enter { @page_title = 'TELETYPE BBS'; @modal = nil }
 
     render do
       text 'Navigate the menu with ↑↓, select with Enter.',
            x: CONT_X, y: CONT_Y + cont_h / 2, style: THEME[:normal]
+
+      if @modal == :sysinfo
+        float title: ' SYSTEM INFO ', width: 56, height: 10,
+              style: THEME[:border], bg: :black do |fx, fy, fw, _|
+          [
+            "Online users  #{ONLINE.count}",
+            "Messages      #{MESSAGES.count}",
+            "Wiki          https://wiki.teletypegames.org",
+            "Games API     https://teletypegames.org",
+            "Platform      #{RUBY_PLATFORM}",
+            "Ruby          #{RUBY_VERSION}",
+          ].each_with_index do |row, i|
+            text row[0, fw], x: fx, y: fy + i, style: THEME[:normal]
+          end
+          text 'ESC  close', x: fx, y: fy + 7, style: THEME[:label]
+        end
+      elsif @modal == :new_msg
+        float title: ' POST MESSAGE ', width: 62, height: 9,
+              style: THEME[:border], bg: :black do |fx, fy, fw, _|
+          text 'Type your message and press Enter.  Esc cancels.',
+               x: fx, y: fy, style: THEME[:normal]
+          text "#{tc(:bright, @username)}: #{tc(:input, @input)}_",
+               x: fx, y: fy + 2
+          text @status, x: fx, y: fy + 4, style: THEME[:error] unless @status.empty?
+          text "#{@input.length}/200  ESC cancel",
+               x: fx, y: fy + 6, style: THEME[:label]
+        end
+      end
     end
 
     nav :menu, size: MENU_ITEMS.size
     key(:enter) do
-      case MENU_ITEMS[@menu_sel]
-      when 'Messages'     then go :messages
-      when 'Post Message' then go :new_msg
-      when 'Blog Posts'   then go :blog
-      when 'HowTo Guides' then go :howto
-      when 'Game Catalog' then go :games
-      when 'Online Users' then go :online
-      when 'System Info'  then go :sysinfo
-      when 'Exit'         then :halt
+      if @modal == :new_msg
+        case MESSAGES.post(@username, @input)
+        when :empty then @status = 'Message cannot be empty.'
+        when :ok    then @modal = nil
+        end
+      elsif @modal.nil?
+        case MENU_ITEMS[@menu_sel]
+        when 'Messages'     then go :messages
+        when 'Post Message' then @modal = :new_msg; @input = +''; @status = +''
+        when 'Blog Posts'   then go :blog
+        when 'HowTo Guides' then go :howto
+        when 'Game Catalog' then go :games
+        when 'Online Users' then go :online
+        when 'System Info'  then @modal = :sysinfo
+        when 'Exit'         then :halt
+        end
       end
     end
-    key('q')     { :halt }
-    key(:escape) { :halt }
+    key(:backspace) { @input.chop! if @modal == :new_msg && !@input.empty? }
+    key('q')     { @modal ? @modal = nil : :halt }
+    key(:escape) { @modal ? @modal = nil : :halt }
+    printable    { |ch| @input << ch if @modal == :new_msg && @input.length < 200 }
   end
 
   page :messages do
@@ -79,20 +116,6 @@ MAIN_TUI = BBS::TUI.define do
     key('r')     { reload }
     key('q')     { go :idle }
     key(:escape) { go :idle }
-  end
-
-  page :new_msg do
-    enter { @page_title = 'POST MESSAGE'; @input = +''; @status = +'' }
-    render { render_new_message_form }
-    key(:enter) do
-      case MESSAGES.post(@username, @input)
-      when :empty then @status = 'Message cannot be empty.'
-      when :ok    then go :idle
-      end
-    end
-    key(:backspace) { @input.chop! unless @input.empty? }
-    key(:escape)    { go :idle }
-    printable       { |ch| @input << ch if @input.length < 200 }
   end
 
   page :blog do
@@ -135,23 +158,6 @@ MAIN_TUI = BBS::TUI.define do
     enter { @page_title = 'ONLINE USERS'; @items = ONLINE.user_list }
     render { render_online_users }
     key('r')     { reload }
-    key('q')     { go :idle }
-    key(:escape) { go :idle }
-  end
-
-  page :sysinfo do
-    enter do
-      @page_title = 'SYSTEM INFO'
-      @items = [
-        "Online users  #{ONLINE.count}",
-        "Messages      #{MESSAGES.count}",
-        "Wiki          https://wiki.teletypegames.org",
-        "Games API     https://teletypegames.org",
-        "Platform      #{RUBY_PLATFORM}",
-        "Ruby          #{RUBY_VERSION}"
-      ]
-    end
-    render { render_sysinfo_rows }
     key('q')     { go :idle }
     key(:escape) { go :idle }
   end
