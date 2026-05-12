@@ -55,22 +55,13 @@ module TUIHelpers
   end
 
   def render_wiki_list
-    list_height = content_height - 3
-    visible     = @items[@scroll, list_height] || []
-    if visible.empty?
-      text 'No items found.', x: CONTENT_X, y: CONTENT_Y, style: THEME[:normal]
-    else
-      list visible.map { |wiki_page| wiki_page.title[0, content_width - 2] },
-           x:         CONTENT_X,
-           y:         CONTENT_Y,
-           selected:  @item_selection - @scroll,
-           style:     THEME[:normal],
-           highlight: THEME[:selected]
-      if (wiki_page = @items[@item_selection])
-        hint = wiki_page.description.to_s.strip[0, content_width]
-        text hint, x: CONTENT_X, y: CONTENT_Y + content_height - 2, style: THEME[:normal] unless hint.empty?
-      end
-    end
+    list_view @items,
+              x: CONTENT_X, y: CONTENT_Y,
+              height: content_height - 3, scroll: @scroll, selected: @item_selection,
+              label: ->(p) { p.title[0, content_width - 2] },
+              hint:  ->(p) { p.description.to_s[0, content_width] },
+              hint_y: CONTENT_Y + content_height - 2,
+              style: THEME[:normal], highlight: THEME[:selected]
     text '↑↓ navigate  Enter read  r refresh  q back',
          x: CONTENT_X, y: CONTENT_Y + content_height, style: THEME[:label]
   end
