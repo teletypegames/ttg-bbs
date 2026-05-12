@@ -1,23 +1,26 @@
 # Teletype BBS Server
 
-Telnet-accessible community BBS server built on the [rubbs](https://git.teletype.hu/tools/rubbs) gem. ANSI-rendered retro terminal interface with a message board, wiki integration, and a game catalog.
+Telnet-accessible Synchronet-style community BBS server built on the
+[rubbs](https://git.teletype.hu/tools/rubbs) gem. Full-screen ANSI interface
+with a top menubar, stacked modal windows, message boards, multi-user chat,
+wiki integration, and a game catalog.
 
 ## Running
 
-**Docker Compose (recommended):**
+**Docker Compose:**
 
 ```bash
 docker compose up --build
 ```
 
-**Directly (requires Ruby 3.x):**
+**Directly (Ruby 3.x):**
 
 ```bash
 bundle install
 ruby bbs.rb
 ```
 
-Connect with:
+Connect:
 
 ```bash
 telnet localhost 2323
@@ -25,39 +28,91 @@ telnet localhost 2323
 
 ## Configuration
 
-Copy `env-example` to `.env` and fill in the values:
+Copy `env-example` to `.env`:
 
 | Variable | Default | Description |
 |---|---|---|
-| `WEBAPP_WIKIJS_TOKEN` | — | Bearer token for Wiki.js API (optional) |
-| `MESSAGES_PATH` | `data/messages.dat` | Path to the messages CSV file |
+| `BBS_PORT` | `2323` | TCP port to listen on |
+| `BBS_SYSOPS` | empty | Comma-separated list of usernames with sysop access |
+| `WEBAPP_WIKIJS_TOKEN` | — | Bearer token for the Wiki.js GraphQL API |
+| `BOARDS_PATH` | `data/boards` | Directory of per-board CSV files |
+| `MESSAGES_PATH` | `data/messages.dat` | Legacy single-board file; auto-migrated into the General board on first run |
+| `LAST_CALLERS_PATH` | `data/last_callers.csv` | Login log CSV |
+| `PROFILE_PATH` | `data/profiles.csv` | User profile CSV |
+| `BBS_DESKTOP_ART` | `data/art` | Path to a single ANSI art file (`.ans`, `.ansi`, `.asc`, `.nfo`, `.txt`) **or** a directory containing them — a random one is shown per session. CP437 / SAUCE-aware |
 
-## Menu
+## Interface
 
-| Option | Description |
+Connect, type a name at the prompt, then a full-screen Synchronet-style shell
+opens.
+
+### Keys
+
+| Key | Action |
 |---|---|
-| Message Board | View the last 30 messages |
-| New Message | Post a message (max 200 chars) |
-| Blog Posts | Browse blog entries from Wiki.js |
-| HowTo Guides | Browse how-to articles from Wiki.js |
-| Game Catalog | Browse the Teletype game catalog |
-| Online Users | List of currently connected users |
-| System Info | Server stats |
+| `Alt+letter` | Open the matching top menu |
+| `F10` | Open the leftmost menu |
+| `Tab` / `Shift-Tab` | Move focus inside a window |
+| `Enter` | Activate the focused button / submit input |
+| `Esc` | Close the top window / menu |
+| `F1` | Help |
+| `F2` | Message Boards |
+| `F3` | Quick post |
+| `F4` | Chat |
+
+### Menus
+
+| Menu | Items |
+|---|---|
+| **File** | Bulletin · System Info · Exit |
+| **Messages** | Boards… · New Post… |
+| **Files** | Blog Posts · HowTo Guides · Game Catalog |
+| **Users** | Online · Last Callers · Profile… |
+| **Chat** | Open chat |
+| **Sysop** | Console (sysops only) |
+| **Help** | About · Keys |
+
+### Features
+
+- **Multi-board messaging** — separate sub-boards (General / Tech / Off-Topic / Sysop), each in its own CSV file under `data/boards/`.
+- **Multi-line composer** — `TextArea` widget, up to 1000 chars per post.
+- **Live chat** — broadcast hub, 1 Hz polling, history replay on join.
+- **Wiki split-view** — list of titles on the left, selected page rendered on the right.
+- **Game card** — selected game's story + external links.
+- **Last callers** + **online users** + **bulletin on login** (last callers, message count).
+- **Persistent user profile** — signature / location / homepage / notes per username.
+- **Sysop console** — stats + broadcast (only for users in `BBS_SYSOPS`).
+- **xterm mouse** — click menus, buttons, list items; wheel-scroll lists.
+- **Idle disconnect** at 10 minutes.
+- **Configurable desktop art** — drop `.ans` / `.ansi` / `.asc` / `.nfo` / `.txt` files into `data/art/` (or wherever `BBS_DESKTOP_ART` points). Classic CP437 BBS art is auto-decoded; SAUCE metadata is stripped. With a directory, a different file is shown per session.
 
 ## Project structure
 
 ```
-bbs.rb              Entry point — BBS configuration and flow definition
+bbs.rb                                 entry point — services + Application
 lib/
-  online_users.rb   Thread-safe connected-users map
-  message_board.rb  CSV-backed message store
-  wiki.rb           Wiki.js GraphQL client
-  catalog.rb        Games API client
-  display.rb        ANSI rendering helpers and content handlers
+  repository/
+    online_users_repository.rb         thread-safe connected-user map
+    board_repository.rb                multi-board CSV store
+    wiki_repository.rb                 Wiki.js GraphQL client
+    catalog_repository.rb              games API client
+    last_callers_repository.rb         login log
+    profile_repository.rb              per-user persistent profile
+  service/
+    online_service.rb, board_service.rb, wiki_service.rb,
+    games_service.rb, chat_service.rb, last_callers_service.rb,
+    profile_service.rb
+  model/                               value objects (MessageModel, GameModel, …)
+  ui/windows/                          per-window builders (messages, wiki,
+                                       games, users, chat, bulletin, profile,
+                                       sysop, system info)
 data/
-  messages.dat      Message board records (auto-created)
+  boards/<id>.csv                      per-board messages (auto-created)
+  last_callers.csv                     login log
+  profiles.csv                         persistent user profiles
 ```
 
 ## Data
 
-Messages are stored in `data/messages.dat` (plain CSV, auto-created on first post). The `data/` directory is mounted as a Docker volume so records survive container restarts.
+All persisted state lives under `data/` which is mounted as a volume in Docker
+so it survives container restarts.

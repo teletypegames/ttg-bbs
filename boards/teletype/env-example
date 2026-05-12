@@ -1,2 +1,10 @@
 WEBAPP_WIKIJS_TOKEN=
+BOARDS_PATH=data/boards
 MESSAGES_PATH=data/messages.dat
+LAST_CALLERS_PATH=data/last_callers.csv
+PROFILE_PATH=data/profiles.csv
+BBS_SYSOPS=
+BBS_PORT=2323
+# BBS_DESKTOP_ART — single .ans/.ansi/.txt file (path) or a directory of them
+# (a random one is shown per session). Defaults to data/art/.
+BBS_DESKTOP_ART=data/art
