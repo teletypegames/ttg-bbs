@@ -2,4 +2,6 @@
 bbs-server
 tmp
 data/messages.dat
+data/last_callers.csvprofiles
+data/profiles.csv
 .claude
