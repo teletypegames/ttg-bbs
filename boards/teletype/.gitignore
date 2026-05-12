@@ -2,6 +2,6 @@
 bbs-server
 tmp
 data/messages.dat
-data/last_callers.csvprofiles
+data/last_callers.csv
 data/profiles.csv
 .claude
