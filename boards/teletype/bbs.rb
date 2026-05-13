@@ -54,7 +54,20 @@ SERVICES = {
 }.freeze
 
 MAIN_APP = BBS::Application.define do
-  theme BBS::Theme.synchronet
+  theme do
+    inherit :synchronet
+    screen        "\e[0m"
+    text          "\e[0;37m"
+    text_dim      "\e[0;2;37m"
+    text_bright   "\e[1;37m"
+    label         "\e[0;36m"
+    accent        "\e[1;33m"
+    success       "\e[1;32m"
+    warning       "\e[1;33m"
+    error         "\e[1;31m"
+    window_shadow "\e[2;30m"
+    input_label   "\e[0;36;44m"
+  end
 
   helpers do
     def sysop?
