@@ -65,41 +65,41 @@ MAIN_APP = BBS::Application.define do
 
   menubar do
     menu '&File' do
-      item '&Bulletin'    do UI::Windows.bulletin(self, services: SERVICES) end
-      item '&System Info' do UI::Windows.system_info(self, services: SERVICES) end
+      item '&Bulletin'    do UI::Windows::Bulletin.open(self, services: SERVICES) end
+      item '&System Info' do UI::Windows::SystemInfo.open(self, services: SERVICES) end
       separator
       item 'E&xit', shortcut: 'Alt-X' do :halt end
     end
 
     menu '&Messages' do
-      item '&Boards…',   shortcut: 'F2' do UI::Windows.messages(self, services: SERVICES) end
+      item '&Boards…',   shortcut: 'F2' do UI::Windows::Messages.open(self, services: SERVICES) end
       item '&New Post…', shortcut: 'F3' do
         board = SERVICES[:boards].boards.first
-        UI::Windows.compose_message(self, services: SERVICES, board: board)
+        UI::Windows::ComposeMessage.open(self, services: SERVICES, board: board)
       end
     end
 
     menu '&Files' do
-      item '&Blog Posts'   do UI::Windows.wiki(self, services: SERVICES, category: 'blog',  title: 'Blog Posts') end
-      item '&HowTo Guides' do UI::Windows.wiki(self, services: SERVICES, category: 'howto', title: 'HowTo Guides') end
-      item '&Game Catalog' do UI::Windows.games(self, services: SERVICES) end
+      item '&Blog Posts'   do UI::Windows::Wiki.open(self, services: SERVICES, category: 'blog',  title: 'Blog Posts') end
+      item '&HowTo Guides' do UI::Windows::Wiki.open(self, services: SERVICES, category: 'howto', title: 'HowTo Guides') end
+      item '&Game Catalog' do UI::Windows::Games.open(self, services: SERVICES) end
     end
 
     menu '&Users' do
-      item '&Online'       do UI::Windows.online_users(self, services: SERVICES) end
-      item '&Last Callers' do UI::Windows.last_callers(self, services: SERVICES) end
-      item '&Profile…'     do UI::Windows.profile(self, services: SERVICES) end
+      item '&Online'       do UI::Windows::OnlineUsers.open(self, services: SERVICES) end
+      item '&Last Callers' do UI::Windows::LastCallers.open(self, services: SERVICES) end
+      item '&Profile…'     do UI::Windows::Profile.open(self, services: SERVICES) end
     end
 
     menu '&Chat' do
-      item '&Open chat', shortcut: 'F4' do UI::Windows.chat(self, services: SERVICES) end
+      item '&Open chat', shortcut: 'F4' do UI::Windows::Chat.open(self, services: SERVICES) end
     end
 
     menu 'S&ysop' do
       item '&Console', shortcut: 'F10' do
         name = (context[:username] || '').downcase
         if SYSOPS.include?(name)
-          UI::Windows.sysop_console(self, services: SERVICES)
+          UI::Windows::SysopConsole.open(self, services: SERVICES)
         else
           BBS::Dialogs.message(self, 'Sysop access denied.', title: ' Sysop ')
         end
@@ -123,12 +123,12 @@ MAIN_APP = BBS::Application.define do
   end
 
   status_hint('F1',  'Help')  { BBS::Dialogs.message(self, 'Top menu: Alt+letter — Windows: Tab/Shift-Tab — Close: Esc') }
-  status_hint('F2',  'Boards') { UI::Windows.messages(self, services: SERVICES) }
+  status_hint('F2',  'Boards') { UI::Windows::Messages.open(self, services: SERVICES) }
   status_hint('F3',  'Post')   {
     board = SERVICES[:boards].boards.first
-    UI::Windows.compose_message(self, services: SERVICES, board: board)
+    UI::Windows::ComposeMessage.open(self, services: SERVICES, board: board)
   }
-  status_hint('F4',  'Chat')   { UI::Windows.chat(self, services: SERVICES) }
+  status_hint('F4',  'Chat')   { UI::Windows::Chat.open(self, services: SERVICES) }
   status_hint('F10', 'Menu')   { menubar.open(0) }
   status_hint('Alt-X', 'Exit') { :halt }
 
