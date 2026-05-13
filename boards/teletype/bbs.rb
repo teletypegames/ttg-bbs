@@ -54,7 +54,7 @@ SERVICES = {
 }.freeze
 
 MAIN_APP = BBS::Application.define do
-  theme BBS::Theme.nortoncommander
+  theme BBS::Theme.neumanntronics
 
   helpers do
     def sysop?
