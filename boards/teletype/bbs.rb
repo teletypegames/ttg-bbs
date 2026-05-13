@@ -40,7 +40,7 @@ PROFILE      = ProfileService.new(ProfileRepository.new(
 
 STARTED_AT  = Time.now
 SYSOPS      = ENV.fetch('BBS_SYSOPS', '').split(',').map { |s| s.strip.downcase }.reject(&:empty?)
-DESKTOP_ART = ENV.fetch('BBS_DESKTOP_ART', 'data/art')
+DESKTOP_ART = ENV.fetch('BBS_DESKTOP_ART', 'data/art/teletype.ansi')
 
 SERVICES = {
   online:       ONLINE,
@@ -133,9 +133,7 @@ MAIN_APP = BBS::Application.define do
   status_hint('Alt-X', 'Exit') { :halt }
 
   init do
-    art = if File.directory?(DESKTOP_ART)
-            BBS::Widgets::AnsiArt.random(DESKTOP_ART)
-          elsif File.file?(DESKTOP_ART)
+    art = if File.file?(DESKTOP_ART)
             BBS::Widgets::AnsiArt.from_file(DESKTOP_ART)
           else
             BBS::Widgets::AnsiArt.new(lines: BBS::Widgets::AnsiArt.default_lines)
