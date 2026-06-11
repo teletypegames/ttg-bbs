@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Generates the personal access code for a player name.
+#
+# Usage:
+#   PLAYER_NAME=norman bin/generate_code
+
+require_relative '../lib/code_generator'
+
+name = ENV['PLAYER_NAME']
+
+if name.nil? || name.strip.empty?
+  warn 'Error: PLAYER_NAME environment variable is not set.'
+  warn 'Usage: PLAYER_NAME=norman bin/generate_code'
+  exit 1
+end
+
+name = name.strip.upcase
+
+if name.length < BBS::CodeGenerator::NAME_LEN
+  warn "Error: PLAYER_NAME must be at least #{BBS::CodeGenerator::NAME_LEN} characters long."
+  exit 1
+end
+
+puts BBS::CodeGenerator.encrypt(name)

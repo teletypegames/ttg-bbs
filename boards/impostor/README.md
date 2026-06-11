@@ -31,10 +31,23 @@ telnet localhost 2323
 
 The port can be changed via the `BBS_PORT` environment variable (see `.env.example`).
 
+## Generating a code
+
+To generate the personal code for a player name, use the CLI tool. It reads the name from the `PLAYER_NAME` environment variable:
+
+```bash
+PLAYER_NAME=norman bin/generate_code
+# => 2J5GFN
+```
+
+The name is trimmed and uppercased (matching how the BBS handles input), and only its first 3 characters are encoded — so `NORMAN` and `NORBERT` produce the same code.
+
 ## Project structure
 
 ```
 bbs.rb                        Entry point — BBS config, flow definition, server start
+bin/
+  generate_code               CLI tool — generates a player's code from PLAYER_NAME
 lib/
   code_generator.rb           Decrypt/encrypt logic (Ruby port of the Lua original)
   bbs.rb                      (internal) library loader
