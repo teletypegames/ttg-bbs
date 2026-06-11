@@ -1,0 +1,13 @@
+# Copy to .env (used by docker compose) and adjust as needed.
+BBS_PORT=2323
+BBS_IDLE=900
+# Where the Grav wiki lives. Inside the wiki-pages compose network this is
+# http://grav; for local dev against `docker compose up` it's
+# http://localhost:9120.
+WIKI_URL=http://localhost:9120
+# Password that unlocks the private wiki pages in the BBS
+# (Wiki menu > Supervisor login). Also sent to the wiki API as ?token= —
+# must match the grav service's SUPERVISOR_PASSWORD (the root compose wires
+# both from this one variable). Empty/unset = private pages stay locked.
+# Avoid double quotes in the value (it is templated into a yaml string).
+SUPERVISOR_PASSWORD=supervisor123
