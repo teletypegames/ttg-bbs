@@ -31,13 +31,13 @@ Mouse works too (xterm SGR), including wheel scroll in both panes.
 ## Data source
 
 Two endpoints on the Grav wiki (templates in
-`themes/ttgwiki/templates/*.json.twig`, pages in `pages/api/`):
+`themes/ttgwiki/templates/*.json.twig`, pages in `pages/custom/`):
 
-- `GET /api/sitemap.json` — every routable page: `route`, `title`,
+- `GET /custom/sitemap.json` — every routable page: `route`, `title`,
   `modified`, `updatedAt`, `tags`, `private` (true when the page or any
   ancestor has `access: site.login` in its frontmatter). Titles/routes only,
   no bodies.
-- `GET /api/page.json?route=/development/tic80[&token=...]` — one page: the
+- `GET /custom/page.json?route=/development/tic80[&token=...]` — one page: the
   above plus `markdown` (raw) and `html` (rendered). Private pages require
   `token` to match the wiki's `SUPERVISOR_PASSWORD`, otherwise
   `{"error": "forbidden"}`. Unknown route → `{"error": "not_found"}`.

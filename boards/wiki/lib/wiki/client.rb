@@ -5,7 +5,7 @@ require 'net/http'
 require 'uri'
 
 module Wiki
-  # Thin JSON client for the Grav wiki's /api endpoints, with an in-memory
+  # Thin JSON client for the Grav wiki's /custom endpoints, with an in-memory
   # per-route page cache so browsing the list doesn't re-fetch on every
   # selection change.
   class Client
@@ -38,7 +38,7 @@ module Wiki
     # ancestor. Raises on network/HTTP errors — Flow's `fetch` step reports
     # those.
     def sitemap
-      data  = get_json('/api/sitemap.json')
+      data  = get_json('/custom/sitemap.json')
       pages = (data['pages'] || []).map do |p|
         route = p['route'].to_s
         {
@@ -68,7 +68,7 @@ module Wiki
 
       params = { route: route }
       params[:token] = @token unless @token.empty?
-      data = get_json('/api/page.json', **params)
+      data = get_json('/custom/page.json', **params)
       md   = case data['error']
              when 'forbidden'
                "# Forbidden\n\nThe wiki refused the supervisor token for " \

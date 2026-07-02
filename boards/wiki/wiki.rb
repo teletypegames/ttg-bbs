@@ -7,7 +7,7 @@ require_relative 'lib/wiki/client'
 # WIKI-BBS — the Teletype Games wiki over telnet. Callers get a Norton
 # Commander-style two-pane browser: page tree on the left, the page rendered
 # as ANSI markdown on the right. Content comes live from the Grav wiki's
-# /api/sitemap.json and /api/page.json endpoints.
+# /custom/sitemap.json and /custom/page.json endpoints.
 # Pages flagged private on the wiki (access: site.login) stay locked until the
 # caller unlocks the session with this password (Wiki menu > Supervisor login).
 # The wiki holds the same secret and only serves private page bodies to
