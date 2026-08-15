@@ -1,6 +1,6 @@
 # WIKI-BBS
 
-The Teletype Games wiki over telnet — a [rubbs](https://git.teletype.hu/tools/rubbs.git)-based
+The Teletype Games wiki over telnet — a [rubbs](https://git.teletypegames.org/engines/rubbs.git)-based
 BBS that browses the Grav wiki live through its JSON API.
 
 ```
