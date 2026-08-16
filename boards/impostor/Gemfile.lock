@@ -1,5 +1,5 @@
 GIT
-  remote: https://git.teletype.hu/tools/rubbs.git
+  remote: https://git.teletypegames.org/engines/rubbs.git
   revision: 15cd593b3326661dd01e3d9199f178e86e37ae5e
   specs:
     bbs (0.1.0)
