@@ -31,7 +31,7 @@ Mouse works too (xterm SGR), including wheel scroll in both panes.
 ## Data source
 
 Two endpoints on the Grav wiki (templates in
-`themes/ttgwiki/templates/*.json.twig`, pages in `pages/custom/`):
+`themes/ttgwiki2/templates/*.json.twig`, pages in `pages/custom/`):
 
 - `GET /custom/sitemap.json` — every routable page: `route`, `title`,
   `modified`, `updatedAt`, `tags`, `private` (true when the page or any
