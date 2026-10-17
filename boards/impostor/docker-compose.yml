@@ -1,5 +1,6 @@
 services:
   bbs:
+    mem_limit: 128m
     build: .
     ports:
       - "${BBS_PORT:-2323}:${BBS_PORT:-2323}"
