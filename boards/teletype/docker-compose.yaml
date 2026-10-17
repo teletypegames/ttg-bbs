@@ -1,5 +1,6 @@
 services:
   bbs:
+    mem_limit: 192m
     build: .
     container_name: teletype-bbs
     ports:
