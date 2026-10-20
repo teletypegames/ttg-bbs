@@ -92,15 +92,15 @@ module UI
       SYSTEMS = [
         ['Teletype BBS', 'teletypegames.org:2323', 'this board: messages, chat, news, catalog'],
         ['Impostor BBS', 'teletypegames.org:2324', 'post-game terminal of Definitely not an Impostor'],
-        ['WIKI-BBS',     'teletypegames.org:2325', 'the whole wiki in a two-pane browser'],
-        ['SERMO',        'teletypegames.org:2326', 'a Neumatronic Margittai machine — talk to it']
+        ['WIKI-BBS',     'teletypegames.org:2325', 'the whole wiki in a two-pane browser']
       ].freeze
 
       def self.body
         rows = SYSTEMS.flat_map do |name, address, note|
           ["  \e[1;33m#{name.ljust(14)}\e[0m \e[1;36m#{address}\e[0m", "  #{' ' * 15}#{note}"]
         end
-        [*rows, :spacer, '  In a browser, no telnet client needed:',
+        [*rows, :spacer, '  SERMO, the Neumatronic Margittai machine, is a door here: Doors > SERMO.',
+         :spacer, '  In a browser, no telnet client needed:',
          "  \e[1;36mhttps://bbsweb.teletypegames.org\e[0m"]
       end
     end

@@ -70,6 +70,7 @@ opens.
 | **Files** | Game Catalog · Platform Guides · Engines · DOS Corner |
 | **Users** | Online · Last Callers · Team · Profile… · Register… · Language EN/HU |
 | **Chat** | Open chat |
+| **Doors** | SERMO |
 | **Network** | Other systems (our other BBSes and bbsweb) |
 | **Sysop** | Console (logged-in sysops only) |
 | **Help** | About · Keys |
@@ -84,6 +85,7 @@ opens.
 - **Game catalog** — every catalog entry (all pages of the API), sorted by platform; the **Platform** button cycles a platform filter. The card shows version, release date, the catalog link, the downloadable kinds, and the external links.
 - **Wiki sections** — Platform Guides (`/platforms`), Engines (`/engines`) and the DOS Corner (`/dos`, with an FTP/DOSINST intro), read from the Grav JSON API; private pages are left out. Users > Language switches them to Hungarian.
 - **Team** — the members of teletypegames.org with their mottos.
+- **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit. **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a Margittai machine from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. A new door is one entry in `DOORS` plus a menu item.
 - **Registered names** — a caller can register the name they logged in with (Users > Register…); from then on that name asks for its password. Profiles belong to registered names only.
 - **Sysop console** — stats + broadcast, for names in `BBS_SYSOPS` that logged in with their password.
 - **Discord feed** — new board posts and sysop broadcasts go to `BBS_DISCORD_WEBHOOK`, mentions disabled.

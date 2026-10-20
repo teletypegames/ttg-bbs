@@ -1,3 +1,4 @@
 source 'https://rubygems.org'
 
 gem 'bbs', git: 'https://git.teletypegames.org/engines/rubbs.git'
+gem 'sermo', git: 'https://git.teletypegames.org/bbs/sermo-bbs.git'

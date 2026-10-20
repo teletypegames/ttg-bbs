@@ -1,4 +1,11 @@
 GIT
+  remote: https://git.teletypegames.org/bbs/sermo-bbs.git
+  revision: 9c75a9054688cb8bf9ed04fb17043a6bdbf3f159
+  specs:
+    sermo (0.1.0)
+      bbs
+
+GIT
   remote: https://git.teletypegames.org/engines/rubbs.git
   revision: b481de2031d731cde849317be19d3c26b3125f20
   specs:
@@ -16,6 +23,7 @@ PLATFORMS
 
 DEPENDENCIES
   bbs!
+  sermo!
 
 BUNDLED WITH
    2.5.9

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'bbs'
+require 'sermo'
 require 'time'
 
 require_relative 'lib/domain/repository/online_users_repository'
@@ -41,6 +42,11 @@ STARTED_AT  = Time.now
 SYSOPS      = ENV.fetch('BBS_SYSOPS', '').split(',').map { |name| name.strip.downcase }.reject(&:empty?)
 account_service      = AccountService.new(AccountRepository.new(
                          ENV.fetch('ACCOUNTS_PATH', 'data/accounts.csv')), reserved: SYSOPS)
+# Doors: full-line programs a caller can step into from the menu. The BBS
+# hands the telnet line over and takes it back when the program exits.
+DOORS = {
+  sermo: Sermo::OS
+}.freeze
 WIKI_SECTIONS = {
   platforms: { prefix: '/platforms', title: 'Platform Guides' },
   engines:   { prefix: '/engines',   title: 'Engines' },
@@ -91,7 +97,7 @@ BBS.configure do |config|
       chat_service.subscribe(ctx[:session_id])
       nil
     end
-    app(BBS::Application.define do
+    teletype_app = BBS::Application.define do
       theme BBS::Theme.neumanntronics
       services online:       online_service,
                boards:       board_service,
@@ -447,6 +453,13 @@ BBS.configure do |config|
           item '&Open chat', shortcut: 'F4' do open_window(:chat) end
         end
 
+        menu '&Doors' do
+          item '&SERMO' do
+            context[:door] = :sermo
+            :halt
+          end
+        end
+
         menu 'Net&work' do
           item '&Other systems' do open_window(:network) end
         end
@@ -466,7 +479,7 @@ BBS.configure do |config|
             BBS::Dialogs.message(self,
               'Teletype BBS — the telnet board of Teletype Games, powered by rubbs. ' \
               'News, our game catalog, the wiki guides and a live chat. ' \
-              'Register your name under Users to keep it. Other systems: Network menu.',
+              'Register your name under Users to keep it. Doors: SERMO. Other systems: Network menu.',
               title: ' About ', width: 64)
           end
           item '&Keys' do
@@ -494,7 +507,21 @@ BBS.configure do |config|
         art.layout(1, 1, cols, rows - 2)
         add(art)
       end
-    end)
+    end
+    call do |ctx, runner|
+      session = runner.session
+      loop do
+        teletype_app.build(session: session, session_id: ctx[:session_id], context: ctx).run
+        door = DOORS[ctx.delete(:door)]
+        break unless door
+
+        session.disable_mouse
+        session.write("\e[0m\e[2J\e[H")
+        BBS::FakeOS::Runner.new(session, door, context: ctx).run
+        session.enable_mouse if BBS.config.mouse
+      end
+      nil
+    end
     say 'Goodbye!', style: :muted
   end
 end
