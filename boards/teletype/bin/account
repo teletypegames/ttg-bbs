@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Create an account or reset its password from the server shell. This is the
+# only way to create a sysop account (names in BBS_SYSOPS cannot be
+# registered over telnet):
+#
+#   docker exec -it teletype-bbs bin/account Tasi
+
+require 'io/console'
+require_relative '../lib/domain/repository/account_repository'
+require_relative '../lib/domain/service/account_service'
+
+name = ARGV.first.to_s.strip
+abort 'usage: bin/account NAME' if name.empty?
+abort "invalid name: #{name}" unless AccountService.normalize_name(name) == name
+
+def ask(prompt)
+  return $stdin.getpass(prompt) if $stdin.tty?
+
+  $stdin.gets.to_s.chomp
+end
+
+password = ask('Password: ')
+abort 'the two passwords differ' unless password == ask('Again: ')
+
+service = AccountService.new(AccountRepository.new(ENV.fetch('ACCOUNTS_PATH', 'data/accounts.csv')))
+case service.set_password(name, password)
+when :ok        then puts "#{name}: password set"
+when :too_short then abort "at least #{AccountService::MIN_PASSWORD} characters"
+end

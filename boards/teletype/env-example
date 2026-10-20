@@ -2,7 +2,11 @@ BOARDS_PATH=data/boards
 MESSAGES_PATH=data/messages.dat
 LAST_CALLERS_PATH=data/last_callers.csv
 PROFILE_PATH=data/profiles.csv
+ACCOUNTS_PATH=data/accounts.csv
+# Sysop names, comma-separated. Their accounts are created only with bin/account.
 BBS_SYSOPS=
+# Discord webhook for new board posts and sysop broadcasts; empty = off.
+BBS_DISCORD_WEBHOOK=
 BBS_PORT=2323
 # BBS_DESKTOP_ART — path to a single .ans/.ansi/.txt file shown on the
 # main screen. Defaults to data/art/teletype.ansi.

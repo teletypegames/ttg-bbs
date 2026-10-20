@@ -9,6 +9,8 @@ services:
       - ./data:/app/data
     environment:
       - MESSAGES_PATH=/app/data/messages.dat
+      - BBS_SYSOPS=${BBS_SYSOPS:-}
+      - BBS_DISCORD_WEBHOOK=${BBS_DISCORD_WEBHOOK:-}
     restart: unless-stopped
     stdin_open: true
     tty: true

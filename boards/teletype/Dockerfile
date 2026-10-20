@@ -9,6 +9,7 @@ RUN bundle install
 
 COPY bbs.rb entrypoint.sh ./
 COPY lib/ ./lib/
+COPY bin/ ./bin/
 
 RUN mkdir -p /app/data && chmod +x entrypoint.sh
 

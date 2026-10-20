@@ -1,29 +1,31 @@
 # frozen_string_literal: true
 
-require 'net/http'
-require 'json'
-require 'uri'
+require_relative 'http_json'
 require_relative '../model/game_model'
 
 class CatalogRepository
-  API_URL   = 'https://teletypegames.org/api/software'
-  GAMES_URL = 'https://teletypegames.org'
+  include HttpJson
+
+  API_URL  = 'https://teletypegames.org/api/software'
+  SITE_URL = 'https://teletypegames.org'
+  MAX_PAGES = 20
 
   def fetch
-    uri  = URI(API_URL)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl      = uri.scheme == 'https'
-    http.open_timeout = 12
-    http.read_timeout = 12
-    data    = JSON.parse(http.get(uri.path).body)
-    entries = data.is_a?(Hash) ? (data['softwares'] || []) : data
-    entries.filter_map { |e| GameModel.new(e) if e.is_a?(Hash) }
+    cached(:all) do
+      games = []
+      page  = 1
+      loop do
+        data = get_json(API_URL, page: page)
+        games.concat((data['softwares'] || []).filter_map { |e| GameModel.new(e) if e.is_a?(Hash) })
+        page = data['nextPage']
+        break if page.nil? || page > MAX_PAGES
+      end
+      games
+    end
   rescue => e
     warn "CatalogRepository fetch error: #{e}"
     []
   end
 
-  def play_url(path)
-    "#{GAMES_URL}#{path}"
-  end
+  def catalog_url(game) = "#{SITE_URL}/catalog/#{game.name}"
 end
