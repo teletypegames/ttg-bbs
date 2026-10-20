@@ -42,11 +42,6 @@ STARTED_AT  = Time.now
 SYSOPS      = ENV.fetch('BBS_SYSOPS', '').split(',').map { |name| name.strip.downcase }.reject(&:empty?)
 account_service      = AccountService.new(AccountRepository.new(
                          ENV.fetch('ACCOUNTS_PATH', 'data/accounts.csv')), reserved: SYSOPS)
-# Doors: full-line programs a caller can step into from the menu. The BBS
-# hands the telnet line over and takes it back when the program exits.
-DOORS = {
-  sermo: Sermo::OS
-}.freeze
 WIKI_SECTIONS = {
   platforms: { prefix: '/platforms', title: 'Platform Guides' },
   engines:   { prefix: '/engines',   title: 'Engines' },
@@ -99,6 +94,9 @@ BBS.configure do |config|
     end
     teletype_app = BBS::Application.define do
       theme BBS::Theme.neumanntronics
+      # Doors: full-line programs a caller can step into from the Doors menu.
+      # The BBS hands the telnet line over and takes it back when the program exits.
+      door :sermo, Sermo::OS, label: '&SERMO'
       services online:       online_service,
                boards:       board_service,
                wiki:         wiki_service,
@@ -454,10 +452,7 @@ BBS.configure do |config|
         end
 
         menu '&Doors' do
-          item '&SERMO' do
-            context[:door] = :sermo
-            :halt
-          end
+          doors
         end
 
         menu 'Net&work' do
@@ -509,17 +504,7 @@ BBS.configure do |config|
       end
     end
     call do |ctx, runner|
-      session = runner.session
-      loop do
-        teletype_app.build(session: session, session_id: ctx[:session_id], context: ctx).run
-        door = DOORS[ctx.delete(:door)]
-        break unless door
-
-        session.disable_mouse
-        session.write("\e[0m\e[2J\e[H")
-        BBS::FakeOS::Runner.new(session, door, context: ctx).run
-        session.enable_mouse if BBS.config.mouse
-      end
+      teletype_app.run(session: runner.session, session_id: ctx[:session_id], context: ctx)
       nil
     end
     say 'Goodbye!', style: :muted
