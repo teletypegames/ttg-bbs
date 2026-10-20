@@ -1,4 +1,3 @@
-WEBAPP_WIKIJS_TOKEN=
 BOARDS_PATH=data/boards
 MESSAGES_PATH=data/messages.dat
 LAST_CALLERS_PATH=data/last_callers.csv

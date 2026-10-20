@@ -34,7 +34,6 @@ Copy `env-example` to `.env`:
 |---|---|---|
 | `BBS_PORT` | `2323` | TCP port to listen on |
 | `BBS_SYSOPS` | empty | Comma-separated list of usernames with sysop access |
-| `WEBAPP_WIKIJS_TOKEN` | — | Bearer token for the Wiki.js GraphQL API |
 | `BOARDS_PATH` | `data/boards` | Directory of per-board CSV files |
 | `MESSAGES_PATH` | `data/messages.dat` | Legacy single-board file; auto-migrated into the General board on first run |
 | `LAST_CALLERS_PATH` | `data/last_callers.csv` | Login log CSV |
@@ -94,7 +93,7 @@ lib/
   repository/
     online_users_repository.rb         thread-safe connected-user map
     board_repository.rb                multi-board CSV store
-    wiki_repository.rb                 Wiki.js GraphQL client
+    wiki_repository.rb                 Grav wiki JSON client
     catalog_repository.rb              games API client
     last_callers_repository.rb         login log
     profile_repository.rb              per-user persistent profile

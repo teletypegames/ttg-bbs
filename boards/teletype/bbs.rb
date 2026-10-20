@@ -22,7 +22,7 @@ online_service       = OnlineService.new(OnlineUsersRepository.new)
 board_service        = BoardService.new(BoardRepository.new(
                          ENV.fetch('BOARDS_PATH', 'data/boards'),
                          legacy_path: ENV.fetch('MESSAGES_PATH', 'data/messages.dat')))
-wiki_service         = WikiService.new(WikiRepository.new(token: ENV['WEBAPP_WIKIJS_TOKEN']))
+wiki_service         = WikiService.new(WikiRepository.new)
 games_service        = GamesService.new(CatalogRepository.new)
 chat_service         = ChatService.new
 last_callers_service = LastCallersService.new(LastCallersRepository.new(
@@ -160,7 +160,7 @@ BBS.configure do |config|
         window_spec.items         { |ctx| ctx[:wiki].list(ctx[:category]) }
         window_spec.item_label    { |page, _ctx| page.title }
         window_spec.render_detail do |page, width, ctx|
-          text = ctx[:wiki].content(page.id)
+          text = ctx[:wiki].content(page.path)
           BBS::Markdown.to_lines(text, width: width - 1, theme: ctx[:app].theme)
         end
         window_spec.bottom_meta do |page, ctx|

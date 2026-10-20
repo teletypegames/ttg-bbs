@@ -5,20 +5,14 @@ require 'json'
 require 'uri'
 require_relative '../model/wiki_page_model'
 
+# Reads the Grav wiki through its JSON endpoints (/custom/pages.json and
+# /custom/page.json). The BBS is public, so login-only pages are left out.
 class WikiRepository
   BASE_URL = 'https://wiki.teletypegames.org'
 
-  def initialize(token: nil)
-    @token = token
-  end
-
   def list(tag)
-    query = <<~GQL
-      { pages { list(orderBy: CREATED, orderByDirection: DESC, tags: ["#{tag}"]) {
-        id path title description createdAt locale
-      }}}
-    GQL
-    (graphql(query).dig('data', 'pages', 'list') || []).map do |p|
+    data = get('/custom/pages.json', tag: tag)
+    (data['pages'] || []).reject { |p| p['private'] }.map do |p|
       WikiPageModel.new(
         id:          p['id'],
         path:        p['path'],
@@ -33,31 +27,27 @@ class WikiRepository
     []
   end
 
-  def content(page_id)
-    query = "{ pages { single(id: #{page_id}) { content } } }"
-    graphql(query).dig('data', 'pages', 'single', 'content') || ''
+  def content(path)
+    get('/custom/page.json', route: "/#{path}")['markdown'] || ''
   rescue => e
     warn "WikiRepository content error: #{e}"
     ''
   end
 
   def page_url(locale, path)
-    "#{BASE_URL}/#{locale}/#{path}"
+    prefix = locale == 'hu' ? '/hu' : ''
+    "#{BASE_URL}#{prefix}/#{path}"
   end
 
   private
 
-  def graphql(query)
-    uri  = URI("#{BASE_URL}/graphql")
+  def get(path, params)
+    uri  = URI("#{BASE_URL}#{path}")
+    uri.query = URI.encode_www_form(params)
     http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl       = uri.scheme == 'https'
-    http.open_timeout  = 12
-    http.read_timeout  = 12
-
-    req = Net::HTTP::Post.new(uri.path, 'Content-Type' => 'application/json')
-    req['Authorization'] = "Bearer #{@token}" if @token
-    req.body = JSON.generate(query: query)
-
-    JSON.parse(http.request(req).body)
+    http.use_ssl      = uri.scheme == 'https'
+    http.open_timeout = 12
+    http.read_timeout = 12
+    JSON.parse(http.get(uri.request_uri).body)
   end
 end

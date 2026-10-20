@@ -4,6 +4,6 @@ class WikiService
   def initialize(repo) = @repo = repo
 
   def list(category)         = @repo.list(category)
-  def content(page_id)       = @repo.content(page_id)
+  def content(path)          = @repo.content(path)
   def page_url(locale, path) = @repo.page_url(locale, path)
 end
