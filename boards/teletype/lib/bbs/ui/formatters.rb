@@ -1,17 +1,14 @@
 # frozen_string_literal: true
 
+require 'artii'
+
 # Pure view-layer helpers used by the window DSL in bbs.rb. No business
 # logic here — each method takes data + width and returns lines/strings.
 module UI
   module Formatters
     module Bulletin
-      BANNER = [
-        "  \e[1;33m _____       _      _                  ____  ____  _____\e[0m",
-        "  \e[1;33m|_   _|__   | |    | |_  __ _ _ _ ___  | __ )| __ )/ ____|\e[0m",
-        "  \e[1;33m  | |/ _ \\  | |    | __|/ _` | '_/ _ \\ |  _ \\|  _ \\\\___ \\\e[0m",
-        "  \e[1;33m  | |  __/  | |___ | |_| (_| | ||  __/ | |_) | |_) |___) |\e[0m",
-        "  \e[1;33m  |_|\\___|  |_____|\\__|\\__,_|_| \\___| |____/|____/|____/\e[0m"
-      ].freeze
+      BANNER = Artii::Base.new(font: 'standard').asciify('Teletype BBS')
+                          .lines.map { |l| "  \e[1;33m#{l.rstrip}\e[0m" }.freeze
 
       def self.body(username:, registered:, online_count:, total_messages:,
                     recent_callers:, releases:, events:)

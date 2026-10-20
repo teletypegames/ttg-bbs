@@ -132,7 +132,7 @@ BBS.configure do |config|
       window :bulletin, type: :info do |window_spec|
         window_spec.title  ' Welcome '
         window_spec.width  72
-        window_spec.height 22
+        window_spec.height 23
         window_spec.scroll true
         window_spec.body do |ctx|
           UI::Formatters::Bulletin.body(
