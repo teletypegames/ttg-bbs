@@ -18,7 +18,10 @@ module UI
         callers = recent_callers.map do |c|
           "  · #{c.username}  \e[2;37m#{c.timestamp[0, 16].sub('T', ' ')}\e[0m"
         end
-        status = registered ? '' : "  \e[2;37m(guest — Users > Register keeps your name)\e[0m"
+        status = if registered then ''
+                 elsif username == 'Anonymous' then "  \e[2;37m(call with a name to register it)\e[0m"
+                 else "  \e[2;37m(guest — Users > Register keeps your name)\e[0m"
+                 end
         [
           *BANNER.map { |l| { text: l, style: :accent } },
           :spacer,
