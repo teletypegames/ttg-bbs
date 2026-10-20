@@ -1,15 +1,15 @@
 GIT
   remote: https://git.teletypegames.org/bbs/sermo-bbs.git
-  revision: b13d7765a520d740438dcf9056bf6cbc2cd56801
+  revision: abc756fd303716d101d348f784ee2c6a4d498b91
   specs:
-    sermo (0.1.0)
-      bbs
+    sermo (0.2.0)
+      bbs (>= 0.5)
 
 GIT
   remote: https://git.teletypegames.org/engines/rubbs.git
-  revision: b481de2031d731cde849317be19d3c26b3125f20
+  revision: fbfaefcc9a01f989a302bb3387bac21be3560138
   specs:
-    bbs (0.4.0)
+    bbs (0.5.0)
       artii (~> 2.1)
 
 GEM
