@@ -31,6 +31,8 @@ require_relative 'lib/domain/service/file_library_service'
 require_relative 'lib/domain/service/dev_log_service'
 require_relative 'lib/domain/service/art_service'
 require_relative 'lib/doors/commodore'
+require_relative 'lib/doors/ra'
+require_relative 'lib/characters/master'
 require_relative 'lib/bbs/ui/formatters'
 
 online_service       = OnlineService.new(OnlineUsersRepository.new)
@@ -51,6 +53,7 @@ oneliner_service     = OnelinerService.new(OnelinerRepository.new(
 file_library         = FileLibraryService.new(FtpRepository.new(ENV.fetch('BBS_FTP_HOST', 'ftp.teletypegames.org')),
                                               games: games_service)
 dev_log_service      = DevLogService.new(GiteaRepository.new)
+ttg_master           = TtgMaster.new(games: games_service, site: site_service)
 impostor_sessions    = Impostor.sessions_store(ENV.fetch('IMPOSTOR_SESSIONS_PATH', 'data/impostor_sessions.csv'))
 
 STARTED_AT  = Time.now
@@ -118,6 +121,7 @@ BBS.configure do |config|
       door :plus4,    Commodore.os(Commodore::PLUS4, games: games_service, files: file_library),
            label: 'Commodore &Plus/4'
       door :impostor, Impostor.flow(sessions: impostor_sessions), label: '&Impostor'
+      door :ra,       Ra.os(games: games_service), label: 'Chat of &Ra'
       services online:       online_service,
                boards:       board_service,
                wiki:         wiki_service,
@@ -132,6 +136,7 @@ BBS.configure do |config|
                files:        file_library,
                dev_log:      dev_log_service,
                art:          art_service,
+               master:       ttg_master,
                uptime:       STARTED_AT
 
       helpers do
@@ -506,6 +511,41 @@ BBS.configure do |config|
         end
       end
 
+      # The TTG Master answers in a thread of his own and the window picks the
+      # reply up on its next tick, so the board never waits for the model.
+      window :master, type: :stream do |window_spec|
+        window_spec.title       ' Ask the TTG Master '
+        window_spec.placeholder 'Ask about the board and press Enter…'
+        window_spec.initial_lines do |ctx|
+          ctx[:master_queue] = Queue.new
+          UI::Formatters::Master.lines('TTG Master', 'Hey, caller! I am the sysop of this board. Ask me where ' \
+                                                     'things are, what is new, what is coming up.', ctx[:app].cols)
+        end
+        window_spec.on_submit do |text, app_, ctx|
+          question = text.strip
+          queue = ctx[:master_queue]
+          UI::Formatters::Master.lines('You', question, app_.cols, you: true).each { |line| queue << line }
+          if ctx[:master_busy]
+            UI::Formatters::Master.lines('TTG Master', 'One question at a time, caller.', app_.cols).each { |line| queue << line }
+          else
+            ctx[:master_busy] = true
+            Thread.new do
+              reply = ctx[:master].answer(question, ctx)
+              UI::Formatters::Master.lines('TTG Master', reply, app_.cols).each { |line| queue << line }
+            rescue StandardError => e
+              warn "TTG Master: #{e.class}: #{e.message}"
+            ensure
+              ctx[:master_busy] = false
+            end
+          end
+        end
+        window_spec.on_poll do |_app, ctx|
+          lines = []
+          lines << ctx[:master_queue].pop until ctx[:master_queue].empty?
+          lines
+        end
+      end
+
       window :sysop_console, type: :info do |window_spec|
         window_spec.title  ' Sysop Console '
         window_spec.width  70
@@ -615,24 +655,26 @@ BBS.configure do |config|
         end
 
         menu '&Help' do
+          item '&Ask the TTG Master', shortcut: 'F1' do open_window(:master) end
+          separator
           item '&About' do
             BBS::Dialogs.message(self,
               'Teletype BBS — the telnet board of Teletype Games, powered by rubbs. ' \
               'News, our game catalog, the wiki guides and a live chat. ' \
               'Register your name under Users to keep it. Doors: SERMO, a Commodore 64 and a Plus/4, ' \
-              'and the Impostor debrief terminal. Other systems: Network menu.',
+              'the Impostor debrief terminal and Chat of Ra. Lost? F1 asks the TTG Master.',
               title: ' About ', width: 64)
           end
           item '&Keys' do
             BBS::Dialogs.message(self,
               'Alt+letter — open menu · Tab/Shift-Tab — move focus · Enter — activate · ' \
-              'Esc — close window · F1 Help · F2 Boards · F3 Post · F4 Chat · F10 Sysop',
+              'Esc — close window · F1 Ask the TTG Master · F2 Boards · F3 Post · F4 Chat · F10 Menu',
               title: ' Keys ', width: 70)
           end
         end
       end
 
-      status_hint('F1',  'Help')   { BBS::Dialogs.message(self, 'Top menu: Alt+letter — Windows: Tab/Shift-Tab — Close: Esc') }
+      status_hint('F1',  'Ask')    { open_window(:master) }
       status_hint('F2',  'Boards') { open_window(:messages) }
       status_hint('F3',  'Post')   { open_new_post }
       status_hint('F4',  'Chat')   { open_window(:chat) }

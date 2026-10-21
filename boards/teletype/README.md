@@ -5,7 +5,8 @@ Telnet-accessible Synchronet-style community BBS server built on the
 with a top menubar, stacked modal windows, message boards, a oneliners wall,
 multi-user chat, news from teletypegames.org, the team's dev log from Gitea,
 the game catalog, the file areas of the FTP server, the wiki guides, an ANSI
-gallery, and doors: SERMO, a Commodore 64, a Plus/4 and the Impostor terminal.
+gallery, the TTG Master who answers callers' questions (F1), and doors:
+SERMO, a Commodore 64, a Plus/4, the Impostor terminal and Chat of Ra.
 
 ## Running
 
@@ -59,6 +60,7 @@ Copy `env-example` to `.env`:
 | `SERMO_LLM_URL` | set by compose | SERMO's model, `http://llm:8080`; empty = canned replies only |
 | `SERMO_LLM_MODEL` | set by compose | the model's name in infra/llm, `qwen3.5-0.8b` |
 | `SERMO_LLM_API_KEY` | empty | SERMO's key to infra/llm, one of its `LLM_API_KEYS`; without it SERMO gets a 401 and answers with canned replies |
+| `BBS_LLM_URL`, `BBS_LLM_MODEL`, `BBS_LLM_API_KEY` | SERMO's | The model of the BBS's own characters (Ra, the TTG Master); each one unset or empty falls back to its `SERMO_LLM_*` |
 | `BBS_DESKTOP_ART` | `data/art/teletype.ansi` | Path to a single ANSI art file (`.ans`, `.ansi`, `.asc`, `.nfo`, `.txt`) **or** a directory containing them. Its folder is the ANSI Gallery. A file is every caller's desktop; with a directory a random one is shown per session. A registered caller's favourite wins over both. CP437 / SAUCE-aware |
 
 ## Interface
@@ -78,7 +80,7 @@ door.
 | `Tab` / `Shift-Tab` | Move focus inside a window |
 | `Enter` | Activate the focused button / submit input |
 | `Esc` | Close the top window / menu |
-| `F1` | Help |
+| `F1` | Ask the TTG Master |
 | `F2` | Message Boards |
 | `F3` | Quick post |
 | `F4` | Chat |
@@ -92,10 +94,10 @@ door.
 | **Files** | File Library · Game Catalog · Platform Guides · Engines · DOS Corner · ANSI Gallery |
 | **Users** | Online · Last Callers · Team · Profile… · Register… · Language EN/HU |
 | **Chat** | Open chat |
-| **Doors** | SERMO · Commodore 64 · Commodore Plus/4 · Impostor |
+| **Doors** | SERMO · Commodore 64 · Commodore Plus/4 · Impostor · Chat of Ra |
 | **Network** | Other systems (our other BBSes and bbsweb) |
 | **Sysop** | Console (logged-in sysops only) |
-| **Help** | About · Keys |
+| **Help** | Ask the TTG Master · About · Keys |
 
 ### Features
 
@@ -116,6 +118,7 @@ door.
 - **Discord feed** — new board posts and sysop broadcasts go to `BBS_DISCORD_WEBHOOK`, mentions disabled.
 - **Last callers** — a call is logged when it ends, and only if the terminal reported its window size (telnet NAWS) and stayed at least 10 seconds. Telnet password-guessing bots never get listed, and neither do they show up as online.
 - **ANSI Gallery** — the art files of the desktop folder with their SAUCE record and a preview. **Show** puts one on the desktop for the call, **Favourite** keeps it for every call of a registered name (the `art` column of the profile).
+- **TTG Master** (Help > Ask the TTG Master, F1) — the sysop who answers callers' questions about the board. See *Characters* below.
 - **xterm mouse** — click menus, buttons, list items; wheel-scroll lists.
 - **Idle disconnect** at 10 minutes.
 - **Configurable desktop art** — drop `.ans` / `.ansi` / `.asc` / `.nfo` / `.txt` files into `data/art/` (or wherever `BBS_DESKTOP_ART` points). Classic CP437 BBS art is auto-decoded; SAUCE metadata is stripped. With a directory, a different file is shown per session.
@@ -147,6 +150,11 @@ lib/
   domain/model/                        value objects (MessageModel, GameModel, …)
   doors/commodore.rb                   the C64 and Plus/4 doors
   doors/commodore/basic.rb             their BASIC V2 interpreter
+  doors/ra.rb                          Chat of Ra
+  characters/                          Ra and the TTG Master: personas, riddles,
+                                       the Master's knowledge, eval questions,
+                                       the shared model client (llm.rb)
+bin/persona-eval                       count a character's slips over many runs
   bbs/ui/formatters.rb                 view helpers: bulletin, news, game card,
                                        team, network, DOS intro, users, sysop,
                                        oneliners, file library, dev log, gallery
@@ -191,6 +199,13 @@ as a BASIC program, `LIST` shows it and `RUN` prints its card with the catalog
 link. The Plus/4 also knows `DIRECTORY` and `DLOAD`. `SYS 64738` resets the
 C64; `EXIT` returns to the BBS.
 
+**Chat of Ra** (`lib/doors/ra.rb`) — the caller is the worker sealed in the
+pyramid of Blessing of Ra, and the sun god answers from above, in gold. Words
+go to the model as Ra; `RIDDLE` asks one of the riddles of the pyramid
+(`lib/characters/ra_riddles.yml`), which the code asks and checks (`HINT`,
+`SKIP`); three solved earn the blessing, and the way to the game. `GAME`
+tells where the game is, from the catalog. See *Characters* below.
+
 **Impostor** ([impostor-bbs](https://git.teletypegames.org/bbs/impostor-bbs),
 the `impostor` gem) — the debrief terminal of Definitely not an Impostor, the
 same flow as the standalone Impostor BBS on port 2324. Its sessions go to
@@ -214,6 +229,42 @@ first. Create the account (or reset any password) from the server shell:
 ```bash
 docker exec -it teletype-bbs bin/account Tasi
 ```
+
+## Characters
+
+Ra and the TTG Master talk through the shared model service (infra/llm,
+Qwen3.5 0.8B), with rubbs' `BBS::AI`. A model this small is good at a short
+reply in a voice and bad at facts, so the code keeps the facts:
+
+- **Personas** — `lib/characters/ra.yml` and `master.yml`: the system prompt,
+  example turns, sampling (`temperature`, `max_tokens`, `stop` on a blank line
+  or a code fence), `deflect` rules the code answers without the model (code,
+  poems, "are you a bot"), and canned replies for when the model is down.
+- **Ra** — the riddles and the game's whereabouts are answered by the code;
+  only free talk goes to the model.
+- **TTG Master** (`lib/characters/master.rb`) — the code looks up the facts
+  for each question: up to two entries of `master_knowledge.yml` (keys are
+  words or phrases of the question; generic words like board or game weigh
+  half) and the live releases, events and game list. The model only words
+  them, and the code checks the wording: it must keep one of the facts'
+  anchors (a menu path, a game or event name) and name no menu path that is not
+  in them, else the caller gets the fact itself. A question with no facts never
+  reaches the model. The answer is made in a thread and shows up on the
+  window's next tick.
+
+Change a persona by measuring it, not by single replies. `bin/persona-eval`
+asks the questions of `lib/characters/eval/<name>.yml` several times and
+counts the slips: out of character, markdown, emoji, too long, and for the
+Master a miss (none of the question's `expect` phrases):
+
+```bash
+BBS_LLM_URL=http://localhost:8080 bundle exec bin/persona-eval master 3
+docker exec teletype-bbs bundle exec bin/persona-eval ra 3      # on the server, with infra/llm
+```
+
+At the last tuning (2026-10-21): Ra 1 slip in 48 replies, the Master 0 in 48.
+To add a fact, add an entry to `master_knowledge.yml` and a question to the
+eval.
 
 ## Data
 

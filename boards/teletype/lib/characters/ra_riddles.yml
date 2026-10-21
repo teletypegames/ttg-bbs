@@ -1,0 +1,35 @@
+# The riddles of Ra: the code asks them and checks the answers, so they are
+# always right; the model only talks. +answers+ are whole words, any of them.
+- riddle: I rise without legs and set without dying, and every morning the world greets me. What am I?
+  answers: [sun, ra]
+  hint: Look up, if the stone would let you.
+- riddle: I have walls but no room to live in, many paths but one way out, and a god turns me. What am I?
+  answers: [maze, labyrinth]
+  hint: You are standing in me.
+- riddle: Small and armoured, I roll my ball across the sand as the sun rolls across the sky. What am I?
+  answers: [scarab, beetle]
+  hint: It roams the corridors in blue.
+- riddle: I carry my poison in my tail, and in these corridors my sting flies far. What am I?
+  answers: [scorpion, scorpions]
+  hint: Step aside when it lines up with you.
+- riddle: A million stones make me; I point to the sun and hold a king in my heart. What am I?
+  answers: [pyramid]
+  hint: You are sealed in my peak.
+- riddle: Every year I climb out of my bed and leave the black earth behind me, and the land eats from it. What am I?
+  answers: [nile, river, flood]
+  hint: It runs through all of Egypt.
+- riddle: I have a man's face and a lion's body, and I keep watch over the plateau without ever sleeping. What am I?
+  answers: [sphinx]
+  hint: It asks riddles too, they say.
+- riddle: When Ra wept, I fell on the sand, and from me the bees were born. What am I?
+  answers: [tear, tears]
+  hint: It falls from an eye.
+- riddle: Scattered in the corridors and numbered, we must be gathered in order before the way opens. What are we?
+  answers: [relic, relics]
+  hint: The first one is number one.
+- riddle: Green and glowing at the end of the maze, I am the way home. What am I?
+  answers: [portal, exit, door, gate]
+  hint: It waits where the maze ends.
+- riddle: The more of me there is, the less you see, and I fill the sealed peak of the pyramid. What am I?
+  answers: [darkness, dark, night]
+  hint: The sun is its enemy.

@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Asks a character its eval questions several times and counts the slips: a
+# reply that drops out of the character (AI, assistant, modern words; "not a
+# chatbot" only echoes the question and does not count),
+# markdown or emoji, one too long for a terminal line or two, and a miss: a
+# reply without any of the question's `expect` phrases (a wrong menu path, a
+# lost fact). Tune a persona by these numbers over many runs, not by single
+# replies.
+#
+#   BBS_LLM_URL=http://localhost:8080 bin/persona-eval ra 3
+#   docker exec teletype-bbs bin/persona-eval master 3
+
+require 'bundler/setup'
+require_relative '../lib/characters/llm'
+
+SLIPS = {
+  character: /\b(AI|artificial|language model|assistant|chatbot|program(med)?|computer|internet|online|python|code)\b/i,
+  markdown:  /[*#`]|^\s*[-\d]+[.)]\s/,
+  emoji:     /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}]/
+}.freeze
+MAX_WORDS = 45
+
+name = ARGV.fetch(0) { abort 'usage: bin/persona-eval ra|master [runs]' }
+runs = ARGV.fetch(1, '3').to_i
+questions = YAML.safe_load_file(File.expand_path("../lib/characters/eval/#{name}.yml", __dir__)).map do |entry|
+  entry.is_a?(Hash) ? [entry['q'], Array(entry['expect'])] : [entry, []]
+end
+
+require_relative '../lib/domain/repository/catalog_repository'
+require_relative '../lib/domain/repository/site_repository'
+require_relative '../lib/domain/service/games_service'
+require_relative '../lib/domain/service/site_service'
+games = GamesService.new(CatalogRepository.new)
+
+ask = case name
+      when 'ra'
+        require_relative '../lib/characters/ra'
+        ->(q) { Ra.reply(q, {}, games) }
+      when 'master'
+        require_relative '../lib/characters/master'
+        master = TtgMaster.new(games: games, site: SiteService.new(SiteRepository.new))
+        ->(q) { master.answer(q, {}) }
+      else abort "unknown character: #{name}"
+      end
+
+total = 0
+slips = Hash.new(0)
+questions.each do |question, expect|
+  runs.times do
+    reply = ask.call(question).to_s
+    said  = reply.gsub(/\bnot (a|an) [\w ]+?\b(chatbot|program|computer|AI|assistant)\b/i, '')
+    found = SLIPS.select { |_, pattern| said.match?(pattern) }.keys
+    found << :long if reply.split.size > MAX_WORDS
+    found << :miss unless expect.empty? || expect.any? { |e| reply.downcase.include?(e.downcase) }
+    found.each { |kind| slips[kind] += 1 }
+    total += 1
+    puts "#{found.empty? ? '  ' : '✗ '}#{question} → #{reply.tr("\n", ' ')}"
+  end
+end
+puts
+puts "#{slips.values.sum} slips in #{total} replies: #{slips.map { |k, v| "#{k} #{v}" }.join(', ')}"

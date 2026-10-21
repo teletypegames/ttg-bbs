@@ -139,6 +139,16 @@ module UI
       end
     end
 
+    module Master
+      # One speaker's turn, wrapped to the Stream window (cols - 8 wide, a
+      # border and a scrollbar inside).
+      def self.lines(who, text, cols, you: false)
+        color = you ? "\e[1;36m" : "\e[1;33m"
+        width = [cols - 14, 20].max
+        BBS::FrameBuffer.wrap_ansi("#{color}#{who}\e[0m: #{text}", width).map { |l| "  #{l}" } + ['']
+      end
+    end
+
     module Gallery
       def self.detail(name, sauce, size, preview, width)
         meta = [['File', name], ['Size', FileLibrary.size(size)]]

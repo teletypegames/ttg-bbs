@@ -14,6 +14,8 @@ BBS_DISCORD_WEBHOOK=
 BBS_PORT=2323
 # SERMO's key to the shared model service (infra/llm), one of its LLM_API_KEYS.
 SERMO_LLM_API_KEY=
+# The key of the BBS's own characters (Ra, the TTG Master); empty = SERMO's key.
+BBS_LLM_API_KEY=
 # BBS_DESKTOP_ART — a single .ans/.ansi/.asc/.nfo/.txt file shown on the
 # main screen, or a folder of them (a random one per call). Its folder is the
 # ANSI Gallery. Defaults to data/art/teletype.ansi.

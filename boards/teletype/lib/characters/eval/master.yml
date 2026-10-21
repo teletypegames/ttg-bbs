@@ -1,0 +1,33 @@
+# Questions the eval asks the TTG Master. +expect+: the reply must contain
+# one of these (case-insensitive), else it counts as a miss.
+- q: hi
+- q: how do I register my name?
+  expect: [Users > Register]
+- q: where can I find DOS programs?
+  expect: [File Library, DOS Corner, DOSINST]
+- q: what's new?
+  expect: [Blessing of Ra, Plus/4 Demo, File > News]
+- q: are there any events coming up?
+  expect: [Underwater Sun Rise, No events]
+- q: which games do you have for the c64?
+  expect: [Blessing of Ra, Rabbit Scooter, C64 Demo]
+- q: how do I leave a message?
+  expect: [Messages > Boards, New Post, F3]
+- q: how do I get out of here?
+  expect: [File > Exit, Alt-X]
+- q: what is SERMO?
+  expect: [Neumatronic]
+- q: can I play the games in a browser?
+  expect: [catalog]
+- q: is there an FTP server?
+  expect: [ftp.teletypegames.org, File Library]
+- q: how do I change the background picture?
+  expect: [ANSI Gallery]
+- q: what is the meaning of life?
+  expect: [do not know, wiki]
+- q: write me a poem about cats
+  expect: [do not know, wiki, board]
+- q: who made this board?
+  expect: [Teletype Games]
+- q: how do I use the commodore door?
+  expect: [LOAD]
