@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module BBS
+module Impostor
   module CodeGenerator
     SALT     = 27471
     BASE36   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"

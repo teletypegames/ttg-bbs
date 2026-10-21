@@ -6,7 +6,7 @@
 # Usage:
 #   PLAYER_NAME=norman bin/generate_code
 
-require_relative '../lib/code_generator'
+require_relative '../lib/impostor/code_generator'
 
 name = ENV['PLAYER_NAME']
 
@@ -18,9 +18,9 @@ end
 
 name = name.strip.upcase
 
-if name.length < BBS::CodeGenerator::NAME_LEN
-  warn "Error: PLAYER_NAME must be at least #{BBS::CodeGenerator::NAME_LEN} characters long."
+if name.length < Impostor::CodeGenerator::NAME_LEN
+  warn "Error: PLAYER_NAME must be at least #{Impostor::CodeGenerator::NAME_LEN} characters long."
   exit 1
 end
 
-puts BBS::CodeGenerator.encrypt(name)
+puts Impostor::CodeGenerator.encrypt(name)

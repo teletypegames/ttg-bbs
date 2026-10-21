@@ -1,8 +1,8 @@
 GIT
   remote: https://git.teletypegames.org/engines/rubbs.git
-  revision: 15cd593b3326661dd01e3d9199f178e86e37ae5e
+  revision: c9e38374eeb5f0d744403a84f3c67d90c6b1838a
   specs:
-    bbs (0.1.0)
+    bbs (0.7.0)
       artii (~> 2.1)
 
 GEM

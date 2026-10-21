@@ -45,18 +45,38 @@ The name is trimmed and uppercased (matching how the BBS handles input), and onl
 ## Project structure
 
 ```
-bbs.rb                        Entry point — BBS config, flow definition, server start
+bbs.rb                        Entry point — the standalone server: the flow + a sessions store
+impostor.gemspec              The gem another rubbs BBS mounts as a door
 bin/
   generate_code               CLI tool — generates a player's code from PLAYER_NAME
 lib/
-  code_generator.rb           Decrypt/encrypt logic (Ruby port of the Lua original)
-  bbs.rb                      (internal) library loader
+  impostor.rb                 Impostor.flow(sessions:) — the whole terminal as a BBS::Flow
+  impostor/code_generator.rb  Decrypt/encrypt logic (Ruby port of the Lua original)
 screens/
   welcome.erb                 Welcome screen
   congrats.erb                Mission complete screen
 data/
   sessions.csv                Player session records (auto-created)
 ```
+
+## As a door
+
+The same terminal is a door of the [Teletype BBS](https://git.teletypegames.org/bbs/bbs-server)
+(Doors > Impostor). It pulls this repository as the `impostor` gem; the flow
+carries its own screens (rubbs 0.7.0's `Flow.define(screens_dir:)`), and the
+host BBS gives it a sessions store of its own:
+
+```ruby
+gem 'impostor', git: 'https://git.teletypegames.org/bbs/impostor-bbs.git'
+
+require 'impostor'
+door :impostor, Impostor.flow(sessions: Impostor.sessions_store('data/impostor_sessions.csv')),
+     label: '&Impostor'
+```
+
+When the flow ends, the door asks for ENTER and hands the caller back to the
+BBS. The host's `Gemfile.lock` pins the revision, so a change here reaches the
+door only with a bump there.
 
 ## Data
 
