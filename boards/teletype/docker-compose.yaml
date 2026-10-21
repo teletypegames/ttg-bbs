@@ -12,7 +12,7 @@ services:
       - BBS_SYSOPS=${BBS_SYSOPS:-}
       - BBS_DISCORD_WEBHOOK=${BBS_DISCORD_WEBHOOK:-}
       - SERMO_LLM_URL=http://llm:8080
-      - SERMO_LLM_MODEL=gemma-3-270m
+      - SERMO_LLM_MODEL=qwen3.5-0.8b
       - SERMO_LLM_API_KEY=${SERMO_LLM_API_KEY:-}
     networks:
       - default
@@ -21,7 +21,7 @@ services:
     stdin_open: true
     tty: true
 
-# SERMO's Lapis-ACP thinks with Gemma 3 270M in the shared model service (infra/llm),
+# SERMO's Lapis-ACP thinks with Qwen3.5 0.8B in the shared model service (infra/llm),
 # reached on the interstack network. Without it SERMO answers with its canned replies.
 networks:
   interstack:
