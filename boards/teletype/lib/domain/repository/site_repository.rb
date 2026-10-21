@@ -16,10 +16,12 @@ class SiteRepository
   def events
     cached(:events) do
       get_json("#{API_URL}/events").filter_map do |e|
-        Event.new(e['name'].to_s, Time.parse(e['date'].to_s)) rescue nil
+        Event.new(e['name'].to_s, Time.parse(e['date'].to_s))
+      rescue StandardError
+        nil
       end
     end
-  rescue => e
+  rescue StandardError => e
     warn "SiteRepository events error: #{e}"
     []
   end
@@ -30,7 +32,7 @@ class SiteRepository
         Member.new(m['nick'].to_s, m['realNick'].to_s, m['motto'].to_s)
       end
     end
-  rescue => e
+  rescue StandardError => e
     warn "SiteRepository members error: #{e}"
     []
   end

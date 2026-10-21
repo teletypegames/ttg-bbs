@@ -30,7 +30,7 @@ class FileLibraryService
   end
 
   # The size in bytes of a WARP file, nil when it is not there.
-  def warp_size(name) = @repo.warp.find { |f| f.name == name }&.size
+  def warp_size(name) = @repo.warp.find { |f| f.name == name }&.bytes
 
   private
 

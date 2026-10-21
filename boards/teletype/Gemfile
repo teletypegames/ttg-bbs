@@ -1,6 +1,12 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
 
 gem 'bbs', git: 'https://git.teletypegames.org/engines/rubbs.git'
-gem 'sermo', git: 'https://git.teletypegames.org/bbs/sermo-bbs.git'
 gem 'impostor', git: 'https://git.teletypegames.org/bbs/impostor-bbs.git'
 gem 'net-ftp'
+gem 'sermo', git: 'https://git.teletypegames.org/bbs/sermo-bbs.git'
+
+group :development do
+  gem 'rubocop', require: false
+end

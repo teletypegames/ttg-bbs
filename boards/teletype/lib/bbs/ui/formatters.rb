@@ -65,12 +65,13 @@ module UI
       def self.file_rows(files, width)
         files.map do |f|
           name = f.name.length > width - 14 ? "#{f.name[0, width - 15]}…" : f.name
-          "    #{name.ljust(width - 14)}\e[0;37m#{size(f.size).rjust(9)}\e[0m"
+          "    #{name.ljust(width - 14)}\e[0;37m#{size(f.bytes).rjust(9)}\e[0m"
         end
       end
 
       def self.app_card(app, readme, width, url:, theme:)
-        lines = ["  \e[1;33m#{app.title}\e[0m #{app.version}", "  \e[0;36m#{[app.platform, app.folder].reject(&:empty?).join(' · ')}\e[0m",
+        lines = ["  \e[1;33m#{app.title}\e[0m #{app.version}",
+                 "  \e[0;36m#{[app.platform, app.folder].reject(&:empty?).join(' · ')}\e[0m",
                  "  \e[1;36m#{url}\e[0m", '']
         BBS::FrameBuffer.wrap_ansi(app.description, width - 4).each { |l| lines << "  #{l}" }
         lines << ''
@@ -116,7 +117,7 @@ module UI
 
       # Commit messages without their trailers (Co-Authored-By and the like).
       def self.message_lines(message, width)
-        body = message.lines.reject { |l| l.match?(/\A[\w-]+-By: /) }.join.rstrip
+        body = message.lines.grep_v(/\A[\w-]+-By: /).join.rstrip
         body.split("\n").flat_map { |l| l.strip.empty? ? [''] : BBS::FrameBuffer.wrap_ansi(l, width - 6).map { |w| "    #{w}" } }
       end
 
@@ -271,11 +272,11 @@ module UI
         lines << "  \e[0;36m#{meta}\e[0m"
         if game.released?
           date = game.released_at&.strftime('%Y-%m-%d')
-          lines << "  \e[0;37mLatest: #{game.version}#{date ? "  (#{date})" : ''}\e[0m"
+          lines << "  \e[0;37mLatest: #{game.version}#{"  (#{date})" if date}\e[0m"
         end
         lines << "  \e[1;36m#{catalog_url}\e[0m"
         lines << ''
-        BBS::FrameBuffer.wrap_ansi(game.desc.to_s,  width - 4).each { |l| lines << "  #{l}" }
+        BBS::FrameBuffer.wrap_ansi(game.desc.to_s, width - 4).each { |l| lines << "  #{l}" }
         unless game.story.to_s.strip.empty?
           lines << ''
           BBS::FrameBuffer.wrap_ansi(game.story.to_s, width - 4).each { |l| lines << "  #{l}" }

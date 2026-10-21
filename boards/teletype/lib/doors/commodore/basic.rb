@@ -40,6 +40,7 @@ module Commodore
       @reset_address = reset_address
       @lines         = []
       @memory        = {}
+      @token_cache   = {}
       clear_variables
     end
 
@@ -83,7 +84,6 @@ module Commodore
       @vars       = {}
       @for_stack  = []
       @gosub      = []
-      @token_cache ||= {}
     end
 
     # Upper case outside string literals, like the keyboard of the machine.
@@ -101,16 +101,16 @@ module Commodore
     rescue Error => e
       report(e.message)
     rescue Break
-      @screen.newline.() unless @screen.column.().zero?
-      @screen.write.("BREAK#{@line_index ? " IN #{@lines[@line_index][0]}" : ''}")
-      @screen.newline.()
+      @screen.newline.call unless @screen.column.call.zero?
+      @screen.write.call("BREAK#{" IN #{@lines[@line_index][0]}" if @line_index}")
+      @screen.newline.call
     end
 
     def report(message)
-      @screen.newline.() unless @screen.column.().zero?
+      @screen.newline.call unless @screen.column.call.zero?
       where = @line_index ? " IN #{@lines[@line_index][0]}" : ''
-      @screen.write.("?#{message}  ERROR#{where}")
-      @screen.newline.()
+      @screen.write.call("?#{message}  ERROR#{where}")
+      @screen.newline.call
     end
 
     # Runs statements from @toks/@pos; in program mode it moves on to the
@@ -121,14 +121,12 @@ module Commodore
         statement_loop
         return if @halted
 
-        if @line_index.nil?
-          return
-        else
-          @line_index += 1
-          return if @line_index >= @lines.size
+        return if @line_index.nil?
 
-          enter_line(@line_index, 0)
-        end
+        @line_index += 1
+        return if @line_index >= @lines.size
+
+        enter_line(@line_index, 0)
       end
     ensure
       @halted = false
@@ -138,7 +136,7 @@ module Commodore
       while @pos < @toks.size
         @steps += 1
         raise Break if @steps > MAX_STEPS
-        raise Break if (@steps % 500).zero? && @screen.stop?.()
+        raise Break if (@steps % 500).zero? && @screen.stop?.call
 
         tok = @toks[@pos]
         if tok.type == :op && tok.value == ':'
@@ -217,16 +215,16 @@ module Commodore
           newline = false
         elsif tok.type == :op && tok.value == ','
           @pos += 1
-          @screen.write.(' ' * (10 - (@screen.column.() % 10)))
+          @screen.write.call(' ' * (10 - (@screen.column.call % 10)))
           newline = false
         else
           value = expression
-          @screen.write.(value.is_a?(String) ? value : format_number(value))
+          @screen.write.call(value.is_a?(String) ? value : format_number(value))
           newline = true
         end
       end
-      @screen.newline.() if newline
-      raise Break if @screen.stop?.()
+      @screen.newline.call if newline
+      raise Break if @screen.stop?.call
     end
 
     def st_gosub
@@ -291,19 +289,20 @@ module Commodore
         frame_index = name ? @for_stack.rindex { |f| f[:var] == name } : @for_stack.size - 1
         raise Error, 'NEXT WITHOUT FOR' if frame_index.nil? || frame_index.negative?
 
-        @for_stack.slice!(frame_index + 1..)
+        @for_stack.slice!((frame_index + 1)..)
         frame = @for_stack.last
         value = @vars[frame[:var]] = @vars.fetch(frame[:var], 0.0) + frame[:step]
         done = frame[:step].negative? ? value < frame[:limit] : value > frame[:limit]
         if done
           @for_stack.pop
-        else
-          @line_index = frame[:line]
-          @toks       = frame[:toks]
-          @pos        = frame[:pos]
-          @moved      = true
-          return
+          next
         end
+
+        @line_index = frame[:line]
+        @toks       = frame[:toks]
+        @pos        = frame[:pos]
+        @moved      = true
+        break
       end
     end
 
@@ -328,19 +327,19 @@ module Commodore
       raise Error, 'SYNTAX' unless names.all? { |t| t&.type == :var }
 
       loop do
-        @screen.write.("#{prompt}? ")
-        answer = @screen.readline.()
+        @screen.write.call("#{prompt}? ")
+        answer = @screen.readline.call
         raise Break if answer.nil?
 
         values = answer.split(',', -1).map(&:strip)
-        if names.each_with_index.all? { |t, i| t.value.end_with?('$') || values[i].to_s.match?(/\A[-+]?(\d+\.?\d*|\.\d+)(E[-+]?\d+)?\z/i) }
+        if names.each_with_index.all? { |t, i| t.value.end_with?('$') || numeric?(values[i]) }
           names.each_with_index do |t, i|
             assign(t.value, t.value.end_with?('$') ? values[i].to_s : values[i].to_f)
           end
           break
         end
-        @screen.write.('?REDO FROM START')
-        @screen.newline.()
+        @screen.write.call('?REDO FROM START')
+        @screen.newline.call
       end
     end
 
@@ -353,19 +352,17 @@ module Commodore
     def st_list
       from = 0
       to   = 63_999
-      if @toks[@pos]&.type == :num
-        from = to = advance.value.to_i
-      end
+      from = to = advance.value.to_i if @toks[@pos]&.type == :num
       if @toks[@pos]&.type == :op && @toks[@pos].value == '-'
         @pos += 1
         to = @toks[@pos]&.type == :num ? advance.value.to_i : 63_999
       end
       @lines.each do |n, text|
         next unless n.between?(from, to)
-        raise Break if @screen.stop?.()
+        raise Break if @screen.stop?.call
 
-        @screen.write.("#{n} #{text}")
-        @screen.newline.()
+        @screen.write.call("#{n} #{text}")
+        @screen.newline.call
       end
       @halted = true if @line_index.nil?
     end
@@ -417,7 +414,7 @@ module Commodore
       left = expr_add
       while (op = relation_op)
         right = expr_add
-        raise Error, 'TYPE MISMATCH' unless left.class == right.class
+        raise Error, 'TYPE MISMATCH' unless left.instance_of?(right.class)
 
         result = case op
                  when '='  then left == right
@@ -496,8 +493,7 @@ module Commodore
       raise Error, 'SYNTAX' unless tok
 
       case tok.type
-      when :num then tok.value
-      when :str then tok.value
+      when :num, :str then tok.value
       when :var then @vars.fetch(tok.value) { tok.value.end_with?('$') ? '' : 0.0 }
       when :op
         raise Error, 'SYNTAX' unless tok.value == '('
@@ -542,7 +538,7 @@ module Commodore
       when 'MID$'
         start = integer(args[1], 1..255) - 1
         string(a)[start, args[2] ? integer(args[2], 0..255) : 255] || ''
-      when 'PEEK'  then @memory.fetch(integer(a, 0..65_535), 0).to_f
+      when 'PEEK' then @memory.fetch(integer(a, 0..65_535), 0).to_f
       end
     end
 
@@ -566,6 +562,8 @@ module Commodore
 
       @vars[name] = value
     end
+
+    def numeric?(text) = text.to_s.match?(/\A[-+]?(\d+\.?\d*|\.\d+)(E[-+]?\d+)?\z/i)
 
     def truthy?(value) = value.is_a?(String) ? !value.empty? : !value.zero?
 

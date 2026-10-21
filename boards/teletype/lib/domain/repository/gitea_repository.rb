@@ -47,7 +47,7 @@ class GiteaRepository
     return unless kind && a['repo']
 
     content = a['content'].to_s
-    payload = content.start_with?('{') ? (JSON.parse(content) rescue {}) : {}
+    payload = parse_payload(content)
     commits = (payload['Commits'] || [payload['HeadCommit']].compact).map { |c| [c['Sha1'].to_s, c['Message'].to_s] }
     ActivityModel.new(kind: kind, user: a.dig('act_user', 'login').to_s, repo: a.dig('repo', 'full_name').to_s,
                       ref: a['ref_name'].to_s.sub(%r{\Arefs/(heads|tags)/}, ''),
@@ -55,5 +55,12 @@ class GiteaRepository
                       title: payload.empty? ? content : '')
   rescue ArgumentError
     nil
+  end
+
+  # Pushes and tags carry their commits as JSON; a release only its title.
+  def parse_payload(content)
+    content.start_with?('{') ? JSON.parse(content) : {}
+  rescue JSON::ParserError
+    {}
   end
 end

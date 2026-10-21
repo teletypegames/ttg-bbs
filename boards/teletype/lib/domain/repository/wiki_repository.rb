@@ -16,7 +16,7 @@ class WikiRepository
       data = get_json("#{base(lang)}/custom/pages.json", tag: tag)
       (data['pages'] || []).reject { |p| p['private'] }.map { |p| model(p) }
     end
-  rescue => e
+  rescue StandardError => e
     warn "WikiRepository list error: #{e}"
     []
   end
@@ -26,11 +26,10 @@ class WikiRepository
   def section(prefix, lang: 'en')
     cached([:section, prefix, lang]) do
       data = get_json("#{base(lang)}/custom/sitemap.json")
-      (data['pages'] || []).select do |p|
-        p['route'].start_with?("#{prefix}/") && !p['private']
-      end.map { |p| model(p) }
+      pages = (data['pages'] || []).select { |p| p['route'].start_with?("#{prefix}/") && !p['private'] }
+      pages.map { |p| model(p) }
     end
-  rescue => e
+  rescue StandardError => e
     warn "WikiRepository section error: #{e}"
     []
   end
@@ -39,7 +38,7 @@ class WikiRepository
     cached([:page, path, lang]) do
       get_json("#{base(lang)}/custom/page.json", route: "/#{path}")['markdown'] || ''
     end
-  rescue => e
+  rescue StandardError => e
     warn "WikiRepository content error: #{e}"
     ''
   end

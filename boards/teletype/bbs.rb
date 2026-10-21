@@ -55,7 +55,7 @@ impostor_sessions    = Impostor.sessions_store(ENV.fetch('IMPOSTOR_SESSIONS_PATH
 
 STARTED_AT  = Time.now
 SYSOPS      = ENV.fetch('BBS_SYSOPS', '').split(',').map { |name| name.strip.downcase }.reject(&:empty?)
-account_service      = AccountService.new(AccountRepository.new(
+account_service = AccountService.new(AccountRepository.new(
                          ENV.fetch('ACCOUNTS_PATH', 'data/accounts.csv')), reserved: SYSOPS)
 WIKI_SECTIONS = {
   platforms: { prefix: '/platforms', title: 'Platform Guides' },
@@ -416,9 +416,11 @@ BBS.configure do |config|
                                       app.close_window(window)
                                       app.open_window(:oneliners)
                                     when :anonymous
-                                      BBS::Dialogs.message(app, 'Call again with a name to write on the wall.', title: ' Oneliners ')
+                                      BBS::Dialogs.message(app, 'Call again with a name to write on the wall.',
+                                                           title: ' Oneliners ')
                                     when :too_long
-                                      BBS::Dialogs.message(app, "At most #{OnelinerService::MAX_LENGTH} characters.", title: ' Oneliners ')
+                                      BBS::Dialogs.message(app, "At most #{OnelinerService::MAX_LENGTH} characters.",
+                                                           title: ' Oneliners ')
                                     end
                                   end)
           :keep
@@ -446,7 +448,7 @@ BBS.configure do |config|
                                                  url: ctx[:files].app_url(item), theme: ctx[:app].theme)
           end
         end
-        window_spec.bottom_meta do |item, ctx|
+        window_spec.bottom_meta do |_item, ctx|
           ctx[:area] == :warp ? ctx[:files].warp_url : 'DOSINST installs it: the DOS Corner tells how'
         end
         window_spec.action label: '&Area', align: :left do |_window, ctx|
@@ -558,7 +560,7 @@ BBS.configure do |config|
           item '&Engines'         do open_window(:wiki, section: :engines) end
           item '&DOS Corner'      do open_window(:wiki, section: :dos) end
           separator
-          item '&ANSI Gallery'    do open_window(:gallery) end
+          item '&ANSI Gallery' do open_window(:gallery) end
         end
 
         menu '&Users' do

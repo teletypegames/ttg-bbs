@@ -1,0 +1,51 @@
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.3
+  SuggestExtensions: false
+  Exclude:
+    - "data/**/*"
+    - "vendor/**/*"
+
+# The house style aligns hashes and keyword arguments as tables.
+Layout/HashAlignment:
+  Enabled: false
+Layout/ExtraSpacing:
+  AllowForAlignment: true
+Layout/LineLength:
+  Max: 130
+# Continuation lines line up with what they continue, not with the call.
+Layout/FirstArgumentIndentation:
+  Enabled: false
+Layout/ArgumentAlignment:
+  Enabled: false
+Layout/MultilineMethodCallBraceLayout:
+  Enabled: false
+Layout/ClosingParenthesisIndentation:
+  Enabled: false
+Layout/EmptyLineAfterGuardClause:
+  Enabled: false
+
+# Menu items and window callbacks are one-line do…end blocks, and a
+# `when … then form.error(…); :keep` table reads best on one line.
+Style/BlockDelimiters:
+  Enabled: false
+Style/SingleLineDoEndBlock:
+  Enabled: false
+Style/Semicolon:
+  AllowAsExpressionSeparator: true
+Style/RescueStandardError:
+  EnforcedStyle: explicit
+Style/FetchEnvVar:
+  Enabled: false
+
+# bbs.rb is one long Application DSL block, and the BASIC interpreter is a
+# set of big case statements; size metrics say nothing useful about either.
+Metrics:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+# Short names (a, n, f, kw) are the idiom of the formatters and the interpreter.
+Naming/MethodParameterName:
+  MinNameLength: 1

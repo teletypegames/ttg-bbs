@@ -162,7 +162,7 @@ module Commodore
     def program_for(game)
       lines = ["REM *** #{file_name(game)} #{game.version} ***", 'PRINT CHR$(147)', print_line(game.title.upcase)]
       date = game.released_at&.strftime('%Y-%m-%d')
-      lines << print_line("VERSION #{game.version}#{date ? " (#{date})" : ''}")
+      lines << print_line("VERSION #{game.version}#{" (#{date})" if date}")
       lines << 'PRINT'
       wrap(game.desc).each { |l| lines << print_line(l) }
       lines << 'PRINT'

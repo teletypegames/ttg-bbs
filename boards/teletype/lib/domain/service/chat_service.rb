@@ -39,7 +39,7 @@ class ChatService
     queue = @mu.synchronize { @subs[session_id] }
     return [] unless queue
     pending = []
-    pending << queue.pop(true) while !queue.empty?
+    pending << queue.pop(true) until queue.empty?
     pending
   rescue ThreadError
     pending

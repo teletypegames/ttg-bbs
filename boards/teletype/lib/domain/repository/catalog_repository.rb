@@ -22,7 +22,7 @@ class CatalogRepository
       end
       games
     end
-  rescue => e
+  rescue StandardError => e
     warn "CatalogRepository fetch error: #{e}"
     []
   end

@@ -38,7 +38,7 @@ class DiscordNotifier
     Thread.new do
       body = JSON.generate(content: content, allowed_mentions: { parse: [] })
       Net::HTTP.post(@uri, body, 'Content-Type' => 'application/json')
-    rescue => e
+    rescue StandardError => e
       warn "DiscordNotifier error: #{e}"
     end
   end

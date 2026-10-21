@@ -4,4 +4,7 @@ tmp
 data/messages.dat
 data/last_callers.csv
 data/profiles.csv
+data/accounts.csv
+data/oneliners.csv
+data/impostor_sessions.csv
 .claude

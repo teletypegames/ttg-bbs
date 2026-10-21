@@ -13,8 +13,8 @@ class BoardRepository
   DEFAULT_BOARDS = [
     BoardMeta.new('general',  'General',  'Open chat, anything goes'),
     BoardMeta.new('tech',     'Tech',     'Hardware, software, code'),
-    BoardMeta.new('offtopic', 'Off-Topic','Random topics, jokes'),
-    BoardMeta.new('sysop',    'Sysop',    'Notes from the operator'),
+    BoardMeta.new('offtopic', 'Off-Topic', 'Random topics, jokes'),
+    BoardMeta.new('sysop',    'Sysop',     'Notes from the operator')
   ].freeze
 
   attr_reader :boards
@@ -72,9 +72,7 @@ class BoardRepository
   def load_board(id)
     return @cache[id] if @cache.key?(id)
     list = []
-    if File.exist?(path_for(id))
-      CSV.foreach(path_for(id)) { |row| list << MessageModel.new(*row) }
-    end
+    CSV.foreach(path_for(id)) { |row| list << MessageModel.new(*row) } if File.exist?(path_for(id))
     @cache[id] = list
   rescue StandardError => e
     warn "BoardRepository load error (#{id}): #{e}"

@@ -62,7 +62,7 @@ class FtpRepository
       type = entry.facts['type']
       next unless %w[dir file].include?(type)
 
-      FtpEntry.new(name: entry.pathname, size: entry.facts['size'].to_i,
+      FtpEntry.new(name: entry.pathname, bytes: entry.facts['size'].to_i,
                    modified: entry.facts['modify'], dir: type == 'dir')
     end.sort_by(&:name)
   end
@@ -74,7 +74,7 @@ class FtpRepository
   end
 
   def parse_ini(text)
-    text.to_s.each_line.each_with_object({}) do |line, acc|
+    text.to_s.each_line.with_object({}) do |line, acc|
       key, value = line.strip.split('=', 2)
       acc[key.downcase] = value.strip if value && !key.start_with?(';', '[')
     end

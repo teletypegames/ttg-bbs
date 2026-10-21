@@ -54,9 +54,7 @@ class AccountRepository
   def load
     return {} unless File.exist?(@path)
 
-    CSV.read(@path, headers: true).each_with_object({}) do |row, acc|
-      acc[row['key']] = Account.new(*HEADER.map { |h| row[h] })
-    end
+    CSV.read(@path, headers: true).to_h { |row| [row['key'], Account.new(*HEADER.map { |h| row[h] })] }
   rescue StandardError
     {}
   end

@@ -4,6 +4,8 @@ RUN apk add --no-cache git build-base
 
 WORKDIR /app
 
+ENV BUNDLE_WITHOUT=development
+
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
