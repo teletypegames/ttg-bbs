@@ -26,11 +26,16 @@ Connect:
 telnet localhost 2323
 ```
 
-Compose starts two containers: `teletype-bbs`, and `teletype-bbs-acp`, the
-model behind SERMO's Lapis-ACP — llama.cpp's `llama-server` with Gemma 3 270M
-(`-c 8192 --parallel 2`, two callers at a time, 1 GB memory limit). It
-downloads the model (about 250 MB) into the `acp-models` volume on first start;
-until it is up, or without it, SERMO answers with canned replies.
+Compose starts one container, `teletype-bbs`. The model behind SERMO's
+Lapis-ACP, Gemma 3 270M, runs in the server's shared model service,
+[infra/llm](https://git.teletypegames.org/infra/llm), reached as
+`http://llm:8080` on the `interstack` network; its key, one of that stack's
+`LLM_API_KEYS`, is `SERMO_LLM_API_KEY` in `.env`. Until the model is up, or
+without it, SERMO answers with canned replies.
+
+`docker-compose.dev.yaml` keeps the model next to the BBS: a `teletype-bbs-acp`
+container with llama.cpp's `llama-server` and the same model, no key, no
+`interstack`.
 
 ## Configuration
 
@@ -46,7 +51,9 @@ Copy `env-example` to `.env`:
 | `MESSAGES_PATH` | `data/messages.dat` | Legacy single-board file; auto-migrated into the General board on first run |
 | `LAST_CALLERS_PATH` | `data/last_callers.csv` | Finished calls (see *Last callers* below) |
 | `PROFILE_PATH` | `data/profiles.csv` | User profile CSV |
-| `SERMO_LLM_URL` | set by compose | SERMO's model, `http://acp:8080`; empty = canned replies only |
+| `SERMO_LLM_URL` | set by compose | SERMO's model, `http://llm:8080`; empty = canned replies only |
+| `SERMO_LLM_MODEL` | set by compose | the model's name in infra/llm, `gemma-3-270m` |
+| `SERMO_LLM_API_KEY` | empty | SERMO's key to infra/llm, one of its `LLM_API_KEYS`; without it SERMO gets a 401 and answers with canned replies |
 | `BBS_DESKTOP_ART` | `data/art` | Path to a single ANSI art file (`.ans`, `.ansi`, `.asc`, `.nfo`, `.txt`) **or** a directory containing them — a random one is shown per session. CP437 / SAUCE-aware |
 
 ## Interface
@@ -92,7 +99,7 @@ opens.
 - **Game catalog** — every catalog entry (all pages of the API), sorted by platform; the **Platform** button cycles a platform filter. The card shows version, release date, the catalog link, the downloadable kinds, and the external links.
 - **Wiki sections** — Platform Guides (`/platforms`), Engines (`/engines`) and the DOS Corner (`/dos`, with an FTP/DOSINST intro), read from the Grav JSON API; private pages are left out. Users > Language switches them to Hungarian.
 - **Team** — the members of teletypegames.org with their mottos.
-- **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `BBS::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Gemma 3 270M model in the `acp` service. See *Doors* below.
+- **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `BBS::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Gemma 3 270M model in the shared `infra/llm` service. See *Doors* below.
 - **Registered names** — a caller can register the name they logged in with (Users > Register…); from then on that name asks for its password. Profiles belong to registered names only.
 - **Sysop console** — stats + broadcast, for names in `BBS_SYSOPS` that logged in with their password.
 - **Discord feed** — new board posts and sysop broadcasts go to `BBS_DISCORD_WEBHOOK`, mentions disabled.

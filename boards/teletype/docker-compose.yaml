@@ -11,23 +11,18 @@ services:
       - MESSAGES_PATH=/app/data/messages.dat
       - BBS_SYSOPS=${BBS_SYSOPS:-}
       - BBS_DISCORD_WEBHOOK=${BBS_DISCORD_WEBHOOK:-}
-      - SERMO_LLM_URL=http://acp:8080
-    depends_on:
-      - acp
+      - SERMO_LLM_URL=http://llm:8080
+      - SERMO_LLM_MODEL=gemma-3-270m
+      - SERMO_LLM_API_KEY=${SERMO_LLM_API_KEY:-}
+    networks:
+      - default
+      - interstack
     restart: unless-stopped
     stdin_open: true
     tty: true
 
-  # SERMO's Lapis-ACP thinks with Gemma 3 270M on llama.cpp; the GGUF is fetched on
-  # first start into the volume. Without it SERMO answers with its canned replies.
-  acp:
-    mem_limit: 1g
-    image: ghcr.io/ggml-org/llama.cpp:server-b11749
-    container_name: teletype-bbs-acp
-    command: -hf ggml-org/gemma-3-270m-it-GGUF --host 0.0.0.0 --port 8080 -c 8192 --parallel 2 --threads 2
-    volumes:
-      - acp-models:/root/.cache
-    restart: unless-stopped
-
-volumes:
-  acp-models:
+# SERMO's Lapis-ACP thinks with Gemma 3 270M in the shared model service (infra/llm),
+# reached on the interstack network. Without it SERMO answers with its canned replies.
+networks:
+  interstack:
+    external: true

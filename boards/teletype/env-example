@@ -8,6 +8,8 @@ BBS_SYSOPS=
 # Discord webhook for new board posts and sysop broadcasts; empty = off.
 BBS_DISCORD_WEBHOOK=
 BBS_PORT=2323
+# SERMO's key to the shared model service (infra/llm), one of its LLM_API_KEYS.
+SERMO_LLM_API_KEY=
 # BBS_DESKTOP_ART — path to a single .ans/.ansi/.txt file shown on the
 # main screen. Defaults to data/art/teletype.ansi.
 BBS_DESKTOP_ART=data/art/teletype.ansi

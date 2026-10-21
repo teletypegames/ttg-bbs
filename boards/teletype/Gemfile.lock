@@ -1,8 +1,8 @@
 GIT
   remote: https://git.teletypegames.org/bbs/sermo-bbs.git
-  revision: abc756fd303716d101d348f784ee2c6a4d498b91
+  revision: 3d8d7f555598c9b1455378d57796c83c7f975a8c
   specs:
-    sermo (0.2.0)
+    sermo (0.3.0)
       bbs (>= 0.5)
 
 GIT
