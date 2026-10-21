@@ -5,7 +5,7 @@ require 'bbs'
 # Persistent user profile, keyed by lower-cased username. Backed by a
 # BBS::Store CSV at +path+.
 class ProfileRepository
-  HEADERS = %w[session_id timestamp username signature location homepage notes].freeze
+  HEADERS = %w[session_id timestamp username signature location homepage notes art].freeze
 
   def initialize(path)
     @store = BBS::Store.new(path: path, headers: HEADERS)

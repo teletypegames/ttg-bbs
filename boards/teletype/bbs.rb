@@ -2,6 +2,7 @@
 
 require 'bbs'
 require 'sermo'
+require 'impostor'
 require 'time'
 
 require_relative 'lib/domain/repository/online_users_repository'
@@ -12,6 +13,9 @@ require_relative 'lib/domain/repository/last_callers_repository'
 require_relative 'lib/domain/repository/profile_repository'
 require_relative 'lib/domain/repository/account_repository'
 require_relative 'lib/domain/repository/site_repository'
+require_relative 'lib/domain/repository/oneliner_repository'
+require_relative 'lib/domain/repository/ftp_repository'
+require_relative 'lib/domain/repository/gitea_repository'
 require_relative 'lib/domain/service/online_service'
 require_relative 'lib/domain/service/board_service'
 require_relative 'lib/domain/service/profile_service'
@@ -22,6 +26,11 @@ require_relative 'lib/domain/service/last_callers_service'
 require_relative 'lib/domain/service/account_service'
 require_relative 'lib/domain/service/site_service'
 require_relative 'lib/domain/service/discord_notifier'
+require_relative 'lib/domain/service/oneliner_service'
+require_relative 'lib/domain/service/file_library_service'
+require_relative 'lib/domain/service/dev_log_service'
+require_relative 'lib/domain/service/art_service'
+require_relative 'lib/doors/commodore'
 require_relative 'lib/bbs/ui/formatters'
 
 online_service       = OnlineService.new(OnlineUsersRepository.new)
@@ -37,6 +46,12 @@ profile_service      = ProfileService.new(ProfileRepository.new(
                          ENV.fetch('PROFILE_PATH', 'data/profiles.csv')))
 site_service         = SiteService.new(SiteRepository.new)
 discord              = DiscordNotifier.new(ENV['BBS_DISCORD_WEBHOOK'])
+oneliner_service     = OnelinerService.new(OnelinerRepository.new(
+                         ENV.fetch('ONELINERS_PATH', 'data/oneliners.csv')))
+file_library         = FileLibraryService.new(FtpRepository.new(ENV.fetch('BBS_FTP_HOST', 'ftp.teletypegames.org')),
+                                              games: games_service)
+dev_log_service      = DevLogService.new(GiteaRepository.new)
+impostor_sessions    = Impostor.sessions_store(ENV.fetch('IMPOSTOR_SESSIONS_PATH', 'data/impostor_sessions.csv'))
 
 STARTED_AT  = Time.now
 SYSOPS      = ENV.fetch('BBS_SYSOPS', '').split(',').map { |name| name.strip.downcase }.reject(&:empty?)
@@ -48,6 +63,7 @@ WIKI_SECTIONS = {
   dos:       { prefix: '/dos',       title: 'DOS Corner' }
 }.freeze
 DESKTOP_ART = ENV.fetch('BBS_DESKTOP_ART', 'data/art/teletype.ansi')
+art_service = ArtService.new(DESKTOP_ART, profile: profile_service)
 
 BBS.configure do |config|
   config.mouse        = true
@@ -96,7 +112,12 @@ BBS.configure do |config|
       theme BBS::Theme.neumanntronics
       # Doors: full-line programs a caller can step into from the Doors menu.
       # The BBS hands the telnet line over and takes it back when the program exits.
-      door :sermo, Sermo::OS, label: '&SERMO'
+      door :sermo,    Sermo::OS, label: '&SERMO'
+      door :c64,      Commodore.os(Commodore::C64, games: games_service, files: file_library),
+           label: '&Commodore 64'
+      door :plus4,    Commodore.os(Commodore::PLUS4, games: games_service, files: file_library),
+           label: 'Commodore &Plus/4'
+      door :impostor, Impostor.flow(sessions: impostor_sessions), label: '&Impostor'
       services online:       online_service,
                boards:       board_service,
                wiki:         wiki_service,
@@ -107,6 +128,10 @@ BBS.configure do |config|
                accounts:     account_service,
                site:         site_service,
                discord:      discord,
+               oneliners:    oneliner_service,
+               files:        file_library,
+               dev_log:      dev_log_service,
+               art:          art_service,
                uptime:       STARTED_AT
 
       helpers do
@@ -122,6 +147,13 @@ BBS.configure do |config|
           else
             BBS::Dialogs.message(self, 'Select a board first.', title: ' Compose ')
           end
+        end
+
+        def show_art(name)
+          lines = services[:art].lines(name)
+          @desktop_art.lines      = lines
+          @desktop_art.art_height = lines.size
+          context[:desktop_art]   = name
         end
       end
 
@@ -140,7 +172,8 @@ BBS.configure do |config|
             total_messages: ctx[:boards].total_count,
             recent_callers: ctx[:last_callers].recent(3),
             releases:       ctx[:games].latest_releases(3),
-            events:         ctx[:site].upcoming_events(2)
+            events:         ctx[:site].upcoming_events(2),
+            oneliners:      ctx[:oneliners].recent(5)
           )
         end
         window_spec.button label: '&Continue', primary: true, cancel: true
@@ -367,6 +400,110 @@ BBS.configure do |config|
         end
       end
 
+      window :oneliners, type: :info do |window_spec|
+        window_spec.title  ' Oneliners '
+        window_spec.width  { |ctx| [ctx[:app].cols - 6, 78].min }
+        window_spec.height { |ctx| (ctx[:oneliners].recent(30).size + 6).clamp(10, ctx[:app].rows - 4) }
+        window_spec.scroll true
+        window_spec.body   { |ctx| UI::Formatters::Oneliners.body(ctx[:oneliners].recent(30)) }
+        window_spec.button label: '&Write', align: :left do |window, ctx|
+          app = ctx[:app]
+          BBS::Dialogs.input(app, prompt: "Your line on the wall (#{OnelinerService::MAX_LENGTH} characters at most):",
+                                  title: ' Oneliner ', width: 74,
+                                  on_submit: lambda do |text|
+                                    case ctx[:oneliners].add(app.context[:username], text)
+                                    when :ok
+                                      app.close_window(window)
+                                      app.open_window(:oneliners)
+                                    when :anonymous
+                                      BBS::Dialogs.message(app, 'Call again with a name to write on the wall.', title: ' Oneliners ')
+                                    when :too_long
+                                      BBS::Dialogs.message(app, "At most #{OnelinerService::MAX_LENGTH} characters.", title: ' Oneliners ')
+                                    end
+                                  end)
+          :keep
+        end
+        window_spec.button label: '&Close', cancel: true
+      end
+
+      window :file_library, type: :master_detail do |window_spec|
+        window_spec.title do |ctx|
+          ctx[:area] == :warp ? ' File Library — WARP: every catalog file ' : ' File Library — APPS: DOS programs '
+        end
+        window_spec.list_width    { |ctx| ctx[:area] == :warp ? 34 : 24 }
+        window_spec.empty_message '  (the FTP server did not answer — try again later)'
+        window_spec.items         { |ctx| ctx[:area] == :warp ? ctx[:files].warp_games : ctx[:files].apps }
+        window_spec.item_label do |item, ctx|
+          ctx[:area] == :warp ? UI::Formatters::Game.label(item[0]) : "#{item.folder.ljust(9)} #{item.version}"
+        end
+        window_spec.render_detail do |item, width, ctx|
+          if ctx[:area] == :warp
+            game, files = item
+            UI::Formatters::FileLibrary.warp_card(game, files, width, url: ctx[:files].warp_url,
+                                                                      catalog_url: ctx[:games].catalog_url(game))
+          else
+            UI::Formatters::FileLibrary.app_card(item, ctx[:files].readme(item), width,
+                                                 url: ctx[:files].app_url(item), theme: ctx[:app].theme)
+          end
+        end
+        window_spec.bottom_meta do |item, ctx|
+          ctx[:area] == :warp ? ctx[:files].warp_url : 'DOSINST installs it: the DOS Corner tells how'
+        end
+        window_spec.action label: '&Area', align: :left do |_window, ctx|
+          ctx[:app].open_window(:file_library, area: ctx[:area] == :warp ? :apps : :warp)
+          :close
+        end
+      end
+
+      window :dev_log, type: :master_detail do |window_spec|
+        window_spec.title         ' Dev Log — git.teletypegames.org '
+        window_spec.list_width    36
+        window_spec.empty_message '  (no activity, or Gitea did not answer)'
+        window_spec.items         { |ctx| ctx[:dev_log].recent(60) }
+        window_spec.item_label    { |activity, _ctx| UI::Formatters::DevLog.label(activity) }
+        window_spec.render_detail do |activity, width, ctx|
+          UI::Formatters::DevLog.detail(activity, width,
+                                        commit_url:  ->(sha) { ctx[:dev_log].commit_url(activity, sha) },
+                                        release_url: ctx[:dev_log].release_url(activity),
+                                        repo_url:    ctx[:dev_log].repo_url(activity))
+        end
+        window_spec.bottom_meta { |_activity, _ctx| '· push   ◆ tag   ★ release   + repository' }
+      end
+
+      window :gallery, type: :master_detail do |window_spec|
+        window_spec.title         ' ANSI Gallery '
+        window_spec.list_width    24
+        window_spec.empty_message '  (no art files)'
+        window_spec.items         { |ctx| ctx[:art].files }
+        window_spec.item_label do |name, ctx|
+          name == ctx[:app].context[:desktop_art] ? "#{name} ◄" : name
+        end
+        window_spec.render_detail do |name, width, ctx|
+          UI::Formatters::Gallery.detail(name, ctx[:art].sauce(name), ctx[:art].size(name), ctx[:art].lines(name), width)
+        end
+        window_spec.bottom_meta { |_name, _ctx| 'Show: the desktop for this call · Favourite: for every call' }
+        window_spec.action label: '&Show', align: :left do |window, ctx|
+          name = window.list_widget.selected_item
+          ctx[:app].show_art(name) if name
+          :close
+        end
+        window_spec.action label: '&Favourite', align: :left do |window, ctx|
+          app  = ctx[:app]
+          name = window.list_widget.selected_item
+          if name.nil?
+            nil
+          elsif app.context[:authenticated]
+            ctx[:art].set_favourite(app.context[:username], name)
+            app.show_art(name)
+            BBS::Dialogs.message(app, "#{name} is your desktop from now on.", title: ' Favourite ')
+          else
+            BBS::Dialogs.message(app, 'Register your name first (Users > Register…): ' \
+                                      'a favourite belongs to a registered name.', title: ' Favourite ', width: 60)
+          end
+          :keep
+        end
+      end
+
       window :sysop_console, type: :info do |window_spec|
         window_spec.title  ' Sysop Console '
         window_spec.width  70
@@ -401,6 +538,7 @@ BBS.configure do |config|
         menu '&File' do
           item '&Bulletin'    do open_window(:bulletin) end
           item '&News'        do open_window(:news) end
+          item '&Dev Log'     do open_window(:dev_log) end
           item '&System Info' do open_window(:system_info) end
           separator
           item 'E&xit', shortcut: 'Alt-X' do :halt end
@@ -409,13 +547,18 @@ BBS.configure do |config|
         menu '&Messages' do
           item '&Boards…',   shortcut: 'F2' do open_window(:messages) end
           item '&New Post…', shortcut: 'F3' do open_new_post end
+          separator
+          item '&Oneliners' do open_window(:oneliners) end
         end
 
         menu 'F&iles' do
+          item '&File Library'    do open_window(:file_library) end
           item '&Game Catalog'    do open_window(:games) end
           item '&Platform Guides' do open_window(:wiki, section: :platforms) end
           item '&Engines'         do open_window(:wiki, section: :engines) end
           item '&DOS Corner'      do open_window(:wiki, section: :dos) end
+          separator
+          item '&ANSI Gallery'    do open_window(:gallery) end
         end
 
         menu '&Users' do
@@ -474,7 +617,8 @@ BBS.configure do |config|
             BBS::Dialogs.message(self,
               'Teletype BBS — the telnet board of Teletype Games, powered by rubbs. ' \
               'News, our game catalog, the wiki guides and a live chat. ' \
-              'Register your name under Users to keep it. Doors: SERMO. Other systems: Network menu.',
+              'Register your name under Users to keep it. Doors: SERMO, a Commodore 64 and a Plus/4, ' \
+              'and the Impostor debrief terminal. Other systems: Network menu.',
               title: ' About ', width: 64)
           end
           item '&Keys' do
@@ -494,13 +638,15 @@ BBS.configure do |config|
       status_hint('Alt-X', 'Exit') { :halt }
 
       init do
-        art = if File.file?(DESKTOP_ART)
-                BBS::Widgets::AnsiArt.from_file(DESKTOP_ART)
-              else
-                BBS::Widgets::AnsiArt.new(lines: BBS::Widgets::AnsiArt.default_lines)
-              end
-        art.layout(1, 1, cols, rows - 2)
-        add(art)
+        name = context[:desktop_art] ||= services[:art].for_caller(context[:authenticated] ? context[:username] : nil)
+        lines = name ? services[:art].lines(name) : BBS::Widgets::AnsiArt.default_lines
+        @desktop_art = BBS::Widgets::AnsiArt.new(lines: lines)
+        @desktop_art.layout(1, 1, cols, rows - 2)
+        add(@desktop_art)
+        unless context[:welcomed]
+          context[:welcomed] = true
+          open_window(:bulletin)
+        end
       end
     end
     call do |ctx, runner|

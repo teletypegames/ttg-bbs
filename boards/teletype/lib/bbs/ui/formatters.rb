@@ -11,7 +11,7 @@ module UI
                           .lines.map { |l| "  \e[1;33m#{l.rstrip}\e[0m" }.freeze
 
       def self.body(username:, registered:, online_count:, total_messages:,
-                    recent_callers:, releases:, events:)
+                    recent_callers:, releases:, events:, oneliners:)
         callers = recent_callers.map do |c|
           "  · #{c.username}  \e[2;37m#{c.timestamp[0, 16].sub('T', ' ')}\e[0m"
         end
@@ -32,8 +32,123 @@ module UI
           *(events.empty? ? ['  (nothing scheduled)'] : events.map { |e| News.event_line(e) }),
           :spacer,
           'Last callers:',
-          *(callers.empty? ? ['  (none yet)'] : callers)
+          *(callers.empty? ? ['  (none yet)'] : callers),
+          :spacer,
+          'Oneliners:',
+          *(oneliners.empty? ? ['  (the wall is empty — Messages > Oneliners)'] : Oneliners.lines(oneliners))
         ]
+      end
+    end
+
+    module Oneliners
+      def self.lines(oneliners)
+        oneliners.map { |o| "  \e[1;33m#{o.username}\e[0m: #{o.text}" }
+      end
+
+      def self.body(oneliners)
+        return ['  (nobody has written on the wall yet — be the first)'] if oneliners.empty?
+
+        oneliners.map do |o|
+          "  \e[2;37m#{o.timestamp.to_s[5, 11].sub('T', ' ')}\e[0m  \e[1;33m#{o.username}\e[0m: #{o.text}"
+        end
+      end
+    end
+
+    module FileLibrary
+      def self.size(bytes)
+        return "#{bytes} B" if bytes < 1024
+        return format('%.1f KB', bytes / 1024.0) if bytes < 1024 * 1024
+
+        format('%.1f MB', bytes / 1024.0 / 1024)
+      end
+
+      def self.file_rows(files, width)
+        files.map do |f|
+          name = f.name.length > width - 14 ? "#{f.name[0, width - 15]}…" : f.name
+          "    #{name.ljust(width - 14)}\e[0;37m#{size(f.size).rjust(9)}\e[0m"
+        end
+      end
+
+      def self.app_card(app, readme, width, url:, theme:)
+        lines = ["  \e[1;33m#{app.title}\e[0m #{app.version}", "  \e[0;36m#{[app.platform, app.folder].reject(&:empty?).join(' · ')}\e[0m",
+                 "  \e[1;36m#{url}\e[0m", '']
+        BBS::FrameBuffer.wrap_ansi(app.description, width - 4).each { |l| lines << "  #{l}" }
+        lines << ''
+        lines << '  Files:'
+        lines.concat(file_rows(app.files, width))
+        unless readme.strip.empty?
+          lines << ''
+          lines.concat(BBS::Markdown.to_lines(readme, width: width - 1, theme: theme))
+        end
+        lines
+      end
+
+      def self.warp_card(game, files, width, url:, catalog_url:)
+        lines = ["  \e[1;33m#{game.title}\e[0m", "  \e[0;36m#{game.platform}\e[0m", "  \e[1;36m#{url}\e[0m",
+                 "  \e[1;36m#{catalog_url}\e[0m", '']
+        files.reject(&:dir).group_by { |f| f.name[/-(\d+(?:\.\d+)*)(?=[.-]|\z)/, 1].to_s }
+             .sort_by { |version, _| Gem::Version.correct?(version) ? Gem::Version.new(version) : Gem::Version.new('0') }
+             .reverse_each do |version, group|
+          lines << "  \e[1;37m#{version.empty? ? '?' : version}\e[0m"
+          lines.concat(file_rows(group, width))
+        end
+        lines
+      end
+    end
+
+    module DevLog
+      MARKS = { push: '·', tag: '◆', release: '★', repo: '+' }.freeze
+
+      def self.label(activity)
+        "#{MARKS[activity.kind]} #{activity.created_at.localtime.strftime('%m-%d')} #{activity.repo}"
+      end
+
+      def self.summary(activity)
+        case activity.kind
+        when :push
+          n = activity.commits.size
+          "#{activity.user} pushed #{n} commit#{'s' if n != 1} to #{activity.ref}"
+        when :tag     then "#{activity.user} tagged #{activity.ref}"
+        when :release then "#{activity.user} released #{activity.title.empty? ? activity.ref : activity.title}"
+        when :repo    then "#{activity.user}: new or moved repository"
+        end
+      end
+
+      # Commit messages without their trailers (Co-Authored-By and the like).
+      def self.message_lines(message, width)
+        body = message.lines.reject { |l| l.match?(/\A[\w-]+-By: /) }.join.rstrip
+        body.split("\n").flat_map { |l| l.strip.empty? ? [''] : BBS::FrameBuffer.wrap_ansi(l, width - 6).map { |w| "    #{w}" } }
+      end
+
+      def self.detail(activity, width, commit_url:, release_url:, repo_url:)
+        lines = ["  \e[1;33m#{activity.repo}\e[0m", "  \e[0;36m#{summary(activity)}\e[0m",
+                 "  \e[2;37m#{activity.created_at.localtime.strftime('%Y-%m-%d %H:%M')}\e[0m", '']
+        if activity.kind == :release
+          lines << "  \e[1;36m#{release_url}\e[0m"
+          lines << ''
+        end
+        activity.commits.each do |sha, message|
+          lines << "  \e[1;37m#{sha[0, 7]}\e[0m"
+          lines << "  \e[1;36m#{commit_url.call(sha)}\e[0m"
+          lines.concat(message_lines(message, width))
+          lines << ''
+        end
+        lines << "  \e[1;36m#{repo_url}\e[0m" if activity.commits.empty?
+        lines
+      end
+    end
+
+    module Gallery
+      def self.detail(name, sauce, size, preview, width)
+        meta = [['File', name], ['Size', FileLibrary.size(size)]]
+        if sauce
+          meta << ['Title', sauce.title] unless sauce.title.empty?
+          meta << ['Artist', sauce.author] unless sauce.author.empty?
+          meta << ['Group', sauce.group] unless sauce.group.empty?
+          meta << ['Date', sauce.date] unless sauce.date.empty?
+        end
+        [*meta.map { |k, v| "  \e[0;37m#{k.ljust(7)}\e[0m #{v}" }, '',
+         *preview.map { |l| BBS::FrameBuffer.clip_ansi(l, width) }]
       end
     end
 
@@ -96,7 +211,8 @@ module UI
         rows = SYSTEMS.flat_map do |name, address, note|
           ["  \e[1;33m#{name.ljust(14)}\e[0m \e[1;36m#{address}\e[0m", "  #{' ' * 15}#{note}"]
         end
-        [*rows, :spacer, '  SERMO, the Neumatronic Margittai machine, is a door here: Doors > SERMO.',
+        [*rows, :spacer, '  Doors here: SERMO, the Neumatronic Margittai machine; a Commodore 64',
+         '  and a Plus/4 with our games on their disks; the Impostor terminal.',
          :spacer, '  In a browser, no telnet client needed:',
          "  \e[1;36mhttps://bbsweb.teletypegames.org\e[0m"]
       end

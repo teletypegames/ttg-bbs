@@ -2,8 +2,10 @@
 
 Telnet-accessible Synchronet-style community BBS server built on the
 [rubbs](https://git.teletypegames.org/engines/rubbs) gem. Full-screen ANSI interface
-with a top menubar, stacked modal windows, message boards, multi-user chat,
-news from teletypegames.org, the game catalog and the wiki guides.
+with a top menubar, stacked modal windows, message boards, a oneliners wall,
+multi-user chat, news from teletypegames.org, the team's dev log from Gitea,
+the game catalog, the file areas of the FTP server, the wiki guides, an ANSI
+gallery, and doors: SERMO, a Commodore 64, a Plus/4 and the Impostor terminal.
 
 ## Running
 
@@ -50,16 +52,22 @@ Copy `env-example` to `.env`:
 | `BOARDS_PATH` | `data/boards` | Directory of per-board CSV files |
 | `MESSAGES_PATH` | `data/messages.dat` | Legacy single-board file; auto-migrated into the General board on first run |
 | `LAST_CALLERS_PATH` | `data/last_callers.csv` | Finished calls (see *Last callers* below) |
-| `PROFILE_PATH` | `data/profiles.csv` | User profile CSV |
+| `PROFILE_PATH` | `data/profiles.csv` | User profile CSV (with the favourite desktop art) |
+| `ONELINERS_PATH` | `data/oneliners.csv` | The oneliners wall |
+| `IMPOSTOR_SESSIONS_PATH` | `data/impostor_sessions.csv` | Codes, feedback and addresses left in the Impostor door |
+| `BBS_FTP_HOST` | `ftp.teletypegames.org` | The FTP server of the File Library (anonymous, passive) |
 | `SERMO_LLM_URL` | set by compose | SERMO's model, `http://llm:8080`; empty = canned replies only |
 | `SERMO_LLM_MODEL` | set by compose | the model's name in infra/llm, `qwen3.5-0.8b` |
 | `SERMO_LLM_API_KEY` | empty | SERMO's key to infra/llm, one of its `LLM_API_KEYS`; without it SERMO gets a 401 and answers with canned replies |
-| `BBS_DESKTOP_ART` | `data/art` | Path to a single ANSI art file (`.ans`, `.ansi`, `.asc`, `.nfo`, `.txt`) **or** a directory containing them — a random one is shown per session. CP437 / SAUCE-aware |
+| `BBS_DESKTOP_ART` | `data/art/teletype.ansi` | Path to a single ANSI art file (`.ans`, `.ansi`, `.asc`, `.nfo`, `.txt`) **or** a directory containing them. Its folder is the ANSI Gallery. A file is every caller's desktop; with a directory a random one is shown per session. A registered caller's favourite wins over both. CP437 / SAUCE-aware |
 
 ## Interface
 
 Connect, type a name at the prompt, then a full-screen Synchronet-style shell
-opens.
+opens with the Welcome window on top: the latest releases, what is coming up,
+the last callers and the oneliners. Continue (or Esc) closes it; File >
+Bulletin opens it again. It does not come back when a caller returns from a
+door.
 
 ### Keys
 
@@ -79,12 +87,12 @@ opens.
 
 | Menu | Items |
 |---|---|
-| **File** | Bulletin · News · System Info · Exit |
-| **Messages** | Boards… · New Post… |
-| **Files** | Game Catalog · Platform Guides · Engines · DOS Corner |
+| **File** | Bulletin · News · Dev Log · System Info · Exit |
+| **Messages** | Boards… · New Post… · Oneliners |
+| **Files** | File Library · Game Catalog · Platform Guides · Engines · DOS Corner · ANSI Gallery |
 | **Users** | Online · Last Callers · Team · Profile… · Register… · Language EN/HU |
 | **Chat** | Open chat |
-| **Doors** | SERMO |
+| **Doors** | SERMO · Commodore 64 · Commodore Plus/4 · Impostor |
 | **Network** | Other systems (our other BBSes and bbsweb) |
 | **Sysop** | Console (logged-in sysops only) |
 | **Help** | About · Keys |
@@ -93,10 +101,13 @@ opens.
 
 - **Multi-board messaging** — separate sub-boards (General / Tech / Off-Topic / Sysop), each in its own CSV file under `data/boards/`.
 - **Multi-line composer** — `TextArea` widget, up to 1000 chars per post.
+- **Oneliners** — a wall of one-line messages (64 characters, a name needed, not Anonymous); the last five are in the Welcome window.
 - **Live chat** — broadcast hub, 1 Hz polling, history replay on join.
-- **Bulletin on login** — the latest releases and upcoming events from teletypegames.org, plus message count and last callers.
+- **Bulletin on login** — the latest releases and upcoming events from teletypegames.org, message count, last callers and the last oneliners.
+- **Dev Log** — the public activity of every organisation on git.teletypegames.org (pushes with their commit messages, tags, releases, new repositories), newest first, read anonymously from the Gitea API, so private repositories never show.
 - **News** — the latest releases with catalog links, upcoming events, and the wiki's `blog` posts once there are any (the same source as teletypegames.org/blog).
 - **Game catalog** — every catalog entry (all pages of the API), sorted by platform; the **Platform** button cycles a platform filter. The card shows version, release date, the catalog link, the downloadable kinds, and the external links.
+- **File Library** — the FTP server as a BBS file area. **APPS**: the DOS programs of the DOSINST store, with their `INFO.INI`, file list and README. **WARP** (the **Area** button switches): every file of every catalog game, all versions, with sizes. Read over anonymous passive FTP and cached for five minutes.
 - **Wiki sections** — Platform Guides (`/platforms`), Engines (`/engines`) and the DOS Corner (`/dos`, with an FTP/DOSINST intro), read from the Grav JSON API; private pages are left out. Users > Language switches them to Hungarian.
 - **Team** — the members of teletypegames.org with their mottos.
 - **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `BBS::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
@@ -104,6 +115,7 @@ opens.
 - **Sysop console** — stats + broadcast, for names in `BBS_SYSOPS` that logged in with their password.
 - **Discord feed** — new board posts and sysop broadcasts go to `BBS_DISCORD_WEBHOOK`, mentions disabled.
 - **Last callers** — a call is logged when it ends, and only if the terminal reported its window size (telnet NAWS) and stayed at least 10 seconds. Telnet password-guessing bots never get listed, and neither do they show up as online.
+- **ANSI Gallery** — the art files of the desktop folder with their SAUCE record and a preview. **Show** puts one on the desktop for the call, **Favourite** keeps it for every call of a registered name (the `art` column of the profile).
 - **xterm mouse** — click menus, buttons, list items; wheel-scroll lists.
 - **Idle disconnect** at 10 minutes.
 - **Configurable desktop art** — drop `.ans` / `.ansi` / `.asc` / `.nfo` / `.txt` files into `data/art/` (or wherever `BBS_DESKTOP_ART` points). Classic CP437 BBS art is auto-decoded; SAUCE metadata is stripped. With a directory, a different file is shown per session.
@@ -113,7 +125,7 @@ opens.
 ```
 bbs.rb                                 entry point — services + Application
 lib/
-  repository/
+  domain/repository/
     online_users_repository.rb         thread-safe connected-user map
     board_repository.rb                multi-board CSV store
     wiki_repository.rb                 Grav wiki JSON client
@@ -122,20 +134,30 @@ lib/
     profile_repository.rb              per-user persistent profile
     account_repository.rb              registered names, PBKDF2 hashes
     site_repository.rb                 teletypegames.org events + members
+    oneliner_repository.rb             the oneliners wall
+    ftp_repository.rb                  anonymous FTP: APPS programs, WARP files
+    gitea_repository.rb                public activity of the Gitea organisations
     http_json.rb                       JSON GET + 5-minute cache
-  service/
+  domain/service/
     online_service.rb, board_service.rb, wiki_service.rb,
     games_service.rb, chat_service.rb, last_callers_service.rb,
     profile_service.rb, account_service.rb, site_service.rb,
-    discord_notifier.rb
-  model/                               value objects (MessageModel, GameModel, …)
+    oneliner_service.rb, file_library_service.rb, dev_log_service.rb,
+    art_service.rb, discord_notifier.rb
+  domain/model/                        value objects (MessageModel, GameModel, …)
+  doors/commodore.rb                   the C64 and Plus/4 doors
+  doors/commodore/basic.rb             their BASIC V2 interpreter
   bbs/ui/formatters.rb                 view helpers: bulletin, news, game card,
-                                       team, network, DOS intro, users, sysop
+                                       team, network, DOS intro, users, sysop,
+                                       oneliners, file library, dev log, gallery
 data/
   boards/<id>.csv                      per-board messages (auto-created)
   last_callers.csv                     finished calls
   profiles.csv                         persistent user profiles
   accounts.csv                         registered names (mode 600)
+  oneliners.csv                        the oneliners wall
+  impostor_sessions.csv                what callers left in the Impostor door
+  art/                                 the desktop art and the ANSI Gallery
 bin/account                            create an account / reset a password
 ```
 
@@ -145,18 +167,41 @@ A door is one line in the Application definition in `bbs.rb`; the Doors menu
 (`doors` in the menubar block) lists the declared doors by itself:
 
 ```ruby
-door :sermo, Sermo::OS, label: '&SERMO'
+door :sermo,    Sermo::OS, label: '&SERMO'
+door :c64,      Commodore.os(Commodore::C64, games: games_service, files: file_library),
+     label: '&Commodore 64'
+door :plus4,    Commodore.os(Commodore::PLUS4, games: games_service, files: file_library),
+     label: 'Commodore &Plus/4'
+door :impostor, Impostor.flow(sessions: impostor_sessions), label: '&Impostor'
 ```
 
-The program is a `BBS::FakeOS` definition or a callable `(session, context)`.
+The program is a `BBS::FakeOS` definition, a `BBS::Flow` or a callable `(session, context)`.
 rubbs runs it on a clean screen and rebuilds the BBS when it returns, with the
 same context, so the caller's session survives the trip.
 
-The `sermo` gem is pinned to a revision in `Gemfile.lock`; the entrypoint
-updates only rubbs on start. After a change in sermo-bbs:
+**Commodore 64 / Plus/4** (`lib/doors/commodore.rb`) — the machine at its
+`READY.` prompt: blue C64 screen, grey Plus/4 screen, 40 columns. It has a
+small BASIC V2 (`lib/doors/commodore/basic.rb`: PRINT, LET, GOTO, GOSUB, IF,
+FOR/NEXT, INPUT, POKE/PEEK, LIST, RUN, NEW, the numeric and string
+functions), so `10 PRINT CHR$(205.5+RND(1)); : GOTO 10` draws the maze; any
+key is RUN/STOP. The disk holds our games for that machine from the catalog:
+`LOAD"$",8` and `LIST` show the directory (the block counts come from the
+`.prg` sizes on the FTP server), `LOAD"NAME",8` (wildcards work) loads a game
+as a BASIC program, `LIST` shows it and `RUN` prints its card with the catalog
+link. The Plus/4 also knows `DIRECTORY` and `DLOAD`. `SYS 64738` resets the
+C64; `EXIT` returns to the BBS.
+
+**Impostor** ([impostor-bbs](https://git.teletypegames.org/bbs/impostor-bbs),
+the `impostor` gem) — the debrief terminal of Definitely not an Impostor, the
+same flow as the standalone Impostor BBS on port 2324. Its sessions go to
+`IMPOSTOR_SESSIONS_PATH`. When it ends, ENTER returns to the BBS.
+
+The `sermo` and `impostor` gems are pinned to a revision in `Gemfile.lock`;
+the entrypoint updates only rubbs on start. After a change in sermo-bbs or
+impostor-bbs:
 
 ```bash
-bundle lock --update sermo
+bundle lock --update sermo      # or impostor
 ```
 
 then commit and redeploy.
