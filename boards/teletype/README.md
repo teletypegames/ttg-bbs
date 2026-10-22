@@ -83,6 +83,7 @@ door.
 | `Enter` | Activate the focused button / submit input |
 | letter / `Alt+letter` | Press the window button with that hotkey (Alt in a text field) |
 | `Esc` | Close the top window / menu |
+| `F5` / `Alt-Enter` | Full screen and back, for the windows with much to read (also `[↑]` / `[↕]` on the title bar, or a double click on it) |
 | `F1` | Ask the TTG Master |
 | `F2` | Message Boards |
 | `F3` | Quick post |
@@ -123,6 +124,7 @@ door.
 - **Last callers** — a call is logged when it ends, and only if the terminal reported its window size (telnet NAWS) and stayed at least 10 seconds. Telnet password-guessing bots never get listed, and neither do they show up as online.
 - **ANSI Gallery** — the art files of the desktop folder with their SAUCE record and a preview. **Show** puts one on the desktop for the call, **Favourite** keeps it for every call of a registered name (the `art` column of the profile).
 - **TTG Master** (the first menu, F1, the desktop button, the Welcome window, Help) — the sysop who answers callers' questions about the board; the menu also has ready questions. See *Characters* below.
+- **Full screen** — the windows with much to read (Welcome, News, Team, Oneliners, Boards and the composer, the wiki sections, Game Catalog, FTP Browser, Dev Log, ANSI Gallery, Live Chat, the TTG Master) can fill the screen and go back: `F5`, `Alt-Enter`, the `[↑]` gadget or a double click on the title bar (rubbs' `maximizable`). The small info windows and dialogs cannot.
 - **xterm mouse** — click menus, buttons, list items; wheel-scroll lists.
 - **Idle disconnect** at 10 minutes.
 - **Configurable desktop art** — drop `.ans` / `.ansi` / `.asc` / `.nfo` / `.txt` files into `data/art/` (or wherever `BBS_DESKTOP_ART` points). Classic CP437 BBS art is auto-decoded; SAUCE metadata is stripped. With a directory, a different file is shown per session.

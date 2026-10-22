@@ -224,6 +224,7 @@ BBS.configure do |config|
       # ── Windows ────────────────────────────────────────────────────────────────
 
       window :bulletin, type: :info do |window_spec|
+        window_spec.maximizable true
         window_spec.title  ' Welcome '
         window_spec.width  72
         window_spec.height 23
@@ -267,6 +268,7 @@ BBS.configure do |config|
       end
 
       window :messages, type: :master_detail do |window_spec|
+        window_spec.maximizable true
         window_spec.title         ' Message Boards '
         window_spec.list_width    20
         window_spec.empty_message '  (no boards configured)'
@@ -288,6 +290,7 @@ BBS.configure do |config|
       end
 
       window :compose_message, type: :form do |window_spec|
+        window_spec.maximizable true
         window_spec.title        { |ctx| ctx[:board] ? " Post to #{ctx[:board].title} " : ' Compose ' }
         window_spec.width        { |ctx| [ctx[:app].cols - 8, 70].min }
         window_spec.height       14
@@ -318,6 +321,7 @@ BBS.configure do |config|
       end
 
       window :wiki, type: :master_detail do |window_spec|
+        window_spec.maximizable true
         window_spec.title         { |ctx| " #{WIKI_SECTIONS[ctx[:section]][:title]} " }
         window_spec.list_width    { |ctx| [32, ctx[:app].cols / 3].max }
         window_spec.empty_message '  (no pages found)'
@@ -345,6 +349,7 @@ BBS.configure do |config|
       end
 
       window :games, type: :master_detail do |window_spec|
+        window_spec.maximizable true
         window_spec.title         { |ctx| ctx[:platform] ? " Game Catalog — #{ctx[:platform]} " : ' Game Catalog ' }
         window_spec.list_width    34
         window_spec.empty_message '  (no games)'
@@ -362,6 +367,7 @@ BBS.configure do |config|
       end
 
       window :news, type: :info do |window_spec|
+        window_spec.maximizable true
         window_spec.title  ' News '
         window_spec.width  { |ctx| [ctx[:app].cols - 6, 76].min }
         window_spec.height { |ctx| [ctx[:app].rows - 4, 24].min }
@@ -378,6 +384,7 @@ BBS.configure do |config|
       end
 
       window :team, type: :info do |window_spec|
+        window_spec.maximizable true
         window_spec.title  ' The Team '
         window_spec.width  64
         window_spec.height { |ctx| [ctx[:app].rows - 4, 22].min }
@@ -433,6 +440,7 @@ BBS.configure do |config|
       end
 
       window :chat, type: :stream do |window_spec|
+        window_spec.maximizable true
         window_spec.title       ' Live Chat '
         window_spec.placeholder 'Type a message and press Enter…'
         window_spec.initial_lines do |ctx|
@@ -472,6 +480,7 @@ BBS.configure do |config|
       end
 
       window :oneliners, type: :info do |window_spec|
+        window_spec.maximizable true
         window_spec.title  ' Oneliners '
         window_spec.width  { |ctx| [ctx[:app].cols - 6, 78].min }
         window_spec.height { |ctx| [ctx[:oneliners].recent(30).size + 6, 10].max }
@@ -501,6 +510,7 @@ BBS.configure do |config|
 
       # A plain FTP client: Enter opens a folder (or sends a file), .. goes up.
       window :ftp, type: :master_detail do |window_spec|
+        window_spec.maximizable true
         window_spec.title do |ctx|
           ctx[:ftp_path] ||= ctx[:app].context[:ftp_path] || FileLibraryService::ROOT
           UI::Formatters::Ftp.title(ctx[:files].host, ctx[:ftp_path])
@@ -538,6 +548,7 @@ BBS.configure do |config|
       end
 
       window :dev_log, type: :master_detail do |window_spec|
+        window_spec.maximizable true
         window_spec.title         ' Dev Log — git.teletypegames.org '
         window_spec.list_width    36
         window_spec.empty_message '  (no activity, or Gitea did not answer)'
@@ -553,6 +564,7 @@ BBS.configure do |config|
       end
 
       window :gallery, type: :master_detail do |window_spec|
+        window_spec.maximizable true
         window_spec.title         ' ANSI Gallery '
         window_spec.list_width    24
         window_spec.empty_message '  (no art files)'
@@ -587,6 +599,7 @@ BBS.configure do |config|
       end
 
       window :master, type: :stream do |window_spec|
+        window_spec.maximizable true
         window_spec.title       ' Ask the TTG Master '
         window_spec.placeholder 'Ask about the board and press Enter…'
         window_spec.initial_lines do |ctx|
@@ -735,7 +748,8 @@ BBS.configure do |config|
           item '&Keys' do
             BBS::Dialogs.message(self,
               'Alt+letter — open menu · Tab/Shift-Tab — move focus · Enter — activate · ' \
-              'Esc — close window · F1 Ask the TTG Master · F2 Boards · F3 Post · F4 Chat · F10 Menu',
+              'Esc — close window · F5 or Alt-Enter — full screen and back (or [↑] on the title bar) · ' \
+              'F1 Ask the TTG Master · F2 Boards · F3 Post · F4 Chat · F10 Menu',
               title: ' Keys ', width: 70)
           end
         end

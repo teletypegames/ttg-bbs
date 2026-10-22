@@ -31,3 +31,5 @@
   expect: [Teletype Games]
 - q: how do I use the commodore door?
   expect: [LOAD]
+- q: how do I make a window full screen?
+  expect: [F5]
