@@ -1,6 +1,6 @@
 FROM ruby:3.3-alpine
 
-RUN apk add --no-cache git build-base
+RUN apk add --no-cache git build-base tzdata
 
 WORKDIR /app
 
