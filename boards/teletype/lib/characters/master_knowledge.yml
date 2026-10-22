@@ -48,8 +48,8 @@
   fact: 'Doors > Impostor is the debrief terminal of our game Definitely not an Impostor; it asks for the personal code the game gave you. It also runs on its own at teletypegames.org:2324.'
 - keys: [network, bbs, other, telnet, bbsweb, port]
   fact: 'File > BBS Network lists our boards, the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324 and the WIKI-BBS at 2325. All three boards work in a browser too, at bbsweb.teletypegames.org.'
-- keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger]
-  fact: 'Alt and a letter opens a menu, F10 the first one; Tab moves inside a window, Enter presses the button, Esc closes the window. F2 boards, F3 post, F4 chat, F1 asks me. F5 or Alt-Enter puts a big window on the full screen and back, so does the [↑] on its title bar. The mouse works too.'
+- keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag]
+  fact: 'Alt and a letter opens a menu, F10 the first one; Tab moves inside a window, Enter presses the button, Esc closes the window. F2 boards, F3 post, F4 chat, F1 asks me. F5 or Alt-Enter puts a big window on the full screen and back, so does the [↑] on its title bar. Ctrl-F5 or F6 moves a window with the arrows and sizes it with Shift and the arrows; with the mouse, drag its title bar or its bottom right corner. The mouse works too.'
 - keys: [sysop, admin, operator, console, broadcast]
   fact: 'Sysop > Console is for the sysops of the board, logged in with their password; it shows the numbers and sends broadcasts to the chat.'
 - keys: [teletype, ttg, company, studio, website, site, made, built, created, behind, owner, who made, who built, who run, who is behind]

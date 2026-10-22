@@ -33,3 +33,5 @@
   expect: [LOAD]
 - q: how do I make a window full screen?
   expect: [F5]
+- q: can I move a window?
+  expect: [F6]

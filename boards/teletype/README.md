@@ -84,6 +84,7 @@ door.
 | letter / `Alt+letter` | Press the window button with that hotkey (Alt in a text field) |
 | `Esc` | Close the top window / menu |
 | `F5` / `Alt-Enter` | Full screen and back, for the windows with much to read (also `[↑]` / `[↕]` on the title bar, or a double click on it) |
+| `Ctrl-F5` / `F6` | Move the window with the arrows, size it with Shift+arrows (Tab switches), Enter ends; with the mouse, drag the title bar or the `┘` corner |
 | `F1` | Ask the TTG Master |
 | `F2` | Message Boards |
 | `F3` | Quick post |

@@ -759,6 +759,7 @@ BBS.configure do |config|
             BBS::Dialogs.message(self,
               'Alt+letter — open menu · Tab/Shift-Tab — move focus · Enter — activate · ' \
               'Esc — close window · F5 or Alt-Enter — full screen and back (or [↑] on the title bar) · ' \
+              'Ctrl-F5 or F6 — move (arrows) and size (Shift+arrows) a window, or drag its title bar and its ┘ corner · ' \
               'F1 Ask the TTG Master · F2 Boards · F3 Post · F4 Chat · F10 Menu',
               title: ' Keys ', width: 70)
           end
