@@ -14,7 +14,7 @@ class AccountService
   end
 
   def self.normalize_name(raw)
-    name = raw.to_s.strip.gsub(/\s+/, ' ')
+    name = raw.to_s.dup.force_encoding(Encoding::UTF_8).scrub('').strip.gsub(/\s+/, ' ')
     name.match?(NAME_PATTERN) ? name : ANONYMOUS
   end
 

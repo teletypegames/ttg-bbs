@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'bbs'
+require 'csv'
 
 # Persistent user profile, keyed by lower-cased username. Backed by a
 # BBS::Store CSV at +path+.
@@ -8,6 +9,7 @@ class ProfileRepository
   HEADERS = %w[session_id timestamp username signature location homepage notes art].freeze
 
   def initialize(path)
+    upgrade_header(path)
     @store = BBS::Store.new(path: path, headers: HEADERS)
     @by_name = {}
     @mu = Mutex.new
@@ -29,6 +31,18 @@ class ProfileRepository
   end
 
   private
+
+  # A file written before a column was added keeps its old header, and the
+  # new column of later rows would be read without a name.
+  def upgrade_header(path)
+    return unless File.exist?(path)
+
+    lines = File.readlines(path)
+    return if lines.empty? || CSV.parse_line(lines.first) == HEADERS
+
+    lines[0] = HEADERS.to_csv
+    File.write(path, lines.join)
+  end
 
   def rebuild
     @mu.synchronize { rebuild_locked }

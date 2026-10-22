@@ -100,6 +100,10 @@ module Commodore
       execute
     rescue Error => e
       report(e.message)
+    rescue ZeroDivisionError, RangeError
+      report('OVERFLOW')
+    rescue SystemStackError
+      report('OUT OF MEMORY')
     rescue Break
       @screen.newline.call unless @screen.column.call.zero?
       @screen.write.call("BREAK#{" IN #{@lines[@line_index][0]}" if @line_index}")
@@ -570,7 +574,10 @@ module Commodore
     def number(value)
       raise Error, 'TYPE MISMATCH' if value.is_a?(String)
 
-      value.to_f
+      value = value.to_f
+      raise Error, 'OVERFLOW' unless value.finite?
+
+      value
     end
 
     def string(value)

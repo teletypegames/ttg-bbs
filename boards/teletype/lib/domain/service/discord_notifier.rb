@@ -18,19 +18,22 @@ class DiscordNotifier
   def enabled? = !@uri.nil?
 
   def board_post(board_title, username, text)
-    notify("📟 **#{username}** on *#{board_title}*: #{clip(text)}")
+    notify("📟 **#{escape(username)}** on *#{escape(board_title)}*: #{clip(text)}")
   end
 
   def broadcast(username, text)
-    notify("📢 Sysop broadcast from **#{username}**: #{clip(text)}")
+    notify("📢 Sysop broadcast from **#{escape(username)}**: #{clip(text)}")
   end
 
   private
 
   def clip(text)
     flat = text.to_s.gsub(/\s+/, ' ').strip
-    flat.length > LIMIT ? "#{flat[0, LIMIT]}…" : flat
+    escape(flat.length > LIMIT ? "#{flat[0, LIMIT]}…" : flat)
   end
+
+  # Discord markdown off, links included: a caller's [text](url) stays text.
+  def escape(text) = text.to_s.gsub(/([\\*_~`|>\[\]()<#:-])/) { "\\#{Regexp.last_match(1)}" }
 
   def notify(content)
     return unless enabled?

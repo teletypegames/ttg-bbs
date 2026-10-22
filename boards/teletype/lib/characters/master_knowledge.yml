@@ -28,8 +28,8 @@
   fact: 'File > System Info shows the board''s numbers and uptime.'
 - keys: [game, catalog, release, platform, download, browser, play]
   fact: 'Files > Game Catalog lists every game of Teletype Games; the Platform button cycles through the platforms, and each card has the catalog link at teletypegames.org/catalog/ with its downloads. Most of our games play right in the browser from their catalog page.'
-- keys: [file, files, library, ftp, apps, warp, download]
-  fact: 'Files > File Library shows the FTP server ftp.teletypegames.org (anonymous, read-only, passive mode) as a file area. APPS holds the DOS programs, WARP every file of every catalog game; the Area button switches between them.'
+- keys: [file, files, library, ftp, apps, warp, download, zmodem, browser, folder]
+  fact: 'Files > FTP Browser is an FTP client on ftp.teletypegames.org (anonymous, read-only, passive mode): Enter opens a folder or downloads a file to your terminal by ZMODEM, Up goes back. APPS holds the DOS programs, WARP every file of every catalog game, WIKI the wiki for DOS.'
 - keys: [dos, dosinst, gmenu, bmagic, ttgwiki, install, mtcp]
   fact: 'Files > DOS Corner is about our DOS programs. DOSINST installs, updates and removes them over the network from the APPS folder of ftp.teletypegames.org; the others are GMENU, BMAGIC and TTGWIKI.'
 - keys: [wiki, guide, guides, engine, engines, documentation, docs, howto]

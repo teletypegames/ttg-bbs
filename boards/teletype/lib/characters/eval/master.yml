@@ -4,7 +4,7 @@
 - q: how do I register my name?
   expect: [Users > Register]
 - q: where can I find DOS programs?
-  expect: [File Library, DOS Corner, DOSINST]
+  expect: [FTP Browser, DOS Corner, DOSINST]
 - q: what's new?
   expect: [Blessing of Ra, Plus/4 Demo, File > News]
 - q: are there any events coming up?
@@ -20,7 +20,7 @@
 - q: can I play the games in a browser?
   expect: [catalog]
 - q: is there an FTP server?
-  expect: [ftp.teletypegames.org, File Library]
+  expect: [ftp.teletypegames.org, FTP Browser]
 - q: how do I change the background picture?
   expect: [ANSI Gallery]
 - q: what is the meaning of life?

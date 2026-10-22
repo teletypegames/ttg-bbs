@@ -1,27 +1,43 @@
 # frozen_string_literal: true
 
 # Tiny in-memory chat hub. Each session subscribes to receive broadcast
-# messages from other sessions. Backed by a per-session Queue so the
-# Application's idle tick can drain pending messages.
+# messages from other sessions. Backed by a per-session list so the
+# Application's idle tick can drain pending messages; a session that does
+# not read its chat keeps only the latest PENDING_LIMIT lines.
 class ChatService
   ChatLine = Struct.new(:timestamp, :username, :text)
 
+  PENDING_LIMIT = 200
+  MIN_INTERVAL  = 0.5
+
   def initialize
     @subs = {}
+    @last = {}
     @mu   = Mutex.new
     @history = []
     @history_limit = 200
   end
 
   def subscribe(session_id)
+    @mu.synchronize { @subs[session_id] = [] }
+  end
+
+  # False when the session spoke less than MIN_INTERVAL seconds ago.
+  def may_speak?(session_id)
+    now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     @mu.synchronize do
-      @subs[session_id] = Queue.new
-      @history.last(50).each { |line| @subs[session_id] << line }
+      return false if @last[session_id] && now - @last[session_id] < MIN_INTERVAL
+
+      @last[session_id] = now
+      true
     end
   end
 
   def unsubscribe(session_id)
-    @mu.synchronize { @subs.delete(session_id) }
+    @mu.synchronize do
+      @subs.delete(session_id)
+      @last.delete(session_id)
+    end
   end
 
   def broadcast(username, text)
@@ -29,20 +45,17 @@ class ChatService
     @mu.synchronize do
       @history << line
       @history.shift while @history.size > @history_limit
-      @subs.each_value { |q| q << line }
+      @subs.each_value do |pending|
+        pending << line
+        pending.shift while pending.size > PENDING_LIMIT
+      end
     end
     line
   end
 
   # Returns Array<ChatLine> of pending messages for the given session.
   def drain(session_id)
-    queue = @mu.synchronize { @subs[session_id] }
-    return [] unless queue
-    pending = []
-    pending << queue.pop(true) until queue.empty?
-    pending
-  rescue ThreadError
-    pending
+    @mu.synchronize { @subs[session_id]&.slice!(0..) || [] }
   end
 
   def history(n = 50)

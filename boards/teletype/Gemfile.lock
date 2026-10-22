@@ -1,22 +1,22 @@
 GIT
   remote: https://git.teletypegames.org/bbs/impostor-bbs.git
-  revision: 9e0f37c2be95e086d31e152b076d6df690cdd671
+  revision: ff97dea4bc86f6228feb4487c85502ce51fd9f75
   specs:
     impostor (0.1.0)
       bbs (>= 0.7)
 
 GIT
   remote: https://git.teletypegames.org/bbs/sermo-bbs.git
-  revision: 8c1947e4321f0d17ad0788317982781ac2aa3ca5
+  revision: 0fb9ae58043c8e6222e136f8145cc91865bf9361
   specs:
-    sermo (0.4.0)
+    sermo (0.4.1)
       bbs (>= 0.5)
 
 GIT
   remote: https://git.teletypegames.org/engines/rubbs.git
-  revision: 02b6c7ee25384237a4d6fa55ee0a65e2d04a3942
+  revision: 9788690ffa34756128ac01542b7648f71f7c427f
   specs:
-    bbs (0.8.0)
+    bbs (0.9.0)
       artii (~> 2.1)
 
 GEM

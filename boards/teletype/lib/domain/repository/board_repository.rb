@@ -6,9 +6,12 @@ require 'fileutils'
 require_relative '../model/message_model'
 
 # Multi-board store. Each board ("general", "tech", "offtopic"…) maps to one
-# CSV file inside +base_dir+. Lazy-loaded the first time a board is touched.
+# CSV file inside +base_dir+. Lazy-loaded the first time a board is touched;
+# memory keeps the latest KEEP messages of a board and the count of all.
 class BoardRepository
   BoardMeta = Struct.new(:id, :title, :description)
+
+  KEEP = 500
 
   DEFAULT_BOARDS = [
     BoardMeta.new('general',  'General',  'Open chat, anything goes'),
@@ -23,6 +26,7 @@ class BoardRepository
     @base_dir = base_dir
     @boards   = boards
     @cache    = {}
+    @counts   = {}
     @mu       = Mutex.new
     FileUtils.mkdir_p(@base_dir)
     migrate_legacy!(legacy_path) if legacy_path
@@ -31,7 +35,10 @@ class BoardRepository
   def append(board_id, username, text)
     msg = MessageModel.new(Time.now.strftime('%m-%d %H:%M'), username, text)
     @mu.synchronize do
-      load_board(board_id) << msg
+      list = load_board(board_id)
+      list << msg
+      list.shift while list.size > KEEP
+      @counts[board_id] += 1
       CSV.open(path_for(board_id), 'a') { |csv| csv << [msg.timestamp, msg.username, msg.text] }
     end
     msg
@@ -42,11 +49,19 @@ class BoardRepository
   end
 
   def count(board_id)
-    @mu.synchronize { load_board(board_id).size }
+    @mu.synchronize do
+      load_board(board_id)
+      @counts[board_id]
+    end
   end
 
   def total_count
-    @mu.synchronize { @boards.sum { |b| load_board(b.id).size } }
+    @mu.synchronize do
+      @boards.sum do |b|
+        load_board(b.id)
+        @counts[b.id]
+      end
+    end
   end
 
   private
@@ -71,11 +86,20 @@ class BoardRepository
 
   def load_board(id)
     return @cache[id] if @cache.key?(id)
-    list = []
-    CSV.foreach(path_for(id)) { |row| list << MessageModel.new(*row) } if File.exist?(path_for(id))
-    @cache[id] = list
+    list  = []
+    count = 0
+    if File.exist?(path_for(id))
+      CSV.foreach(path_for(id)) do |row|
+        list << MessageModel.new(*row)
+        list.shift if list.size > KEEP
+        count += 1
+      end
+    end
+    @counts[id] = count
+    @cache[id]  = list
   rescue StandardError => e
     warn "BoardRepository load error (#{id}): #{e}"
-    @cache[id] = []
+    @counts[id] = 0
+    @cache[id]  = []
   end
 end

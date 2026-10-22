@@ -4,7 +4,7 @@ Telnet-accessible Synchronet-style community BBS server built on the
 [rubbs](https://git.teletypegames.org/engines/rubbs) gem. Full-screen ANSI interface
 with a top menubar, stacked modal windows, message boards, a oneliners wall,
 multi-user chat, news from teletypegames.org, the team's dev log from Gitea,
-the game catalog, the file areas of the FTP server, the wiki guides, an ANSI
+the game catalog, an FTP browser with ZMODEM downloads, the wiki guides, an ANSI
 gallery, the TTG Master who answers callers' questions (F1), and doors:
 SERMO, a Commodore 64, a Plus/4, the Impostor terminal and Chat of Ra.
 
@@ -56,7 +56,8 @@ Copy `env-example` to `.env`:
 | `PROFILE_PATH` | `data/profiles.csv` | User profile CSV (with the favourite desktop art) |
 | `ONELINERS_PATH` | `data/oneliners.csv` | The oneliners wall |
 | `IMPOSTOR_SESSIONS_PATH` | `data/impostor_sessions.csv` | Codes, feedback and addresses left in the Impostor door |
-| `BBS_FTP_HOST` | `ftp.teletypegames.org` | The FTP server of the File Library (anonymous, passive) |
+| `BBS_FTP_HOST` | `ftp.teletypegames.org` | The FTP server of the FTP Browser (anonymous, passive) |
+| `BBS_FTP_DOWNLOAD_MAX` | `16777216` | The largest file (bytes) the FTP Browser sends by ZMODEM; a bigger one only gets its FTP (and for WARP, HTTPS) address |
 | `SERMO_LLM_URL` | set by compose | SERMO's model, `http://llm:8080`; empty = canned replies only |
 | `SERMO_LLM_MODEL` | set by compose | the model's name in infra/llm, `qwen3.5-0.8b` |
 | `SERMO_LLM_API_KEY` | empty | SERMO's key to infra/llm, one of its `LLM_API_KEYS`; without it SERMO gets a 401 and answers with canned replies |
@@ -67,8 +68,9 @@ Copy `env-example` to `.env`:
 
 Connect, type a name at the prompt, then a full-screen Synchronet-style shell
 opens with the Welcome window on top: the latest releases, what is coming up,
-the last callers and the oneliners. Continue (or Esc) closes it; File >
-Bulletin opens it again. It does not come back when a caller returns from a
+the last callers and the oneliners. Continue (or Esc) closes it, **Ask the
+TTG Master** opens the Master; File > Bulletin opens it again. The desktop
+has a **F1 ▸ Lost? Ask the TTG Master** button in its bottom right corner. It does not come back when a caller returns from a
 door.
 
 ### Keys
@@ -79,6 +81,7 @@ door.
 | `F10` | Open the leftmost menu |
 | `Tab` / `Shift-Tab` | Move focus inside a window |
 | `Enter` | Activate the focused button / submit input |
+| letter / `Alt+letter` | Press the window button with that hotkey (Alt in a text field) |
 | `Esc` | Close the top window / menu |
 | `F1` | Ask the TTG Master |
 | `F2` | Message Boards |
@@ -89,9 +92,10 @@ door.
 
 | Menu | Items |
 |---|---|
+| **TTG Master** | Ask a question… · What is new? · What is coming up? · Where do I start? · How do I download files? · Which doors are there? |
 | **File** | Bulletin · News · Dev Log · System Info · Exit |
 | **Messages** | Boards… · New Post… · Oneliners |
-| **Files** | File Library · Game Catalog · Platform Guides · Engines · DOS Corner · ANSI Gallery |
+| **Files** | FTP Browser · Game Catalog · Platform Guides · Engines · DOS Corner · ANSI Gallery |
 | **Users** | Online · Last Callers · Team · Profile… · Register… · Language EN/HU |
 | **Chat** | Open chat |
 | **Doors** | SERMO · Commodore 64 · Commodore Plus/4 · Impostor · Chat of Ra |
@@ -102,23 +106,23 @@ door.
 ### Features
 
 - **Multi-board messaging** — separate sub-boards (General / Tech / Off-Topic / Sysop), each in its own CSV file under `data/boards/`.
-- **Multi-line composer** — `TextArea` widget, up to 1000 chars per post.
+- **Multi-line composer** — `TextArea` widget, up to 1000 chars per post, one post per 30 seconds from a call.
 - **Oneliners** — a wall of one-line messages (64 characters, a name needed, not Anonymous); the last five are in the Welcome window.
-- **Live chat** — broadcast hub, 1 Hz polling, history replay on join.
+- **Live chat** — broadcast hub, 1 Hz polling, history replay on join; at most two lines a second from one caller, and a caller who does not read keeps the last 200 lines.
 - **Bulletin on login** — the latest releases and upcoming events from teletypegames.org, message count, last callers and the last oneliners.
 - **Dev Log** — the public activity of every organisation on git.teletypegames.org (pushes with their commit messages, tags, releases, new repositories), newest first, read anonymously from the Gitea API, so private repositories never show.
 - **News** — the latest releases with catalog links, upcoming events, and the wiki's `blog` posts once there are any (the same source as teletypegames.org/blog).
 - **Game catalog** — every catalog entry (all pages of the API), sorted by platform; the **Platform** button cycles a platform filter. The card shows version, release date, the catalog link, the downloadable kinds, and the external links.
-- **File Library** — the FTP server as a BBS file area. **APPS**: the DOS programs of the DOSINST store, with their `INFO.INI`, file list and README. **WARP** (the **Area** button switches): every file of every catalog game, all versions, with sizes. Read over anonymous passive FTP and cached for five minutes.
+- **FTP Browser** — an FTP client on the FTP server, from its root (`APPS`, `WARP`, `WIKI`): **Enter** opens a folder, `..` or **Up** goes back. A file shows its size, date, `ftp://` address (and for WARP its `https://teletypegames.org/file/…` mirror) and, for a text file under 64 KB (`.md`, `.txt`, `.ini`, `.lst`, `.bat`, `.nfo`, …), its contents. **Enter** or **Download** sends it to the caller's terminal by ZMODEM (rubbs' `BBS::Zmodem`): SyncTERM, NetRunner and Qodem start receiving by themselves, `rz` by hand, and bbsweb saves it as a browser download. Files over `BBS_FTP_DOWNLOAD_MAX` get only their addresses. Listings are cached for a minute; the last folder is kept for the call.
 - **Wiki sections** — Platform Guides (`/platforms`), Engines (`/engines`) and the DOS Corner (`/dos`, with an FTP/DOSINST intro), read from the Grav JSON API; private pages are left out. Users > Language switches them to Hungarian.
 - **Team** — the members of teletypegames.org with their mottos.
 - **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `BBS::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
-- **Registered names** — a caller can register the name they logged in with (Users > Register…); from then on that name asks for its password. Profiles belong to registered names only.
+- **Registered names** — a caller can register the name they logged in with (Users > Register…); from then on that name asks for its password, with a 2-second wait after each wrong one. Profiles belong to registered names only. `accounts.csv` is read again whenever it changes, so `bin/account` works on a running server.
 - **Sysop console** — stats + broadcast, for names in `BBS_SYSOPS` that logged in with their password.
 - **Discord feed** — new board posts and sysop broadcasts go to `BBS_DISCORD_WEBHOOK`, mentions disabled.
 - **Last callers** — a call is logged when it ends, and only if the terminal reported its window size (telnet NAWS) and stayed at least 10 seconds. Telnet password-guessing bots never get listed, and neither do they show up as online.
 - **ANSI Gallery** — the art files of the desktop folder with their SAUCE record and a preview. **Show** puts one on the desktop for the call, **Favourite** keeps it for every call of a registered name (the `art` column of the profile).
-- **TTG Master** (Help > Ask the TTG Master, F1) — the sysop who answers callers' questions about the board. See *Characters* below.
+- **TTG Master** (the first menu, F1, the desktop button, the Welcome window, Help) — the sysop who answers callers' questions about the board; the menu also has ready questions. See *Characters* below.
 - **xterm mouse** — click menus, buttons, list items; wheel-scroll lists.
 - **Idle disconnect** at 10 minutes.
 - **Configurable desktop art** — drop `.ans` / `.ansi` / `.asc` / `.nfo` / `.txt` files into `data/art/` (or wherever `BBS_DESKTOP_ART` points). Classic CP437 BBS art is auto-decoded; SAUCE metadata is stripped. With a directory, a different file is shown per session.
@@ -138,7 +142,7 @@ lib/
     account_repository.rb              registered names, PBKDF2 hashes
     site_repository.rb                 teletypegames.org events + members
     oneliner_repository.rb             the oneliners wall
-    ftp_repository.rb                  anonymous FTP: APPS programs, WARP files
+    ftp_repository.rb                  anonymous FTP: folder listings, file bytes
     gitea_repository.rb                public activity of the Gitea organisations
     http_json.rb                       JSON GET + 5-minute cache
   domain/service/
@@ -157,7 +161,7 @@ lib/
 bin/persona-eval                       count a character's slips over many runs
   bbs/ui/formatters.rb                 view helpers: bulletin, news, game card,
                                        team, network, DOS intro, users, sysop,
-                                       oneliners, file library, dev log, gallery
+                                       oneliners, FTP browser, dev log, gallery
 data/
   boards/<id>.csv                      per-board messages (auto-created)
   last_callers.csv                     finished calls

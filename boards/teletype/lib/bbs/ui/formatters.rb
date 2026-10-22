@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'artii'
+require_relative '../../domain/model/ftp_models'
 
 # Pure view-layer helpers used by the window DSL in bbs.rb. No business
 # logic here — each method takes data + width and returns lines/strings.
@@ -24,6 +25,8 @@ module UI
           :spacer,
           "Logged in as \e[1;33m#{username}\e[0m#{status}",
           "Online now: #{online_count}   Messages: #{total_messages}",
+          :spacer,
+          { text: 'Lost? Press F1: the TTG Master, the sysop, answers your questions.', style: :accent },
           :spacer,
           "What's new:",
           *(releases.empty? ? ['  (no releases)'] : releases.map { |g| News.release_line(g) }),
@@ -54,7 +57,9 @@ module UI
       end
     end
 
-    module FileLibrary
+    module Ftp
+      UP = FtpEntry.new(name: '..', dir: true, bytes: 0).freeze
+
       def self.size(bytes)
         return "#{bytes} B" if bytes < 1024
         return format('%.1f KB', bytes / 1024.0) if bytes < 1024 * 1024
@@ -62,38 +67,97 @@ module UI
         format('%.1f MB', bytes / 1024.0 / 1024)
       end
 
-      def self.file_rows(files, width)
-        files.map do |f|
-          name = f.name.length > width - 14 ? "#{f.name[0, width - 15]}…" : f.name
-          "    #{name.ljust(width - 14)}\e[0;37m#{size(f.bytes).rjust(9)}\e[0m"
-        end
+      def self.title(host, path) = " FTP — #{host}#{path} "
+
+      def self.items(path, entries)
+        return [] if entries.nil?
+
+        up = path == FileLibraryService::ROOT ? [] : [UP.dup.tap { |e| e.path = File.dirname(path) }]
+        up + entries
       end
 
-      def self.app_card(app, readme, width, url:, theme:)
-        lines = ["  \e[1;33m#{app.title}\e[0m #{app.version}",
-                 "  \e[0;36m#{[app.platform, app.folder].reject(&:empty?).join(' · ')}\e[0m",
-                 "  \e[1;36m#{url}\e[0m", '']
-        BBS::FrameBuffer.wrap_ansi(app.description, width - 4).each { |l| lines << "  #{l}" }
+      def self.label(entry)
+        return "\u25B8 #{entry.name}/" if entry.dir
+
+        name = entry.name.length > 26 ? "#{entry.name[0, 25]}…" : entry.name
+        "  #{name.ljust(26)} #{size(entry.bytes).rjust(9)}"
+      end
+
+      def self.date(entry) = entry.modified&.strftime('%Y-%m-%d %H:%M').to_s
+
+      def self.detail(entry, width, files:, theme:)
+        return folder(entry, files) if entry.dir
+
+        lines = ["  \e[1;33m#{entry.name}\e[0m",
+                 "  \e[0;37m#{size(entry.bytes)} (#{entry.bytes} bytes) · #{date(entry)}\e[0m", '',
+                 "  \e[1;36m#{files.url(entry.path)}\e[0m"]
+        https = files.https_url(entry.path)
+        lines << "  \e[1;36m#{https}\e[0m" if https
         lines << ''
-        lines << '  Files:'
-        lines.concat(file_rows(app.files, width))
-        unless readme.strip.empty?
-          lines << ''
-          lines.concat(BBS::Markdown.to_lines(readme, width: width - 1, theme: theme))
+        how = if files.downloadable?(entry)
+                'Enter or Download sends it to your terminal by ZMODEM (SyncTERM, NetRunner, ' \
+                  'Qodem, rz, or the web terminal). Or fetch it with any FTP client from the address above.'
+              else
+                "Too big for a ZMODEM download from here (over #{size(FileLibraryService::DOWNLOAD_MAX)}): " \
+                  'fetch it with an FTP client from the address above.'
+              end
+        BBS::FrameBuffer.wrap_ansi(how, width - 4).each { |l| lines << "  #{l}" }
+        if files.preview?(entry)
+          text = files.preview(entry)
+          unless text.strip.empty?
+            lines << ''
+            lines << "  \e[2;37m#{'─' * [width - 5, 1].max}\e[0m"
+            lines.concat(preview_lines(entry, text, width, theme))
+          end
         end
         lines
       end
 
-      def self.warp_card(game, files, width, url:, catalog_url:)
-        lines = ["  \e[1;33m#{game.title}\e[0m", "  \e[0;36m#{game.platform}\e[0m", "  \e[1;36m#{url}\e[0m",
-                 "  \e[1;36m#{catalog_url}\e[0m", '']
-        files.reject(&:dir).group_by { |f| f.name[/-(\d+(?:\.\d+)*)(?=[.-]|\z)/, 1].to_s }
-             .sort_by { |version, _| Gem::Version.correct?(version) ? Gem::Version.new(version) : Gem::Version.new('0') }
-             .reverse_each do |version, group|
-          lines << "  \e[1;37m#{version.empty? ? '?' : version}\e[0m"
-          lines.concat(file_rows(group, width))
+      def self.preview_lines(entry, text, width, theme)
+        return BBS::Markdown.to_lines(text, width: width - 1, theme: theme) if entry.name.match?(/\.md\z/i)
+
+        text.delete("\r").split("\n").flat_map do |line|
+          line = line.gsub("\t", '    ').gsub(/[\x00-\x1f\x7f]/, '')
+          line.empty? ? [''] : BBS::FrameBuffer.wrap_ansi(line, width - 4).map { |l| "  #{l}" }
         end
-        lines
+      end
+
+      def self.folder(entry, files)
+        path = entry.path || '/'
+        ["  \e[1;33m#{entry.name == '..' ? '.. (up)' : "#{entry.name}/"}\e[0m",
+         "  \e[0;37m#{path}\e[0m", '', "  \e[1;36m#{files.url(path)}\e[0m", '',
+         '  Enter opens it.']
+      end
+
+      def self.meta(entry, files)
+        files.downloadable?(entry) ? "Enter: download #{entry.name} by ZMODEM" : "#{size(entry.bytes)}: FTP client only"
+      end
+
+      def self.offer(entry)
+        "Send #{entry.name} (#{size(entry.bytes)}) to your terminal by ZMODEM? " \
+          'Most BBS terminals start receiving by themselves; with rz, start it by hand. Esc cancels the wait.'
+      end
+
+      def self.too_big(entry, files)
+        ["#{entry.name} is #{size(entry.bytes)}: too big to send from the BBS. Fetch it with an FTP client:",
+         files.url(entry.path), files.https_url(entry.path)].compact.join(' ')
+      end
+
+      def self.fetching(entry) = "\r\n  Fetching #{entry.name} from the FTP server...\r\n"
+
+      def self.sending(entry)
+        "  Sending #{entry.name} by ZMODEM. Start receiving if your terminal does not; Esc gives up.\r\n\r\n"
+      end
+
+      def self.result(result, entry, files)
+        case result
+        when :ok         then "#{entry.name} sent."
+        when :cancelled  then 'Download cancelled.'
+        when :timeout
+          "Your terminal did not answer in ZMODEM. Fetch #{entry.name} by FTP instead: #{files.url(entry.path)}"
+        when :unreadable then 'The FTP server did not hand over the file. Try again later.'
+        else 'The download stopped.'
+        end
       end
     end
 
@@ -140,6 +204,16 @@ module UI
     end
 
     module Master
+      DESKTOP_LABEL = 'F1 ▸ Lost? Ask the TTG Master'
+
+      QUICK_QUESTIONS = [
+        ['&What is new?',                   'What is new? What was released lately?'],
+        ['What is &coming up?',             'What events are coming up?'],
+        ['&Where do I start?',              'I am new here. Where do I start?'],
+        ['How do I &download files?',       'How do I download files from the FTP server?'],
+        ['Which &doors are there?',         'Which doors are there?']
+      ].freeze
+
       # One speaker's turn, wrapped to the Stream window (cols - 8 wide, a
       # border and a scrollbar inside).
       def self.lines(who, text, cols, you: false)
@@ -151,7 +225,7 @@ module UI
 
     module Gallery
       def self.detail(name, sauce, size, preview, width)
-        meta = [['File', name], ['Size', FileLibrary.size(size)]]
+        meta = [['File', name], ['Size', Ftp.size(size)]]
         if sauce
           meta << ['Title', sauce.title] unless sauce.title.empty?
           meta << ['Artist', sauce.author] unless sauce.author.empty?
@@ -223,7 +297,8 @@ module UI
           ["  \e[1;33m#{name.ljust(14)}\e[0m \e[1;36m#{address}\e[0m", "  #{' ' * 15}#{note}"]
         end
         [*rows, :spacer, '  Doors here: SERMO, the Neumatronic Margittai machine; a Commodore 64',
-         '  and a Plus/4 with our games on their disks; the Impostor terminal.',
+         '  and a Plus/4 with our games on their disks; the Impostor terminal;',
+         '  Chat of Ra.',
          :spacer, '  In a browser, no telnet client needed:',
          "  \e[1;36mhttps://bbsweb.teletypegames.org\e[0m"]
       end
@@ -263,7 +338,9 @@ module UI
         lines = []
         messages.each do |m|
           head = "\e[2;37m#{m.timestamp}\e[0m  \e[1;33m#{m.username}\e[0m: "
-          BBS::FrameBuffer.wrap_ansi(head + m.text.to_s, width - 1).each { |l| lines << l }
+          m.text.to_s.split("\n").each_with_index do |text, i|
+            BBS::FrameBuffer.wrap_ansi(i.zero? ? head + text : text, width - 1).each { |l| lines << l }
+          end
           lines << ''
         end
         lines

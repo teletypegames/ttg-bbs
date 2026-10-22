@@ -1,5 +1,5 @@
 # The TTG Master, the sysop of the Teletype BBS who answers callers' questions
-# (Help > Ask the TTG Master, F1). He answers from the facts the code looks up
+# (the TTG Master menu, F1, Help). He answers from the facts the code looks up
 # for each question (master_knowledge.yml and the live catalog and events);
 # the examples show the voice, the facts carry the content.
 

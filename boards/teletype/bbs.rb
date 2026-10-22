@@ -50,8 +50,7 @@ site_service         = SiteService.new(SiteRepository.new)
 discord              = DiscordNotifier.new(ENV['BBS_DISCORD_WEBHOOK'])
 oneliner_service     = OnelinerService.new(OnelinerRepository.new(
                          ENV.fetch('ONELINERS_PATH', 'data/oneliners.csv')))
-file_library         = FileLibraryService.new(FtpRepository.new(ENV.fetch('BBS_FTP_HOST', 'ftp.teletypegames.org')),
-                                              games: games_service)
+file_library         = FileLibraryService.new(FtpRepository.new(ENV.fetch('BBS_FTP_HOST', 'ftp.teletypegames.org')))
 dev_log_service      = DevLogService.new(GiteaRepository.new)
 ttg_master           = TtgMaster.new(games: games_service, site: site_service)
 impostor_sessions    = Impostor.sessions_store(ENV.fetch('IMPOSTOR_SESSIONS_PATH', 'data/impostor_sessions.csv'))
@@ -95,6 +94,7 @@ BBS.configure do |config|
             ctx[:authenticated] = true
             break
           end
+          sleep 2
           runner.write "  \e[1;31mWrong password.\e[0m\r\n"
         end
         unless ctx[:authenticated]
@@ -110,6 +110,9 @@ BBS.configure do |config|
       end
       chat_service.subscribe(ctx[:session_id])
       nil
+    rescue StandardError => e
+      warn "Login error: #{e.class}: #{e.message}"
+      :halt
     end
     teletype_app = BBS::Application.define do
       theme BBS::Theme.neumanntronics
@@ -154,6 +157,62 @@ BBS.configure do |config|
           end
         end
 
+        # The TTG Master answers in a thread of his own and the window picks the
+        # reply up on its next tick, so the board never waits for the model.
+        def ask_master(ctx, question)
+          queue = ctx[:master_queue]
+          UI::Formatters::Master.lines('You', question, cols, you: true).each { |line| queue << line }
+          if ctx[:master_busy]
+            UI::Formatters::Master.lines('TTG Master', 'One question at a time, caller.', cols).each { |line| queue << line }
+            return
+          end
+
+          ctx[:master_busy] = true
+          width = cols
+          Thread.new do
+            reply = ctx[:master].answer(question, ctx)
+            UI::Formatters::Master.lines('TTG Master', reply, width).each { |line| queue << line }
+          rescue StandardError => e
+            warn "TTG Master: #{e.class}: #{e.message}"
+          ensure
+            ctx[:master_busy] = false
+          end
+        end
+
+        def ftp_open(window, ctx, path)
+          entries = services[:files].list(path)
+          if entries
+            ctx[:ftp_path] = context[:ftp_path] = path
+            window.replace_items(UI::Formatters::Ftp.items(path, entries),
+                                 title: UI::Formatters::Ftp.title(services[:files].host, path))
+          else
+            BBS::Dialogs.message(self, "The FTP server did not answer for #{path}. Try again later.", title: ' FTP ')
+          end
+        end
+
+        def ftp_download(entry)
+          files = services[:files]
+          unless files.downloadable?(entry)
+            return BBS::Dialogs.message(self, UI::Formatters::Ftp.too_big(entry, files), title: ' Download ', width: 70)
+          end
+
+          BBS::Dialogs.confirm(self, UI::Formatters::Ftp.offer(entry), title: ' Download ',
+                                     on_yes: -> { ftp_send(entry) })
+        end
+
+        def ftp_send(entry)
+          result = with_line do |session|
+            session.write(UI::Formatters::Ftp.fetching(entry))
+            data = services[:files].download(entry)
+            next :unreadable unless data
+
+            session.write(UI::Formatters::Ftp.sending(entry))
+            BBS::Zmodem.send_files(session, [[entry.name, data, entry.modified]])
+          end
+          BBS::Dialogs.message(self, UI::Formatters::Ftp.result(result, entry, services[:files]),
+                               title: ' Download ', width: 64)
+        end
+
         def show_art(name)
           lines = services[:art].lines(name)
           @desktop_art.lines      = lines
@@ -180,6 +239,9 @@ BBS.configure do |config|
             events:         ctx[:site].upcoming_events(2),
             oneliners:      ctx[:oneliners].recent(5)
           )
+        end
+        window_spec.button label: 'Ask the TTG &Master', align: :left do |_window, ctx|
+          ctx[:app].open_window(:master)
         end
         window_spec.button label: '&Continue', primary: true, cancel: true
       end
@@ -239,9 +301,12 @@ BBS.configure do |config|
             :keep
           else
             username = ctx[:username] || 'Anonymous'
-            case ctx[:boards].post(ctx[:board].id, username, values[:body])
+            case ctx[:boards].post(ctx[:board].id, username, values[:body], session_id: ctx[:session_id])
             when :empty
               form.error('Message cannot be empty.')
+              :keep
+            when :too_fast
+              form.error("One post every #{BoardService::COOLDOWN} seconds, please.")
               :keep
             else
               ctx[:discord].board_post(ctx[:board].title, username, values[:body])
@@ -371,10 +436,11 @@ BBS.configure do |config|
         window_spec.title       ' Live Chat '
         window_spec.placeholder 'Type a message and press Enter…'
         window_spec.initial_lines do |ctx|
+          ctx[:chat].drain(ctx[:session_id])
           ctx[:chat].history.map { |line| UI::Formatters::Chat.line(line) }
         end
         window_spec.on_submit do |text, _app, ctx|
-          ctx[:chat].broadcast(ctx[:username] || 'Anonymous', text.strip)
+          ctx[:chat].broadcast(ctx[:username] || 'Anonymous', text.strip) if ctx[:chat].may_speak?(ctx[:session_id])
         end
         window_spec.on_poll do |app_, ctx|
           ctx[:chat].drain(app_.session_id).map { |line| UI::Formatters::Chat.line(line) }
@@ -408,7 +474,7 @@ BBS.configure do |config|
       window :oneliners, type: :info do |window_spec|
         window_spec.title  ' Oneliners '
         window_spec.width  { |ctx| [ctx[:app].cols - 6, 78].min }
-        window_spec.height { |ctx| (ctx[:oneliners].recent(30).size + 6).clamp(10, ctx[:app].rows - 4) }
+        window_spec.height { |ctx| [ctx[:oneliners].recent(30).size + 6, 10].max }
         window_spec.scroll true
         window_spec.body   { |ctx| UI::Formatters::Oneliners.body(ctx[:oneliners].recent(30)) }
         window_spec.button label: '&Write', align: :left do |window, ctx|
@@ -433,33 +499,42 @@ BBS.configure do |config|
         window_spec.button label: '&Close', cancel: true
       end
 
-      window :file_library, type: :master_detail do |window_spec|
+      # A plain FTP client: Enter opens a folder (or sends a file), .. goes up.
+      window :ftp, type: :master_detail do |window_spec|
         window_spec.title do |ctx|
-          ctx[:area] == :warp ? ' File Library — WARP: every catalog file ' : ' File Library — APPS: DOS programs '
+          ctx[:ftp_path] ||= ctx[:app].context[:ftp_path] || FileLibraryService::ROOT
+          UI::Formatters::Ftp.title(ctx[:files].host, ctx[:ftp_path])
         end
-        window_spec.list_width    { |ctx| ctx[:area] == :warp ? 34 : 24 }
+        window_spec.list_width    { |ctx| [40, (ctx[:app].cols / 2) - 4].min }
         window_spec.empty_message '  (the FTP server did not answer — try again later)'
-        window_spec.items         { |ctx| ctx[:area] == :warp ? ctx[:files].warp_games : ctx[:files].apps }
-        window_spec.item_label do |item, ctx|
-          ctx[:area] == :warp ? UI::Formatters::Game.label(item[0]) : "#{item.folder.ljust(9)} #{item.version}"
+        window_spec.close_button  false
+        window_spec.items do |ctx|
+          UI::Formatters::Ftp.items(ctx[:ftp_path], ctx[:files].list(ctx[:ftp_path]))
         end
-        window_spec.render_detail do |item, width, ctx|
-          if ctx[:area] == :warp
-            game, files = item
-            UI::Formatters::FileLibrary.warp_card(game, files, width, url: ctx[:files].warp_url,
-                                                                      catalog_url: ctx[:games].catalog_url(game))
+        window_spec.item_label    { |entry, _ctx| UI::Formatters::Ftp.label(entry) }
+        window_spec.render_detail do |entry, width, ctx|
+          UI::Formatters::Ftp.detail(entry, width, files: ctx[:files], theme: ctx[:app].theme)
+        end
+        window_spec.bottom_meta do |entry, ctx|
+          entry.dir ? 'Enter: open the folder' : UI::Formatters::Ftp.meta(entry, ctx[:files])
+        end
+        window_spec.on_activate do |entry, window, ctx|
+          if entry.dir
+            ctx[:app].ftp_open(window, ctx, entry.path)
           else
-            UI::Formatters::FileLibrary.app_card(item, ctx[:files].readme(item), width,
-                                                 url: ctx[:files].app_url(item), theme: ctx[:app].theme)
+            ctx[:app].ftp_download(entry)
           end
         end
-        window_spec.bottom_meta do |_item, ctx|
-          ctx[:area] == :warp ? ctx[:files].warp_url : 'DOSINST installs it: the DOS Corner tells how'
+        window_spec.action label: '&Up', align: :left do |window, ctx|
+          ctx[:app].ftp_open(window, ctx, ctx[:files].parent(ctx[:ftp_path]))
+          :keep
         end
-        window_spec.action label: '&Area', align: :left do |_window, ctx|
-          ctx[:app].open_window(:file_library, area: ctx[:area] == :warp ? :apps : :warp)
-          :close
+        window_spec.action label: '&Download', align: :left do |window, ctx|
+          entry = window.list_widget.selected_item
+          ctx[:app].ftp_download(entry) if entry && !entry.dir
+          :keep
         end
+        window_spec.action label: '&Close', cancel: true
       end
 
       window :dev_log, type: :master_detail do |window_spec|
@@ -511,33 +586,17 @@ BBS.configure do |config|
         end
       end
 
-      # The TTG Master answers in a thread of his own and the window picks the
-      # reply up on its next tick, so the board never waits for the model.
       window :master, type: :stream do |window_spec|
         window_spec.title       ' Ask the TTG Master '
         window_spec.placeholder 'Ask about the board and press Enter…'
         window_spec.initial_lines do |ctx|
           ctx[:master_queue] = Queue.new
+          ctx[:app].ask_master(ctx, ctx[:question]) if ctx[:question]
           UI::Formatters::Master.lines('TTG Master', 'Hey, caller! I am the sysop of this board. Ask me where ' \
                                                      'things are, what is new, what is coming up.', ctx[:app].cols)
         end
         window_spec.on_submit do |text, app_, ctx|
-          question = text.strip
-          queue = ctx[:master_queue]
-          UI::Formatters::Master.lines('You', question, app_.cols, you: true).each { |line| queue << line }
-          if ctx[:master_busy]
-            UI::Formatters::Master.lines('TTG Master', 'One question at a time, caller.', app_.cols).each { |line| queue << line }
-          else
-            ctx[:master_busy] = true
-            Thread.new do
-              reply = ctx[:master].answer(question, ctx)
-              UI::Formatters::Master.lines('TTG Master', reply, app_.cols).each { |line| queue << line }
-            rescue StandardError => e
-              warn "TTG Master: #{e.class}: #{e.message}"
-            ensure
-              ctx[:master_busy] = false
-            end
-          end
+          app_.ask_master(ctx, text.strip)
         end
         window_spec.on_poll do |_app, ctx|
           lines = []
@@ -577,6 +636,14 @@ BBS.configure do |config|
       # ── Menubar ────────────────────────────────────────────────────────────────
 
       menubar do
+        menu '&TTG Master' do
+          item '&Ask a question…', shortcut: 'F1' do open_window(:master) end
+          separator
+          UI::Formatters::Master::QUICK_QUESTIONS.each do |label, question|
+            item(label) { open_window(:master, question: question) }
+          end
+        end
+
         menu '&File' do
           item '&Bulletin'    do open_window(:bulletin) end
           item '&News'        do open_window(:news) end
@@ -594,7 +661,7 @@ BBS.configure do |config|
         end
 
         menu 'F&iles' do
-          item '&File Library'    do open_window(:file_library) end
+          item '&FTP Browser'     do open_window(:ftp) end
           item '&Game Catalog'    do open_window(:games) end
           item '&Platform Guides' do open_window(:wiki, section: :platforms) end
           item '&Engines'         do open_window(:wiki, section: :engines) end
@@ -687,6 +754,10 @@ BBS.configure do |config|
         @desktop_art = BBS::Widgets::AnsiArt.new(lines: lines)
         @desktop_art.layout(1, 1, cols, rows - 2)
         add(@desktop_art)
+        master = BBS::Widgets::Button.new(label: UI::Formatters::Master::DESKTOP_LABEL, on_click: ->(_) { open_window(:master) })
+        master.layout(cols - UI::Formatters::Master::DESKTOP_LABEL.length - 5, rows - 2,
+                      UI::Formatters::Master::DESKTOP_LABEL.length + 4, 1)
+        add(master)
         unless context[:welcomed]
           context[:welcomed] = true
           open_window(:bulletin)
