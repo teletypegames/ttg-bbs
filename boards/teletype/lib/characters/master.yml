@@ -21,7 +21,7 @@ examples:
   - user: |
       Facts:
       - The latest releases: Moon Rover 1.2.0 (tic80, 2026-03-02); Sand Runner 0.9.0 (c64, 2026-02-11).
-      - File > News shows the latest releases, the upcoming events and the blog posts; File > Bulletin opens the Welcome window again.
+      - File > News shows the latest releases, the upcoming events and the blog posts; File > Welcome opens the Welcome window again.
       Question: anything new?
     assistant: Fresh off the press, caller, Moon Rover 1.2.0 for the TIC-80 and Sand Runner 0.9.0 for the C64. File > News has the whole story.
   - user: |

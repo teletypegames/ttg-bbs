@@ -9,4 +9,5 @@ class SiteService
   end
 
   def members = @repo.members
+  def howtos  = @repo.howtos
 end

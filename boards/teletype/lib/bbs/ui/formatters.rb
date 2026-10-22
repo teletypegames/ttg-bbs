@@ -298,7 +298,7 @@ module UI
         end
         [*rows, :spacer, '  Doors here: SERMO, the Neumatronic Margittai machine; a Commodore 64',
          '  and a Plus/4 with our games on their disks; the Impostor terminal;',
-         '  Chat of Ra.',
+         '  Chat of Ra; TTG Trivia.',
          :spacer, '  In a browser, no telnet client needed:',
          "  \e[1;36mhttps://bbsweb.teletypegames.org\e[0m"]
       end
@@ -361,6 +361,9 @@ module UI
           date = game.released_at&.strftime('%Y-%m-%d')
           lines << "  \e[0;37mLatest: #{game.version}#{"  (#{date})" if date}\e[0m"
         end
+        facts = [(game.status.empty? ? nil : game.status), (game.license.empty? ? nil : game.license),
+                 "#{game.downloads} downloads"].compact.join(' · ')
+        lines << "  \e[0;37m#{facts}\e[0m"
         lines << "  \e[1;36m#{catalog_url}\e[0m"
         lines << ''
         BBS::FrameBuffer.wrap_ansi(game.desc.to_s, width - 4).each { |l| lines << "  #{l}" }
@@ -373,6 +376,14 @@ module UI
           lines << '  Downloads (on the catalog page above):'
           kinds = game.assets.map(&:kind).join(' · ')
           BBS::FrameBuffer.wrap_ansi(kinds, width - 6).each { |l| lines << "    \e[0;37m#{l}\e[0m" }
+        end
+        if game.releases.size > 1
+          lines << ''
+          lines << '  Release history:'
+          game.releases.reverse_each do |r|
+            lines << "    \e[1;33m#{r.version.ljust(16)}\e[0m \e[0;37m#{r.released_at&.strftime('%Y-%m-%d')}  " \
+                     "#{r.downloads} DLs\e[0m"
+          end
         end
         unless game.external_links.empty?
           lines << ''
@@ -392,11 +403,6 @@ module UI
     end
 
     module Users
-      def self.online_list(usernames, current_user)
-        return ['  (no one else here yet)'] if usernames.empty?
-        usernames.map { |u| u == current_user ? "  #{u}  ← you" : "  #{u}" }
-      end
-
       def self.last_callers_list(callers)
         return ['  (no callers recorded yet)'] if callers.empty?
         callers.map do |c|

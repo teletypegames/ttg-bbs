@@ -14,7 +14,7 @@
 - q: how do I leave a message?
   expect: [Messages > Boards, New Post, F3]
 - q: how do I get out of here?
-  expect: [File > Exit, Alt-X]
+  expect: [File > Log off, Alt-X]
 - q: what is SERMO?
   expect: [Neumatronic]
 - q: can I play the games in a browser?
@@ -35,3 +35,11 @@
   expect: [F5]
 - q: can I move a window?
   expect: [F6]
+- q: how do I send a private message to someone?
+  expect: [Messages > Mail]
+- q: is there a game I can play here?
+  expect: [TTG Trivia, Doors]
+- q: where can I vote?
+  expect: [Voting Booth]
+- q: where are the files?
+  expect: [File Areas, FTP Browser]

@@ -8,3 +8,7 @@ data/accounts.csv
 data/oneliners.csv
 data/impostor_sessions.csv
 .claude
+data/mail.csv
+data/last_read.csv
+data/votes.csv
+data/trivia_scores.csv

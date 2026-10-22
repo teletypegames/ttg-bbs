@@ -25,6 +25,15 @@ class AccountRepository
     @mu.synchronize { fresh!.key?(key_for(name)) }
   end
 
+  # The display spellings of every registered name, in sign-up order.
+  def names
+    @mu.synchronize { fresh!.values.map(&:name) }
+  end
+
+  def created_at(name)
+    @mu.synchronize { fresh![key_for(name)]&.created_at }
+  end
+
   def verify(name, password)
     account = @mu.synchronize { fresh![key_for(name)] }
     return false unless account

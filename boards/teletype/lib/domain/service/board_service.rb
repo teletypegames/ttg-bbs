@@ -3,8 +3,9 @@
 class BoardService
   COOLDOWN = 30
 
-  def initialize(repo)
-    @repo = repo
+  def initialize(repo, last_read: nil)
+    @repo      = repo
+    @last_read = last_read
     @last = {}
     @mu   = Mutex.new
   end
@@ -14,6 +15,29 @@ class BoardService
   def messages(id, n = 30) = @repo.last(id, n)
   def count(id)            = @repo.count(id)
   def total_count          = @repo.total_count
+
+  # Unread messages of a registered name on a board. A name that never
+  # opened the board has read nothing of it.
+  def unread(username, board_id)
+    return 0 unless @last_read && username
+
+    [count(board_id) - (@last_read.get(username, board_id) || 0), 0].max
+  end
+
+  # {board => unread} for the boards with something new.
+  def new_scan(username)
+    boards.to_h { |b| [b, unread(username, b.id)] }.select { |_, n| n.positive? }
+  end
+
+  def mark_read(username, board_id)
+    @last_read&.set(username, board_id, count(board_id)) if username
+  end
+
+  # [[name, posts], ...] most posts first.
+  def top_posters(n = 10)
+    @repo.posters.values.reject { |name, _| name.casecmp?(AccountService::ANONYMOUS) }
+         .sort_by { |name, posts| [-posts, name.downcase] }.first(n)
+  end
 
   # :too_fast when the same session posted less than COOLDOWN seconds ago.
   def post(board_id, username, text, session_id: nil)

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'time'
+require 'cgi'
 require_relative 'http_json'
 
 # The public teletypegames.org endpoints that are not the catalog:
@@ -12,6 +13,7 @@ class SiteRepository
 
   Event  = Struct.new(:name, :date)
   Member = Struct.new(:nick, :real_nick, :motto)
+  HowTo  = Struct.new(:title, :url, :description)
 
   def events
     cached(:events) do
@@ -35,5 +37,28 @@ class SiteRepository
   rescue StandardError => e
     warn "SiteRepository members error: #{e}"
     []
+  end
+
+  # The tech how-tos of teletypegames.org/howtos: wiki pages, from the RSS
+  # feed. A feed this plain needs no XML parser.
+  def howtos
+    cached(:howtos) do
+      uri = URI("#{API_URL}/rss/howtos")
+      xml = Net::HTTP.get(uri).force_encoding(Encoding::UTF_8)
+      xml.scan(%r{<item>(.*?)</item>}m).map do |(item)|
+        HowTo.new(tag(item, 'title'), tag(item, 'link'), tag(item, 'description'))
+      end
+    end
+  rescue StandardError => e
+    warn "SiteRepository howtos error: #{e}"
+    []
+  end
+
+  private
+
+  def tag(item, name)
+    raw = item[%r{<#{name}>(.*?)</#{name}>}m, 1].to_s
+    raw = raw.sub(/\A<!\[CDATA\[(.*)\]\]>\z/m, '\\1')
+    CGI.unescapeHTML(raw).strip
   end
 end

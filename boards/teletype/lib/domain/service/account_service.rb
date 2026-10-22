@@ -20,6 +20,11 @@ class AccountService
 
   def registered?(name)            = @repo.exists?(name)
   def authenticate(name, password) = @repo.verify(name, password)
+  def names                        = @repo.names
+  def created_at(name)             = @repo.created_at(name)
+
+  # The registered spelling of a name typed in any case, nil when unknown.
+  def canonical(name) = names.find { |n| n.casecmp?(name.to_s.strip) }
 
   def register(name, password, confirm)
     return :anonymous  if name.to_s.casecmp?(ANONYMOUS)

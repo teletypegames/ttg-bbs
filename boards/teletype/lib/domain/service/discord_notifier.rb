@@ -25,6 +25,15 @@ class DiscordNotifier
     notify("📢 Sysop broadcast from **#{escape(username)}**: #{clip(text)}")
   end
 
+  def page(username)
+    notify("🔔 **#{escape(username)}** is paging the sysop on the Teletype BBS (telnet teletypegames.org:2323)")
+  end
+
+  # Only that a letter came: what it says stays on the board.
+  def feedback(username)
+    notify("✉️ New feedback for the sysop from **#{escape(username)}**: read it in Messages > Mail")
+  end
+
   private
 
   def clip(text)

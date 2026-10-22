@@ -27,6 +27,7 @@ class BoardRepository
     @boards   = boards
     @cache    = {}
     @counts   = {}
+    @posters  = {}
     @mu       = Mutex.new
     FileUtils.mkdir_p(@base_dir)
     migrate_legacy!(legacy_path) if legacy_path
@@ -39,6 +40,7 @@ class BoardRepository
       list << msg
       list.shift while list.size > KEEP
       @counts[board_id] += 1
+      @posters[board_id][username.downcase] = [username, (@posters[board_id].dig(username.downcase, 1) || 0) + 1]
       CSV.open(path_for(board_id), 'a') { |csv| csv << [msg.timestamp, msg.username, msg.text] }
     end
     msg
@@ -60,6 +62,18 @@ class BoardRepository
       @boards.sum do |b|
         load_board(b.id)
         @counts[b.id]
+      end
+    end
+  end
+
+  # {name_key => [display name, posts]} over every board.
+  def posters
+    @mu.synchronize do
+      @boards.each_with_object({}) do |b, all|
+        load_board(b.id)
+        @posters[b.id].each do |key, (name, n)|
+          all[key] = [name, (all.dig(key, 1) || 0) + n]
+        end
       end
     end
   end
@@ -86,20 +100,25 @@ class BoardRepository
 
   def load_board(id)
     return @cache[id] if @cache.key?(id)
-    list  = []
-    count = 0
+    list    = []
+    count   = 0
+    posters = {}
     if File.exist?(path_for(id))
       CSV.foreach(path_for(id)) do |row|
         list << MessageModel.new(*row)
         list.shift if list.size > KEEP
         count += 1
+        key = row[1].to_s.downcase
+        posters[key] = [row[1].to_s, (posters.dig(key, 1) || 0) + 1]
       end
     end
-    @counts[id] = count
-    @cache[id]  = list
+    @counts[id]  = count
+    @posters[id] = posters
+    @cache[id]   = list
   rescue StandardError => e
     warn "BoardRepository load error (#{id}): #{e}"
-    @counts[id] = 0
-    @cache[id]  = []
+    @counts[id]  = 0
+    @posters[id] = {}
+    @cache[id]   = []
   end
 end
