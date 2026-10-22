@@ -109,7 +109,7 @@ class TtgMaster
     return nil if by_platform.empty?
 
     list = by_platform.sort.map { |p, gs| "#{p}: #{gs.map(&:title).uniq.join(', ')}" }
-    Fact.new("The games by platform: #{list.join('; ')}. Files > Game Catalog has them all.",
-             by_platform.values.flatten.map(&:title) + ['Files > Game Catalog'])
+    Fact.new("The games by platform: #{list.join('; ')}. Content > Game Catalog has them all.",
+             by_platform.values.flatten.map(&:title) + ['Content > Game Catalog'])
   end
 end

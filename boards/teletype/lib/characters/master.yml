@@ -31,9 +31,9 @@ examples:
     assistant: Mark your calendar, caller. Spring Jam on 2026-04-10, then Demo Night on 2026-05-01.
   - user: |
       Facts:
-      - Chat > Open chat (F4) is the live chat with everyone online right now.
+      - Messages > Live Chat (F4) is the live chat with everyone online right now.
       Question: is there a chat?
-    assistant: Sure is. Chat > Open chat, or just hit F4, and you are talking to everyone on the board.
+    assistant: Sure is. Messages > Live Chat, or just hit F4, and you are talking to everyone on the board.
 
 options:
   max_tokens: 110

@@ -11,7 +11,7 @@
 - keys: [oneliner, wall, line]
   fact: 'Messages > Oneliners is a wall of one-line messages, 64 characters each; Write adds yours (a name is needed, not Anonymous). The last five are in the Welcome window.'
 - keys: [chat, talk, live, people, everyone]
-  fact: 'Chat > Open chat (F4) is the live chat with everyone online right now.'
+  fact: 'Messages > Live Chat (F4) is the live chat with everyone online right now.'
 - keys: [online, who, caller, last]
   fact: 'Users > Online lists who is on the board now; Users > Last Callers lists the recent calls.'
 - keys: [team, member, members, motto, crew, group]
@@ -27,15 +27,15 @@
 - keys: [system, info, uptime, ruby, version]
   fact: 'File > System Info shows the board''s numbers and uptime.'
 - keys: [game, catalog, release, platform, download, browser, play]
-  fact: 'Files > Game Catalog lists every game of Teletype Games; the Platform button cycles through the platforms, and each card has the catalog link at teletypegames.org/catalog/ with its downloads. Most of our games play right in the browser from their catalog page.'
+  fact: 'Content > Game Catalog lists every game of Teletype Games; the Platform button cycles through the platforms, and each card has the catalog link at teletypegames.org/catalog/ with its downloads. Most of our games play right in the browser from their catalog page.'
 - keys: [file, files, library, ftp, apps, warp, download, zmodem, browser, folder]
-  fact: 'Files > FTP Browser is an FTP client on ftp.teletypegames.org (anonymous, read-only, passive mode): Enter opens a folder or downloads a file to your terminal by ZMODEM, Up goes back. APPS holds the DOS programs, WARP every file of every catalog game, WIKI the wiki for DOS.'
+  fact: 'Content > FTP Browser is an FTP client on ftp.teletypegames.org (anonymous, read-only, passive mode): Enter opens a folder or downloads a file to your terminal by ZMODEM, Up goes back. APPS holds the DOS programs, WARP every file of every catalog game, WIKI the wiki for DOS.'
 - keys: [dos, dosinst, gmenu, bmagic, ttgwiki, install, mtcp]
-  fact: 'Files > DOS Corner is about our DOS programs. DOSINST installs, updates and removes them over the network from the APPS folder of ftp.teletypegames.org; the others are GMENU, BMAGIC and TTGWIKI.'
+  fact: 'Content > DOS Corner is about our DOS programs. DOSINST installs, updates and removes them over the network from the APPS folder of ftp.teletypegames.org; the others are GMENU, BMAGIC and TTGWIKI.'
 - keys: [wiki, guide, guides, engine, engines, documentation, docs, howto]
-  fact: 'Files > Platform Guides, Files > Engines and Files > DOS Corner read the wiki. The whole wiki is at wiki.teletypegames.org, and on the WIKI-BBS at teletypegames.org:2325.'
-- keys: [ansi, art, gallery, desktop, background, picture]
-  fact: 'Files > ANSI Gallery shows the desktop art. Show puts one on the desktop for this call; Favourite keeps it for every call of a registered name.'
+  fact: 'Content > Platform Guides, Content > Engines and Content > DOS Corner read the wiki. The whole wiki is at wiki.teletypegames.org, and on the WIKI-BBS at teletypegames.org:2325.'
+- keys: [ansi, ascii, art, gallery, desktop, background, picture, graphics]
+  fact: 'Content > ANSI Gallery shows the ANSI art of the board. Enter or View shows a piece on the full screen, Desktop puts it on the desktop for this call, Favourite keeps it for every call of a registered name.'
 - keys: [door, doors, program]
   fact: 'The Doors menu has programs that take over the screen and give it back when you leave them: SERMO, Commodore 64, Commodore Plus/4, Impostor and Chat of Ra.'
 - keys: [sermo, neumatronic, margittai, acp]
@@ -47,7 +47,7 @@
 - keys: [impostor, code, debrief, norman]
   fact: 'Doors > Impostor is the debrief terminal of our game Definitely not an Impostor; it asks for the personal code the game gave you. It also runs on its own at teletypegames.org:2324.'
 - keys: [network, bbs, other, telnet, bbsweb, port]
-  fact: 'Network > Other systems lists our boards, the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324 and the WIKI-BBS at 2325. All three boards work in a browser too, at bbsweb.teletypegames.org.'
+  fact: 'File > BBS Network lists our boards, the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324 and the WIKI-BBS at 2325. All three boards work in a browser too, at bbsweb.teletypegames.org.'
 - keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger]
   fact: 'Alt and a letter opens a menu, F10 the first one; Tab moves inside a window, Enter presses the button, Esc closes the window. F2 boards, F3 post, F4 chat, F1 asks me. F5 or Alt-Enter puts a big window on the full screen and back, so does the [↑] on its title bar. The mouse works too.'
 - keys: [sysop, admin, operator, console, broadcast]

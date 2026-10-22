@@ -213,6 +213,14 @@ BBS.configure do |config|
                                title: ' Download ', width: 64)
         end
 
+        def view_art(name)
+          lines = services[:art].lines(name)
+          title = services[:art].sauce(name)&.title.to_s
+          with_line do |session|
+            BBS::Widgets::AnsiArt.view(session, lines, title: title.empty? ? name : "#{name} — #{title}")
+          end
+        end
+
         def show_art(name)
           lines = services[:art].lines(name)
           @desktop_art.lines      = lines
@@ -575,8 +583,16 @@ BBS.configure do |config|
         window_spec.render_detail do |name, width, ctx|
           UI::Formatters::Gallery.detail(name, ctx[:art].sauce(name), ctx[:art].size(name), ctx[:art].lines(name), width)
         end
-        window_spec.bottom_meta { |_name, _ctx| 'Show: the desktop for this call · Favourite: for every call' }
-        window_spec.action label: '&Show', align: :left do |window, ctx|
+        window_spec.bottom_meta do |_name, _ctx|
+          'Enter/View: full screen · Desktop: for this call · Favourite: for every call'
+        end
+        window_spec.on_activate { |name, _window, ctx| ctx[:app].view_art(name) }
+        window_spec.action label: '&View', align: :left do |window, ctx|
+          name = window.list_widget.selected_item
+          ctx[:app].view_art(name) if name
+          :keep
+        end
+        window_spec.action label: '&Desktop', align: :left do |window, ctx|
           name = window.list_widget.selected_item
           ctx[:app].show_art(name) if name
           :close
@@ -662,6 +678,7 @@ BBS.configure do |config|
           item '&News'        do open_window(:news) end
           item '&Dev Log'     do open_window(:dev_log) end
           item '&System Info' do open_window(:system_info) end
+          item 'BBS Net&work' do open_window(:network) end
           separator
           item 'E&xit', shortcut: 'Alt-X' do :halt end
         end
@@ -669,11 +686,12 @@ BBS.configure do |config|
         menu '&Messages' do
           item '&Boards…',   shortcut: 'F2' do open_window(:messages) end
           item '&New Post…', shortcut: 'F3' do open_new_post end
-          separator
           item '&Oneliners' do open_window(:oneliners) end
+          separator
+          item '&Live Chat', shortcut: 'F4' do open_window(:chat) end
         end
 
-        menu 'F&iles' do
+        menu '&Content' do
           item '&FTP Browser'     do open_window(:ftp) end
           item '&Game Catalog'    do open_window(:games) end
           item '&Platform Guides' do open_window(:wiki, section: :platforms) end
@@ -712,16 +730,8 @@ BBS.configure do |config|
           end
         end
 
-        menu '&Chat' do
-          item '&Open chat', shortcut: 'F4' do open_window(:chat) end
-        end
-
         menu '&Doors' do
           doors
-        end
-
-        menu 'Net&work' do
-          item '&Other systems' do open_window(:network) end
         end
 
         menu 'S&ysop' do

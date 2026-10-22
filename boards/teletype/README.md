@@ -94,13 +94,11 @@ door.
 | Menu | Items |
 |---|---|
 | **TTG Master** | Ask a question… · What is new? · What is coming up? · Where do I start? · How do I download files? · Which doors are there? |
-| **File** | Bulletin · News · Dev Log · System Info · Exit |
-| **Messages** | Boards… · New Post… · Oneliners |
-| **Files** | FTP Browser · Game Catalog · Platform Guides · Engines · DOS Corner · ANSI Gallery |
+| **File** | Bulletin · News · Dev Log · System Info · BBS Network (our other BBSes and bbsweb) · Exit |
+| **Messages** | Boards… · New Post… · Oneliners · Live Chat |
+| **Content** | FTP Browser · Game Catalog · Platform Guides · Engines · DOS Corner · ANSI Gallery |
 | **Users** | Online · Last Callers · Team · Profile… · Register… · Language EN/HU |
-| **Chat** | Open chat |
 | **Doors** | SERMO · Commodore 64 · Commodore Plus/4 · Impostor · Chat of Ra |
-| **Network** | Other systems (our other BBSes and bbsweb) |
 | **Sysop** | Console (logged-in sysops only) |
 | **Help** | Ask the TTG Master · About · Keys |
 
@@ -122,7 +120,7 @@ door.
 - **Sysop console** — stats + broadcast, for names in `BBS_SYSOPS` that logged in with their password.
 - **Discord feed** — new board posts and sysop broadcasts go to `BBS_DISCORD_WEBHOOK`, mentions disabled.
 - **Last callers** — a call is logged when it ends, and only if the terminal reported its window size (telnet NAWS) and stayed at least 10 seconds. Telnet password-guessing bots never get listed, and neither do they show up as online.
-- **ANSI Gallery** — the art files of the desktop folder with their SAUCE record and a preview. **Show** puts one on the desktop for the call, **Favourite** keeps it for every call of a registered name (the `art` column of the profile).
+- **ANSI Gallery** — the art files of the desktop folder with their SAUCE record and a preview. **Enter** or **View** shows a piece on the full screen (rubbs' `AnsiArt.view`: scrolled with the arrows and PgUp/PgDn when taller than the screen, any other key returns), **Desktop** puts it on the desktop for the call, **Favourite** keeps it for every call of a registered name (the `art` column of the profile). `data/art` has the TTG pieces: `sunset.ans`, `pyramid.ans` (80×40, Blessing of Ra), `c64.ans`, `impostor.ans`, `floppy.ans` (the DOS tools), `ttg.ans`, all CP437 with SAUCE, next to the older `.ansi` files.
 - **TTG Master** (the first menu, F1, the desktop button, the Welcome window, Help) — the sysop who answers callers' questions about the board; the menu also has ready questions. See *Characters* below.
 - **Full screen** — the windows with much to read (Welcome, News, Team, Oneliners, Boards and the composer, the wiki sections, Game Catalog, FTP Browser, Dev Log, ANSI Gallery, Live Chat, the TTG Master) can fill the screen and go back: `F5`, `Alt-Enter`, the `[↑]` gadget or a double click on the title bar (rubbs' `maximizable`). The small info windows and dialogs cannot.
 - **xterm mouse** — click menus, buttons, list items; wheel-scroll lists.
