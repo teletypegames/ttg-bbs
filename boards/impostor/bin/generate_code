@@ -23,4 +23,9 @@ if name.length < Impostor::CodeGenerator::NAME_LEN
   exit 1
 end
 
+unless name[0, Impostor::CodeGenerator::NAME_LEN].match?(/\A[A-Z]+\z/)
+  warn "Error: the first #{Impostor::CodeGenerator::NAME_LEN} characters of PLAYER_NAME must be letters A-Z."
+  exit 1
+end
+
 puts Impostor::CodeGenerator.encrypt(name)
