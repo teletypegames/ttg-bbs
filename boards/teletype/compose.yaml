@@ -12,6 +12,7 @@ services:
       - TZ=Europe/Budapest
       - BBS_SYSOPS=${BBS_SYSOPS:-}
       - BBS_DISCORD_WEBHOOK=${BBS_DISCORD_WEBHOOK:-}
+      - BBS_IRC_PASSWORD=${BBS_IRC_PASSWORD:-}
       - SERMO_LLM_URL=http://llm:8080
       - SERMO_LLM_MODEL=qwen3.5-0.8b
       - SERMO_LLM_API_KEY=${SERMO_LLM_API_KEY:-}

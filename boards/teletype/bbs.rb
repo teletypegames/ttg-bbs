@@ -22,6 +22,7 @@ require_relative 'lib/domain/service/profile_service'
 require_relative 'lib/domain/service/wiki_service'
 require_relative 'lib/domain/service/games_service'
 require_relative 'lib/domain/service/chat_service'
+require_relative 'lib/domain/service/irc_relay'
 require_relative 'lib/domain/service/last_callers_service'
 require_relative 'lib/domain/service/account_service'
 require_relative 'lib/domain/service/site_service'
@@ -51,6 +52,11 @@ board_service        = BoardService.new(BoardRepository.new(
 wiki_service         = WikiService.new(WikiRepository.new)
 games_service        = GamesService.new(CatalogRepository.new)
 chat_service         = ChatService.new
+irc_relay            = IrcRelay.new(server:   ENV.fetch('BBS_IRC_SERVER', 'irc.libera.chat'),
+                                    port:     ENV.fetch('BBS_IRC_PORT', '6697'),
+                                    channel:  ENV.fetch('BBS_IRC_CHANNEL', '#teletypegames'),
+                                    nick:     ENV.fetch('BBS_IRC_NICK', 'ttgbbs'),
+                                    password: ENV.fetch('BBS_IRC_PASSWORD', '')).start
 last_callers_service = LastCallersService.new(LastCallersRepository.new(
                          ENV.fetch('LAST_CALLERS_PATH', 'data/last_callers.csv')))
 profile_service      = ProfileService.new(ProfileRepository.new(
@@ -93,6 +99,7 @@ BBS.configure do |config|
   config.on_session_end = lambda do |session|
     online_service.remove(session.session_id)
     chat_service.unsubscribe(session.session_id)
+    irc_relay.unsubscribe(session.session_id)
     last_callers_service.finish(session.session_id)
   end
 
@@ -189,6 +196,7 @@ BBS.configure do |config|
                wiki:         wiki_service,
                games:        games_service,
                chat:         chat_service,
+               irc:          irc_relay,
                last_callers: last_callers_service,
                profile:      profile_service,
                accounts:     account_service,
@@ -611,6 +619,25 @@ BBS.configure do |config|
         end
         window_spec.on_poll do |app_, ctx|
           ctx[:chat].drain(app_.session_id).map { |line| UI::Formatters::Chat.line(line) }
+        end
+      end
+
+      # The IRC channel, read only: the input line only tells how to join.
+      window :irc, type: :stream do |window_spec|
+        window_spec.maximizable true
+        window_spec.title       { |ctx| UI::Formatters::Irc.title(ctx[:irc]) }
+        window_spec.placeholder UI::Formatters::Irc::PLACEHOLDER
+        window_spec.initial_lines do |ctx|
+          ctx[:irc].subscribe(ctx[:session_id])
+          UI::Formatters::Irc.intro(ctx[:irc]) + ctx[:irc].history.map { |line| UI::Formatters::Irc.line(line) }
+        end
+        window_spec.on_submit do |_text, _app, ctx|
+          ctx[:irc_hint] = true
+          nil
+        end
+        window_spec.on_poll do |app_, ctx|
+          hint = ctx.delete(:irc_hint) ? UI::Formatters::Irc.how_to_join(ctx[:irc]) : []
+          ctx[:irc].drain(app_.session_id).map { |line| UI::Formatters::Irc.line(line) } + hint
         end
       end
 
@@ -1066,6 +1093,7 @@ BBS.configure do |config|
           item '&Oneliners' do open_window(:oneliners) end
           separator
           item '&Live Chat', shortcut: 'F4' do open_window(:chat) end
+          item '&IRC #teletypegames' do open_window(:irc) end
           separator
           item '&Feedback to the Sysop…' do write_mail(to: MailService::SYSOP) end
           item '&Page the Sysop'         do page_sysop end
@@ -1139,7 +1167,8 @@ BBS.configure do |config|
           item '&About' do
             BBS::Dialogs.message(self,
               'Teletype BBS — the telnet board of Teletype Games, powered by rubbs. ' \
-              'Message boards, mail, oneliners, a live chat and a voting booth; our games in the file areas ' \
+              'Message boards, mail, oneliners, a live chat, the IRC channel (read only) and a voting booth; ' \
+              'our games in the file areas ' \
               'and the catalog, the wiki guides, bulletins and the dev log. ' \
               'Register your name under Users to keep it. Doors: SERMO, a Commodore 64 and a Plus/4, ' \
               'the Impostor debrief terminal, Chat of Ra and TTG Trivia. Lost? F1 asks the TTG Master.',

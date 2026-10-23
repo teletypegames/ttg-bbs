@@ -53,6 +53,11 @@ Copy `env-example` to `.env`:
 | `BBS_PORT` | `2323` | TCP port to listen on |
 | `BBS_SYSOPS` | empty | Comma-separated sysop names. Sysop rights need the name's password; these accounts are created only with `bin/account` |
 | `BBS_DISCORD_WEBHOOK` | empty | Discord webhook for new board posts and sysop broadcasts; empty = off |
+| `BBS_IRC_SERVER` | `irc.libera.chat` | IRC server of the read-only channel window (TLS); empty = off |
+| `BBS_IRC_PORT` | `6697` | Its TLS port |
+| `BBS_IRC_CHANNEL` | `#teletypegames` | The channel the board listens on |
+| `BBS_IRC_NICK` | `ttgbbs` | The board's nick there; taken at login → `ttgbbs_` |
+| `BBS_IRC_PASSWORD` | empty | NickServ password of the nick (SASL PLAIN); empty = no login |
 | `ACCOUNTS_PATH` | `data/accounts.csv` | Registered names with salted PBKDF2-SHA256 password hashes |
 | `BOARDS_PATH` | `data/boards` | Directory of per-board CSV files |
 | `MESSAGES_PATH` | `data/messages.dat` | Legacy single-board file; auto-migrated into the General board on first run |
@@ -119,7 +124,7 @@ door.
 |---|---|
 | **TTG Master** | Ask a question… · What is new? · What is coming up? · Where do I start? · How do I download files? · Which doors are there? |
 | **File** | Welcome · Bulletins… · News · Dev Log · System Info · BBS Network (our other BBSes and bbsweb) · Log off |
-| **Messages** | Boards… · New Post… · Mail… · Oneliners · Live Chat · Feedback to the Sysop… · Page the Sysop |
+| **Messages** | Boards… · New Post… · Mail… · Oneliners · Live Chat · IRC #teletypegames · Feedback to the Sysop… · Page the Sysop |
 | **Content** | File Areas · FTP Browser · Game Catalog · Platform Guides · Engines · DOS Corner · Tech HowTos · ANSI Gallery |
 | **Users** | Who is Online · Last Callers · User Listing · Your Stats · Hall of Fame · Voting Booth · Team · Profile… · Register… · Language EN/HU |
 | **Doors** | SERMO · Commodore 64 · Commodore Plus/4 · Impostor · Chat of Ra · TTG Trivia |
@@ -132,6 +137,7 @@ door.
 - **Multi-line composer** — `TextArea` widget, up to 1000 chars per post, one post per 30 seconds from a call.
 - **Oneliners** — a wall of one-line messages (64 characters, a name needed, not Anonymous); the last five are in the Welcome window.
 - **Live chat** — broadcast hub, 1 Hz polling, history replay on join; at most two lines a second from one caller, and a caller who does not read keeps the last 200 lines.
+- **IRC #teletypegames** — a read-only window on the channel at Libera.Chat: one connection for the whole board under the nick `ttgbbs` (TLS, reconnects with a growing pause), the last 200 lines replayed, the member count and the topic; the window tells how to join, and the input line only repeats it. mIRC formatting and control characters are stripped. The board never speaks on the channel.
 - **Bulletin on login** — the latest releases and upcoming events from teletypegames.org, message count, last callers and the last oneliners.
 - **Logon sequence** — caller numbers (every logged call before this one, plus one), a name's calls, first and last call and time on line, and the scans: unread mail, the new messages of each board since the name last opened it (registered names; `LAST_READ_PATH`), polls without the caller's vote, releases of the last 30 days. The quote of the day is a member's motto, the same for everyone until midnight; the logoff screen picks a tagline (`lib/content/taglines.yml`) or a motto.
 - **Nodes** — every caller gets the lowest free node number. Users > Who is Online lists the nodes with the name, what the caller is doing (the title of the top window, *At the main menu*, or the door) and the time on line.
@@ -155,7 +161,7 @@ door.
 - **Last callers** — a call is logged when it ends, and only if the terminal reported its window size (telnet NAWS) and stayed at least 10 seconds. Telnet password-guessing bots never get listed, and neither do they show up as online.
 - **ANSI Gallery** — the art files of the desktop folder with their SAUCE record and a preview. **Enter** or **View** shows a piece on the full screen (rubbs' `AnsiArt.view`: scrolled with the arrows and PgUp/PgDn when taller than the screen, any other key returns), **Desktop** puts it on the desktop for the call, **Favourite** keeps it for every call of a registered name (the `art` column of the profile). `data/art` has the TTG pieces: `sunset.ans`, `pyramid.ans` (80×40, Blessing of Ra), `c64.ans`, `impostor.ans`, `floppy.ans` (the DOS tools), `ttg.ans`, `ttg-logo.ans` (the TTG logo, 80×40, converted to 16-colour half blocks), all CP437 with SAUCE, next to the older `.ansi` files.
 - **TTG Master** (the first menu, F1, the desktop button, the Welcome window, Help) — the sysop who answers callers' questions about the board; the menu also has ready questions. See *Characters* below.
-- **Full screen** — the windows with much to read (Welcome, News, Team, Oneliners, Boards and the composer, the wiki sections, Game Catalog, FTP Browser, Dev Log, ANSI Gallery, Live Chat, the TTG Master) can fill the screen and go back: `F5`, `Alt-Enter`, the `[↑]` gadget or a double click on the title bar (rubbs' `maximizable`). The small info windows and dialogs cannot.
+- **Full screen** — the windows with much to read (Welcome, News, Team, Oneliners, Boards and the composer, the wiki sections, Game Catalog, FTP Browser, Dev Log, ANSI Gallery, Live Chat, IRC, the TTG Master) can fill the screen and go back: `F5`, `Alt-Enter`, the `[↑]` gadget or a double click on the title bar (rubbs' `maximizable`). The small info windows and dialogs cannot.
 - **xterm mouse** — click menus, buttons, list items; wheel-scroll lists.
 - **Idle disconnect** at 10 minutes.
 - **Configurable desktop art** — drop `.ans` / `.ansi` / `.asc` / `.nfo` / `.txt` files into `data/art/` (or wherever `BBS_DESKTOP_ART` points). Classic CP437 BBS art is auto-decoded; SAUCE metadata is stripped. With a directory, a different file is shown per session.
@@ -183,7 +189,7 @@ lib/
     http_json.rb                       JSON GET + 5-minute cache
   domain/service/
     online_service.rb, board_service.rb, wiki_service.rb,
-    games_service.rb, chat_service.rb, last_callers_service.rb,
+    games_service.rb, chat_service.rb, irc_relay.rb, last_callers_service.rb,
     profile_service.rb, account_service.rb, site_service.rb,
     oneliner_service.rb, file_library_service.rb, dev_log_service.rb,
     art_service.rb, discord_notifier.rb, mail_service.rb,

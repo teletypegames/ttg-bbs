@@ -402,6 +402,46 @@ module UI
       end
     end
 
+    module Irc
+      NETWORK     = 'Libera.Chat'
+      HOST        = 'irc.libera.chat'
+      WEBCHAT     = 'https://web.libera.chat/'
+      PLACEHOLDER = 'Read only here. To talk, join the channel from an IRC client (see the top).'
+
+      def self.title(irc) = " IRC — #{irc.channel} on #{NETWORK} "
+
+      def self.intro(irc)
+        [
+          "  \e[1;36mA read-only window on #{irc.channel} at #{NETWORK}:\e[0m " \
+          "the board listens there as \e[1;33m#{irc.nick}\e[0m.",
+          "  To talk, join with any IRC client: \e[1;37m#{HOST}\e[0m, port \e[1;37m6697\e[0m (TLS), " \
+          "channel \e[1;37m#{irc.channel}\e[0m",
+          "  or in a browser: \e[1;37m#{WEBCHAT}#{irc.channel}\e[0m",
+          "  #{status(irc)}",
+          ''
+        ]
+      end
+
+      def self.status(irc)
+        return "\e[1;31mNot connected right now, reconnecting…\e[0m" unless irc.joined?
+
+        topic = irc.topic.to_s.empty? ? '' : " · Topic: #{irc.topic}"
+        "\e[2;37m#{irc.member_count} on the channel#{topic}\e[0m"
+      end
+
+      def self.line(entry)
+        if entry.username == IrcRelay::SYSTEM
+          "  \e[2;37m#{entry.timestamp}  * #{entry.text}\e[0m"
+        else
+          "  \e[2;37m#{entry.timestamp}\e[0m  \e[1;36m<#{entry.username}>\e[0m #{entry.text}"
+        end
+      end
+
+      def self.how_to_join(irc)
+        ["  \e[1;33mThe board only reads the channel. Say it on IRC: #{HOST} #{irc.channel}\e[0m"]
+      end
+    end
+
     module Users
       def self.last_callers_list(callers)
         return ['  (no callers recorded yet)'] if callers.empty?
