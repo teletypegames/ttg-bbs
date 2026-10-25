@@ -1,0 +1,208 @@
+# frozen_string_literal: true
+
+module UI
+  module C64
+    class Board
+      private
+
+      def date(time) = time ? time.localtime.strftime('%Y-%m-%d') : '-'
+
+      # ── callers & users ────────────────────────────────────────────────
+
+      def people
+        loop do
+          doing('Callers & Users')
+          @screen.title('CALLERS & USERS')
+          [['w', 'who is online'], ['l', 'last callers'], ['u', 'user listing'], ['t', 'the team']].each do |k, label|
+            @screen.puts " #{YE}#{k.upcase}#{LG} #{label}"
+          end
+          case @screen.choose("\r\n#{WH}command#{LG} (q: back): ", %w[w l u t q])
+          when 'w' then @screen.page('WHO IS ONLINE', who_is_online)
+          when 'l' then @screen.page('LAST CALLERS', last_callers)
+          when 'u' then @screen.page('USER LISTING', user_listing)
+          when 't' then @screen.page('THE TEAM', team)
+          else return
+          end
+        end
+      end
+
+      def who_is_online
+        @bbs.online.nodes.flat_map do |n|
+          me = n.session_id == session_id ? " #{GN}<#{LG}" : ''
+          on = Time.now - n.since
+          [" #{YE}#{n.number.to_s.rjust(2)}#{LG} #{WH}#{n.name}#{LG}#{me} #{GR}#{(on / 60).to_i}m#{LG}",
+           "    #{CY}#{n.activity.to_s[0, 34]}#{LG}"]
+        end
+      end
+
+      def last_callers
+        @bbs.last_callers.recent(15).map do |c|
+          " #{GR}#{c.timestamp.to_s[5, 11].sub('T', ' ')}#{LG} #{YE}#{c.username}#{LG}"
+        end
+      end
+
+      def user_listing
+        rows = @bbs.user_rows
+        return [" #{GR}(nobody has registered yet)#{LG}"] if rows.empty?
+
+        [" #{GR}  name                calls last call#{LG}"] +
+          rows.map do |user, stats, _location, online|
+            " #{online ? "#{GN}*#{LG}" : ' '} #{user[0, 18].ljust(19)}#{YE}#{(stats&.calls || 0).to_s.rjust(5)}#{LG} " \
+              "#{GR}#{stats ? stats.last_call.localtime.strftime('%m-%d') : '-'}#{LG}"
+          end + ['', " #{GN}*#{LG} #{GR}on line now#{LG}"]
+      end
+
+      def team
+        members = @bbs.site.members
+        return [" #{GR}(team list unavailable)#{LG}"] if members.empty?
+
+        members.flat_map do |m|
+          [" #{YE}#{m.nick}#{LG} #{GR}#{m.real_nick}#{LG}", *@screen.wrap(m.motto.gsub(/\s+/, ' '), 36).map { |l| "   #{l}" }, '']
+        end
+      end
+
+      def hall_of_fame
+        doing('Hall of Fame')
+        fame = @bbs.hall_of_fame
+        lines = [['most downloaded games', fame[:downloads]], ['top callers', fame[:callers]],
+                 ['top posters', fame[:posters]], ['ttg trivia high scores', fame[:trivia]]]
+                .flat_map do |heading, rows|
+          [" #{WH}#{heading}#{LG}", *(rows.empty? ? [" #{GR}(nobody yet)#{LG}"] : fame_rows(rows)), '']
+        end
+        @screen.page('HALL OF FAME', lines)
+      end
+
+      def fame_rows(rows)
+        max = rows.map(&:last).max.to_f
+        rows.each_with_index.map do |(who, n), i|
+          bar = '█' * (max.positive? ? (n / max * 9).round : 0)
+          " #{YE}#{(i + 1).to_s.rjust(2)}#{LG} #{who.to_s[0, 18].ljust(19)}#{CY}#{bar.ljust(9)}#{LG}#{n.to_s.rjust(6)}"
+        end
+      end
+
+      # ── the voting booth ───────────────────────────────────────────────
+
+      def voting
+        loop do
+          doing('Voting Booth')
+          poll = @screen.pick('VOTING BOOTH', @bbs.voting.polls, empty: '(no polls)') do |p|
+            "#{@bbs.voting.ballot(p, name) ? "#{GN}✓#{LG}" : "#{YE}*#{LG}"} #{p.title}"
+          end
+          return unless poll
+
+          poll_screen(poll)
+        end
+      end
+
+      def poll_screen(poll)
+        results = @bbs.voting.results(poll)
+        total   = @bbs.voting.total(poll)
+        ballot  = @bbs.voting.ballot(poll, name)
+        max     = results.map(&:last).max.to_i
+        lines = @screen.wrap(poll.question).map { |l| " #{WH}#{l}#{LG}" }
+        lines << " #{GR}#{total} vote#{'s' if total != 1}#{ballot ? ", yours: #{ballot}" : ', you have not voted yet'}#{LG}"
+        lines << ''
+        results.each_with_index do |(option, votes), i|
+          pct  = total.positive? ? (votes * 100.0 / total).round : 0
+          bar  = '█' * (max.positive? ? (votes.to_f / max * 6).round : 0)
+          mine = option == ballot ? "#{GN}<#{LG}" : ' '
+          lines << " #{YE}#{(i + 1).to_s.rjust(2)}#{LG} #{option.to_s[0, 21].ljust(22)}#{CY}#{bar.ljust(6)}#{LG}" \
+                   "#{pct.to_s.rjust(3)}%#{mine}"
+        end
+        @screen.page(poll.title.upcase[0, 30], lines, wait: anonymous?)
+        return if anonymous?
+
+        answer = @screen.ask("#{WH}your vote#{LG} (1-#{poll.options.size}, return: none): ", max: 3)
+        return if answer.empty?
+
+        option = poll.options[answer.to_i - 1] if answer.to_i.positive?
+        if option && @bbs.voting.vote(poll, name, option) == :ok
+          @screen.say("Your vote: #{option}.", GN)
+        else
+          @screen.say("Type a number from 1 to #{poll.options.size}.", RD)
+        end
+        @screen.pause('return')
+      end
+
+      # ── you ────────────────────────────────────────────────────────────
+
+      def you
+        loop do
+          doing('Your Stats')
+          @screen.page("YOU - #{name.upcase}"[0, 30], my_stats, wait: false)
+          k = @screen.choose("#{YE}P#{LG}rofile  #{YE}R#{LG}egister  #{YE}Q#{LG}: back ", %w[p r q])
+          case k
+          when 'p' then profile
+          when 'r' then register
+          else return
+          end
+        end
+      end
+
+      def my_stats
+        s = @bbs.my_stats(name, registered: registered?, session_id: session_id, caller_number: @ctx[:caller_number],
+                                sysop: sysop?)
+        stats = s[:stats]
+        rows = [
+          ['name', registered? ? "#{name} (registered)" : "#{name} (guest)"],
+          ['this call', "caller ##{s[:caller_number]}#{", node #{s[:node].number}" if s[:node]}"],
+          ['calls', stats ? stats.calls.to_s : 'this is your first'],
+          ['first call', date(stats&.first_call)], ['last call', date(stats&.last_call)],
+          ['posts', s[:posts].to_s], ['votes', s[:ballots].to_s],
+          ['mail', s[:letters].nil? ? 'register to get mail' : "#{s[:letters]} letter#{'s' if s[:letters] != 1}"]
+        ]
+        rows << ['member since', s[:member_since].to_s[0, 10]] if s[:member_since]
+        profile = registered? ? @bbs.profile.find(name) : nil
+        rows += %w[location homepage signature].map { |f| [f, profile[f].to_s] }.reject { |_, v| v.empty? } if profile
+        rows.flat_map { |k, v| @screen.wrap("#{GR}#{k.ljust(13)}#{LG}#{v}", 38).map { |l| " #{l}" } }
+      end
+
+      def profile
+        unless registered?
+          @screen.say('Register your name first (R): a profile belongs to a registered name.', RD)
+          return @screen.pause('return')
+        end
+
+        @screen.title("PROFILE - #{name.upcase}")
+        @screen.say('Return keeps a field as it is.', GR)
+        existing = @bbs.profile.find(name) || {}
+        values = %w[signature location homepage notes].to_h do |field|
+          @screen.puts " #{GR}#{field}: #{existing[field]}#{LG}" unless existing[field].to_s.empty?
+          typed = @screen.ask(" #{WH}#{field}#{LG}> ", max: 60)
+          [field.to_sym, typed.empty? ? existing[field].to_s : typed]
+        end
+        @bbs.profile.update(name, **values)
+        @screen.say('Profile saved.', GN)
+        @screen.pause('return')
+      end
+
+      def register
+        @screen.title("REGISTER - #{name.upcase}")
+        if registered?
+          @screen.say("#{name} is already registered and logged in.")
+        elsif anonymous?
+          @screen.say('Call again with a name to register it.', RD)
+        else
+          @screen.say('Next time the board asks for this password.', GR)
+          password = @screen.ask(" #{WH}password#{LG}: ", mask: '*')
+          confirm  = @screen.ask(" #{WH}again#{LG}:    ", mask: '*')
+          @screen.say(register_result(@bbs.accounts.register(name, password, confirm)))
+        end
+        @screen.pause('return')
+      end
+
+      def register_result(result)
+        case result
+        when :ok
+          @ctx[:authenticated] = true
+          "#{GN}#{name} is yours now.#{LG}"
+        when :reserved  then "#{RD}This name is reserved for the sysop.#{LG}"
+        when :taken     then "#{RD}This name is already registered.#{LG}"
+        when :too_short then "#{RD}At least #{AccountService::MIN_PASSWORD} characters.#{LG}"
+        when :mismatch  then "#{RD}The two passwords differ.#{LG}"
+        else "#{RD}Log in with a name first, not as Anonymous.#{LG}"
+        end
+      end
+    end
+  end
+end

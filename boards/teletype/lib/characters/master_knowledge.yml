@@ -1,7 +1,7 @@
 # What the TTG Master knows about the board: one fact per entry, found by its
 # keys (whole words of the question, or a phrase of them; a trailing s does
 # not matter; board, door, game and the like weigh half). Keep the
-# menu paths the same as the menubar in bbs.rb.
+# menu paths the same as the menubar in lib/ui/modern.rb.
 - keys: [register, registration, password, account, signup, keep, reserve]
   fact: 'Users > Register… ties the name you called with to a password; from then on that name asks for it. Anonymous cannot register, so call again with a name first.'
 - keys: [profile, signature, location, homepage, note]

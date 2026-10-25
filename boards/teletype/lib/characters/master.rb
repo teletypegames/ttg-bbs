@@ -10,10 +10,18 @@ require_relative 'llm'
 class TtgMaster
   def self.stem(word) = word.to_s.downcase.sub(/(?<=...)s\z/, '')
 
+  def self.knowledge(file)
+    YAML.safe_load_file(File.join(__dir__, file)).map do |entry|
+      [entry.fetch('keys').map { |k| k.split.map { |w| stem(w) }.join(' ') }.uniq, entry.fetch('fact')]
+    end.freeze
+  end
+
   PERSONA   = BBS::AI::Persona.load(File.join(__dir__, 'master.yml'))
-  KNOWLEDGE = YAML.safe_load_file(File.join(__dir__, 'master_knowledge.yml')).map do |entry|
-    [entry.fetch('keys').map { |k| k.split.map { |w| stem(w) }.join(' ') }.uniq, entry.fetch('fact')]
-  end.freeze
+  KNOWLEDGE = knowledge('master_knowledge.yml')
+  # The same sysop on the C64 board, where the way around is single keys.
+  C64 = { persona:   BBS::AI::Persona.load(File.join(__dir__, 'master_c64.yml')),
+          knowledge: knowledge('master_knowledge_c64.yml'),
+          catalog:   'G on the main menu' }.freeze
   MAX_FACTS = 2
 
   # Words that sit in many questions weigh half: "board" in "who made this
@@ -24,10 +32,14 @@ class TtgMaster
   EVENT_WORDS  = %w[event party jam meeting deadline upcoming next when coming].freeze
   LIST_WORDS   = %w[which list all what].freeze
 
-  def initialize(games:, site:)
-    @games = games
-    @site  = site
-    @chat  = BBS::AI::Chat.new(persona: PERSONA, client: Characters.client, key: :master_history, history: 0)
+  # +catalog+ is where the board keeps the game catalog, for the catalog fact.
+  def initialize(games:, site:, persona: PERSONA, knowledge: KNOWLEDGE, catalog: 'Content > Game Catalog')
+    @games     = games
+    @site      = site
+    @persona   = persona
+    @knowledge = knowledge
+    @catalog   = catalog
+    @chat      = BBS::AI::Chat.new(persona: persona, client: Characters.client, key: :master_history, history: 0)
   end
 
   MENU_PATH = %r{\b[A-Z][\w/-]*(?: [A-Z][\w/-]*)* > [A-Z0-9][\w/…-]*(?: [A-Z0-9][\w/…-]*)*}
@@ -39,12 +51,12 @@ class TtgMaster
   # the wording lost the facts' anchors or names a menu that is not in
   # them, the caller gets the fact itself.
   def answer(question, ctx = {})
-    if (canned = PERSONA.deflect(question))
+    if (canned = @persona.deflect(question))
       return canned
     end
 
     facts = facts_for(question)
-    return PERSONA.fallback(question) if facts.empty?
+    return @persona.fallback(question) if facts.empty?
 
     reply = @chat.reply("Facts:\n#{facts.map { |f| "- #{f.text}" }.join("\n")}\nQuestion: #{question}", ctx,
                         fallback: facts.first.text)
@@ -54,10 +66,10 @@ class TtgMaster
   def facts_for(question)
     words = question.downcase.scan(/[[:alnum:]]+/).map { |w| self.class.stem(w) }
     phrase = " #{words.join(' ')} "
-    found = KNOWLEDGE.map { |keys, text| [score(keys, words, phrase), text] }
-                     .select { |score, _| score.positive? }
-                     .sort_by { |score, _| -score }.first(MAX_FACTS)
-                     .map { |_, text| Fact.new(text, text.scan(MENU_PATH)) }
+    found = @knowledge.map { |keys, text| [score(keys, words, phrase), text] }
+                      .select { |score, _| score.positive? }
+                      .sort_by { |score, _| -score }.first(MAX_FACTS)
+                      .map { |_, text| Fact.new(text, text.scan(MENU_PATH)) }
     live = []
     live << releases if words.intersect?(NEWS_WORDS)
     live << events if words.intersect?(EVENT_WORDS)
@@ -109,7 +121,7 @@ class TtgMaster
     return nil if by_platform.empty?
 
     list = by_platform.sort.map { |p, gs| "#{p}: #{gs.map(&:title).uniq.join(', ')}" }
-    Fact.new("The games by platform: #{list.join('; ')}. Content > Game Catalog has them all.",
-             by_platform.values.flatten.map(&:title) + ['Content > Game Catalog'])
+    Fact.new("The games by platform: #{list.join('; ')}. #{@catalog} has them all.",
+             by_platform.values.flatten.map(&:title) + [@catalog])
   end
 end

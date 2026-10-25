@@ -12,6 +12,11 @@ FTP server with ZMODEM downloads, the wiki guides and tech how-tos, an ANSI
 gallery, the TTG Master who answers callers' questions (F1), and doors: SERMO,
 a Commodore 64, a Plus/4, the Impostor terminal, Chat of Ra and TTG Trivia.
 
+The board has two faces on one port: the **modern** one for ANSI terminals
+(windows, menus, mouse) and a **Commodore 64** one in PETSCII, 40×25, with
+single-key menus. Both work on the same board: a C64 caller and a PC caller
+share the nodes, the boards, the mail and the live chat.
+
 ## Running
 
 **Docker Compose:**
@@ -71,6 +76,7 @@ Copy `env-example` to `.env`:
 | `TRIVIA_SCORES_PATH` | `data/trivia_scores.csv` | Every finished TTG Trivia game, for its hall of fame |
 | `BBS_LOGON_ART` | `lib/content/logon.ans` | The art of the logon matrix, above the name prompt |
 | `BBS_FTP_HOST` | `ftp.teletypegames.org` | The FTP server of the FTP Browser (anonymous, passive) |
+| `BBS_ARCHIVE_URL` | `http://archive.teletypegames.org` | The FTP tree on plain HTTP: the C64 face gives these addresses, as a C64 cannot take a ZMODEM download or speak TLS |
 | `BBS_FTP_DOWNLOAD_MAX` | `16777216` | The largest file (bytes) the FTP Browser sends by ZMODEM; a bigger one only gets its FTP (and for WARP, HTTPS) address |
 | `SERMO_LLM_URL` | set by compose | SERMO's model, `http://llm:8080`; empty = canned replies only |
 | `SERMO_LLM_MODEL` | set by compose | the model's name in infra/llm, `qwen3.5-0.8b` |
@@ -79,6 +85,18 @@ Copy `env-example` to `.env`:
 | `BBS_DESKTOP_ART` | `data/art/teletype.ansi` | Path to a single ANSI art file (`.ans`, `.ansi`, `.asc`, `.nfo`, `.txt`) **or** a directory containing them. Its folder is the ANSI Gallery. A file is every caller's desktop; with a directory a random one is shown per session. A registered caller's favourite wins over both. CP437 / SAUCE-aware |
 
 ## Interface
+
+A call starts with one question, before the name: which terminal is calling.
+The board guesses first: it waits up to 1.5 seconds for the telnet answers, and
+a terminal that reports a window wider than 40 columns is a modern one; 40
+columns, or no answer at all (a C64 behind a WiFi modem speaks plain TCP), is
+taken for a Commodore. The question is plain ASCII in capitals, readable on
+both; RETURN takes the guess, `1` (or `A`) picks ANSI, `2` (or `C`) the C64.
+Whatever the caller types before the question is dropped (a bot's `root`), and
+mouse reporting is switched on only after the choice, so the C64 never gets
+its escape sequence.
+
+### The modern face
 
 A call starts the old way: the modem dials and connects (`CONNECT
 38400/ARQ/V42BIS`), the logon matrix shows the TTG art with the caller number
@@ -97,7 +115,7 @@ The statusbar shows the node, the clock and the time on line on the right. The d
 has a **F1 ▸ Lost? Ask the TTG Master** button in its bottom right corner. It does not come back when a caller returns from a
 door.
 
-### Keys
+#### Keys
 
 | Key | Action |
 |---|---|
@@ -118,7 +136,7 @@ door.
 | `F7` | Mail |
 | `Alt-X` | Log off |
 
-### Menus
+#### Menus
 
 | Menu | Items |
 |---|---|
@@ -131,7 +149,7 @@ door.
 | **Sysop** | Console (logged-in sysops only) |
 | **Help** | Ask the TTG Master · New to BBSes? · About · Keys |
 
-### Features
+#### Features
 
 - **Multi-board messaging** — separate sub-boards (General / Tech / Off-Topic / Sysop), each in its own CSV file under `data/boards/`.
 - **Multi-line composer** — `TextArea` widget, up to 1000 chars per post, one post per 30 seconds from a call.
@@ -166,11 +184,54 @@ door.
 - **Idle disconnect** at 10 minutes.
 - **Configurable desktop art** — drop `.ans` / `.ansi` / `.asc` / `.nfo` / `.txt` files into `data/art/` (or wherever `BBS_DESKTOP_ART` points). Classic CP437 BBS art is auto-decoded; SAUCE metadata is stripped. With a directory, a different file is shown per session.
 
+### The C64 face
+
+The board as the C64 boards had it (`lib/ui/c64`), on a C64 terminal program
+(CCGMS, StrikeTerm, SyncTERM in C64 mode) in the lowercase character set: the
+TELETYPE logo in reversed blocks, the name and the password, the logon scans,
+then the main menu, one key for each line:
+
+```
+ MESSAGES            CONTENT
+ M message boards    F file areas
+ E e-mail            B ftp browser
+ O oneliners         G game catalog
+ L live chat         W wiki & how-tos
+ I irc channel       N news
+ P page the sysop    U bulletins
+                     D dev log
+ PEOPLE              MORE
+ C callers & users   R doors
+ V voting booth      T ttg master
+ S you & your name   Y system info
+ H hall of fame      ? help
+ Z sysop console     Q log off
+```
+
+Lists are numbered: the number and RETURN opens one, RETURN alone turns the
+page, `Q` or `←` (RUN/STOP too) goes back. Long texts stop at every
+screenful. Posts and letters take several lines; an empty line ends them. In
+the live chat the others' lines show up above the one being typed. Wiki pages
+are the same Markdown, rendered 38 columns wide. Files cannot come down the
+line, so the file areas and the FTP browser give each file's plain HTTP
+address (`BBS_ARCHIVE_URL`) and its FTP one. The doors are the ones that fit 40
+columns (the Commodore 64 and the Plus/4); the others are on the modern face.
+The ANSI Gallery is on the modern face only. Mail rings when it arrives during
+the call, and `Q` ends the call with `NO CARRIER`.
+
+The screen is rubbs' PETSCII line (`session.petscii!`, see the rubbs README):
+the C64 face writes UTF-8 with ANSI colours, and the line makes PETSCII of it,
+so the shared parts (Markdown, the doors' FakeOS) work there unchanged.
+
 ## Project structure
 
 ```
-bbs.rb                                 entry point — services + Application
+bbs.rb                                 entry point: the terminal question, then a face
 lib/
+  domain.rb                            loads the domain (and the doors and characters)
+  domain/teletype_bbs.rb               the board: services wired to their stores, the
+                                       doors, and what a call does across services
+                                       (logon, posting, mail, paging, statistics)
   domain/repository/
     online_users_repository.rb         the nodes: who, since when, doing what
     board_repository.rb                multi-board CSV store
@@ -193,7 +254,7 @@ lib/
     profile_service.rb, account_service.rb, site_service.rb,
     oneliner_service.rb, file_library_service.rb, dev_log_service.rb,
     art_service.rb, discord_notifier.rb, mail_service.rb,
-    voting_service.rb, file_area_service.rb
+    voting_service.rb, file_area_service.rb, tagline_service.rb
   domain/model/                        value objects (MessageModel, GameModel, …)
   doors/commodore.rb                   the C64 and Plus/4 doors
   doors/commodore/basic.rb             their BASIC V2 interpreter
@@ -201,15 +262,24 @@ lib/
   doors/trivia.rb                      TTG Trivia
   content/                             polls.yml, trivia.yml, taglines.yml,
                                        bulletins/*.md, logon.ans
-  bbs/ui/classic_formatters.rb         logon/logoff, nodes, mail, voting,
-                                       file areas, history, hall of fame
   characters/                          Ra and the TTG Master: personas, riddles,
-                                       the Master's knowledge, eval questions,
-                                       the shared model client (llm.rb)
-bin/persona-eval                       count a character's slips over many runs
-  bbs/ui/formatters.rb                 view helpers: bulletin, news, game card,
+                                       the Master's knowledge (modern and C64),
+                                       eval questions, the shared model client
+  ui/terminal.rb                       the terminal question and its guess
+  ui/modern.rb                         the modern face: modem, logon matrix,
+                                       the Application (windows, menus, doors)
+  ui/modern/formatters.rb              view helpers: bulletin, news, game card,
                                        team, network, DOS intro, users, sysop,
                                        oneliners, FTP browser, dev log, gallery
+  ui/modern/classic_formatters.rb      logon/logoff, nodes, mail, voting,
+                                       file areas, history, hall of fame
+  ui/c64.rb                            the C64 face: logo, logon, NO CARRIER
+  ui/c64/screen.rb                     title bar, pages, numbered lists, editor,
+                                       chat line on the 40×25 screen
+  ui/c64/board.rb                      the main menu, doors, Master, help, sysop
+  ui/c64/messages.rb, content.rb,      its sections
+  ui/c64/people.rb
+bin/persona-eval                       count a character's slips over many runs
 data/
   boards/<id>.csv                      per-board messages (auto-created)
   last_callers.csv                     finished calls
@@ -227,18 +297,17 @@ bin/account                            create an account / reset a password
 
 ## Doors
 
-A door is one line in the Application definition in `bbs.rb`; the Doors menu
-(`doors` in the menubar block) lists the declared doors by itself:
+A door is one line of `TeletypeBBS#doors` (`lib/domain/teletype_bbs.rb`): its
+name, the program, the label with its hotkey, and the narrowest screen it draws
+for. The modern face declares them all in its Application, and its Doors menu
+(`doors` in the menubar block) lists them by itself; the C64 face offers the
+ones of 40 columns.
 
 ```ruby
-door :sermo,    Sermo::OS, label: '&SERMO'
-door :c64,      Commodore.os(Commodore::C64, games: games_service, files: file_library),
-     label: '&Commodore 64'
-door :plus4,    Commodore.os(Commodore::PLUS4, games: games_service, files: file_library),
-     label: 'Commodore &Plus/4'
-door :impostor, Impostor.flow(sessions: impostor_sessions), label: '&Impostor'
-door :trivia,   Trivia.door(games: games_service, site: site_service, scores: trivia_scores),
-     label: '&TTG Trivia'
+Door.new(:sermo,    Sermo::OS, '&SERMO', 80),
+Door.new(:c64,      Commodore.os(Commodore::C64, games: @games, files: @files), '&Commodore 64', 40),
+Door.new(:plus4,    Commodore.os(Commodore::PLUS4, games: @games, files: @files), 'Commodore &Plus/4', 40),
+Door.new(:impostor, Impostor.flow(sessions: @impostor_sessions), '&Impostor', 80),
 ```
 
 The program is a `BBS::FakeOS` definition, a `BBS::Flow` or a callable `(session, context)`.
@@ -316,7 +385,9 @@ reply in a voice and bad at facts, so the code keeps the facts:
   anchors (a menu path, a game or event name) and name no menu path that is not
   in them, else the caller gets the fact itself. A question with no facts never
   reaches the model. The answer is made in a thread and shows up on the
-  window's next tick.
+  window's next tick. On the C64 face the same Master works from
+  `master_c64.yml` and `master_knowledge_c64.yml`, which tell the way around in
+  the keys of its menus.
 
 Change a persona by measuring it, not by single replies. `bin/persona-eval`
 asks the questions of `lib/characters/eval/<name>.yml` several times and
