@@ -1,0 +1,118 @@
+# WikiProxy
+
+Wikipedia on a telnet line. Type the title of an article, and the proxy looks
+it up on wikipedia.org and shows it in a form a terminal can read: the article
+as plain text, cut into its sections, wrapped to the screen. Built on the
+[rubbs](https://git.teletypegames.org/engines/rubbs) gem, like the
+[Teletype BBS](https://git.teletypegames.org/bbs/bbs-server).
+
+It has two faces on one port: the **modern** one for ANSI terminals (windows,
+menus, mouse) and a **Commodore 64** one in PETSCII, 40×25, with single-key
+menus.
+
+## Running
+
+**Docker Compose:**
+
+```bash
+docker compose up --build
+```
+
+**Directly (Ruby 3.x):**
+
+```bash
+bundle install
+ruby bbs.rb
+```
+
+Connect:
+
+```bash
+telnet localhost 2326      # compose
+telnet localhost 2323      # directly (BBS_PORT)
+```
+
+## Configuration
+
+Copy `env-example` to `.env`:
+
+| Variable | Default | Description |
+|---|---|---|
+| `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2326) |
+| `WIKIPROXY_LANGUAGES` | `en,hu` | The Wikipedias a caller can switch between, by their language code; the first one is the default |
+
+## Interface
+
+A call starts with one question: which terminal is calling. The proxy guesses
+first: it waits up to 1.5 seconds for the telnet answers, and a terminal that
+reports a window wider than 40 columns is a modern one; 40 columns, or no
+answer at all (a C64 behind a WiFi modem speaks plain TCP), is taken for a
+Commodore. The question is plain ASCII in capitals, readable on both; RETURN
+takes the guess, `1` (or `M`) picks the modern face, `2` (or `C`) the C64.
+
+What is typed is first looked up as a title: when Wikipedia has an article of
+that title, or one it redirects to (`c64` → *Commodore 64*), it opens at once.
+Otherwise the search results come, best first, up to 30. An article opens with
+its sections: the lead under the article's title, then the `==` sections, the
+deeper headings inside them. The sections nobody reads on a terminal (See also,
+References, External links, and their Hungarian and German names) are left
+out. A formula is shown as its TeX made readable (`e^(iπ)+1=0`). Search
+results and articles are cached for 10 minutes.
+
+### The modern face
+
+A desktop under a menubar, the search dialog open on it.
+
+| Key | Action |
+|---|---|
+| `F2` | Search… |
+| `F3` | Random article |
+| `F4` | The next language |
+| `Enter` | Open the search result |
+| `F5` / `Alt-Enter` | Full screen and back |
+| `F6` / `Shift-F6` | Next / previous window |
+| `Esc` | Close the window |
+| `F10` | Menu |
+| `Alt-X` | Log off |
+
+The results window lists the titles with the matching snippet and the word
+count; the article window has its sections on the left and the text on the
+right, the article's address under it.
+
+### The C64 face
+
+The WIKIPROXY logo and a prompt: type a title and RETURN. RETURN alone opens
+the menu: `R` random article, `L` the next language, `Q` log off. Results and
+sections are numbered lists: the number and RETURN opens one, RETURN alone
+turns the page, `Q` or `←` (RUN/STOP too) goes back. A section stops at every
+screenful. Accented letters come as their nearest ASCII (the PETSCII line of
+rubbs).
+
+## Project structure
+
+```
+bbs.rb                    entry point: the terminal question, then a face
+lib/
+  domain/wikipedia.rb     the Action API client: search, article, random;
+                          the plain extract → sections in Markdown
+  ui/terminal.rb          the terminal question and its guess
+  ui/modern.rb            the modern face: desktop, search, results, article
+  ui/c64.rb               the C64 face: logo, prompt, menu, lists, pages
+  ui/c64/screen.rb        title bar, pages, numbered lists on the 40×25 screen
+```
+
+## Wikipedia
+
+The proxy reads the [MediaWiki Action API](https://www.mediawiki.org/wiki/API:Main_page)
+of `<lang>.wikipedia.org` anonymously: `list=search` for the results,
+`prop=extracts` (TextExtracts, `explaintext`) for the article,
+`list=random` for a random one. Every request names the proxy in its
+User-Agent, as Wikipedia asks. The text is Wikipedia's, under
+[CC BY-SA](https://creativecommons.org/licenses/by-sa/4.0/); every article
+shows its address.
+
+## Deploy
+
+A push to master deploys from Woodpecker: RuboCop, a compose check, then
+`ci-deploy wikiproxy` on the server (infra/host-config), which runs the stack in
+`/srv/stacks/wikiproxy`. The entrypoint updates rubbs on start.

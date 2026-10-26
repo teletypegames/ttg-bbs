@@ -1,0 +1,2 @@
+# The Wikipedias a caller can switch between (F4 / L), the first one is the default.
+WIKIPROXY_LANGUAGES=en,hu

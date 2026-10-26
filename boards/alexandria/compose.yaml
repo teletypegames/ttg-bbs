@@ -1,0 +1,11 @@
+services:
+  wikiproxy:
+    mem_limit: 128m
+    build: .
+    container_name: wikiproxy
+    ports:
+      - "2326:2323"
+    environment:
+      - TZ=Europe/Budapest
+      - WIKIPROXY_LANGUAGES=${WIKIPROXY_LANGUAGES:-en,hu}
+    restart: unless-stopped
