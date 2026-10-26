@@ -145,7 +145,7 @@ module UI
 
         init do
           context[:lang] ||= services[:wikipedia].languages.first
-          top = [(rows - 15) / 2 - TITLE.size, 2].max
+          top = [((rows - 15) / 2) - TITLE.size, 2].max
           lines = [*TITLE.map { |l| [l, :accent] }, ['', :text],
                    ['Wikipedia on a telnet line', :text_bright],
                    ['F2 search · F3 random article · F4 language · Alt-X log off', :text_dim]]
