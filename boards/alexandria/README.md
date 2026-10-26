@@ -104,7 +104,7 @@ lib/
 ## Wikipedia
 
 The proxy reads the [MediaWiki Action API](https://www.mediawiki.org/wiki/API:Main_page)
-of `<lang>.wikipedia.org` anonymously: `list=search` for the results,
+of `en.wikipedia.org` / `hu.wikipedia.org` anonymously: `list=search` for the results,
 `prop=extracts` (TextExtracts, `explaintext`) for the article,
 `list=random` for a random one. Every request names the proxy in its
 User-Agent, as Wikipedia asks. The text is Wikipedia's, under
