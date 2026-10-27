@@ -16,8 +16,10 @@ module UI
       session.settle(timeout: SETTLE) && session.term_cols > BBS::Petscii::COLS ? :modern : :c64
     end
 
-    # :modern or :c64; nil when the line drops. A caller who does not answer
-    # gets the guess.
+    # :modern or :c64; nil when the line drops. A key only picks, RETURN
+    # takes it: a line-mode telnet sends the digit and the RETURN together,
+    # and a RETURN left on the line would land in the first screen. A caller
+    # who does not answer gets what is picked, or the guess.
     def self.choose(session)
       guess   = guess(session)
       default = guess == :modern ? '1' : '2'
@@ -25,18 +27,25 @@ module UI
                     "1 - MODERN (ANSI: PC, MAC, WEB)\r\n" \
                     "2 - COMMODORE 64 (PETSCII)\r\n\r\n" \
                     "YOUR TERMINAL [#{default}]: "
+      picked = nil
       loop do
-        choice = case session.readkey(timeout: WAIT)
-                 when nil                     then return nil
-                 when :enter, :idle           then default
-                 when '1', 'a', 'A', 'm', 'M' then '1'
-                 when '2', 'c', 'C'           then '2'
-                 end
-        next unless choice
-
-        session.write "#{choice}\r\n"
-        return choice == '1' ? :modern : :c64
+        case session.readkey(timeout: WAIT)
+        when nil                     then return nil
+        when :enter, :idle           then break
+        when '1', 'a', 'A', 'm', 'M' then picked = pick(session, picked, '1')
+        when '2', 'c', 'C'           then picked = pick(session, picked, '2')
+        when :backspace, :ctrl_t     then picked = pick(session, picked, nil)
+        end
       end
+      choice = picked || default
+      session.write picked ? "\r\n" : "#{choice}\r\n"
+      choice == '1' ? :modern : :c64
+    end
+
+    def self.pick(session, picked, choice)
+      session.write "\b \b" if picked
+      session.write choice if choice
+      choice
     end
   end
 end
