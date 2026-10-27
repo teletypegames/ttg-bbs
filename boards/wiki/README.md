@@ -11,9 +11,10 @@ The wiki has two faces on one port. A call starts with one question: which
 terminal is calling. The BBS guesses first — it waits up to 1.5 seconds for the
 telnet answers, and a terminal reporting a window wider than 40 columns is a
 modern one; 40 columns, or no answer at all (a C64 behind a WiFi modem speaks
-plain TCP), is taken for a Commodore. RETURN takes the guess, `1` (or `A`)
-picks ANSI, `2` (or `C`) the C64. Mouse reporting is switched on only after
-the choice. Code: `lib/ui/terminal.rb`, `lib/ui/modern.rb`, `lib/ui/c64*`.
+plain TCP), is taken for a Commodore. `1` picks the modern terminal
+(ANSI/xterm, 256 colours), `2` the C64 (PETSCII), and RETURN takes the pick or
+the guess. Mouse reporting is switched on only after the choice. The question
+is rubbs' `BBS::Terminal`; the faces: `lib/ui/modern.rb`, `lib/ui/c64*`.
 
 ## The modern face
 
