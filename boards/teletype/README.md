@@ -299,16 +299,18 @@ bin/account                            create an account / reset a password
 ## Doors
 
 A door is one line of `TeletypeBBS#doors` (`lib/domain/teletype_bbs.rb`): its
-name, the program, the label with its hotkey, and the narrowest screen it draws
-for. The modern face declares them all in its Application, and its Doors menu
-(`doors` in the menubar block) lists them by itself; the C64 face offers the
-ones of 40 columns.
+name, the program, the label with its hotkey, the narrowest screen it draws
+for, and optionally the same door drawn for 40 columns. The modern face
+declares them all in its Application, and its Doors menu (`doors` in the
+menubar block) lists them by itself; the C64 face offers the ones of 40
+columns and the ones with a C64 version (Impostor).
 
 ```ruby
 Door.new(:sermo,    Sermo::OS, '&SERMO', 80),
 Door.new(:c64,      Commodore.os(Commodore::C64, games: @games, files: @files), '&Commodore 64', 40),
 Door.new(:plus4,    Commodore.os(Commodore::PLUS4, games: @games, files: @files), 'Commodore &Plus/4', 40),
-Door.new(:impostor, Impostor.flow(sessions: @impostor_sessions), '&Impostor', 80),
+Door.new(:impostor, Impostor.flow(sessions: @impostor_sessions), '&Impostor', 80,
+         Impostor.flow(sessions: @impostor_sessions, c64: true)),
 ```
 
 The program is a `BBS::FakeOS` definition, a `BBS::Flow` or a callable `(session, context)`.

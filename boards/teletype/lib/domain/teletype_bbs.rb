@@ -25,8 +25,9 @@ class TeletypeBBS
     dos:       { prefix: '/dos',       title: 'DOS Corner' }
   }.freeze
 
-  # +cols+: the narrowest screen the program draws for.
-  Door = Struct.new(:name, :program, :label, :cols)
+  # +cols+: the narrowest screen the program draws for; +c64+: the same door
+  # drawn for 40 columns, when the program itself needs more.
+  Door = Struct.new(:name, :program, :label, :cols, :c64)
 
   attr_reader :online, :boards, :wiki, :games, :chat, :irc, :last_callers, :profile, :accounts, :site,
               :discord, :oneliners, :files, :dev_log, :art, :master, :mail, :voting, :file_areas, :trivia,
@@ -83,7 +84,8 @@ class TeletypeBBS
       Door.new(:sermo,    Sermo::OS, '&SERMO', 80),
       Door.new(:c64,      Commodore.os(Commodore::C64, games: @games, files: @files), '&Commodore 64', 40),
       Door.new(:plus4,    Commodore.os(Commodore::PLUS4, games: @games, files: @files), 'Commodore &Plus/4', 40),
-      Door.new(:impostor, Impostor.flow(sessions: @impostor_sessions), '&Impostor', 80),
+      Door.new(:impostor, Impostor.flow(sessions: @impostor_sessions), '&Impostor', 80,
+               Impostor.flow(sessions: @impostor_sessions, c64: true)),
       Door.new(:ra,       Ra.os(games: @games), 'Chat of &Ra', 80),
       Door.new(:trivia,   Trivia.door(games: @games, site: @site, scores: @trivia), '&TTG Trivia', 80)
     ]
