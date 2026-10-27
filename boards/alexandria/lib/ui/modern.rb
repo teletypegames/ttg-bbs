@@ -118,7 +118,7 @@ module UI
           menu '&Help' do
             item '&About' do
               BBS::Dialogs.message(self,
-                'WikiProxy — Wikipedia on a telnet line, from Teletype Games, powered by rubbs. ' \
+                'Alexandria BBS — Wikipedia on a telnet line, from Teletype Games, powered by rubbs. ' \
                 'Type a title: the article of that title opens at once, otherwise the search results. ' \
                 'An article opens with its sections on the left. ' \
                 "The text is Wikipedia's, under CC BY-SA; the address is under each article.",
@@ -165,7 +165,7 @@ module UI
           nil
         end
         call do |_ctx, runner|
-          runner.write "\e[0m\e[2J\e[H\r\n  \e[1;37mThanks for calling WikiProxy.\e[0m\r\n  " \
+          runner.write "\e[0m\e[2J\e[H\r\n  \e[1;37mThanks for calling Alexandria BBS.\e[0m\r\n  " \
                        "\e[2;37mArticles from wikipedia.org, under CC BY-SA. More of us: teletypegames.org\e[0m\r\n\r\n  " \
                        "\e[1;31mNO CARRIER\e[0m\r\n\r\n"
           nil

@@ -9,14 +9,14 @@ require_relative 'lib/ui/c64'
 # terminal (BBS::Terminal guesses it first), and an ANSI terminal gets the modern
 # desktop, a Commodore 64 the PETSCII screens. Mouse reporting waits for the
 # choice: its escape sequence would be garbage on a C64.
-wikipedia = Wikipedia.new(languages: ENV.fetch('WIKIPROXY_LANGUAGES', 'en,hu').split(',').map(&:strip).reject(&:empty?))
+wikipedia = Wikipedia.new(languages: ENV.fetch('ALEXANDRIA_LANGUAGES', 'en,hu').split(',').map(&:strip).reject(&:empty?))
 
 BBS.configure do |config|
   config.mouse            = true
   config.mouse_on_connect = false
   config.idle_seconds     = 600
 
-  config.flow = BBS::Terminal.flow(title: 'WikiProxy', modern: UI::Modern.flow(wikipedia), c64: UI::C64.flow(wikipedia))
+  config.flow = BBS::Terminal.flow(title: 'Alexandria BBS', modern: UI::Modern.flow(wikipedia), c64: UI::C64.flow(wikipedia))
 end
 
 BBS.start

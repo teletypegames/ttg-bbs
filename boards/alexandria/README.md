@@ -1,6 +1,6 @@
-# WikiProxy
+# Alexandria BBS
 
-Wikipedia on a telnet line. Type the title of an article, and the proxy looks
+Wikipedia on a telnet line. Type the title of an article, and Alexandria looks
 it up on wikipedia.org and shows it in a form a terminal can read: the article
 as plain text, cut into its sections, wrapped to the screen. Built on the
 [rubbs](https://git.teletypegames.org/engines/rubbs) gem, like the
@@ -39,7 +39,7 @@ Copy `env-example` to `.env`:
 | Variable | Default | Description |
 |---|---|---|
 | `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2326) |
-| `WIKIPROXY_LANGUAGES` | `en,hu` | The Wikipedias a caller can switch between, by their language code; the first one is the default |
+| `ALEXANDRIA_LANGUAGES` | `en,hu` | The Wikipedias a caller can switch between, by their language code; the first one is the default |
 
 ## Interface
 
@@ -83,7 +83,7 @@ right, the article's address under it.
 
 ### The C64 face
 
-The WIKIPROXY logo and a prompt: type a title and RETURN. RETURN alone opens
+The ALEXANDRIA logo and a prompt: type a title and RETURN. RETURN alone opens
 the menu: `R` random article, `L` the next language, `Q` log off. Results and
 sections are numbered lists: the number and RETURN opens one, RETURN alone
 turns the page, `Q` or `←` (RUN/STOP too) goes back. A section stops at every
@@ -115,5 +115,5 @@ shows its address.
 ## Deploy
 
 A push to master deploys from Woodpecker: RuboCop, a compose check, then
-`ci-deploy wikiproxy` on the server (infra/host-config), which runs the stack in
-`/srv/stacks/wikiproxy`. The entrypoint updates rubbs on start.
+`ci-deploy alexandria` on the server (infra/host-config), which runs the stack in
+`/srv/stacks/alexandria`. The entrypoint updates rubbs on start.

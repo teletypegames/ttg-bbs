@@ -8,9 +8,9 @@ module UI
   # article as its contents, each section paged a screenful at a time.
   module C64
     LOGO_FONT = {
-      'W' => %w[#.# #.# #.# ### #.#], 'I' => %w[### .#. .#. .#. ###], 'K' => %w[#.# #.# ##. #.# #.#],
-      'P' => %w[##. #.# ##. #.. #..], 'R' => %w[##. #.# ##. #.# #.#], 'O' => %w[### #.# #.# #.# ###],
-      'X' => %w[#.# #.# .#. #.# #.#], 'Y' => %w[#.# #.# .#. .#. .#.]
+      'A' => %w[.#. #.# ### #.# #.#], 'L' => %w[#.. #.. #.. #.. ###], 'E' => %w[### #.. ##. #.. ###],
+      'X' => %w[#.# #.# .#. #.# #.#], 'N' => %w[##. #.# #.# #.# #.#], 'D' => %w[##. #.# #.# #.# ##.],
+      'R' => %w[##. #.# ##. #.# #.#], 'I' => %w[# # # # #]
     }.freeze
     LOGO_COLORS = [CY, CY, LB, LB, "\e[0;34m"].freeze
 
@@ -19,10 +19,10 @@ module UI
 
     LANGUAGES = { 'en' => 'english', 'hu' => 'magyar', 'de' => 'deutsch' }.freeze
 
-    # WIKIPROXY in reversed blocks, five rows.
+    # ALEXANDRIA in reversed blocks, five rows.
     def self.logo
       5.times.map do |row|
-        bits = 'WIKIPROXY'.chars.map { |c| LOGO_FONT[c][row] }.join('.')
+        bits = 'ALEXANDRIA'.chars.map { |c| LOGO_FONT[c][row] }.join('.')
         line = bits.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')
         "  #{LOGO_COLORS[row]}#{line}#{LG}"
       end
@@ -46,7 +46,7 @@ module UI
     def self.goodbye(screen)
       screen.cls
       screen.puts
-      screen.puts " #{CY}#{RV}#{' thanks for calling wikiproxy'.ljust(39)}#{RO}#{LG}"
+      screen.puts " #{CY}#{RV}#{' thanks for calling alexandria bbs'.ljust(39)}#{RO}#{LG}"
       screen.puts
       screen.say('Articles from wikipedia.org, under CC BY-SA. More of us: teletypegames.org', GR)
       screen.puts
@@ -85,7 +85,7 @@ module UI
           @screen.puts
           @screen.say(e.message, RD)
           @screen.pause
-          @screen.title('WIKIPROXY', right)
+          @screen.title('ALEXANDRIA', right)
         end
       end
 
@@ -109,7 +109,7 @@ module UI
 
       # :quit when the caller logs off.
       def menu_choice
-        @screen.title('WIKIPROXY', right)
+        @screen.title('ALEXANDRIA', right)
         @screen.puts
         @screen.puts " #{YE}R#{LG} random article"
         @screen.puts " #{YE}L#{LG} language: #{WH}#{LANGUAGES.fetch(lang, lang)}#{LG}"
@@ -120,9 +120,9 @@ module UI
           read(title)
         when 'l'
           @ctx[:lang] = @wikipedia.next_language(lang)
-          @screen.title('WIKIPROXY', right)
+          @screen.title('ALEXANDRIA', right)
         when 'q' then return :quit
-        else @screen.title('WIKIPROXY', right)
+        else @screen.title('ALEXANDRIA', right)
         end
         nil
       end
@@ -140,7 +140,7 @@ module UI
 
           read(result.title)
         end
-        @screen.title('WIKIPROXY', right)
+        @screen.title('ALEXANDRIA', right)
       end
 
       def read(title)
@@ -164,7 +164,7 @@ module UI
             section(article, picked, heading)
           end
         end
-        @screen.title('WIKIPROXY', right)
+        @screen.title('ALEXANDRIA', right)
       end
 
       def section(article, section, heading)

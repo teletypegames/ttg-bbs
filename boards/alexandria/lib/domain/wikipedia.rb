@@ -9,7 +9,7 @@ require 'cgi'
 # as plain text cut into its sections. Wikipedia asks every client to name
 # itself in the User-Agent, else it may answer 403.
 class Wikipedia
-  USER_AGENT = 'WikiProxy/0.1 (Teletype Games telnet BBS; https://git.teletypegames.org/bbs/wikiproxy)'
+  USER_AGENT = 'AlexandriaBBS/0.1 (Teletype Games telnet BBS; https://git.teletypegames.org/bbs/alexandria)'
   TTL = 600
   SEARCH_LIMIT = 30
 
