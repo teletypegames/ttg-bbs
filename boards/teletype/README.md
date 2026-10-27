@@ -90,8 +90,10 @@ A call starts with one question, before the name: which terminal is calling.
 The board guesses first: it waits up to 1.5 seconds for the telnet answers, and
 a terminal that reports a window wider than 40 columns is a modern one; 40
 columns, or no answer at all (a C64 behind a WiFi modem speaks plain TCP), is
-taken for a Commodore. The question is plain ASCII in capitals, readable on
-both; RETURN takes the guess, `1` (or `A`) picks ANSI, `2` (or `C`) the C64.
+taken for a Commodore. The question is rubbs' `BBS::Terminal`, plain ASCII in
+capitals, readable on both: `1` (or `M`) picks the modern face (ANSI/xterm, 256
+colours), `2` (or `C`) the C64 (PETSCII), and RETURN takes the pick, or the
+guess when nothing is picked.
 Whatever the caller types before the question is dropped (a bot's `root`), and
 mouse reporting is switched on only after the choice, so the C64 never gets
 its escape sequence.
@@ -265,7 +267,6 @@ lib/
   characters/                          Ra and the TTG Master: personas, riddles,
                                        the Master's knowledge (modern and C64),
                                        eval questions, the shared model client
-  ui/terminal.rb                       the terminal question and its guess
   ui/modern.rb                         the modern face: modem, logon matrix,
                                        the Application (windows, menus, doors)
   ui/modern/formatters.rb              view helpers: bulletin, news, game card,
