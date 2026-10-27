@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# The admins' look at what callers sent, newest first:
+#   docker exec feedia bin/inbox [count]
+require_relative '../lib/domain/inbox'
+
+inbox = Inbox.new(path: ENV.fetch('FEEDIA_INBOX', File.expand_path('../data/inbox.jsonl', __dir__)))
+messages = inbox.messages((ARGV.first || 20).to_i)
+puts 'The inbox is empty.' if messages.empty?
+messages.each do |m|
+  puts "#{m.at}  #{m.kind.upcase}  from #{m.from.to_s.empty? ? '(anonymous)' : m.from}"
+  puts "  #{m.name} <#{m.url}>" if m.url
+  m.text.to_s.each_line { |l| puts "  #{l.chomp}" }
+  puts
+end

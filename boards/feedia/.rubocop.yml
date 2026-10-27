@@ -1,0 +1,57 @@
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.3
+  SuggestExtensions: false
+  Exclude:
+    - "data/**/*"
+    - "vendor/**/*"
+
+# The house style aligns hashes and keyword arguments as tables.
+Layout/HashAlignment:
+  Enabled: false
+Layout/ExtraSpacing:
+  AllowForAlignment: true
+Layout/LineLength:
+  Max: 130
+# Continuation lines line up with what they continue, not with the call.
+Layout/FirstArgumentIndentation:
+  Enabled: false
+Layout/ArgumentAlignment:
+  Enabled: false
+Layout/MultilineMethodCallBraceLayout:
+  Enabled: false
+Layout/ClosingParenthesisIndentation:
+  Enabled: false
+Layout/EmptyLineAfterGuardClause:
+  Enabled: false
+
+# Menu items and window callbacks are one-line do…end blocks, and a
+# `when … then form.error(…); :keep` table reads best on one line.
+Style/BlockDelimiters:
+  Enabled: false
+Style/SingleLineDoEndBlock:
+  Enabled: false
+Style/Semicolon:
+  AllowAsExpressionSeparator: true
+Style/RescueStandardError:
+  EnforcedStyle: explicit
+Style/FetchEnvVar:
+  Enabled: false
+
+# The modern face is one long Application DSL block, and the feed parser a
+# set of small readers for three formats; size metrics say nothing useful.
+Metrics:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+# The helpers of an Application are methods defined in its DSL block, and the
+# modern face builds its Application inside UI::Modern.flow.
+Lint/NestedMethodDefinition:
+  Exclude:
+    - lib/ui/modern.rb
+
+# Short names (f, el, w) are the idiom of the window callbacks and the parser.
+Naming/MethodParameterName:
+  MinNameLength: 1

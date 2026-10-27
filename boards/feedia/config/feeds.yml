@@ -1,0 +1,92 @@
+# The feeds a caller can pick, in this order. RSS 0.9x/2.0, RSS 1.0 (RDF) and Atom
+# all work. Every entry needs a name and a url; group, lang and about are shown
+# with it. A new feed is a commit here: a push to master deploys it.
+- name: Hacker News
+  url: https://news.ycombinator.com/rss
+  group: Tech
+  lang: en
+  about: The front page of Hacker News, the links and their comment pages.
+
+- name: Lobsters
+  url: https://lobste.rs/rss
+  group: Tech
+  lang: en
+  about: A computing-focused link aggregator, the newest stories.
+
+- name: Ars Technica
+  url: https://feeds.arstechnica.com/arstechnica/index
+  group: Tech
+  lang: en
+  about: Technology, science and policy news.
+
+- name: The Register
+  url: https://www.theregister.com/headlines.atom
+  group: Tech
+  lang: en
+  about: Biting the hand that feeds IT.
+
+- name: OSNews
+  url: https://www.osnews.com/feed/
+  group: Tech
+  lang: en
+  about: Operating systems, old and new.
+
+- name: Hackaday
+  url: https://hackaday.com/blog/feed/
+  group: Tech
+  lang: en
+  about: Fresh hacks every day.
+
+- name: Indie Retro News
+  url: https://www.indieretronews.com/feeds/posts/default
+  group: Retro
+  lang: en
+  about: New games and demos for old machines, the C64 among them.
+
+- name: Vintage Computing and Gaming
+  url: https://www.vintagecomputing.com/index.php/feed
+  group: Retro
+  lang: en
+  about: Old computers and games, and their history.
+
+- name: RetroRGB
+  url: https://www.retrorgb.com/feed
+  group: Retro
+  lang: en
+  about: Retro consoles and computers on modern screens.
+
+- name: NASA
+  url: https://www.nasa.gov/feed/
+  group: Science
+  lang: en
+  about: News from NASA.
+
+- name: BBC World
+  url: https://feeds.bbci.co.uk/news/world/rss.xml
+  group: News
+  lang: en
+  about: World news from the BBC.
+
+- name: Telex
+  url: https://telex.hu/rss
+  group: Hírek
+  lang: hu
+  about: Magyar hírportál.
+
+- name: 444
+  url: https://444.hu/feed
+  group: Hírek
+  lang: hu
+  about: Magyar hírportál.
+
+- name: HVG
+  url: https://hvg.hu/rss
+  group: Hírek
+  lang: hu
+  about: Heti Világgazdaság, a friss hírek.
+
+- name: HUP
+  url: https://hup.hu/node/feed
+  group: Tech
+  lang: hu
+  about: Hungarian Unix Portal, magyar IT-hírek.

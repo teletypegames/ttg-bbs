@@ -1,0 +1,21 @@
+FROM ruby:3.3-alpine
+
+RUN apk add --no-cache git build-base tzdata
+
+WORKDIR /app
+
+ENV BUNDLE_WITHOUT=development
+
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+COPY bbs.rb entrypoint.sh ./
+COPY bin/ ./bin/
+COPY config/ ./config/
+COPY lib/ ./lib/
+
+RUN chmod +x entrypoint.sh bin/inbox
+
+EXPOSE 2323
+
+ENTRYPOINT ["./entrypoint.sh"]

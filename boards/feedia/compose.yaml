@@ -1,0 +1,13 @@
+services:
+  feedia:
+    mem_limit: 128m
+    build: .
+    container_name: feedia
+    ports:
+      - "2327:2323"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TZ=Europe/Budapest
+      - FEEDIA_DISCORD_WEBHOOK=${FEEDIA_DISCORD_WEBHOOK:-}
+    restart: unless-stopped
