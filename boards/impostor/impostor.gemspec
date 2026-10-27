@@ -5,11 +5,11 @@
 #   require 'impostor'   # => Impostor.flow(sessions:), a BBS::Flow
 Gem::Specification.new do |s|
   s.name     = 'impostor'
-  s.version  = '0.1.0'
+  s.version  = '0.2.0'
   s.summary  = 'The debrief terminal of Definitely not an Impostor as a rubbs flow'
   s.authors  = ['Teletype Games']
   s.files    = Dir['lib/**/*.rb'] + Dir['screens/*.erb']
   s.require_paths = ['lib']
   s.required_ruby_version = '>= 3.1'
-  s.add_dependency 'bbs', '>= 0.7'
+  s.add_dependency 'bbs', '>= 0.16.1'
 end

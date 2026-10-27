@@ -8,6 +8,14 @@ When a player connects, the server asks for their player name and their personal
 
 Every session — successful or not — is recorded in `data/sessions.csv` with a unique session ID, timestamp, player name, and code. Feedback and email are added to the same row as the conversation progresses.
 
+## Two terminals
+
+A call starts with one question: which terminal is calling (rubbs'
+`BBS::Terminal`, with a guess from the telnet answers as the default). `1`
+picks a modern terminal (ANSI/xterm), `2` a Commodore 64 (PETSCII): the C64
+gets the same terminal on 40 columns, with its own screens
+(`screens/*_c64.erb`).
+
 ## Running
 
 **With Docker Compose (recommended):**
@@ -50,11 +58,13 @@ impostor.gemspec              The gem another rubbs BBS mounts as a door
 bin/
   generate_code               CLI tool — generates a player's code from PLAYER_NAME
 lib/
-  impostor.rb                 Impostor.flow(sessions:) — the whole terminal as a BBS::Flow
+  impostor.rb                 Impostor.flow(sessions:, c64:) — the whole terminal as a BBS::Flow
   impostor/code_generator.rb  Decrypt/encrypt logic (Ruby port of the Lua original)
 screens/
   welcome.erb                 Welcome screen
   congrats.erb                Mission complete screen
+  welcome_c64.erb             The same two on 40 columns, for a C64
+  congrats_c64.erb
 data/
   sessions.csv                Player session records (auto-created)
 ```
