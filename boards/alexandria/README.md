@@ -63,7 +63,8 @@ results and articles are cached for 10 minutes.
 
 ### The modern face
 
-A desktop under a menubar, the search dialog open on it.
+A desktop under a menubar, the search dialog open on it. Above it the Pharos of
+Alexandria stands by the sea, its light turning while the caller types.
 
 | Key | Action |
 |---|---|
@@ -83,7 +84,7 @@ right, the article's address under it.
 
 ### The C64 face
 
-The ALEXANDRIA logo and a prompt: type a title and RETURN. RETURN alone opens
+The Pharos, the ALEXANDRIA logo and a prompt: type a title and RETURN. RETURN alone opens
 the menu: `R` random article, `L` the next language, `Q` log off. Results and
 sections are numbered lists: the number and RETURN opens one, RETURN alone
 turns the page, `Q` or `←` (RUN/STOP too) goes back. A section stops at every
@@ -98,6 +99,7 @@ lib/
   domain/wikipedia.rb     the Action API client: search, article, random;
                           the plain extract → sections in Markdown
   ui/modern.rb            the modern face: desktop, search, results, article
+  ui/modern/pharos.rb     the desktop's title: the lighthouse and the name
   ui/c64.rb               the C64 face: logo, prompt, menu, lists, pages
   ui/c64/screen.rb        title bar, pages, numbered lists on the 40×25 screen
 ```

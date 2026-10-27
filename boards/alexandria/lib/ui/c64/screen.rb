@@ -11,6 +11,7 @@ module UI
     GR = "\e[2;37m"
     DG = "\e[1;30m"
     LB = "\e[1;34m"
+    BL = "\e[0;34m"
     GN = "\e[1;32m"
     RD = "\e[1;31m"
     RV = "\e[7m"

@@ -1,19 +1,13 @@
 # frozen_string_literal: true
 
+require_relative 'modern/pharos'
+
 module UI
   # The proxy on a modern terminal (ANSI colours, UTF-8, a mouse): a desktop
   # under a menubar, the search in a dialog, the results and the article in
   # two-pane windows that can fill the screen.
   module Modern
     LANGUAGES = { 'en' => 'English', 'hu' => 'Magyar', 'de' => 'Deutsch' }.freeze
-
-    TITLE = [
-      '██   ██ ██ ██  ██ ██ █████  █████   ████  ██   ██ ██  ██',
-      '██   ██ ██ ██ ██  ██ ██  ██ ██  ██ ██  ██  ██ ██   ████ ',
-      '██ █ ██ ██ ████   ██ █████  █████  ██  ██   ███     ██  ',
-      '███████ ██ ██ ██  ██ ██     ██  ██ ██  ██  ██ ██    ██  ',
-      ' ██ ██  ██ ██  ██ ██ ██     ██  ██  ████  ██   ██   ██  '
-    ].freeze
 
     def self.flow(wikipedia)
       app = BBS::Application.define do
@@ -141,19 +135,20 @@ module UI
         status_hint('F10', 'Menu') { menubar.open(0) }
         status_hint('Alt-X', 'Bye') { :halt }
 
-        on_tick { statusbar.right_text = status_text }
+        on_tick do
+          @pharos.tick
+          statusbar.right_text = status_text
+        end
 
         init do
           context[:lang] ||= services[:wikipedia].languages.first
-          top = [((rows - 15) / 2) - TITLE.size, 2].max
-          lines = [*TITLE.map { |l| [l, :accent] }, ['', :text],
-                   ['Wikipedia on a telnet line', :text_bright],
-                   ['F2 search · F3 random article · F4 language · Alt-X log off', :text_dim]]
-          lines.each_with_index do |(text, style), i|
-            label = BBS::Widgets::Label.new(text: text, align: :center, style_key: style)
-            label.layout(1, top + i, cols, 1)
-            add(label)
-          end
+          dialog_top = ((rows - 7) / 2) + 1
+          @pharos = add(Pharos.new)
+          @pharos.layout(1, [dialog_top - Pharos::HEIGHT - 1, 2].max, cols, Pharos::HEIGHT)
+          help = BBS::Widgets::Label.new(text: 'F2 search · F3 random article · F4 language · Alt-X log off',
+                                         align: :center, style_key: :text_dim)
+          help.layout(1, dialog_top + 8, cols, 1)
+          add(help)
           statusbar.right_text = status_text
           search
         end

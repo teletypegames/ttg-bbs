@@ -12,12 +12,24 @@ module UI
       'X' => %w[#.# #.# .#. #.# #.#], 'N' => %w[##. #.# #.# #.# #.#], 'D' => %w[##. #.# #.# #.# ##.],
       'R' => %w[##. #.# ##. #.# #.#], 'I' => %w[# # # # #]
     }.freeze
-    LOGO_COLORS = [CY, CY, LB, LB, "\e[0;34m"].freeze
+    LOGO_COLORS = [CY, CY, LB, LB, BL].freeze
 
     # The colours of an article, in the keys of a BBS::Theme.
     MARKDOWN = { text: LG, text_bright: WH, accent: YE, label: CY, text_dim: GR }.freeze
 
     LANGUAGES = { 'en' => 'english', 'hu' => 'magyar', 'de' => 'deutsch' }.freeze
+
+    PHAROS = ['▄▀▄', '▐*▌', '▄███▄', '▐█▀█▌', '▄█████▄', '▄██▀▀▀██▄'].freeze
+    WAVES  = '▄▀▀▄▄▄▀▄▄▀▀▀▄▄▀▄'
+
+    # The Pharos of Alexandria by the sea, its light thrown both ways.
+    def self.pharos
+      PHAROS.each_with_index.map do |t, i|
+        next "#{YE}#{'░░░▒▒▒▒▓▓▓▓████'.rjust(19)}#{LG}▐#{WH}*#{LG}▌#{YE}████▓▓▓▓▒▒▒▒░░░#{LG}" if i == 1
+
+        "  #{LG}#{t.center(37).rstrip}"
+      end + ["#{BL}#{(WAVES * 3)[0, 39]}#{LG}"]
+    end
 
     # ALEXANDRIA in reversed blocks, five rows.
     def self.logo
@@ -70,6 +82,8 @@ module UI
 
       def run
         @screen.cls
+        @screen.puts
+        C64.pharos.each { |l| @screen.puts l }
         @screen.puts
         C64.logo.each { |l| @screen.puts l }
         @screen.puts
