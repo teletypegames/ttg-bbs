@@ -47,9 +47,10 @@ A call starts with one question: which terminal is calling. The proxy guesses
 first: it waits up to 1.5 seconds for the telnet answers, and a terminal that
 reports a window wider than 40 columns is a modern one; 40 columns, or no
 answer at all (a C64 behind a WiFi modem speaks plain TCP), is taken for a
-Commodore. The question is plain ASCII in capitals, readable on both: `1` (or
-`M`) picks the modern face, `2` (or `C`) the C64, and RETURN takes the pick, or
-the guess when nothing is picked.
+Commodore. The question is rubbs' `BBS::Terminal`, plain ASCII in capitals,
+readable on both: `1` (or `M`) picks the modern face (ANSI/xterm, 256 colours),
+`2` (or `C`) the C64 (PETSCII), and RETURN takes the pick, or the guess when
+nothing is picked.
 
 What is typed is first looked up as a title: when Wikipedia has an article of
 that title, or one it redirects to (`c64` → *Commodore 64*), it opens at once.
@@ -96,7 +97,6 @@ bbs.rb                    entry point: the terminal question, then a face
 lib/
   domain/wikipedia.rb     the Action API client: search, article, random;
                           the plain extract → sections in Markdown
-  ui/terminal.rb          the terminal question and its guess
   ui/modern.rb            the modern face: desktop, search, results, article
   ui/c64.rb               the C64 face: logo, prompt, menu, lists, pages
   ui/c64/screen.rb        title bar, pages, numbered lists on the 40×25 screen
