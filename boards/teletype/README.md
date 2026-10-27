@@ -10,7 +10,8 @@ the end. Around them the work of Teletype Games: news from teletypegames.org,
 the team's dev log from Gitea, the game catalog with its release history, the
 FTP server with ZMODEM downloads, the wiki guides and tech how-tos, an ANSI
 gallery, the TTG Master who answers callers' questions (F1), and doors: SERMO,
-a Commodore 64, a Plus/4, the Impostor terminal, Chat of Ra and TTG Trivia.
+a Commodore 64, a Plus/4, the Impostor terminal, Chat of Ra, TTG Trivia, and
+telnet gateways to Alexandria BBS and Feedia.
 
 The board has two faces on one port: the **modern** one for ANSI terminals
 (windows, menus, mouse) and a **Commodore 64** one in PETSCII, 40×25, with
@@ -74,6 +75,7 @@ Copy `env-example` to `.env`:
 | `LAST_READ_PATH` | `data/last_read.csv` | How far each registered name has read each board (the new-message scan) |
 | `VOTES_PATH` | `data/votes.csv` | The ballots of the Voting Booth, a log: a name's later ballot wins |
 | `TRIVIA_SCORES_PATH` | `data/trivia_scores.csv` | Every finished TTG Trivia game, for its hall of fame |
+| `BBS_GATEWAY_HOST` | `host.docker.internal` | Where the Alexandria (:2326) and Feedia (:2327) gateway doors connect; compose maps it to the host |
 | `BBS_LOGON_ART` | `lib/content/logon.ans` | The art of the logon matrix, above the name prompt |
 | `BBS_FTP_HOST` | `ftp.teletypegames.org` | The FTP server of the FTP Browser (anonymous, passive) |
 | `BBS_ARCHIVE_URL` | `http://archive.teletypegames.org` | The FTP tree on plain HTTP: the C64 face gives these addresses, as a C64 cannot take a ZMODEM download or speak TLS |
@@ -147,7 +149,7 @@ door.
 | **Messages** | Boards… · New Post… · Mail… · Oneliners · Live Chat · IRC #teletypegames · Feedback to the Sysop… · Page the Sysop |
 | **Content** | File Areas · FTP Browser · Game Catalog · Platform Guides · Engines · DOS Corner · Tech HowTos · ANSI Gallery |
 | **Users** | Who is Online · Last Callers · User Listing · Your Stats · Hall of Fame · Voting Booth · Team · Profile… · Register… · Language EN/HU |
-| **Doors** | SERMO · Commodore 64 · Commodore Plus/4 · Impostor · Chat of Ra · TTG Trivia |
+| **Doors** | SERMO · Commodore 64 · Commodore Plus/4 · Impostor · Chat of Ra · TTG Trivia · Alexandria · Feedia |
 | **Sysop** | Console (logged-in sysops only) |
 | **Help** | Ask the TTG Master · New to BBSes? · About · Keys |
 
@@ -175,6 +177,7 @@ door.
 - **Wiki sections** — Platform Guides (`/platforms`), Engines (`/engines`) and the DOS Corner (`/dos`, with an FTP/DOSINST intro), read from the Grav JSON API; private pages are left out. Users > Language switches them to Hungarian.
 - **Team** — the members of teletypegames.org with their mottos.
 - **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `BBS::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
+- **Telnet gateways** — Doors > Alexandria and Doors > Feedia hand the caller's line on to [Alexandria BBS](https://git.teletypegames.org/bbs/alexandria) (:2326) and [Feedia](https://git.teletypegames.org/bbs/feedia) (:2327) as it is, with rubbs' `BBS::Gateway`: those boards run their own code on their own ports, and the caller comes back when they hang up (Alt-X, or Q on a C64). The gateway reports the caller's window size; a C64 caller reports none, so the other board answers in PETSCII.
 - **Registered names** — a caller can register the name they logged in with (Users > Register…); from then on that name asks for its password, with a 2-second wait after each wrong one. Profiles belong to registered names only. `accounts.csv` is read again whenever it changes, so `bin/account` works on a running server.
 - **Sysop console** — stats + broadcast, for names in `BBS_SYSOPS` that logged in with their password.
 - **Discord feed** — new board posts and sysop broadcasts go to `BBS_DISCORD_WEBHOOK`, mentions disabled.
@@ -217,7 +220,8 @@ the live chat the others' lines show up above the one being typed. Wiki pages
 are the same Markdown, rendered 38 columns wide. Files cannot come down the
 line, so the file areas and the FTP browser give each file's plain HTTP
 address (`BBS_ARCHIVE_URL`) and its FTP one. The doors are the ones that fit 40
-columns (the Commodore 64 and the Plus/4); the others are on the modern face.
+columns (the Commodore 64 and the Plus/4, Impostor, and the Alexandria and Feedia
+gateways, which those boards answer in PETSCII); the others are on the modern face.
 The ANSI Gallery is on the modern face only. Mail rings when it arrives during
 the call, and `Q` ends the call with `NO CARRIER`.
 

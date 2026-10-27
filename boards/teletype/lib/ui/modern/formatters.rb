@@ -295,7 +295,7 @@ module UI
           end
           [*rows, :spacer, '  Doors here: SERMO, the Neumatronic Margittai machine; a Commodore 64',
            '  and a Plus/4 with our games on their disks; the Impostor terminal;',
-           '  Chat of Ra; TTG Trivia.',
+           '  Chat of Ra; TTG Trivia; and gateways to Alexandria BBS and Feedia.',
            :spacer, '  In a browser, no telnet client needed:',
            "  \e[1;36mhttps://bbsweb.teletypegames.org\e[0m"]
         end

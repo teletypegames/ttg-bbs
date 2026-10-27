@@ -58,7 +58,7 @@
 - keys: [ansi, ascii, art, gallery, desktop, background, picture, graphics]
   fact: 'The ANSI art gallery is on the modern face of the board only: call with an ANSI terminal and choose 1 at the start.'
 - keys: [door, doors, program]
-  fact: 'R on the main menu has the doors that fit the 40 columns of a C64: a Commodore 64 and a Commodore Plus/4 with our games on their disks, and the Impostor debrief terminal. SERMO, Chat of Ra and TTG Trivia need 80 columns: they are on the modern face of the board.'
+  fact: 'R on the main menu has the doors that fit the 40 columns of a C64: a Commodore 64 and a Commodore Plus/4 with our games on their disks, the Impostor debrief terminal, and Alexandria and Feedia, which take you over to those boards. SERMO, Chat of Ra and TTG Trivia need 80 columns: they are on the modern face of the board.'
 - keys: [sermo, neumatronic, margittai, acp]
   fact: 'SERMO is a door on the modern face of the board, a dual machine of the Neumatronic universe; it needs 80 columns, so call with a PC terminal and choose 1.'
 - keys: [commodore, c64, plus4, basic, load, run, emulator, retro]
@@ -68,7 +68,9 @@
 - keys: [impostor, code, debrief, norman]
   fact: 'Impostor is the debrief terminal of our game Definitely not an Impostor, a door on both faces of the board: R on the main menu on a C64. It also runs on its own at teletypegames.org:2324, on a C64 too.'
 - keys: [network, bbs, other, telnet, bbsweb, port]
-  fact: 'Y on the main menu lists our boards: the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324 and the WIKI-BBS at 2325. All three work in a browser too, at bbsweb.teletypegames.org.'
+  fact: 'Y on the main menu lists our boards: the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324, the WIKI-BBS at 2325, Alexandria BBS (Wikipedia) at 2326 and Feedia (RSS news) at 2327. All of them work in a browser too, at bbsweb.teletypegames.org.'
+- keys: [alexandria, wikipedia, feedia, rss, news, feed, feeds, gateway]
+  fact: 'Alexandria and Feedia, doors under R, take your line over to those boards, in PETSCII: Alexandria BBS reads Wikipedia, Feedia reads RSS news feeds. Q on their menu brings you back here.'
 - keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag, switch, window, windows, front]
   fact: 'Every menu takes one key, the letter in front of the line. Lists are numbered: type the number and RETURN; RETURN alone turns the page, Q or the arrow-left key goes back. ? on the main menu is the help.'
 - keys: [sysop, admin, operator, console, broadcast]
