@@ -27,6 +27,16 @@ module UI
       end
     end
 
+    # The logo as a newspaper's masthead: the issue line and the date
+    # between rules, the motto under it.
+    def self.masthead
+      date  = Time.now.strftime('%a %-d %b %Y').downcase
+      issue = 'vol. i  no. 2327'
+      rule  = " #{DG}#{'─' * (COLS - 2)}#{LG}"
+      [rule, '', *logo, '', rule, " #{GR}#{issue}#{' ' * [COLS - 2 - issue.length - date.length, 1].max}#{date}#{LG}", rule,
+       "  #{WH}all the news that fits in 40 columns#{LG}"]
+    end
+
     def self.flow(feeds, inbox)
       BBS::Flow.define do
         call do |ctx, runner|
@@ -70,9 +80,7 @@ module UI
       def run
         @screen.cls
         @screen.puts
-        C64.logo.each { |l| @screen.puts l }
-        @screen.puts
-        @screen.puts "  #{WH}rss on your commodore#{LG}"
+        C64.masthead.each { |l| @screen.puts l }
         loop do
           @screen.puts
           @screen.puts " #{YE}F#{LG} feeds"

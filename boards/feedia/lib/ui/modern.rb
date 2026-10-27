@@ -5,12 +5,11 @@ module UI
   # under a menubar, the feeds in a two-pane window, a feed's items with the
   # one picked on the right, and two forms that write to the admins.
   module Modern
-    TITLE = [
-      '██████ ██████ ██████ █████   ██  █████ ',
-      '██     ██     ██     ██  ██  ██ ██   ██',
-      '█████  █████  █████  ██  ██  ██ ███████',
-      '██     ██     ██     ██  ██  ██ ██   ██',
-      '██     ██████ ██████ █████   ██ ██   ██'
+    # A newspaper's masthead in half blocks, two rows: the feed windows
+    # leave two rows of the desktop above them, and two below.
+    MASTHEAD = [
+      '█▀▀ █▀▀ █▀▀ █▀▄ █ ▄▀█',
+      '█▀  ██▄ ██▄ █▄▀ █ █▀█'
     ].freeze
 
     def self.flow(feeds, inbox)
@@ -58,6 +57,12 @@ module UI
           def feedback = can_send? && open_window(:feedback)
 
           def status_text = "#{services[:feeds].list.size} feeds │ #{Time.now.strftime('%H:%M')}"
+
+          def desktop_label(text, style, x, y, width, align: :left)
+            label = BBS::Widgets::Label.new(text: text, align: align, style_key: style)
+            label.layout(x, y, width, 1)
+            add(label)
+          end
 
           def markdown(text, width) = BBS::Markdown.to_lines(text, width: width - 1, theme: theme)
         end
@@ -181,15 +186,16 @@ module UI
         on_tick { statusbar.right_text = status_text }
 
         init do
-          top = [((rows - 15) / 2) - TITLE.size, 2].max
-          lines = [*TITLE.map { |l| [l, :accent] }, ['', :text],
-                   ['RSS on a telnet line', :text_bright],
-                   ['F2 feeds · F7 suggest a feed · F8 feedback · Alt-X log off', :text_dim]]
-          lines.each_with_index do |(text, style), i|
-            label = BBS::Widgets::Label.new(text: text, align: :center, style_key: style)
-            label.layout(1, top + i, cols, 1)
-            add(label)
+          left  = ['VOL. I · NO. 2327', 'THE TELNET EDITION']
+          right = [Time.now.strftime('%A %-d %b %Y').upcase, "#{services[:feeds].list.size} FEEDS · NO CHARGE"]
+          mark  = ((cols - MASTHEAD.first.length) / 2) + 1
+          ear   = mark - 4
+          MASTHEAD.each_with_index do |row, i|
+            desktop_label(row, :accent, mark, 2 + i, row.length)
+            desktop_label(left[i], :text_dim, 3, 2 + i, ear)
+            desktop_label(right[i], :text_dim, mark + row.length + 2, 2 + i, ear, align: :right)
           end
+          desktop_label('─── All the news that fits in 80 columns ───', :text_dim, 1, rows - 1, cols, align: :center)
           statusbar.right_text = status_text
           feed_list
         end
