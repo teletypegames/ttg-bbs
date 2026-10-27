@@ -5,8 +5,9 @@ module UI
   # under a menubar, the feeds in a two-pane window, a feed's items with the
   # one picked on the right, and two forms that write to the admins.
   module Modern
-    # A newspaper's masthead in half blocks, two rows: the feed windows
-    # leave two rows of the desktop above them, and two below.
+    # A newspaper's masthead in half blocks, two rows under an empty one:
+    # the feed windows are four rows shorter than the desktop's default,
+    # so three rows stay free above them and three below.
     MASTHEAD = [
       '█▀▀ █▀▀ █▀▀ █▀▄ █ ▄▀█',
       '█▀  ██▄ ██▄ █▄▀ █ █▀█'
@@ -70,6 +71,7 @@ module UI
         window :feeds, type: :master_detail do |w|
           w.maximizable true
           w.title         ' Feeds '
+          w.height        { |ctx| ctx[:app].rows - 8 }
           w.list_width    { |ctx| [30, ctx[:app].cols / 3].max }
           w.items         { |ctx| ctx[:feeds].list }
           w.item_label    { |f, _ctx| f.name }
@@ -93,6 +95,7 @@ module UI
         window :channel, type: :master_detail do |w|
           w.maximizable true
           w.title         { |ctx| " #{ctx[:channel].title} " }
+          w.height        { |ctx| ctx[:app].rows - 8 }
           w.list_width    { |ctx| [30, ctx[:app].cols / 3].max }
           w.items         { |ctx| ctx[:channel].items }
           w.item_label    { |item, _ctx| item.title }
@@ -191,11 +194,11 @@ module UI
           mark  = ((cols - MASTHEAD.first.length) / 2) + 1
           ear   = mark - 4
           MASTHEAD.each_with_index do |row, i|
-            desktop_label(row, :accent, mark, 2 + i, row.length)
-            desktop_label(left[i], :text_dim, 3, 2 + i, ear)
-            desktop_label(right[i], :text_dim, mark + row.length + 2, 2 + i, ear, align: :right)
+            desktop_label(row, :accent, mark, 3 + i, row.length)
+            desktop_label(left[i], :text_dim, 3, 3 + i, ear)
+            desktop_label(right[i], :text_dim, mark + row.length + 2, 3 + i, ear, align: :right)
           end
-          desktop_label('─── All the news that fits in 80 columns ───', :text_dim, 1, rows - 1, cols, align: :center)
+          desktop_label('─── All the news that fits in 80 columns ───', :text_dim, 1, rows - 2, cols, align: :center)
           statusbar.right_text = status_text
           feed_list
         end
