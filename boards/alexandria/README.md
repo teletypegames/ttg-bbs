@@ -47,8 +47,9 @@ A call starts with one question: which terminal is calling. The proxy guesses
 first: it waits up to 1.5 seconds for the telnet answers, and a terminal that
 reports a window wider than 40 columns is a modern one; 40 columns, or no
 answer at all (a C64 behind a WiFi modem speaks plain TCP), is taken for a
-Commodore. The question is plain ASCII in capitals, readable on both; RETURN
-takes the guess, `1` (or `M`) picks the modern face, `2` (or `C`) the C64.
+Commodore. The question is plain ASCII in capitals, readable on both: `1` (or
+`M`) picks the modern face, `2` (or `C`) the C64, and RETURN takes the pick, or
+the guess when nothing is picked.
 
 What is typed is first looked up as a title: when Wikipedia has an article of
 that title, or one it redirects to (`c64` → *Commodore 64*), it opens at once.
