@@ -97,10 +97,10 @@ module UI
           w.item_label    { |s, _ctx| s.title }
           w.render_detail do |s, width, ctx|
             article = ctx[:article]
-            app     = ctx[:app]
-            lines   = app.markdown("# #{s.title}\n\n#{s.markdown}", width)
+            t       = ctx[:app].theme
+            lines   = ctx[:app].markdown("# #{s.title}\n\n#{s.markdown}", width)
             if s == article.sections.first && article.redirected_from
-              lines.insert(1, "#{app.theme[:text_dim]}(Redirected from #{article.redirected_from})#{app.theme[:text]}")
+              lines.insert(1, "#{t[:text_dim]}(Redirected from #{article.redirected_from})#{t[:text]}")
             end
             lines
           end
