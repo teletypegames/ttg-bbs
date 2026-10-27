@@ -6,7 +6,7 @@ the author, the text wrapped to the screen, its links numbered under it.
 Callers can suggest a new feed or send feedback to the admins. Built on the
 [rubbs](https://git.teletypegames.org/engines/rubbs) gem, like the
 [Teletype BBS](https://git.teletypegames.org/bbs/bbs-server) and
-[WikiProxy](https://git.teletypegames.org/bbs/wikiproxy).
+[Alexandria BBS](https://git.teletypegames.org/bbs/alexandria).
 
 It has two faces on one port: the **modern** one for ANSI terminals (windows,
 menus, mouse) and a **Commodore 64** one in PETSCII, 40×25, with single-key
