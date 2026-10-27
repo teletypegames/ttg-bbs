@@ -7,10 +7,21 @@ BBS that browses the Grav wiki live through its JSON API.
 telnet localhost 2325
 ```
 
-A Norton Commander-style two-pane browser: page tree on the left (indented by
-route depth), the selected page rendered as ANSI markdown on the right.
+The wiki has two faces on one port. A call starts with one question: which
+terminal is calling. The BBS guesses first — it waits up to 1.5 seconds for the
+telnet answers, and a terminal reporting a window wider than 40 columns is a
+modern one; 40 columns, or no answer at all (a C64 behind a WiFi modem speaks
+plain TCP), is taken for a Commodore. RETURN takes the guess, `1` (or `A`)
+picks ANSI, `2` (or `C`) the C64. Mouse reporting is switched on only after
+the choice. Code: `lib/ui/terminal.rb`, `lib/ui/modern.rb`, `lib/ui/c64*`.
 
-## Keys
+## The modern face
+
+A full-screen Norton Commander-style two-pane browser: page tree on the left
+(indented by route depth), the selected page rendered as ANSI markdown on the
+right. The browser opens maximized — it fills the screen between the menubar
+and the statusbar; F5 / Alt-Enter (or the `[↕]` gadget) turns it into a
+window and back.
 
 | Key | Action |
 |---|---|
@@ -18,7 +29,8 @@ route depth), the selected page rendered as ANSI markdown on the right.
 | Tab | Move focus to the reader pane |
 | PgUp/PgDn/Home/End | Scroll the reader |
 | F2 | Reopen the browser |
-| F5 | Refresh the wiki index (clears the page cache) |
+| F5 / Alt-Enter | Window / full screen |
+| F8 | Refresh the wiki index (clears the page cache) |
 | F10 | Menubar |
 | Alt-X / Esc | Quit / close window |
 
@@ -27,6 +39,16 @@ Unlock them with **Wiki > Supervisor login** — the password comes from the
 `SUPERVISOR_PASSWORD` env var. Locking back: same menu item, confirm.
 
 Mouse works too (xterm SGR), including wheel scroll in both panes.
+
+## The C64 face
+
+PETSCII on a 40×25 screen. The same page tree, one level per screen as a
+numbered list: a page with pages under it is marked `>`, a private one `*`.
+A number opens the page, or goes down a level, where line 1 is the page
+itself; `Q` (or ←) goes back up. Pages are shown a screenful at a time
+(RETURN: more, `Q`: back), with their public address at the end. On the top
+level `S` is the supervisor login (again: lock back) and `R` re-reads the
+index.
 
 ## Data source
 
@@ -43,7 +65,7 @@ Two endpoints on the Grav wiki (templates in
   `{"error": "forbidden"}`. Unknown route → `{"error": "not_found"}`.
 
 The page index (`sitemap.json`) is loaded once at server boot and shared by
-every session; **F5 / Wiki > Refresh index** re-reads it for everyone. If the
+every session; **F8 / Wiki > Refresh index** (`R` on the C64) re-reads it for everyone. If the
 wiki is down at boot, the BBS still starts with an empty index. Page bodies
 are rendered with `BBS::Markdown` and cached for 5 minutes
 (`Wiki::Client::PAGE_TTL`).
