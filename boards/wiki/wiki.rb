@@ -24,14 +24,28 @@ require_relative 'lib/ui/terminal'
 require_relative 'lib/ui/modern'
 require_relative 'lib/ui/c64'
 
-# Load the page index once at boot; sessions share it. If the wiki is down,
-# start anyway — callers can pull it in later with Wiki > Refresh index.
-begin
-  WIKI.refresh_index!
-  puts "wiki-bbs: indexed #{WIKI.pages.size} pages from #{WIKI.base_url}"
-rescue StandardError => e
-  warn "wiki-bbs: could not load wiki index at boot " \
-       "(#{e.class}: #{e.message}) — use Wiki > Refresh index"
+$stdout.sync = true
+
+# Load the page index at boot; sessions share it. A stack deploy recreates
+# grav together with this container, so the wiki is often not up yet: start
+# anyway and keep retrying in the background until it answers. Callers can
+# also pull it in with Wiki > Refresh index.
+INDEX_RETRY = 10 # seconds
+
+Thread.new do
+  attempts = 0
+  begin
+    WIKI.refresh_index!
+    puts "wiki-bbs: indexed #{WIKI.pages.size} pages from #{WIKI.base_url}"
+  rescue StandardError => e
+    attempts += 1
+    if attempts == 1 || (attempts % 30).zero?
+      warn "wiki-bbs: could not load wiki index (#{e.class}: #{e.message}), " \
+           "retrying every #{INDEX_RETRY}s"
+    end
+    sleep INDEX_RETRY
+    retry
+  end
 end
 
 faces = { modern: UI::Modern.flow(WIKI), c64: UI::C64.flow(WIKI) }

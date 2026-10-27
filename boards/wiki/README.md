@@ -66,7 +66,8 @@ Two endpoints on the Grav wiki (templates in
 
 The page index (`sitemap.json`) is loaded once at server boot and shared by
 every session; **F8 / Wiki > Refresh index** (`R` on the C64) re-reads it for everyone. If the
-wiki is down at boot, the BBS still starts with an empty index. Page bodies
+wiki is down at boot (a stack deploy recreates grav at the same time), the BBS
+still starts and retries the index every 10 seconds until it answers. Page bodies
 are rendered with `BBS::Markdown` and cached for 5 minutes
 (`Wiki::Client::PAGE_TTL`).
 
