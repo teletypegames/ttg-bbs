@@ -1,6 +1,8 @@
 services:
   feedia:
-    mem_limit: 128m
+    mem_limit: 160m
+    cpus: 1.0
+    pids_limit: 256
     build: .
     container_name: feedia
     ports:
@@ -9,5 +11,7 @@ services:
       - ./data:/app/data
     environment:
       - TZ=Europe/Budapest
+      # Callers at once: each costs up to ~1.7 MB on top of ~30 MB, sized to mem_limit.
+      - BBS_MAX_SESSIONS=50
       - FEEDIA_DISCORD_WEBHOOK=${FEEDIA_DISCORD_WEBHOOK:-}
     restart: unless-stopped

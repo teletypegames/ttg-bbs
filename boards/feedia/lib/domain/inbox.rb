@@ -17,6 +17,10 @@ class Inbox
   MAX_FIELD   = 200
   PER_CALL    = 5
   DISCORD_MAX = 1500
+  # At most RELAY_MAX messages ring Discord in RELAY_WINDOW seconds; the rest
+  # are only kept in the inbox file, so a crowd cannot flood the channel.
+  RELAY_MAX    = 20
+  RELAY_WINDOW = 600
 
   Message = Struct.new(:kind, :at, :from, :name, :url, :text, keyword_init: true)
 
@@ -26,6 +30,7 @@ class Inbox
     @path    = path
     @webhook = webhook.to_s.empty? ? nil : URI(webhook)
     @mu      = Mutex.new
+    @sent    = []
   end
 
   # :ok, or why not: :no_url, :bad_url, :empty.
@@ -74,8 +79,21 @@ class Inbox
 
   def text(value) = HtmlText.clean(value).gsub(/[ \t]+/, ' ').gsub(/\n{3,}/, "\n\n").strip[0, MAX_TEXT]
 
+  # True when one more message fits in the window, and counts it.
+  def relay_slot?
+    @mu.synchronize do
+      now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      @sent.shift while @sent.any? && now - @sent.first > RELAY_WINDOW
+      next false if @sent.size >= RELAY_MAX
+
+      @sent << now
+      true
+    end
+  end
+
   def notify(message)
     return unless @webhook
+    return warn('Inbox: Discord relay limit reached, not sent') unless relay_slot?
 
     who  = message.from.to_s.empty? ? 'a caller' : "**#{escape(message.from)}**"
     head = if message.kind == 'suggestion'
