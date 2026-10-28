@@ -7,12 +7,19 @@ require 'uri'
 # Posts board messages and sysop broadcasts to a Discord webhook, in the
 # background so a slow webhook never stalls a telnet session. Without a
 # webhook URL it does nothing. Mentions are disabled: a caller cannot ping
-# @everyone from the BBS.
+# @everyone from the BBS. At most RELAY_MAX messages go out in RELAY_WINDOW
+# seconds, however many callers post: the rest stay on the board only, so a
+# crowd (or one caller redialling past the post cooldown) cannot flood the
+# channel.
 class DiscordNotifier
-  LIMIT = 300
+  LIMIT        = 300
+  RELAY_MAX    = 20
+  RELAY_WINDOW = 600
 
   def initialize(webhook)
-    @uri = webhook.to_s.empty? ? nil : URI(webhook)
+    @uri  = webhook.to_s.empty? ? nil : URI(webhook)
+    @sent = []
+    @mu   = Mutex.new
   end
 
   def enabled? = !@uri.nil?
@@ -44,8 +51,21 @@ class DiscordNotifier
   # Discord markdown off, links included: a caller's [text](url) stays text.
   def escape(text) = text.to_s.gsub(/([\\*_~`|>\[\]()<#:-])/) { "\\#{Regexp.last_match(1)}" }
 
+  # True when one more message fits in the window, and counts it.
+  def relay_slot?
+    @mu.synchronize do
+      now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      @sent.shift while @sent.any? && now - @sent.first > RELAY_WINDOW
+      next false if @sent.size >= RELAY_MAX
+
+      @sent << now
+      true
+    end
+  end
+
   def notify(content)
     return unless enabled?
+    return warn('DiscordNotifier: relay limit reached, not sent') unless relay_slot?
 
     Thread.new do
       body = JSON.generate(content: content, allowed_mentions: { parse: [] })
