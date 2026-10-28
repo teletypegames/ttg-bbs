@@ -68,9 +68,11 @@
 - keys: [impostor, code, debrief, norman]
   fact: 'Impostor is the debrief terminal of our game Definitely not an Impostor, a door on both faces of the board: R on the main menu on a C64. It also runs on its own at teletypegames.org:2324, on a C64 too.'
 - keys: [network, bbs, other, telnet, bbsweb, port]
-  fact: 'Y on the main menu lists our boards: the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324, the WIKI-BBS at 2325, Alexandria BBS (Wikipedia) at 2326 and Feedia (RSS news) at 2327. All of them work in a browser too, at bbsweb.teletypegames.org.'
+  fact: 'Y on the main menu lists our boards: the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324, the WIKI-BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia (RSS news) at 2327 and TTGBLOG (our blog) at 2328. All of them work in a browser too, at bbsweb.teletypegames.org.'
 - keys: [alexandria, wikipedia, feedia, rss, news, feed, feeds, gateway]
   fact: 'Alexandria and Feedia, doors under R, take your line over to those boards, in PETSCII: Alexandria BBS reads Wikipedia, Feedia reads RSS news feeds. Q on their menu brings you back here.'
+- keys: [ttgblog, blog, posts, post, editor, editors]
+  fact: 'TTGBLOG at teletypegames.org:2328 is our blog on a telnet line: the latest posts and the categories, read a screenful at a time; our editors log in there and write. It is not a door here: call it directly, or on bbsweb.teletypegames.org.'
 - keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag, switch, window, windows, front]
   fact: 'Every menu takes one key, the letter in front of the line. Lists are numbered: type the number and RETURN; RETURN alone turns the page, Q or the arrow-left key goes back. ? on the main menu is the help.'
 - keys: [sysop, admin, operator, console, broadcast]

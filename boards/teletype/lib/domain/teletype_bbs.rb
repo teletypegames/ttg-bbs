@@ -18,7 +18,8 @@ class TeletypeBBS
     ['Impostor BBS',   'teletypegames.org:2324', 'post-game terminal of Definitely not an Impostor'],
     ['WIKI-BBS',       'teletypegames.org:2325', 'the whole wiki in a two-pane browser'],
     ['Alexandria BBS', 'teletypegames.org:2326', 'Wikipedia on a telnet line; a door here too'],
-    ['Feedia BBS',     'teletypegames.org:2327', 'an RSS reader: the news as text; a door here too']
+    ['Feedia BBS',     'teletypegames.org:2327', 'an RSS reader: the news as text; a door here too'],
+    ['TTGBLOG',        'teletypegames.org:2328', 'the Teletype Games blog: posts by category']
   ].freeze
   DOOR_NAMES    = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Impostor', 'Chat of Ra', 'TTG Trivia', 'Alexandria',
                    'Feedia'].freeze
