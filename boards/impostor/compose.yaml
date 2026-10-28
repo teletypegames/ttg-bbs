@@ -1,6 +1,8 @@
 services:
   bbs:
     mem_limit: 128m
+    cpus: 1.0
+    pids_limit: 256
     build: .
     container_name: impostor-bbs
     ports:
@@ -9,4 +11,6 @@ services:
       - ./data:/app/data
     environment:
       - TZ=Europe/Budapest
+      # Callers at once: each costs up to ~1.7 MB on top of ~25 MB, sized to mem_limit.
+      - BBS_MAX_SESSIONS=40
     restart: unless-stopped

@@ -8,6 +8,7 @@ require_relative 'lib/impostor'
 sessions = Impostor.sessions_store(File.expand_path('data/sessions.csv', __dir__))
 
 BBS.configure do |c|
+  c.idle_seconds = 600
   c.flow = BBS::Terminal.flow(title: 'Impostor BBS',
                               modern: Impostor.flow(sessions: sessions),
                               c64: Impostor.flow(sessions: sessions, c64: true))
