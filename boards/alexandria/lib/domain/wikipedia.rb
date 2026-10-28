@@ -12,6 +12,12 @@ class Wikipedia
   USER_AGENT = 'AlexandriaBBS/0.1 (Teletype Games telnet BBS; https://git.teletypegames.org/bbs/alexandria)'
   TTL = 600
   SEARCH_LIMIT = 30
+  # All callers share one pace towards Wikipedia, so a crowd on the board
+  # cannot get our address throttled there: at most RATE requests a second,
+  # and a request that would wait longer than MAX_WAIT is not sent at all
+  # (the caller sees "Wikipedia did not answer" and can try again).
+  RATE     = 5
+  MAX_WAIT = 3
 
   Result  = Struct.new(:title, :snippet, :words, keyword_init: true)
   Section = Struct.new(:title, :markdown, keyword_init: true)
@@ -42,6 +48,7 @@ class Wikipedia
     @languages = languages
     @cache     = {}
     @mu        = Mutex.new
+    @next_slot = 0.0
   end
 
   # The search results for +query+, best first; nil when Wikipedia did not answer.
@@ -101,6 +108,7 @@ class Wikipedia
   def api(lang, **params)
     raise ArgumentError, "unknown language #{lang}" unless @languages.include?(lang)
 
+    pace
     uri = URI("https://#{lang}.wikipedia.org/w/api.php")
     uri.query = URI.encode_www_form(params.merge(format: 'json', formatversion: 2))
     http = Net::HTTP.new(uri.host, uri.port)
@@ -111,6 +119,19 @@ class Wikipedia
     raise "HTTP #{response.code}" unless response.is_a?(Net::HTTPSuccess)
 
     JSON.parse(response.body)
+  end
+
+  # Waits for this request's turn; raises when the queue is longer than MAX_WAIT.
+  def pace
+    wait = @mu.synchronize do
+      now  = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      slot = [@next_slot, now].max
+      raise 'busy: too many Wikipedia requests at once' if slot - now > MAX_WAIT
+
+      @next_slot = slot + (1.0 / RATE)
+      slot - now
+    end
+    sleep wait if wait.positive?
   end
 
   def cached(key)

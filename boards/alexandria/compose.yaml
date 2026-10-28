@@ -1,11 +1,15 @@
 services:
   alexandria:
-    mem_limit: 128m
+    mem_limit: 160m
+    cpus: 1.0
+    pids_limit: 256
     build: .
     container_name: alexandria
     ports:
       - "2326:2323"
     environment:
       - TZ=Europe/Budapest
+      # Callers at once: each costs up to ~1.7 MB (more with long articles) on top of ~25 MB.
+      - BBS_MAX_SESSIONS=50
       - ALEXANDRIA_LANGUAGES=${ALEXANDRIA_LANGUAGES:-en,hu}
     restart: unless-stopped
