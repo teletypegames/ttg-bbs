@@ -37,7 +37,8 @@ Connect with:
 telnet localhost 2323
 ```
 
-The port can be changed via the `BBS_PORT` environment variable (see `.env.example`).
+Docker Compose publishes it on port 2324 (`telnet localhost 2324`), the public port on the server. Run directly,
+the port can be changed via the `BBS_PORT` environment variable (see `.env.example`).
 
 ## Generating a code
 
