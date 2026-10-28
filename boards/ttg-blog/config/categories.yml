@@ -1,0 +1,18 @@
+# The categories of the blog: a post names one by its id. Change = commit, the
+# push deploys it. Renaming a name is safe; a removed id leaves its posts under
+# the bare id, and new posts can no longer pick it.
+- id: news
+  name: News
+  about: What happened at Teletype Games
+- id: devlog
+  name: Devlog
+  about: How the games and the tools are made
+- id: releases
+  name: Releases
+  about: New games, new versions
+- id: retro
+  name: Retro
+  about: C64, Plus/4, DOS and other old friends
+- id: events
+  name: Events
+  about: Meetups, jams, parties

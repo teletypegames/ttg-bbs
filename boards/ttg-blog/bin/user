@@ -1,0 +1,38 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# The editors of the blog, from the server's shell:
+#   docker exec -it ttgblog bin/user list
+#   docker exec -it ttgblog bin/user add NAME      (asks the password twice; without a tty, two lines of stdin)
+#   docker exec -it ttgblog bin/user passwd NAME
+#   docker exec -it ttgblog bin/user remove NAME   (their posts stay, without an author)
+require 'io/console'
+require_relative '../lib/domain/blog'
+
+def ask(prompt) = $stdin.tty? ? $stdin.getpass(prompt) : $stdin.gets.to_s.chomp
+
+def password
+  first  = ask('password: ')
+  second = ask('again: ')
+  abort 'the two passwords differ' unless first == second
+  first
+end
+
+blog = Blog.new(path:       ENV.fetch('TTGBLOG_DB', File.join(__dir__, '../data/ttgblog.sqlite3')),
+                categories: [])
+command, name = ARGV
+result = case command
+         when 'list'   then blog.users.each { |u| puts u.name } && :ok
+         when 'add'    then name ? blog.add_user(name, password) : :usage
+         when 'passwd' then name ? blog.set_password(name, password) : :usage
+         when 'remove' then name ? blog.remove_user(name) : :usage
+         else :usage
+         end
+case result
+when :ok then puts 'ok' unless command == 'list'
+when :usage then abort 'usage: bin/user list | add NAME | passwd NAME | remove NAME'
+when :bad_name then abort "a name is 2 to #{Blog::MAX_NAME} letters, digits, _ . -"
+when :short_password then abort "a password is at least #{Blog::MIN_PASS} characters"
+when :taken then abort 'that name is taken'
+when :no_user then abort 'no such editor'
+end
