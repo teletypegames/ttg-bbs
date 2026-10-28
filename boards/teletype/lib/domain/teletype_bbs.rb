@@ -19,10 +19,10 @@ class TeletypeBBS
     ['WIKI-BBS',       'teletypegames.org:2325', 'the whole wiki in a two-pane browser'],
     ['Alexandria BBS', 'teletypegames.org:2326', 'Wikipedia on a telnet line; a door here too'],
     ['Feedia BBS',     'teletypegames.org:2327', 'an RSS reader: the news as text; a door here too'],
-    ['TTGBLOG',        'teletypegames.org:2328', 'the Teletype Games blog: posts by category']
+    ['TTGBLOG',        'teletypegames.org:2328', 'the Teletype Games blog; a door here too']
   ].freeze
   DOOR_NAMES    = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Impostor', 'Chat of Ra', 'TTG Trivia', 'Alexandria',
-                   'Feedia'].freeze
+                   'Feedia', 'TTGBLOG'].freeze
   GATEWAY_HOST  = ENV.fetch('BBS_GATEWAY_HOST', 'host.docker.internal')
   WIKI_SECTIONS = {
     platforms: { prefix: '/platforms', title: 'Platform Guides' },
@@ -94,7 +94,8 @@ class TeletypeBBS
       Door.new(:ra,         Ra.os(games: @games), 'Chat of &Ra', 80),
       Door.new(:trivia,     Trivia.door(games: @games, site: @site, scores: @trivia), '&TTG Trivia', 80),
       Door.new(:alexandria, BBS::Gateway.new(host: GATEWAY_HOST, port: 2326, name: 'Alexandria BBS'), '&Alexandria', 40),
-      Door.new(:feedia,     BBS::Gateway.new(host: GATEWAY_HOST, port: 2327, name: 'Feedia'), '&Feedia', 40)
+      Door.new(:feedia,     BBS::Gateway.new(host: GATEWAY_HOST, port: 2327, name: 'Feedia'), '&Feedia', 40),
+      Door.new(:ttgblog,    BBS::Gateway.new(host: GATEWAY_HOST, port: 2328, name: 'TTGBLOG'), 'TTG&BLOG', 40)
     ]
   end
 

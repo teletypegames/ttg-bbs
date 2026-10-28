@@ -58,7 +58,7 @@
 - keys: [ansi, ascii, art, gallery, desktop, background, picture, graphics]
   fact: 'The ANSI art gallery is on the modern face of the board only: call with an ANSI terminal and choose 1 at the start.'
 - keys: [door, doors, program]
-  fact: 'R on the main menu has the doors that fit the 40 columns of a C64: a Commodore 64 and a Commodore Plus/4 with our games on their disks, the Impostor debrief terminal, and Alexandria and Feedia, which take you over to those boards. SERMO, Chat of Ra and TTG Trivia need 80 columns: they are on the modern face of the board.'
+  fact: 'R on the main menu has the doors that fit the 40 columns of a C64: a Commodore 64 and a Commodore Plus/4 with our games on their disks, the Impostor debrief terminal, and Alexandria, Feedia and TTGBLOG, which take you over to those boards. SERMO, Chat of Ra and TTG Trivia need 80 columns: they are on the modern face of the board.'
 - keys: [sermo, neumatronic, margittai, acp]
   fact: 'SERMO is a door on the modern face of the board, a dual machine of the Neumatronic universe; it needs 80 columns, so call with a PC terminal and choose 1.'
 - keys: [commodore, c64, plus4, basic, load, run, emulator, retro]
@@ -72,7 +72,7 @@
 - keys: [alexandria, wikipedia, feedia, rss, news, feed, feeds, gateway]
   fact: 'Alexandria and Feedia, doors under R, take your line over to those boards, in PETSCII: Alexandria BBS reads Wikipedia, Feedia reads RSS news feeds. Q on their menu brings you back here.'
 - keys: [ttgblog, blog, posts, post, editor, editors]
-  fact: 'TTGBLOG at teletypegames.org:2328 is our blog on a telnet line: the latest posts and the categories, read a screenful at a time; our editors log in there and write. It is not a door here: call it directly, or on bbsweb.teletypegames.org.'
+  fact: 'TTGBLOG at teletypegames.org:2328 is our blog on a telnet line: the latest posts and the categories, read a screenful at a time; our editors log in there and write. It is a door under R too, or call it directly, or on bbsweb.teletypegames.org.'
 - keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag, switch, window, windows, front]
   fact: 'Every menu takes one key, the letter in front of the line. Lists are numbered: type the number and RETURN; RETURN alone turns the page, Q or the arrow-left key goes back. ? on the main menu is the help.'
 - keys: [sysop, admin, operator, console, broadcast]

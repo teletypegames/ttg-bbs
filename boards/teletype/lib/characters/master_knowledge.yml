@@ -59,7 +59,7 @@
 - keys: [ansi, ascii, art, gallery, desktop, background, picture, graphics]
   fact: 'Content > ANSI Gallery shows the ANSI art of the board. Enter or View shows a piece on the full screen, Desktop puts it on the desktop for this call, Favourite keeps it for every call of a registered name.'
 - keys: [door, doors, program]
-  fact: 'The Doors menu has programs that take over the screen and give it back when you leave them: SERMO, Commodore 64, Commodore Plus/4, Impostor, Chat of Ra, the TTG Trivia game, and Alexandria and Feedia, which take you over to those boards.'
+  fact: 'The Doors menu has programs that take over the screen and give it back when you leave them: SERMO, Commodore 64, Commodore Plus/4, Impostor, Chat of Ra, the TTG Trivia game, and Alexandria, Feedia and TTGBLOG, which take you over to those boards.'
 - keys: [sermo, neumatronic, margittai, acp]
   fact: 'Doors > SERMO is a dual machine of the Neumatronic universe: type a command, or just talk to it. EXIT returns to the board.'
 - keys: [commodore, c64, plus4, basic, load, run, emulator, retro]
@@ -73,7 +73,7 @@
 - keys: [alexandria, wikipedia, feedia, rss, news, feed, feeds, gateway]
   fact: 'Doors > Alexandria and Doors > Feedia take your line over to those boards: Alexandria BBS reads Wikipedia, Feedia reads RSS news feeds. Leave them the way they say (Alt-X, or Q on a C64), and you come back here.'
 - keys: [ttgblog, blog, posts, post, editor, editors]
-  fact: 'TTGBLOG at teletypegames.org:2328 is our blog on a telnet line: the latest posts and the categories, read a screenful at a time; our editors log in there and write. It is not a door here: call it directly, or on bbsweb.teletypegames.org.'
+  fact: 'TTGBLOG at teletypegames.org:2328 is our blog on a telnet line: the latest posts and the categories, read a screenful at a time; our editors log in there and write. It is a door here too (Doors > TTGBLOG), or call it directly, or on bbsweb.teletypegames.org.'
 - keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag, switch, window, windows, front]
   fact: 'Alt and a letter opens a menu, F10 the first one; Tab moves inside a window, Enter presses the button, Esc closes the window. F2 boards, F3 post, F4 chat, F7 mail, F1 asks me. F5 or Alt-Enter puts a big window on the full screen and back, so does the [↑] on its title bar. Several windows can be open: F6 brings the next one to the front, Shift-F6 the previous one, Alt and its number picks one, and a click on a window brings it forward. Ctrl-F5 moves a window with the arrows and sizes it with Shift and the arrows; with the mouse, drag its title bar or its bottom right corner. The mouse works too.'
 - keys: [sysop, admin, operator, console, broadcast]
