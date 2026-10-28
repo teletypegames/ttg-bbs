@@ -1,8 +1,10 @@
 FROM ruby:3.3-alpine
 
-RUN apk add --no-cache git build-base
+RUN apk add --no-cache git build-base tzdata
 
 WORKDIR /app
+
+ENV BUNDLE_WITHOUT=development
 
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
