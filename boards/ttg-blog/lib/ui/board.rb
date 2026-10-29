@@ -1,13 +1,23 @@
 # frozen_string_literal: true
 
+require_relative 'screen'
+
 module UI
   # One call of the blog, line by line on either face: the readers' menu (the
   # latest posts, the categories, a post paged a screenful at a time) and,
   # after an editor logs in, writing, editing and deleting posts. The body is
   # Markdown, typed in a line editor with slash commands, which a C64 can
-  # type as well as a modern terminal.
+  # type as well as a modern terminal. The faces (UI::Modern, UI::C64) give
+  # it a screen and a masthead.
   class Board
     LOGIN_TRIES = 3
+
+    LOGO_FONT = {
+      'T' => %w[### .#. .#. .#. .#.], 'G' => %w[### #.. #.# #.# ###], 'B' => %w[##. #.# ##. #.# ##.],
+      'L' => %w[#.. #.. #.. #.. ###], 'O' => %w[### #.# #.# #.# ###], ' ' => %w[. . . . .]
+    }.freeze
+
+    MOTTO = 'news from teletype games'
 
     EDITOR_HELP = 'Type the post line by line, in Markdown; an empty line starts a new paragraph. ' \
                   'Commands on a line of their own: /s save, /q quit, /l list, /e N retype line N, ' \
@@ -21,6 +31,25 @@ module UI
       long_body:    'The body is too long.',
       bad_category: 'Pick a category from the list.'
     }.freeze
+
+    # TTG BLOG as five rows of bits, # set and . clear, for a face to draw.
+    def self.logo_bits = 5.times.map { |row| 'TTG BLOG'.chars.map { |c| LOGO_FONT[c][row] }.join('.') }
+
+    # The flow of a face: the block makes the screen and the masthead of a
+    # call from its session.
+    def self.flow(blog, &face)
+      BBS::Flow.define do
+        call do |ctx, runner|
+          screen, masthead = face.call(runner.session)
+          board = Board.new(blog, screen, ctx, masthead: masthead)
+          board.run
+          board.goodbye
+          nil
+        rescue IOError, Errno::EPIPE, Errno::ECONNRESET
+          nil
+        end
+      end
+    end
 
     def initialize(blog, screen, ctx, masthead:)
       @blog     = blog
@@ -57,6 +86,22 @@ module UI
         end
         @screen.title('TTGBLOG', right)
       end
+    end
+
+    def goodbye
+      @screen.cls
+      @screen.puts
+      @screen.puts " #{YE}#{RV}#{' thanks for reading ttgblog'.ljust(@screen.cols - 1)}#{RO}#{LG}"
+      @screen.puts
+      @screen.say('More of us: teletypegames.org', GR)
+      @screen.puts
+      sleep 1.2
+      @screen.puts " #{LG}+++"
+      sleep 0.6
+      @screen.puts ' ATH0'
+      sleep 0.4
+      @screen.puts " #{RD}NO CARRIER#{LG}"
+      @screen.puts
     end
 
     private

@@ -2,7 +2,8 @@
 
 require 'bbs'
 require_relative 'lib/domain/blog'
-require_relative 'lib/ui/faces'
+require_relative 'lib/ui/modern'
+require_relative 'lib/ui/c64'
 
 # The Teletype Games blog on a telnet line, two faces on one port: the caller
 # picks a terminal (BBS::Terminal guesses it first), and both faces read and
@@ -16,7 +17,7 @@ BBS.configure do |config|
   config.mouse_on_connect = false
   config.idle_seconds     = 900
 
-  config.flow = BBS::Terminal.flow(title: 'TTGBLOG', modern: UI::Faces.modern(blog), c64: UI::Faces.c64(blog))
+  config.flow = BBS::Terminal.flow(title: 'TTGBLOG', modern: UI::Modern.flow(blog), c64: UI::C64.flow(blog))
 end
 
 BBS.start

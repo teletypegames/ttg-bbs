@@ -23,8 +23,6 @@ module UI
   # menus. The same on both faces, only its size differs: 40×25 on a C64,
   # the caller's window up to 80 columns on a modern terminal.
   class Screen
-    C64_COLS = 40
-
     attr_reader :session, :cols, :width
 
     def initialize(session, cols:, rows:)

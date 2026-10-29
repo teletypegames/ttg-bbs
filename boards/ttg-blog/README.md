@@ -129,8 +129,9 @@ bin/user                  the editors, from the server's shell
 config/categories.yml     the categories
 lib/
   domain/blog.rb          the SQLite database: editors, posts, passwords
-  ui/faces.rb             the two faces: screen size, masthead, goodbye
-  ui/board.rb             one call: menu, lists, a post, login, the editor
+  ui/modern.rb            the modern face: the caller's window, half-block masthead
+  ui/c64.rb               the C64 face: 40×25 PETSCII, reversed-space masthead
+  ui/board.rb             one call: menu, lists, a post, login, the editor, goodbye
   ui/screen.rb            title bar, pages, numbered lists, single-key menus
 ```
 
