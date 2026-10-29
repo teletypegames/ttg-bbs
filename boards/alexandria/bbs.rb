@@ -16,7 +16,7 @@ BBS.configure do |config|
   config.mouse_on_connect = false
   config.idle_seconds     = 600
 
-  config.flow = BBS::Terminal.flow(title: 'Alexandria BBS', modern: UI::Modern.flow(wikipedia), c64: UI::Petscii.flow(wikipedia))
+  config.flow = BBS::Terminal.flow(title: 'Alexandria BBS', modern: UI::Modern.flow(wikipedia), petscii: UI::Petscii.flow(wikipedia))
 end
 
 BBS.start
