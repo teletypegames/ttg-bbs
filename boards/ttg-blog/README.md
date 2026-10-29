@@ -130,7 +130,7 @@ config/categories.yml     the categories
 lib/
   domain/blog.rb          the SQLite database: editors, posts, passwords
   ui/modern.rb            the modern face: the caller's window, half-block masthead
-  ui/c64.rb               the C64 face: 40×25 PETSCII, reversed-space masthead
+  ui/petscii.rb           the PETSCII face: 40×25 PETSCII, reversed-space masthead
   ui/board.rb             one call: menu, lists, a post, login, the editor, goodbye
   ui/screen.rb            title bar, pages, numbered lists, single-key menus
 ```

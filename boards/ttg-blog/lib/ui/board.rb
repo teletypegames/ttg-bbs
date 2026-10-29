@@ -7,7 +7,7 @@ module UI
   # latest posts, the categories, a post paged a screenful at a time) and,
   # after an editor logs in, writing, editing and deleting posts. The body is
   # Markdown, typed in a line editor with slash commands, which a C64 can
-  # type as well as a modern terminal. The faces (UI::Modern, UI::C64) give
+  # type as well as a modern terminal. The faces (UI::Modern, UI::Petscii) give
   # it a screen and a masthead.
   class Board
     LOGIN_TRIES = 3

@@ -5,7 +5,7 @@ require_relative 'board'
 module UI
   # The blog on a Commodore 64: the line-by-line Board in PETSCII on a 40×25
   # screen, under a masthead in reversed spaces.
-  module C64
+  module Petscii
     COLS = 40
     ROWS = 25
 
