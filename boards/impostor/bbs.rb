@@ -11,7 +11,7 @@ BBS.configure do |c|
   c.idle_seconds = 600
   c.flow = BBS::Terminal.flow(title: 'Impostor BBS',
                               modern: Impostor::Modern.flow(sessions: sessions),
-                              c64: Impostor::Petscii.flow(sessions: sessions))
+                              petscii: Impostor::Petscii.flow(sessions: sessions))
 end
 
 BBS.start
