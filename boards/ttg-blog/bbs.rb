@@ -17,7 +17,7 @@ BBS.configure do |config|
   config.mouse_on_connect = false
   config.idle_seconds     = 900
 
-  config.flow = BBS::Terminal.flow(title: 'TTGBLOG', modern: UI::Modern.flow(blog), c64: UI::Petscii.flow(blog))
+  config.flow = BBS::Terminal.flow(title: 'TTGBLOG', modern: UI::Modern.flow(blog), petscii: UI::Petscii.flow(blog))
 end
 
 BBS.start
