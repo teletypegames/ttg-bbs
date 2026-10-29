@@ -4,7 +4,7 @@ require 'bbs'
 require_relative 'impostor/code_generator'
 
 # The debrief terminal of Definitely not an Impostor as a rubbs flow, with
-# two faces: Impostor::Modern for an ANSI terminal and Impostor::C64 for a
+# two faces: Impostor::Modern for an ANSI terminal and Impostor::Petscii for a
 # PETSCII line, each with its own screens. It runs the standalone Impostor
 # BBS (bbs.rb), and another rubbs BBS mounts it as a door:
 # `door :impostor, Impostor::Modern.flow(sessions: store), label: '&Impostor'`.
@@ -59,4 +59,4 @@ module Impostor
 end
 
 require_relative 'impostor/modern'
-require_relative 'impostor/c64'
+require_relative 'impostor/petscii'

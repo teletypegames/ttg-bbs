@@ -2,7 +2,7 @@
 
 # Lets another rubbs BBS mount the debrief terminal as a door:
 #   gem 'impostor', git: 'https://git.teletypegames.org/bbs/impostor-bbs.git'
-#   require 'impostor'   # => Impostor::Modern.flow(sessions:), Impostor::C64.flow(sessions:)
+#   require 'impostor'   # => Impostor::Modern.flow(sessions:), Impostor::Petscii.flow(sessions:)
 Gem::Specification.new do |s|
   s.name     = 'impostor'
   s.version  = '0.3.0'

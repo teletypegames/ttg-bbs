@@ -14,8 +14,8 @@ A call starts with one question: which terminal is calling (rubbs'
 `BBS::Terminal`, with a guess from the telnet answers as the default). `1`
 picks a modern terminal (ANSI/xterm), `2` a Commodore 64 (PETSCII): the C64
 gets the same terminal on 40 columns, with its own screens. The two faces are
-two modules, `Impostor::Modern` and `Impostor::C64`, each with its screens in
-`screens/modern/` and `screens/c64/`.
+two modules, `Impostor::Modern` and `Impostor::Petscii`, each with its screens in
+`screens/modern/` and `screens/petscii/`.
 
 ## Running
 
@@ -62,13 +62,13 @@ bin/
 lib/
   impostor.rb                 Impostor.debrief — the whole terminal as a BBS::Flow, shared by the faces
   impostor/modern.rb          Impostor::Modern.flow(sessions:) — the face for an ANSI terminal
-  impostor/c64.rb             Impostor::C64.flow(sessions:) — the face for a C64, in PETSCII
+  impostor/petscii.rb         Impostor::Petscii.flow(sessions:) — the face for a C64, in PETSCII
   impostor/code_generator.rb  Decrypt/encrypt logic (Ruby port of the Lua original)
 screens/
   modern/welcome.erb          Welcome screen
   modern/congrats.erb         Mission complete screen
-  c64/welcome.erb             The same two on 40 columns, for a C64
-  c64/congrats.erb
+  petscii/welcome.erb         The same two on 40 columns, for a C64
+  petscii/congrats.erb
 data/
   sessions.csv                Player session records (auto-created)
 ```
@@ -86,7 +86,7 @@ gem 'impostor', git: 'https://git.teletypegames.org/bbs/impostor-bbs.git'
 require 'impostor'
 sessions = Impostor.sessions_store('data/impostor_sessions.csv')
 door :impostor, Impostor::Modern.flow(sessions: sessions), label: '&Impostor'
-# and for a C64 caller: Impostor::C64.flow(sessions: sessions)
+# and for a C64 caller: Impostor::Petscii.flow(sessions: sessions)
 ```
 
 When the flow ends, the door asks for ENTER and hands the caller back to the
