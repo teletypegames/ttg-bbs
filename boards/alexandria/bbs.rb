@@ -3,7 +3,7 @@
 require 'bbs'
 require_relative 'lib/domain/wikipedia'
 require_relative 'lib/ui/modern'
-require_relative 'lib/ui/c64'
+require_relative 'lib/ui/petscii'
 
 # Wikipedia on a telnet line, two faces on one port: the caller picks a
 # terminal (BBS::Terminal guesses it first), and an ANSI terminal gets the modern
@@ -16,7 +16,7 @@ BBS.configure do |config|
   config.mouse_on_connect = false
   config.idle_seconds     = 600
 
-  config.flow = BBS::Terminal.flow(title: 'Alexandria BBS', modern: UI::Modern.flow(wikipedia), c64: UI::C64.flow(wikipedia))
+  config.flow = BBS::Terminal.flow(title: 'Alexandria BBS', modern: UI::Modern.flow(wikipedia), c64: UI::Petscii.flow(wikipedia))
 end
 
 BBS.start

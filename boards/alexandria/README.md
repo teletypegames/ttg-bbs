@@ -100,8 +100,8 @@ lib/
                           the plain extract → sections in Markdown
   ui/modern.rb            the modern face: desktop, search, results, article
   ui/modern/pharos.rb     the desktop's title: the lighthouse and the name
-  ui/c64.rb               the C64 face: logo, prompt, menu, lists, pages
-  ui/c64/screen.rb        title bar, pages, numbered lists on the 40×25 screen
+  ui/petscii.rb           the PETSCII face: logo, prompt, menu, lists, pages
+  ui/petscii/screen.rb    title bar, pages, numbered lists on the 40×25 screen
 ```
 
 ## Wikipedia

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  module C64
+  module Petscii
     # Colours as ANSI, which the PETSCII line turns into the C64's own; the
     # width helpers of rubbs know ANSI and would count PETSCII codes as text.
     WH = "\e[1;37m"

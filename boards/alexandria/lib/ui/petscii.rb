@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require_relative 'c64/screen'
+require_relative 'petscii/screen'
 
 module UI
   # The proxy on a Commodore 64: PETSCII on a 40×25 screen. A title typed at
   # the prompt is looked up, the results come as a numbered list, and an
   # article as its contents, each section paged a screenful at a time.
-  module C64
+  module Petscii
     LOGO_FONT = {
       'A' => %w[.#. #.# ### #.# #.#], 'L' => %w[#.. #.. #.. #.. ###], 'E' => %w[### #.. ##. #.. ###],
       'X' => %w[#.# #.# .#. #.# #.#], 'N' => %w[##. #.# #.# #.# #.#], 'D' => %w[##. #.# #.# #.# ##.],
@@ -47,7 +47,7 @@ module UI
           nil
         end
         call do |_ctx, runner|
-          C64.goodbye(Screen.new(runner.session))
+          Petscii.goodbye(Screen.new(runner.session))
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           nil
@@ -83,9 +83,9 @@ module UI
       def run
         @screen.cls
         @screen.puts
-        C64.pharos.each { |l| @screen.puts l }
+        Petscii.pharos.each { |l| @screen.puts l }
         @screen.puts
-        C64.logo.each { |l| @screen.puts l }
+        Petscii.logo.each { |l| @screen.puts l }
         @screen.puts
         @screen.puts "  #{WH}wikipedia on your commodore#{LG}"
         loop do
