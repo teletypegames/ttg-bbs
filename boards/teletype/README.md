@@ -78,7 +78,7 @@ Copy `env-example` to `.env`:
 | `BBS_GATEWAY_HOST` | `host.docker.internal` | Where the Alexandria (:2326), Feedia (:2327) and TTGBLOG (:2328) gateway doors connect; compose maps it to the host |
 | `BBS_LOGON_ART` | `lib/content/logon.ans` | The art of the logon matrix, above the name prompt |
 | `BBS_FTP_HOST` | `ftp.teletypegames.org` | The FTP server of the FTP Browser (anonymous, passive) |
-| `BBS_ARCHIVE_URL` | `http://archive.teletypegames.org` | The FTP tree on plain HTTP: the C64 face gives these addresses, as a C64 cannot take a ZMODEM download or speak TLS |
+| `BBS_ARCHIVE_URL` | `http://archive.teletypegames.org` | The FTP tree on plain HTTP: the PETSCII face gives these addresses, as a C64 cannot take a ZMODEM download or speak TLS |
 | `BBS_FTP_DOWNLOAD_MAX` | `16777216` | The largest file (bytes) the FTP Browser sends by ZMODEM; a bigger one only gets its FTP (and for WARP, HTTPS) address |
 | `SERMO_LLM_URL` | set by compose | SERMO's model, `http://llm:8080`; empty = canned replies only |
 | `SERMO_LLM_MODEL` | set by compose | the model's name in infra/llm, `qwen3.5-0.8b` |
@@ -191,7 +191,7 @@ door.
 
 ### The C64 face
 
-The board as the C64 boards had it (`lib/ui/c64`), on a C64 terminal program
+The board as the C64 boards had it (`lib/ui/petscii`), on a C64 terminal program
 (CCGMS, StrikeTerm, SyncTERM in C64 mode) in the lowercase character set: the
 TELETYPE logo in reversed blocks, the name and the password, the logon scans,
 then the main menu, one key for each line:
@@ -226,7 +226,7 @@ The ANSI Gallery is on the modern face only. Mail rings when it arrives during
 the call, and `Q` ends the call with `NO CARRIER`.
 
 The screen is rubbs' PETSCII line (`session.petscii!`, see the rubbs README):
-the C64 face writes UTF-8 with ANSI colours, and the line makes PETSCII of it,
+the PETSCII face writes UTF-8 with ANSI colours, and the line makes PETSCII of it,
 so the shared parts (Markdown, the doors' FakeOS) work there unchanged.
 
 ## Project structure
@@ -278,12 +278,12 @@ lib/
                                        oneliners, FTP browser, dev log, gallery
   ui/modern/classic_formatters.rb      logon/logoff, nodes, mail, voting,
                                        file areas, history, hall of fame
-  ui/c64.rb                            the C64 face: logo, logon, NO CARRIER
-  ui/c64/screen.rb                     title bar, pages, numbered lists, editor,
+  ui/petscii.rb                        the PETSCII face: logo, logon, NO CARRIER
+  ui/petscii/screen.rb                 title bar, pages, numbered lists, editor,
                                        chat line on the 40×25 screen
-  ui/c64/board.rb                      the main menu, doors, Master, help, sysop
-  ui/c64/messages.rb, content.rb,      its sections
-  ui/c64/people.rb
+  ui/petscii/board.rb                  the main menu, doors, Master, help, sysop
+  ui/petscii/messages.rb, content.rb,  its sections
+  ui/petscii/people.rb
 bin/persona-eval                       count a character's slips over many runs
 data/
   boards/<id>.csv                      per-board messages (auto-created)
@@ -306,7 +306,7 @@ A door is one line of `TeletypeBBS#doors` (`lib/domain/teletype_bbs.rb`): its
 name, the program, the label with its hotkey, the narrowest screen it draws
 for, and optionally the same door drawn for 40 columns. The modern face
 declares them all in its Application, and its Doors menu (`doors` in the
-menubar block) lists them by itself; the C64 face offers the ones of 40
+menubar block) lists them by itself; the PETSCII face offers the ones of 40
 columns and the ones with a C64 version (Impostor).
 
 ```ruby
@@ -314,7 +314,7 @@ Door.new(:sermo,    Sermo::OS, '&SERMO', 80),
 Door.new(:c64,      Commodore.os(Commodore::C64, games: @games, files: @files), '&Commodore 64', 40),
 Door.new(:plus4,    Commodore.os(Commodore::PLUS4, games: @games, files: @files), 'Commodore &Plus/4', 40),
 Door.new(:impostor, Impostor::Modern.flow(sessions: @impostor_sessions), '&Impostor', 80,
-         Impostor::C64.flow(sessions: @impostor_sessions)),
+         Impostor::Petscii.flow(sessions: @impostor_sessions)),
 ```
 
 The program is a `BBS::FakeOS` definition, a `BBS::Flow` or a callable `(session, context)`.
@@ -392,7 +392,7 @@ reply in a voice and bad at facts, so the code keeps the facts:
   anchors (a menu path, a game or event name) and name no menu path that is not
   in them, else the caller gets the fact itself. A question with no facts never
   reaches the model. The answer is made in a thread and shows up on the
-  window's next tick. On the C64 face the same Master works from
+  window's next tick. On the PETSCII face the same Master works from
   `master_c64.yml` and `master_knowledge_c64.yml`, which tell the way around in
   the keys of its menus.
 

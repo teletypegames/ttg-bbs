@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  module C64
+  module Petscii
     class Board
       # The colours of a wiki page on the C64, in the keys of a BBS::Theme.
       MARKDOWN = { text: LG, text_bright: WH, accent: YE, label: CY, text_dim: GR }.freeze

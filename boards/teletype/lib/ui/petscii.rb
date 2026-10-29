@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-require_relative 'c64/screen'
-require_relative 'c64/board'
-require_relative 'c64/messages'
-require_relative 'c64/content'
-require_relative 'c64/people'
+require_relative 'petscii/screen'
+require_relative 'petscii/board'
+require_relative 'petscii/messages'
+require_relative 'petscii/content'
+require_relative 'petscii/people'
 
 module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen, single-key
   # menus and numbered lists, the way the C64 boards of the eighties were.
   # It works on the same TeletypeBBS as the modern face.
-  module C64
+  module Petscii
     LOGO_FONT = {
       'T' => %w[### .#. .#. .#. .#.], 'E' => %w[### #.. ##. #.. ###], 'L' => %w[#.. #.. #.. #.. ###],
       'Y' => %w[#.# #.# .#. .#. .#.], 'P' => %w[##. #.# ##. #.. #..]
@@ -36,7 +36,7 @@ module UI
           ctx[:authenticated] = false
           screen.cls
           screen.puts
-          C64.logo.each { |l| screen.puts l }
+          Petscii.logo.each { |l| screen.puts l }
           screen.puts
           screen.puts "  #{WH}teletype bbs#{LG}, the c64 side"
           screen.puts "  #{GR}caller ##{bbs.last_callers.caller_number}, #{bbs.online.count} on line#{LG}"
@@ -78,15 +78,16 @@ module UI
 s[:name] == AccountService::ANONYMOUS ? 'Call with a name to keep one.' : 'A guest: S, then R keeps your name.', GR)
           end
           screen.puts
-          C64.scan(screen, 'mailbox', s[:mail].nil? ? "#{DG}register for mail" : "#{s[:mail]} new letter#{'s' if s[:mail] != 1}")
-          C64.scan(screen, 'message bases',
-                   if s[:new_scan].nil? then "#{DG}register to track"
-                   elsif s[:new_scan].empty? then 'nothing new'
-                   else s[:new_scan].map { |b, n| "#{b.title} #{n}" }.join(', ')
-                   end)
-          C64.scan(screen, 'voting booth',
+          Petscii.scan(screen, 'mailbox',
+                       s[:mail].nil? ? "#{DG}register for mail" : "#{s[:mail]} new letter#{'s' if s[:mail] != 1}")
+          Petscii.scan(screen, 'message bases',
+                       if s[:new_scan].nil? then "#{DG}register to track"
+                       elsif s[:new_scan].empty? then 'nothing new'
+                       else s[:new_scan].map { |b, n| "#{b.title} #{n}" }.join(', ')
+                       end)
+          Petscii.scan(screen, 'voting booth',
 s[:polls_open].zero? ? 'all voted' : "#{s[:polls_open]} poll#{'s' if s[:polls_open] != 1} open")
-          C64.scan(screen, 'new files', s[:new_files].empty? ? 'none this month' : s[:new_files].first)
+          Petscii.scan(screen, 'new files', s[:new_files].empty? ? 'none this month' : s[:new_files].first)
           screen.puts
           screen.puts " #{CY}quote of the day#{LG}"
           text, who = s[:quote]
@@ -99,7 +100,7 @@ s[:polls_open].zero? ? 'all voted' : "#{s[:polls_open]} poll#{'s' if s[:polls_op
           nil
         end
         call do |ctx, runner|
-          C64.goodbye(Screen.new(runner.session), name: ctx[:username] || AccountService::ANONYMOUS,
+          Petscii.goodbye(Screen.new(runner.session), name: ctx[:username] || AccountService::ANONYMOUS,
                                                   seconds: Time.now - (ctx[:call_started] || Time.now),
                                                   caller_number: ctx[:caller_number], quote: bbs.taglines.pick)
           nil

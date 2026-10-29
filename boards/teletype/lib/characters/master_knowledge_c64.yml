@@ -1,6 +1,6 @@
-# What the TTG Master knows about the C64 board (lib/ui/c64): the facts of
+# What the TTG Master knows about the C64 board (lib/ui/petscii): the facts of
 # master_knowledge.yml, with the way around told in the keys of its main
-# menu. Keep the keys the same as Board::MENU in lib/ui/c64/board.rb.
+# menu. Keep the keys the same as Board::MENU in lib/ui/petscii/board.rb.
 - keys: [register, registration, password, account, signup, keep, reserve]
   fact: 'S on the main menu, then R, registers the name you called with: from then on that name asks for a password. Anonymous cannot register, so call again with a name first.'
 - keys: [profile, signature, location, homepage, note]

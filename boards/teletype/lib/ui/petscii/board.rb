@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  module C64
+  module Petscii
     # One call on the C64 board: the main menu and what its keys open. The
     # sections live in messages.rb, content.rb and people.rb.
     class Board

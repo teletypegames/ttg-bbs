@@ -2,7 +2,7 @@
 
 require_relative 'lib/domain'
 require_relative 'lib/ui/modern'
-require_relative 'lib/ui/c64'
+require_relative 'lib/ui/petscii'
 
 # One board, two faces: the caller picks a terminal (BBS::Terminal guesses it
 # first), and an ANSI terminal gets the modern desktop, a Commodore 64 the
@@ -17,7 +17,7 @@ BBS.configure do |config|
 
   config.on_session_end = ->(session) { bbs.end_call(session.session_id) }
 
-  config.flow = BBS::Terminal.flow(title: 'Teletype BBS', modern: UI::Modern.flow(bbs), c64: UI::C64.flow(bbs))
+  config.flow = BBS::Terminal.flow(title: 'Teletype BBS', modern: UI::Modern.flow(bbs), c64: UI::Petscii.flow(bbs))
 end
 
 BBS.start

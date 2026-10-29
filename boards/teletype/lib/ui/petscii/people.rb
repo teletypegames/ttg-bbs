@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  module C64
+  module Petscii
     class Board
       private
 

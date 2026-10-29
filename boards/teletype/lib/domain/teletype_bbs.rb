@@ -3,7 +3,7 @@
 # The board itself, whatever terminal a caller has: its services wired to
 # their stores, its doors, and what a call does across several services
 # (logging on, posting, mail, paging the sysop, the statistics). The modern
-# ANSI interface (lib/ui/modern) and the Commodore 64 one (lib/ui/c64) both
+# ANSI interface (lib/ui/modern) and the Commodore 64 one (lib/ui/petscii) both
 # work on one instance of it, so a C64 caller and an ANSI caller see the same
 # nodes, boards, mail and chat.
 class TeletypeBBS
@@ -90,7 +90,7 @@ class TeletypeBBS
       Door.new(:c64,        Commodore.os(Commodore::C64, games: @games, files: @files), '&Commodore 64', 40),
       Door.new(:plus4,      Commodore.os(Commodore::PLUS4, games: @games, files: @files), 'Commodore &Plus/4', 40),
       Door.new(:impostor,   Impostor::Modern.flow(sessions: @impostor_sessions), '&Impostor', 80,
-                            Impostor::C64.flow(sessions: @impostor_sessions)),
+                            Impostor::Petscii.flow(sessions: @impostor_sessions)),
       Door.new(:ra,         Ra.os(games: @games), 'Chat of &Ra', 80),
       Door.new(:trivia,     Trivia.door(games: @games, site: @site, scores: @trivia), '&TTG Trivia', 80),
       Door.new(:alexandria, BBS::Gateway.new(host: GATEWAY_HOST, port: 2326, name: 'Alexandria BBS'), '&Alexandria', 40),
