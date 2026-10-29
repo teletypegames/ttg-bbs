@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  module C64
+  module Petscii
     # The wiki tree on the C64, one level per screen: the pages of a level
     # numbered, the ones with pages under them marked with >. A number opens
     # the page or goes down a level, where the first line is the page itself;

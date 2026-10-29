@@ -21,7 +21,7 @@ WIKI = Wiki::Client.new(base_url: ENV['WIKI_URL'] || 'http://localhost:9120',
                         token: SUPERVISOR_PASSWORD)
 
 require_relative 'lib/ui/modern'
-require_relative 'lib/ui/c64'
+require_relative 'lib/ui/petscii'
 
 $stdout.sync = true
 
@@ -55,7 +55,7 @@ BBS.configure do |config|
   config.mouse_on_connect = false
   config.idle_seconds     = (ENV['BBS_IDLE'] || 900).to_i
 
-  config.flow = BBS::Terminal.flow(title: 'TTG Wiki', modern: UI::Modern.flow(WIKI), c64: UI::C64.flow(WIKI))
+  config.flow = BBS::Terminal.flow(title: 'TTG Wiki', modern: UI::Modern.flow(WIKI), petscii: UI::Petscii.flow(WIKI))
 end
 
 BBS.start

@@ -14,7 +14,7 @@ modern one; 40 columns, or no answer at all (a C64 behind a WiFi modem speaks
 plain TCP), is taken for a Commodore. `1` picks the modern terminal
 (ANSI/xterm, 256 colours), `2` the C64 (PETSCII), and RETURN takes the pick or
 the guess. Mouse reporting is switched on only after the choice. The question
-is rubbs' `BBS::Terminal`; the faces: `lib/ui/modern.rb`, `lib/ui/c64*`.
+is rubbs' `BBS::Terminal`; the faces: `lib/ui/modern.rb`, `lib/ui/petscii*`.
 
 ## The modern face
 
@@ -41,7 +41,7 @@ Unlock them with **Wiki > Supervisor login** — the password comes from the
 
 Mouse works too (xterm SGR), including wheel scroll in both panes.
 
-## The C64 face
+## The PETSCII face
 
 PETSCII on a 40×25 screen. The same page tree, one level per screen as a
 numbered list: a page with pages under it is marked `>`, a private one `*`.

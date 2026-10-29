@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require_relative 'c64/screen'
-require_relative 'c64/browser'
+require_relative 'petscii/screen'
+require_relative 'petscii/browser'
 
 module UI
   # The wiki on a Commodore 64: PETSCII on a 40×25 screen, the page tree as
   # numbered lists, the pages as screenfuls of text that wait for RETURN.
-  module C64
+  module Petscii
     LOGO_FONT = {
       'T' => %w[### .#. .#. .#. .#.], 'G' => %w[### #.. #.# #.# ###],
       'W' => %w[#...# #...# #.#.# ##.## #...#], 'I' => %w[### .#. .#. .#. ###],
@@ -30,7 +30,7 @@ module UI
           ctx[:call_started] = Time.now
           screen.cls
           screen.puts
-          C64.logo.each { |l| screen.puts l }
+          Petscii.logo.each { |l| screen.puts l }
           screen.puts
           screen.puts "  #{WH}the teletype games wiki#{LG}, c64 side"
           screen.puts "  #{GR}#{wiki.pages.size} pages indexed#{LG}"
@@ -38,7 +38,7 @@ module UI
           screen.say('Pick a page by its number, RETURN pages on, Q goes back. Pages marked * are private.', GR)
           screen.pause('return: enter the wiki')
           Browser.new(wiki, screen, ctx).run
-          C64.goodbye(screen, seconds: Time.now - ctx[:call_started])
+          Petscii.goodbye(screen, seconds: Time.now - ctx[:call_started])
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           :halt
