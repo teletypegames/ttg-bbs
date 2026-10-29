@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require_relative 'c64/screen'
+require_relative 'petscii/screen'
 
 module UI
   # The reader on a Commodore 64: PETSCII on a 40×25 screen. A one-key menu,
   # the feeds and their items as numbered lists, an item paged a screenful at
   # a time, and the messages to the admins typed line by line.
-  module C64
+  module Petscii
     LOGO_FONT = {
       'F' => %w[### #.. ##. #.. #..], 'E' => %w[### #.. ##. #.. ###], 'D' => %w[##. #.# #.# #.# ##.],
       'I' => %w[### .#. .#. .#. ###], 'A' => %w[.#. #.# ### #.# #.#]
@@ -44,7 +44,7 @@ module UI
           nil
         end
         call do |_ctx, runner|
-          C64.goodbye(Screen.new(runner.session))
+          Petscii.goodbye(Screen.new(runner.session))
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           nil
@@ -80,7 +80,7 @@ module UI
       def run
         @screen.cls
         @screen.puts
-        C64.masthead.each { |l| @screen.puts l }
+        Petscii.masthead.each { |l| @screen.puts l }
         loop do
           @screen.puts
           @screen.puts " #{YE}F#{LG} feeds"

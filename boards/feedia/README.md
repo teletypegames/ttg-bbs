@@ -128,8 +128,8 @@ lib/
   domain/html_text.rb     an item's HTML → Markdown, numbered links
   domain/inbox.rb         suggestions and feedback: the inbox file, Discord
   ui/modern.rb            the modern face: desktop, feeds, items, forms
-  ui/c64.rb               the C64 face: logo, menu, lists, pages, messages
-  ui/c64/screen.rb        title bar, pages, numbered lists on the 40×25 screen
+  ui/petscii.rb           the PETSCII face: logo, menu, lists, pages, messages
+  ui/petscii/screen.rb    title bar, pages, numbered lists on the 40×25 screen
 ```
 
 ## Deploy

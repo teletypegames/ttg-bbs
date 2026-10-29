@@ -4,7 +4,7 @@ require 'bbs'
 require_relative 'lib/domain/feeds'
 require_relative 'lib/domain/inbox'
 require_relative 'lib/ui/modern'
-require_relative 'lib/ui/c64'
+require_relative 'lib/ui/petscii'
 
 # An RSS reader on a telnet line, two faces on one port: the caller picks a
 # terminal (BBS::Terminal guesses it first), and an ANSI terminal gets the modern
@@ -19,7 +19,7 @@ BBS.configure do |config|
   config.mouse_on_connect = false
   config.idle_seconds     = 600
 
-  config.flow = BBS::Terminal.flow(title: 'Feedia', modern: UI::Modern.flow(feeds, inbox), c64: UI::C64.flow(feeds, inbox))
+  config.flow = BBS::Terminal.flow(title: 'Feedia', modern: UI::Modern.flow(feeds, inbox), c64: UI::Petscii.flow(feeds, inbox))
 end
 
 BBS.start
