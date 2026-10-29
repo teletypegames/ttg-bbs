@@ -40,7 +40,9 @@ module UI
       write("#{text}\r\n")
     end
 
-    def cls = write("\e[0m\e[2J\e[H")
+    # PETSCII CLR homes the cursor itself; the HOME after it, 0x13, is XOFF
+    # to a modem or terminal on software flow control.
+    def cls = write(@session.petscii? ? "\e[0m\e[2J" : "\e[0m\e[2J\e[H")
 
     # A clear screen under a reversed title bar.
     def title(text, right = '')
