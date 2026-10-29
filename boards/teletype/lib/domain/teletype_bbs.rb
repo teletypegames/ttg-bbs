@@ -30,9 +30,9 @@ class TeletypeBBS
     dos:       { prefix: '/dos',       title: 'DOS Corner' }
   }.freeze
 
-  # +cols+: the narrowest screen the program draws for; +c64+: the same door
+  # +cols+: the narrowest screen the program draws for; +petscii+: the same door
   # drawn for 40 columns, when the program itself needs more.
-  Door = Struct.new(:name, :program, :label, :cols, :c64)
+  Door = Struct.new(:name, :program, :label, :cols, :petscii)
 
   attr_reader :online, :boards, :wiki, :games, :chat, :irc, :last_callers, :profile, :accounts, :site,
               :discord, :oneliners, :files, :dev_log, :art, :master, :mail, :voting, :file_areas, :trivia,

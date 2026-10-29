@@ -121,7 +121,7 @@ module UI
       # Only the doors that fit 40 columns, or have a C64 version; the others
       # wait on the modern face.
       def doors
-        doors, wide = @bbs.doors.partition { |d| d.cols <= COLS || d.c64 }
+        doors, wide = @bbs.doors.partition { |d| d.cols <= COLS || d.petscii }
         door = @screen.pick('DOORS', doors) { |d| d.label.delete('&') }
         unless door
           return if wide.empty?
@@ -133,7 +133,7 @@ module UI
         end
 
         doing("Door: #{door.label.delete('&')}")
-        BBS::Door.new(door.name, door.c64 || door.program, label: door.label).run(@screen.session, @ctx)
+        BBS::Door.new(door.name, door.petscii || door.program, label: door.label).run(@screen.session, @ctx)
       end
 
       def master

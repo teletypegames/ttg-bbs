@@ -17,7 +17,7 @@ BBS.configure do |config|
 
   config.on_session_end = ->(session) { bbs.end_call(session.session_id) }
 
-  config.flow = BBS::Terminal.flow(title: 'Teletype BBS', modern: UI::Modern.flow(bbs), c64: UI::Petscii.flow(bbs))
+  config.flow = BBS::Terminal.flow(title: 'Teletype BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs))
 end
 
 BBS.start
