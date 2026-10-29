@@ -3,11 +3,11 @@
 require 'bbs'
 require_relative 'impostor/code_generator'
 
-# The debrief terminal of Definitely not an Impostor as a rubbs flow. It runs
-# the standalone Impostor BBS (bbs.rb), and another rubbs BBS mounts it as a
-# door: `door :impostor, Impostor.flow(sessions: store), label: '&Impostor'`.
-# `c64: true` gives the same terminal for a PETSCII line: its screens are
-# drawn for 40 columns.
+# The debrief terminal of Definitely not an Impostor as a rubbs flow, with
+# two faces: Impostor::Modern for an ANSI terminal and Impostor::C64 for a
+# PETSCII line, each with its own screens. It runs the standalone Impostor
+# BBS (bbs.rb), and another rubbs BBS mounts it as a door:
+# `door :impostor, Impostor::Modern.flow(sessions: store), label: '&Impostor'`.
 module Impostor
   SCREENS = File.expand_path('../screens', __dir__)
 
@@ -15,10 +15,11 @@ module Impostor
 
   def self.sessions_store(path) = BBS::Store.new(path: path, headers: SESSION_HEADERS)
 
-  def self.flow(sessions:, c64: false)
-    suffix = c64 ? '_c64' : ''
-    BBS::Flow.define(screens_dir: SCREENS) do
-      screen :"welcome#{suffix}"
+  # The flow both faces share; +screens_dir+ holds the face's welcome and
+  # congrats screens.
+  def self.debrief(sessions:, screens_dir:)
+    BBS::Flow.define(screens_dir: screens_dir) do
+      screen :welcome
 
       banner "IDENTITY VERIFICATION", style: :info
 
@@ -33,7 +34,7 @@ module Impostor
       end
 
       confirm "Norman, is that you?", denied: "Very well. Goodbye." do
-        screen :"congrats#{suffix}"
+        screen :congrats
 
         menu ">", loop: true do
           option "Leave feedback" do
@@ -56,3 +57,6 @@ module Impostor
     end
   end
 end
+
+require_relative 'impostor/modern'
+require_relative 'impostor/c64'

@@ -13,8 +13,9 @@ Every session — successful or not — is recorded in `data/sessions.csv` with 
 A call starts with one question: which terminal is calling (rubbs'
 `BBS::Terminal`, with a guess from the telnet answers as the default). `1`
 picks a modern terminal (ANSI/xterm), `2` a Commodore 64 (PETSCII): the C64
-gets the same terminal on 40 columns, with its own screens
-(`screens/*_c64.erb`).
+gets the same terminal on 40 columns, with its own screens. The two faces are
+two modules, `Impostor::Modern` and `Impostor::C64`, each with its screens in
+`screens/modern/` and `screens/c64/`.
 
 ## Running
 
@@ -59,13 +60,15 @@ impostor.gemspec              The gem another rubbs BBS mounts as a door
 bin/
   generate_code               CLI tool — generates a player's code from PLAYER_NAME
 lib/
-  impostor.rb                 Impostor.flow(sessions:, c64:) — the whole terminal as a BBS::Flow
+  impostor.rb                 Impostor.debrief — the whole terminal as a BBS::Flow, shared by the faces
+  impostor/modern.rb          Impostor::Modern.flow(sessions:) — the face for an ANSI terminal
+  impostor/c64.rb             Impostor::C64.flow(sessions:) — the face for a C64, in PETSCII
   impostor/code_generator.rb  Decrypt/encrypt logic (Ruby port of the Lua original)
 screens/
-  welcome.erb                 Welcome screen
-  congrats.erb                Mission complete screen
-  welcome_c64.erb             The same two on 40 columns, for a C64
-  congrats_c64.erb
+  modern/welcome.erb          Welcome screen
+  modern/congrats.erb         Mission complete screen
+  c64/welcome.erb             The same two on 40 columns, for a C64
+  c64/congrats.erb
 data/
   sessions.csv                Player session records (auto-created)
 ```
@@ -81,8 +84,9 @@ host BBS gives it a sessions store of its own:
 gem 'impostor', git: 'https://git.teletypegames.org/bbs/impostor-bbs.git'
 
 require 'impostor'
-door :impostor, Impostor.flow(sessions: Impostor.sessions_store('data/impostor_sessions.csv')),
-     label: '&Impostor'
+sessions = Impostor.sessions_store('data/impostor_sessions.csv')
+door :impostor, Impostor::Modern.flow(sessions: sessions), label: '&Impostor'
+# and for a C64 caller: Impostor::C64.flow(sessions: sessions)
 ```
 
 When the flow ends, the door asks for ENTER and hands the caller back to the
