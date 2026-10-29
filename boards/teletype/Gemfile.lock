@@ -1,8 +1,8 @@
 GIT
   remote: https://git.teletypegames.org/bbs/impostor-bbs.git
-  revision: 105eb072808610324316acf0d52d410cde073a89
+  revision: 8c42491d8ea317a260c0677a8fef7bad086fd686
   specs:
-    impostor (0.2.0)
+    impostor (0.3.0)
       bbs (>= 0.16.1)
 
 GIT

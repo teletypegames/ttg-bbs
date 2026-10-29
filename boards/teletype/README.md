@@ -313,8 +313,8 @@ columns and the ones with a C64 version (Impostor).
 Door.new(:sermo,    Sermo::OS, '&SERMO', 80),
 Door.new(:c64,      Commodore.os(Commodore::C64, games: @games, files: @files), '&Commodore 64', 40),
 Door.new(:plus4,    Commodore.os(Commodore::PLUS4, games: @games, files: @files), 'Commodore &Plus/4', 40),
-Door.new(:impostor, Impostor.flow(sessions: @impostor_sessions), '&Impostor', 80,
-         Impostor.flow(sessions: @impostor_sessions, c64: true)),
+Door.new(:impostor, Impostor::Modern.flow(sessions: @impostor_sessions), '&Impostor', 80,
+         Impostor::C64.flow(sessions: @impostor_sessions)),
 ```
 
 The program is a `BBS::FakeOS` definition, a `BBS::Flow` or a callable `(session, context)`.
