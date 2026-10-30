@@ -64,3 +64,12 @@ boards:
     accent: "#5fd7af"
     petscii: true
     enabled: true
+
+  - id: warp-engine-bbs
+    name: "WarpEngine BBS"
+    summary: "The file area of Teletype Games: the Commodore 64 and Plus/4 shelves of the WarpEngine, a title a page, downloaded by ZMODEM or XMODEM. On a modern terminal or, in PETSCII, on a Commodore 64."
+    tags: ["files", "downloads", "C64"]
+    port: 2329
+    accent: "#ff87d7"
+    petscii: true
+    enabled: true
