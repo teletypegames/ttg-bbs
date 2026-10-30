@@ -47,8 +47,12 @@ module UI
     # A clear screen under a reversed title bar.
     def title(text, right = '')
       cls
+      puts title_bar(text, right)
+    end
+
+    def title_bar(text, right = '')
       bar = " #{text}".ljust(@cols - right.length - 1)[0, @cols - right.length - 1] + "#{right} "
-      puts "#{CY}#{RV}#{bar}#{RO}#{LG}"
+      "#{CY}#{RV}#{bar}#{RO}#{LG}"
     end
 
     def rule(color = DG) = puts("#{color}#{'─' * (@cols - 1)}#{LG}")

@@ -17,7 +17,7 @@ require 'yaml'
 class Blog
   Category = Data.define(:id, :name, :about)
   User     = Data.define(:id, :name)
-  Post     = Data.define(:id, :title, :summary, :body, :category, :author, :created_at, :updated_at) do
+  Post     = Data.define(:id, :slug, :title, :summary, :body, :category, :author, :face, :created_at, :updated_at) do
     def updated? = updated_at - created_at >= 60
   end
 
@@ -28,6 +28,9 @@ class Blog
   MIN_PASS    = 8
 
   ITERATIONS = 200_000
+
+  # The face a post was written on: a modern terminal or a Commodore 64.
+  FACES = %w[modern petscii].freeze
 
   SCHEMA = <<~SQL
     CREATE TABLE IF NOT EXISTS users (
@@ -50,6 +53,12 @@ class Blog
     CREATE INDEX IF NOT EXISTS posts_by_date ON posts (created_at);
   SQL
 
+  # Columns added after the first posts: ALTER TABLE adds each one missing.
+  COLUMNS = {
+    'slug' => 'TEXT',
+    'face' => "TEXT NOT NULL DEFAULT 'modern'"
+  }.freeze
+
   POST_SQL = <<~SQL
     SELECT posts.*, users.name AS author FROM posts LEFT JOIN users ON users.id = posts.author_id
   SQL
@@ -70,16 +79,29 @@ class Blog
     @db.execute('PRAGMA journal_mode = WAL')
     @db.execute('PRAGMA foreign_keys = ON')
     @db.execute_batch(SCHEMA)
+    migrate
     @categories = categories
     @mutex      = Mutex.new
+    @listeners  = []
+  end
+
+  # The block is called with every new post, after it is saved.
+  def on_publish(&block) = @listeners << block
+
+  # The address of a post on the web: its date and its title, in plain
+  # lower-case ASCII ("2026-10-28-hello-world").
+  def self.slug_base(title, time)
+    words = title.to_s.unicode_normalize(:nfkd).gsub(/\p{Mn}/, '').downcase.gsub(/[^a-z0-9]+/, '-').gsub(/\A-|-\z/, '')
+    [time.utc.strftime('%Y-%m-%d'), words[0, 60].sub(/-\z/, '')].reject(&:empty?).join('-')
   end
 
   def category(id) = @categories.find { |c| c.id == id } || Category.new(id: id, name: id, about: '')
 
   # Posts newest first, all of them or one category's; without their bodies.
-  def posts(category: nil)
+  def posts(category: nil, limit: nil)
     where = category ? 'WHERE posts.category = ?' : ''
-    query("#{POST_SQL} #{where} ORDER BY posts.created_at DESC, posts.id DESC", *[category].compact)
+    cap   = limit ? "LIMIT #{limit.to_i}" : ''
+    query("#{POST_SQL} #{where} ORDER BY posts.created_at DESC, posts.id DESC #{cap}", *[category].compact)
       .map { |r| post_of(r, body: false) }
   end
 
@@ -92,18 +114,27 @@ class Blog
     row && post_of(row)
   end
 
+  def post_by_slug(slug)
+    row = query("#{POST_SQL} WHERE posts.slug = ?", slug.to_s).first
+    row && post_of(row)
+  end
+
   # The new Post, or a Symbol naming what is wrong with it.
-  def create(author:, title:, summary:, body:, category:)
+  def create(author:, title:, summary:, body:, category:, face: 'modern')
     problem = check(title, summary, body, category)
     return problem if problem
 
     now = stamp
     id = transaction do
-      @db.execute('INSERT INTO posts (title, summary, body, category, author_id, created_at, updated_at) ' \
-                  'VALUES (?, ?, ?, ?, ?, ?, ?)', [title.strip, summary.strip, body, category, author.id, now, now])
+      @db.execute('INSERT INTO posts (slug, title, summary, body, category, face, author_id, created_at, updated_at) ' \
+                  'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                  [free_slug(Blog.slug_base(title, Time.iso8601(now))), title.strip, summary.strip, body, category,
+                   FACES.include?(face) ? face : 'modern', author.id, now, now])
       @db.last_insert_row_id
     end
-    post(id)
+    created = post(id)
+    publish(created)
+    created
   end
 
   # The Post as saved, or a Symbol naming what is wrong with it.
@@ -171,6 +202,33 @@ class Blog
 
   private
 
+  def migrate
+    have = @db.execute('PRAGMA table_info(posts)').map { |c| c['name'] }
+    COLUMNS.each { |name, type| @db.execute("ALTER TABLE posts ADD COLUMN #{name} #{type}") unless have.include?(name) }
+    @db.execute('CREATE UNIQUE INDEX IF NOT EXISTS posts_by_slug ON posts (slug)')
+    @db.execute('SELECT id, title, created_at FROM posts WHERE slug IS NULL ORDER BY id').each do |row|
+      @db.execute('UPDATE posts SET slug = ? WHERE id = ?',
+                  [free_slug(Blog.slug_base(row['title'], Time.iso8601(row['created_at']))), row['id']])
+    end
+  end
+
+  # +base+, or base-2, base-3… when a post has it already. A post keeps its
+  # slug when its title changes, so a link to it keeps working.
+  def free_slug(base)
+    base = 'post' if base.empty?
+    (1..).lazy.map { |n| n == 1 ? base : "#{base}-#{n}" }
+         .find { |slug| @db.execute('SELECT 1 FROM posts WHERE slug = ?', [slug]).empty? }
+  end
+
+  # A listener that fails does not fail the post: it is saved already.
+  def publish(post)
+    @listeners.each do |listener|
+      listener.call(post)
+    rescue StandardError => e
+      warn "ttgblog: on_publish failed: #{e.class}: #{e.message}"
+    end
+  end
+
   def check(title, summary, body, category)
     return :no_title if title.to_s.strip.empty?
     return :long_title if title.length > MAX_TITLE
@@ -195,8 +253,8 @@ class Blog
   def stamp = Time.now.utc.iso8601
 
   def post_of(row, body: true)
-    Post.new(id: row['id'], title: row['title'], summary: row['summary'], body: body ? row['body'] : nil,
-             category: row['category'], author: row['author'],
+    Post.new(id: row['id'], slug: row['slug'], title: row['title'], summary: row['summary'],
+             body: body ? row['body'] : nil, category: row['category'], author: row['author'], face: row['face'],
              created_at: Time.iso8601(row['created_at']), updated_at: Time.iso8601(row['updated_at']))
   end
 end

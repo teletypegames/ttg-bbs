@@ -21,7 +21,7 @@ module UI
     end
 
     def self.flow(blog)
-      Board.flow(blog) do |session|
+      Board.flow(blog, face: 'modern') do |session|
         cols = session.term_cols.clamp(40, 80)
         [Screen.new(session, cols: cols, rows: session.term_rows.clamp(16, 60)), masthead(cols)]
       end

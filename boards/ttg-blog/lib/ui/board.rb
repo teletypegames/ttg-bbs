@@ -30,13 +30,29 @@ module UI
     # TTG BLOG as five rows of bits, # set and . clear, for a face to draw.
     def self.logo_bits = 5.times.map { |row| 'TTG BLOG'.chars.map { |c| LOGO_FONT[c][row] }.join('.') }
 
-    # The flow of a face: the block makes the screen and the masthead of a
-    # call from its session.
-    def self.flow(blog, &face)
+    # A post as the board pages it, +width+ columns wide; the web shows the
+    # C64 screen of a post from the same lines.
+    def self.post_lines(blog, post, width:, long_dates: width >= 58)
+      wrap = ->(text) { BBS::FrameBuffer.wrap_ansi(text.to_s, width) }
+      date = ->(time) { time.localtime.strftime(long_dates ? '%Y-%m-%d %H:%M' : '%Y-%m-%d') }
+      meta = [blog.category(post.category).name, date.call(post.created_at), post.author].compact.join(' · ')
+      lines = wrap.call(post.title).map { |l| " #{WH}#{l}#{LG}" }
+      lines << " #{GR}#{meta}#{LG}"
+      lines << " #{GR}updated #{date.call(post.updated_at)}#{LG}" if post.updated?
+      lines << ''
+      lines.concat(wrap.call(post.summary).map { |l| " #{CY}#{l}#{LG}" }) unless post.summary.empty?
+      lines << " #{DG}#{'─' * (width - 1)}#{LG}"
+      body = post.body.strip.empty? ? '*(no text yet)*' : post.body
+      lines.concat(BBS::Markdown.to_lines(body, width: width, theme: MARKDOWN).map { |l| " #{l}" })
+    end
+
+    # The flow of a face, +face+ one of Blog::FACES: the block makes the
+    # screen and the masthead of a call from its session.
+    def self.flow(blog, face:, &screen_of)
       BBS::Flow.define do
         call do |ctx, runner|
-          screen, masthead = face.call(runner.session)
-          board = Board.new(blog, screen, ctx, masthead: masthead)
+          screen, masthead = screen_of.call(runner.session)
+          board = Board.new(blog, screen, ctx, masthead: masthead, face: face)
           board.run
           board.goodbye
           nil
@@ -46,11 +62,12 @@ module UI
       end
     end
 
-    def initialize(blog, screen, ctx, masthead:)
+    def initialize(blog, screen, ctx, masthead:, face:)
       @blog     = blog
       @screen   = screen
       @ctx      = ctx
       @masthead = masthead
+      @face     = face
     end
 
     def run
@@ -61,6 +78,7 @@ module UI
         @screen.puts
         menu_line('L', 'latest posts')
         menu_line('C', 'categories')
+        menu_line('G', 'go to post #')
         if user
           menu_line('W', 'write a post')
           menu_line('P', 'change your password')
@@ -69,10 +87,11 @@ module UI
           menu_line('E', 'editor login')
         end
         menu_line('Q', 'log off')
-        keys = user ? %w[l c w p o q] : %w[l c e q]
+        keys = user ? %w[l c g w p o q] : %w[l c g e q]
         case @screen.choose("\r\n #{WH}ttgblog#{LG}> ", keys)
         when 'l' then browse('LATEST POSTS') { @blog.posts }
         when 'c' then categories
+        when 'g' then go_to
         when 'e' then login
         when 'w' then compose
         when 'p' then password
@@ -109,7 +128,18 @@ module UI
 
     def menu_line(key, text) = @screen.puts(" #{YE}#{key}#{LG} #{text}")
 
-    def date(time, long: wide?) = time.localtime.strftime(long ? '%Y-%m-%d %H:%M' : '%Y-%m-%d')
+    # A post by its number, the one the web shows beside it.
+    def go_to
+      @screen.title('GO TO POST', right)
+      @screen.say('The number of a post, as the web shows it. Return alone: back.', GR)
+      @screen.write "\r\n #{WH}post ##{LG} "
+      id = @screen.number
+      return if id.nil? || id.zero?
+      return show(id) if @blog.post(id)
+
+      @screen.say("No post number #{id}.", RD)
+      @screen.pause
+    end
 
     def categories
       loop do
@@ -157,17 +187,7 @@ module UI
       end
     end
 
-    def post_lines(post)
-      meta = [@blog.category(post.category).name, date(post.created_at), post.author].compact.join(' · ')
-      lines = @screen.wrap(post.title).map { |l| " #{WH}#{l}#{LG}" }
-      lines << " #{GR}#{meta}#{LG}"
-      lines << " #{GR}updated #{date(post.updated_at)}#{LG}" if post.updated?
-      lines << ''
-      lines.concat(@screen.wrap(post.summary).map { |l| " #{CY}#{l}#{LG}" }) unless post.summary.empty?
-      lines << " #{DG}#{'─' * (@screen.width - 1)}#{LG}"
-      body = post.body.strip.empty? ? '*(no text yet)*' : post.body
-      lines.concat(BBS::Markdown.to_lines(body, width: @screen.width, theme: MARKDOWN).map { |l| " #{l}" })
-    end
+    def post_lines(post) = Board.post_lines(@blog, post, width: @screen.width, long_dates: wide?)
 
     def delete?(post)
       @screen.puts
@@ -304,7 +324,8 @@ module UI
     end
 
     def preview(draft)
-      post = Blog::Post.new(id: 0, **draft, author: user.name, created_at: Time.now, updated_at: Time.now)
+      post = Blog::Post.new(id: 0, slug: '', **draft, author: user.name, face: @face,
+                            created_at: Time.now, updated_at: Time.now)
       @screen.page('PREVIEW', post_lines(post), right: right)
     end
 
@@ -312,7 +333,7 @@ module UI
       result = if post
                  @blog.update(post.id, **draft)
                else
-                 @blog.create(author: user, **draft)
+                 @blog.create(author: user, face: @face, **draft)
                end
       @screen.puts
       if result.is_a?(Symbol)

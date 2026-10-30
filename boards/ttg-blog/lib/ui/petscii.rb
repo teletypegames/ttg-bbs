@@ -8,6 +8,7 @@ module UI
   module Petscii
     COLS = 40
     ROWS = 25
+    PAGE = ROWS - 5
 
     LOGO_COLORS = [YE, YE, "\e[0;33m", "\e[0;33m", "\e[0;31m"].freeze
 
@@ -22,8 +23,16 @@ module UI
       [rule, '', *logo, '', rule, "  #{WH}#{Board::MOTTO}#{LG}"]
     end
 
+    # A post on a C64, as lines of ANSI: the title bar, then the post as the
+    # board pages it, PAGE lines a screenful. The web draws it in C64 colours.
+    def self.post_screen(blog, post)
+      screen = Screen.new(nil, cols: COLS, rows: ROWS)
+      lines  = screen.fit(Board.post_lines(blog, post, width: screen.width))
+      [screen.title_bar(blog.category(post.category).name.upcase, "#{blog.total} posts "), *lines]
+    end
+
     def self.flow(blog)
-      Board.flow(blog) { |session| [Screen.new(session, cols: COLS, rows: ROWS), masthead] }
+      Board.flow(blog, face: 'petscii') { |session| [Screen.new(session, cols: COLS, rows: ROWS), masthead] }
     end
   end
 end

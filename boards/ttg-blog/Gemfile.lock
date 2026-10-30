@@ -11,6 +11,10 @@ GEM
     artii (2.1.2)
     ast (2.4.3)
     json (3.1.0)
+    kramdown (2.5.2)
+      rexml (>= 3.4.4)
+    kramdown-parser-gfm (1.1.0)
+      kramdown (~> 2.0)
     language_server-protocol (3.17.0.6)
     lint_roller (1.1.0)
     mini_portile2 (2.8.9)
@@ -22,6 +26,7 @@ GEM
     racc (1.8.1)
     rainbow (3.1.1)
     regexp_parser (2.13.1)
+    rexml (3.4.4)
     rubocop (1.92.1)
       json (>= 2.3)
       language_server-protocol (~> 3.17.0.2)
@@ -52,6 +57,7 @@ GEM
     unicode-display_width (3.3.0)
       unicode-emoji (~> 4.3)
     unicode-emoji (4.3.0)
+    webrick (1.9.2)
 
 PLATFORMS
   aarch64-linux-gnu
@@ -68,8 +74,11 @@ PLATFORMS
 
 DEPENDENCIES
   bbs!
+  kramdown (~> 2.5)
+  kramdown-parser-gfm (~> 1.1)
   rubocop
   sqlite3 (~> 2.1)
+  webrick (~> 1.9)
 
 BUNDLED WITH
    2.5.22
