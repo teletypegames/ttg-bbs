@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'lib/domain'
+require_relative 'lib/ui/logo'
 require_relative 'lib/ui/modern'
 require_relative 'lib/ui/petscii'
 

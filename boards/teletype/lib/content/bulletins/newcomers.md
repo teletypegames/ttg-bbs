@@ -15,7 +15,7 @@ browser too: **https://bbsweb.teletypegames.org**.
 Esc closes a window, Tab moves inside it, F5 makes it full screen. The
 mouse works too.
 
-**Files.** Content > File Areas has our games by platform; Enter sends a
+**Files.** Files > File Areas has our games by platform; Enter sends a
 file to your terminal by ZMODEM. The FTP Browser shows the whole FTP
 server, DOS tools included.
 

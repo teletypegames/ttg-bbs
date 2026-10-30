@@ -84,7 +84,7 @@ Copy `env-example` to `.env`:
 | `SERMO_LLM_MODEL` | set by compose | the model's name in infra/llm, `qwen3.5-0.8b` |
 | `SERMO_LLM_API_KEY` | empty | SERMO's key to infra/llm, one of its `LLM_API_KEYS`; without it SERMO gets a 401 and answers with canned replies |
 | `BBS_LLM_URL`, `BBS_LLM_MODEL`, `BBS_LLM_API_KEY` | SERMO's | The model of the BBS's own characters (Ra, the TTG Master); each one unset or empty falls back to its `SERMO_LLM_*` |
-| `BBS_DESKTOP_ART` | `data/art/teletype.ansi` | Path to a single ANSI art file (`.ans`, `.ansi`, `.asc`, `.nfo`, `.txt`) **or** a directory containing them. Its folder is the ANSI Gallery. A file is every caller's desktop; with a directory a random one is shown per session. A registered caller's favourite wins over both. CP437 / SAUCE-aware |
+| `BBS_DESKTOP_ART` | `data/art/teletype.ansi` | An ANSI art file (`.ans`, `.ansi`, `.asc`, `.nfo`, `.txt`) or a directory of them: the folder is the ANSI Gallery. The desktop is the live dashboard; a piece the caller puts there from the gallery (or a registered caller's favourite) takes its place. CP437 / SAUCE-aware |
 
 ## Interface
 
@@ -108,16 +108,25 @@ and the nodes in use, and asks for a name (and a registered name's password).
 Then the logon sequence: *Welcome back*, your caller number, your calls, and
 the scans — new letters in your mailbox, new messages on the boards since your
 last read, open polls in the voting booth, new files this month — and the quote
-of the day (a member's motto). ENTER opens the full-screen Synchronet-style
-shell with the Welcome window on top: the latest releases, what is coming up,
-the last callers and the oneliners. Continue (or Esc) closes it, **Ask the
-TTG Master** opens the Master; File > Welcome opens it again. File > Log off
-(Alt-X) ends the call with the logoff screen: the call's length, a tagline,
-`+++`, `ATH0`, `NO CARRIER`.
+of the day (a member's motto). The board's logo heads it: TTG BBS in a
+three-by-five pixel font (`lib/ui/logo.rb`), yellow to red like the logon art,
+the same on the C64 face. ENTER opens the full-screen Synchronet-style shell
+on the **dashboard**: the logo and the greeting, four live panels (who is on
+line now, the last callers, what is new, what is coming up, with the days to
+go) and the oneliners running along the bottom (`lib/ui/modern/desktop.rb`).
+It refreshes itself every few seconds; Board > Dashboard closes every window
+and brings it back. Board > Log off (Alt-X) ends the call with the logoff
+screen: the call's length, a tagline, `+++`, `ATH0`, `NO CARRIER`.
 
-The statusbar shows the node, the clock and the time on line on the right. The desktop
-has a **F1 ▸ Lost? Ask the TTG Master** button in its bottom right corner. It does not come back when a caller returns from a
-door.
+The statusbar shows the node, the clock and the time on line on the right;
+while a menu is open it tells what the highlighted item does instead. The
+desktop has a **F1 ▸ Lost? Ask the TTG Master** button in its bottom right
+corner.
+
+Every window wears the colour of its menu on its frame and its title: Board
+pale teal, Messages green, Files amber, Read blue, People pink, Doors salmon,
+You grey, Help yellow (`UI::Modern::Accent`). The dashboard's panels wear the
+colour of what they show.
 
 #### Keys
 
@@ -144,60 +153,69 @@ door.
 
 | Menu | Items |
 |---|---|
-| **TTG Master** | Ask a question… · What is new? · What is coming up? · Where do I start? · How do I download files? · Which doors are there? |
-| **File** | Welcome · Bulletins… · News · Dev Log · System Info · BBS Network (our other BBSes and bbsweb) · Log off |
-| **Messages** | Boards… · New Post… · Mail… · Oneliners · Live Chat · IRC #teletypegames · Feedback to the Sysop… · Page the Sysop |
-| **Content** | File Areas · FTP Browser · Game Catalog · Platform Guides · Engines · DOS Corner · Tech HowTos · ANSI Gallery |
-| **Users** | Who is Online · Last Callers · User Listing · Your Stats · Hall of Fame · Voting Booth · Team · Profile… · Register… · Language EN/HU |
-| **Doors** | SERMO · Commodore 64 · Commodore Plus/4 · Impostor · Chat of Ra · TTG Trivia · Alexandria · Feedia · TTGBLOG |
-| **Sysop** | Console (logged-in sysops only) |
-| **Help** | Ask the TTG Master · New to BBSes? · About · Keys |
+The menus go by what a caller wants to do; every item has a hint, shown on the
+statusbar while it is highlighted.
+
+| Menu | Items |
+|---|---|
+| **Board** | Dashboard · News · Bulletins… · Dev Log · System Info · BBS Network (our other BBSes and bbsweb) · Log off |
+| **Messages** | Boards… · New Post… · Mail… · Oneliners · Live Chat · IRC #teletypegames · Voting Booth · Feedback to the Sysop… · Page the Sysop |
+| **Files** | File Areas · Game Catalog · FTP Browser · ANSI Gallery |
+| **Read** | Platform Guides · Engines · DOS Corner · Tech HowTos |
+| **People** | Who is Online · Last Callers · User Listing · Hall of Fame · Team |
+| **Doors** | Door Lobby… · SERMO · Commodore 64 · Commodore Plus/4 · Impostor · Chat of Ra · TTG Trivia · Alexandria · Feedia · TTGBLOG |
+| **You** | Your Stats · Profile… · Register… · Language EN/HU · Sysop Console (logged-in sysops only) |
+| **Help** | Ask the TTG Master… · What is new? · What is coming up? · Where do I start? · How do I download files? · Which doors are there? · New to BBSes? · Keys · About |
 
 #### Features
 
 - **Multi-board messaging** — separate sub-boards (General / Tech / Off-Topic / Sysop), each in its own CSV file under `data/boards/`.
 - **Multi-line composer** — `TextArea` widget, up to 1000 chars per post, one post per 30 seconds from a call.
-- **Oneliners** — a wall of one-line messages (64 characters, a name needed, not Anonymous); the last five are in the Welcome window.
+- **Oneliners** — a wall of one-line messages (64 characters, a name needed, not Anonymous); the newest run along the bottom of the dashboard.
 - **Live chat** — broadcast hub, 1 Hz polling, history replay on join; at most two lines a second from one caller, and a caller who does not read keeps the last 200 lines.
 - **IRC #teletypegames** — a read-only window on the channel at Libera.Chat: one connection for the whole board under the nick `ttgbbs` (TLS, reconnects with a growing pause), the last 200 lines replayed, the member count and the topic; the window tells how to join, and the input line only repeats it. mIRC formatting and control characters are stripped. The board never speaks on the channel.
-- **Bulletin on login** — the latest releases and upcoming events from teletypegames.org, message count, last callers and the last oneliners.
+- **Dashboard** — the desktop, live: the nodes, the last callers, the latest releases, the coming events with their countdown, the message count and the oneliners ticker, refreshed every five seconds.
+- **Door Lobby** (Doors) — every door with what it is, the screen it needs (and whether the C64 face has it) and how many callers are inside; Enter or Open steps in.
 - **Logon sequence** — caller numbers (every logged call before this one, plus one), a name's calls, first and last call and time on line, and the scans: unread mail, the new messages of each board since the name last opened it (registered names; `LAST_READ_PATH`), polls without the caller's vote, releases of the last 30 days. The quote of the day is a member's motto, the same for everyone until midnight; the logoff screen picks a tagline (`lib/content/taglines.yml`) or a motto.
-- **Nodes** — every caller gets the lowest free node number. Users > Who is Online lists the nodes with the name, what the caller is doing (the title of the top window, *At the main menu*, or the door) and the time on line.
+- **Nodes** — every caller gets the lowest free node number. People > Who is Online lists the nodes with the name, what the caller is doing (the title of the top window, *At the main menu*, or the door) and the time on line.
 - **Mail** (Messages > Mail…, F7) — private letters between registered names: Write, Reply, Delete; `•` marks the unread ones. **Feedback to the Sysop…** is a letter to `Sysop`, which anyone with a name may write and every sysop reads in their own mailbox; the Discord feed gets only that a letter came, never what it says. A letter arriving during a call rings the bell and says so. One letter every 30 seconds from a call.
 - **Page the Sysop** — once a call: the bell, a line in the live chat and on Discord; when no sysop is on line it offers to leave a letter.
 - **Voting Booth** (Users) — the polls of `lib/content/polls.yml`; `options: catalog` fills one with the released games, `options: doors` with the doors. Results as bars; a name (not Anonymous) votes and can change its vote.
 - **File Areas** (Content) — the catalog as the file areas of the old boards: one area per platform, a file per asset of each game's latest release (web builds as their `.html.zip`), sizes from the FTP server's WARP folder, the release's download count, `*` for the files of the last 30 days, and a FILE_ID.DIZ box from the game's card. **Enter** or **Download** sends the file by ZMODEM, like the FTP Browser.
-- **Bulletins** (File > Bulletins…, Help > New to BBSes?) — numbered: the logon bulletin, About Teletype Games (the wiki's home page), the story so far (every release of every game by month), what is coming up, the board rules and New to BBSes? (`lib/content/bulletins/*.md`), and the BBS network.
+- **Bulletins** (Board > Bulletins…, Help > New to BBSes?) — numbered: the logon bulletin, About Teletype Games (the wiki's home page), the story so far (every release of every game by month), what is coming up, the board rules and New to BBSes? (`lib/content/bulletins/*.md`), and the BBS network.
 - **Tech HowTos** (Content) — the how-tos of teletypegames.org/howtos (its RSS feed), each read from its wiki page.
 - **Hall of Fame** (Users) — top lists with bars: the most downloaded games (the catalog's `totalDownloads`), the top callers, the top posters and the TTG Trivia high scores. **User Listing** has the registered names with their calls, last call and location; **Your Stats** the caller's own numbers.
 - **Dev Log** — the public activity of every organisation on git.teletypegames.org (pushes with their commit messages, tags, releases, new repositories), newest first, read anonymously from the Gitea API, so private repositories never show.
-- **News** — the latest releases with catalog links, upcoming events, and the wiki's `blog` posts once there are any (the same source as teletypegames.org/blog).
+- **News** — the latest releases with catalog links, upcoming events, and the newest posts of the blog (TTGBLOG, read from the teletypegames.org API, the same as teletypegames.org/blog).
 - **Game catalog** — every catalog entry (all pages of the API), sorted by platform; the **Platform** button cycles a platform filter. The card shows version, release date, status, license and downloads, the catalog link, the downloadable kinds, the release history and the external links.
 - **FTP Browser** — an FTP client on the FTP server, from its root (`APPS`, `WARP`, `WIKI`): **Enter** opens a folder, `..` or **Up** goes back. A file shows its size, date, `ftp://` address (and for WARP its `https://teletypegames.org/file/…` mirror) and, for a text file under 64 KB (`.md`, `.txt`, `.ini`, `.lst`, `.bat`, `.nfo`, …), its contents. **Enter** or **Download** sends it to the caller's terminal by ZMODEM (rubbs' `BBS::Zmodem`): SyncTERM, NetRunner and Qodem start receiving by themselves, `rz` by hand, and bbsweb saves it as a browser download. Files over `BBS_FTP_DOWNLOAD_MAX` get only their addresses. Listings are cached for a minute; the last folder is kept for the call.
-- **Wiki sections** — Platform Guides (`/platforms`), Engines (`/engines`) and the DOS Corner (`/dos`, with an FTP/DOSINST intro), read from the Grav JSON API; private pages are left out. Users > Language switches them to Hungarian.
+- **Wiki sections** — Platform Guides (`/platforms`), Engines (`/engines`) and the DOS Corner (`/dos`, with an FTP/DOSINST intro), read from the Grav JSON API; private pages are left out. You > Language switches them to Hungarian.
 - **Team** — the members of teletypegames.org with their mottos.
 - **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `BBS::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
 - **Telnet gateways** — Doors > Alexandria, Doors > Feedia and Doors > TTGBLOG hand the caller's line on to [Alexandria BBS](https://git.teletypegames.org/bbs/alexandria) (:2326), [Feedia](https://git.teletypegames.org/bbs/feedia) (:2327) and [TTGBLOG](https://git.teletypegames.org/bbs/ttgblog) (:2328) as it is, with rubbs' `BBS::Gateway`: those boards run their own code on their own ports, and the caller comes back when they hang up (Alt-X, or Q on a C64). The gateway reports the caller's window size; a C64 caller reports none, so the other board answers in PETSCII.
-- **Registered names** — a caller can register the name they logged in with (Users > Register…); from then on that name asks for its password, with a 2-second wait after each wrong one. Profiles belong to registered names only. `accounts.csv` is read again whenever it changes, so `bin/account` works on a running server.
+- **Registered names** — a caller can register the name they logged in with (You > Register…); from then on that name asks for its password, with a 2-second wait after each wrong one. Profiles belong to registered names only. `accounts.csv` is read again whenever it changes, so `bin/account` works on a running server.
 - **Sysop console** — stats + broadcast, for names in `BBS_SYSOPS` that logged in with their password.
 - **Discord feed** — new board posts and sysop broadcasts go to `BBS_DISCORD_WEBHOOK`, mentions disabled.
 - **Last callers** — a call is logged when it ends, and only if the terminal reported its window size (telnet NAWS) and stayed at least 10 seconds. Telnet password-guessing bots never get listed, and neither do they show up as online.
 - **ANSI Gallery** — the art files of the desktop folder with their SAUCE record and a preview. **Enter** or **View** shows a piece on the full screen (rubbs' `AnsiArt.view`: scrolled with the arrows and PgUp/PgDn when taller than the screen, any other key returns), **Desktop** puts it on the desktop for the call, **Favourite** keeps it for every call of a registered name (the `art` column of the profile). `data/art` has the TTG pieces: `sunset.ans`, `pyramid.ans` (80×40, Blessing of Ra), `c64.ans`, `impostor.ans`, `floppy.ans` (the DOS tools), `ttg.ans`, `ttg-logo.ans` (the TTG logo, 80×40, converted to 16-colour half blocks), all CP437 with SAUCE, next to the older `.ansi` files.
-- **TTG Master** (the first menu, F1, the desktop button, the Welcome window, Help) — the sysop who answers callers' questions about the board; the menu also has ready questions. See *Characters* below.
-- **Full screen** — the windows with much to read (Welcome, News, Team, Oneliners, Boards and the composer, the wiki sections, Game Catalog, FTP Browser, Dev Log, ANSI Gallery, Live Chat, IRC, the TTG Master) can fill the screen and go back: `F5`, `Alt-Enter`, the `[↑]` gadget or a double click on the title bar (rubbs' `maximizable`). The small info windows and dialogs cannot.
+- **TTG Master** (F1, the desktop button, Help) — the sysop who answers callers' questions about the board; the menu also has ready questions. See *Characters* below.
+- **Full screen** — the windows with much to read (News, Team, Oneliners, Boards and the composer, the wiki sections, Game Catalog, FTP Browser, Dev Log, ANSI Gallery, Live Chat, IRC, the TTG Master) can fill the screen and go back: `F5`, `Alt-Enter`, the `[↑]` gadget or a double click on the title bar (rubbs' `maximizable`). The small info windows and dialogs cannot.
 - **xterm mouse** — click menus, buttons, list items; wheel-scroll lists.
 - **Idle disconnect** at 10 minutes.
-- **Configurable desktop art** — drop `.ans` / `.ansi` / `.asc` / `.nfo` / `.txt` files into `data/art/` (or wherever `BBS_DESKTOP_ART` points). Classic CP437 BBS art is auto-decoded; SAUCE metadata is stripped. With a directory, a different file is shown per session.
+- **Desktop art** — drop `.ans` / `.ansi` / `.asc` / `.nfo` / `.txt` files into `data/art/` (or wherever `BBS_DESKTOP_ART` points): they are the ANSI Gallery, and Desktop or Favourite there puts one in place of the dashboard. Classic CP437 BBS art is auto-decoded; SAUCE metadata is stripped.
 
 ### The C64 face
 
 The board as the C64 boards had it (`lib/ui/petscii`), on a C64 terminal program
 (CCGMS, StrikeTerm, SyncTERM in C64 mode) in the lowercase character set: the
-TELETYPE logo in reversed blocks, the name and the password, the logon scans,
-then the main menu, one key for each line:
+TTG BBS logo in reversed blocks (yellow, orange and red, the modern face's
+logo), the name and the password, the logon scans, then the main menu, one key
+for each line. Each section has its colour, and its keys wear it; under the
+menu a line of what is happening: the callers on line, the messages (and new
+mail), the next event with its days to go, the newest release.
 
 ```
- MESSAGES            CONTENT
+ messages ─────────  content ──────────
  M message boards    F file areas
  E e-mail            B ftp browser
  O oneliners         G game catalog
@@ -205,13 +223,19 @@ then the main menu, one key for each line:
  I irc channel       N news
  P page the sysop    U bulletins
                      D dev log
- PEOPLE              MORE
+ people ───────────  more ─────────────
  C callers & users   R doors
  V voting booth      T ttg master
  S you & your name   Y system info
  H hall of fame      ? help
  Z sysop console     Q log off
+───────────────────────────────────────
+ 2 on line · 8 messages · 1 new mail
+ next: Release Party in 34 days
+ new:  Thread of Ariadne 1.1.0
 ```
+
+The doors list gives each door a few words of what it is.
 
 Lists are numbered: the number and RETURN opens one, RETURN alone turns the
 page, `Q` or `←` (RUN/STOP too) goes back. Long texts stop at every
@@ -276,7 +300,9 @@ lib/
                                        eval questions, the shared model client
   ui/modern.rb                         the modern face: modem, logon matrix,
                                        the Application (windows, menus, doors)
-  ui/modern/formatters.rb              view helpers: bulletin, news, game card,
+  ui/logo.rb                           the board's logo (TTG BBS) for both faces
+  ui/modern/desktop.rb                 the dashboard and the colours of the menus
+  ui/modern/formatters.rb              view helpers: bulletin, news, game card, doors,
                                        team, network, DOS intro, users, sysop,
                                        oneliners, FTP browser, dev log, gallery
   ui/modern/classic_formatters.rb      logon/logoff, nodes, mail, voting,
@@ -305,19 +331,22 @@ bin/account                            create an account / reset a password
 
 ## Doors
 
-A door is one line of `TeletypeBBS#doors` (`lib/domain/teletype_bbs.rb`): its
-name, the program, the label with its hotkey, the narrowest screen it draws
-for, and optionally the same door drawn for 40 columns. The modern face
-declares them all in its Application, and its Doors menu (`doors` in the
-menubar block) lists them by itself; the PETSCII face offers the ones of 40
-columns and the ones with a C64 version (Impostor).
+A door is one entry of `TeletypeBBS#doors` (`lib/domain/teletype_bbs.rb`):
+its name, the program, the label with its hotkey, the narrowest screen it
+draws for, optionally the same door drawn for 40 columns, and three texts:
+`tag` (a few words for the C64's list), `hint` (the statusbar line of its menu
+item) and `about` (its paragraph in the Door Lobby). The modern face declares
+them all in its Application, and its Doors menu (`doors` in the menubar block)
+lists them by itself under the Door Lobby; the PETSCII face offers the ones of
+40 columns and the ones with a C64 version (Impostor).
 
 ```ruby
-Door.new(:sermo,    Sermo::OS, '&SERMO', 80),
-Door.new(:c64,      Commodore.os(Commodore::C64, games: @games, files: @files), '&Commodore 64', 40),
-Door.new(:plus4,    Commodore.os(Commodore::PLUS4, games: @games, files: @files), 'Commodore &Plus/4', 40),
-Door.new(:impostor, Impostor::Modern.flow(sessions: @impostor_sessions), '&Impostor', 80,
-         Impostor::Petscii.flow(sessions: @impostor_sessions)),
+Door.new(name: :c64, program: Commodore.os(Commodore::C64, games: @games, files: @files),
+         label: '&Commodore 64', cols: 40, tag: 'c64 + our games',
+         hint: 'A Commodore 64 at READY., with our C64 games on its disk: LOAD"$",8 lists them',
+         about: 'A Commodore 64 at its READY. prompt, with a small BASIC V2. …'),
+Door.new(name: :impostor, program: Impostor::Modern.flow(sessions: @impostor_sessions),
+         petscii: Impostor::Petscii.flow(sessions: @impostor_sessions), label: '&Impostor', cols: 80, …),
 ```
 
 The program is a `BBS::FakeOS` definition, a `BBS::Flow` or a callable `(session, context)`.

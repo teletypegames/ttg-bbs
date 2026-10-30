@@ -33,7 +33,7 @@ class TtgMaster
   LIST_WORDS   = %w[which list all what].freeze
 
   # +catalog+ is where the board keeps the game catalog, for the catalog fact.
-  def initialize(games:, site:, persona: PERSONA, knowledge: KNOWLEDGE, catalog: 'Content > Game Catalog')
+  def initialize(games:, site:, persona: PERSONA, knowledge: KNOWLEDGE, catalog: 'Files > Game Catalog')
     @games     = games
     @site      = site
     @persona   = persona

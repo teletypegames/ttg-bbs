@@ -65,13 +65,17 @@ module UI
                        "#{D}caller ##{Formatters.number(caller_number)}#{O} #{K}·#{O} #{D}#{nodes} online#{O}\r\n"
         end
 
-        def self.dots(label, width = 34) = "  #{D}#{label} #{K}#{'.' * [width - label.length, 2].max}#{O} "
+        DOTS = 34
+
+        def self.dots(label, width = DOTS) = "  #{D}#{label} #{K}#{'.' * [width - label.length, 2].max}#{O} "
 
         # The logon sequence after the name: who you are, then the scans.
         def self.screen(runner, name:, node:, caller_number:, stats:, registered:, mail:, new_scan:,
                         polls_open:, new_files:, quote:)
           out = ->(text) { runner.write(text) }
+          room = [(runner.session.term_cols || 80) - DOTS - 5, 20].max
           out.call "\e[0m\e[2J\e[H\r\n"
+          Logo.half_blocks.each { |l| out.call "  #{l}\r\n" }
           out.call "  #{C}═══#{O} #{W}Teletype BBS#{O} #{C}#{'═' * 47}#{O} #{W}Node #{node}#{O} #{C}═══#{O}\r\n" if node
           out.call "\r\n"
           greeting = stats ? "Welcome back, #{Y}#{name}#{O}!" : "Welcome, #{Y}#{name}#{O}! Your first call here."
@@ -83,7 +87,7 @@ module UI
                      "online #{Formatters.duration(stats.seconds)}#{O}\r\n"
           end
           unless registered
-            note = name == 'Anonymous' ? 'Call with a name to keep one.' : 'A guest: Users > Register keeps your name.'
+            note = name == 'Anonymous' ? 'Call with a name to keep one.' : 'A guest: You > Register keeps your name.'
             out.call "  #{D}#{note}#{O}\r\n"
           end
           out.call "\r\n"
@@ -105,7 +109,9 @@ module UI
             end
           end
           scan(out, 'Looking for new files') do
-            new_files.empty? ? "#{D}no new files this month#{O}" : new_files.first(2).join(' · ')
+            next "#{D}no new files this month#{O}" if new_files.empty?
+
+            BBS::FrameBuffer.clip_ansi(new_files.first(2).join(' · '), room)
           end
           out.call "\r\n  #{C}Quote of the day#{O}\r\n"
           Formatters.wrap(Taglines.line(quote), 72).each { |l| out.call "  #{W}#{l}#{O}\r\n" }
@@ -211,7 +217,7 @@ module UI
         end
 
         def self.empty(registered)
-          registered ? '  (your mailbox is empty)' : '  (register your name to get mail — Users > Register…)'
+          registered ? '  (your mailbox is empty)' : '  (register your name to get mail — You > Register…)'
         end
       end
 

@@ -13,6 +13,7 @@ module UI
     LB = "\e[1;34m"
     GN = "\e[1;32m"
     RD = "\e[1;31m"
+    PU = "\e[0;35m"
     RV = "\e[7m"
     RO = "\e[27m"
 

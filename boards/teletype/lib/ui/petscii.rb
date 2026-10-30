@@ -11,20 +11,11 @@ module UI
   # menus and numbered lists, the way the C64 boards of the eighties were.
   # It works on the same TeletypeBBS as the modern face.
   module Petscii
-    LOGO_FONT = {
-      'T' => %w[### .#. .#. .#. .#.], 'E' => %w[### #.. ##. #.. ###], 'L' => %w[#.. #.. #.. #.. ###],
-      'Y' => %w[#.# #.# .#. .#. .#.], 'P' => %w[##. #.# ##. #.. #..]
-    }.freeze
-    LOGO_COLORS = [CY, CY, LB, LB, "\e[0;34m"].freeze
+    # The board's logo (UI::Logo) in yellow, orange and red, as on the
+    # modern face: the C64 has these three colours too.
+    LOGO_COLORS = [YE, YE, "\e[0;33m", "\e[0;33m", "\e[0;31m"].freeze
 
-    # TELETYPE in reversed blocks, five rows.
-    def self.logo
-      5.times.map do |row|
-        bits = 'TELETYPE'.chars.map { |c| LOGO_FONT[c][row] }.join('.')
-        line = bits.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')
-        "    #{LOGO_COLORS[row]}#{line}#{LG}"
-      end
-    end
+    def self.logo = Logo.reversed(LOGO_COLORS).map { |l| "      #{l}#{LG}" }
 
     def self.flow(bbs)
       BBS::Flow.define do

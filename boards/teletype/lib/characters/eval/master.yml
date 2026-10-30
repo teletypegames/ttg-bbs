@@ -2,11 +2,11 @@
 # one of these (case-insensitive), else it counts as a miss.
 - q: hi
 - q: how do I register my name?
-  expect: [Users > Register]
+  expect: [You > Register]
 - q: where can I find DOS programs?
   expect: [FTP Browser, DOS Corner, DOSINST]
 - q: what's new?
-  expect: [Blessing of Ra, Plus/4 Demo, File > News]
+  expect: [Blessing of Ra, Plus/4 Demo, Board > News]
 - q: are there any events coming up?
   expect: [Underwater Sun Rise, No events]
 - q: which games do you have for the c64?
@@ -14,7 +14,7 @@
 - q: how do I leave a message?
   expect: [Messages > Boards, New Post, F3]
 - q: how do I get out of here?
-  expect: [File > Log off, Alt-X]
+  expect: [Board > Log off, Alt-X]
 - q: what is SERMO?
   expect: [Neumatronic]
 - q: can I play the games in a browser?

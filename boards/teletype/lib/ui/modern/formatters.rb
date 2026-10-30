@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'artii'
 require_relative '../../domain/model/ftp_models'
 
 # Pure view-layer helpers used by the window DSL in lib/ui/modern.rb. No business
@@ -9,8 +8,7 @@ module UI
   module Modern
     module Formatters
       module Bulletin
-        BANNER = Artii::Base.new(font: 'standard').asciify('Teletype BBS')
-                            .lines.map { |l| "  \e[1;33m#{l.rstrip}\e[0m" }.freeze
+        BANNER = Logo.half_blocks.map { |l| "  #{l}" }.freeze
 
         def self.body(username:, registered:, online_count:, total_messages:,
                       recent_callers:, releases:, events:, oneliners:)
@@ -19,10 +17,10 @@ module UI
           end
           status = if registered then ''
                    elsif username == 'Anonymous' then "  \e[2;37m(call with a name to register it)\e[0m"
-                   else "  \e[2;37m(guest — Users > Register keeps your name)\e[0m"
+                   else "  \e[2;37m(guest — You > Register keeps your name)\e[0m"
                    end
           [
-            *BANNER.map { |l| { text: l, style: :accent } },
+            *BANNER,
             :spacer,
             "Logged in as \e[1;33m#{username}\e[0m#{status}",
             "Online now: #{online_count}   Messages: #{total_messages}",
@@ -248,7 +246,7 @@ module UI
           "  · #{event.date.strftime('%Y-%m-%d')}  #{event.name}"
         end
 
-        def self.body(releases:, events:, posts:, catalog_url:, post_url:)
+        def self.body(releases:, events:, posts:, catalog_url:)
           body = ['  Latest releases']
           if releases.empty?
             body << '  (no releases)'
@@ -262,13 +260,14 @@ module UI
           body << '  Upcoming events'
           body.concat(events.empty? ? ['  (nothing scheduled)'] : events.map { |e| event_line(e) })
           body << :spacer
-          body << '  Blog'
+          body << '  From the blog (Doors > TTGBLOG)'
           if posts.empty?
             body << '  (no posts yet — they will show up here and on teletypegames.org/blog)'
           else
-            posts.first(5).each do |p|
-              body << "  · #{p.created_at.to_s[0, 10]}  #{p.title}"
-              body << "    \e[1;36m#{post_url.call(p)}\e[0m"
+            posts.each do |p|
+              body << "  · #{p.created_at.localtime.strftime('%Y-%m-%d')}  \e[1;33m#{p.title}\e[0m" \
+                      "#{"  \e[2;37m#{p.author}\e[0m" if p.author}"
+              body << "    \e[1;36m#{p.url}\e[0m"
             end
           end
           body
@@ -286,6 +285,29 @@ module UI
         end
       end
 
+      # A door in the Door Lobby: its name on a bar of the doors' colour, what
+      # it is, and the facts a caller wants before stepping in.
+      module Doors
+        def self.detail(door, width, inside:)
+          inner = [width - 4, 10].max
+          bar   = " #{door.title} "[0, inner].ljust(inner)
+          screen = if door.cols <= 40 then '40 columns: on the C64 face too'
+                   elsif door.petscii then '80 columns, with a C64 version on the C64 face'
+                   else '80 columns: the modern face only'
+                   end
+          [
+            "  \e[0;38;5;16;48;5;209m#{bar}\e[0m",
+            '',
+            *BBS::FrameBuffer.wrap_ansi(door.about.to_s, inner).map { |l| "  #{l}" },
+            '',
+            "  \e[2;37mscreen\e[0m   #{screen}",
+            "  \e[2;37minside\e[0m   #{inside.zero? ? 'nobody right now' : "#{inside} caller#{'s' if inside != 1}"}",
+            '',
+            "  \e[1;33mEnter\e[0m or \e[1;33mOpen\e[0m steps in."
+          ]
+        end
+      end
+
       module Network
         SYSTEMS = TeletypeBBS::NETWORK
 
@@ -293,10 +315,7 @@ module UI
           rows = SYSTEMS.flat_map do |name, address, note|
             ["  \e[1;33m#{name.ljust(14)}\e[0m \e[1;36m#{address}\e[0m", "  #{' ' * 15}#{note}"]
           end
-          [*rows, :spacer, '  Doors here: SERMO, the Neumatronic Margittai machine; a Commodore 64',
-           '  and a Plus/4 with our games on their disks; the Impostor terminal;',
-           '  Chat of Ra; TTG Trivia; and gateways to Alexandria BBS, Feedia and',
-           '  TTGBLOG.',
+          [*rows, :spacer, '  What each door here is: Doors > Door Lobby.',
            :spacer, '  In a browser, no telnet client needed:',
            "  \e[1;36mhttps://bbsweb.teletypegames.org\e[0m"]
         end
@@ -330,39 +349,56 @@ module UI
         end
       end
 
+      # A board as a message base: a header line, then each message under its
+      # number, author and date, its text indented, a thin line between.
       module Board
         def self.lines(messages, board_title, width)
-          return ["  (no messages on #{board_title} yet — press 'n' to start one)"] if messages.empty?
-          lines = []
-          messages.each do |m|
-            head = "\e[2;37m#{m.timestamp}\e[0m  \e[1;33m#{m.username}\e[0m: "
-            m.text.to_s.split("\n").each_with_index do |text, i|
-              BBS::FrameBuffer.wrap_ansi(i.zero? ? head + text : text, width - 1).each { |l| lines << l }
+          return ["  (no messages on #{board_title} yet — New starts one)"] if messages.empty?
+
+          inner = [width - 3, 10].max
+          head  = " #{board_title} · #{messages.size} message#{'s' if messages.size != 1} "[0, inner].ljust(inner)
+          lines = ["\e[0;38;5;16;48;5;78m#{head}\e[0m", '']
+          messages.each_with_index do |m, i|
+            stamp = m.timestamp.to_s
+            left  = "\e[0;38;5;78m##{i + 1}\e[0m \e[1;33m#{m.username}\e[0m"
+            pad   = [inner - BBS::FrameBuffer.visible_width(left) - stamp.length, 1].max
+            lines << "#{left}#{' ' * pad}\e[2;37m#{stamp}\e[0m"
+            m.text.to_s.split("\n").each do |text|
+              BBS::FrameBuffer.wrap_ansi(text, inner - 2).each { |l| lines << "  #{l}" }
             end
-            lines << ''
+            lines << "\e[2;37m#{'┄' * inner}\e[0m" unless i == messages.size - 1
           end
           lines
         end
       end
 
       module Game
+        LABEL_TITLE = 21
+
+        # The title first, the platform after it, each in its own column.
         def self.label(game)
-          "#{game.platform.ljust(10)} #{game.title}"
+          title = game.title.length > LABEL_TITLE ? "#{game.title[0, LABEL_TITLE - 1]}…" : game.title
+          "#{title.ljust(LABEL_TITLE)} #{game.platform[0, 10]}"
+        end
+
+        # A long address cut at the width, the rest on the next lines.
+        def self.url_lines(url, width, indent = '  ')
+          url.to_s.scan(/.{1,#{[width - indent.length, 10].max}}/).map { |part| "#{indent}\e[1;36m#{part}\e[0m" }
         end
 
         def self.card(game, width, catalog_url:)
-          lines = []
-          lines << "  \e[1;33m#{game.title}\e[0m"
+          wrap  = ->(text, w = width - 4) { BBS::FrameBuffer.wrap_ansi(text.to_s, w) }
+          lines = wrap.call(game.title).map { |l| "  \e[1;33m#{l}\e[0m" }
           meta = [game.platform, game.category, game.author].reject(&:empty?).join(' · ')
-          lines << "  \e[0;36m#{meta}\e[0m"
+          wrap.call(meta).each { |l| lines << "  \e[0;36m#{l}\e[0m" }
           if game.released?
             date = game.released_at&.strftime('%Y-%m-%d')
             lines << "  \e[0;37mLatest: #{game.version}#{"  (#{date})" if date}\e[0m"
           end
           facts = [(game.status.empty? ? nil : game.status), (game.license.empty? ? nil : game.license),
                    "#{game.downloads} downloads"].compact.join(' · ')
-          lines << "  \e[0;37m#{facts}\e[0m"
-          lines << "  \e[1;36m#{catalog_url}\e[0m"
+          wrap.call(facts).each { |l| lines << "  \e[0;37m#{l}\e[0m" }
+          lines.concat(url_lines(catalog_url.to_s.delete_prefix('https://'), width - 2))
           lines << ''
           BBS::FrameBuffer.wrap_ansi(game.desc.to_s, width - 4).each { |l| lines << "  #{l}" }
           unless game.story.to_s.strip.empty?
@@ -371,7 +407,7 @@ module UI
           end
           unless game.assets.empty?
             lines << ''
-            lines << '  Downloads (on the catalog page above):'
+            wrap.call('Downloads, on the catalog page above:').each { |l| lines << "  #{l}" }
             kinds = game.assets.map(&:kind).join(' · ')
             BBS::FrameBuffer.wrap_ansi(kinds, width - 6).each { |l| lines << "    \e[0;37m#{l}\e[0m" }
           end
@@ -387,7 +423,7 @@ module UI
             lines << ''
             game.external_links.each do |link|
               lines << "  \e[0;37m#{link[:label]}\e[0m"
-              lines << "    \e[1;36m#{link[:url]}\e[0m"
+              lines.concat(url_lines(link[:url], width - 2, '    '))
             end
           end
           lines

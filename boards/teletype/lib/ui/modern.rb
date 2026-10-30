@@ -2,6 +2,7 @@
 
 require_relative 'modern/formatters'
 require_relative 'modern/classic_formatters'
+require_relative 'modern/desktop'
 
 module UI
   # The board on a modern terminal (ANSI colours, UTF-8, a mouse): the modem
@@ -67,7 +68,7 @@ module UI
           theme BBS::Theme.neumanntronics
           # Doors: full-line programs a caller can step into from the Doors menu.
           # The BBS hands the telnet line over and takes it back when the program exits.
-          bbs.doors.each { |d| door d.name, d.program, label: d.label }
+          bbs.doors.each { |d| door d.name, d.program, label: d.label, hint: d.hint }
           services bbs.services
 
           helpers do
@@ -100,8 +101,8 @@ module UI
               if registered? || sysop?
                 open_window(:mail)
               else
-                BBS::Dialogs.message(self, 'Mail belongs to registered names (Users > Register…). ' \
-                                           'Anyone with a name can leave feedback for the sysop: Messages > Feedback.',
+                BBS::Dialogs.message(self, 'Mail belongs to registered names (You > Register…). ' \
+                                           'Anyone with a name can write to the sysop: Messages > Feedback to the Sysop.',
                                      title: ' Mail ', width: 60)
               end
             end
@@ -231,27 +232,36 @@ module UI
               @desktop_art.lines      = lines
               @desktop_art.art_height = lines.size
               context[:desktop_art]   = name
+              @dashboard.data = nil
+            end
+
+            # Back to the live desktop: every window closed, the art put away.
+            def show_dashboard
+              windows.dup.each { |w| close_window(w) }
+              context[:desktop_art] = nil
+              @desktop_art.lines    = []
+              refresh_dashboard
+            end
+
+            def refresh_dashboard
+              return if context[:desktop_art]
+
+              @dashboard.data = Dashboard::Data.new(
+                name: context[:username] || AccountService::ANONYMOUS, registered: registered?,
+                caller_number: context[:caller_number], node: services[:online].node(session_id)&.number,
+                nodes: services[:online].nodes, callers: services[:last_callers].recent(5),
+                releases: services[:games].latest_releases(5), events: services[:site].upcoming_events(3),
+                oneliners: services[:oneliners].recent(8), messages: services[:boards].total_count
+              )
+            rescue StandardError => e
+              warn "Dashboard: #{e.class}: #{e.message}"
             end
           end
 
           # ── Windows ────────────────────────────────────────────────────────────────
 
-          window :bulletin, type: :info do |window_spec|
-            window_spec.maximizable true
-            window_spec.title  ' Welcome '
-            window_spec.width  72
-            window_spec.height 23
-            window_spec.scroll true
-            window_spec.body do |ctx|
-              Formatters::Bulletin.body(**ctx[:bbs].bulletin(ctx[:username], registered: ctx[:authenticated]))
-            end
-            window_spec.button label: 'Ask the TTG &Master', align: :left do |_window, ctx|
-              ctx[:app].open_window(:master)
-            end
-            window_spec.button label: '&Continue', primary: true, cancel: true
-          end
-
           window :system_info, type: :info do |window_spec|
+            window_spec.accent Accent::STYLES[:board]
             window_spec.title  ' System Info '
             window_spec.width  60
             window_spec.height 15
@@ -273,6 +283,7 @@ module UI
           end
 
           window :messages, type: :master_detail do |window_spec|
+            window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
             window_spec.title         ' Message Boards '
             window_spec.list_width    20
@@ -299,6 +310,7 @@ module UI
           end
 
           window :compose_message, type: :form do |window_spec|
+            window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
             window_spec.title        { |ctx| ctx[:board] ? " Post to #{ctx[:board].title} " : ' Compose ' }
             window_spec.width        { |ctx| [ctx[:app].cols - 8, 70].min }
@@ -329,6 +341,7 @@ module UI
           end
 
           window :wiki, type: :master_detail do |window_spec|
+            window_spec.accent Accent::STYLES[:read]
             window_spec.maximizable true
             window_spec.title         { |ctx| " #{TeletypeBBS::WIKI_SECTIONS[ctx[:section]][:title]} " }
             window_spec.list_width    { |ctx| [32, ctx[:app].cols / 3].max }
@@ -357,6 +370,7 @@ module UI
           end
 
           window :games, type: :master_detail do |window_spec|
+            window_spec.accent Accent::STYLES[:files]
             window_spec.maximizable true
             window_spec.title         { |ctx| ctx[:platform] ? " Game Catalog — #{ctx[:platform]} " : ' Game Catalog ' }
             window_spec.list_width    34
@@ -375,6 +389,7 @@ module UI
           end
 
           window :news, type: :info do |window_spec|
+            window_spec.accent Accent::STYLES[:board]
             window_spec.maximizable true
             window_spec.title  ' News '
             window_spec.width  { |ctx| [ctx[:app].cols - 6, 76].min }
@@ -384,14 +399,14 @@ module UI
               Formatters::News.body(
                 releases:    ctx[:games].latest_releases(5),
                 events:      ctx[:site].upcoming_events(5),
-                posts:       ctx[:wiki].list('blog', lang: ctx[:lang]),
-                catalog_url: ->(game) { ctx[:games].catalog_url(game) },
-                post_url:    ->(post) { "https://teletypegames.org/blog/#{post.path.delete_prefix('blog/')}" }
+                posts:       ctx[:site].blog_posts(5),
+                catalog_url: ->(game) { ctx[:games].catalog_url(game) }
               )
             end
           end
 
           window :team, type: :info do |window_spec|
+            window_spec.accent Accent::STYLES[:people]
             window_spec.maximizable true
             window_spec.title  ' The Team '
             window_spec.width  64
@@ -401,13 +416,16 @@ module UI
           end
 
           window :network, type: :info do |window_spec|
+            window_spec.accent Accent::STYLES[:board]
             window_spec.title  ' BBS Network '
             window_spec.width  72
-            window_spec.height 16
+            window_spec.height { |ctx| [Formatters::Network.body.size + 6, ctx[:app].rows - 3].min }
+            window_spec.scroll true
             window_spec.body   { |_ctx| Formatters::Network.body }
           end
 
           window :register, type: :form do |window_spec|
+            window_spec.accent Accent::STYLES[:you]
             window_spec.title        { |ctx| " Register — #{ctx[:username]} " }
             window_spec.width        60
             window_spec.height       11
@@ -432,6 +450,7 @@ module UI
           end
 
           window :online_users, type: :info do |window_spec|
+            window_spec.accent Accent::STYLES[:people]
             window_spec.title  ' Who is Online '
             window_spec.width  74
             window_spec.scroll true
@@ -440,6 +459,7 @@ module UI
           end
 
           window :last_callers, type: :info do |window_spec|
+            window_spec.accent Accent::STYLES[:people]
             window_spec.title  ' Last Callers '
             window_spec.width  64
             window_spec.scroll true
@@ -448,6 +468,7 @@ module UI
           end
 
           window :chat, type: :stream do |window_spec|
+            window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
             window_spec.title       ' Live Chat '
             window_spec.placeholder 'Type a message and press Enter…'
@@ -465,6 +486,7 @@ module UI
 
           # The IRC channel, read only: the input line only tells how to join.
           window :irc, type: :stream do |window_spec|
+            window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
             window_spec.title       { |ctx| Formatters::Irc.title(ctx[:irc]) }
             window_spec.placeholder Formatters::Irc::PLACEHOLDER
@@ -483,6 +505,7 @@ module UI
           end
 
           window :profile, type: :form do |window_spec|
+            window_spec.accent Accent::STYLES[:you]
             window_spec.title  { |ctx| " Profile — #{ctx[:username] || 'Anonymous'} " }
             window_spec.width  64
             window_spec.height 14
@@ -507,6 +530,7 @@ module UI
           end
 
           window :oneliners, type: :info do |window_spec|
+            window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
             window_spec.title  ' Oneliners '
             window_spec.width  { |ctx| [ctx[:app].cols - 6, 78].min }
@@ -537,6 +561,7 @@ module UI
 
           # A plain FTP client: Enter opens a folder (or sends a file), .. goes up.
           window :ftp, type: :master_detail do |window_spec|
+            window_spec.accent Accent::STYLES[:files]
             window_spec.maximizable true
             window_spec.title do |ctx|
               ctx[:ftp_path] ||= ctx[:app].context[:ftp_path] || FileLibraryService::ROOT
@@ -575,6 +600,7 @@ module UI
           end
 
           window :dev_log, type: :master_detail do |window_spec|
+            window_spec.accent Accent::STYLES[:board]
             window_spec.maximizable true
             window_spec.title         ' Dev Log — git.teletypegames.org '
             window_spec.list_width    36
@@ -591,6 +617,7 @@ module UI
           end
 
           window :gallery, type: :master_detail do |window_spec|
+            window_spec.accent Accent::STYLES[:files]
             window_spec.maximizable true
             window_spec.title         ' ANSI Gallery '
             window_spec.list_width    24
@@ -626,7 +653,7 @@ module UI
                 app.show_art(name)
                 BBS::Dialogs.message(app, "#{name} is your desktop from now on.", title: ' Favourite ')
               else
-                BBS::Dialogs.message(app, 'Register your name first (Users > Register…): ' \
+                BBS::Dialogs.message(app, 'Register your name first (You > Register…): ' \
                                           'a favourite belongs to a registered name.', title: ' Favourite ', width: 60)
               end
               :keep
@@ -634,6 +661,7 @@ module UI
           end
 
           window :master, type: :stream do |window_spec|
+            window_spec.accent Accent::STYLES[:help]
             window_spec.maximizable true
             window_spec.title       ' Ask the TTG Master '
             window_spec.placeholder 'Ask about the board and press Enter…'
@@ -654,6 +682,7 @@ module UI
           end
 
           window :sysop_console, type: :info do |window_spec|
+            window_spec.accent Accent::STYLES[:you]
             window_spec.title  ' Sysop Console '
             window_spec.width  70
             window_spec.height 18
@@ -681,6 +710,7 @@ module UI
           end
 
           window :user_list, type: :info do |window_spec|
+            window_spec.accent Accent::STYLES[:people]
             window_spec.maximizable true
             window_spec.title  ' User Listing '
             window_spec.width  74
@@ -692,6 +722,7 @@ module UI
           end
 
           window :my_stats, type: :info do |window_spec|
+            window_spec.accent Accent::STYLES[:you]
             window_spec.title  { |ctx| " Your Stats — #{ctx[:username]} " }
             window_spec.width  60
             window_spec.height 16
@@ -705,6 +736,7 @@ module UI
           end
 
           window :hall_of_fame, type: :info do |window_spec|
+            window_spec.accent Accent::STYLES[:people]
             window_spec.maximizable true
             window_spec.title  ' Hall of Fame '
             window_spec.width  { |ctx| [ctx[:app].cols - 6, 76].min }
@@ -716,6 +748,7 @@ module UI
           end
 
           window :mail, type: :master_detail do |window_spec|
+            window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
             window_spec.title         { |ctx| " Mail — #{ctx[:username]} " }
             window_spec.list_width    36
@@ -756,6 +789,7 @@ module UI
           end
 
           window :compose_mail, type: :form do |window_spec|
+            window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
             window_spec.title        ' Write a Letter '
             window_spec.width        { |ctx| [ctx[:app].cols - 8, 70].min }
@@ -786,6 +820,7 @@ module UI
           end
 
           window :voting, type: :master_detail do |window_spec|
+            window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
             window_spec.title         ' Voting Booth '
             window_spec.list_width    26
@@ -805,6 +840,7 @@ module UI
           end
 
           window :file_areas, type: :master_detail do |window_spec|
+            window_spec.accent Accent::STYLES[:files]
             window_spec.maximizable true
             window_spec.title         ' File Areas '
             window_spec.list_width    32
@@ -817,6 +853,7 @@ module UI
           end
 
           window :file_area, type: :master_detail do |window_spec|
+            window_spec.accent Accent::STYLES[:files]
             window_spec.maximizable true
             window_spec.title         { |ctx| " Files — #{ctx[:area].title} " }
             window_spec.list_width    37
@@ -837,6 +874,7 @@ module UI
           end
 
           window :bulletins, type: :master_detail do |window_spec|
+            window_spec.accent Accent::STYLES[:board]
             window_spec.maximizable true
             window_spec.title         ' Bulletins '
             window_spec.list_width    30
@@ -869,6 +907,7 @@ module UI
           end
 
           window :howtos, type: :master_detail do |window_spec|
+            window_spec.accent Accent::STYLES[:read]
             window_spec.maximizable true
             window_spec.title         ' Tech HowTos '
             window_spec.list_width    { |ctx| [34, ctx[:app].cols / 3].max }
@@ -884,73 +923,138 @@ module UI
             window_spec.bottom_meta { |h, _ctx| h.url }
           end
 
+          # Every door with what it is, the way the old boards had a door menu.
+          window :doors, type: :master_detail do |window_spec|
+            window_spec.accent Accent::STYLES[:doors]
+            window_spec.maximizable true
+            window_spec.title         ' Door Lobby '
+            window_spec.list_width    22
+            window_spec.items         { |ctx| ctx[:bbs].doors }
+            window_spec.item_label    { |door, _ctx| door.title }
+            window_spec.render_detail do |door, width, ctx|
+              inside = ctx[:online].nodes.count { |n| n.activity.to_s == "Door: #{door.title}" }
+              Formatters::Doors.detail(door, width, inside: inside)
+            end
+            window_spec.bottom_meta   { |_door, _ctx| 'Enter or Open: step in · leaving the door brings you back' }
+            window_spec.on_activate   { |door, _window, ctx| ctx[:app].open_door(door.name) }
+            window_spec.action label: '&Open', align: :left do |window, ctx|
+              door = window.list_widget.selected_item
+              door ? ctx[:app].open_door(door.name) : :keep
+            end
+          end
+
           # ── Menubar ────────────────────────────────────────────────────────────────
 
           menubar do
-            menu '&TTG Master' do
-              item '&Ask a question…', shortcut: 'F1' do open_window(:master) end
-              separator
-              Formatters::Master::QUICK_QUESTIONS.each do |label, question|
-                item(label) { open_window(:master, question: question) }
+            menu '&Board' do
+              item '&Dashboard', hint: 'The live desktop: who is on, the last callers, what is new and coming up' do
+                show_dashboard
               end
-            end
-
-            menu '&File' do
-              item '&Welcome'     do open_window(:bulletin) end
-              item '&Bulletins…'  do open_window(:bulletins) end
-              item '&News'        do open_window(:news) end
-              item '&Dev Log'     do open_window(:dev_log) end
-              item '&System Info' do open_window(:system_info) end
-              item 'BBS Net&work' do open_window(:network) end
+              item '&News', hint: 'The latest releases, the coming events and the newest blog posts' do
+                open_window(:news)
+              end
+              item '&Bulletins…', hint: 'Numbered bulletins: the rules, the story so far, New to BBSes?' do
+                open_window(:bulletins)
+              end
+              item 'Dev &Log', hint: 'What the team pushed, tagged and released on git.teletypegames.org' do
+                open_window(:dev_log)
+              end
               separator
-              item '&Log off', shortcut: 'Alt-X' do :halt end
+              item '&System Info', hint: 'Nodes, calls, messages and uptime of this board' do
+                open_window(:system_info)
+              end
+              item 'BBS Net&work', hint: 'Our other boards, their telnet addresses, and the board in a browser' do
+                open_window(:network)
+              end
+              separator
+              item 'Log &off', shortcut: 'Alt-X', hint: 'Hang up: +++ ATH0 NO CARRIER' do :halt end
             end
 
             menu '&Messages' do
-              item '&Boards…',   shortcut: 'F2' do open_window(:messages) end
-              item '&New Post…', shortcut: 'F3' do open_new_post end
-              item '&Mail…',     shortcut: 'F7' do open_mail end
-              item '&Oneliners' do open_window(:oneliners) end
+              item '&Boards…', shortcut: 'F2', hint: 'The message boards: General, Tech, Off-Topic, Sysop' do
+                open_window(:messages)
+              end
+              item '&New Post…', shortcut: 'F3', hint: 'Write a post on the first board' do open_new_post end
+              item '&Mail…', shortcut: 'F7', hint: 'Private letters between registered names' do open_mail end
+              item '&Oneliners', hint: 'The wall: one line, 64 characters, the newest run along the desktop' do
+                open_window(:oneliners)
+              end
               separator
-              item '&Live Chat', shortcut: 'F4' do open_window(:chat) end
-              item '&IRC #teletypegames' do open_window(:irc) end
+              item '&Live Chat', shortcut: 'F4', hint: 'Talk with everyone on the lines now, C64 callers too' do
+                open_window(:chat)
+              end
+              item '&IRC #teletypegames', hint: 'Our channel on Libera.Chat, read only here' do open_window(:irc) end
+              item '&Voting Booth', hint: 'The polls of the board, with the results as bars' do
+                open_window(:voting)
+              end
               separator
-              item '&Feedback to the Sysop…' do write_mail(to: MailService::SYSOP) end
-              item '&Page the Sysop'         do page_sysop end
+              item '&Feedback to the Sysop…', hint: 'A letter to the sysops; anyone with a name may write' do
+                write_mail(to: MailService::SYSOP)
+              end
+              item '&Page the Sysop', hint: 'Ring the bell for a sysop, once a call' do page_sysop end
             end
 
-            menu '&Content' do
-              item '&File Areas'      do open_window(:file_areas) end
-              item 'FTP &Browser'     do open_window(:ftp) end
-              item '&Game Catalog'    do open_window(:games) end
+            menu '&Files' do
+              item '&File Areas', hint: 'Our games by platform, the old way: FILE_ID.DIZ, ZMODEM downloads' do
+                open_window(:file_areas)
+              end
+              item '&Game Catalog', hint: 'Every game of Teletype Games with its card and release history' do
+                open_window(:games)
+              end
+              item 'FTP &Browser', hint: 'ftp.teletypegames.org: the APPS, WARP and WIKI folders, ZMODEM downloads' do
+                open_window(:ftp)
+              end
               separator
-              item '&Platform Guides' do open_window(:wiki, section: :platforms) end
-              item '&Engines'         do open_window(:wiki, section: :engines) end
-              item '&DOS Corner'      do open_window(:wiki, section: :dos) end
-              item 'Tech &HowTos'     do open_window(:howtos) end
-              separator
-              item '&ANSI Gallery' do open_window(:gallery) end
+              item '&ANSI Gallery', hint: 'The art of the board: view it full screen, or make it your desktop' do
+                open_window(:gallery)
+              end
             end
 
-            menu '&Users' do
-              item '&Who is Online'  do open_window(:online_users) end
-              item '&Last Callers'   do open_window(:last_callers) end
-              item '&User Listing'   do open_window(:user_list) end
-              item 'Your &Stats'     do open_window(:my_stats) end
-              item '&Hall of Fame'   do open_window(:hall_of_fame) end
-              item '&Voting Booth'   do open_window(:voting) end
+            menu '&Read' do
+              item '&Platform Guides', hint: 'The wiki on the platforms we make games for' do
+                open_window(:wiki, section: :platforms)
+              end
+              item '&Engines', hint: 'The wiki on our engines and tools: rubbs, WarpEngine and the rest' do
+                open_window(:wiki, section: :engines)
+              end
+              item '&DOS Corner', hint: 'Our DOS programs and how DOSINST installs them over the network' do
+                open_window(:wiki, section: :dos)
+              end
+              item 'Tech &HowTos', hint: 'The how-tos of teletypegames.org/howtos' do open_window(:howtos) end
+            end
+
+            menu '&People' do
+              item '&Who is Online', hint: 'The nodes: who is on, what they are doing, for how long' do
+                open_window(:online_users)
+              end
+              item '&Last Callers', hint: 'The calls of late, newest first' do open_window(:last_callers) end
+              item '&User Listing', hint: 'The registered names with their calls and where they are from' do
+                open_window(:user_list)
+              end
+              item '&Hall of Fame', hint: 'Top downloads, callers, posters and TTG Trivia scores' do
+                open_window(:hall_of_fame)
+              end
               separator
-              item '&Team' do open_window(:team) end
+              item '&Team', hint: 'The members of Teletype Games with their mottos' do open_window(:team) end
+            end
+
+            menu '&Doors' do
+              item 'Door &Lobby…', hint: 'Every door with what it is and who is inside' do open_window(:doors) end
               separator
-              item '&Profile…' do
+              doors
+            end
+
+            menu '&You' do
+              item 'Your &Stats', hint: 'Your calls, posts, votes and letters' do open_window(:my_stats) end
+              item '&Profile…', hint: 'Your signature, location, homepage and notes' do
                 if context[:authenticated]
                   open_window(:profile)
                 else
-                  BBS::Dialogs.message(self, 'Register your name first (Users > Register…): ' \
+                  BBS::Dialogs.message(self, 'Register your name first (You > Register…): ' \
                                              'a profile belongs to a registered name.', title: ' Profile ', width: 60)
                 end
               end
-              item '&Register…' do
+              item '&Register…', hint: 'Tie the name you called with to a password' do
                 if context[:authenticated]
                   BBS::Dialogs.message(self, "#{context[:username]} is already registered and logged in.", title: ' Register ')
                 elsif context[:username] == AccountService::ANONYMOUS
@@ -959,42 +1063,27 @@ module UI
                   open_window(:register)
                 end
               end
-              item 'Lan&guage EN/HU' do
+              item 'Lan&guage EN/HU', hint: 'The wiki pages in English or in Hungarian' do
                 context[:lang] = context[:lang] == 'hu' ? 'en' : 'hu'
                 BBS::Dialogs.message(self, context[:lang] == 'hu' ? 'Wiki pages now in Hungarian.' : 'Wiki pages now in English.',
                                      title: ' Language ')
               end
-            end
-
-            menu '&Doors' do
-              doors
-            end
-
-            menu 'S&ysop' do
-              item '&Console', shortcut: 'F10' do
-                if sysop?
-                  open_window(:sysop_console)
-                else
-                  BBS::Dialogs.message(self, 'Sysop access denied.', title: ' Sysop ')
-                end
+              separator
+              item 'Sysop &Console', enabled: -> { sysop? }, hint: 'Stats and broadcasts, for the sysops' do
+                open_window(:sysop_console)
               end
             end
 
             menu '&Help' do
-              item '&Ask the TTG Master', shortcut: 'F1' do open_window(:master) end
-              item '&New to BBSes?' do open_window(:bulletins) end
-              separator
-              item '&About' do
-                BBS::Dialogs.message(self,
-                  'Teletype BBS — the telnet board of Teletype Games, powered by rubbs. ' \
-                  'Message boards, mail, oneliners, a live chat, the IRC channel (read only) and a voting booth; ' \
-                  'our games in the file areas ' \
-                  'and the catalog, the wiki guides, bulletins and the dev log. ' \
-                  'Register your name under Users to keep it. Doors: SERMO, a Commodore 64 and a Plus/4, ' \
-                  'the Impostor debrief terminal, Chat of Ra and TTG Trivia. Lost? F1 asks the TTG Master.',
-                  title: ' About ', width: 64)
+              item '&Ask the TTG Master…', shortcut: 'F1', hint: 'The sysop answers your questions about the board' do
+                open_window(:master)
               end
-              item '&Keys' do
+              Formatters::Master::QUICK_QUESTIONS.each do |label, question|
+                item(label, hint: "Ask the TTG Master: #{question}") { open_window(:master, question: question) }
+              end
+              separator
+              item '&New to BBSes?', hint: 'How a board like this works, in a bulletin' do open_window(:bulletins) end
+              item '&Keys', hint: 'Every key of the board' do
                 BBS::Dialogs.message(self,
                   'Alt+letter — open menu · Tab/Shift-Tab — move focus · Enter — activate · ' \
                   'Esc — close window · F5 or Alt-Enter — full screen and back (or [↑] on the title bar) · ' \
@@ -1002,6 +1091,14 @@ module UI
                   'Ctrl-F5 — move (arrows) and size (Shift+arrows) a window, or drag its title bar and its ┘ corner · ' \
                   'F1 Ask the TTG Master · F2 Boards · F3 Post · F4 Chat · F7 Mail · F10 Menu · Alt-X Log off',
                   title: ' Keys ', width: 70)
+              end
+              item 'A&bout', hint: 'What this board is' do
+                BBS::Dialogs.message(self,
+                  'Teletype BBS — the telnet board of Teletype Games, powered by rubbs. ' \
+                  'Board: the dashboard, news, bulletins, the dev log. Messages: boards, mail, oneliners, live chat, ' \
+                  'IRC and the voting booth. Files: the file areas, the game catalog, the FTP server and the ANSI art. ' \
+                  'Read: the wiki guides and how-tos. People, Doors, You. Lost? F1 asks the TTG Master.',
+                  title: ' About ', width: 64)
               end
             end
           end
@@ -1019,6 +1116,8 @@ module UI
             services[:online].activity(session_id, top.empty? ? 'At the main menu' : top)
             statusbar.right_text = status_text
             context[:ticks] = (context[:ticks] || 0) + 1
+            @dashboard.tick!
+            refresh_dashboard if (context[:ticks] % 5).zero?
             check_mail if (context[:ticks] % 10).zero?
           end
 
@@ -1027,21 +1126,22 @@ module UI
           end
 
           init do
-            name = context[:desktop_art] ||= services[:art].for_caller(context[:authenticated] ? context[:username] : nil)
-            lines = name ? services[:art].lines(name) : BBS::Widgets::AnsiArt.default_lines
-            @desktop_art = BBS::Widgets::AnsiArt.new(lines: lines)
+            unless context.key?(:desktop_art)
+              context[:desktop_art] = services[:art].for_caller(context[:authenticated] ? context[:username] : nil)
+            end
+            name = context[:desktop_art]
+            @desktop_art = BBS::Widgets::AnsiArt.new(lines: name ? services[:art].lines(name) : [])
             @desktop_art.layout(1, 1, cols, rows - 2)
             add(@desktop_art)
+            @dashboard = Dashboard.new
+            add(@dashboard)
+            refresh_dashboard
             master = BBS::Widgets::Button.new(label: Formatters::Master::DESKTOP_LABEL, on_click: ->(_) { open_window(:master) })
             master.layout(cols - Formatters::Master::DESKTOP_LABEL.length - 5, rows - 2,
                           Formatters::Master::DESKTOP_LABEL.length + 4, 1)
             add(master)
             statusbar.right_text = status_text
             context[:mail_seen] ||= services[:mail].unread_count(context[:username], sysop: sysop?) if registered?
-            unless context[:welcomed]
-              context[:welcomed] = true
-              open_window(:bulletin)
-            end
           end
         end
         call do |ctx, runner|

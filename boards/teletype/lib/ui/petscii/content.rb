@@ -198,12 +198,11 @@ module UI
         doing('News')
         lines = [" #{WH}latest releases#{LG}"]
         @bbs.games.latest_releases(5).each { |g| lines += [release_line(g), *urls(@bbs.games.catalog_url(g))] }
-        lines += ['', " #{WH}coming up#{LG}", *events(5), '', " #{WH}blog#{LG}"]
-        posts = @bbs.wiki.list('blog', lang: lang).first(5)
+        lines += ['', " #{WH}coming up#{LG}", *events(5), '', " #{WH}blog#{LG} #{GR}(r: doors > ttgblog)#{LG}"]
+        posts = @bbs.site.blog_posts(5)
         lines << " #{GR}(no posts yet)#{LG}" if posts.empty?
         posts.each do |p|
-          lines += [" #{GR}#{p.created_at.to_s[0, 10]}#{LG} #{p.title}",
-                    *urls("https://teletypegames.org/blog/#{p.path.delete_prefix('blog/')}")]
+          lines += [" #{GR}#{p.created_at.localtime.strftime('%Y-%m-%d')}#{LG} #{p.title}", *urls(p.url)]
         end
         @screen.page('NEWS', lines)
       end

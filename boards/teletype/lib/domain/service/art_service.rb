@@ -5,11 +5,9 @@
 class ArtService
   EXTENSIONS = %w[.ans .ansi .asc .nfo .txt].freeze
 
-  # +source+ is a folder of art, or one file (its folder is the gallery and
-  # the file is the default desktop).
+  # +source+ is a folder of art, or one file in it: the folder is the gallery.
   def initialize(source, profile:)
     @dir     = File.directory?(source) ? source : File.dirname(source)
-    @default = File.file?(source) ? File.basename(source) : nil
     @profile = profile
   end
 
@@ -31,9 +29,7 @@ class ArtService
 
   def set_favourite(username, name) = @profile.update(username, art: name)
 
-  # The art a session starts with: the caller's favourite, else the
-  # configured file, else a random one of the folder.
-  def for_caller(username)
-    favourite(username) || (@default if files.include?(@default)) || files.sample
-  end
+  # The art a session starts with: the caller's favourite, or nil, and the
+  # desktop is the live dashboard.
+  def for_caller(username) = username && favourite(username)
 end

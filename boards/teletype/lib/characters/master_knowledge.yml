@@ -1,27 +1,28 @@
 # What the TTG Master knows about the board: one fact per entry, found by its
 # keys (whole words of the question, or a phrase of them; a trailing s does
 # not matter; board, door, game and the like weigh half). Keep the
-# menu paths the same as the menubar in lib/ui/modern.rb.
+# menu paths the same as the menubar in lib/ui/modern.rb: Board, Messages,
+# Files, Read, People, Doors, You, Help.
 - keys: [register, registration, password, account, signup, keep, reserve]
-  fact: 'Users > Register… ties the name you called with to a password; from then on that name asks for it. Anonymous cannot register, so call again with a name first.'
+  fact: 'You > Register… ties the name you called with to a password; from then on that name asks for it. Anonymous cannot register, so call again with a name first.'
 - keys: [profile, signature, location, homepage, note]
-  fact: 'Users > Profile… edits your signature, location, homepage and notes. A profile belongs to a registered name, so register first.'
+  fact: 'You > Profile… edits your signature, location, homepage and notes. A profile belongs to a registered name, so register first.'
 - keys: [board, message, post, write, forum, general, tech, offtopic, leave a message]
   fact: 'Messages > Boards… (F2) opens the boards General, Tech, Off-Topic and Sysop. The New button there, or Messages > New Post… (F3), writes a post of up to 1000 characters; Ctrl-Enter sends it.'
 - keys: [oneliner, wall, line]
-  fact: 'Messages > Oneliners is a wall of one-line messages, 64 characters each; Write adds yours (a name is needed, not Anonymous). The last five are in the Welcome window.'
+  fact: 'Messages > Oneliners is a wall of one-line messages, 64 characters each; Write adds yours (a name is needed, not Anonymous). The newest ones run along the bottom of the Dashboard.'
 - keys: [chat, talk, live, people, everyone]
   fact: 'Messages > Live Chat (F4) is the live chat with everyone online right now.'
 - keys: [online, who, caller, last, node, nodes]
-  fact: 'Users > Who is Online lists the nodes: who is on which line now and what they are doing. Users > Last Callers lists the recent calls.'
+  fact: 'People > Who is Online lists the nodes: who is on which line now and what they are doing. People > Last Callers lists the recent calls.'
 - keys: [user list, users, userlist, listing, registered, members list]
-  fact: 'Users > User Listing lists the registered names with their calls and last call.'
+  fact: 'People > User Listing lists the registered names with their calls and last call.'
 - keys: [stats, statistics, my calls, caller number, how many times]
-  fact: 'Users > Your Stats shows your caller number, your calls, your first and last call, your posts and votes.'
+  fact: 'You > Your Stats shows your caller number, your calls, your first and last call, your posts and votes.'
 - keys: [hall, fame, top, best, highscore, high score, most, ranking, toplist]
-  fact: 'Users > Hall of Fame has the top lists: the most downloaded games, the top callers, the top posters and the TTG Trivia high scores.'
+  fact: 'People > Hall of Fame has the top lists: the most downloaded games, the top callers, the top posters and the TTG Trivia high scores.'
 - keys: [vote, voting, poll, polls, booth, survey, favourite, favorite]
-  fact: 'Users > Voting Booth has the polls of the board, like your favourite Teletype Games title; Enter or Vote, then the number of your choice. A name is needed to vote, and you can change your vote.'
+  fact: 'Messages > Voting Booth has the polls of the board, like your favourite Teletype Games title; Enter or Vote, then the number of your choice. A name is needed to vote, and you can change your vote.'
 - keys: [mail, email, e-mail, letter, private, inbox, message someone, write to]
   fact: 'Messages > Mail… (F7) is private mail between registered names: Write, Reply, Delete. You get a bell when a letter arrives during your call.'
 - keys: [feedback, complain, complaint, contact, suggestion, report, bug]
@@ -29,37 +30,39 @@
 - keys: [page, yell, call the sysop, talk to the sysop, sysop online]
   fact: 'Messages > Page the Sysop rings the sysop once a call; when the sysop is away, it offers to leave a letter instead.'
 - keys: [file area, file areas, areas, diz, file_id]
-  fact: 'Content > File Areas has our games as files, one area per platform, with sizes, download counts and a FILE_ID.DIZ; Enter sends a file to your terminal by ZMODEM.'
+  fact: 'Files > File Areas has our games as files, one area per platform, with sizes, download counts and a FILE_ID.DIZ; Enter sends a file to your terminal by ZMODEM.'
 - keys: [bulletins, rules, history, story, about, newcomer, new to bbs, what is a bbs]
-  fact: 'File > Bulletins… has the numbered bulletins: the logon bulletin, About Teletype Games, the story so far (every release), what is coming up, the board rules, New to BBSes? and our BBS network.'
+  fact: 'Board > Bulletins… has the numbered bulletins: the logon bulletin, About Teletype Games, the story so far (every release), what is coming up, the board rules, New to BBSes? and our BBS network.'
 - keys: [howto, howtos, tutorial, tech]
-  fact: 'Content > Tech HowTos reads the tech how-tos of teletypegames.org/howtos, each a wiki page.'
+  fact: 'Read > Tech HowTos reads the tech how-tos of teletypegames.org/howtos, each a wiki page.'
 - keys: [trivia, quiz, question, score, door game]
   fact: 'Doors > TTG Trivia is a door game: ten questions about Teletype Games and the old days, 20 seconds each, with a hall of fame.'
 - keys: [team, member, members, motto, crew, group]
-  fact: 'Users > Team lists the members of Teletype Games with their mottos.'
+  fact: 'People > Team lists the members of Teletype Games with their mottos.'
 - keys: [language, hungarian, magyar, english, translate]
-  fact: 'Users > Language EN/HU switches the wiki pages of the board between English and Hungarian.'
+  fact: 'You > Language EN/HU switches the wiki pages of the board between English and Hungarian.'
 - keys: [news, blog, welcome]
-  fact: 'File > News shows the latest releases, the upcoming events and the blog posts; File > Welcome opens the Welcome window again.'
+  fact: 'Board > News shows the latest releases, the upcoming events and the newest posts of our blog, TTGBLOG.'
+- keys: [dashboard, desktop, home, start screen, main screen, overview, what is happening]
+  fact: 'Board > Dashboard is the live desktop: who is on the lines, the last callers, what is new, what is coming up, and the oneliners running along the bottom. It closes every window; an art from Files > ANSI Gallery can take its place.'
 - keys: [devlog, dev, log, commit, git, gitea, development, source, repository, repo]
-  fact: 'File > Dev Log shows what the team pushed, tagged and released lately on git.teletypegames.org, where the source of our projects lives.'
+  fact: 'Board > Dev Log shows what the team pushed, tagged and released lately on git.teletypegames.org, where the source of our projects lives.'
 - keys: [exit, quit, logoff, logout, bye, disconnect, get out, log off, leave the board]
-  fact: 'File > Log off, or Alt-X, ends the call. An idle call is disconnected after 10 minutes.'
+  fact: 'Board > Log off, or Alt-X, ends the call. An idle call is disconnected after 10 minutes.'
 - keys: [system, info, uptime, ruby, version]
-  fact: 'File > System Info shows the board''s numbers and uptime.'
+  fact: 'Board > System Info shows the board''s numbers and uptime.'
 - keys: [game, catalog, release, platform, download, browser, play]
-  fact: 'Content > Game Catalog lists every game of Teletype Games; the Platform button cycles through the platforms, and each card has the catalog link at teletypegames.org/catalog/ with its downloads. Most of our games play right in the browser from their catalog page.'
+  fact: 'Files > Game Catalog lists every game of Teletype Games; the Platform button cycles through the platforms, and each card has the catalog link at teletypegames.org/catalog/ with its downloads. Most of our games play right in the browser from their catalog page.'
 - keys: [file, files, library, ftp, apps, warp, download, zmodem, browser, folder]
-  fact: 'Content > FTP Browser is an FTP client on ftp.teletypegames.org (anonymous, read-only, passive mode): Enter opens a folder or downloads a file to your terminal by ZMODEM, Up goes back. APPS holds the DOS programs, WARP every file of every catalog game, WIKI the wiki for DOS.'
+  fact: 'Files > FTP Browser is an FTP client on ftp.teletypegames.org (anonymous, read-only, passive mode): Enter opens a folder or downloads a file to your terminal by ZMODEM, Up goes back. APPS holds the DOS programs, WARP every file of every catalog game, WIKI the wiki for DOS.'
 - keys: [dos, dosinst, gmenu, bmagic, ttgwiki, install, mtcp]
-  fact: 'Content > DOS Corner is about our DOS programs. DOSINST installs, updates and removes them over the network from the APPS folder of ftp.teletypegames.org; the others are GMENU, BMAGIC and TTGWIKI.'
+  fact: 'Read > DOS Corner is about our DOS programs. DOSINST installs, updates and removes them over the network from the APPS folder of ftp.teletypegames.org; the others are GMENU, BMAGIC and TTGWIKI.'
 - keys: [wiki, guide, guides, engine, engines, documentation, docs, howto]
-  fact: 'Content > Platform Guides, Content > Engines and Content > DOS Corner read the wiki. The whole wiki is at wiki.teletypegames.org, and on the WIKI-BBS at teletypegames.org:2325.'
+  fact: 'Read > Platform Guides, Read > Engines and Read > DOS Corner read the wiki. The whole wiki is at wiki.teletypegames.org, and on the WIKI-BBS at teletypegames.org:2325.'
 - keys: [ansi, ascii, art, gallery, desktop, background, picture, graphics]
-  fact: 'Content > ANSI Gallery shows the ANSI art of the board. Enter or View shows a piece on the full screen, Desktop puts it on the desktop for this call, Favourite keeps it for every call of a registered name.'
-- keys: [door, doors, program]
-  fact: 'The Doors menu has programs that take over the screen and give it back when you leave them: SERMO, Commodore 64, Commodore Plus/4, Impostor, Chat of Ra, the TTG Trivia game, and Alexandria, Feedia and TTGBLOG, which take you over to those boards.'
+  fact: 'Files > ANSI Gallery shows the ANSI art of the board. Enter or View shows a piece on the full screen, Desktop puts it on the desktop for this call, Favourite keeps it for every call of a registered name.'
+- keys: [door, doors, program, lobby]
+  fact: 'Doors > Door Lobby… lists every door with what it is and who is inside; Enter steps in. The doors take over the screen and give it back when you leave them: SERMO, Commodore 64, Commodore Plus/4, Impostor, Chat of Ra, the TTG Trivia game, and Alexandria, Feedia and TTGBLOG, which take you over to those boards.'
 - keys: [sermo, neumatronic, margittai, acp]
   fact: 'Doors > SERMO is a dual machine of the Neumatronic universe: type a command, or just talk to it. EXIT returns to the board.'
 - keys: [commodore, c64, plus4, basic, load, run, emulator, retro]
@@ -69,7 +72,7 @@
 - keys: [impostor, code, debrief, norman]
   fact: 'Doors > Impostor is the debrief terminal of our game Definitely not an Impostor; it asks for the personal code the game gave you. It also runs on its own at teletypegames.org:2324.'
 - keys: [network, bbs, other, telnet, bbsweb, port]
-  fact: 'File > BBS Network lists our boards: the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324, the WIKI-BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia (RSS news) at 2327 and TTGBLOG (our blog) at 2328, and TTG Gate at 2399 reaches all of them from one port. All of them work in a browser too, at bbsweb.teletypegames.org.'
+  fact: 'Board > BBS Network lists our boards: the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324, the WIKI-BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia (RSS news) at 2327 and TTGBLOG (our blog) at 2328, and TTG Gate at 2399 reaches all of them from one port. All of them work in a browser too, at bbsweb.teletypegames.org.'
 - keys: [alexandria, wikipedia, feedia, rss, news, feed, feeds, gateway]
   fact: 'Doors > Alexandria and Doors > Feedia take your line over to those boards: Alexandria BBS reads Wikipedia, Feedia reads RSS news feeds. Leave them the way they say (Alt-X, or Q on a C64), and you come back here.'
 - keys: [ttgblog, blog, posts, post, editor, editors]
@@ -77,9 +80,9 @@
 - keys: [gate, ttggate, dial, dialing, '2399', one port, all boards]
   fact: 'TTG Gate at teletypegames.org:2399 is one port for our whole network: a dialing menu that puts your call through to any of our boards, this one too, and takes it back when that board hangs up. On a C64 it lists the boards that have a C64 face.'
 - keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag, switch, window, windows, front]
-  fact: 'Alt and a letter opens a menu, F10 the first one; Tab moves inside a window, Enter presses the button, Esc closes the window. F2 boards, F3 post, F4 chat, F7 mail, F1 asks me. F5 or Alt-Enter puts a big window on the full screen and back, so does the [↑] on its title bar. Several windows can be open: F6 brings the next one to the front, Shift-F6 the previous one, Alt and its number picks one, and a click on a window brings it forward. Ctrl-F5 moves a window with the arrows and sizes it with Shift and the arrows; with the mouse, drag its title bar or its bottom right corner. The mouse works too.'
+  fact: 'Alt and a letter opens a menu, F10 the first one, and the bottom line tells what the highlighted menu item does; Tab moves inside a window, Enter presses the button, Esc closes the window. F2 boards, F3 post, F4 chat, F7 mail, F1 asks me. F5 or Alt-Enter puts a big window on the full screen and back, so does the [↑] on its title bar. Several windows can be open: F6 brings the next one to the front, Shift-F6 the previous one, Alt and its number picks one, and a click on a window brings it forward. Ctrl-F5 moves a window with the arrows and sizes it with Shift and the arrows; with the mouse, drag its title bar or its bottom right corner. The mouse works too.'
 - keys: [sysop, admin, operator, console, broadcast]
-  fact: 'Sysop > Console is for the sysops of the board, logged in with their password; it shows the numbers and sends broadcasts to the chat.'
+  fact: 'You > Sysop Console is for the sysops of the board, logged in with their password; it shows the numbers and sends broadcasts to the chat.'
 - keys: [teletype, ttg, company, studio, website, site, made, built, created, behind, owner, who made, who built, who run, who is behind]
   fact: 'Teletype Games is the group behind this board. It makes games for retro and modern platforms, from the Commodore 64 and the Plus/4 to TIC-80 and the browser; its home is teletypegames.org, with the catalog, the blog and the events.'
 - keys: [discord]

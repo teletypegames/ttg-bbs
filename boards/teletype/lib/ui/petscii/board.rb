@@ -5,22 +5,18 @@ module UI
     # One call on the C64 board: the main menu and what its keys open. The
     # sections live in messages.rb, content.rb and people.rb.
     class Board
+      # Two rows of two sections, each with its colour: the keys of a section
+      # wear it, so the eye finds the group first.
       MENU = [
-        [['MESSAGES', nil], ['CONTENT', nil]],
-        [['m', 'message boards'], ['f', 'file areas']],
-        [%w[e e-mail], ['b', 'ftp browser']],
-        [%w[o oneliners], ['g', 'game catalog']],
-        [['l', 'live chat'], ['w', 'wiki & how-tos']],
-        [['i', 'irc channel'], %w[n news]],
-        [['p', 'page the sysop'], %w[u bulletins]],
-        [[nil, nil], ['d', 'dev log']],
-        [[nil, nil], [nil, nil]],
-        [['PEOPLE', nil], ['MORE', nil]],
-        [['c', 'callers & users'], %w[r doors]],
-        [['v', 'voting booth'], ['t', 'ttg master']],
-        [['s', 'you & your name'], ['y', 'system info']],
-        [['h', 'hall of fame'], ['?', 'help']]
+        [['messages', GN, [['m', 'message boards'], %w[e e-mail], %w[o oneliners], ['l', 'live chat'],
+                           ['i', 'irc channel'], ['p', 'page the sysop']]],
+         ['content', CY, [['f', 'file areas'], ['b', 'ftp browser'], ['g', 'game catalog'], ['w', 'wiki & how-tos'],
+                          %w[n news], %w[u bulletins], ['d', 'dev log']]]],
+        [['people', PU, [['c', 'callers & users'], ['v', 'voting booth'], ['s', 'you & your name'],
+                         ['h', 'hall of fame']]],
+         ['more', YE, [%w[r doors], ['t', 'ttg master'], ['y', 'system info'], ['?', 'help'], ['q', 'log off']]]]
       ].freeze
+      CELL = 20
 
       HELP = [
         'Every menu takes one key: the letter in front of the line. RETURN alone does nothing on the main menu.',
@@ -86,19 +82,43 @@ module UI
         @unread = registered? ? @bbs.mail.unread_count(name, sysop: sysop?) : nil
         @screen.title('TELETYPE BBS', node_text)
         MENU.each do |left, right|
-          @screen.puts "#{menu_cell(*left)}#{menu_cell(*right)}"
+          left = [left[0], left[1], left[2] + [['z', 'sysop console']]] if sysop? && left[0] == 'people'
+          @screen.puts "#{section_head(left)}#{section_head(right)}"
+          [left[2].size, right[2].size].max.times do |i|
+            @screen.puts "#{menu_cell(left[1], *left[2][i])}#{menu_cell(right[1], *right[2][i])}"
+          end
         end
-        @screen.puts "#{menu_cell('z', 'sysop console')}#{menu_cell('q', 'log off')}" if sysop?
-        @screen.puts "#{' ' * 20}#{menu_cell('q', 'log off')}" unless sysop?
+        live_strip
         status
       end
 
-      def menu_cell(key, label)
-        return ' ' * 20 if key.nil?
-        return " #{CY}#{key.ljust(19)}#{LG}" if label.nil?
+      # A section's name in its colour, the rest of the cell a line.
+      def section_head((title, color, _items))
+        " #{color}#{title}#{DG} #{'─' * (CELL - title.length - 3)}#{LG}"
+      end
+
+      def menu_cell(color, key = nil, label = nil)
+        return ' ' * CELL if key.nil?
 
         label = "#{label} (#{@unread})" if key == 'e' && @unread.to_i.positive?
-        " #{YE}#{key.upcase}#{LG} #{label[0, 16].ljust(16)} "
+        " #{color}#{key.upcase}#{LG} #{label[0, CELL - 4].ljust(CELL - 4)} "
+      end
+
+      # What is happening, under the menu: the nodes, the boards, the next
+      # event and the newest release, one line each.
+      def live_strip
+        @screen.rule
+        online = @bbs.online.count
+        mail   = @unread.to_i.positive? ? " #{GR}·#{LG} #{GN}#{@unread} new mail#{LG}" : ''
+        @screen.puts " #{YE}#{online}#{LG} on line #{GR}·#{LG} #{YE}#{@bbs.boards.total_count}#{LG} messages#{mail}"
+        event = @bbs.site.upcoming_events(1).first
+        if event
+          days = ((event.date - Time.now) / 86_400).ceil
+          when_ = days <= 0 ? 'today' : "in #{days} day#{'s' unless days == 1}"
+          @screen.puts " #{GR}next:#{LG} #{event.name[0, 38 - 7 - when_.length - 1]} #{CY}#{when_}#{LG}"
+        end
+        game = @bbs.games.latest_releases(1).first
+        @screen.puts " #{GR}new:#{LG}  #{YE}#{game.title[0, 38 - 7 - game.version.length - 1]}#{LG} #{game.version}" if game
       end
 
       # Mail that arrived since the last look rings once, as on the old boards.
@@ -121,18 +141,18 @@ module UI
       # Only the doors that fit 40 columns, or have a C64 version; the others
       # wait on the modern face.
       def doors
-        doors, wide = @bbs.doors.partition { |d| d.cols <= COLS || d.petscii }
-        door = @screen.pick('DOORS', doors) { |d| d.label.delete('&') }
+        doors, wide = @bbs.doors.partition(&:c64?)
+        door = @screen.pick('DOORS', doors) { |d| "#{d.title} #{GR}#{d.tag}#{LG}" }
         unless door
           return if wide.empty?
 
           @screen.title('DOORS')
-          @screen.say("#{wide.map { |d| d.label.delete('&') }.join(', ')} need 80 columns: call with a PC " \
+          @screen.say("#{wide.map(&:title).join(', ')} need 80 columns: call with a PC " \
                       'terminal and choose 1 to open them.', GR)
           return @screen.pause
         end
 
-        doing("Door: #{door.label.delete('&')}")
+        doing("Door: #{door.title}")
         BBS::Door.new(door.name, door.petscii || door.program, label: door.label).run(@screen.session, @ctx)
       end
 

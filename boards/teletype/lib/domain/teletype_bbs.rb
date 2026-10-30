@@ -32,8 +32,13 @@ class TeletypeBBS
   }.freeze
 
   # +cols+: the narrowest screen the program draws for; +petscii+: the same door
-  # drawn for 40 columns, when the program itself needs more.
-  Door = Struct.new(:name, :program, :label, :cols, :petscii)
+  # drawn for 40 columns, when the program itself needs more. +tag+ is a few
+  # words for the C64's list, +hint+ the line of the modern statusbar, +about+
+  # the Door Lobby's paragraph.
+  Door = Struct.new(:name, :program, :label, :cols, :petscii, :tag, :hint, :about, keyword_init: true) do
+    def title = label.delete('&')
+    def c64? = cols <= 40 || !petscii.nil?
+  end
 
   attr_reader :online, :boards, :wiki, :games, :chat, :irc, :last_callers, :profile, :accounts, :site,
               :discord, :oneliners, :files, :dev_log, :art, :master, :mail, :voting, :file_areas, :trivia,
@@ -87,16 +92,53 @@ class TeletypeBBS
   # The doors, in the order of the Doors menu; each label marks its hotkey with &.
   def doors
     @doors ||= [
-      Door.new(:sermo,      Sermo::OS, '&SERMO', 80),
-      Door.new(:c64,        Commodore.os(Commodore::C64, games: @games, files: @files), '&Commodore 64', 40),
-      Door.new(:plus4,      Commodore.os(Commodore::PLUS4, games: @games, files: @files), 'Commodore &Plus/4', 40),
-      Door.new(:impostor,   Impostor::Modern.flow(sessions: @impostor_sessions), '&Impostor', 80,
-                            Impostor::Petscii.flow(sessions: @impostor_sessions)),
-      Door.new(:ra,         Ra.os(games: @games), 'Chat of &Ra', 80),
-      Door.new(:trivia,     Trivia.door(games: @games, site: @site, scores: @trivia), '&TTG Trivia', 80),
-      Door.new(:alexandria, BBS::Gateway.new(host: GATEWAY_HOST, port: 2326, name: 'Alexandria BBS'), '&Alexandria', 40),
-      Door.new(:feedia,     BBS::Gateway.new(host: GATEWAY_HOST, port: 2327, name: 'Feedia'), '&Feedia', 40),
-      Door.new(:ttgblog,    BBS::Gateway.new(host: GATEWAY_HOST, port: 2328, name: 'TTGBLOG'), 'TTG&BLOG', 40)
+      Door.new(name: :sermo, program: Sermo::OS, label: '&SERMO', cols: 80,
+               tag: 'neumatronic machine',
+               hint: 'SERMO: a dual machine of the Neumatronic universe; type a command, or just talk to it',
+               about: 'The Margittai machine of the Neumatronic universe, running SERMO. Type its commands, ' \
+                      'or talk to it: its Lapis-ACP answers. EXIT brings you back.'),
+      Door.new(name: :c64, program: Commodore.os(Commodore::C64, games: @games, files: @files),
+               label: '&Commodore 64', cols: 40, tag: 'c64 + our games',
+               hint: 'A Commodore 64 at READY., with our C64 games on its disk: LOAD"$",8 lists them',
+               about: 'A Commodore 64 at its READY. prompt, with a small BASIC V2. The disk holds our C64 games: ' \
+                      'LOAD"$",8 and LIST show the directory, LOAD"NAME",8 and RUN show a game. EXIT returns.'),
+      Door.new(name: :plus4, program: Commodore.os(Commodore::PLUS4, games: @games, files: @files),
+               label: 'Commodore &Plus/4', cols: 40, tag: 'plus/4 + our games',
+               hint: 'A Commodore Plus/4 with our Plus/4 games on its disk: DIRECTORY lists them',
+               about: 'The grey screen of the Plus/4 and its BASIC 3.5 habits: DIRECTORY and DLOAD work, and ' \
+                      'the disk holds our Plus/4 games. EXIT returns.'),
+      Door.new(name: :impostor, program: Impostor::Modern.flow(sessions: @impostor_sessions),
+               petscii: Impostor::Petscii.flow(sessions: @impostor_sessions), label: '&Impostor', cols: 80,
+               tag: 'the debrief terminal',
+               hint: 'The debrief terminal of Definitely not an Impostor: leave your code and your feedback',
+               about: 'The terminal at the end of our game Definitely not an Impostor: type the code the game ' \
+                      'gave you, and tell us how it went. The same as Impostor BBS on port 2324.'),
+      Door.new(name: :ra, program: Ra.os(games: @games), label: 'Chat of &Ra', cols: 80,
+               tag: 'talk to the sun god',
+               hint: 'Talk to Ra in the pyramid of Blessing of Ra; solve three riddles for his blessing',
+               about: 'You are the worker sealed in the pyramid of Blessing of Ra, and the sun god answers from ' \
+                      'above. RIDDLE asks one of the pyramid\'s riddles; three solved earn his blessing.'),
+      Door.new(name: :trivia, program: Trivia.door(games: @games, site: @site, scores: @trivia),
+               label: '&TTG Trivia', cols: 80, tag: 'quiz, high scores',
+               hint: 'Ten questions, 20 seconds each, A to D: quick answers and streaks score more',
+               about: 'A door game of the old kind: ten questions about our games, the team and old computers, ' \
+                      '20 seconds each. A quick answer is worth more, three in a row earn a bonus, and the best ' \
+                      'ten games are in the Hall of Fame.'),
+      Door.new(name: :alexandria, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2326, name: 'Alexandria BBS'),
+               label: '&Alexandria', cols: 40, tag: 'wikipedia bbs',
+               hint: 'Alexandria BBS: Wikipedia on a telnet line, a gateway to port 2326',
+               about: 'Our Wikipedia board: search, read an article a screenful at a time, follow its links. ' \
+                      'A gateway to Alexandria BBS on port 2326; hang up there to come back.'),
+      Door.new(name: :feedia, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2327, name: 'Feedia'),
+               label: '&Feedia', cols: 40, tag: 'rss reader bbs',
+               hint: 'Feedia: an RSS reader board, the news of the day as text, a gateway to port 2327',
+               about: 'Our RSS reader board: Hacker News, the retro sites, the Hungarian news and our own blog, as ' \
+                      'plain text. A gateway to Feedia on port 2327; hang up there to come back.'),
+      Door.new(name: :ttgblog, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2328, name: 'TTGBLOG'),
+               label: 'TTG&BLOG', cols: 40, tag: 'our blog',
+               hint: 'TTGBLOG: the Teletype Games blog, written on the line, a gateway to port 2328',
+               about: 'The board our blog is written on: the posts of teletypegames.org/blog, read a screenful at ' \
+                      'a time. A gateway to TTGBLOG on port 2328; hang up there to come back.')
     ]
   end
 
