@@ -1,6 +1,11 @@
 # The feeds a caller can pick, in this order. RSS 0.9x/2.0, RSS 1.0 (RDF) and Atom
 # all work. Every entry needs a name and a url; group, lang and about are shown
 # with it. A new feed is a commit here: a push to master deploys it.
+- name: TTGBLOG
+  url: https://teletypegames.org/api/v1/rss/blog
+  group: Teletype Games
+  about: Our own blog, written on the TTGBLOG telnet board.
+
 - name: Hacker News
   url: https://news.ycombinator.com/rss
   group: Tech
