@@ -1,0 +1,9 @@
+# Where the gate dials the boards; their ports are in config/boards.yml.
+TTGGATE_GATEWAY_HOST=host.docker.internal
+# The address shown with every board in the menu.
+TTGGATE_PUBLIC_HOST=teletypegames.org
+# The boards list.
+TTGGATE_BOARDS=config/boards.yml
+# rubbs: the port inside the container, callers at once, idle seconds.
+BBS_PORT=2323
+BBS_MAX_SESSIONS=50

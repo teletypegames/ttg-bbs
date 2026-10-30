@@ -1,0 +1,18 @@
+services:
+  ttggate:
+    mem_limit: 160m
+    cpus: 1.0
+    pids_limit: 256
+    build: .
+    container_name: ttggate
+    ports:
+      - "2399:2323"
+    environment:
+      - TZ=Europe/Budapest
+      - BBS_MAX_SESSIONS=50
+      - TTGGATE_GATEWAY_HOST=host.docker.internal
+      - TTGGATE_PUBLIC_HOST=teletypegames.org
+    extra_hosts:
+      # The boards are dialled on their ports on the host.
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
