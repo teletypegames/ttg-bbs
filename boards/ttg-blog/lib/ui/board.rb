@@ -19,11 +19,6 @@ module UI
 
     MOTTO = 'news from teletype games'
 
-    EDITOR_HELP = 'Type the post line by line, in Markdown; an empty line starts a new paragraph. ' \
-                  'Commands on a line of their own: /s save, /q quit, /l list, /e N retype line N, ' \
-                  '/i N insert before line N, /d N delete line N, /c clear all, /h help. ' \
-                  'A line that starts with / itself: type //.'
-
     ERRORS = {
       no_title:     'The post needs a title.',
       long_title:   "The title is longer than #{Blog::MAX_TITLE} characters.",
@@ -262,16 +257,12 @@ module UI
     end
 
     def new_draft
-      @screen.title('NEW POST', right)
-      @screen.say('Return alone on the title: back.', GR)
-      @screen.puts
       title = ask_title('')
       return nil unless title
 
       category = pick_category
       return nil unless category
 
-      @screen.title('NEW POST', right)
       summary = ask_summary('')
       body    = edit_body('')
       { title: title, summary: summary, body: body || '', category: category }
@@ -292,18 +283,17 @@ module UI
       @screen.wrap(value, @screen.width - 3).first(3).each { |l| @screen.puts "    #{l}" }
     end
 
+    # The title in the editor, the current one to start from. Nil when the
+    # caller quit or left it empty.
     def ask_title(current)
-      keep = current.empty? ? '' : ' Return alone keeps it.'
-      @screen.say("Title, up to #{Blog::MAX_TITLE} characters.#{keep}", GR)
-      title = @screen.ask(" #{WH}title#{LG}> ", max: Blog::MAX_TITLE)
-      title.empty? ? nil : title
+      title = @screen.edit(current, title: 'TITLE', single_line: true, max: Blog::MAX_TITLE)&.strip
+      title.nil? || title.empty? ? nil : title
     end
 
+    # The summary in the editor; the current one when the caller quit.
     def ask_summary(current)
-      keep = current.empty? ? '' : ' Return alone keeps it.'
-      @screen.say("A summary in one line, up to #{Blog::MAX_SUMMARY} characters.#{keep}", GR)
-      summary = @screen.ask(" #{WH}summary#{LG}> ", max: Blog::MAX_SUMMARY)
-      summary.empty? ? current : summary
+      summary = @screen.edit(current, title: 'SUMMARY', single_line: true, max: Blog::MAX_SUMMARY)
+      summary.nil? ? current : summary.strip
     end
 
     def pick_category
@@ -343,56 +333,9 @@ module UI
       @screen.choose(" #{WH}y/n#{LG}> ", %w[y n], back: 'n') == 'y'
     end
 
-    # The line editor: the body as lines, typed one after the other, with
-    # slash commands. The new body on /s, nil on /q.
+    # The body in the editor, in Markdown; nil when the caller quit.
     def edit_body(body)
-      lines = body.to_s.lines(chomp: true)
-      @screen.title('BODY', right)
-      @screen.say(EDITOR_HELP, GR)
-      list(lines) unless lines.empty?
-      loop do
-        input = @screen.line("#{YE}#{(lines.size + 1).to_s.rjust(3)}#{LG}> ")
-        if input.start_with?('//')
-          lines << input[1..]
-          next
-        end
-        unless input.start_with?('/')
-          lines << input
-          next
-        end
-
-        command, arg = input[1..].split(/\s+/, 2)
-        n = arg.to_i
-        case command&.downcase
-        when 's' then return lines.join("\n").rstrip
-        when 'q' then return nil
-        when 'l' then list(lines)
-        when 'h' then @screen.say(EDITOR_HELP, GR)
-        when 'c' then lines.clear
-        when 'd'
-          next bad_line(lines) unless n.between?(1, lines.size)
-
-          lines.delete_at(n - 1)
-        when 'e', 'i'
-          limit = command.downcase == 'e' ? lines.size : lines.size + 1
-          next bad_line(lines) unless n.between?(1, limit)
-
-          @screen.puts "#{GR}#{lines[n - 1]}#{LG}" if command.downcase == 'e'
-          text = @screen.line("#{YE}#{n.to_s.rjust(3)}#{LG}> ")
-          command.downcase == 'e' ? lines[n - 1] = text : lines.insert(n - 1, text)
-        else
-          @screen.say('Unknown command; /h lists them.', RD)
-        end
-      end
-    end
-
-    def bad_line(lines)
-      @screen.say(lines.empty? ? 'There are no lines yet.' : "A line number from 1 to #{lines.size}, please.", RD)
-    end
-
-    def list(lines)
-      @screen.page('BODY', lines.each_with_index.map { |l, i| "#{YE}#{(i + 1).to_s.rjust(3)}#{LG} #{l}" },
-                   right: right, wait: false)
+      @screen.edit(body.to_s, title: 'BODY (MARKDOWN)', max: Blog::MAX_BODY)&.rstrip
     end
   end
 end

@@ -11,7 +11,7 @@ menu and write, edit and delete posts. Built on the
 It has two faces on one port, and both are line by line, with no windows: a
 **modern** one for ANSI terminals (up to 80 columns, the caller's window
 height) and a **Commodore 64** one in PETSCII, 40×25. The menus, the lists and
-the line editor are the same on both.
+the full-screen editor are the same on both.
 
 ## Running
 
@@ -106,20 +106,20 @@ the draft: `T` title, `C` category, `S` summary, `B` body, `V` view (as a
 reader will see it), `W` save, `Q` quit (asks before dropping changes). Editing
 a post opens the same draft screen.
 
-The body is Markdown, typed in a line editor: every line typed is added, an
-empty line starts a new paragraph. Commands on a line of their own:
+The title, the summary and the body are written in the full-screen editor of
+rubbs (`BBS::Editor`), which starts from the current text: the cursor keys move
+anywhere in it, typing inserts at the cursor, DEL deletes before it, and the
+lines wrap as they are typed. The title and the summary are one line each
+(RETURN saves them); the body is Markdown, RETURN starts a new line and an
+empty line a new paragraph.
 
-| Command | Action |
+| Key | Action |
 |---|---|
-| `/s` | Save the body |
-| `/q` | Quit, keep the body as it was |
-| `/l` | List the lines, numbered |
-| `/e N` | Retype line N |
-| `/i N` | Insert a line before line N |
-| `/d N` | Delete line N |
-| `/c` | Clear all |
-| `/h` | Help |
-| `//…` | A line that starts with `/` |
+| cursor keys | Move; up and down keep the column |
+| HOME / END | Start / end of the screen row |
+| PgUp / PgDn | A screenful up / down (modern terminal) |
+| F1 (Ctrl-S) | Save |
+| F7, RUN/STOP, `←` (Esc) | Quit, keep the text as it was |
 
 ## Project structure
 

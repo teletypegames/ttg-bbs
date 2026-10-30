@@ -105,13 +105,11 @@ module UI
       max ? line[0, max] : line
     end
 
-    # A line as typed: the line editor keeps the spaces a line starts with.
-    def line(prompt)
-      write prompt
-      line = @session.readline
-      raise IOError, 'the caller hung up' if line.nil?
-
-      line.rstrip
+    # The full-screen editor of rubbs on this screen: the text when saved,
+    # nil when the caller quit.
+    def edit(text, title:, single_line: false, max: nil)
+      BBS::Editor.new(@session, text: text, title: title, single_line: single_line, max: max,
+                                cols: @cols, rows: @rows).run
     end
 
     def pause(text = 'return: back')
