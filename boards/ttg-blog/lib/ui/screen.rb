@@ -98,10 +98,7 @@ module UI
     # A line typed by the caller in a field of rubbs after +prompt+,
     # starting from +text+; trimmed, and empty when the caller cancelled.
     def ask(prompt, text: '', mask: nil, max: nil)
-      write prompt
-      width = @cols - 1 - BBS::FrameBuffer.visible_width(prompt)
-      line  = BBS::Field.new(@session, text: text, width: width, max: max, mask: mask).run
-      line.to_s.strip
+      BBS::Field.ask(@session, prompt, text: text, max: max, mask: mask, cols: @cols).to_s.strip
     end
 
     # The full-screen editor of rubbs on this screen: the text when saved,
