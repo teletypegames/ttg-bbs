@@ -39,6 +39,7 @@ module UI
       lines = wrap.call(post.title).map { |l| " #{WH}#{l}#{LG}" }
       lines << " #{GR}#{meta}#{LG}"
       lines << " #{GR}updated #{date.call(post.updated_at)}#{LG}" if post.updated?
+      lines << " #{RD}unpublished: only the editors see it#{LG}" unless post.published
       lines << ''
       lines.concat(wrap.call(post.summary).map { |l| " #{CY}#{l}#{LG}" }) unless post.summary.empty?
       lines << " #{DG}#{'─' * (width - 1)}#{LG}"
@@ -80,6 +81,7 @@ module UI
         menu_line('C', 'categories')
         menu_line('G', 'go to post #')
         if user
+          menu_line('U', "unpublished posts #{GR}(#{@blog.total(published: false)})#{LG}")
           menu_line('W', 'write a post')
           menu_line('P', 'change your password')
           menu_line('O', "log out #{GR}(#{user.name})#{LG}")
@@ -87,9 +89,10 @@ module UI
           menu_line('E', 'editor login')
         end
         menu_line('Q', 'log off')
-        keys = user ? %w[l c g w p o q] : %w[l c g e q]
+        keys = user ? %w[l c g u w p o q] : %w[l c g e q]
         case @screen.choose("\r\n #{WH}ttgblog#{LG}> ", keys)
-        when 'l' then browse('LATEST POSTS') { @blog.posts }
+        when 'l' then browse('LATEST POSTS') { @blog.posts(published: shown) }
+        when 'u' then browse('UNPUBLISHED POSTS') { @blog.posts(published: false) }
         when 'c' then categories
         when 'g' then go_to
         when 'e' then login
@@ -122,9 +125,17 @@ module UI
 
     def user = @ctx[:user]
 
+    # What the caller may read: everything for an editor, the published
+    # posts for a reader (nil and true, as Blog#posts takes them).
+    def shown = user ? nil : true
+
+    def readable?(post) = post && (user || post.published)
+
+    def draft_tag = wide? ? 'unpublished' : 'u'
+
     def wide? = @screen.cols >= 60
 
-    def right = user ? "#{user.name} " : "#{@blog.total} posts "
+    def right = user ? "#{user.name} " : "#{@blog.total(published: true)} posts "
 
     def menu_line(key, text) = @screen.puts(" #{YE}#{key}#{LG} #{text}")
 
@@ -135,7 +146,7 @@ module UI
       @screen.write "\r\n #{WH}post ##{LG} "
       id = @screen.number
       return if id.nil? || id.zero?
-      return show(id) if @blog.post(id)
+      return show(id) if readable?(@blog.post(id))
 
       @screen.say("No post number #{id}.", RD)
       @screen.pause
@@ -145,11 +156,11 @@ module UI
       loop do
         category = @screen.pick('CATEGORIES', @blog.categories, empty: 'no categories are configured.', right: right) do |c|
           about = wide? && !c.about.empty? ? " #{GR}#{c.about}#{LG}" : ''
-          "#{c.name} #{GR}(#{@blog.count(c.id)})#{LG}#{about}"
+          "#{c.name} #{GR}(#{@blog.count(c.id, published: shown)})#{LG}#{about}"
         end
         break unless category
 
-        browse(category.name.upcase) { @blog.posts(category: category.id) }
+        browse(category.name.upcase) { @blog.posts(category: category.id, published: shown) }
       end
     end
 
@@ -158,8 +169,9 @@ module UI
       list = posts.call
       loop do
         post = @screen.pick(heading, list, empty: 'no posts here yet.', right: right) do |p|
-          tag = wide? ? " #{CY}#{@blog.category(p.category).name}#{LG}" : ''
-          "#{GR}#{p.created_at.localtime.strftime(wide? ? '%Y-%m-%d' : '%m-%d')}#{LG} #{p.title}#{tag}"
+          tag   = wide? ? " #{CY}#{@blog.category(p.category).name}#{LG}" : ''
+          draft = p.published ? '' : "#{RD}#{draft_tag}#{LG} "
+          "#{GR}#{p.created_at.localtime.strftime(wide? ? '%Y-%m-%d' : '%m-%d')}#{LG} #{draft}#{p.title}#{tag}"
         end
         break unless post
 
@@ -171,7 +183,7 @@ module UI
     # page. True when it was changed or deleted.
     def show(id)
       post = @blog.post(id)
-      return false unless post
+      return false unless readable?(post)
 
       heading = @blog.category(post.category).name.upcase
       unless user
@@ -180,14 +192,30 @@ module UI
       end
 
       @screen.page(heading, post_lines(post), right: right, wait: false)
-      case @screen.choose("\r\n #{YE}E#{LG} edit  #{YE}D#{LG} delete  #{DG}return: back#{LG} ", ['e', 'd', 'q', :enter])
+      flip = post.published ? 'unpublish' : 'publish'
+      case @screen.choose("\r\n #{YE}E#{LG} edit  #{YE}P#{LG} #{flip}  #{YE}D#{LG} delete  #{DG}return: back#{LG} ",
+                          ['e', 'p', 'd', 'q', :enter])
       when 'e' then compose(post)
+      when 'p' then publish?(post, !post.published)
       when 'd' then delete?(post)
       else false
       end
     end
 
     def post_lines(post) = Board.post_lines(@blog, post, width: @screen.width, long_dates: wide?)
+
+    # Publishes the post, or takes it back to the editors. True when changed.
+    def publish?(post, published)
+      @screen.puts
+      question = published ? "Publish \"#{post.title}\" on the web and to the readers?" : "Take \"#{post.title}\" back?"
+      @screen.say(question, published ? GN : RD)
+      return false unless @screen.choose(" #{WH}y/n#{LG}> ", %w[y n], back: 'n') == 'y'
+
+      @blog.set_published(post.id, published)
+      @screen.say(published ? 'Published.' : 'Unpublished: only the editors see it now.', GN)
+      @screen.pause
+      true
+    end
 
     def delete?(post)
       @screen.puts
@@ -324,8 +352,8 @@ module UI
     end
 
     def preview(draft)
-      post = Blog::Post.new(id: 0, slug: '', **draft, author: user.name, face: @face,
-                            created_at: Time.now, updated_at: Time.now)
+      post = Blog::Post.new(id: 0, slug: '', **draft, author: user.name, face: @face, published: true,
+                            published_at: nil, created_at: Time.now, updated_at: Time.now)
       @screen.page('PREVIEW', post_lines(post), right: right)
     end
 
@@ -341,8 +369,13 @@ module UI
         @screen.pause
         return false
       end
-      @screen.say(post ? 'Saved.' : "Posted as number #{result.id}.", GN)
-      @screen.pause
+      if post
+        @screen.say('Saved.', GN)
+        @screen.pause
+      else
+        @screen.say("Saved as number #{result.id}, unpublished: only the editors see it.", GN)
+        publish?(result, true)
+      end
       true
     rescue SQLite3::Exception => e
       warn "ttgblog: saving failed: #{e.message}"

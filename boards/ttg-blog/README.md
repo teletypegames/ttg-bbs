@@ -58,7 +58,7 @@ and shows its bare id.
 | `TTGBLOG_DB` | `data/ttgblog.sqlite3` | The SQLite database (compose mounts `./data`) |
 | `TTGBLOG_CATEGORIES` | `config/categories.yml` | The category list |
 | `TTGBLOG_HTTP_PORT` | `8080` | Port of the read API (`0` turns it off); compose does not publish it |
-| `TTGBLOG_DISCORD_WEBHOOK` | — | A new post rings this Discord webhook, with its link on the web (`.env` on the server) |
+| `TTGBLOG_DISCORD_WEBHOOK` | — | A post rings this Discord webhook when first published, with its link on the web (`.env` on the server) |
 | `TTGBLOG_SITE_URL` | `https://teletypegames.org` | The site the Discord message links to |
 
 ## Data
@@ -69,7 +69,14 @@ One SQLite file, two tables:
   PBKDF2-SHA256 password digest.
 - `posts` — `slug`, `title`, `summary`, `body` (Markdown), `category` (an id
   from the config), `face` (`modern` or `petscii`: the terminal it was written
-  on), `author_id`, `created_at`, `updated_at` (UTC, ISO 8601).
+  on), `published` (0 or 1), `published_at` (the first time it was
+  published), `author_id`, `created_at`, `updated_at` (UTC, ISO 8601).
+
+A new post is **unpublished**: only the editors see it, on the board, and
+the web does not. Saving a new post asks whether to publish it at once; `P`
+under a post publishes it or takes it back. Taking a post back keeps its
+`published_at`, and only the first publishing rings Discord. The posts from
+before the flag stay published.
 
 The slug is the post's address on the web: its date and its title in plain
 ASCII (`2026-10-28-hello-world`, `-2` when taken). It is made once, when the
@@ -99,6 +106,7 @@ Then the masthead and the menu:
 | `L` | Latest posts, newest first |
 | `C` | Categories, with their post counts, then that category's posts |
 | `G` | Go to a post by its number (the web shows it beside the post) |
+| `U` | Unpublished posts (logged in) |
 | `E` | Editor login |
 | `W` | Write a post (logged in) |
 | `P` | Change your password (logged in) |
@@ -108,7 +116,9 @@ Then the masthead and the menu:
 Lists are numbered: the number and RETURN opens a post, RETURN alone turns the
 page, `Q` or `←` (Esc, RUN/STOP) goes back. A post shows its title, category,
 date, author, the date of its last change, the summary, then the body,
-paged a screenful at a time. An editor gets `E` edit and `D` delete under it.
+paged a screenful at a time. An editor gets `E` edit, `P` publish or
+unpublish and `D` delete under it. A reader sees the published posts only; an
+editor sees all of them, the unpublished ones marked so.
 
 ### Writing
 
@@ -151,8 +161,11 @@ published.
 | `GET /posts[?limit=N]` | the posts newest first, without their bodies |
 | `GET /posts/SLUG` | one post: `body` (Markdown), `html` (kramdown, GFM), `screen` |
 
+Only the published posts: an unpublished one is 404, and the category counts
+leave it out.
+
 A post carries `id`, `slug`, `title`, `summary`, `category` (`id`, `name`),
-`author`, `face`, `created_at`, `updated_at` and `updated`. Its `screen` is the
+`author`, `face`, `published_at`, `created_at`, `updated_at` and `updated`. Its `screen` is the
 post as a Commodore 64 caller sees it: `cols` (40), `page` (lines a
 screenful) and `lines`, the title bar and the paged lines in the board's ANSI
 colours; the site draws them in the C64 palette. The HTML is not sanitised

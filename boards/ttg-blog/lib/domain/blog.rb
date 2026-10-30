@@ -17,7 +17,8 @@ require 'yaml'
 class Blog
   Category = Data.define(:id, :name, :about)
   User     = Data.define(:id, :name)
-  Post     = Data.define(:id, :slug, :title, :summary, :body, :category, :author, :face, :created_at, :updated_at) do
+  Post     = Data.define(:id, :slug, :title, :summary, :body, :category, :author, :face, :published, :published_at,
+                         :created_at, :updated_at) do
     def updated? = updated_at - created_at >= 60
   end
 
@@ -54,9 +55,13 @@ class Blog
   SQL
 
   # Columns added after the first posts: ALTER TABLE adds each one missing.
+  # The posts from before published stay published; a new post starts
+  # unpublished (create says so).
   COLUMNS = {
-    'slug' => 'TEXT',
-    'face' => "TEXT NOT NULL DEFAULT 'modern'"
+    'slug'         => 'TEXT',
+    'face'         => "TEXT NOT NULL DEFAULT 'modern'",
+    'published'    => 'INTEGER NOT NULL DEFAULT 1',
+    'published_at' => 'TEXT'
   }.freeze
 
   POST_SQL = <<~SQL
@@ -85,7 +90,7 @@ class Blog
     @listeners  = []
   end
 
-  # The block is called with every new post, after it is saved.
+  # The block is called with a post the first time it is published.
   def on_publish(&block) = @listeners << block
 
   # The address of a post on the web: its date and its title, in plain
@@ -98,16 +103,21 @@ class Blog
   def category(id) = @categories.find { |c| c.id == id } || Category.new(id: id, name: id, about: '')
 
   # Posts newest first, all of them or one category's; without their bodies.
-  def posts(category: nil, limit: nil)
-    where = category ? 'WHERE posts.category = ?' : ''
-    cap   = limit ? "LIMIT #{limit.to_i}" : ''
-    query("#{POST_SQL} #{where} ORDER BY posts.created_at DESC, posts.id DESC #{cap}", *[category].compact)
+  # +published+ true or false keeps only the published or the unpublished
+  # ones; nil keeps both.
+  def posts(category: nil, limit: nil, published: nil)
+    where, args = filter(category: category, published: published)
+    cap = limit ? "LIMIT #{limit.to_i}" : ''
+    query("#{POST_SQL} #{where} ORDER BY posts.created_at DESC, posts.id DESC #{cap}", *args)
       .map { |r| post_of(r, body: false) }
   end
 
-  def total = query('SELECT COUNT(*) AS n FROM posts').first['n']
+  def total(published: nil) = count(nil, published: published)
 
-  def count(category) = query('SELECT COUNT(*) AS n FROM posts WHERE category = ?', category).first['n']
+  def count(category, published: nil)
+    where, args = filter(category: category, published: published)
+    query("SELECT COUNT(*) AS n FROM posts #{where}", *args).first['n']
+  end
 
   def post(id)
     row = query("#{POST_SQL} WHERE posts.id = ?", id.to_i).first
@@ -126,15 +136,31 @@ class Blog
 
     now = stamp
     id = transaction do
-      @db.execute('INSERT INTO posts (slug, title, summary, body, category, face, author_id, created_at, updated_at) ' \
-                  'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      @db.execute('INSERT INTO posts (slug, title, summary, body, category, face, published, author_id, ' \
+                  'created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)',
                   [free_slug(Blog.slug_base(title, Time.iso8601(now))), title.strip, summary.strip, body, category,
                    FACES.include?(face) ? face : 'modern', author.id, now, now])
       @db.last_insert_row_id
     end
-    created = post(id)
-    publish(created)
-    created
+    post(id)
+  end
+
+  # The post published or taken back, as it is now; nil when there is no
+  # such post. The first publishing stamps published_at and tells the
+  # listeners; taking it back and publishing it again does not.
+  def set_published(id, published)
+    first = transaction do
+      row = @db.execute('SELECT published_at FROM posts WHERE id = ?', [id.to_i]).first
+      next nil unless row
+
+      stamp_it = published && row['published_at'].nil?
+      @db.execute('UPDATE posts SET published = ?, published_at = COALESCE(published_at, ?) WHERE id = ?',
+                  [published ? 1 : 0, stamp_it ? stamp : nil, id.to_i])
+      stamp_it
+    end
+    changed = post(id)
+    publish(changed) if first
+    changed
   end
 
   # The Post as saved, or a Symbol naming what is wrong with it.
@@ -206,6 +232,7 @@ class Blog
     have = @db.execute('PRAGMA table_info(posts)').map { |c| c['name'] }
     COLUMNS.each { |name, type| @db.execute("ALTER TABLE posts ADD COLUMN #{name} #{type}") unless have.include?(name) }
     @db.execute('CREATE UNIQUE INDEX IF NOT EXISTS posts_by_slug ON posts (slug)')
+    @db.execute('UPDATE posts SET published_at = created_at WHERE published = 1 AND published_at IS NULL')
     @db.execute('SELECT id, title, created_at FROM posts WHERE slug IS NULL ORDER BY id').each do |row|
       @db.execute('UPDATE posts SET slug = ? WHERE id = ?',
                   [free_slug(Blog.slug_base(row['title'], Time.iso8601(row['created_at']))), row['id']])
@@ -218,6 +245,17 @@ class Blog
     base = 'post' if base.empty?
     (1..).lazy.map { |n| n == 1 ? base : "#{base}-#{n}" }
          .find { |slug| @db.execute('SELECT 1 FROM posts WHERE slug = ?', [slug]).empty? }
+  end
+
+  def filter(category:, published:)
+    clauses = []
+    args    = []
+    if category
+      clauses << 'posts.category = ?'
+      args << category
+    end
+    clauses << "posts.published = #{published ? 1 : 0}" unless published.nil?
+    [clauses.empty? ? '' : "WHERE #{clauses.join(' AND ')}", args]
   end
 
   # A listener that fails does not fail the post: it is saved already.
@@ -255,6 +293,7 @@ class Blog
   def post_of(row, body: true)
     Post.new(id: row['id'], slug: row['slug'], title: row['title'], summary: row['summary'],
              body: body ? row['body'] : nil, category: row['category'], author: row['author'], face: row['face'],
+             published: row['published'] == 1, published_at: row['published_at'] && Time.iso8601(row['published_at']),
              created_at: Time.iso8601(row['created_at']), updated_at: Time.iso8601(row['updated_at']))
   end
 end

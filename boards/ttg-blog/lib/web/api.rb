@@ -10,7 +10,8 @@ require_relative '../ui/petscii'
 module Web
   # The blog read over HTTP, for teletypegames.org: JSON, read only, on the
   # inner network of the server (interstack), never on a public port. It runs
-  # in the board's process, beside the telnet line, on the same Blog.
+  # in the board's process, beside the telnet line, on the same Blog. Only
+  # the published posts: an unpublished one is the editors' business.
   #
   #   GET /health              {"ok":true}
   #   GET /categories          the categories, with their post counts
@@ -49,10 +50,10 @@ module Web
       case String.new(req.path, encoding: Encoding::UTF_8)
       when '/health'     then [200, { ok: true }]
       when '/categories' then [200, { categories: categories }]
-      when '/posts'      then [200, { posts: @blog.posts(limit: limit(req)).map { |p| summary(p) } }]
+      when '/posts'      then [200, { posts: @blog.posts(limit: limit(req), published: true).map { |p| summary(p) } }]
       when %r{\A/posts/([a-z0-9-]+)\z}
         post = @blog.post_by_slug(Regexp.last_match(1))
-        post ? [200, full(post)] : [404, { error: 'no such post' }]
+        post&.published ? [200, full(post)] : [404, { error: 'no such post' }]
       else [404, { error: 'not found' }]
       end
     end
@@ -63,14 +64,15 @@ module Web
     end
 
     def categories
-      @blog.categories.map { |c| { id: c.id, name: c.name, about: c.about, count: @blog.count(c.id) } }
+      @blog.categories.map { |c| { id: c.id, name: c.name, about: c.about, count: @blog.count(c.id, published: true) } }
     end
 
     def summary(post)
       category = @blog.category(post.category)
       { id: post.id, slug: post.slug, title: post.title, summary: post.summary,
         category: { id: category.id, name: category.name }, author: post.author, face: post.face,
-        created_at: post.created_at.utc.iso8601, updated_at: post.updated_at.utc.iso8601, updated: post.updated? }
+        published_at: post.published_at&.utc&.iso8601, created_at: post.created_at.utc.iso8601,
+        updated_at: post.updated_at.utc.iso8601, updated: post.updated? }
     end
 
     def full(post)

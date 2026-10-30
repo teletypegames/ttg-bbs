@@ -28,7 +28,7 @@ module UI
     def self.post_screen(blog, post)
       screen = Screen.new(nil, cols: COLS, rows: ROWS)
       lines  = screen.fit(Board.post_lines(blog, post, width: screen.width))
-      [screen.title_bar(blog.category(post.category).name.upcase, "#{blog.total} posts "), *lines]
+      [screen.title_bar(blog.category(post.category).name.upcase, "#{blog.total(published: true)} posts "), *lines]
     end
 
     def self.flow(blog)
