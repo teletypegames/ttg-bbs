@@ -20,6 +20,7 @@ class TeletypeBBS
     ['Alexandria BBS', 'teletypegames.org:2326', 'Wikipedia on a telnet line; a door here too'],
     ['Feedia BBS',     'teletypegames.org:2327', 'an RSS reader: the news as text; a door here too'],
     ['TTGBLOG',        'teletypegames.org:2328', 'the Teletype Games blog; a door here too'],
+    ['WarpEngine BBS', 'teletypegames.org:2329', 'the file area: C64 and Plus/4 titles by ZMODEM/XMODEM'],
     ['TTG Gate',       'teletypegames.org:2399', 'one port for all of these: a dialing menu']
   ].freeze
   DOOR_NAMES    = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Impostor', 'Chat of Ra', 'TTG Trivia', 'Alexandria',

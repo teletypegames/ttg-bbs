@@ -72,11 +72,13 @@
 - keys: [impostor, code, debrief, norman]
   fact: 'Doors > Impostor is the debrief terminal of our game Definitely not an Impostor; it asks for the personal code the game gave you. It also runs on its own at teletypegames.org:2324.'
 - keys: [network, bbs, other, telnet, bbsweb, port]
-  fact: 'Board > BBS Network lists our boards: the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324, the WIKI-BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia (RSS news) at 2327 and TTGBLOG (our blog) at 2328, and TTG Gate at 2399 reaches all of them from one port. All of them work in a browser too, at bbsweb.teletypegames.org.'
+  fact: 'Board > BBS Network lists our boards: the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324, the WIKI-BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia (RSS news) at 2327, TTGBLOG (our blog) at 2328 and WarpEngine BBS (C64 and Plus/4 downloads) at 2329, and TTG Gate at 2399 reaches all of them from one port. All of them work in a browser too, at bbsweb.teletypegames.org.'
 - keys: [alexandria, wikipedia, feedia, rss, news, feed, feeds, gateway]
   fact: 'Doors > Alexandria and Doors > Feedia take your line over to those boards: Alexandria BBS reads Wikipedia, Feedia reads RSS news feeds. Leave them the way they say (Alt-X, or Q on a C64), and you come back here.'
 - keys: [ttgblog, blog, posts, post, editor, editors]
   fact: 'TTGBLOG at teletypegames.org:2328 is our blog on a telnet line: the latest posts and the categories, read a screenful at a time; our editors log in there and write. It is a door here too (Doors > TTGBLOG), or call it directly, or on bbsweb.teletypegames.org.'
+- keys: [warpengine, warp-engine, xmodem, shelf, shelves, prg]
+  fact: 'WarpEngine BBS at teletypegames.org:2329 is our file area: the Commodore 64 and Plus/4 shelves of the WarpEngine, a title a page, downloaded by ZMODEM or by XMODEM, which a C64 terminal like CCGMS takes onto its disk. Call it directly, through TTG Gate, or on bbsweb.teletypegames.org.'
 - keys: [gate, ttggate, dial, dialing, '2399', one port, all boards]
   fact: 'TTG Gate at teletypegames.org:2399 is one port for our whole network: a dialing menu that puts your call through to any of our boards, this one too, and takes it back when that board hangs up. On a C64 it lists the boards that have a C64 face.'
 - keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag, switch, window, windows, front]
