@@ -10,7 +10,7 @@ require_relative '../ui/petscii'
 module Web
   # The blog read over HTTP, for teletypegames.org: JSON, read only, on the
   # inner network of the server (interstack), never on a public port. It runs
-  # in the board's process, beside the telnet line, on the same Blog. Only
+  # in the board's process, beside the telnet line, on the same TtgblogBBS. Only
   # the published posts: an unpublished one is the editors' business.
   #
   #   GET /health              {"ok":true}
@@ -20,8 +20,9 @@ module Web
   class Api
     MAX_LIMIT = 200
 
-    def initialize(blog, port:, host: '0.0.0.0')
-      @blog   = blog
+    def initialize(bbs, port:, host: '0.0.0.0')
+      @bbs    = bbs
+      @posts  = bbs.posts
       @server = WEBrick::HTTPServer.new(BindAddress: host, Port: port, Logger: WEBrick::Log.new($stderr, WEBrick::Log::WARN),
                                         AccessLog: [])
       @server.mount_proc('/') { |req, res| serve(req, res) }
@@ -50,9 +51,9 @@ module Web
       case String.new(req.path, encoding: Encoding::UTF_8)
       when '/health'     then [200, { ok: true }]
       when '/categories' then [200, { categories: categories }]
-      when '/posts'      then [200, { posts: @blog.posts(limit: limit(req), published: true).map { |p| summary(p) } }]
+      when '/posts'      then [200, { posts: @posts.all(limit: limit(req), published: true).map { |p| summary(p) } }]
       when %r{\A/posts/([a-z0-9-]+)\z}
-        post = @blog.post_by_slug(Regexp.last_match(1))
+        post = @posts.find_by_slug(Regexp.last_match(1))
         post&.published ? [200, full(post)] : [404, { error: 'no such post' }]
       else [404, { error: 'not found' }]
       end
@@ -64,11 +65,11 @@ module Web
     end
 
     def categories
-      @blog.categories.map { |c| { id: c.id, name: c.name, about: c.about, count: @blog.count(c.id, published: true) } }
+      @bbs.categories.all.map { |c| { id: c.id, name: c.name, about: c.about, count: @posts.count(c.id, published: true) } }
     end
 
     def summary(post)
-      category = @blog.category(post.category)
+      category = @bbs.categories.find(post.category)
       { id: post.id, slug: post.slug, title: post.title, summary: post.summary,
         category: { id: category.id, name: category.name }, author: post.author, face: post.face,
         published_at: post.published_at&.utc&.iso8601, created_at: post.created_at.utc.iso8601,
@@ -78,7 +79,7 @@ module Web
     def full(post)
       summary(post).merge(body: post.body, html: Api.html(post.body),
                           screen: { cols: UI::Petscii::COLS, page: UI::Petscii::PAGE,
-                                    lines: UI::Petscii.post_screen(@blog, post) })
+                                    lines: UI::Petscii.post_screen(@bbs, post) })
     end
   end
 end

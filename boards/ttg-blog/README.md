@@ -174,17 +174,28 @@ here: the site does that.
 ## Project structure
 
 ```
-bbs.rb                    entry point: the terminal question, then a face
-bin/user                  the editors, from the server's shell
-config/categories.yml     the categories
+bbs.rb                         entry point: the terminal question, then a face
+bin/user                       the editors, from the server's shell
+config/categories.yml          the categories
+env-example                    every environment variable, with its default
 lib/
-  domain/blog.rb          the SQLite database: editors, posts, passwords, slugs
-  domain/announcer.rb     a new post on Discord
-  web/api.rb              the read API for teletypegames.org
-  ui/modern.rb            the modern face: the caller's window, half-block masthead
-  ui/petscii.rb           the PETSCII face: 40×25 PETSCII, reversed-space masthead
-  ui/board.rb             one call: menu, lists, a post, login, the editor, goodbye
-  ui/screen.rb            title bar, pages, numbered lists, single-key menus
+  domain.rb                    requires the domain in dependency order
+  domain/
+    model/                     CategoryModel, UserModel, PostModel (and its slug)
+    repository/                SqliteDatabase (the one connection), PostRepository,
+                               UserRepository, CategoryRepository (the YAML file)
+    service/                   PostService (limits, publishing), EditorService
+                               (names, passwords, login), CategoryService,
+                               DiscordNotifier (a new post on Discord)
+    ttgblog_bbs.rb             TtgblogBBS, the composition root: reads ENV, wires it all
+  web/api.rb                   the read API for teletypegames.org
+  ui/
+    screen.rb                  title bar, pages, numbered lists, single-key menus
+    board.rb                   one call, shared by the faces: menu, lists, a post,
+                               login, the editor, goodbye
+    modern.rb, modern/board.rb    UI::Modern: the caller's window, half-block masthead
+    petscii.rb, petscii/board.rb  UI::Petscii: 40×25 PETSCII, reversed-space masthead,
+                                  a post's C64 screen for the web
 ```
 
 ## Deploy

@@ -7,7 +7,7 @@ require 'uri'
 # A new post on the Discord channel of a webhook, with its link on the web.
 # In the background, so a slow webhook never stalls the editor's call;
 # mentions are off, and the text goes in as plain text.
-class Announcer
+class DiscordNotifier
   MAX = 1500
 
   def initialize(webhook:, site:)

@@ -1,38 +1,36 @@
 # frozen_string_literal: true
 
 require_relative 'board'
+require_relative 'petscii/board'
 
 module UI
-  # The blog on a Commodore 64: the line-by-line Board in PETSCII on a 40×25
-  # screen, under a masthead in reversed spaces.
+  # The blog on a Commodore 64: the line-by-line board in PETSCII on a 40×25
+  # screen. It works on the same TtgblogBBS as the modern face.
   module Petscii
     COLS = 40
     ROWS = 25
     PAGE = ROWS - 5
 
-    LOGO_COLORS = [YE, YE, "\e[0;33m", "\e[0;33m", "\e[0;31m"].freeze
-
-    def self.logo
-      Board.logo_bits.each_with_index.map do |row, i|
-        "  #{LOGO_COLORS[i]}#{row.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')}#{LG}"
-      end
-    end
-
-    def self.masthead
-      rule = " #{DG}#{'─' * (COLS - 2)}#{LG}"
-      [rule, '', *logo, '', rule, "  #{WH}#{Board::MOTTO}#{LG}"]
-    end
-
     # A post on a C64, as lines of ANSI: the title bar, then the post as the
     # board pages it, PAGE lines a screenful. The web draws it in C64 colours.
-    def self.post_screen(blog, post)
+    def self.post_screen(bbs, post)
       screen = Screen.new(nil, cols: COLS, rows: ROWS)
-      lines  = screen.fit(Board.post_lines(blog, post, width: screen.width))
-      [screen.title_bar(blog.category(post.category).name.upcase, "#{blog.total(published: true)} posts "), *lines]
+      lines  = screen.fit(UI::Board.post_lines(bbs.categories, post, width: screen.width))
+      [screen.title_bar(bbs.categories.find(post.category).name.upcase, "#{bbs.posts.total(published: true)} posts "),
+       *lines]
     end
 
-    def self.flow(blog)
-      Board.flow(blog, face: 'petscii') { |session| [Screen.new(session, cols: COLS, rows: ROWS), masthead] }
+    def self.flow(bbs)
+      BBS::Flow.define do
+        call do |ctx, runner|
+          board = Board.new(bbs, Board.screen(runner.session), ctx)
+          board.run
+          board.goodbye
+          nil
+        rescue IOError, Errno::EPIPE, Errno::ECONNRESET
+          nil
+        end
+      end
     end
   end
 end

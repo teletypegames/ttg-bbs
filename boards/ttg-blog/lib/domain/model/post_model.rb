@@ -1,0 +1,29 @@
+# frozen_string_literal: true
+
+require 'time'
+
+# A post of the blog. +body+ is Markdown, nil when a list read the post
+# without it; +author+ the editor's name, nil when they were removed; +face+
+# the terminal it was written on.
+PostModel = Data.define(:id, :slug, :title, :summary, :body, :category, :author, :face, :published, :published_at,
+                        :created_at, :updated_at) do
+  # The face a post was written on: a modern terminal or a Commodore 64.
+  const_set(:FACES, %w[modern petscii].freeze)
+
+  # A row of the posts table joined with its author's name.
+  def self.from_row(row, body: true)
+    new(id: row['id'], slug: row['slug'], title: row['title'], summary: row['summary'],
+        body: body ? row['body'] : nil, category: row['category'], author: row['author'], face: row['face'],
+        published: row['published'] == 1, published_at: row['published_at'] && Time.iso8601(row['published_at']),
+        created_at: Time.iso8601(row['created_at']), updated_at: Time.iso8601(row['updated_at']))
+  end
+
+  # The address of a post on the web: its date and its title, in plain
+  # lower-case ASCII ("2026-10-28-hello-world").
+  def self.slug_base(title, time)
+    words = title.to_s.unicode_normalize(:nfkd).gsub(/\p{Mn}/, '').downcase.gsub(/[^a-z0-9]+/, '-').gsub(/\A-|-\z/, '')
+    [time.utc.strftime('%Y-%m-%d'), words[0, 60].sub(/-\z/, '')].reject(&:empty?).join('-')
+  end
+
+  def updated? = updated_at - created_at >= 60
+end

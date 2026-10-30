@@ -7,8 +7,9 @@ module UI
   # latest posts, the categories, a post paged a screenful at a time) and,
   # after an editor logs in, writing, editing and deleting posts. The body is
   # Markdown, typed in a line editor with slash commands, which a C64 can
-  # type as well as a modern terminal. The faces (UI::Modern, UI::Petscii) give
-  # it a screen and a masthead.
+  # type as well as a modern terminal. It works on the services of a
+  # TtgblogBBS; a face (UI::Modern::Board, UI::Petscii::Board) gives it its
+  # FACE, its screen and its masthead.
   class Board
     LOGIN_TRIES = 3
 
@@ -21,10 +22,11 @@ module UI
 
     ERRORS = {
       no_title:     'The post needs a title.',
-      long_title:   "The title is longer than #{Blog::MAX_TITLE} characters.",
-      long_summary: "The summary is longer than #{Blog::MAX_SUMMARY} characters.",
+      long_title:   "The title is longer than #{PostService::MAX_TITLE} characters.",
+      long_summary: "The summary is longer than #{PostService::MAX_SUMMARY} characters.",
       long_body:    'The body is too long.',
-      bad_category: 'Pick a category from the list.'
+      bad_category: 'Pick a category from the list.',
+      not_saved:    'The post could not be saved. Try again later.'
     }.freeze
 
     # TTG BLOG as five rows of bits, # set and . clear, for a face to draw.
@@ -32,10 +34,10 @@ module UI
 
     # A post as the board pages it, +width+ columns wide; the web shows the
     # C64 screen of a post from the same lines.
-    def self.post_lines(blog, post, width:, long_dates: width >= 58)
+    def self.post_lines(categories, post, width:, long_dates: width >= 58)
       wrap = ->(text) { BBS::FrameBuffer.wrap_ansi(text.to_s, width) }
       date = ->(time) { time.localtime.strftime(long_dates ? '%Y-%m-%d %H:%M' : '%Y-%m-%d') }
-      meta = [blog.category(post.category).name, date.call(post.created_at), post.author].compact.join(' · ')
+      meta = [categories.find(post.category).name, date.call(post.created_at), post.author].compact.join(' · ')
       lines = wrap.call(post.title).map { |l| " #{WH}#{l}#{LG}" }
       lines << " #{GR}#{meta}#{LG}"
       lines << " #{GR}updated #{date.call(post.updated_at)}#{LG}" if post.updated?
@@ -47,41 +49,25 @@ module UI
       lines.concat(BBS::Markdown.to_lines(body, width: width, theme: MARKDOWN).map { |l| " #{l}" })
     end
 
-    # The flow of a face, +face+ one of Blog::FACES: the block makes the
-    # screen and the masthead of a call from its session.
-    def self.flow(blog, face:, &screen_of)
-      BBS::Flow.define do
-        call do |ctx, runner|
-          screen, masthead = screen_of.call(runner.session)
-          board = Board.new(blog, screen, ctx, masthead: masthead, face: face)
-          board.run
-          board.goodbye
-          nil
-        rescue IOError, Errno::EPIPE, Errno::ECONNRESET
-          nil
-        end
-      end
-    end
-
-    def initialize(blog, screen, ctx, masthead:, face:)
-      @blog     = blog
-      @screen   = screen
-      @ctx      = ctx
-      @masthead = masthead
-      @face     = face
+    def initialize(bbs, screen, ctx)
+      @posts      = bbs.posts
+      @editors    = bbs.editors
+      @categories = bbs.categories
+      @screen     = screen
+      @ctx        = ctx
     end
 
     def run
       @screen.cls
       @screen.puts
-      @masthead.each { |l| @screen.puts l }
+      masthead.each { |l| @screen.puts l }
       loop do
         @screen.puts
         menu_line('L', 'latest posts')
         menu_line('C', 'categories')
         menu_line('G', 'go to post #')
         if user
-          menu_line('U', "unpublished posts #{GR}(#{@blog.total(published: false)})#{LG}")
+          menu_line('U', "unpublished posts #{GR}(#{@posts.total(published: false)})#{LG}")
           menu_line('W', 'write a post')
           menu_line('P', 'change your password')
           menu_line('O', "log out #{GR}(#{user.name})#{LG}")
@@ -91,8 +77,8 @@ module UI
         menu_line('Q', 'log off')
         keys = user ? %w[l c g u w p o q] : %w[l c g e q]
         case @screen.choose("\r\n #{WH}ttgblog#{LG}> ", keys)
-        when 'l' then browse('LATEST POSTS') { @blog.posts(published: shown) }
-        when 'u' then browse('UNPUBLISHED POSTS') { @blog.posts(published: false) }
+        when 'l' then browse('LATEST POSTS') { @posts.all(published: shown) }
+        when 'u' then browse('UNPUBLISHED POSTS') { @posts.all(published: false) }
         when 'c' then categories
         when 'g' then go_to
         when 'e' then login
@@ -123,10 +109,15 @@ module UI
 
     private
 
+    # The lines over the menu, drawn by the face.
+    def masthead = raise(NotImplementedError)
+
+    def face = self.class::FACE
+
     def user = @ctx[:user]
 
     # What the caller may read: everything for an editor, the published
-    # posts for a reader (nil and true, as Blog#posts takes them).
+    # posts for a reader (nil and true, as PostService#all takes them).
     def shown = user ? nil : true
 
     def readable?(post) = post && (user || post.published)
@@ -135,7 +126,7 @@ module UI
 
     def wide? = @screen.cols >= 60
 
-    def right = user ? "#{user.name} " : "#{@blog.total(published: true)} posts "
+    def right = user ? "#{user.name} " : "#{@posts.total(published: true)} posts "
 
     def menu_line(key, text) = @screen.puts(" #{YE}#{key}#{LG} #{text}")
 
@@ -146,7 +137,7 @@ module UI
       @screen.write "\r\n #{WH}post ##{LG} "
       id = @screen.number
       return if id.nil? || id.zero?
-      return show(id) if readable?(@blog.post(id))
+      return show(id) if readable?(@posts.find(id))
 
       @screen.say("No post number #{id}.", RD)
       @screen.pause
@@ -154,13 +145,13 @@ module UI
 
     def categories
       loop do
-        category = @screen.pick('CATEGORIES', @blog.categories, empty: 'no categories are configured.', right: right) do |c|
+        category = @screen.pick('CATEGORIES', @categories.all, empty: 'no categories are configured.', right: right) do |c|
           about = wide? && !c.about.empty? ? " #{GR}#{c.about}#{LG}" : ''
-          "#{c.name} #{GR}(#{@blog.count(c.id, published: shown)})#{LG}#{about}"
+          "#{c.name} #{GR}(#{@posts.count(c.id, published: shown)})#{LG}#{about}"
         end
         break unless category
 
-        browse(category.name.upcase) { @blog.posts(category: category.id, published: shown) }
+        browse(category.name.upcase) { @posts.all(category: category.id, published: shown) }
       end
     end
 
@@ -169,7 +160,7 @@ module UI
       list = posts.call
       loop do
         post = @screen.pick(heading, list, empty: 'no posts here yet.', right: right) do |p|
-          tag   = wide? ? " #{CY}#{@blog.category(p.category).name}#{LG}" : ''
+          tag   = wide? ? " #{CY}#{@categories.find(p.category).name}#{LG}" : ''
           draft = p.published ? '' : "#{RD}#{draft_tag}#{LG} "
           "#{GR}#{p.created_at.localtime.strftime(wide? ? '%Y-%m-%d' : '%m-%d')}#{LG} #{draft}#{p.title}#{tag}"
         end
@@ -182,10 +173,10 @@ module UI
     # The post paged; an editor gets to edit or delete it after its last
     # page. True when it was changed or deleted.
     def show(id)
-      post = @blog.post(id)
+      post = @posts.find(id)
       return false unless readable?(post)
 
-      heading = @blog.category(post.category).name.upcase
+      heading = @categories.find(post.category).name.upcase
       unless user
         @screen.page(heading, post_lines(post), right: right)
         return false
@@ -202,7 +193,7 @@ module UI
       end
     end
 
-    def post_lines(post) = Board.post_lines(@blog, post, width: @screen.width, long_dates: wide?)
+    def post_lines(post) = Board.post_lines(@categories, post, width: @screen.width, long_dates: wide?)
 
     # Publishes the post, or takes it back to the editors. True when changed.
     def publish?(post, published)
@@ -211,7 +202,7 @@ module UI
       @screen.say(question, published ? GN : RD)
       return false unless @screen.choose(" #{WH}y/n#{LG}> ", %w[y n], back: 'n') == 'y'
 
-      @blog.set_published(post.id, published)
+      @posts.set_published(post.id, published)
       @screen.say(published ? 'Published.' : 'Unpublished: only the editors see it now.', GN)
       @screen.pause
       true
@@ -222,7 +213,7 @@ module UI
       @screen.say("Delete \"#{post.title}\" for good?", RD)
       return false unless @screen.choose(" #{WH}y/n#{LG}> ", %w[y n], back: 'n') == 'y'
 
-      @blog.delete(post.id)
+      @posts.delete(post.id)
       @screen.say('Deleted.', GN)
       @screen.pause
       true
@@ -239,11 +230,11 @@ module UI
       @screen.title('EDITOR LOGIN', right)
       @screen.say('For the editors of the blog. Return alone: back.', GR)
       @screen.puts
-      name = @screen.ask(" #{WH}name#{LG}> ", max: Blog::MAX_NAME)
+      name = @screen.ask(" #{WH}name#{LG}> ", max: EditorService::MAX_NAME)
       return if name.empty?
 
       pass = @screen.ask(" #{WH}password#{LG}> ", mask: '*', max: 200)
-      found = @blog.authenticate(name, pass)
+      found = @editors.authenticate(name, pass)
       @screen.puts
       if found
         @ctx[:user] = found
@@ -259,7 +250,7 @@ module UI
 
     def password
       @screen.title('CHANGE PASSWORD', right)
-      @screen.say("At least #{Blog::MIN_PASS} characters. Return alone: back.", GR)
+      @screen.say("At least #{EditorService::MIN_PASS} characters. Return alone: back.", GR)
       @screen.puts
       old = @screen.ask(" #{WH}current#{LG}> ", mask: '*', max: 200)
       return if old.empty?
@@ -267,14 +258,14 @@ module UI
       fresh = @screen.ask(" #{WH}new#{LG}> ", mask: '*', max: 200)
       again = @screen.ask(" #{WH}again#{LG}> ", mask: '*', max: 200)
       @screen.puts
-      if !@blog.authenticate(user.name, old)
+      if !@editors.authenticate(user.name, old)
         @screen.say('The current password is wrong.', RD)
       elsif fresh != again
         @screen.say('The two new ones differ.', RD)
-      elsif @blog.set_password(user.name, fresh) == :ok
+      elsif @editors.set_password(user.name, fresh) == :ok
         @screen.say('Password changed.', GN)
       else
-        @screen.say("The new password needs at least #{Blog::MIN_PASS} characters.", RD)
+        @screen.say("The new password needs at least #{EditorService::MIN_PASS} characters.", RD)
       end
       @screen.pause
     end
@@ -298,7 +289,7 @@ module UI
         when 's' then draft[:summary] = ask_summary(draft[:summary])
         when 'b' then (b = edit_body(draft[:body])) && draft[:body] = b
         when 'v' then preview(draft)
-        when 'w' then return true if save(draft, post)
+        when 'w' then return true if save?(draft, post)
         when 'q' then return false if draft == saved || drop?
         end
       end
@@ -319,7 +310,7 @@ module UI
     def draft_screen(draft, post)
       @screen.title(post ? "EDIT POST #{post.id}" : 'NEW POST', right)
       field('T', 'title', draft[:title])
-      field('C', 'category', @blog.category(draft[:category]).name)
+      field('C', 'category', @categories.find(draft[:category]).name)
       field('S', 'summary', draft[:summary].empty? ? '-' : draft[:summary])
       field('B', 'body', "#{draft[:body].lines.size} lines")
       @screen.puts
@@ -335,33 +326,33 @@ module UI
     # caller quit or left it empty.
     def ask_title(current)
       @screen.title('TITLE', right)
-      @screen.say("Up to #{Blog::MAX_TITLE} characters. Return alone or Stop: back.", GR)
+      @screen.say("Up to #{PostService::MAX_TITLE} characters. Return alone or Stop: back.", GR)
       @screen.puts
-      title = @screen.ask(" #{WH}title#{LG}> ", text: current, max: Blog::MAX_TITLE)
+      title = @screen.ask(" #{WH}title#{LG}> ", text: current, max: PostService::MAX_TITLE)
       title.empty? ? nil : title
     end
 
     # The summary in the editor; the current one when the caller quit.
     def ask_summary(current)
-      summary = @screen.edit(current, title: 'SUMMARY', single_line: true, max: Blog::MAX_SUMMARY)
+      summary = @screen.edit(current, title: 'SUMMARY', single_line: true, max: PostService::MAX_SUMMARY)
       summary.nil? ? current : summary.strip
     end
 
     def pick_category
-      @screen.pick('CATEGORY', @blog.categories, empty: 'no categories are configured.', right: right, &:name)&.id
+      @screen.pick('CATEGORY', @categories.all, empty: 'no categories are configured.', right: right, &:name)&.id
     end
 
     def preview(draft)
-      post = Blog::Post.new(id: 0, slug: '', **draft, author: user.name, face: @face, published: true,
+      post = PostModel.new(id: 0, slug: '', **draft, author: user.name, face: face, published: true,
                             published_at: nil, created_at: Time.now, updated_at: Time.now)
       @screen.page('PREVIEW', post_lines(post), right: right)
     end
 
-    def save(draft, post)
+    def save?(draft, post)
       result = if post
-                 @blog.update(post.id, **draft)
+                 @posts.update(post.id, **draft)
                else
-                 @blog.create(author: user, face: @face, **draft)
+                 @posts.create(author: user, face: face, **draft)
                end
       @screen.puts
       if result.is_a?(Symbol)
@@ -377,11 +368,6 @@ module UI
         publish?(result, true)
       end
       true
-    rescue SQLite3::Exception => e
-      warn "ttgblog: saving failed: #{e.message}"
-      @screen.say('The post could not be saved. Try again later.', RD)
-      @screen.pause
-      false
     end
 
     def drop?
@@ -392,7 +378,7 @@ module UI
 
     # The body in the editor, in Markdown; nil when the caller quit.
     def edit_body(body)
-      @screen.edit(body.to_s, title: 'BODY (MARKDOWN)', max: Blog::MAX_BODY)&.rstrip
+      @screen.edit(body.to_s, title: 'BODY (MARKDOWN)', max: PostService::MAX_BODY)&.rstrip
     end
   end
 end

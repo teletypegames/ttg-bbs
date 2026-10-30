@@ -1,0 +1,17 @@
+# Every environment variable of TTGBLOG, with its default. On the server the
+# secrets go in .env beside compose.yaml, never in the repository.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=100
+
+# The SQLite database and the category list
+TTGBLOG_DB=data/ttgblog.sqlite3
+TTGBLOG_CATEGORIES=config/categories.yml
+
+# The read API for teletypegames.org; 0 turns it off
+TTGBLOG_HTTP_PORT=8080
+
+# A post rings this Discord webhook when first published; empty: off
+TTGBLOG_DISCORD_WEBHOOK=
+TTGBLOG_SITE_URL=https://teletypegames.org
