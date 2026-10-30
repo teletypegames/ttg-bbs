@@ -49,6 +49,15 @@ module UI
         puts "#{CY}#{RV}#{bar}#{RO}#{LG}"
       end
 
+      # A text of several lines in the full-screen editor of rubbs, titled
+      # +heading+, which is drawn again on a clear screen after it. Empty
+      # when the caller quit.
+      def editor(max, heading = 'YOUR TEXT')
+        text = BBS::Editor.new(@session, title: heading, max: max).run
+        title(heading)
+        text.to_s
+      end
+
       def rule(color = DG) = puts("#{color}#{'─' * (COLS - 1)}#{LG}")
 
       def wrap(text, width = WIDTH) = BBS::FrameBuffer.wrap_ansi(text.to_s, width)
@@ -93,14 +102,11 @@ module UI
         end
       end
 
-      # A line typed by the caller, nil on hang-up.
-      def ask(prompt, mask: nil, max: nil)
-        write prompt
-        line = @session.readline(mask: mask)
-        raise IOError, 'the caller hung up' if line.nil?
-
-        line = line.strip
-        max ? line[0, max] : line
+      # A line typed by the caller in a field of rubbs after +prompt+,
+      # starting from +text+; trimmed, and empty when the caller cancelled
+      # with RUN/STOP or ←.
+      def ask(prompt, text: '', mask: nil, max: nil)
+        BBS::Field.ask(@session, prompt, text: text, max: max, mask: mask, cols: BBS::Petscii::COLS).to_s.strip
       end
 
       def pause(text = 'return: back')

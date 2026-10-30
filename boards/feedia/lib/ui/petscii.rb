@@ -16,8 +16,6 @@ module UI
     # The colours of an item, in the keys of a BBS::Theme.
     MARKDOWN = { text: LG, text_bright: WH, accent: YE, label: CY, text_dim: GR }.freeze
 
-    FEEDBACK_LINES = 10
-
     # FEEDIA in reversed blocks, five rows.
     def self.logo
       5.times.map do |row|
@@ -172,20 +170,14 @@ module UI
         return unless can_send?
 
         @screen.title('WRITE TO THE ADMINS', right)
-        @screen.say("A bug, an idea, a word of thanks. Up to #{FEEDBACK_LINES} lines; return on an empty line sends it, " \
-                    'on the first one goes back.', GR)
+        @screen.say('A bug, an idea, a word of thanks. Your name, then the message in the editor: ' \
+                    'stop or ← and S sends it, Q goes back.', GR)
         @screen.puts
-        from  = @screen.ask(" #{WH}your name#{LG}> ", max: Inbox::MAX_FIELD)
-        lines = []
-        while lines.size < FEEDBACK_LINES
-          line = @screen.ask("#{YE}#{(lines.size + 1).to_s.rjust(2)}#{LG}> ")
-          break if line.empty?
+        from = @screen.ask(" #{WH}your name#{LG}> ", max: Inbox::MAX_FIELD)
+        text = @screen.editor(Inbox::MAX_TEXT, 'WRITE TO THE ADMINS')
+        return if text.strip.empty?
 
-          lines << line
-        end
-        return if lines.empty?
-
-        answer(@inbox.feedback(text: lines.join("\n"), from: from))
+        answer(@inbox.feedback(text: text, from: from))
       end
 
       def answer(result)
