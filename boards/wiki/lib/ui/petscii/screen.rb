@@ -89,14 +89,11 @@ module UI
         end
       end
 
-      # A line typed by the caller.
-      def ask(prompt, mask: nil, max: nil)
-        write prompt
-        line = @session.readline(mask: mask)
-        raise IOError, 'the caller hung up' if line.nil?
-
-        line = line.strip
-        max ? line[0, max] : line
+      # A line typed by the caller in a field of rubbs after +prompt+,
+      # starting from +text+; trimmed, and empty when the caller cancelled
+      # with RUN/STOP or ←.
+      def ask(prompt, text: '', mask: nil, max: nil)
+        BBS::Field.ask(@session, prompt, text: text, max: max, mask: mask, cols: BBS::Petscii::COLS).to_s.strip
       end
 
       def pause(text = 'return: back')
