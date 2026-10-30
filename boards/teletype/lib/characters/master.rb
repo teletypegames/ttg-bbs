@@ -12,7 +12,7 @@ class TtgMaster
 
   def self.knowledge(file)
     YAML.safe_load_file(File.join(__dir__, file)).map do |entry|
-      [entry.fetch('keys').map { |k| k.split.map { |w| stem(w) }.join(' ') }.uniq, entry.fetch('fact')]
+      [entry.fetch('keys').map { |k| k.to_s.split.map { |w| stem(w) }.join(' ') }.uniq, entry.fetch('fact')]
     end.freeze
   end
 

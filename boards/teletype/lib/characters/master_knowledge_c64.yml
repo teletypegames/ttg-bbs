@@ -73,7 +73,7 @@
   fact: 'Alexandria and Feedia, doors under R, take your line over to those boards, in PETSCII: Alexandria BBS reads Wikipedia, Feedia reads RSS news feeds. Q on their menu brings you back here.'
 - keys: [ttgblog, blog, posts, post, editor, editors]
   fact: 'TTGBLOG at teletypegames.org:2328 is our blog on a telnet line: the latest posts and the categories, read a screenful at a time; our editors log in there and write. It is a door under R too, or call it directly, or on bbsweb.teletypegames.org.'
-- keys: [gate, ttggate, dial, dialing, 2399, one port, all boards]
+- keys: [gate, ttggate, dial, dialing, '2399', one port, all boards]
   fact: 'TTG Gate at teletypegames.org:2399 is one port for our whole network: a dialing menu that puts your call through to any of our boards, this one too, and takes it back when that board hangs up. On a C64 it lists the boards that have a C64 face.'
 - keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag, switch, window, windows, front]
   fact: 'Every menu takes one key, the letter in front of the line. Lists are numbered: type the number and RETURN; RETURN alone turns the page, Q or the arrow-left key goes back. ? on the main menu is the help.'
