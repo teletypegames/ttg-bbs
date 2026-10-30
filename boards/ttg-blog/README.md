@@ -118,8 +118,9 @@ empty line a new paragraph.
 | cursor keys | Move; up and down keep the column |
 | HOME / END | Start / end of the screen row |
 | PgUp / PgDn | A screenful up / down (modern terminal) |
-| F1 (Ctrl-S) | Save |
-| F7, RUN/STOP, `←` (Esc) | Quit, keep the text as it was |
+| RUN/STOP or `←` (Esc), then `S` | Save |
+| RUN/STOP or `←` (Esc), then `Q` | Quit, keep the text as it was |
+| F1 (Ctrl-S) | Save at once (the Ultimate Term keeps F1 for its help) |
 
 ## Project structure
 
