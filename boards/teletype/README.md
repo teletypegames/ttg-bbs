@@ -215,7 +215,10 @@ then the main menu, one key for each line:
 
 Lists are numbered: the number and RETURN opens one, RETURN alone turns the
 page, `Q` or `←` (RUN/STOP too) goes back. Long texts stop at every
-screenful. Posts and letters take several lines; an empty line ends them. In
+screenful. Every line is typed in a field of rubbs (`BBS::Field`: the cursor
+keys move in it, DEL deletes, RETURN ends it, RUN/STOP or `←` goes back);
+posts and letters are written in its full-screen editor (`BBS::Editor`):
+RUN/STOP or `←`, then `S` sends them, `Q` drops them. In
 the live chat the others' lines show up above the one being typed. Wiki pages
 are the same Markdown, rendered 38 columns wide. Files cannot come down the
 line, so the file areas and the FTP browser give each file's plain HTTP

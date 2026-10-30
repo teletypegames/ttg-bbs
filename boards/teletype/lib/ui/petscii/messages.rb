@@ -40,7 +40,7 @@ module UI
       def post(board)
         @screen.title("POST TO #{board.title.upcase}")
         @screen.puts " #{GR}from:#{LG} #{name}"
-        text = @screen.editor(1000)
+        text = @screen.editor(1000, "POST TO #{board.title.upcase}")
         return if text.strip.empty?
 
         case @bbs.post_message(board, name, text, session_id: session_id)
@@ -117,7 +117,7 @@ module UI
         else
           subject = @screen.ask(" #{GR}subject:#{LG} ", max: MailService::SUBJECT_MAX)
         end
-        body = @screen.editor(MailService::BODY_MAX)
+        body = @screen.editor(MailService::BODY_MAX, 'WRITE A LETTER')
         return if body.strip.empty?
 
         case @bbs.send_letter(name, to, subject, body, registered: registered?, session_id: session_id)
