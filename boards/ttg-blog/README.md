@@ -106,12 +106,15 @@ the draft: `T` title, `C` category, `S` summary, `B` body, `V` view (as a
 reader will see it), `W` save, `Q` quit (asks before dropping changes). Editing
 a post opens the same draft screen.
 
-The title, the summary and the body are written in the full-screen editor of
-rubbs (`BBS::Editor`), which starts from the current text: the cursor keys move
+The name, the passwords and the title are typed in a field of rubbs
+(`BBS::Field`), the summary and the body in its full-screen editor
+(`BBS::Editor`); both start from the current text: the cursor keys move
 anywhere in it, typing inserts at the cursor, DEL deletes before it, and the
-lines wrap as they are typed. The title and the summary are one line each
-(RETURN saves them); the body is Markdown, RETURN starts a new line and an
+lines wrap as they are typed. A field and the summary end with RETURN, RUN/STOP
+or `←` leaves a field; the body is Markdown, RETURN starts a new line and an
 empty line a new paragraph.
+
+In the editor:
 
 | Key | Action |
 |---|---|

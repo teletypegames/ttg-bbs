@@ -283,11 +283,14 @@ module UI
       @screen.wrap(value, @screen.width - 3).first(3).each { |l| @screen.puts "    #{l}" }
     end
 
-    # The title in the editor, the current one to start from. Nil when the
+    # The title in a field, the current one to start from. Nil when the
     # caller quit or left it empty.
     def ask_title(current)
-      title = @screen.edit(current, title: 'TITLE', single_line: true, max: Blog::MAX_TITLE)&.strip
-      title.nil? || title.empty? ? nil : title
+      @screen.title('TITLE', right)
+      @screen.say("Up to #{Blog::MAX_TITLE} characters. Return alone or Stop: back.", GR)
+      @screen.puts
+      title = @screen.ask(" #{WH}title#{LG}> ", text: current, max: Blog::MAX_TITLE)
+      title.empty? ? nil : title
     end
 
     # The summary in the editor; the current one when the caller quit.

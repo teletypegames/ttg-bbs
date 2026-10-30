@@ -95,14 +95,13 @@ module UI
       end
     end
 
-    # A line typed by the caller, trimmed and cut to +max+.
-    def ask(prompt, mask: nil, max: nil)
+    # A line typed by the caller in a field of rubbs after +prompt+,
+    # starting from +text+; trimmed, and empty when the caller cancelled.
+    def ask(prompt, text: '', mask: nil, max: nil)
       write prompt
-      line = @session.readline(mask: mask)
-      raise IOError, 'the caller hung up' if line.nil?
-
-      line = line.strip
-      max ? line[0, max] : line
+      width = @cols - 1 - BBS::FrameBuffer.visible_width(prompt)
+      line  = BBS::Field.new(@session, text: text, width: width, max: max, mask: mask).run
+      line.to_s.strip
     end
 
     # The full-screen editor of rubbs on this screen: the text when saved,
