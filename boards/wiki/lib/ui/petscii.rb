@@ -5,7 +5,7 @@ require_relative 'petscii/browser'
 
 module UI
   # The wiki on a Commodore 64: PETSCII on a 40×25 screen, the page tree as
-  # numbered lists, the pages as screenfuls of text that wait for RETURN.
+  # numbered cursor menus, the pages as screenfuls of text that wait for RETURN.
   module Petscii
     LOGO_FONT = {
       'T' => %w[### .#. .#. .#. .#.], 'G' => %w[### #.. #.# #.# ###],
@@ -35,7 +35,7 @@ module UI
           screen.puts "  #{WH}the teletype games wiki#{LG}, c64 side"
           screen.puts "  #{GR}#{wiki.pages.size} pages indexed#{LG}"
           screen.puts
-          screen.say('Pick a page by its number, RETURN pages on, Q goes back. Pages marked * are private.', GR)
+          screen.say('CRSR and RETURN, or the number, opens a page; Q goes back. Pages marked * are private.', GR)
           screen.pause('return: enter the wiki')
           Browser.new(wiki, screen, ctx).run
           Petscii.goodbye(screen, seconds: Time.now - ctx[:call_started])

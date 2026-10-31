@@ -44,9 +44,10 @@ Mouse works too (xterm SGR), including wheel scroll in both panes.
 ## The PETSCII face
 
 PETSCII on a 40×25 screen. The same page tree, one level per screen as a
-numbered list: a page with pages under it is marked `>`, a private one `*`.
-A number opens the page, or goes down a level, where line 1 is the page
-itself; `Q` (or ←) goes back up. Pages are shown a screenful at a time
+numbered list, a cursor menu of rubbs (`BBS::Selector`): a page with pages
+under it is marked `>`, a private one `*`. CRSR moves the bar (left and right
+turn the pages), the number typed lights a page, and RETURN opens it, or goes
+down a level, where line 1 is the page itself; `Q` (or ←) goes back up. Pages are shown a screenful at a time
 (RETURN: more, `Q`: back), with their public address at the end. On the top
 level `S` is the supervisor login (again: lock back) and `R` re-reads the
 index.
