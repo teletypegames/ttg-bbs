@@ -20,6 +20,17 @@ module UI
       "\e[38;5;#{16 + (36 * r) + (6 * g) + b}m"
     end
 
+    # The colours of the C64 (Pepto's palette) a board's button can take:
+    # bright enough for the black letters of a reversed band.
+    C64 = {
+      0x05 => [255, 255, 255], 0x9f => [170, 255, 238], 0x99 => [170, 255, 102], 0x9e => [238, 238, 119],
+      0x81 => [221, 136, 85],  0x96 => [255, 119, 119], 0x9c => [204, 68, 204],  0x9a => [0, 136, 255],
+      0x1e => [0, 204, 85],    0x1c => [136, 0, 0]
+    }.freeze
+
+    # The PETSCII colour code of the C64 colour nearest to +rgb+.
+    def self.c64(rgb) = C64.min_by { |_, c| c.zip(rgb).sum { |a, b| (a - b)**2 } }.first
+
     def self.petscii(rgb)
       PETSCII.min_by { |_, c| c.zip(rgb).sum { |a, b| (a - b)**2 } }.first
     end

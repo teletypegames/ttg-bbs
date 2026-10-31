@@ -10,8 +10,37 @@ ports, the gate only carries the bytes.
 It has two faces on one port, like every board of the network: a **modern** one
 for ANSI terminals, after the list of [bbsweb](https://bbsweb.teletypegames.org)
 (the logo, a row a board in its own colour, the chosen board's description
-under the list), and a **Commodore 64** one in PETSCII, 40×25, which lists the
-boards that have a C64 face.
+under the list), and a **Commodore 64** one in PETSCII, 40×25, for the boards
+that have a C64 face.
+
+### The C64 switchboard
+
+The C64 face is drawn in the uppercase/graphics character set of the C64, where
+the card suits, the balls, the rounded corners, the triangles and the quarter
+blocks are: TTG GATE in fat rainbow letters with a checkered shadow, twinkling
+stars around it, and the boards as candy buttons in their own colours, two by
+four. The chosen one has a heart on each side, and its address and tags are
+under the buttons.
+
+| Key | |
+|---|---|
+| CRSR | move between the buttons; past the first or the last row, the page turns |
+| RETURN or 1-8 | dial: the button flashes, the dots roll, the line goes to the board |
+| + / - | the next / previous page |
+| Q or RUN/STOP | hang up |
+
+A page holds eight buttons. The empty places of the last page are grey **free
+lines**, so a new board in `config/boards.yml` just fills the next one; past
+eight the menu turns into pages, with ● ○ dots under the buttons. The colour of
+a button is the C64 colour nearest to the board's `accent`.
+
+The screen goes out as raw PETSCII (`Session#write_raw`, rubbs 0.26.0), past
+the encoder of rubbs, which speaks the lowercase set: the whole screen once
+(about 1.3 KB), then only the cells that change, since a C64 line behind a
+modem is slow. The stars twinkle every 1.5 s while the caller thinks; the call
+still ends after the session's idle time. Before the line goes to a board the
+gate switches back to the lowercase set. `UI::Petscii::Canvas` turns a grid of
+cells into these bytes, `UI::Petscii::Switchboard` draws the menu on it.
 
 ## Running
 
@@ -95,8 +124,10 @@ lib/
   domain/ttg_gate_bbs.rb               the composition root (TTGGateBBS)
   ui/modern.rb                         the modern face
   ui/modern/selector.rb                the dialing menu on an ANSI terminal
-  ui/petscii.rb                        the PETSCII face: logo, numbered list
-  ui/petscii/screen.rb                 the 40×25 screen of one call
+  ui/petscii.rb                        the PETSCII face: keys, dialling, goodbye
+  ui/petscii/switchboard.rb            the C64 menu: logo, stars, candy buttons, pages
+  ui/petscii/canvas.rb                 40×25 cells in the graphics set → raw PETSCII
+  ui/petscii/screen.rb                 the C64 line of one call: raw out, keys in
   ui/colors.rb                         a board's accent on either face
   ui/dial.rb                           hands the line to a board (BBS::Gateway)
 ```

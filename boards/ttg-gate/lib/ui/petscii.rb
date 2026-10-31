@@ -3,22 +3,19 @@
 require_relative 'colors'
 require_relative 'dial'
 require_relative 'petscii/screen'
+require_relative 'petscii/switchboard'
 
 module UI
-  # TTG Gate on a Commodore 64: the logo in reversed blocks and the boards
-  # with a C64 face, numbered in their own colours. The number dials, Q or
-  # RUN/STOP hangs up.
+  # TTG Gate on a Commodore 64: the Switchboard, raw PETSCII in the
+  # graphics set. CRSR moves between the boards, RETURN or a digit dials,
+  # + and - turn the pages, Q or RUN/STOP hangs up. While the caller thinks,
+  # the stars twinkle.
   module Petscii
-    LETTERS = {
-      'T' => %w[### .#. .#. .#. .#.],
-      'G' => %w[.## #.. #.# #.# .##],
-      'A' => %w[.#. #.# ### #.# #.#],
-      'E' => %w[### #.. ##. #.. ###],
-      ' ' => %w[. . . . .]
-    }.freeze
-
-    # TTG GATE in rows of bits, # a reversed space.
-    LOGO_BITS = Array.new(5) { |r| 'TTG GATE'.chars.map { |c| LETTERS.fetch(c)[r] }.join('.') }.freeze
+    # Seconds between two twinkles.
+    TICK = 1.5
+    # Seconds between two steps of the dialling.
+    STEP = 0.12
+    MOVES = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }.freeze
 
     def self.flow(bbs)
       BBS::Flow.define do
@@ -32,44 +29,58 @@ module UI
     end
 
     def self.menu(screen, boards)
+      board = Switchboard.new(boards)
+      screen.raw(board.frame)
+      idle = 0.0
       loop do
-        draw(screen, boards)
-        key = screen.key
-        return goodbye(screen) if [:escape, 'q', 'Q'].include?(key)
+        key = screen.key(timeout: TICK)
+        if key == :idle
+          idle += TICK
+          return goodbye(screen) if screen.idle_limit && idle >= screen.idle_limit
 
-        board = key.is_a?(String) && key.match?(/\A[1-9]\z/) ? boards[key.to_i - 1] : nil
-        next unless board
+          screen.raw(board.twinkle)
+          next
+        end
 
-        screen.puts(key)
-        UI.dial(screen.session, board)
+        idle = 0.0
+        case key
+        when :escape, 'q', 'Q' then return goodbye(screen)
+        when *MOVES.keys then screen.raw(board.move(*MOVES[key]))
+        when '+' then screen.raw(board.turn(1))
+        when '-' then screen.raw(board.turn(-1))
+        when :enter then dial(screen, board)
+        when /\A[1-#{Switchboard::PER_PAGE}]\z/
+          next unless board.board_at(key.to_i)
+
+          screen.raw(board.select(key.to_i - 1))
+          dial(screen, board)
+        end
       end
     end
 
-    def self.logo
-      LOGO_BITS.map do |row|
-        "     #{GN}#{row.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')}#{LG}"
-      end
-    end
+    # The button flashes, the dots roll, and the line goes to the board;
+    # the whole switchboard again when the board hangs up.
+    def self.dial(screen, board)
+      target = board.selected
+      return unless target
 
-    def self.draw(screen, boards)
-      screen.cls
-      screen.puts
-      logo.each { |l| screen.puts l }
-      screen.puts
-      screen.puts "  #{GR}choose a system to dial#{LG}"
-      screen.puts " #{DG}#{'─' * (COLS - 2)}#{LG}"
-      boards.each_with_index do |board, i|
-        screen.puts " #{YE}#{i + 1}#{LG} #{Colors.petscii(board.rgb)}#{board.name}#{LG}"
-        screen.puts "   #{GR}#{BBS::FrameBuffer.clip_ansi(board.tags.join(', '), COLS - 4)}#{LG}"
+      board.dial_steps.each do |step|
+        screen.raw(step)
+        sleep STEP
       end
-      screen.puts
-      screen.write " #{GR}number: dial  q: hang up#{LG}\r\n #{WH}>#{LG} "
+      screen.raw([Canvas::LOWERCASE, Canvas::CLEAR].pack('C*'))
+      UI.dial(screen.session, target)
+      screen.raw(board.frame)
     end
 
     def self.goodbye(screen)
-      screen.puts
-      screen.puts
-      screen.puts " #{GN}TTG GATE#{GR}: line closed. See you.#{LG}"
+      canvas = Canvas.new
+      canvas.text(9, 9, '♥ ♦ ♣ ♠ ♥ ♦ ♣ ♠ ♥ ♦ ♣', Canvas::LIGHT_RED)
+      canvas.text(11, 10, 'TTG GATE: LINE CLOSED', Canvas::WHITE)
+      canvas.text(12, 11, 'SEE YOU ON THE WIRE', Canvas::CYAN)
+      canvas.text(14, 9, '♠ ♣ ♦ ♥ ♠ ♣ ♦ ♥ ♠ ♣ ♦', Canvas::PURPLE)
+      canvas.text(17, 15, 'NO CARRIER', Canvas::LIGHT_RED)
+      screen.raw(canvas.frame + [Canvas::LOWERCASE].pack('C*'))
       nil
     end
   end
