@@ -17,6 +17,14 @@ module UI
 
     def self.logo = Logo.reversed(LOGO_COLORS).map { |l| "      #{l}#{LG}" }
 
+    # The one port to every board of ours, big, on the board's face.
+    def self.gate(screen)
+      ['', 'The whole Teletype Games BBS', 'Network in one place: TTG GATE', '',
+       'telnet teletypegames.org 2399', ''].each_with_index do |line, i|
+        screen.puts " #{i == 4 ? WH : YE}#{RV}#{line.center(WIDTH)}#{RO}#{LG}"
+      end
+    end
+
     def self.flow(bbs)
       BBS::Flow.define do
         # The board's face, the name and the password.
@@ -31,6 +39,8 @@ module UI
           screen.puts
           screen.puts "  #{WH}teletype bbs#{LG}, the c64 side"
           screen.puts "  #{GR}caller ##{bbs.last_callers.caller_number}, #{bbs.online.count} on line#{LG}"
+          screen.puts
+          Petscii.gate(screen)
           screen.puts
           name = AccountService.normalize_name(screen.ask("  #{WH}name#{LG} (return: anonymous)\r\n  > ", max: 20))
           ctx[:username] = name

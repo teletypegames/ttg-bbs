@@ -21,7 +21,7 @@ module UI
     end
 
     # The desktop while no art is chosen: the board as it is now. The logo
-    # and the greeting, then four panels (the nodes, the last callers, the
+    # and the greeting, the TTG Gate banner, then four panels (the nodes, the last callers, the
     # new releases, what is coming up) and the oneliners wall running along
     # the bottom. The application gives it its Data on start and every few
     # seconds after, and steps the ticker once a second.
@@ -35,6 +35,10 @@ module UI
       Y = "\e[0;38;5;220;48;5;16m"
 
       TICKER_STEP = 2
+
+      GATE      = 'TTG GATE  ·  telnet teletypegames.org 2399'
+      GATE_NOTE = 'the whole Teletype Games BBS Network, every board from one place'
+      GATE_SGR  = "\e[0;1;38;5;220;48;5;52m"
 
       attr_writer :data
 
@@ -55,6 +59,8 @@ module UI
         width = bounds.width - 4
         header(frame, x, y, width)
         y += 4
+        gate(frame, x, y, width)
+        y += 5
         columns = width >= 70 ? 2 : 1
         panel_w = columns == 2 ? (width - 2) / 2 : width
         @inner  = panel_w - 4
@@ -93,6 +99,16 @@ module UI
         lines.each_with_index do |line, i|
           frame.move(tx, y + i)
           frame.write_ansi(BBS::FrameBuffer.clip_ansi(line, x + width - tx), base_sgr: T)
+        end
+      end
+
+      # The one port to every board of ours, big, under the greeting.
+      def gate(frame, x, y, width)
+        frame.box(x: x, y: y, width: width, height: 4, sgr: GATE_SGR, fill_sgr: GATE_SGR, style: :double)
+        [GATE, GATE_NOTE].each_with_index do |text, i|
+          text = text[0, width - 4]
+          frame.move(x + ((width - text.length) / 2), y + 1 + i)
+          frame.write(text, sgr: i.zero? ? "\e[0;1;38;5;231;48;5;52m" : GATE_SGR)
         end
       end
 
