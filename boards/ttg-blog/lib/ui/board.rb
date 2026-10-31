@@ -58,25 +58,11 @@ module UI
     end
 
     def run
-      @screen.cls
-      @screen.puts
-      masthead.each { |l| @screen.puts l }
+      start
       loop do
-        @screen.puts
-        menu_line('L', 'latest posts')
-        menu_line('C', 'categories')
-        menu_line('G', 'go to post #')
-        if user
-          menu_line('U', "unpublished posts #{GR}(#{@posts.total(published: false)})#{LG}")
-          menu_line('W', 'write a post')
-          menu_line('P', 'change your password')
-          menu_line('O', "log out #{GR}(#{user.name})#{LG}")
-        else
-          menu_line('E', 'editor login')
-        end
-        menu_line('Q', 'log off')
-        keys = user ? %w[l c g u w p o q] : %w[l c g e q]
-        case @screen.choose("\r\n #{WH}ttgblog#{LG}> ", keys)
+        choice = main_choice
+        case choice
+        when PostModel then show(choice.id)
         when 'l' then browse('LATEST POSTS') { @posts.all(published: shown) }
         when 'u' then browse('UNPUBLISHED POSTS') { @posts.all(published: false) }
         when 'c' then categories
@@ -87,7 +73,6 @@ module UI
         when 'o' then @ctx.delete(:user)
         when 'q' then return
         end
-        @screen.title('TTGBLOG', right)
       end
     end
 
@@ -111,6 +96,47 @@ module UI
 
     # The lines over the menu, drawn by the face.
     def masthead = raise(NotImplementedError)
+
+    # The screen before the first menu: the masthead.
+    def start
+      @screen.cls
+      @screen.puts
+      masthead.each { |l| @screen.puts l }
+    end
+
+    # The main menu, under the masthead the first time and under a title
+    # bar after: the key of the caller's choice.
+    def main_choice
+      @screen.title('TTGBLOG', right) if @home_shown
+      @home_shown = true
+      @screen.puts
+      menu_line('L', 'latest posts')
+      menu_line('C', 'categories')
+      menu_line('G', 'go to post #')
+      if user
+        menu_line('U', "unpublished posts #{GR}(#{@posts.total(published: false)})#{LG}")
+        menu_line('W', 'write a post')
+        menu_line('P', 'change your password')
+        menu_line('O', "log out #{GR}(#{user.name})#{LG}")
+      else
+        menu_line('E', 'editor login')
+      end
+      menu_line('Q', 'log off')
+      @screen.choose("\r\n #{WH}ttgblog#{LG}> ", user ? %w[l c g u w p o q] : %w[l c g e q])
+    end
+
+    # What an editor does with a post after its last page: e, p, d or q.
+    def post_choice(post)
+      flip = post.published ? 'unpublish' : 'publish'
+      @screen.choose("\r\n #{YE}E#{LG} edit  #{YE}P#{LG} #{flip}  #{YE}D#{LG} delete  #{DG}return: back#{LG} ",
+                     ['e', 'p', 'd', 'q', :enter])
+    end
+
+    # The draft on its screen and the key of the caller's choice.
+    def draft_choice(draft, post)
+      draft_screen(draft, post)
+      @screen.choose("\r\n #{WH}edit#{LG}> ", %w[t c s b v w q])
+    end
 
     def face = self.class::FACE
 
@@ -183,9 +209,7 @@ module UI
       end
 
       @screen.page(heading, post_lines(post), right: right, wait: false)
-      flip = post.published ? 'unpublish' : 'publish'
-      case @screen.choose("\r\n #{YE}E#{LG} edit  #{YE}P#{LG} #{flip}  #{YE}D#{LG} delete  #{DG}return: back#{LG} ",
-                          ['e', 'p', 'd', 'q', :enter])
+      case post_choice(post)
       when 'e' then compose(post)
       when 'p' then publish?(post, !post.published)
       when 'd' then delete?(post)
@@ -282,8 +306,7 @@ module UI
 
       saved = post ? draft.dup : {}
       loop do
-        draft_screen(draft, post)
-        case @screen.choose("\r\n #{WH}edit#{LG}> ", %w[t c s b v w q])
+        case draft_choice(draft, post)
         when 't' then (t = ask_title(draft[:title])) && draft[:title] = t
         when 'c' then (c = pick_category) && draft[:category] = c
         when 's' then draft[:summary] = ask_summary(draft[:summary])
@@ -362,11 +385,11 @@ module UI
       end
       if post
         @screen.say('Saved.', GN)
-        @screen.pause
       else
-        @screen.say("Saved as number #{result.id}, unpublished: only the editors see it.", GN)
-        publish?(result, true)
+        @screen.say("Saved as number #{result.id}, unpublished: only the editors see it. " \
+                    'Open it and press P to publish it.', GN)
       end
+      @screen.pause
       true
     end
 

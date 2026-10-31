@@ -10,8 +10,9 @@ menu and write, edit and delete posts. Built on the
 
 It has two faces on one port, and both are line by line, with no windows: a
 **modern** one for ANSI terminals (up to 80 columns, the caller's window
-height) and a **Commodore 64** one in PETSCII, 40×25. The menus, the lists and
-the full-screen editor are the same on both.
+height) and a **Commodore 64** one in PETSCII, 40×25. The lists and the
+full-screen editor are the same on both; on the C64 the menus and the lists
+are cursor menus of rubbs (`BBS::Selector`), and the front page is its own.
 
 ## Running
 
@@ -72,9 +73,9 @@ One SQLite file, two tables:
   on), `published` (0 or 1), `published_at` (the first time it was
   published), `author_id`, `created_at`, `updated_at` (UTC, ISO 8601).
 
-A new post is **unpublished**: only the editors see it, on the board, and
-the web does not. Saving a new post asks whether to publish it at once; `P`
-under a post publishes it or takes it back. Taking a post back keeps its
+A new post is saved **unpublished**: only the editors see it, on the board,
+and the web does not. Publishing is a step of its own: `P` under a post
+publishes it or takes it back. Taking a post back keeps its
 `published_at`, and only the first publishing rings Discord. The posts from
 before the flag stay published.
 
@@ -99,7 +100,12 @@ wrong logins end the tries of a call; each costs a second.
 ## Interface
 
 A call starts with rubbs' `BBS::Terminal` question: which terminal is calling.
-Then the masthead and the menu:
+Then the masthead and the menu. On a C64 the front page is the logo over one
+cursor menu: the newest posts (`1`…`5` open them), then the items below, the
+lit one's line about it under the menu. CRSR moves the bar and RETURN takes
+it; the keys of the table work as well. The lists, the draft screen and the
+row under a post are cursor menus too, numbered or lettered as on the
+modern face.
 
 | Key | Action |
 |---|---|
@@ -114,7 +120,9 @@ Then the masthead and the menu:
 | `Q` | Log off |
 
 Lists are numbered: the number and RETURN opens a post, RETURN alone turns the
-page, `Q` or `←` (Esc, RUN/STOP) goes back. A post shows its title, category,
+page, `Q` or `←` (Esc, RUN/STOP) goes back. On a C64 the number lights the
+post, CRSR moves the bar, RETURN opens the lit one, and the pages turn with
+CRSR left and right (or as the bar runs past the end). A post shows its title, category,
 date, author, the date of its last change, the summary, then the body,
 paged a screenful at a time. An editor gets `E` edit, `P` publish or
 unpublish and `D` delete under it. A reader sees the published posts only; an
@@ -194,8 +202,9 @@ lib/
     board.rb                   one call, shared by the faces: menu, lists, a post,
                                login, the editor, goodbye
     modern.rb, modern/board.rb    UI::Modern: the caller's window, half-block masthead
-    petscii.rb, petscii/board.rb  UI::Petscii: 40×25 PETSCII, reversed-space masthead,
-                                  a post's C64 screen for the web
+    petscii.rb, petscii/board.rb  UI::Petscii: 40×25 PETSCII, the front page of cursor
+                                  menus, a post's C64 screen for the web
+    petscii/screen.rb             the lists and menus as BBS::Selector
 ```
 
 ## Deploy
