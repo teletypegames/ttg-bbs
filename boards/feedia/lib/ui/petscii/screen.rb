@@ -135,7 +135,12 @@ module UI
         nil
       end
 
-      # A numbered list of +items+ by +label+; the item picked, or nil.
+      # The colours of a menu: the bar in the title bar's cyan.
+      MENU = { text: LG, key: YE, bar: CY, heading: DG, about: GR, hint: DG }.freeze
+
+      # A numbered list of +items+ by +label+ under a title bar, a menu of
+      # rubbs (BBS::Selector); the item picked, or nil. CRSR and RETURN or
+      # the number pick; q, ← or RUN/STOP go back.
       def pick(heading, items, empty: '(nothing here)', right: '', &label)
         if items.empty?
           title(heading, right)
@@ -143,59 +148,16 @@ module UI
           pause
           return nil
         end
-        per   = PAGE - 2
-        pages = items.each_slice(per).to_a
-        index = 0
-        loop do
-          title(heading, right)
-          pages[index].each_with_index do |item, i|
-            n = (index * per) + i + 1
-            puts "#{YE}#{n.to_s.rjust(3)}#{LG} #{BBS::FrameBuffer.clip_ansi(label.call(item).to_s, COLS - 6)}"
-          end
-          more = if pages.size > 1
-                   " return: #{index + 1 < pages.size ? 'more' : 'top'}"
-                 else
-                   ''
-                 end
-          write "\r\n#{DG}number#{more}  q: back#{LG}\r\n> "
-          answer = number
-          if answer.nil?
-            return nil
-          elsif answer.zero?
-            index = (index + 1) % pages.size
-          elsif answer <= items.size
-            return items[answer - 1]
-          end
-        end
+        title(heading, right)
+        BBS::Selector.list(@session, items, width: COLS - 1, height: PAGE, hint: 'crsr or number, return  q: back',
+                                            exits: { 'q' => nil }, colors: MENU, &label)
       end
 
-      # Digits up to RETURN: the number, 0 for RETURN alone; nil for q or ←
-      # before any digit.
-      def number
-        digits = +''
-        loop do
-          k = key
-          case k
-          when :enter
-            puts
-            return digits.to_i
-          when :escape, 'q', 'Q'
-            next unless digits.empty?
-
-            puts 'q'
-            return nil
-          when :backspace
-            next if digits.empty?
-
-            digits.chop!
-            write "\b \b"
-          when /\A\d\z/
-            next if digits.length >= 4
-
-            digits << k
-            write k
-          end
-        end
+      # A menu of +items+ (BBS::Selector::Item) at the cursor: the value of
+      # the one taken, +back+ for ← or RUN/STOP. The other options are those
+      # of BBS::Selector.new.
+      def menu(items, back: nil, **)
+        BBS::Selector.new(@session, items, width: COLS - 1, back: back, colors: MENU, **).run
       end
     end
   end

@@ -97,9 +97,11 @@ it. `Reload` fetches the feed again, past the cache.
 ### The C64 face
 
 The FEEDIA logo and a menu: `F` feeds, `S` suggest a feed, `W` write to the
-admins, `Q` log off. Feeds and items are numbered lists: the number and
-RETURN opens one, RETURN alone turns the page, `Q` or `←` (RUN/STOP too) goes
-back. An item stops at every screenful. Every line is typed in a field of
+admins, `Q` log off. Feeds and items are numbered lists. The menu and the
+lists are cursor menus of rubbs (`BBS::Selector`): CRSR moves the bar, RETURN
+takes the lit item, and the letters (or the number typed, in a list) work as
+well; CRSR left and right turn the pages of a list, `Q` or `←` (RUN/STOP too)
+goes back. An item stops at every screenful. Every line is typed in a field of
 rubbs (`BBS::Field`: the cursor keys move in it, DEL deletes, RETURN ends it,
 RUN/STOP or `←` goes back), the feedback in its full-screen editor
 (`BBS::Editor`): RUN/STOP or `←`, then `S` sends it. Accented letters come as their
@@ -131,7 +133,7 @@ lib/
   domain/inbox.rb         suggestions and feedback: the inbox file, Discord
   ui/modern.rb            the modern face: desktop, feeds, items, forms
   ui/petscii.rb           the PETSCII face: logo, menu, lists, pages, messages
-  ui/petscii/screen.rb    title bar, pages, numbered lists on the 40×25 screen
+  ui/petscii/screen.rb    title bar, pages, the cursor menus on the 40×25 screen
 ```
 
 ## Deploy

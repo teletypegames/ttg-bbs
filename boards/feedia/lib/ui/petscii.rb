@@ -81,11 +81,9 @@ module UI
         Petscii.masthead.each { |l| @screen.puts l }
         loop do
           @screen.puts
-          @screen.puts " #{YE}F#{LG} feeds"
-          @screen.puts " #{YE}S#{LG} suggest a feed to the admins"
-          @screen.puts " #{YE}W#{LG} write to the admins"
-          @screen.puts " #{YE}Q#{LG} log off"
-          case @screen.choose("\r\n #{WH}feedia#{LG}> ", %w[f s w q], back: 'q')
+          @choice = @screen.menu(menu_items, index: menu_items.index { |i| i.value == @choice }, back: 'q',
+                                             hint: 'crsr: choose  return: take')
+          case @choice
           when 'f' then feed_list
           when 's' then suggest
           when 'w' then feedback
@@ -98,6 +96,15 @@ module UI
       private
 
       def right = "#{@feeds.list.size} feeds "
+
+      def menu_items
+        @menu_items ||= [
+          BBS::Selector.item('feeds', key: 'f', value: 'f', about: "#{@feeds.list.size} papers to read"),
+          BBS::Selector.item('suggest a feed to the admins', key: 's', value: 's', about: 'an address for the list'),
+          BBS::Selector.item('write to the admins', key: 'w', value: 'w', about: 'a bug, an idea, a word of thanks'),
+          BBS::Selector.item('log off', key: 'q', value: 'q', about: 'hang up. see you!')
+        ]
+      end
 
       def feed_list
         loop do
