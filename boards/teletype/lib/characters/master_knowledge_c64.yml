@@ -58,7 +58,7 @@
 - keys: [ansi, ascii, art, gallery, desktop, background, picture, graphics]
   fact: 'The ANSI art gallery is on the modern face of the board only: call with an ANSI terminal and choose 1 at the start.'
 - keys: [door, doors, program]
-  fact: 'R on the main menu has the doors that fit the 40 columns of a C64: a Commodore 64 and a Commodore Plus/4 with our games on their disks, the Impostor debrief terminal, and Alexandria, Feedia and TTGBLOG, which take you over to those boards. SERMO, Chat of Ra and TTG Trivia need 80 columns: they are on the modern face of the board.'
+  fact: 'R on the main menu has the doors that fit the 40 columns of a C64: a Commodore 64 and a Commodore Plus/4 with our games on their disks, the Impostor debrief terminal, and Alexandria, Feedia, TTGBLOG and WarpEngine, which take you over to those boards. SERMO, Chat of Ra and TTG Trivia need 80 columns: they are on the modern face of the board.'
 - keys: [sermo, neumatronic, margittai, acp]
   fact: 'SERMO is a door on the modern face of the board, a dual machine of the Neumatronic universe; it needs 80 columns, so call with a PC terminal and choose 1.'
 - keys: [commodore, c64, plus4, basic, load, run, emulator, retro]
@@ -74,7 +74,7 @@
 - keys: [ttgblog, blog, posts, post, editor, editors]
   fact: 'TTGBLOG at teletypegames.org:2328 is our blog on a telnet line: the latest posts and the categories, read a screenful at a time; our editors log in there and write. It is a door under R too, or call it directly, or on bbsweb.teletypegames.org.'
 - keys: [warpengine, warp-engine, xmodem, shelf, shelves, prg]
-  fact: 'WarpEngine BBS at teletypegames.org:2329 is our file area: the Commodore 64 and Plus/4 shelves of the WarpEngine, a title a page, downloaded by ZMODEM or by XMODEM, which a C64 terminal like CCGMS takes onto its disk. Call it directly, through TTG Gate, or on bbsweb.teletypegames.org.'
+  fact: 'WarpEngine BBS at teletypegames.org:2329 is our file area: the Commodore 64 and Plus/4 shelves of the WarpEngine, a title a page, downloaded by ZMODEM or by XMODEM, which a C64 terminal like CCGMS takes onto its disk. It is a door under R too, or call it directly, through TTG Gate, or on bbsweb.teletypegames.org.'
 - keys: [gate, ttggate, dial, dialing, '2399', one port, all boards]
   fact: 'TTG Gate at teletypegames.org:2399 is one port for our whole network: a dialing menu that puts your call through to any of our boards, this one too, and takes it back when that board hangs up. On a C64 it lists the boards that have a C64 face.'
 - keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag, switch, window, windows, front]

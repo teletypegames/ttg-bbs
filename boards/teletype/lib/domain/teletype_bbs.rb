@@ -20,11 +20,11 @@ class TeletypeBBS
     ['Alexandria BBS', 'teletypegames.org:2326', 'Wikipedia on a telnet line; a door here too'],
     ['Feedia BBS',     'teletypegames.org:2327', 'an RSS reader: the news as text; a door here too'],
     ['TTGBLOG',        'teletypegames.org:2328', 'the Teletype Games blog; a door here too'],
-    ['WarpEngine BBS', 'teletypegames.org:2329', 'the file area: C64 and Plus/4 titles by ZMODEM/XMODEM'],
+    ['WarpEngine BBS', 'teletypegames.org:2329', 'the file area: C64 and Plus/4 titles; a door here too'],
     ['TTG Gate',       'teletypegames.org:2399', 'one port for all of these: a dialing menu']
   ].freeze
   DOOR_NAMES    = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Impostor', 'Chat of Ra', 'TTG Trivia', 'Alexandria',
-                   'Feedia', 'TTGBLOG'].freeze
+                   'Feedia', 'TTGBLOG', 'WarpEngine'].freeze
   GATEWAY_HOST  = ENV.fetch('BBS_GATEWAY_HOST', 'host.docker.internal')
   WIKI_SECTIONS = {
     platforms: { prefix: '/platforms', title: 'Platform Guides' },
@@ -139,7 +139,13 @@ class TeletypeBBS
                label: 'TTG&BLOG', cols: 40, tag: 'our blog',
                hint: 'TTGBLOG: the Teletype Games blog, written on the line, a gateway to port 2328',
                about: 'The board our blog is written on: the posts of teletypegames.org/blog, read a screenful at ' \
-                      'a time. A gateway to TTGBLOG on port 2328; hang up there to come back.')
+                      'a time. A gateway to TTGBLOG on port 2328; hang up there to come back.'),
+      Door.new(name: :warp, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2329, name: 'WarpEngine BBS'),
+               label: '&WarpEngine', cols: 40, tag: 'c64 + plus/4 files',
+               hint: 'WarpEngine BBS: our C64 and Plus/4 titles by ZMODEM or XMODEM, a gateway to port 2329',
+               about: 'Our file area: the Commodore 64 and Plus/4 shelves of the WarpEngine, a title a page, ' \
+                      'downloaded by ZMODEM or by XMODEM onto a C64 disk. A gateway to WarpEngine BBS on port 2329; ' \
+                      'hang up there to come back.')
     ]
   end
 
