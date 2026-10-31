@@ -4,44 +4,62 @@ require_relative 'canvas'
 
 module UI
   module Petscii
-    # The gate's menu on a C64, drawn on a Canvas: TTG GATE in fat rainbow
-    # letters with a checkered shadow and twinkling stars around it, then the
-    # boards as candy buttons in their own colours, two by four on a page.
-    # A page that is not full shows its empty places as free lines, so the
-    # next board has somewhere to go; more than eight turn into pages.
+    # The gate's menu on a C64, drawn on a Canvas in the greens of a phosphor
+    # screen: code rain falls down the screen behind everything else, the
+    # boards are the nodes of a list in a thin frame, one row each, and the
+    # chosen one is lit. Under the
+    # frame the chosen node's address, tags and link. A page holds eight
+    # nodes; the empty places are unassigned, so the next board has somewhere
+    # to go, and more than eight turn into pages.
     class Switchboard
       PER_PAGE = 8
-      TILE_WIDTH = 18
-      TILE_COLS  = [1, 21].freeze
-      TILE_TOP   = 9
-      NAME_WIDTH = TILE_WIDTH - 4
 
-      LOGO_TOP  = 1
-      LOGO_LEFT = 2
-      # The letters, 4×5: # a block, a b c d the triangles ◢ ◣ ◥ ◤.
+      RAIN_ROWS = (0..22)
+      RAIN_COLS = (0..38)
+      DROPS     = 7
+      # A drop from its head up: the head white, the trail fading out.
+      TRAIL = [Canvas::WHITE, Canvas::LIGHT_GREEN, Canvas::GREEN, Canvas::GREEN, Canvas::DARK_GREY].freeze
+      RAIN  = %w[0 1 2 3 4 5 6 7 8 9 A E K N R T X Z $ + < > = : π ╳ ┼ ▚ ▖ ▝ £].freeze
+
+      LOGO_TOP = 1
+      # The letters, 4×6 pixels, two pixel rows to a cell in the half blocks.
       FONT = {
-        'T' => %w[#### .##. .##. .##. .##.],
-        'G' => %w[a##b #... #.## #..# c##d],
-        'A' => %w[a##b #..# #### #..# #..#],
-        'E' => %w[#### #... ###. #... ####],
-        ' ' => %w[.. .. .. .. ..]
+        'T' => %w[#### .##. .##. .##. .##. .##.],
+        'G' => %w[#### #... #... #.## #..# ####],
+        'A' => %w[#### #..# #..# #### #..# #..#],
+        'E' => %w[#### #... ###. #... #... ####],
+        ' ' => %w[.. .. .. .. .. ..]
       }.freeze
-      FONT_GLYPHS = { '#' => '█', 'a' => '◢', 'b' => '◣', 'c' => '◥', 'd' => '◤' }.freeze
-      RAINBOW = [Canvas::LIGHT_RED, Canvas::ORANGE, Canvas::YELLOW, Canvas::LIGHT_GREEN, Canvas::CYAN].freeze
+      HALVES = { '..' => ' ', '#.' => '▀', '.#' => '▄', '##' => '█' }.freeze
+      LOGO_COLORS = [Canvas::LIGHT_GREEN, Canvas::LIGHT_GREEN, Canvas::GREEN].freeze
 
-      STAR_ROWS   = [0, 7].freeze
-      STARS       = %w[● ○ ♦ ♥ ♠ ♣ ▚ ╳].freeze
-      STAR_COLORS = [Canvas::WHITE, Canvas::YELLOW, Canvas::CYAN, Canvas::LIGHT_RED, Canvas::PURPLE,
-                     Canvas::LIGHT_GREEN, Canvas::LIGHT_BLUE, Canvas::ORANGE].freeze
-      STRIPE = [Canvas::RED, Canvas::ORANGE, Canvas::YELLOW, Canvas::GREEN, Canvas::CYAN, Canvas::LIGHT_BLUE,
-                Canvas::PURPLE, Canvas::LIGHT_RED].freeze
+      TAGLINE     = 'JACK INTO THE TELETYPE NETWORK'
+      TAGLINE_ROW = 5
 
-      MOTTO     = '♥ ONE NUMBER ♦ EVERY BOARD ♥'
-      INFO_ROW  = 22
-      PAGES_ROW = 21
-      HELP_ROW  = 24
-      HELP       = 'CRSR+RETURN OR 1-8: DIAL   Q: HANG UP'
-      HELP_PAGES = 'RETURN/1-8 DIAL  +/- PAGE  Q HANG UP'
+      FRAME_TOP    = 7
+      FRAME_BOTTOM = FRAME_TOP + PER_PAGE + 1
+      FRAME_LEFT   = 3
+      FRAME_RIGHT  = 36
+      NODE_COL     = FRAME_LEFT + 1
+      NODE_WIDTH   = FRAME_RIGHT - FRAME_LEFT - 1
+      NAME_WIDTH   = 16
+      PORT_COL     = 31
+
+      ADDR_ROW    = FRAME_BOTTOM + 2
+      TAGS_ROW    = ADDR_ROW + 1
+      LINK_ROW    = ADDR_ROW + 2
+      VALUE_COL   = NODE_COL + 6
+      VALUE_WIDTH = FRAME_RIGHT - VALUE_COL
+      BAR         = 12
+
+      HELP_ROW   = 23
+      REST_ROW   = 24
+      HELP       = [['CRSR', true], [' SELECT   ', false], ['RETURN', true], [' JACK IN   ', false],
+                    ['Q', true], [' EXIT', false]].freeze
+      HELP_PAGES = [['CRSR', true], ['  ', false], ['RETURN', true], [' JACK IN  ', false],
+                    ['+/-', true], [' PAGE  ', false], ['Q', true], [' EXIT', false]].freeze
+
+      Drop = Struct.new(:col, :head, :glyphs)
 
       attr_reader :page, :index
 
@@ -50,7 +68,8 @@ module UI
         @random = random
         @page   = 0
         @index  = 0
-        @stars  = {}
+        @drops  = []
+        spawn(@random.rand(RAIN_ROWS.size + TRAIL.size)) while @drops.size < DROPS
       end
 
       def pages = [(@boards.size + PER_PAGE - 1) / PER_PAGE, 1].max
@@ -65,23 +84,23 @@ module UI
       # The whole screen.
       def frame
         canvas = Canvas.new
-        stars(canvas)
+        residue(canvas)
+        @drops.each { |drop| trail(canvas, drop) }
         logo(canvas)
-        canvas.text(7, centre(MOTTO), MOTTO, Canvas::WHITE)
-        stripe(canvas, 8)
-        PER_PAGE.times { |slot| tile(canvas, slot) }
-        page_dots(canvas)
+        canvas.text(TAGLINE_ROW, centre(TAGLINE), TAGLINE, Canvas::GREEN)
+        border(canvas)
+        PER_PAGE.times { |slot| node(canvas, slot) }
+        labels(canvas)
         info(canvas)
-        help = pages > 1 ? HELP_PAGES : HELP
-        canvas.text(HELP_ROW, centre(help), help, Canvas::GREY)
+        help(canvas)
         canvas.frame + rest
       end
 
-      # Moves the selection by +dx+ tiles across and +dy+ down; past the first
-      # or the last row it turns the page. Returns the bytes that repaint
-      # what changed: the hearts, the info, or the whole screen for a page.
-      def move(dx, dy)
-        slot = @index + dx + (dy * 2)
+      # Moves the selection +delta+ nodes down; past the first or the last
+      # node it turns the page. Returns the bytes that repaint what changed:
+      # the two nodes and the info, or the whole screen for a page.
+      def move(delta)
+        slot = @index + delta
         if slot.negative? && @page.positive?
           @page -= 1
           @index = on_page.size - 1
@@ -106,52 +125,45 @@ module UI
         frame
       end
 
-      # Selects +slot+ on this page; the repaint of the old and the new tile's
-      # hearts and of the info lines.
+      # Selects +slot+ on this page; the repaint of the old and the new node
+      # and of the info.
       def select(slot)
         return ''.b if slot == @index || slot.negative? || slot >= on_page.size
 
-        canvas = Canvas.new
         old = @index
         @index = slot
-        hearts(canvas, old)
-        hearts(canvas, slot)
-        info(canvas)
-        [old, slot].map { |s| heart_spans(canvas, s) }.join + info_spans(canvas) + rest
+        node_span(old) + node_span(slot) + info_spans + rest
       end
 
-      # A few stars change place and colour: an idle tick.
-      def twinkle
+      # The rain falls a row: an idle tick. Only the cells of the drops go
+      # out, the cursor stepping from one to the next.
+      def rain
         canvas = Canvas.new
-        out = +''.b
-        2.times do
-          row = STAR_ROWS.sample(random: @random)
-          col = star_cols(row).sample(random: @random)
-          canvas.text(row, col, STARS.sample(random: @random), STAR_COLORS.sample(random: @random))
-          out << canvas.span(row, col, 1)
+        cells = []
+        @drops.each do |drop|
+          drop.head += 1
+          drop.glyphs[drop.head] = RAIN.sample(random: @random)
+          cells.concat(trail(canvas, drop))
+          cells << drip(canvas, drop.head - TRAIL.size, drop.col, ' ', nil)
         end
-        out + rest
+        @drops.reject! { |drop| drop.head - TRAIL.size >= RAIN_ROWS.last }
+        spawn(0) while @drops.size < DROPS
+        canvas.patch(cells.compact) + rest
       end
 
-      # The dialling of the selected board: its button flashes, then the
-      # info says where the call goes. Yields each step's bytes, with a pause
-      # after it.
+      # The dialling of the selected board: its node flashes, the link bar
+      # fills, the carrier comes. Each step's bytes, to go out with a pause
+      # after them.
       def dial_steps
-        board = selected
         slot  = @index
         steps = []
-        3.times do
-          steps << tile_spans(slot, flash: true) << tile_spans(slot, flash: false)
+        2.times { steps << node_span(slot, flash: true) << node_span(slot, flash: false) }
+        (0..BAR).step(2) do |filled|
+          steps << link([['HANDSHAKE ', Canvas::GREEN], ['█' * filled, Canvas::LIGHT_GREEN],
+                         ['▒' * (BAR - filled), Canvas::DARK_GREY]])
         end
-        canvas = Canvas.new
-        line = "DIALLING #{board.address.upcase}"
-        canvas.text(INFO_ROW, 1, line.ljust(38), Canvas::WHITE)
-        canvas.text(INFO_ROW + 1, 1, ''.ljust(38), Canvas::WHITE)
-        steps << (canvas.span(INFO_ROW, 1, 38) + canvas.span(INFO_ROW + 1, 1, 38))
-        3.times do |i|
-          dots = Canvas.new.text(INFO_ROW + 1, 1 + (i * 2), '●', STRIPE[i * 2])
-          steps << dots.span(INFO_ROW + 1, 1 + (i * 2), 1)
-        end
+        steps << link([['CARRIER DETECTED', Canvas::LIGHT_GREEN]])
+        steps << link([['JACKING IN', Canvas::WHITE]])
         steps
       end
 
@@ -159,105 +171,169 @@ module UI
 
       private
 
-      def rest = Canvas.new.cursor(HELP_ROW, 0)
+      def rest = Canvas.new.cursor(REST_ROW, 0)
 
       def centre(text) = (Canvas::COLS - text.length) / 2
 
-      def star_cols(row) = row.zero? ? (0..38).step(3).to_a : [0, 1, 2, 3, 36, 37, 38, 39]
+      # A new drop, half of them in the open columns beside the frame.
+      def spawn(head)
+        free = RAIN_COLS.to_a - @drops.map(&:col)
+        open = free.grep_v(FRAME_LEFT..FRAME_RIGHT)
+        free = open if open.any? && @random.rand < 0.5
+        drop = Drop.new(free.sample(random: @random), head, {})
+        ((head - TRAIL.size + 1)..head).each { |row| drop.glyphs[row] = RAIN.sample(random: @random) }
+        @drops << drop
+      end
 
-      def stars(canvas)
-        STAR_ROWS.each do |row|
-          star_cols(row).each do |col|
-            next unless @random.rand < 0.45
-
-            canvas.text(row, col, STARS.sample(random: @random), STAR_COLORS.sample(random: @random))
+      # The cells of the logo, the tagline, the frame and the info; the rain
+      # falls behind them.
+      def solid
+        @solid ||= begin
+          logo = logo_cells.keys
+          rows = logo.map(&:first)
+          cols = logo.map(&:last)
+          [[rows.minmax, cols.minmax],
+           [[TAGLINE_ROW] * 2, [centre(TAGLINE), centre(TAGLINE) + TAGLINE.length - 1]],
+           [[FRAME_TOP, FRAME_BOTTOM], [FRAME_LEFT, FRAME_RIGHT]],
+           [[ADDR_ROW, LINK_ROW], [FRAME_LEFT, FRAME_RIGHT]]].each_with_object({}) do |((top, bottom), (left, right)), cells|
+            (top..bottom).each { |row| (left..right).each { |col| cells[[row, col]] = true } }
           end
         end
       end
 
-      def logo(canvas)
-        rows = 5.times.map { |r| 'TTG GATE'.chars.map { |c| FONT.fetch(c)[r] }.join('.') }
-        rows.each_with_index do |line, r|
-          line.each_char.with_index do |ch, c|
-            next if ch == '.'
+      # A cell of rain, unless it is off the rain or behind the logo; its
+      # position when it was drawn.
+      def drip(canvas, row, col, glyph, color)
+        return unless RAIN_ROWS.cover?(row) && !solid[[row, col]]
 
-            shadow_r = r + 1
-            shadow_c = c + 1
-            shadow_free = shadow_r >= rows.size || rows[shadow_r][shadow_c].nil? || rows[shadow_r][shadow_c] == '.'
-            canvas.text(LOGO_TOP + shadow_r, LOGO_LEFT + shadow_c, '▒', Canvas::DARK_GREY) if shadow_free
-            canvas.text(LOGO_TOP + r, LOGO_LEFT + c, FONT_GLYPHS.fetch(ch), RAINBOW[r])
+        canvas.text(row, col, glyph, color)
+        [row, col]
+      end
+
+      def trail(canvas, drop)
+        TRAIL.each_with_index.map do |color, i|
+          row = drop.head - i
+          drip(canvas, row, drop.col, drop.glyphs.fetch(row, ' '), color)
+        end
+      end
+
+      # Old rain, dim, left on the glass.
+      def residue(canvas)
+        RAIN_ROWS.each do |row|
+          RAIN_COLS.each do |col|
+            chance = @random.rand
+            next if chance > 0.1
+
+            drip(canvas, row, col, RAIN.sample(random: @random), chance < 0.02 ? Canvas::GREEN : Canvas::DARK_GREY)
           end
         end
       end
 
-      def stripe(canvas, row)
-        Canvas::COLS.times { |c| canvas.text(row, c, '▄', STRIPE[(c / 5) % STRIPE.size]) }
+      # The cells of TTG GATE: [row, col] => [glyph, colour].
+      def logo_cells
+        @logo_cells ||= begin
+          pixels = 6.times.map { |r| 'TTG GATE'.chars.map { |c| FONT.fetch(c)[r] }.join('.') }
+          left = centre(pixels.first)
+          cells = {}
+          3.times do |r|
+            pixels.first.length.times do |c|
+              glyph = HALVES.fetch(pixels[2 * r][c] + pixels[(2 * r) + 1][c])
+              cells[[LOGO_TOP + r, left + c]] = [glyph, LOGO_COLORS[r]] unless glyph == ' '
+            end
+          end
+          cells
+        end
       end
 
-      def origin(slot) = [TILE_TOP + ((slot / 2) * 3), TILE_COLS[slot % 2]]
+      def logo(canvas) = logo_cells.each { |(row, col), (glyph, color)| canvas.text(row, col, glyph, color) }
 
-      # A candy button: a rounded band in the board's colour, its digit on a
-      # white key; an empty place is a grey free line.
-      def tile(canvas, slot, flash: false)
-        row, col = origin(slot)
+      def border(canvas)
+        [FRAME_TOP, FRAME_BOTTOM].each do |row|
+          canvas.text(row, FRAME_LEFT, "┼#{'─' * NODE_WIDTH}┼", Canvas::DARK_GREY)
+        end
+        ((FRAME_TOP + 1)...FRAME_BOTTOM).each do |row|
+          canvas.text(row, FRAME_LEFT, '│', Canvas::DARK_GREY)
+          canvas.text(row, FRAME_RIGHT, '│', Canvas::DARK_GREY)
+        end
+      end
+
+      def labels(canvas)
+        canvas.text(FRAME_TOP, FRAME_LEFT + 2, ' TTG NETWORK ', Canvas::GREEN)
+        page = " PAGE #{@page + 1}/#{pages} "
+        canvas.text(FRAME_TOP, FRAME_RIGHT - 1 - page.length, page, Canvas::GREEN)
+        site = ' TELETYPEGAMES.ORG '
+        canvas.text(FRAME_BOTTOM, FRAME_RIGHT - 1 - site.length, site, Canvas::DARK_GREY)
+        canvas.text(ADDR_ROW, NODE_COL, 'ADDR', Canvas::DARK_GREY)
+        canvas.text(TAGS_ROW, NODE_COL, 'TAGS', Canvas::DARK_GREY)
+        canvas.text(LINK_ROW, NODE_COL, 'LINK', Canvas::DARK_GREY)
+      end
+
+      # A node: its key, the board's colour, its name, a dotted leader and
+      # the port; the chosen one lit in green, or white while it flashes. An
+      # empty place is unassigned.
+      def node(canvas, slot, flash: false)
+        row   = FRAME_TOP + 1 + slot
         board = on_page[slot]
-        color = board ? Switchboard.color(board) : Canvas::DARK_GREY
-        color = Canvas::WHITE if flash
-        inner = TILE_WIDTH - 2
-        canvas.text(row, col, "◢#{'▄' * inner}◣", color)
-        canvas.text(row + 2, col, "◥#{'▀' * inner}◤", color)
-        if board
-          canvas.text(row + 1, col, ' ', color, rvs: true)
-          canvas.text(row + 1, col + 1, (slot + 1).to_s, flash ? color : Canvas::WHITE, rvs: true)
-          name = board.name.upcase[0, NAME_WIDTH].center(NAME_WIDTH)
-          canvas.text(row + 1, col + 2, " #{name} ", color, rvs: true)
+        canvas.clear(row, NODE_COL, NODE_WIDTH)
+        key = format('%02d', slot + 1)
+        return canvas.text(row, NODE_COL + 1, "#{key}   [ UNASSIGNED ]", Canvas::DARK_GREY) unless board
+
+        name   = board.name.upcase[0, NAME_WIDTH]
+        leader = '.' * (PORT_COL - 1 - (NODE_COL + 6 + name.length + 1))
+        if slot == @index
+          lit = flash ? Canvas::WHITE : Canvas::LIGHT_GREEN
+          canvas.text(row, NODE_COL, ">#{key}   #{name} #{leader} #{board.port}".ljust(NODE_WIDTH), lit, rvs: true)
+          canvas.text(row, NODE_COL + 4, ' ', Switchboard.color(board), rvs: true)
         else
-          canvas.text(row + 1, col, '█', color)
-          canvas.text(row + 1, col + 1, ' FREE LINE '.center(inner), Canvas::GREY)
-          canvas.text(row + 1, col + TILE_WIDTH - 1, '█', color)
+          canvas.text(row, NODE_COL + 1, key, Canvas::DARK_GREY)
+          canvas.text(row, NODE_COL + 4, '▌', Switchboard.color(board))
+          canvas.text(row, NODE_COL + 6, name, Canvas::GREEN)
+          canvas.text(row, NODE_COL + 6 + name.length + 1, leader, Canvas::DARK_GREY)
+          canvas.text(row, PORT_COL, board.port.to_s, Canvas::GREEN)
         end
-        hearts(canvas, slot)
       end
 
-      def hearts(canvas, slot)
-        row, col = origin(slot)
-        on = slot == @index && on_page[slot]
-        canvas.text(row + 1, col - 1, on ? '♥' : ' ', Canvas::LIGHT_RED)
-        canvas.text(row + 1, col + TILE_WIDTH, on ? '♥' : ' ', Canvas::LIGHT_RED)
-      end
-
-      def heart_spans(canvas, slot)
-        row, col = origin(slot)
-        canvas.span(row + 1, col - 1, 1) + canvas.span(row + 1, col + TILE_WIDTH, 1)
-      end
-
-      def tile_spans(slot, flash:)
+      def node_span(slot, flash: false)
         canvas = Canvas.new
-        tile(canvas, slot, flash: flash)
-        row, col = origin(slot)
-        (0..2).map { |r| canvas.span(row + r, col, TILE_WIDTH) }.join
-      end
-
-      def page_dots(canvas)
-        return if pages == 1
-
-        dots = pages.times.map { |p| p == @page ? '●' : '○' }.join(' ')
-        text = "- #{dots} +"
-        canvas.text(PAGES_ROW, centre(text), text, Canvas::YELLOW)
+        node(canvas, slot, flash: flash)
+        canvas.span(FRAME_TOP + 1 + slot, NODE_COL, NODE_WIDTH)
       end
 
       def info(canvas)
+        [ADDR_ROW, TAGS_ROW, LINK_ROW].each { |row| canvas.clear(row, VALUE_COL, VALUE_WIDTH) }
         board = selected
-        canvas.clear(INFO_ROW, 1, 38).clear(INFO_ROW + 1, 1, 38)
         return unless board
 
-        color = Switchboard.color(board)
-        canvas.text(INFO_ROW, 1, '♦', color)
-        canvas.text(INFO_ROW, 3, board.address.upcase[0, 36], Canvas::WHITE)
-        canvas.text(INFO_ROW + 1, 3, board.tags.join(' ♦ ').upcase[0, 36], color)
+        canvas.text(ADDR_ROW, VALUE_COL, board.address.upcase[0, VALUE_WIDTH], Canvas::LIGHT_GREEN)
+        canvas.text(TAGS_ROW, VALUE_COL, board.tags.join('/').upcase[0, VALUE_WIDTH], Canvas::GREEN)
+        canvas.text(LINK_ROW, VALUE_COL, 'STANDBY', Canvas::GREEN)
       end
 
-      def info_spans(canvas) = canvas.span(INFO_ROW, 1, 38) + canvas.span(INFO_ROW + 1, 1, 38)
+      def info_spans
+        canvas = Canvas.new
+        info(canvas)
+        [ADDR_ROW, TAGS_ROW, LINK_ROW].map { |row| canvas.span(row, VALUE_COL, VALUE_WIDTH) }.join
+      end
+
+      # The link line, from +parts+ of [text, colour].
+      def link(parts)
+        canvas = Canvas.new
+        col = VALUE_COL
+        parts.each do |text, color|
+          canvas.text(LINK_ROW, col, text, color)
+          col += text.length
+        end
+        canvas.span(LINK_ROW, VALUE_COL, VALUE_WIDTH)
+      end
+
+      def help(canvas)
+        parts = pages > 1 ? HELP_PAGES : HELP
+        col = centre(parts.map(&:first).join)
+        parts.each do |text, key|
+          canvas.text(HELP_ROW, col, text, key ? Canvas::GREEN : Canvas::DARK_GREY)
+          col += text.length
+        end
+      end
     end
   end
 end

@@ -7,15 +7,16 @@ require_relative 'petscii/switchboard'
 
 module UI
   # TTG Gate on a Commodore 64: the Switchboard, raw PETSCII in the
-  # graphics set. CRSR moves between the boards, RETURN or a digit dials,
-  # + and - turn the pages, Q or RUN/STOP hangs up. While the caller thinks,
-  # the stars twinkle.
+  # graphics set. CRSR up and down move between the nodes, left and right or
+  # + and - turn the pages, RETURN or a digit dials, Q or RUN/STOP hangs up.
+  # While the caller thinks, the code rain falls.
   module Petscii
-    # Seconds between two twinkles.
-    TICK = 1.5
+    # Seconds between two rows of rain.
+    TICK = 0.5
     # Seconds between two steps of the dialling.
     STEP = 0.12
-    MOVES = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }.freeze
+    MOVES = { up: -1, down: 1 }.freeze
+    PAGES = { left: -1, right: 1, '-' => -1, '+' => 1 }.freeze
 
     def self.flow(bbs)
       BBS::Flow.define do
@@ -38,16 +39,15 @@ module UI
           idle += TICK
           return goodbye(screen) if screen.idle_limit && idle >= screen.idle_limit
 
-          screen.raw(board.twinkle)
+          screen.raw(board.rain)
           next
         end
 
         idle = 0.0
         case key
         when :escape, 'q', 'Q' then return goodbye(screen)
-        when *MOVES.keys then screen.raw(board.move(*MOVES[key]))
-        when '+' then screen.raw(board.turn(1))
-        when '-' then screen.raw(board.turn(-1))
+        when *MOVES.keys then screen.raw(board.move(MOVES[key]))
+        when *PAGES.keys then screen.raw(board.turn(PAGES[key]))
         when :enter then dial(screen, board)
         when /\A[1-#{Switchboard::PER_PAGE}]\z/
           next unless board.board_at(key.to_i)
@@ -58,7 +58,7 @@ module UI
       end
     end
 
-    # The button flashes, the dots roll, and the line goes to the board;
+    # The node flashes, the link bar fills, and the line goes to the board;
     # the whole switchboard again when the board hangs up.
     def self.dial(screen, board)
       target = board.selected
@@ -75,11 +75,11 @@ module UI
 
     def self.goodbye(screen)
       canvas = Canvas.new
-      canvas.text(9, 9, '♥ ♦ ♣ ♠ ♥ ♦ ♣ ♠ ♥ ♦ ♣', Canvas::LIGHT_RED)
-      canvas.text(11, 10, 'TTG GATE: LINE CLOSED', Canvas::WHITE)
-      canvas.text(12, 11, 'SEE YOU ON THE WIRE', Canvas::CYAN)
-      canvas.text(14, 9, '♠ ♣ ♦ ♥ ♠ ♣ ♦ ♥ ♠ ♣ ♦', Canvas::PURPLE)
-      canvas.text(17, 15, 'NO CARRIER', Canvas::LIGHT_RED)
+      canvas.text(9, 10, '> LINK SEVERED', Canvas::GREEN)
+      canvas.text(10, 10, '> TRACE WIPED', Canvas::GREEN)
+      canvas.text(11, 10, '> TTG GATE OFFLINE', Canvas::GREEN)
+      canvas.text(13, 10, 'SEE YOU ON THE WIRE', Canvas::DARK_GREY)
+      canvas.text(16, 15, 'NO CARRIER', Canvas::LIGHT_GREEN)
       screen.raw(canvas.frame + [Canvas::LOWERCASE].pack('C*'))
       nil
     end

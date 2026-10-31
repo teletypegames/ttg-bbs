@@ -15,32 +15,34 @@ that have a C64 face.
 
 ### The C64 switchboard
 
-The C64 face is drawn in the uppercase/graphics character set of the C64, where
-the card suits, the balls, the rounded corners, the triangles and the quarter
-blocks are: TTG GATE in fat rainbow letters with a checkered shadow, twinkling
-stars around it, and the boards as candy buttons in their own colours, two by
-four. The chosen one has a heart on each side, and its address and tags are
-under the buttons.
+The C64 face is drawn in the uppercase/graphics character set of the C64, in
+the greens of a phosphor screen: code rain falls down the whole screen, behind
+TTG GATE in half-block letters, the tagline, the frame and the info, and shows
+in the open columns beside the frame and in the gaps between. The boards are
+the nodes of a list in a thin frame, one row each: the key, a block of the
+board's colour, the name, a dotted leader and the port. The chosen node is lit
+in green, and its address, tags and link state are under the frame.
 
 | Key | |
 |---|---|
-| CRSR | move between the buttons; past the first or the last row, the page turns |
-| RETURN or 1-8 | dial: the button flashes, the dots roll, the line goes to the board |
-| + / - | the next / previous page |
+| CRSR up / down | move between the nodes; past the first or the last one, the page turns |
+| CRSR left / right, + / - | the previous / next page |
+| RETURN or 1-8 | jack in: the node flashes, the HANDSHAKE bar fills, the line goes to the board |
 | Q or RUN/STOP | hang up |
 
-A page holds eight buttons. The empty places of the last page are grey **free
-lines**, so a new board in `config/boards.yml` just fills the next one; past
-eight the menu turns into pages, with ● ○ dots under the buttons. The colour of
-a button is the C64 colour nearest to the board's `accent`.
+A page holds eight nodes. The empty places of the last page are **unassigned**,
+so a new board in `config/boards.yml` just fills the next one; past eight the
+menu turns into pages, PAGE 2/3 in the frame. The colour block of a node is the
+C64 colour nearest to the board's `accent`.
 
 The screen goes out as raw PETSCII (`Session#write_raw`, rubbs 0.26.0), past
 the encoder of rubbs, which speaks the lowercase set: the whole screen once
-(about 1.3 KB), then only the cells that change, since a C64 line behind a
-modem is slow. The stars twinkle every 1.5 s while the caller thinks; the call
-still ends after the session's idle time. Before the line goes to a board the
-gate switches back to the lowercase set. `UI::Petscii::Canvas` turns a grid of
-cells into these bytes, `UI::Petscii::Switchboard` draws the menu on it.
+(about 1 KB), then only the cells that change, since a C64 line behind a modem
+is slow. The rain falls a row every 0.5 s while the caller thinks, about 180
+bytes a step, the cursor stepping from cell to nearest cell; the call still
+ends after the session's idle time. Before the line goes to a board the gate
+switches back to the lowercase set. `UI::Petscii::Canvas` turns a grid of cells
+into these bytes, `UI::Petscii::Switchboard` draws the menu on it.
 
 ## Running
 

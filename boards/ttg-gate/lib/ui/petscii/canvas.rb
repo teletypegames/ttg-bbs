@@ -32,7 +32,9 @@ module UI
       CLEAR     = 0x93
       HOME      = 0x13
       DOWN      = 0x11
+      UP        = 0x91
       RIGHT     = 0x1d
+      LEFT      = 0x9d
       RVS_ON    = 0x12
       RVS_OFF   = 0x92
       CR        = 0x0d
@@ -105,6 +107,29 @@ module UI
         out.pack('C*')
       end
 
+      # The cells at +positions+, [row, col] each, the cursor stepping to the
+      # nearest one left instead of from the top left each time: the cheap
+      # repaint of a few cells scattered over the screen.
+      def patch(positions)
+        out = [HOME, RVS_OFF]
+        state = { color: nil, rvs: false }
+        at = [0, 0]
+        left = positions.uniq
+        until left.empty?
+          row, col = left.min_by { |r, c| [distance(at, r, c), r, c] }
+          left.delete([row, col])
+          if row + col < distance(at, row, col)
+            out << HOME
+            at = [0, 0]
+          end
+          out.concat(steps(at, row, col))
+          emit(out, [@cells[row][col]], state)
+          at = col == COLS - 1 ? [row + 1, 0] : [row, col + 1]
+        end
+        out << RVS_OFF if state[:rvs]
+        out.pack('C*')
+      end
+
       # The cursor moves to +row+, +col+, with nothing printed.
       def cursor(row, col) = ([HOME] + ([DOWN] * row) + ([RIGHT] * col)).pack('C*')
 
@@ -121,6 +146,14 @@ module UI
       private
 
       def blank = Cell.new(0x20, nil, false)
+
+      def distance(from, row, col) = (row - from[0]).abs + (col - from[1]).abs
+
+      def steps(from, row, col)
+        dr = row - from[0]
+        dc = col - from[1]
+        (dr.negative? ? [UP] * -dr : [DOWN] * dr) + (dc.negative? ? [LEFT] * -dc : [RIGHT] * dc)
+      end
 
       def inside?(row, col) = row.between?(0, ROWS - 1) && col.between?(0, COLS - 1) && !(row == ROWS - 1 && col == COLS - 1)
 
