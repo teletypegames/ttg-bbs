@@ -13,10 +13,13 @@ module UI
         loop do
           doing('Callers & Users')
           @screen.title('CALLERS & USERS')
-          [['w', 'who is online'], ['l', 'last callers'], ['u', 'user listing'], ['t', 'the team']].each do |k, label|
-            @screen.puts " #{YE}#{k.upcase}#{LG} #{label}"
-          end
-          case @screen.choose("\r\n#{WH}command#{LG} (q: back): ", %w[w l u t q])
+          @screen.puts
+          items = [['w', 'who is online', 'the nodes and who is on them'], ['l', 'last callers', 'who called lately'],
+                   ['u', 'user listing', 'every registered name'], ['t', 'the team', 'the people of teletype games'],
+                   ['q', 'back', 'to the main menu']]
+          @people = @screen.menu(items.map { |k, label, about| BBS::Selector.item(label, key: k, value: k, about: about) },
+                                 index: items.index { |k, _| k == @people }, back: 'q', hint: 'crsr: choose  return: open')
+          case @people
           when 'w' then @screen.page('WHO IS ONLINE', who_is_online)
           when 'l' then @screen.page('LAST CALLERS', last_callers)
           when 'u' then @screen.page('USER LISTING', user_listing)
@@ -130,7 +133,7 @@ module UI
         loop do
           doing('Your Stats')
           @screen.page("YOU - #{name.upcase}"[0, 30], my_stats, wait: false)
-          k = @screen.choose("#{YE}P#{LG}rofile  #{YE}R#{LG}egister  #{YE}Q#{LG}: back ", %w[p r q])
+          k = @screen.actions(%w[p profile], %w[r register], %w[q back])
           case k
           when 'p' then profile
           when 'r' then register

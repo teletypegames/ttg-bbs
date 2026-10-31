@@ -78,7 +78,7 @@
 - keys: [gate, ttggate, dial, dialing, '2399', one port, all boards]
   fact: 'TTG Gate at teletypegames.org:2399 is one port for our whole network: a dialing menu that puts your call through to any of our boards, this one too, and takes it back when that board hangs up. On a C64 it lists the boards that have a C64 face.'
 - keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag, switch, window, windows, front]
-  fact: 'Every menu takes one key, the letter in front of the line. Lists are numbered: type the number and RETURN; RETURN alone turns the page, Q or the arrow-left key goes back. ? on the main menu is the help.'
+  fact: 'The cursor keys move the bar of a menu, RETURN opens the lit item, and the letter in front of an item opens it at once. Lists are numbered: the cursor or the number, then RETURN; cursor left and right turn the pages, Q or the arrow-left key goes back. ? on the main menu is the help.'
 - keys: [sysop, admin, operator, console, broadcast]
   fact: 'Z on the main menu is the console of the sysops, logged in with their password; it shows the numbers and sends broadcasts to the chat.'
 - keys: [teletype, ttg, company, studio, website, site, made, built, created, behind, owner, who made, who built, who run, who is behind]

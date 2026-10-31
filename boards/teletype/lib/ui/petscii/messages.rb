@@ -30,7 +30,7 @@ module UI
           end
           lines = [" #{GR}(no messages on #{board.title} yet)#{LG}"] if messages.empty?
           @screen.page(board.title.upcase, lines, wait: false)
-          k = @screen.choose("#{YE}N#{LG}ew post  #{YE}R#{LG}eread  #{YE}Q#{LG}: back ", %w[n r q])
+          k = @screen.actions(['n', 'new post'], %w[r reread], %w[q back])
           return if k == 'q'
 
           post(board) if k == 'n'
@@ -59,7 +59,7 @@ module UI
           @screen.title('E-MAIL')
           @screen.say('Mail belongs to registered names (S, then R registers yours). Anyone with a name can ' \
                       'leave feedback for the sysop.')
-          k = @screen.choose("#{YE}F#{LG}eedback to the sysop  #{YE}Q#{LG}: back ", %w[f q])
+          k = @screen.actions(['f', 'feedback to the sysop'], %w[q back])
           write_letter(to: MailService::SYSOP) if k == 'f'
           return
         end
@@ -89,7 +89,7 @@ module UI
                  " #{GR}subject#{LG} #{WH}#{letter.subject}#{LG}", "#{DG}#{'─' * 39}#{LG}",
                  *letter.body.to_s.split("\n").flat_map { |l| l.strip.empty? ? [''] : @screen.wrap(l).map { |w| " #{w}" } }]
         @screen.page('LETTER', lines, wait: false)
-        k = @screen.choose("#{YE}R#{LG}eply  #{YE}D#{LG}elete  #{YE}Q#{LG}: back ", %w[r d q])
+        k = @screen.actions(%w[r reply], %w[d delete], %w[q back])
         if k == 'r'
           subject = letter.subject.start_with?('Re: ') ? letter.subject : "Re: #{letter.subject}"
           write_letter(to: letter.from, subject: subject[0, MailService::SUBJECT_MAX])
@@ -139,7 +139,7 @@ module UI
             @screen.wrap("#{YE}#{o.username}#{LG}: #{o.text}", 37).map { |w| " #{w}" }
           end
           @screen.page('ONELINERS', lines.empty? ? [" #{GR}(the wall is empty, be the first)#{LG}"] : lines, wait: false)
-          return unless @screen.choose("#{YE}W#{LG}rite  #{YE}Q#{LG}: back ", %w[w q]) == 'w'
+          return unless @screen.actions(%w[w write], %w[q back]) == 'w'
 
           text = @screen.ask(" #{GR}#{OnelinerService::MAX_LENGTH} characters at most#{LG}\r\n> ")
           next if text.empty?

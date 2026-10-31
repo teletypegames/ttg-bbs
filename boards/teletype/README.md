@@ -209,36 +209,44 @@ statusbar while it is highlighted.
 The board as the C64 boards had it (`lib/ui/petscii`), on a C64 terminal program
 (CCGMS, StrikeTerm, SyncTERM in C64 mode) in the lowercase character set: the
 TTG BBS logo in reversed blocks (yellow, orange and red, the modern face's
-logo), the name and the password, the logon scans, then the main menu, one key
-for each line. Each section has its colour, and its keys wear it; under the
-menu a line of what is happening: the callers on line, the messages (and new
-mail), the next event with its days to go, the newest release.
+logo), the name and the password, the logon scans, then the main menu: who is
+calling and what is happening (the callers on line, new mail, the next event
+with its days to go, the newest release), then the sections in two columns, a
+cursor menu of rubbs (`BBS::Selector`). Each section is a band of its colour,
+and its keys and its bar wear it. CRSR moves the bar (left and right to the
+column beside), RETURN opens the lit item, and the letter in front of an item
+opens it at once, as before; under the menu a line about the lit item.
 
 ```
- messages ─────────  content ──────────
- M message boards    F file areas
- E e-mail            B ftp browser
- O oneliners         G game catalog
- L live chat         W wiki & how-tos
- I irc channel       N news
- P page the sysop    U bulletins
-                     D dev log
- people ───────────  more ─────────────
- C callers & users   R doors
- V voting booth      T ttg master
- S you & your name   Y system info
- H hall of fame      ? help
- Z sysop console     Q log off
-───────────────────────────────────────
- 2 on line · 8 messages · 1 new mail
- next: Release Party in 34 days
- new:  Thread of Ariadne 1.1.0
+ TELETYPE BBS              node 2 13:32
+ hi tasi! · 3 on line · 2 new mail
+ next: TTG Game Jam in 3 days
+ new:  Thread of Ariadne 1.0.0
+ ──────────────────────────────────────
+ [messages] ───────  [content] ─────────
+ M message boards   F file areas
+ E e-mail 2         B ftp browser
+ O oneliners        G game catalog
+ L live chat        W wiki & how-tos
+ I irc channel      N news
+ P page the sysop   U bulletins
+                    D dev log
+ [people] ─────────  [more] ────────────
+ C callers & users  R doors
+ V voting booth     T ttg master
+ S you & your name  Y system info
+ H hall of fame     ? help
+ Z sysop console    Q log off
+ read and post on the boards
+ crsr: choose  return: open  q: off
 ```
 
 The doors list gives each door a few words of what it is.
 
-Lists are numbered: the number and RETURN opens one, RETURN alone turns the
-page, `Q` or `←` (RUN/STOP too) goes back. Long texts stop at every
+Lists are numbered cursor menus: CRSR or the number typed lights one, RETURN
+opens it, CRSR left and right turn the pages, `Q` or `←` (RUN/STOP too) goes
+back. The keys under a post, a letter or the wall are a row the cursor moves
+along, their letters working as well. Long texts stop at every
 screenful. Every line is typed in a field of rubbs (`BBS::Field`: the cursor
 keys move in it, DEL deletes, RETURN ends it, RUN/STOP or `←` goes back);
 posts and letters are written in its full-screen editor (`BBS::Editor`):
@@ -308,7 +316,7 @@ lib/
   ui/modern/classic_formatters.rb      logon/logoff, nodes, mail, voting,
                                        file areas, history, hall of fame
   ui/petscii.rb                        the PETSCII face: logo, logon, NO CARRIER
-  ui/petscii/screen.rb                 title bar, pages, numbered lists, editor,
+  ui/petscii/screen.rb                 title bar, pages, cursor menus, editor,
                                        chat line on the 40×25 screen
   ui/petscii/board.rb                  the main menu, doors, Master, help, sysop
   ui/petscii/messages.rb, content.rb,  its sections

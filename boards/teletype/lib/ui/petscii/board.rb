@@ -6,23 +6,42 @@ module UI
     # sections live in messages.rb, content.rb and people.rb.
     class Board
       # Two rows of two sections, each with its colour: the keys of a section
-      # wear it, so the eye finds the group first.
+      # and its bar wear it, so the eye finds the group first. Each item:
+      # its key, its label and the line about it under the menu.
       MENU = [
-        [['messages', GN, [['m', 'message boards'], %w[e e-mail], %w[o oneliners], ['l', 'live chat'],
-                           ['i', 'irc channel'], ['p', 'page the sysop']]],
-         ['content', CY, [['f', 'file areas'], ['b', 'ftp browser'], ['g', 'game catalog'], ['w', 'wiki & how-tos'],
-                          %w[n news], %w[u bulletins], ['d', 'dev log']]]],
-        [['people', PU, [['c', 'callers & users'], ['v', 'voting booth'], ['s', 'you & your name'],
-                         ['h', 'hall of fame']]],
-         ['more', YE, [%w[r doors], ['t', 'ttg master'], ['y', 'system info'], ['?', 'help'], ['q', 'log off']]]]
+        [['messages', GN, [['m', 'message boards', 'read and post on the boards'],
+                           ['e', 'e-mail', 'your letters; feedback to the sysop'],
+                           ['o', 'oneliners', 'a line on the wall for every caller'],
+                           ['l', 'live chat', 'talk with whoever is on line'],
+                           ['i', 'irc channel', 'the irc channel, from a c64'],
+                           ['p', 'page the sysop', 'call the sysop to a chat']]],
+         ['content', CY, [['f', 'file areas', 'games, demos and tools to download'],
+                          ['b', 'ftp browser', 'browse ftp.teletypegames.org'],
+                          ['g', 'game catalog', 'every game of teletype games'],
+                          ['w', 'wiki & how-tos', 'the wiki and the how-tos'],
+                          ['n', 'news', 'news from teletype games'],
+                          ['u', 'bulletins', 'the bulletins of the board'],
+                          ['d', 'dev log', 'what we are making, commit by commit']]]],
+        [['people', PU, [['c', 'callers & users', 'who is on line, who called'],
+                         ['v', 'voting booth', 'the polls of the board'],
+                         ['s', 'you & your name', 'your stats, profile and registration'],
+                         ['h', 'hall of fame', 'the top callers and posters']]],
+         ['more', YE, [['r', 'doors', 'games and programs behind the doors'],
+                       ['t', 'ttg master', 'ask the sysop where things are'],
+                       ['y', 'system info', 'this board and the network of boards'],
+                       ['?', 'help', 'how the keys of this board work'],
+                       ['q', 'log off', 'hang up. see you on the wire!']]]]
       ].freeze
-      CELL = 20
+      SYSOP = ['z', 'sysop console', 'the nodes, a broadcast: sysops only'].freeze
+      # The width of the menu: two columns of COLS / 2 less one.
+      MENU_WIDTH = COLS - 1
 
       HELP = [
-        'Every menu takes one key: the letter in front of the line. RETURN alone does nothing on the main menu.',
+        'The menus move: CRSR up and down (and left and right on the main menu) lights an item, RETURN opens ' \
+        'it. The letter in front of an item opens it at once too.',
         '',
-        'Lists are numbered: type the number and RETURN. RETURN alone turns the page, Q goes back. ' \
-        'The <- key and RUN/STOP go back too.',
+        'Lists are numbered: CRSR, or type the number, then RETURN. CRSR left and right turn the pages, Q goes ' \
+        'back. The <- key and RUN/STOP go back too.',
         '',
         'Long texts stop at every screenful: RETURN shows more, Q leaves.',
         '',
@@ -54,9 +73,7 @@ module UI
       def run
         loop do
           doing('At the main menu')
-          main_menu
-          k = @screen.choose("#{WH}command:#{LG} ", [*ACTIONS.keys, 'q', 'x', :enter], back: :enter)
-          next if k == :enter
+          k = main_menu
           return if %w[q x].include?(k) && logoff?
 
           send(ACTIONS[k]) if ACTIONS[k]
@@ -78,39 +95,63 @@ module UI
         "#{"node #{node.number} " if node}#{Time.now.strftime('%H:%M')}"
       end
 
+      # The front page: the title bar, the caller and what is going on, then
+      # the sections as a cursor menu in two columns. The key of the item
+      # taken; nil for ← or RUN/STOP.
       def main_menu
         @unread = registered? ? @bbs.mail.unread_count(name, sysop: sysop?) : nil
         @screen.title('TELETYPE BBS', node_text)
-        MENU.each do |left, right|
-          left = [left[0], left[1], left[2] + [['z', 'sysop console']]] if sysop? && left[0] == 'people'
-          @screen.puts "#{section_head(left)}#{section_head(right)}"
-          [left[2].size, right[2].size].max.times do |i|
-            @screen.puts "#{menu_cell(left[1], *left[2][i])}#{menu_cell(right[1], *right[2][i])}"
+        live_strip
+        @screen.puts " #{DG}#{'─' * (COLS - 2)}#{LG}"
+        items = menu_items
+        index = items.index { |i| i.selectable? && i.value == @lit }
+        @lit  = @screen.menu(items, columns: 2, height: items.size / 2, index: index, exits: { 'x' => 'x' },
+                                    hint: 'crsr: choose  return: open  q: off')
+      end
+
+      # The cells of the menu, down the left column, then down the right: a
+      # section's band, its items, then the next section's band level with
+      # the one beside it.
+      def menu_items
+        left, right = MENU.transpose.map do |sections|
+          sections.map do |title, color, items|
+            items += [SYSOP] if title == 'people' && sysop?
+            [band(title, color), *items.map { |k, label, about| item(k, label, about, color) }]
           end
         end
-        live_strip
-        status
+        rows = left.zip(right).map { |l, r| [l.size, r.size].max }
+        [left, right].flat_map do |column|
+          column.each_with_index.flat_map { |cells, i| cells + Array.new(rows[i] - cells.size) { BBS::Selector.heading } }
+        end
       end
 
-      # A section's name in its colour, the rest of the cell a line.
-      def section_head((title, color, _items))
-        " #{color}#{title}#{DG} #{'─' * (CELL - title.length - 3)}#{LG}"
+      # A section's name on a band of its colour.
+      def band(title, color)
+        BBS::Selector.heading("#{color}#{RV} #{title} #{RO}#{DG} #{'─' * (MENU_WIDTH / 2)}")
       end
 
-      def menu_cell(color, key = nil, label = nil)
-        return ' ' * CELL if key.nil?
-
-        label = "#{label} (#{@unread})" if key == 'e' && @unread.to_i.positive?
-        " #{color}#{key.upcase}#{LG} #{label[0, CELL - 4].ljust(CELL - 4)} "
+      def item(key, label, about, color)
+        if key == 'e' && @unread.to_i.positive?
+          label = "#{label} #{GN}#{@unread}#{LG}"
+          about = "#{@unread} new letter#{'s' unless @unread == 1}: #{about}"
+        end
+        BBS::Selector.item(label, key: key, value: key, about: about, color: color)
       end
 
-      # What is happening, under the menu: the nodes, the boards, the next
-      # event and the newest release, one line each.
+      # Who is calling and what is happening, over the menu: the caller and
+      # the nodes, the next event and the newest release, one line each. New
+      # mail since the last look rings once, as on the old boards.
       def live_strip
-        @screen.rule
         online = @bbs.online.count
-        mail   = @unread.to_i.positive? ? " #{GR}·#{LG} #{GN}#{@unread} new mail#{LG}" : ''
-        @screen.puts " #{YE}#{online}#{LG} on line #{GR}·#{LG} #{YE}#{@bbs.boards.total_count}#{LG} messages#{mail}"
+        seen   = @ctx[:mail_seen] || @unread
+        @ctx[:mail_seen] = @unread
+        mail = if @unread.to_i.positive?
+                 @screen.bell if seen && @unread > seen
+                 " #{GR}·#{LG} #{GN}#{@unread} new mail#{LG}"
+               else
+                 ''
+               end
+        @screen.puts " #{WH}hi #{name}!#{LG} #{GR}·#{LG} #{YE}#{online}#{LG} on line#{mail}"
         event = @bbs.site.upcoming_events(1).first
         if event
           days = ((event.date - Time.now) / 86_400).ceil
@@ -119,17 +160,6 @@ module UI
         end
         game = @bbs.games.latest_releases(1).first
         @screen.puts " #{GR}new:#{LG}  #{YE}#{game.title[0, 38 - 7 - game.version.length - 1]}#{LG} #{game.version}" if game
-      end
-
-      # Mail that arrived since the last look rings once, as on the old boards.
-      def status
-        unread = @unread
-        seen   = @ctx[:mail_seen] || unread
-        @ctx[:mail_seen] = unread
-        return unless unread && seen && unread > seen
-
-        @screen.bell
-        @screen.puts " #{GN}new mail! e opens your mailbox.#{LG}"
       end
 
       def logoff?
