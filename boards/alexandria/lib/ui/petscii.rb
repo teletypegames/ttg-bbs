@@ -125,17 +125,19 @@ module UI
       def menu_choice
         @screen.title('ALEXANDRIA', right)
         @screen.puts
-        @screen.puts " #{YE}R#{LG} random article"
-        @screen.puts " #{YE}L#{LG} language: #{WH}#{LANGUAGES.fetch(lang, lang)}#{LG}"
-        @screen.puts " #{YE}Q#{LG} log off"
-        case @screen.choose("\r\n #{DG}return: back#{LG} ", ['r', 'l', 'q', :enter], back: :enter)
-        when 'r'
+        items = [BBS::Selector.item('search a title', key: 's', value: :search, about: 'back to the prompt'),
+                 BBS::Selector.item('random article', key: 'r', value: :random, about: 'wherever the wiki takes you'),
+                 BBS::Selector.item("language: #{WH}#{LANGUAGES.fetch(lang, lang)}#{LG}", key: 'l', value: :language,
+                                                                                         about: 'the next wikipedia'),
+                 BBS::Selector.item('log off', key: 'q', value: :quit, about: 'hang up. see you!')]
+        case @screen.menu(items, back: :search, hint: 'crsr: choose  return: take')
+        when :random
           title = @wikipedia.random(lang: lang) or raise LookupFailed, 'Wikipedia did not answer. Try again later.'
           read(title)
-        when 'l'
+        when :language
           @ctx[:lang] = @wikipedia.next_language(lang)
           @screen.title('ALEXANDRIA', right)
-        when 'q' then return :quit
+        when :quit then return :quit
         else @screen.title('ALEXANDRIA', right)
         end
         nil

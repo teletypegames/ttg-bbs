@@ -85,9 +85,12 @@ right, the article's address under it.
 ### The C64 face
 
 The Pharos, the ALEXANDRIA logo and a prompt: type a title and RETURN. RETURN alone opens
-the menu: `R` random article, `L` the next language, `Q` log off. Results and
-sections are numbered lists: the number and RETURN opens one, RETURN alone
-turns the page, `Q` or `←` (RUN/STOP too) goes back. A section stops at every
+the menu: `S` back to the search, `R` random article, `L` the next language,
+`Q` log off. Results and sections are numbered lists. The menu and the lists
+are cursor menus of rubbs (`BBS::Selector`): CRSR moves the bar, RETURN takes
+the lit item, and the letters (or the number typed, in a list) work as well;
+CRSR left and right turn the pages of a list, `Q` or `←` (RUN/STOP too) goes
+back. A section stops at every
 screenful. Accented letters come as their nearest ASCII (the PETSCII line of
 rubbs).
 
@@ -101,7 +104,7 @@ lib/
   ui/modern.rb            the modern face: desktop, search, results, article
   ui/modern/pharos.rb     the desktop's title: the lighthouse and the name
   ui/petscii.rb           the PETSCII face: logo, prompt, menu, lists, pages
-  ui/petscii/screen.rb    title bar, pages, numbered lists on the 40×25 screen
+  ui/petscii/screen.rb    title bar, pages, the cursor menus on the 40×25 screen
 ```
 
 ## Wikipedia
