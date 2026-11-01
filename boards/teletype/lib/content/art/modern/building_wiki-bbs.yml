@@ -1,0 +1,17 @@
+# wiki-bbs on the town map of the modern face (12×4): its building.
+size: [12, 4]
+charset: cp437
+palette:
+  a: '#5fb0ff'
+  d: 240
+  w: 231
+chars: |2
+   ▄▄▄▄▄▄▄▄▄▄ 
+   █▒▒█▒▒█▒▒█ 
+   █▒▒█▒▒█▒▒█ 
+   █▀▀▀▀▀▀▀▀█ 
+colors: |2
+  .aaaaaaaaaa.
+  .awwawwawwa.
+  .awwawwawwa.
+  .adddddddda.

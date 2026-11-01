@@ -12,21 +12,6 @@ class TeletypeBBS
   CONTENT_DIR   = File.expand_path('../content', __dir__)
   BULLETINS_DIR = File.join(CONTENT_DIR, 'bulletins')
   LOGON_ART     = ENV.fetch('TELETYPE_BBS_LOGON_ART', File.join(CONTENT_DIR, 'logon.ans'))
-  # Every board of the network and what it carries: the BBS Network window,
-  # where a caller finds what this board leaves to the others.
-  NETWORK       = [
-    ['Teletype BBS',    'teletypegames.org:2323', 'this board: messages, mail, chat and our own doors'],
-    ['Impostor BBS',    'teletypegames.org:2324', 'the debrief terminal of Definitely not an Impostor'],
-    ['TTG Wiki BBS',    'teletypegames.org:2325', 'our wiki: the guides, the how-tos, the DOS corner'],
-    ['Alexandria BBS',  'teletypegames.org:2326', 'Wikipedia on a telnet line'],
-    ['Feedia BBS',      'teletypegames.org:2327', 'an RSS reader: the news as text'],
-    ['TTG Blog BBS',    'teletypegames.org:2328', 'our blog, written on the line'],
-    ['WarpEngine BBS',  'teletypegames.org:2329', 'our games and files: ZMODEM, XMODEM onto a C64'],
-    ['Scriptorium BBS', 'teletypegames.org:2330', 'Project Gutenberg books, a chapter at a time'],
-    ['Commodex BBS',    'teletypegames.org:2331', 'the C64 game compendium, with cheats and tips'],
-    ['Pixelia BBS',     'teletypegames.org:2332', 'ANSI and PETSCII art and a shared canvas'],
-    ['TTG Gate BBS',    'teletypegames.org:2399', 'one port for all of these: a dialing menu']
-  ].freeze
   DOOR_NAMES = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Chat of Ra', 'TTG Trivia'].freeze
 
   # +cols+: the narrowest screen the program draws for; +petscii+: the same door
@@ -40,7 +25,7 @@ class TeletypeBBS
 
   attr_reader :online, :boards, :games, :chat, :irc, :last_callers, :profile, :accounts, :site,
               :discord, :oneliners, :warp_sizes, :dev_log, :master, :mail, :voting, :trivia,
-              :taglines, :c64_master, :scene
+              :taglines, :c64_master, :scene, :network
 
   def initialize
     @online       = OnlineService.new(OnlineUsersRepository.new)
@@ -73,6 +58,7 @@ class TeletypeBBS
                                       path: File.join(CONTENT_DIR, 'polls.yml'), games: @games, doors: DOOR_NAMES)
     @trivia       = Trivia::Scores.new(ENV.fetch('TELETYPE_BBS_TRIVIA_SCORES_PATH', 'data/trivia_scores.csv'))
     @taglines     = TaglineService.new(@site)
+    @network      = NetworkService.new(NetworkRepository.new(File.join(CONTENT_DIR, 'network.yml')))
     @scene        = SceneService.new(online: @online, chat: @chat, boards: @boards, mail: @mail,
                                      last_callers: @last_callers, site: @site, oneliners: @oneliners,
                                      door_titles: DOOR_NAMES)
@@ -83,7 +69,7 @@ class TeletypeBBS
     { online: @online, boards: @boards, games: @games, chat: @chat, irc: @irc,
       last_callers: @last_callers, profile: @profile, accounts: @accounts, site: @site, discord: @discord,
       oneliners: @oneliners, dev_log: @dev_log, master: @master, mail: @mail, voting: @voting, trivia: @trivia,
-      scene: @scene, bbs: self, uptime: STARTED_AT }
+      scene: @scene, network: @network, bbs: self, uptime: STARTED_AT }
   end
 
   # The doors, in the order of the Doors menu; each label marks its hotkey with &.

@@ -165,11 +165,11 @@ module UI
       end
 
       module Network
-        SYSTEMS = TeletypeBBS::NETWORK
-
-        def self.body
-          rows = SYSTEMS.flat_map do |name, address, note|
-            ["  \e[1;33m#{name.ljust(15)}\e[0m \e[1;36m#{address}\e[0m", "  #{' ' * 16}#{note}"]
+        # The boards of the network as a list (+boards+: NetworkBoardModel,
+        # this one first): the bulletin of the network.
+        def self.body(boards)
+          rows = boards.flat_map do |b|
+            ["  \e[1;33m#{b.name.ljust(15)}\e[0m \e[1;36m#{b.address}\e[0m", "  #{' ' * 16}#{b.about}"]
           end
           ['  Each kind of thing has a board of its own: our games and files,',
            '  the wiki, the blog and the art. TTG Gate BBS dials them all.',

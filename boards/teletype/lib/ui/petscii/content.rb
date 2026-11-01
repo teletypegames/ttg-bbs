@@ -64,8 +64,9 @@ module UI
 
       def network_lines
         lines = @screen.wrap('Each kind of thing has a board of its own; TTG Gate BBS dials them all.', 37).map { |l| " #{l}" }
-        TeletypeBBS::NETWORK.each do |board, address, note|
-          lines += ['', " #{YE}#{board}#{LG}", "   #{CY}#{address}#{LG}", *@screen.wrap(note, 35).map { |l| "   #{l}" }]
+        @bbs.network.all.each do |board|
+          lines += ['', " #{YE}#{board.name}#{LG}", "   #{CY}#{board.address}#{LG}",
+                    *@screen.wrap(board.about, 35).map { |l| "   #{l}" }]
         end
         lines + ['', " #{GR}in a browser:#{LG}", " #{CY}bbsweb.teletypegames.org#{LG}",
                  " #{GR}every file on plain http:#{LG}", " #{CY}archive.teletypegames.org#{LG}"]

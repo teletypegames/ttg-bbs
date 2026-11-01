@@ -1,0 +1,17 @@
+# impostor-bbs on the town map of the modern face (12×4): its building.
+size: [12, 4]
+charset: cp437
+palette:
+  a: '#ff5f56'
+  k: 238
+  G: 46
+chars: |2
+   ▓▒░    ░▒▓ 
+   ▓▒ ┌──┐ ▒▓ 
+   ▓▒ │█ │ ▒▓ 
+   ▓▒░└──┘░▒▓ 
+colors: |2
+  .kkk....kkk.
+  .kk.kkkk.kk.
+  .kk.kaG.kk..
+  .kkkkkkkkkk.

@@ -62,6 +62,10 @@ module UI
         't' => :master, 'y' => :system_info, '?' => :help, 'z' => :sysop_console
       }.freeze
 
+      # The rooms the clubhouse shows as pictures (Clubhouse) instead of
+      # the text screens of ACTIONS.
+      GRAPHICS = { 'n' => :town_map, 'r' => :games_room }.freeze
+
       def initialize(bbs, screen, ctx)
         @bbs    = bbs
         @screen = screen
@@ -75,6 +79,8 @@ module UI
           next @ctx[:plain] = !text_menu? if k == '*'
           leaving = %w[q x].include?(k) && logoff?
           next unless leaving || ACTIONS[k]
+
+          next send(GRAPHICS[k]) if !text_menu? && !leaving && GRAPHICS[k]
 
           Clubhouse.text_mode(@screen.session) unless text_menu?
           return if leaving
@@ -194,6 +200,23 @@ module UI
       end
 
       # ── more ───────────────────────────────────────────────────────────
+
+      def town_map
+        doing('BBS Network')
+        Clubhouse::TownMap.new(@screen.session, @bbs.network).run
+      end
+
+      # The games room; a C64 door chosen there opens on the text screen.
+      def games_room
+        doing('Games Room')
+        scene = @bbs.scene.scene(name, registered: registered?, sysop: sysop?)
+        door = Clubhouse::GamesRoom.new(@screen.session, @bbs.doors, scene).run
+        return unless door
+
+        Clubhouse.text_mode(@screen.session)
+        doing("Door: #{door.title}")
+        BBS::Door.new(door.name, door.petscii || door.program, label: door.label).run(@screen.session, @ctx)
+      end
 
       # Only the doors that fit 40 columns, or have a C64 version; the others
       # wait on the modern face.

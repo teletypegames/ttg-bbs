@@ -3,6 +3,7 @@
 require_relative 'modern/formatters'
 require_relative 'modern/classic_formatters'
 require_relative 'modern/desktop'
+require_relative 'modern/rooms'
 
 module UI
   # The board on a modern terminal (ANSI colours, UTF-8, a mouse): the modem
@@ -184,6 +185,24 @@ module UI
               end
             end
 
+            # The town map (the BBS Network); on a terminal under 80 columns the
+            # list of the boards in the Bulletins.
+            def open_town_map
+              return open_window(:bulletins) if cols < 80
+
+              PictureWindow.open(self, TownMap.new(network: services[:network]),
+                                 title: Icon.title(:board, 'Town Map — the BBS Network'), accent: Accent::STYLES[:board])
+            end
+
+            # The games room (the doors as stations); the Door Lobby under 80 columns.
+            def open_games_room
+              return open_window(:doors) if cols < 80
+
+              room = GamesRoom.new(doors: services[:bbs].doors, scene: @scene, on_open: ->(door) { open_door(door.name) })
+              @games_room = room
+              PictureWindow.open(self, room, title: Icon.title(:doors, 'Games Room'), accent: Accent::STYLES[:doors])
+            end
+
             # Back to the live desktop: every window closed.
             def show_dashboard
               windows.dup.each { |w| close_window(w) }
@@ -192,10 +211,11 @@ module UI
 
             def refresh_dashboard
               name = context[:username] || AccountService::ANONYMOUS
+              @scene = services[:scene].scene(name, registered: registered?, sysop: sysop?)
+              @games_room&.scene = @scene
               @dashboard.data = Dashboard::Data.new(
                 name: name, registered: registered?, caller_number: context[:caller_number],
-                node: services[:online].node(session_id)&.number,
-                scene: services[:scene].scene(name, registered: registered?, sysop: sysop?)
+                node: services[:online].node(session_id)&.number, scene: @scene
               )
             rescue StandardError => e
               warn "Dashboard: #{e.class}: #{e.message}"
@@ -292,15 +312,6 @@ module UI
             window_spec.height { |ctx| [ctx[:app].rows - 4, 22].min }
             window_spec.scroll true
             window_spec.body   { |ctx| Formatters::Team.body(ctx[:site].members) }
-          end
-
-          window :network, type: :info do |window_spec|
-            window_spec.accent Accent::STYLES[:board]
-            window_spec.title  Icon.title(:board, 'BBS Network')
-            window_spec.width  { |ctx| [ctx[:app].cols - 4, 76].min }
-            window_spec.height { |ctx| [Formatters::Network.body.size + 6, ctx[:app].rows - 3].min }
-            window_spec.scroll true
-            window_spec.body   { |_ctx| Formatters::Network.body }
           end
 
           window :register, type: :form do |window_spec|
@@ -655,7 +666,7 @@ module UI
                 events = ctx[:site].upcoming_events(10)
                 events.empty? ? ['  (nothing scheduled)'] : events.map { |e| Formatters::Events.line(e) }
               when :network
-                Formatters::Network.body.map { |l| l == :spacer ? '' : l }
+                Formatters::Network.body(ctx[:network].all).map { |l| l == :spacer ? '' : l }
               when :file
                 text = File.read(File.join(TeletypeBBS::BULLETINS_DIR, b[:file]))
                 BBS::Markdown.to_lines(text, width: width - 1, theme: ctx[:app].theme)
@@ -700,8 +711,8 @@ module UI
               item '&System Info', hint: 'Nodes, calls, messages and uptime of this board' do
                 open_window(:system_info)
               end
-              item 'BBS Net&work', hint: 'Our boards and what each carries: the games, the wiki, the blog, the art' do
-                open_window(:network)
+              item 'BBS Net&work', hint: 'The town map: our other boards, the games, the wiki, the blog, the art' do
+                open_town_map
               end
               separator
               item 'Log &off', shortcut: 'Alt-X', hint: 'Hang up: +++ ATH0 NO CARRIER' do :halt end
@@ -747,6 +758,9 @@ module UI
             end
 
             menu '&Doors' do
+              item '&Games Room…', hint: 'The games room at the back: the stations, a lamp over each one in use' do
+                open_games_room
+              end
               item 'Door &Lobby…', hint: 'Every door with what it is and who is inside' do open_window(:doors) end
               separator
               doors
@@ -783,8 +797,8 @@ module UI
               end
               Formatters::Master::QUICK_QUESTIONS.each do |label, question|
                 if question == :network
-                  item(label, hint: 'Our other boards: the games and files, the wiki, the blog, the art') do
-                    open_window(:network)
+                  item(label, hint: 'The town map: our other boards, the games and files, the wiki, the blog, the art') do
+                    open_town_map
                   end
                 else
                   item(label, hint: "Ask the TTG Master: #{question}") { open_window(:master, question: question) }

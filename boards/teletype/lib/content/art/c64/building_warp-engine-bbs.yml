@@ -1,0 +1,17 @@
+# warp-engine-bbs on the town map of the C64 face (3×3): its building.
+size: [3, 3]
+charset: petscii-upper
+palette:
+  a: light_red
+chars: |2
+  ▄▄ 
+    ◣
+     
+colors: |2
+  aa.
+  aaa
+  aaa
+reverse: |2
+  ...
+  RR.
+  RRR

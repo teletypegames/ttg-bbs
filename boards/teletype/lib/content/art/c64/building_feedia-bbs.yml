@@ -1,0 +1,17 @@
+# feedia-bbs on the town map of the C64 face (3×3): its building.
+size: [3, 3]
+charset: petscii-upper
+palette:
+  a: orange
+chars: |2
+  ▄▄▄
+  ▚▚▚
+   N 
+colors: |2
+  aaa
+  aaa
+  aaa
+reverse: |2
+  ...
+  ...
+  R.R

@@ -1,0 +1,220 @@
+# frozen_string_literal: true
+
+module UI
+  module Modern
+    # A room of the clubhouse as a window: a picture (BBS::Art) with places
+    # on it to choose with the arrows or the mouse, and a few lines about
+    # the chosen one under it. The town map and the games room.
+    class PictureWindow < BBS::Window
+      # Opens +view+ (a PictureView) in a window titled +title+ with the
+      # +accent+ of its part of the board, in the middle of +app+.
+      def self.open(app, view, title:, accent:)
+        window = new(title: title, maximizable: false)
+        window.accent = accent
+        width  = view.width + 4
+        height = view.height + 2
+        window.layout(((app.cols - width) / 2) + 1, [((app.rows - height) / 2) + 1, 2].max, width, height)
+        view.layout(window.bounds.x + 2, window.bounds.y + 1, view.width, view.height)
+        window.add(view)
+        app.open_window(window)
+        window.reset_focus
+        window
+      end
+    end
+
+    # The picture and its places. A subclass gives #places (anything), the
+    # #width and #height it draws in, #draw and #activate.
+    class PictureView < BBS::Widget
+      MOVES = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] }.freeze
+
+      def initialize(**kw)
+        super
+        @index = 0
+      end
+
+      def focusable? = true
+
+      def chosen = places[@index]
+
+      def render(frame) = draw(frame, bounds.x, bounds.y)
+
+      def handle_event(event)
+        if event.mouse? && event.mouse.kind == :press
+          hit = places.index { |p| inside?(p, event.x - bounds.x, event.y - bounds.y) }
+          return nil unless hit
+
+          @index = hit
+          return :handled
+        end
+        return nil unless event.key?
+        return activate if event.key == :enter
+        return step(*MOVES[event.key]) if MOVES.key?(event.key)
+
+        nil
+      end
+
+      private
+
+      # The place nearest in the direction +dx+, +dy+, by where the places
+      # are (#at): the cross distance weighs more, so a row stays a row.
+      def step(dx, dy)
+        x0, y0 = at(chosen)
+        best = places.each_index.select do |i|
+          x, y = at(places[i])
+          dx.zero? ? ((y - y0) * dy).positive? : ((x - x0) * dx).positive?
+        end
+        best = best.min_by do |i|
+          x, y = at(places[i])
+          dx.zero? ? ((y - y0).abs * 1) + ((x - x0).abs * 3) : ((x - x0).abs * 1) + ((y - y0).abs * 8)
+        end
+        @index = best if best
+        :handled
+      end
+
+      def write(frame, x, y, text, sgr)
+        frame.move(x, y)
+        frame.write(text, sgr: sgr)
+      end
+    end
+
+    # The town map on the clubhouse wall (Board > BBS Network): the town
+    # (art town.yml), each board of the network a building
+    # (building_<id>.yml) where lib/content/network.yml puts it, with its
+    # name under it in its accent. The chosen one's name lights up, and
+    # under the map what it carries and how to walk over.
+    class TownMap < PictureView
+      LABEL = 18
+
+      def initialize(network:, **kw)
+        super(**kw)
+        @boards = network.boards
+        @town   = Arts.load(:modern, 'town')
+        @icons  = @boards.to_h { |b| [b.id, Arts.load(:modern, "building_#{b.id}")] }
+      end
+
+      def places = @boards
+      def width = @town.cols
+      def height = @town.rows + 4
+      def activate = :handled
+
+      private
+
+      def at(board) = board.place.fetch(:modern)
+
+      def inside?(board, x, y)
+        bx, by = at(board)
+        x.between?(bx - 3, bx + LABEL - 4) && y.between?(by, by + 4)
+      end
+
+      def draw(frame, x, y)
+        @town.draw(frame, x: x, y: y)
+        @boards.each do |b|
+          bx, by = at(b)
+          @icons[b.id].draw(frame, x: x + bx, y: y + by)
+          color = BBS::Art.color(b.accent).ansi
+          sgr = b.equal?(chosen) ? "\e[0;1;38;5;16;48;5;#{color}m" : "\e[0;38;5;#{color}m"
+          write(frame, x + bx - 3, y + by + 4, b.name.center(LABEL), sgr)
+        end
+        info(frame, x, y + @town.rows)
+      end
+
+      def info(frame, x, y)
+        b     = chosen
+        color = BBS::Art.color(b.accent).ansi
+        write(frame, x, y, "#{b.name} · #{b.building}".ljust(width), "\e[0;1;38;5;#{color}m")
+        write(frame, x, y + 1, b.about.ljust(width), "\e[0;38;5;252m")
+        write(frame, x, y + 2, "walk over: from TTG Gate BBS (2399), or telnet #{b.address.sub(':', ' ')}".ljust(width),
+              "\e[0;38;5;116m")
+        write(frame, x, y + 3, '←↑↓→ or a click: another building · Esc: back to the clubhouse'.ljust(width),
+              "\e[0;38;5;66m")
+      end
+    end
+
+    # The games room at the back (Doors): five stations, a lamp over each
+    # that burns while somebody is inside (with the count), the chosen one's
+    # screen switched on and its name lit; Enter steps in.
+    class GamesRoom < PictureView
+      LIT    = "\e[0;1;38;5;226;48;5;235m"
+      GLOW   = "\e[0;38;5;222;48;5;235m"
+      # What the chosen station shows on its screen.
+      SCREENS = {
+        sermo:  ["\e[0;38;5;46;48;5;22m", ['SERMO>_', ' ready ']],
+        c64:    ["\e[0;38;5;117;48;5;19m", [' READY. ', ' █       '.rstrip.ljust(9)]],
+        plus4:  ["\e[0;38;5;16;48;5;250m", [' READY. ', ' █       '.rstrip.ljust(9)]],
+        ra:     ["\e[0;1;38;5;226;48;5;235m", ['◄☼►']],
+        trivia: ["\e[0;1;38;5;226;48;5;90m", ['A B C D ?']]
+      }.freeze
+
+      def initialize(doors:, on_open:, scene: nil, **kw)
+        super(**kw)
+        @doors   = doors
+        @on_open = on_open
+        @scene   = scene
+        @art     = Arts.load(:modern, 'games_room')
+      end
+
+      attr_writer :scene
+
+      def places = @doors
+      def width = @art.cols
+      def height = @art.rows + 5
+      def activate = @on_open.call(chosen)
+
+      private
+
+      def at(door) = [@art.hotspot(:"label_#{door.name}").col, 0]
+
+      def inside?(door, x, y)
+        spot = @art.hotspot(:"label_#{door.name}")
+        x.between?(spot.col, spot.col + spot.width - 1) && y.between?(0, spot.row)
+      end
+
+      def draw(frame, x, y)
+        @art.draw(frame, x: x, y: y)
+        @doors.each do |door|
+          lamp(frame, x, y, door)
+          label = @art.hotspot(:"label_#{door.name}")
+          sgr = door.equal?(chosen) ? "\e[0;1;38;5;16;48;5;209m" : "\e[0;38;5;209;48;5;236m"
+          title = door.title.length > label.width ? door.title.sub('Commodore ', '') : door.title
+          write(frame, x + label.col, y + label.row, title.center(label.width), sgr)
+        end
+        screen(frame, x, y, chosen)
+        info(frame, x, y + @art.rows + 1)
+      end
+
+      def inside(door) = @scene ? @scene.in_door(door.title) : 0
+
+      def lamp(frame, x, y, door)
+        n = inside(door)
+        return unless n.positive?
+
+        spot = @art.hotspot(:"lamp_#{door.name}")
+        write(frame, x + spot.col, y + spot.row, '▄█▄', LIT)
+        glow = @art.hotspot(:"glow_#{door.name}")
+        write(frame, x + glow.col, y + glow.row, '░▒▓▒░', GLOW)
+        count = @art.hotspot(:"count_#{door.name}")
+        write(frame, x + count.col, y + count.row, n.to_s, LIT)
+      end
+
+      def screen(frame, x, y, door)
+        sgr, lines = SCREENS.fetch(door.name)
+        spot = @art.hotspot(:"screen_#{door.name}")
+        lines.first(spot.height).each_with_index do |line, i|
+          write(frame, x + spot.col, y + spot.row + i, line[0, spot.width].ljust(spot.width), sgr)
+        end
+      end
+
+      def info(frame, x, y)
+        door = chosen
+        BBS::FrameBuffer.wrap_ansi(door.about.to_s, width).first(2).each_with_index do |line, i|
+          write(frame, x, y + i, line.ljust(width), "\e[0;38;5;252m")
+        end
+        n = inside(door)
+        who = n.zero? ? 'nobody inside right now' : "#{n} caller#{'s' unless n == 1} inside"
+        write(frame, x, y + 2, "#{door.title} · #{who}".ljust(width), "\e[0;38;5;209m")
+        write(frame, x, y + 3, '←→ or a click: another station · Enter: step in · Esc: back'.ljust(width),
+              "\e[0;38;5;66m")
+      end
+    end
+  end
+end

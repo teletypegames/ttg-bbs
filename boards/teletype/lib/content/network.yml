@@ -1,0 +1,124 @@
+# The Teletype Games BBS Network as the town around the clubhouse: the town map (Board > BBS
+# Network on the modern face, N on the C64) and every list of the boards come from here. The same
+# boards as the TTG Gate BBS dials (bbs/ttg-gate-bbs config/boards.yml) and the bbsweb cards
+# (services/bbs-web config/config.json), kept in step by hand.
+#
+# [id]       the board's id, as in bbsweb; its buildings are art/modern/building_<id>.yml (12x4)
+#            and art/c64/building_<id>.yml (3x3)
+# [name]     the board's name
+# [port]     its telnet port on teletypegames.org
+# [building] what it is in the town
+# [about]    what it carries, a line for the map and the lists
+# [short]    its name on the C64 map (seven letters at most)
+# [words]    two words about it for the C64 map
+# [accent]   its bbsweb accent colour; the C64 takes [c64], one of its sixteen like it
+# [place]    the top left of its building on the modern map [col, row], and on the C64 one
+# A new board: a row here and its two buildings.
+clubhouse:
+  name: Teletype BBS
+  port: 2323
+  building: the clubhouse
+  about: this board, the clubhouse - messages, mail, chat and our own doors
+  accent: '#3cff7a'
+  c64: light_green
+boards:
+  - id: ttg-gate-bbs
+    name: TTG Gate BBS
+    port: 2399
+    building: the town gate
+    about: one port for every board here, a dialing menu
+    short: GATE
+    words: ALL BOARDS
+    accent: '#b48cff'
+    c64: white
+    place: { modern: [3, 0], c64: [4, 1] }
+  - id: wiki-bbs
+    name: TTG Wiki BBS
+    port: 2325
+    building: the archive
+    about: our wiki - the guides, the how-tos, the DOS corner
+    short: WIKI
+    words: OUR GUIDES
+    accent: '#5fb0ff'
+    c64: light_blue
+    place: { modern: [22, 0], c64: [14, 1] }
+  - id: alexandria-bbs
+    name: Alexandria BBS
+    port: 2326
+    building: the great library
+    about: Wikipedia on a telnet line, an article at a time
+    short: ALEXAND
+    words: WIKIPEDIA
+    accent: '#ffd75f'
+    c64: yellow
+    place: { modern: [41, 0], c64: [24, 1] }
+  - id: feedia-bbs
+    name: Feedia BBS
+    port: 2327
+    building: the news kiosk
+    about: an RSS reader - the news as text
+    short: FEEDIA
+    words: RSS NEWS
+    accent: '#ff9f43'
+    c64: orange
+    place: { modern: [60, 0], c64: [34, 1] }
+  - id: ttg-blog-bbs
+    name: TTG Blog BBS
+    port: 2328
+    building: the printing press
+    about: our blog, written on the line
+    short: BLOG
+    words: OUR BLOG
+    accent: '#5fd7af'
+    c64: cyan
+    place: { modern: [3, 6], c64: [4, 6] }
+  - id: warp-engine-bbs
+    name: WarpEngine BBS
+    port: 2329
+    building: the warehouse with the loading ramp
+    about: our games and files - ZMODEM, XMODEM onto a C64 disk
+    short: WARP
+    words: GAMES, FILES
+    accent: '#ff87d7'
+    c64: light_red
+    place: { modern: [60, 6], c64: [34, 6] }
+  - id: scriptorium-bbs
+    name: Scriptorium BBS
+    port: 2330
+    building: the monastery scriptorium
+    about: Project Gutenberg books, a chapter at a time
+    short: SCRIPT
+    words: OLD BOOKS
+    accent: '#d7af87'
+    c64: light_grey
+    place: { modern: [3, 12], c64: [4, 11] }
+  - id: commodex-bbs
+    name: Commodex BBS
+    port: 2331
+    building: the game shop
+    about: the C64 game compendium, with cheats and tips
+    short: CDEX
+    words: C64 GAMES
+    accent: '#8787ff'
+    c64: green
+    place: { modern: [22, 12], c64: [14, 11] }
+  - id: pixelia-bbs
+    name: Pixelia BBS
+    port: 2332
+    building: the gallery
+    about: ANSI and PETSCII art and a shared canvas
+    short: PIXELIA
+    words: TEXT ART
+    accent: '#af5fff'
+    c64: purple
+    place: { modern: [41, 12], c64: [24, 11] }
+  - id: impostor-bbs
+    name: Impostor BBS
+    port: 2324
+    building: the dark alley with a blinking terminal
+    about: the debrief terminal of Definitely not an Impostor
+    short: ALLEY
+    words: THE DEBRIEF
+    accent: '#ff5f56'
+    c64: red
+    place: { modern: [60, 12], c64: [34, 11] }

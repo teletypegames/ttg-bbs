@@ -104,6 +104,19 @@ module UI
         end
       end
 
+      # The bytes that turn +before+ into +canvas+: the rows where much
+      # changed (a line of text) as spans, the scattered cells as a patch,
+      # or the whole frame when that is less.
+      def self.changes(canvas, before)
+        changed = canvas.changes(before)
+        return ''.b if changed.empty?
+
+        wide  = changed.group_by(&:first).select { |_, cells| cells.size > 6 }.keys
+        spans = wide.map { |row| canvas.span(row, 0, C::COLS - 1) }.join.b
+        mixed = spans + canvas.patch(changed.reject { |row, _| wide.include?(row) })
+        [mixed, canvas.update(before)].min_by(&:bytesize)
+      end
+
       # A rounded box of +color+ from +row+, +col+, +width+ × +height+.
       def self.box(canvas, row, col, width, height, color)
         canvas.text(row, col, "╭#{'─' * (width - 2)}╮", color)
@@ -175,6 +188,199 @@ module UI
             Clubhouse.smoke(canvas, art, puffs += 1)
             canvas.update(before) + canvas.cursor(C::ROWS - 1, 0)
           end
+        end
+      end
+
+      # A picture with places on it to walk between with CRSR: the whole
+      # screen goes out once, then each move as a patch of what changed.
+      # A subclass gives #places, #at (the [row, col] of a place, for the
+      # cursor keys), #paint (the whole picture), #mark (a place chosen or
+      # not) and #info (the rows about the chosen one).
+      class Picture
+        MOVES = { left: [0, -1], right: [0, 1], up: [-1, 0], down: [1, 0] }.freeze
+        BACK  = [:escape, '←', 'q'].freeze
+
+        def initialize(session)
+          @session = session
+          @index   = 0
+        end
+
+        def chosen = places[@index]
+
+        # Shows the picture and walks it until RETURN (the chosen place) or
+        # ← / RUN/STOP / Q (nil).
+        def run
+          @canvas = C.new
+          paint
+          places.each { |p| mark(p, p.equal?(chosen)) }
+          info
+          @session.write_raw(@canvas.frame + rest)
+          loop do
+            key = @session.readkey
+            raise IOError, 'the caller hung up' if key.nil?
+
+            key = key.downcase if key.is_a?(String)
+            return nil if BACK.include?(key)
+            return chosen if key == :enter
+
+            move(*MOVES[key]) if MOVES.key?(key)
+          end
+        end
+
+        # The bytes of the last move (for measuring).
+        attr_reader :last
+
+        private
+
+        def rest = @canvas.cursor(C::ROWS - 1, 0)
+
+        def move(dr, dc)
+          r0, c0 = at(chosen)
+          best = places.each_index.select do |i|
+            r, c = at(places[i])
+            dr.zero? ? ((c - c0) * dc).positive? : ((r - r0) * dr).positive?
+          end
+          best = best.min_by do |i|
+            r, c = at(places[i])
+            dr.zero? ? (c - c0).abs + ((r - r0).abs * 8) : (r - r0).abs + ((c - c0).abs * 3)
+          end
+          return unless best && best != @index
+
+          before = @canvas.dup
+          mark(chosen, false)
+          @index = best
+          mark(chosen, true)
+          info
+          @last = Clubhouse.changes(@canvas, before) + rest
+          @session.write_raw(@last)
+        end
+
+        def line(row, text, color, col: 1)
+          @canvas.clear(row, 0, C::COLS)
+          @canvas.text(row, col, text[0, C::COLS - col - 1], color)
+        end
+      end
+
+      # The town map on the C64 (N): the town (art town.yml) with each board
+      # a 3×3 building in its colour where lib/content/network.yml puts it,
+      # its short name under it; the chosen one's name reversed, and under
+      # the map its name, two words about it and its port.
+      class TownMap < Picture
+        TOP = 1
+
+        def initialize(session, network)
+          super(session)
+          @boards = network.boards
+        end
+
+        def places = @boards
+
+        private
+
+        def at(board) = board.place.fetch(:c64).reverse
+
+        def paint
+          @canvas.text(0, 1, 'TOWN MAP', :cyan)
+          @canvas.text(0, 10, '- THE BBS NETWORK', :dark_grey)
+          Arts.load(:c64, 'town').draw_canvas(@canvas, row: TOP)
+          @boards.each { |b| Arts.load(:c64, "building_#{b.id}").draw_canvas(@canvas, row: TOP + at(b)[0], col: at(b)[1]) }
+          @canvas.text(23, 1, 'CRSR: WALK   RETURN OR <-: BACK', :dark_grey)
+        end
+
+        def mark(board, lit)
+          row, col = at(board)
+          text = board.short.center(9)
+          @canvas.text(TOP + row + 3, col - 3, text, board.c64, rvs: lit)
+        end
+
+        def info
+          b = chosen
+          line(19, b.name.upcase, b.c64)
+          line(20, "#{b.words}  -  PORT #{b.port}", :light_grey)
+          line(21, "TELNET TELETYPEGAMES.ORG #{b.port}", :grey)
+        end
+      end
+
+      # The games room on the C64 (R): five stations (art games_room.yml), a
+      # lamp over each burning while somebody is inside, the chosen one's
+      # screen on and its name reversed. RETURN opens the C64 and the
+      # Plus/4; the others wait on the modern face.
+      class GamesRoom < Picture
+        TOP = 2
+        # The names under the stations.
+        LABELS = { sermo: 'SERMO', c64: 'C64', plus4: 'PLUS/4', ra: 'RA', trivia: 'TRIVIA' }.freeze
+        # What a station's screen shows when it is chosen, and when not:
+        # [text, colour] each.
+        SCREENS = { sermo: [['SERMO', :green], ['', :green]], c64: [['READY', :light_blue], ['', :blue]],
+                    plus4: [['READY', :white], ['', :grey]], ra: [['●', :yellow], ['●', :brown]],
+                    trivia: [['ABCD?', :yellow], ['?????', :purple]] }.freeze
+
+        def initialize(session, doors, scene)
+          super(session)
+          @doors = doors
+          @scene = scene
+          @art   = Arts.load(:c64, 'games_room')
+        end
+
+        def places = @doors
+
+        # Like Picture#run, but RETURN on a door the C64 cannot show tells so
+        # and stays.
+        def run
+          loop do
+            door = super
+            return door if door.nil? || door.c64?
+
+            line(21, 'MODERN FACE ONLY: CALL WITH A PC', :light_red)
+            @session.write_raw(@canvas.span(21, 0, C::COLS - 1) + rest)
+            @session.readkey
+          end
+        end
+
+        private
+
+        def spot(name, door) = @art.hotspot(:"#{name}_#{door.name}")
+
+        def at(door) = [0, spot(:label, door).col]
+
+        def paint
+          @canvas.text(0, 1, 'GAMES ROOM', :orange)
+          @canvas.text(0, 12, '- STEP UP TO A STATION', :dark_grey)
+          @art.draw_canvas(@canvas, row: TOP)
+          @doors.each do |door|
+            lamp(door)
+            label = spot(:label, door)
+            @canvas.text(TOP + label.row + 1, label.col, 'PC ONLY'.center(label.width), :dark_grey) unless door.c64?
+          end
+          @canvas.text(23, 1, 'CRSR: CHOOSE  RETURN: STEP IN  <-: BACK', :dark_grey)
+        end
+
+        def lamp(door)
+          n = @scene.in_door(door.title)
+          return unless n.positive?
+
+          lamp = spot(:lamp, door)
+          @canvas.text(TOP + lamp.row, lamp.col, '◢█◣', :yellow)
+          count = spot(:count, door)
+          @canvas.text(TOP + count.row, count.col, n.clamp(0, 99).to_s, :white)
+        end
+
+        def mark(door, lit)
+          label = spot(:label, door)
+          @canvas.text(TOP + label.row, label.col, LABELS.fetch(door.name).center(label.width), :orange, rvs: lit)
+          screen = spot(:screen, door)
+          text, color = SCREENS.fetch(door.name)[lit ? 0 : 1]
+          @canvas.text(TOP + screen.row, screen.col, text.ljust(screen.width)[0, screen.width], color)
+        end
+
+        def info
+          door = chosen
+          n = @scene.in_door(door.title)
+          line(15, door.title.upcase, :orange)
+          words = BBS::FrameBuffer.wrap_ansi(BBS::Petscii.plain(door.about.to_s).upcase, 37).first(4)
+          (16..19).each_with_index { |row, i| line(row, words[i].to_s, :light_grey) }
+          line(20, n.zero? ? 'NOBODY INSIDE' : "#{n} INSIDE", :grey)
+          line(21, door.c64? ? 'RETURN: STEP IN' : 'ON THE MODERN FACE ONLY', door.c64? ? :yellow : :dark_grey)
         end
       end
     end

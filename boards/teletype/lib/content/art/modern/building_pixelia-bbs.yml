@@ -1,0 +1,20 @@
+# pixelia-bbs on the town map of the modern face (12×4): its building.
+size: [12, 4]
+charset: cp437
+palette:
+  a: '#af5fff'
+  w: 231
+  y: 220
+  c: 45
+  r: 203
+  g: 84
+chars: |2
+   ▄▄▄▄▄▄▄▄▄▄ 
+   █░▒▓█▓▒░ █ 
+   █ ART  ☼ █ 
+   ▀▀▀▀▀▀▀▀▀▀ 
+colors: |2
+  .aaaaaaaaaa.
+  .aycrawgy.a.
+  .awwww..y.a.
+  .aaaaaaaaaa.
