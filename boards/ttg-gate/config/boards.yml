@@ -13,8 +13,8 @@
 boards:
   - id: teletype-bbs
     name: "Teletype BBS"
-    summary: "The clubhouse of the network: message boards, mail, oneliners, a multi-user chat and the doors that live only here (SERMO, a C64 and a Plus/4, Chat of Ra, TTG Trivia), on a full-screen Synchronet-style ANSI interface."
-    tags: ["boards", "chat", "mail", "doors"]
+    summary: "The clubhouse of the network, drawn as one: come in at the door, sign the guestbook, see who is inside. Message boards, mail, oneliners, a multi-user chat, the town map of the other boards, and the games room of the doors that live only here (SERMO, a C64 and a Plus/4, Chat of Ra, TTG Trivia). ANSI pictures on a modern terminal or, in PETSCII, on a Commodore 64."
+    tags: ["clubhouse", "boards", "chat", "doors"]
     port: 2323
     accent: "#3cff7a"
     petscii: true
