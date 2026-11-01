@@ -1,28 +1,21 @@
 # frozen_string_literal: true
 
-require 'net/http'
-require 'json'
-require 'uri'
+require 'bbs/discord_webhook'
 
-# Posts board messages and sysop broadcasts to a Discord webhook, in the
-# background so a slow webhook never stalls a telnet session. Without a
-# webhook URL it does nothing. Mentions are disabled: a caller cannot ping
-# @everyone from the BBS. At most RELAY_MAX messages go out in RELAY_WINDOW
-# seconds, however many callers post: the rest stay on the board only, so a
-# crowd (or one caller redialling past the post cooldown) cannot flood the
-# channel.
+# Posts board messages and sysop broadcasts to a Discord webhook through
+# BBS::DiscordWebhook: in the background, so a slow webhook never stalls a
+# telnet session; nothing without a webhook URL; mentions off, so a caller
+# cannot ping @everyone from the BBS; and at most 20 posts in ten minutes,
+# however many callers post: the rest stay on the board only, so a crowd
+# (or one caller redialling past the post cooldown) cannot flood the channel.
 class DiscordNotifier
-  LIMIT        = 300
-  RELAY_MAX    = 20
-  RELAY_WINDOW = 600
+  LIMIT = 300
 
   def initialize(webhook)
-    @uri  = webhook.to_s.empty? ? nil : URI(webhook)
-    @sent = []
-    @mu   = Mutex.new
+    @hook = BBS::DiscordWebhook.new(webhook, label: 'DiscordNotifier')
   end
 
-  def enabled? = !@uri.nil?
+  def enabled? = @hook.enabled?
 
   def board_post(board_title, username, text)
     notify("📟 **#{escape(username)}** on *#{escape(board_title)}*: #{clip(text)}")
@@ -43,35 +36,9 @@ class DiscordNotifier
 
   private
 
-  def clip(text)
-    flat = text.to_s.gsub(/\s+/, ' ').strip
-    escape(flat.length > LIMIT ? "#{flat[0, LIMIT]}…" : flat)
-  end
+  def clip(text) = escape(BBS::DiscordWebhook.clip(text, LIMIT))
 
-  # Discord markdown off, links included: a caller's [text](url) stays text.
-  def escape(text) = text.to_s.gsub(/([\\*_~`|>\[\]()<#:-])/) { "\\#{Regexp.last_match(1)}" }
+  def escape(text) = BBS::DiscordWebhook.escape(text)
 
-  # True when one more message fits in the window, and counts it.
-  def relay_slot?
-    @mu.synchronize do
-      now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      @sent.shift while @sent.any? && now - @sent.first > RELAY_WINDOW
-      next false if @sent.size >= RELAY_MAX
-
-      @sent << now
-      true
-    end
-  end
-
-  def notify(content)
-    return unless enabled?
-    return warn('DiscordNotifier: relay limit reached, not sent') unless relay_slot?
-
-    Thread.new do
-      body = JSON.generate(content: content, allowed_mentions: { parse: [] })
-      Net::HTTP.post(@uri, body, 'Content-Type' => 'application/json')
-    rescue StandardError => e
-      warn "DiscordNotifier error: #{e}"
-    end
-  end
+  def notify(content) = @hook.post(content)
 end

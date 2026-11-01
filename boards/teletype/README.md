@@ -308,7 +308,7 @@ lib/
                                        eval questions, the shared model client
   ui/modern.rb                         the modern face: modem, logon matrix,
                                        the Application (windows, menus, doors)
-  ui/logo.rb                           the board's logo (TTG BBS) for both faces
+  ui/logo.rb                           the board's logo (TTG BBS, BBS::BlockFont) for both faces
   ui/modern/desktop.rb                 the dashboard and the colours of the menus
   ui/modern/formatters.rb              view helpers: bulletin, news, game card, doors,
                                        team, network, DOS intro, users, sysop,
@@ -316,8 +316,8 @@ lib/
   ui/modern/classic_formatters.rb      logon/logoff, nodes, mail, voting,
                                        file areas, history, hall of fame
   ui/petscii.rb                        the PETSCII face: logo, logon, NO CARRIER
-  ui/petscii/screen.rb                 title bar, pages, cursor menus, editor,
-                                       chat line on the 40×25 screen
+  ui/petscii/screen.rb                 the 40×25 screen (BBS::Petscii::Screen of
+                                       rubbs) and its chat line
   ui/petscii/board.rb                  the main menu, doors, Master, help, sysop
   ui/petscii/messages.rb, content.rb,  its sections
   ui/petscii/people.rb

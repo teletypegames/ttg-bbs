@@ -15,7 +15,7 @@ module UI
     # modern face: the C64 has these three colours too.
     LOGO_COLORS = [YE, YE, "\e[0;33m", "\e[0;33m", "\e[0;31m"].freeze
 
-    def self.logo = Logo.reversed(LOGO_COLORS).map { |l| "      #{l}#{LG}" }
+    def self.logo = BBS::BlockFont.petscii(Logo::TEXT, colors: LOGO_COLORS, indent: 6)
 
     # The one port to every board of ours, big, on the board's face.
     def self.gate(screen)
@@ -117,29 +117,21 @@ s[:polls_open].zero? ? 'all voted' : "#{s[:polls_open]} poll#{'s' if s[:polls_op
       screen.puts "#{YE}#{BBS::FrameBuffer.clip_ansi(result.to_s, 21)}#{LG}"
     end
 
+    # The C64's goodbye (BBS::Goodbye): the caller's number and time on
+    # line, a quote, and where to find us.
     def self.goodbye(screen, name:, seconds:, caller_number:, quote:)
-      screen.cls
-      screen.puts
-      screen.puts " #{CY}#{RV}#{" thanks for calling, #{name}".ljust(39)[0, 39]}#{RO}#{LG}"
-      screen.puts
-      minutes = (seconds / 60).to_i
-      screen.puts " #{GR}caller ##{caller_number}, on line #{minutes.positive? ? "#{minutes}m" : "#{seconds.to_i}s"}#{LG}"
-      screen.puts
-      text, who = quote
-      screen.say("...\"#{text}\"#{" - #{who}" if who}", WH)
-      screen.puts
-      screen.puts " #{GR}our games:#{LG}"
-      screen.puts " #{CY}teletypegames.org#{LG}"
-      screen.puts " #{GR}every file on plain http:#{LG}"
-      screen.puts " #{CY}archive.teletypegames.org#{LG}"
-      screen.puts
-      sleep 1.2
-      screen.puts " #{LG}+++"
-      sleep 0.6
-      screen.puts ' ATH0'
-      sleep 0.4
-      screen.puts " #{RD}NO CARRIER#{LG}"
-      screen.puts
+      BBS::Goodbye.petscii(screen, bar: "thanks for calling, #{name}") do |s|
+        minutes = (seconds / 60).to_i
+        s.puts " #{GR}caller ##{caller_number}, on line #{minutes.positive? ? "#{minutes}m" : "#{seconds.to_i}s"}#{LG}"
+        s.puts
+        text, who = quote
+        s.say("...\"#{text}\"#{" - #{who}" if who}", WH)
+        s.puts
+        s.puts " #{GR}our games:#{LG}"
+        s.puts " #{CY}teletypegames.org#{LG}"
+        s.puts " #{GR}every file on plain http:#{LG}"
+        s.puts " #{CY}archive.teletypegames.org#{LG}"
+      end
     end
   end
 end
