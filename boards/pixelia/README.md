@@ -20,10 +20,15 @@ The [16colo.rs](https://16colo.rs) archive of the ANSI and ASCII scene, read on
 demand from its public API (`api.16colo.rs/v1`): the years, a year's packs, a
 pack's files, with the artists and groups and the 16colo.rs address of each.
 Nothing is mirrored into the repository and nothing is fetched ahead: a listing
-when it is opened, a file when it is shown. Listings stay in memory for
-`PIXELIA_BBS_API_TTL` seconds; files are cached in `data/cache/` up to
-`PIXELIA_BBS_CACHE_MB`, the least recently used going first. Requests carry a
-`User-Agent` naming the board and teletypegames.org.
+when it is opened, a file when it is shown. Every request goes through rubbs'
+`BBS::HTTP` (a deadline, a cap on the body, redirects to public http(s)
+addresses only) and a `BBS::Cache`, so callers opening the same listing or
+piece at once wait for one request. Listings stay in memory for
+`PIXELIA_BBS_API_TTL` seconds, and a dead API gives the last one it sent;
+files are cached in `data/cache/` up to `PIXELIA_BBS_CACHE_MB`, the least
+recently used going first. Requests carry a `User-Agent` naming the board and
+teletypegames.org. Names, credits and SAUCE texts lose their control
+characters (`BBS::Text.clean`) before they reach a screen.
 
 Only text art is listed: `.ans .asc .diz .nfo .txt .ice`, and any file whose
 SAUCE record (as the API reports it) says it is ASCII, ANSI or ANSiMation
@@ -62,7 +67,7 @@ Everybody sees everybody's paint: the modern face draws the canvas on every
 tick, the C64 face sends only the cells that changed, after every key and
 every 3 seconds. A caller paints at most `PIXELIA_BBS_PAINT_RATE` cells a second.
 The canvas is written to `data/canvas.json` at most every 2 seconds, through a
-temporary file.
+temporary file of its own and a rename.
 
 - **Modern:** arrows move, typing paints, Enter paints the brush, Backspace and
   Delete rub out, F7/F8 ink, F9 or Ctrl-R reverse, Insert or Ctrl-G glyph mode,
@@ -80,8 +85,14 @@ temporary file.
 ## The Wall
 
 The canvas saved under a title (32 characters) and a handle (16), newest first,
-one JSON file each in `data/works/`. A caller saves at most once in
-`PIXELIA_BBS_WALL_COOLDOWN` seconds.
+one JSON file each in `data/works/`. The board keeps the works it has read in
+memory and lists the folder only when it changed, reading just the files it
+does not know, so a save writes one file and reads none, and a work the admin
+script removes is gone at the next look. A broken file is skipped with one
+warning. A caller (counted by address, `BBS::RateLimit.caller_key`, so calling
+again does not help) saves at most once in `PIXELIA_BBS_WALL_COOLDOWN`
+seconds, and the board takes at most `PIXELIA_BBS_WALL_PER_HOUR` works an
+hour.
 
 ## Running
 
@@ -113,6 +124,7 @@ with its default. The board has no secrets.
 | `PIXELIA_BBS_MAX_ROWS` | `1000` | a piece is cut after this many rows |
 | `PIXELIA_BBS_PAINT_RATE` | `20` | cells a second one caller may paint |
 | `PIXELIA_BBS_WALL_COOLDOWN` | `300` | seconds between two saves of one caller |
+| `PIXELIA_BBS_WALL_PER_HOUR` | `30` | works the whole board takes an hour |
 
 `data/` is a volume.
 
@@ -128,13 +140,27 @@ docker exec pixelia-bbs bin/canvas clear        # archive into data/archive/, th
 
 The running board holds the canvas in memory, so `bin/canvas clear` leaves a
 flag file (`data/canvas.clear`) that the board answers within a few seconds;
-when no board answers, the script clears the file itself.
+when no board answers, the script clears the file itself. An archive is
+`data/archive/canvas-<date>-<time>-<4 hex>.json`, written whole or not at all.
+
+## Tests
+
+```bash
+bundle exec bin/test            # all of them
+bundle exec bin/test wall       # the files whose name has the word
+```
+
+Minitest, in `test/domain/`: the Wall's rules and limits, the works folder,
+the canvas file and its archive, the art cache, the 16colo.rs listings and
+files (with `BBS::HTTP` stubbed: no network), the SAUCE record and the ANSI
+renderer. CI runs them with RuboCop before a deploy.
 
 ## Project structure
 
 ```
 bbs.rb                      entry point: BBS.configure + BBS::Terminal.flow
 bin/works, bin/canvas       admin scripts, run with docker exec
+bin/test                    the tests (test/domain/*_test.rb)
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
   model/color_model.rb      the sixteen C64 colours (ANSI and xterm-256 too)
@@ -157,8 +183,13 @@ lib/ui/
   logo.rb                   PIXELIA in blocks (BBS::BlockFont), a colour a letter, both faces
   glyph_keys.rb             glyph mode's keyboard, both faces
   wall_text.rb              what a caller is told about a save, both faces
-  modern.rb                 UI::Modern: the rubbs Application
-  modern/canvas_widget.rb   the canvas and its panel, and its window
+  modern.rb                 UI::Modern: the rubbs Application and the flow
+  modern/helpers.rb         the Application's helpers: opening windows, saving
+  modern/pane.rb            the size of a two-pane window
+  modern/years_window.rb, packs_window.rb, files_window.rb, wall_window.rb   one window each
+  modern/menu.rb            the menubar, the status hints and the desktop
+  modern/canvas_widget.rb   the canvas's keys and mouse, and its window
+  modern/canvas_panel.rb    drawing the canvas and its panel
   modern/viewer.rb          a piece or a work on the whole screen
   modern/art_lines.rb       rows of cells as ANSI lines
   modern/logo_widget.rb     the logo on the desktop
