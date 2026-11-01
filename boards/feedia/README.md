@@ -57,7 +57,7 @@ Copy `env-example` to `.env`:
 | `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2327) |
 | `BBS_MAX_SESSIONS` | `100` | Callers at once (compose sets 50) |
 | `FEEDIA_BBS_FEEDS` | `config/feeds.yml` | The feed list |
-| `FEEDIA_BBS_INBOX` | `data/inbox.jsonl` | Where suggestions and feedback are kept (compose mounts `./data`) |
+| `FEEDIA_BBS_DB` | `data/feedia.sqlite3` | The board's SQLite database: suggestions and feedback (compose mounts `./data`) |
 | `FEEDIA_BBS_DISCORD_WEBHOOK` | — | Suggestions and feedback ring this Discord webhook too |
 
 ## Interface
@@ -68,12 +68,14 @@ columns is a modern terminal; 40 columns or no answer is a Commodore), `1` (or
 `M`) picks the modern face, `2` (or `C`) the C64, and RETURN takes the pick or
 the guess.
 
-A feed is fetched when it is opened and kept for 10 minutes; up to 60 items of
-it are shown. The item's HTML becomes plain text: paragraphs, headings, lists
+A feed is fetched when it is opened (rubbs' `BBS::HTTP`: public addresses
+only, http(s) redirects only, at most 1 MB) and kept for 10 minutes
+(`BBS::Cache`): callers opening the same feed at once share one fetch. Up to 60
+items of it are shown. The item's HTML becomes plain text: paragraphs, headings, lists
 and quotes are kept, a link keeps its text with a number (`Comments[1]`) and
 its address is listed under the text, an image keeps its alt text. Control
-characters are dropped, so a feed cannot send escape sequences to the
-terminal. Most feeds carry only a summary: the item's own address is under it.
+characters are dropped (`BBS::Text.clean`, the item's address too), so a feed
+cannot send escape sequences to the terminal. Most feeds carry only a summary: the item's own address is under it.
 
 ### The modern face
 
@@ -111,9 +113,12 @@ nearest ASCII (the PETSCII line of rubbs).
 ## The admins' inbox
 
 A suggestion (the feed's address, its name, why, who) or a feedback (the text,
-who) is one JSON line in `data/inbox.jsonl`, and a message on the Discord
-webhook when there is one (mentions off, links not unfurled). One call can
-send five. Feedia never fetches a suggested address itself: an admin looks at
+who) is a row of the `messages` table in `data/feedia.sqlite3`, and a message
+on the Discord webhook when there is one (mentions off, links not unfurled).
+The newest 1000 are kept. A caller (by IP address) can send five messages an
+hour, all callers together thirty. The `data/inbox.jsonl` of earlier versions
+is taken in on the first start and renamed `inbox.jsonl.imported`. Feedia
+never fetches a suggested address itself: an admin looks at
 it and, if it stays, adds it to `config/feeds.yml`. To read the inbox on the
 server:
 
@@ -127,6 +132,7 @@ docker exec feedia-bbs bin/inbox 100
 ```
 bbs.rb                          entry point: the board, the terminal question, then a face
 bin/inbox                       the admins' look at the inbox
+bin/test                        the domain's tests (minitest, no network)
 config/feeds.yml                the feed list
 lib/
   domain.rb                     requires the domain in dependency order
@@ -139,20 +145,30 @@ lib/
     model/feed_xml.rb           RSS/RDF/Atom → a channel and its items
     model/html_text.rb          an item's HTML → Markdown, numbered links
     repository/feed_list_repository.rb  config/feeds.yml
-    repository/feed_repository.rb       fetching a feed over HTTP(S), the cache
-    repository/inbox_repository.rb      data/inbox.jsonl
+    repository/feed_repository.rb       fetching a feed (BBS::HTTP), the cache (BBS::Cache)
+    repository/inbox_repository.rb      the messages table, the import of inbox.jsonl
     repository/discord_repository.rb    the admins' Discord webhook, rate-limited
     service/feed_service.rb     the feed list, reading a feed
-    service/inbox_service.rb    suggestions and feedback: checks, the inbox, Discord
+    service/inbox_service.rb    suggestions and feedback: checks, limits, the inbox, Discord
   ui/logo.rb                    FEEDIA in half blocks for the modern masthead
-  ui/modern.rb                  the modern face: desktop, feeds, items, forms
+  ui/modern.rb                  the modern face: the Application from the parts below
+  ui/modern/                    one module a window (feeds, channel, suggest, feedback),
+                                the menubar, the masthead, the helpers
   ui/petscii.rb                 the PETSCII face: logo, menu, lists, pages, messages
   ui/petscii/screen.rb          the 40×25 screen: rubbs' BBS::Petscii::Screen
+test/                           the domain's tests
+```
+
+## Tests
+
+```bash
+bundle exec bin/test              # all of them
+bundle exec bin/test inbox        # the files whose name has the word
 ```
 
 ## Deploy
 
-A push to master deploys from Woodpecker: RuboCop, a compose check, then
+A push to master deploys from Woodpecker: RuboCop, the tests, a compose check, then
 `ci-deploy feedia-bbs` on the server (infra/host-config), which runs the stack in
 `/srv/stacks/feedia-bbs`; `data/` and `.env` stay. The image runs the rubbs revision of
 `Gemfile.lock`, as uid 1000.
