@@ -13,12 +13,7 @@ module UI
     LOGO_COLORS = [LB, LB, CY, CY, WH].freeze
 
     # WARP in reversed blocks, five rows.
-    def self.logo
-      Logo.rows.each_with_index.map do |line, row|
-        blocks = line.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')
-        "          #{LOGO_COLORS[row]}#{blocks}#{LG}"
-      end
-    end
+    def self.logo = BBS::BlockFont.petscii(Logo::WORD, colors: LOGO_COLORS, indent: 10)
 
     def self.masthead
       rule = " #{DG}#{'─' * (COLS - 2)}#{LG}"
@@ -33,28 +28,12 @@ module UI
           nil
         end
         call do |_ctx, runner|
-          Petscii.goodbye(Screen.new(runner.session))
+          BBS::Goodbye.petscii(Screen.new(runner.session), title: 'warpengine bbs', color: LB)
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           nil
         end
       end
-    end
-
-    def self.goodbye(screen)
-      screen.cls
-      screen.puts
-      screen.puts " #{LB}#{RV}#{' thanks for calling warpengine bbs'.ljust(39)}#{RO}#{LG}"
-      screen.puts
-      screen.say('More of us: teletypegames.org', GR)
-      screen.puts
-      sleep 1.2
-      screen.puts " #{LG}+++"
-      sleep 0.6
-      screen.puts ' ATH0'
-      sleep 0.4
-      screen.puts " #{RD}NO CARRIER#{LG}"
-      screen.puts
     end
 
     # One call: the shelves, their titles, the downloads.

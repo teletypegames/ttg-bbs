@@ -72,10 +72,10 @@ lib/domain/
   warp_engine_bbs.rb        the composition root (WarpEngineBBS)
 lib/ui/
   transfer.rb               the protocols and what the caller is told, both faces
-  logo.rb                   WARP in blocks, both faces
+  logo.rb                   WARP in blocks (BBS::BlockFont), both faces
   modern.rb                 UI::Modern: the rubbs Application
   petscii.rb                UI::Petscii: the C64 board
-  petscii/screen.rb         the 40×25 screen: title bar, pages, numbered lists
+  petscii/screen.rb         the 40×25 screen: rubbs' BBS::Petscii::Screen
 ```
 
 The downloads are rubbs' `BBS::Zmodem` and `BBS::Xmodem` (rubbs 0.26.0 and
