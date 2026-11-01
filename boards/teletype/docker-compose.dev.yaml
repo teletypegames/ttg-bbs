@@ -1,5 +1,5 @@
 services:
-  bbs:
+  teletype-bbs:
     build: .
     container_name: teletype-bbs
     ports:
@@ -8,8 +8,8 @@ services:
       - ./:/app/
     environment:
       - TELETYPE_BBS_MESSAGES_PATH=/app/data/messages.dat
-      - TELETYPE_BBS_SYSOPS=${BBS_SYSOPS:-}
-      - TELETYPE_BBS_DISCORD_WEBHOOK=${BBS_DISCORD_WEBHOOK:-}
+      - TELETYPE_BBS_SYSOPS=${TELETYPE_BBS_SYSOPS:-}
+      - TELETYPE_BBS_DISCORD_WEBHOOK=${TELETYPE_BBS_DISCORD_WEBHOOK:-}
       - SERMO_LLM_URL=http://acp:8080
     depends_on:
       - acp
