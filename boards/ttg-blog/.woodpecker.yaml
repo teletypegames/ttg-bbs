@@ -1,4 +1,4 @@
-# Every push is linted with RuboCop. A push to master that changes the server deploys it:
+# Every push is linted with RuboCop and runs the tests (bin/test). A push to master that changes the server deploys it:
 # the stack runs in /srv/stacks/ttg-blog-bbs on the server.
 #
 # The deploy step only asks the server to deploy. Its key (secret deploy_ssh_key) is bound
@@ -19,6 +19,7 @@ steps:
       - apk add --no-cache git build-base
       - bundle install --jobs 4 --quiet
       - bundle exec rubocop
+      - bundle exec bin/test
 
   - name: check
     image: docker:cli

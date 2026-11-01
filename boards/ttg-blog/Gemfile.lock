@@ -19,6 +19,7 @@ GEM
     language_server-protocol (3.17.0.6)
     lint_roller (1.1.0)
     mini_portile2 (2.8.9)
+    minitest (5.27.0)
     parallel (1.28.0)
     parser (3.3.13.0)
       ast (~> 2.4.1)
@@ -77,6 +78,7 @@ DEPENDENCIES
   bbs!
   kramdown (~> 2.5)
   kramdown-parser-gfm (~> 1.1)
+  minitest (~> 5.25)
   rubocop
   sqlite3 (~> 2.1)
   webrick (~> 1.9)

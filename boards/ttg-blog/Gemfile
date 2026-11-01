@@ -9,5 +9,6 @@ gem 'sqlite3', '~> 2.1'
 gem 'webrick', '~> 1.9'
 
 group :development do
+  gem 'minitest', '~> 5.25'
   gem 'rubocop', require: false
 end

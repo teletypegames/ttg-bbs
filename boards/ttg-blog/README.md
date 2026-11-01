@@ -64,7 +64,8 @@ and shows its bare id.
 
 ## Data
 
-One SQLite file, two tables:
+One SQLite file (`data/ttgblog.sqlite3`, through rubbs' `BBS::SQLite`), two
+tables, its schema in `BlogSchema` as `migrate` steps (`PRAGMA user_version`):
 
 - `users` — the editors: `name` (unique, case does not matter) and a
   PBKDF2-SHA256 password digest.
@@ -81,9 +82,13 @@ before the flag stay published.
 
 The slug is the post's address on the web: its date and its title in plain
 ASCII (`2026-10-28-hello-world`, `-2` when taken). It is made once, when the
-post is saved, and stays when the title changes, so links keep working. A
-database from before the slug and the face gets both columns on start, and
-its posts get slugs.
+post is saved, and stays when the title changes, so links keep working.
+
+Step 1 of the schema is the board before versions: on a database the board
+wrote before (version 0) it adds only what that file lacks (the slug, face
+and publishing columns, the slugs, the indexes) and keeps every row, so the
+production file comes out at version 1 as it was. What an editor types is
+cleaned of control characters (`BBS::Text.clean`) before it is kept.
 
 Readers need no account. The editors are managed from the server's shell:
 
@@ -94,8 +99,12 @@ docker exec -it ttg-blog-bbs bin/user passwd NAME
 docker exec -it ttg-blog-bbs bin/user remove NAME    # their posts stay, without an author
 ```
 
-A logged-in editor can change their own password from the menu too. Three
-wrong logins end the tries of a call; each costs a second.
+A logged-in editor can change their own password from the menu too. Wrong
+logins are counted by the name (10 in 15 minutes) and by the caller's address
+(5 in 15 minutes; `BBS::RateLimit.caller_key`), so a new call does not start
+over: past either limit the login is locked until the window lets it go.
+Each wrong one costs a second, and the password derivations (PBKDF2) run at
+most two at a time, so a flood of tries cannot take the CPU.
 
 ## Interface
 
@@ -173,7 +182,7 @@ published.
 |---|---|
 | `GET /health` | `{"ok":true}` |
 | `GET /categories` | the categories in order, with `count` |
-| `GET /posts[?limit=N]` | the posts newest first, without their bodies |
+| `GET /posts[?limit=N]` | the posts newest first, without their bodies: 100 by default, at most 200 |
 | `GET /posts/SLUG` | one post: `body` (Markdown), `html` (kramdown, GFM), `screen` |
 
 Only the published posts: an unpublished one is 404, and the category counts
@@ -197,29 +206,43 @@ lib/
   domain.rb                    requires the domain in dependency order
   domain/
     model/                     CategoryModel, UserModel, PostModel (and its slug)
-    repository/                SqliteDatabase (the one connection), PostRepository,
+    repository/                BlogSchema (the migrations), PostRepository,
                                UserRepository, CategoryRepository (the YAML file)
-    service/                   PostService (limits, publishing), EditorService
-                               (names, passwords, login), CategoryService,
-                               DiscordNotifier (a new post on Discord)
+    service/                   PostService (limits, cleaning, publishing), EditorService
+                               (names, passwords, login), LoginGuard (failed tries
+                               by name and caller, two derivations at a time),
+                               CategoryService, DiscordNotifier (a new post on Discord)
     ttg_blog_bbs.rb            TTGBlogBBS, the composition root: reads ENV, wires it all
   web/api.rb                   the read API for teletypegames.org
   ui/
     screen.rb                  the colours and the screen (BBS::Petscii::Screen of
                                rubbs), with a number typed up to RETURN
-    board.rb                   one call, shared by the faces: menu, lists, a post,
-                               login, the editor, goodbye
+    board.rb                   one call, shared by the faces: menu, lists, a post, goodbye
+    board/account.rb           logging in and changing the password
+    board/composer.rb          writing and editing a post
+    post_page.rb               a post as lines, for both faces and the web's C64 screen
     modern.rb, modern/board.rb    UI::Modern: the caller's window, half-block masthead
     modern/screen.rb              its lists, numbered, picked by typing the number
     petscii.rb, petscii/board.rb  UI::Petscii: 40×25 PETSCII, the front page of cursor
                                   menus, a post's C64 screen for the web
     petscii/screen.rb             full-screen menus and lists, the footer bar, a post
                                   read under its footer, questions in the footer
+test/                          minitest: the schema and the legacy shapes, the services,
+                               the login limits, the read API (bin/test)
 ```
+
+## Tests
+
+```bash
+bundle exec bin/test               # all of them
+bundle exec bin/test schema        # the files whose name has one of the words
+```
+
+They need no network: each test works on a database in a temporary folder.
 
 ## Deploy
 
-A push to master deploys from Woodpecker: RuboCop, a compose check, then
+A push to master deploys from Woodpecker: RuboCop and the tests, a compose check, then
 `ci-deploy ttg-blog-bbs` on the server (infra/host-config), which runs the stack in
 `/srv/stacks/ttg-blog-bbs`; `data/` and `.env` stay. The image runs the rubbs revision of
 `Gemfile.lock`, as uid 1000.
