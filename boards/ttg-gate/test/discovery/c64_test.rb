@@ -159,6 +159,13 @@ module Discovery
       assert_equal 'Board 1', text_at(screen, 15, 1, 7)
     end
 
+    # D opens Browse; its second entry is All PETSCII.
+    def all_petscii(gate)
+      gate.press('d')
+      gate.press(:down)
+      gate.press(:enter)
+    end
+
     def test_the_tabs_switch_and_the_sub_menu_is_a_cursor_menu
       g = gate
       g.start
@@ -166,7 +173,7 @@ module Discovery
       assert_equal :main, g.focus
       g.press('d')
       assert_equal :discover, g.tab
-      assert_instance_of UI::Petscii::Views::ListView, g.view
+      assert_instance_of UI::Petscii::Views::MenuView, g.view
       screen = shown
       assert_equal '/Find Browse New Random Sources         ', text_at(screen, 2, 0, 40)
       assert_equal [Canvas::LIGHT_GREEN, true], [screen.cell(2, 6).color, screen.cell(2, 6).rvs]
@@ -213,7 +220,7 @@ module Discovery
     def test_the_discovery_list_marks_states_filters_and_steps_cheaply
       g = gate
       g.start
-      g.press('d')
+      all_petscii(g)
       first = @line.sent.last
       assert_operator first.bytesize, :<=, 1300
       screen = shown
@@ -241,7 +248,7 @@ module Discovery
     def test_a_board_page_has_the_strip_the_buttons_and_b_is_its_banner
       g = gate
       g.start
-      g.press('d')
+      all_petscii(g)
       g.press(:enter)
       page = g.view
       assert_instance_of UI::Petscii::Views::PageView, page
@@ -277,7 +284,7 @@ module Discovery
       assert_includes canvas.to_s, 'wiki.teletypegames.org'
       list = gate(listings: [l])
       list.start
-      list.press('d')
+      all_petscii(list)
       text = shown.to_s.lines.map { |line| line[0, Layout::WIDTH].strip }
       assert_includes text.each_cons(2).map { |a, b| a + b }, "#{host}:6400"
     end

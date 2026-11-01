@@ -46,7 +46,7 @@ dot or before the port.
 
 | Key | |
 |---|---|
-| O / D or G | the tab Own Servers / Global Discovery (it opens All PETSCII), from anywhere |
+| O / D or G | the tab Own Servers / Global Discovery (it opens Browse), from anywhere |
 | CRSR up / down | move the lit row of a list (past the edge of a page, the page turns); on Global Discovery CRSR up from the top of a list (or from a page) goes to the sub-menu, and there CRSR down goes back |
 | CRSR left / right | in the sub-menu: move its bar |
 | RETURN | open the place of the sub-menu; in a list open the board's page (dial our own board); on a board's page dial it |
@@ -152,7 +152,7 @@ name, tags and port; the description and the full address of the chosen one are
 under the list. Global Discovery is described [below](#the-gate-ui).
 
 **Commodore 64:** the frame and the tabs ([above](#the-c64-face)); `D`
-turns to Global Discovery (the All PETSCII list of Browse), `O` back to our own boards, the number dials, `Q`
+turns to Global Discovery (Browse: All, All PETSCII, All ASCII and the axes), `O` back to our own boards, the number dials, `Q`
 hangs up.
 
 Either way the board asks its own terminal question first: the gate reports the
@@ -338,7 +338,8 @@ preview, and a PETSCII banner only on the C64 face). RETURN or `D` dials it.
 ### On a Commodore 64
 
 `D` or `G` (or the `GLOBAL DISCOVERY` tab) opens Global Discovery in the frame of the
-C64 face on `ALL PETSCII` (the first lists of Browse): every PETSCII board in
+C64 face on Browse. `ALL PETSCII` and `ALL ASCII` (the first lists of Browse, after
+`All`) show every PETSCII, or every plain ASCII, board in
 every state, online and flaky first, then down, not called and dead, then by
 name, ten a page. The row under the title shows the
 filter as chips (`PETSCII`, and the state: `All`, or what `F` chose), a dark

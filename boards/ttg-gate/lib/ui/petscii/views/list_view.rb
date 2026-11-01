@@ -50,9 +50,11 @@ module UI
         # [any_terminal] every encoding: no PETSCII chip, a board without
         #                PETSCII dimmed
         def initialize(title:, color:, loader:, on_open:, filter: true, chips: [], details: nil, section: :discover,
-                       empty: 'Nothing here.', all_states: false, any_terminal: false, now: -> { Time.now.to_i })
+                       empty: 'Nothing here.', all_states: false, any_terminal: false, terminal: 'PETSCII',
+                       now: -> { Time.now.to_i })
           @all_states   = all_states
           @any_terminal = any_terminal
+          @terminal     = terminal
           @title   = title
           @color   = color
           @loader  = loader
@@ -116,7 +118,7 @@ module UI
 
         def chips(canvas, row)
           col = Layout.runs(canvas, row, 1, [['Filter', Canvas::GREY]]) + 1
-          col = Layout.chip(canvas, row, col, @any_terminal ? 'Any' : 'PETSCII', Canvas::PURPLE) + 1
+          col = Layout.chip(canvas, row, col, @any_terminal ? 'Any' : @terminal, Canvas::PURPLE) + 1
           @chips.each { |text, color| col = Layout.chip(canvas, row, col, text, color) + 1 }
           return unless @filter
 
