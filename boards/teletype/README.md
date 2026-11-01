@@ -424,12 +424,20 @@ Master a miss (none of the question's `expect` phrases):
 
 ```bash
 TELETYPE_BBS_LLM_URL=http://localhost:8080 bundle exec bin/persona-eval master 3
-docker exec teletype-bbs bundle exec bin/persona-eval ra 3      # on the server, with infra/llm
+docker exec teletype-bbs bin/persona-eval ra 3            # on the server, with infra/llm
+docker exec teletype-bbs bin/persona-eval master_c64 3    # the Master of the C64 face
 ```
 
-At the last tuning (2026-10-21): Ra 1 slip in 48 replies, the Master 0 in 48.
-To add a fact, add an entry to `master_knowledge.yml` and a question to the
-eval.
+The Master names a menu path only for what is on this board; for what
+another board of the network carries he names that board and its port
+(the games on WarpEngine BBS 2329, the wiki on TTG Wiki BBS 2325, …). At the
+slimming down (2026-11-01), on the new questions: the modern Master went from
+44 slips in 90 replies (27 misses) with the old knowledge to 9 (5 misses),
+the C64 Master from 34 in 87 (27 misses) to 17 (10 misses); the misses left
+are mostly the live game list winning over Commodex BBS for "cheats for C64
+games". Ra, at the last tuning (2026-10-21): 1 slip in 48 replies.
+To add a fact, add an entry to `master_knowledge.yml` (and its C64 twin) and
+a question to the eval.
 
 ## Data
 
