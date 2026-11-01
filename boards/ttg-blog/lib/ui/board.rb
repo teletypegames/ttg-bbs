@@ -13,11 +13,6 @@ module UI
   class Board
     LOGIN_TRIES = 3
 
-    LOGO_FONT = {
-      'T' => %w[### .#. .#. .#. .#.], 'G' => %w[### #.. #.# #.# ###], 'B' => %w[##. #.# ##. #.# ##.],
-      'L' => %w[#.. #.. #.. #.. ###], 'O' => %w[### #.# #.# #.# ###], ' ' => %w[. . . . .]
-    }.freeze
-
     MOTTO = 'news from teletype games'
 
     ERRORS = {
@@ -29,8 +24,8 @@ module UI
       not_saved:    'The post could not be saved. Try again later.'
     }.freeze
 
-    # TTG BLOG as five rows of bits, # set and . clear, for a face to draw.
-    def self.logo_bits = 5.times.map { |row| 'TTG BLOG'.chars.map { |c| LOGO_FONT[c][row] }.join('.') }
+    # The name on the masthead, in BBS::BlockFont.
+    LOGO = 'TTG BLOG'
 
     # A post as the board pages it, +width+ columns wide; the web shows the
     # C64 screen of a post from the same lines.
@@ -76,21 +71,7 @@ module UI
       end
     end
 
-    def goodbye
-      @screen.cls
-      @screen.puts
-      @screen.puts " #{YE}#{RV}#{' thanks for reading ttgblog'.ljust(@screen.cols - 1)}#{RO}#{LG}"
-      @screen.puts
-      @screen.say('More of us: teletypegames.org', GR)
-      @screen.puts
-      sleep 1.2
-      @screen.puts " #{LG}+++"
-      sleep 0.6
-      @screen.puts ' ATH0'
-      sleep 0.4
-      @screen.puts " #{RD}NO CARRIER#{LG}"
-      @screen.puts
-    end
+    def goodbye = BBS::Goodbye.petscii(@screen, bar: 'thanks for reading ttgblog', color: YE)
 
     private
 
@@ -208,7 +189,7 @@ module UI
         return false
       end
 
-      @screen.page(heading, post_lines(post), right: right, wait: false)
+      @screen.page(heading, post_lines(post), right: right, wait: false, room: 2)
       case post_choice(post)
       when 'e' then compose(post)
       when 'p' then publish?(post, !post.published)

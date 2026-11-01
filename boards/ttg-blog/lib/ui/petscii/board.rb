@@ -22,11 +22,7 @@ module UI
 
       def self.screen(session) = Screen.new(session, cols: COLS, rows: ROWS)
 
-      def self.logo
-        logo_bits.each_with_index.map do |row, i|
-          "  #{LOGO_COLORS[i]}#{row.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')}#{LG}"
-        end
-      end
+      def self.logo = BBS::BlockFont.petscii(LOGO, colors: LOGO_COLORS, indent: 2)
 
       private
 

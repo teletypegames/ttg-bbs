@@ -198,13 +198,14 @@ lib/
     ttgblog_bbs.rb             TtgblogBBS, the composition root: reads ENV, wires it all
   web/api.rb                   the read API for teletypegames.org
   ui/
-    screen.rb                  title bar, pages, numbered lists, single-key menus
+    screen.rb                  the colours and the screen (BBS::Petscii::Screen of
+                               rubbs), with a number typed up to RETURN
     board.rb                   one call, shared by the faces: menu, lists, a post,
                                login, the editor, goodbye
     modern.rb, modern/board.rb    UI::Modern: the caller's window, half-block masthead
+    modern/screen.rb              its lists, numbered, picked by typing the number
     petscii.rb, petscii/board.rb  UI::Petscii: 40×25 PETSCII, the front page of cursor
                                   menus, a post's C64 screen for the web
-    petscii/screen.rb             the lists and menus as BBS::Selector
 ```
 
 ## Deploy

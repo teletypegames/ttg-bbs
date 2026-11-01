@@ -11,13 +11,8 @@ module UI
         Screen.new(session, cols: session.term_cols.clamp(40, 80), rows: session.term_rows.clamp(16, 60))
       end
 
-      # Two rows of bits in one row of half blocks.
-      def self.logo
-        rows = logo_bits << ('.' * logo_bits.first.length)
-        rows.each_slice(2).map do |top, bottom|
-          top.chars.zip(bottom.chars).map { |t, b| { '##' => '█', '#.' => '▀', '.#' => '▄' }.fetch("#{t}#{b}", ' ') }.join
-        end
-      end
+      # The logo in half blocks.
+      def self.logo = BBS::BlockFont.half_blocks(LOGO)
 
       private
 

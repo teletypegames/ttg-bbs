@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative 'board'
-require_relative 'petscii/screen'
 require_relative 'petscii/board'
 
 module UI
