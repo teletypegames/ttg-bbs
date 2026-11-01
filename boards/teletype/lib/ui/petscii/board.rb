@@ -33,8 +33,10 @@ module UI
       MENU_WIDTH = COLS - 1
 
       HELP = [
-        'The menus move: CRSR up and down (and left and right on the main menu) lights an item, RETURN opens ' \
-        'it. The letter in front of an item opens it at once too.',
+        'The main menu is the clubhouse: each item a room of the club. CRSR up and down (and left and right) ' \
+        'lights a room, RETURN opens it, and the letter in front of a room opens it at once too. ? is this help, ' \
+        'Y the system info, and * swaps the pictures for a menu of plain text and back (for a terminal that ' \
+        'cannot show the C64 graphics).',
         '',
         'Lists are numbered: CRSR, or type the number, then RETURN. CRSR left and right turn the pages, Q goes ' \
         'back. The <- key and RUN/STOP go back too.',
@@ -46,7 +48,7 @@ module UI
         'In the live chat what the others say shows up above your line. An empty line leaves.',
         '',
         'Our games and files are on the WarpEngine BBS, port 2329: it sends them by XMODEM onto a C64 disk. ' \
-        'Y lists every board of the network.',
+        'N, the town map, shows every board of the network.',
         '',
         'The board has a modern face too, with windows: call with a PC terminal and choose 1.',
         '',
@@ -69,10 +71,15 @@ module UI
       def run
         loop do
           doing('At the main menu')
-          k = main_menu
-          return if %w[q x].include?(k) && logoff?
+          k = text_menu? ? main_menu : clubhouse_menu
+          next @ctx[:plain] = !text_menu? if k == '*'
+          leaving = %w[q x].include?(k) && logoff?
+          next unless leaving || ACTIONS[k]
 
-          send(ACTIONS[k]) if ACTIONS[k]
+          Clubhouse.text_mode(@screen.session) unless text_menu?
+          return if leaving
+
+          send(ACTIONS[k])
         end
       end
 
@@ -85,6 +92,25 @@ module UI
       def session_id = @ctx[:session_id]
 
       def doing(text) = @bbs.online.activity(session_id, "#{text} (C64)")
+
+      # The lowercase menu of text instead of the clubhouse: chosen with *,
+      # or for a caller whose letters come in capitals (UltimateTerm in its
+      # ANSI mode swaps the case and cannot show the graphics).
+      def text_menu? = @ctx[:plain] == true
+
+      # The main menu as the clubhouse (Clubhouse::MainMenu); the key taken.
+      def clubhouse_menu
+        @unread = registered? ? @bbs.mail.unread_count(name, sysop: sysop?) : 0
+        ring_for_mail
+        @lit = Clubhouse::MainMenu.new(@bbs, @screen.session, @ctx).run(lit: @lit, unread: @unread) || @lit
+      end
+
+      # New mail since the last look rings once, as on the old boards.
+      def ring_for_mail
+        seen = @ctx[:mail_seen] || @unread
+        @ctx[:mail_seen] = @unread
+        @screen.bell if @unread.to_i > seen.to_i
+      end
 
       def node_text
         node = @bbs.online.node(session_id)
@@ -101,8 +127,8 @@ module UI
         @screen.puts " #{DG}#{'─' * (COLS - 2)}#{LG}"
         items = menu_items
         index = items.index { |i| i.selectable? && i.value == @lit }
-        @lit  = @screen.menu(items, columns: 2, height: items.size / 2, index: index, exits: { 'x' => 'x' },
-                                    hint: 'crsr: choose  return: open  q: off')
+        @lit  = @screen.menu(items, columns: 2, height: items.size / 2, index: index, exits: { 'x' => 'x', '*' => '*' },
+                                    hint: 'crsr: choose  return: open  *: art')
       end
 
       # The cells of the menu, down the left column, then down the right: a
@@ -162,6 +188,8 @@ module UI
       end
 
       def logoff?
+        return Clubhouse.leave?(@screen) unless text_menu?
+
         @screen.choose("#{WH}log off now? (y/n)#{LG} ", %w[y n], back: 'n') == 'y'
       end
 

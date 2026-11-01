@@ -5,6 +5,7 @@ require_relative 'petscii/board'
 require_relative 'petscii/messages'
 require_relative 'petscii/content'
 require_relative 'petscii/people'
+require_relative 'petscii/clubhouse'
 
 module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen, single-key
@@ -41,7 +42,9 @@ module UI
           screen.puts
           Petscii.gate(screen)
           screen.puts
-          name = AccountService.normalize_name(screen.ask("  #{WH}name#{LG} (return: anonymous)\r\n  > ", max: 20))
+          typed = screen.ask("  #{WH}name#{LG} (return: anonymous)\r\n  > ", max: 20)
+          ctx[:plain] = Petscii.capitals?(typed)
+          name = AccountService.normalize_name(typed)
           ctx[:username] = name
           if bbs.accounts.registered?(name)
             3.times do
@@ -108,6 +111,11 @@ s[:polls_open].zero? ? 'all voted' : "#{s[:polls_open]} poll#{'s' if s[:polls_op
         end
       end
     end
+
+    # Whether a name came in capitals only: UltimateTerm in its ANSI mode
+    # swaps the case of what is typed (and cannot show the graphics), so its
+    # caller gets the text menu.
+    def self.capitals?(text) = text.to_s.count('A-Z') >= 2 && !text.to_s.match?(/[a-z]/)
 
     def self.scan(screen, label, result)
       screen.write " #{GR}#{label} #{DG}#{'.' * (15 - label.length)}#{LG} "
