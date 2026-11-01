@@ -22,7 +22,7 @@ module UI
             when :enter then return done(text.strip)
             when :escape then return done(nil)
             when :backspace then text.chop!
-            when String then text << k if k.length == 1 && k.match?(/[[:print:]]/) && text.length < MAX
+            when String then text << k if BBS::Text.printable?(k) && text.length < MAX
             end
           end
         end

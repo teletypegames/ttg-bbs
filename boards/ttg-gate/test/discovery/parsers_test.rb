@@ -139,5 +139,36 @@ module Discovery
       assert_nil Address.port('65536')
       assert_equal 23, Address.port('23')
     end
+
+    def test_a_field_of_a_source_holds_no_control_character
+      assert_equal 'Evil BBS [2J', Address.text("Evil\e BBS\u202E \e[2J\u0085\u0007")
+      assert_equal 'One line', Address.text("One\r\nline\t")
+      assert_equal 'Café', Address.text("Cafe\u0301")
+      assert_nil Address.text("\e\u202E")
+      assert_equal 'ok?', Address.text("ok?\xFF".b)
+    end
+
+    # Every range the board blocked before it asked BBS::Address: the rule
+    # may only grow stricter.
+    OLD_NON_PUBLIC = %w[
+      0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 127.0.0.0/8 169.254.0.0/16 172.16.0.0/12 192.0.0.0/24
+      192.168.0.0/16 198.18.0.0/15 224.0.0.0/3 ::/127 64:ff9b::/96 100::/64 fc00::/7 fe80::/10 ff00::/8
+    ].freeze
+
+    def test_the_public_internet_is_no_wider_than_before
+      OLD_NON_PUBLIC.each do |range|
+        first, last = IPAddr.new(range).to_range.minmax
+        [first, last].each { |ip| refute Address.public?(ip.to_s), "#{ip} of #{range}" }
+      end
+      refute Address.public?('::ffff:10.1.2.3')
+      refute Address.public?('192.0.2.1')
+      refute Address.public?('not an address')
+      assert Address.public?('93.184.215.14')
+      assert Address.public?('2a01:4f8::1')
+      refute Address.callable?(['93.184.215.14'], 22)
+      assert Address.callable?(['93.184.215.14'], 23)
+      refute Address.callable?(['93.184.215.14', '10.0.0.1'], 23)
+      refute Address.callable?([], 23)
+    end
   end
 end

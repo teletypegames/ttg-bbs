@@ -4,6 +4,8 @@
 # The importer and the prober run as their own processes (bin/discovery-*);
 # the Gate reads the catalog (BrowseService) and records its dials
 # (DialService).
+require 'bbs'
+
 %w[
   model/address model/record_model model/probe_result_model model/board_state_model model/source_model
   model/listing_model model/listing_filter model/search_query model/board_page_model

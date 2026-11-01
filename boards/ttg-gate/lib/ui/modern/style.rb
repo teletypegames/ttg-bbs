@@ -39,12 +39,17 @@ module UI
 
       def rule = "#{LINE}#{'─' * width}#{RESET}"
 
-      # +text+ cut or padded to +size+ columns, an ellipsis where it was cut.
+      # +text+ cut or padded to +size+ columns, an ellipsis where it was cut;
+      # no control character of it reaches the caller (a second guard after
+      # Discovery::Address.text, for what the catalog held before it).
       def fit(text, size)
         size = [size, 0].max
-        text = text.to_s
+        text = plain(text)
         text.length > size ? "#{text[0, [size - 1, 0].max]}…" : text.ljust(size)
       end
+
+      # +text+ on one line with no control or bidi character (BBS::Text.clean).
+      def plain(text) = BBS::Text.clean(text, keep_newlines: false).tr("\t", ' ')
 
       def mark(listing) = "#{STATE_COLORS.fetch(listing.state, TEXT)}#{listing.mark}#{RESET}"
 
@@ -60,8 +65,8 @@ module UI
 
       # The top line of a Discovery screen: where the caller is, and +right+.
       def crumbs(path, right = '')
-        left = "GLOBAL DISCOVERY › #{path}"
-        left = fit(left, width - right.length - 1).rstrip
+        right = plain(right)
+        left  = fit("GLOBAL DISCOVERY › #{path}", width - right.length - 1).rstrip
         "#{GREEN}#{BOLD}#{left}#{RESET}#{' ' * [width - left.length - right.length, 1].max}#{DIM}#{right}#{RESET}"
       end
 

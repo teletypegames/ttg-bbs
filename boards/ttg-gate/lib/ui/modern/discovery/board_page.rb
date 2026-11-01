@@ -81,7 +81,7 @@ module UI
 
         # The tags but the claims of the sources (claims:petscii is searched,
         # not shown: only our calls say what a board speaks).
-        def shown_tags = listing.tags.reject { |t| t.start_with?(::Discovery::TagService::CLAIMS) }
+        def shown_tags = listing.tags.reject { |t| t.start_with?(::Discovery::TagService::CLAIMS) }.map { |t| plain(t) }
 
         def answer
           return 'not called yet' unless listing.first_probe_at
@@ -167,7 +167,7 @@ module UI
 
           clear
           @session.write(::Discovery::BannerPreview.ansi(bytes))
-          @session.write("#{RESET}\e[#{rows};1H\e[K#{SELECT}#{DIM} The banner of #{listing.title}, #{date(@page.banner_at)}. " \
+          @session.write("#{RESET}\e[#{rows};1H\e[K#{SELECT}#{DIM} The banner of #{plain(listing.title)}, #{date(@page.banner_at)}. " \
                          "Press a key. #{RESET}")
           key
           restore
