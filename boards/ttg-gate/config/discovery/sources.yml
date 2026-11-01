@@ -4,7 +4,8 @@
 # [id]          the source's technical name; the src:<id> tag
 # [name]        shown on the Sources screen
 # [url]         where it is downloaded from
-# [format]      the parser: nodelist, sbl_html, syncterm_lst or cbbs_json
+# [format]      the parser: nodelist, sbl_html, syncterm_lst, cbbs_json or tbg_zip
+# [link]        a page that links the list: the first link matching this regular expression
 # [member]      in a .zip download, the file to read (a regular expression)
 # [network]     an FTN nodelist: the net:<network> tag of its nodes
 # [licence]     what we may do with it
@@ -14,11 +15,14 @@
 # The counts are of 2026-11-01; the catalog keeps the telnet endpoints (host:port) of a list.
 
 # A field two sources disagree on is taken from the earlier source of this list; the other
-# value stays in board_source. CBBS > nodelist > SBL > SyncTERM > TBG: the CBBS Outpost lists only
+# value stays in board_source. CBBS > nodelist > SBL > TBG > SyncTERM: the CBBS Outpost lists only
 # Commodore boards, and its entries are kept by their sysops, so for a board it names its
 # software and location are the best we have (and the nodelists still give the FTN address,
-# which it has not); the banner's software is shown over all of them.
-priority: [cbbs, fidonet, fsxnet, micronet, sbl, syncterm, tbg]
+# which it has not); the banner's software is shown over all of them. The Telnet BBS Guide is
+# the largest list, but it is edited by hand, monthly, and an entry may not have changed for
+# years, while the nodelists and the SBL are rebuilt daily or weekly from what their boards
+# say; it still has more than SyncTERM (location, software, website), an export of the SBL.
+priority: [cbbs, fidonet, fsxnet, micronet, sbl, tbg, syncterm]
 
 sources:
   - id: fidonet
@@ -89,11 +93,20 @@ sources:
 
   - id: tbg
     name: "Telnet BBS Guide"
+    # The "official" monthly list (IBBSmmyy.ZIP), the one meant for distribution, linked from
+    # the download page under a name that changes each month; the daily one is for personal use
+    # only and never read. From the zip the full listing (the facts) and the EtherTerm phonebook
+    # (the names as written) are read; the e-mail and the descriptions are never stored, a
+    # description only says whether it names PETSCII (TbgZipParser).
     url: "https://www.telnetbbsguide.com/lists/download-list/"
-    format: tbg
-    licence: "Permission asked (TBG_PERMISSION_REQUEST.md); off until an answer."
-    attribution: "Telnet BBS Guide, telnetbbsguide.com"
-    enabled: false
+    link: '/bbslist/ibbs\d{4}\.zip\z'
+    format: tbg_zip
+    licence: >-
+      "Please distribute this list everywhere you see fit" in the list; used with the Guide's
+      permission (2026-11-01, TBG_PERMISSION_REQUEST.md): the facts of a board only, with credit.
+    attribution: "Telnet BBS Guide (telnetbbsguide.com), used with permission"
+    # 2026-11-01 (IBBS1126.ZIP): 1074 telnet entries, 1060 telnet endpoints.
+    enabled: true
 
   - id: cbbs
     name: "CBBS Outpost (commodorebbs.com)"

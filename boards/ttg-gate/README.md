@@ -151,25 +151,37 @@ these lists publish.
 | [Synchronet BBS List](https://www.synchro.net/sbbslist.html) | HTML export of Vertrauen | 235 | Synchronet BBS List, synchro.net |
 | [SyncTERM BBS list](http://synchro.net/syncterm.lst) | SyncTERM ini (the SBL export) | 243 | SyncTERM BBS list, synchro.net |
 | [CBBS Outpost](https://www.commodorebbs.com) (Commodore boards) | the site's public JSON (`/api/bbs`) | 198 | CBBS Outpost (commodorebbs.com) |
+| [Telnet BBS Guide](https://www.telnetbbsguide.com) | the monthly IBBSmmyy.ZIP: its full listing and EtherTerm phonebook | 1060 | Telnet BBS Guide (telnetbbsguide.com), used with permission |
 
-Together they give 561 boards (245 in more than one list; the CBBS Outpost
-shares only a handful with the others). From the CBBS Outpost we take the facts
+Together they give about 1380 boards (about 350 in more than one list; the CBBS
+Outpost shares only a handful with the others, and some 820 are only in the
+Telnet BBS Guide). From the CBBS Outpost we take the facts
 only: name, address, port, location, software, hardware, website and the date
 of the entry; never the sysop, the e-mail, the owner, the screenshot, the
 comment or the site's own online mark (our calls decide that). The import is
 one request a day with our User-Agent, and its credit is on every board page it
 names and on the Sources screen; its sysops can ask us to take an entry down.
-The Telnet BBS Guide is in `config/discovery/sources.yml` too, switched off
-until it answers our request for permission. The country of a board comes from
+The Telnet BBS Guide is used with its permission (2026-11-01): the "official"
+monthly list, the one it publishes for distribution, found by its link on the
+download page (the file name changes each month; the daily list is for
+personal use and never read). From its full listing we take the name, the
+telnet `host:port`, the location, the software, the website and the date of the
+entry, and the names as their sysops write them from the phonebook of the zip;
+never the e-mail or the description (a description only tells whether it names
+PETSCII), and the SSH, web-only and dial-up entries are left out. The country of a board comes from
 [DB-IP](https://db-ip.com)'s IP to Country Lite database (CC BY 4.0: "IP
 Geolocation by DB-IP"), our own copy downloaded monthly into `data/geoip/`.
 
 Each format has its own parser with a test fixture (synthetic samples in
 `test/fixtures/discovery/`). One endpoint is one `host:port`: two lists naming
 it are one board, and the fields come from the more trusted list
-(`priority` in `sources.yml`; CBBS > nodelist > SBL > SyncTERM), the other value kept
+(`priority` in `sources.yml`; CBBS > nodelist > SBL > TBG > SyncTERM), the other value kept
 too. The CBBS Outpost comes first: it lists only Commodore boards, kept by
 their sysops, so for those its software and location are the best we have.
+The Telnet BBS Guide is the largest list, but it is edited by hand, once a
+month, and an entry may not have changed for years, while the nodelists and the
+SBL are rebuilt daily or weekly; it still has more than SyncTERM (location,
+software, website), which is an export of the SBL.
 Two hosts on the same IP and port are one board with an alias; the same
 name on two addresses is two boards. A board no list names any more is
 **delisted** but still called. If a list loses more than half of its records
@@ -193,7 +205,8 @@ calls each board like this:
 adapts to its caller shows it ANSI, while a real Commodore 64 (a terminal
 program behind a WiFi modem: plain TCP, no telnet) would get PETSCII. So a board
 a source calls a PETSCII board (the CBBS Outpost's boards, a SyncTERM entry in
-C64 mode, a PETSCII comment in the SBL: the tag `claims:petscii`), or whose
+C64 mode, a PETSCII comment in the SBL, a Telnet BBS Guide entry naming PETSCII
+or running a Commodore BBS program: the tag `claims:petscii`), or whose
 banner was PETSCII, is called a second time 30 s after its scheduled call
 answered, as a C64 would: the same connection, one CR (0x0D) after 4 s of
 silence, but every telnet option declined (WONT/DONT, no terminal type, no

@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
+require 'cgi'
 require 'net/http'
 require 'uri'
 
 module Discovery
   # Downloads a source list over HTTP(S), following up to five redirects, at
   # most MAX_BYTES; from a .zip the member of the source's +member+ pattern.
-  # Raises FetchError on any failure.
+  # A source with a +link+ pattern is a page that links its list under a name
+  # that changes (a monthly file): the first link of the page that matches is
+  # downloaded. Raises FetchError on any failure.
   class SourceFetcher
     class FetchError < StandardError; end
 
@@ -16,7 +19,7 @@ module Discovery
 
     # The bytes of +source+ (a SourceModel).
     def fetch(source)
-      bytes = get(URI(source.url))
+      bytes = get(source.link ? linked(source) : URI(source.url))
       return bytes unless source.member
 
       ZipReader.read(bytes, source.member) or raise FetchError, "#{source.id}: no member like #{source.member.source}"
@@ -41,6 +44,15 @@ module Discovery
       end
     rescue SocketError, SystemCallError, Timeout::Error, OpenSSL::SSL::SSLError, Net::HTTPBadResponse, EOFError => e
       raise FetchError, "#{uri}: #{e.class}: #{e.message}"
+    end
+
+    # The URI of the first link of the source's page that matches its +link+.
+    def linked(source)
+      page = get(URI(source.url)).force_encoding(Encoding::UTF_8).scrub('?')
+      href = page.scan(/href\s*=\s*["']([^"']+)["']/i).flatten.find { |h| h.match?(source.link) }
+      raise FetchError, "#{source.id}: no link like #{source.link.source} on #{source.url}" unless href
+
+      URI(source.url) + CGI.unescapeHTML(href)
     end
 
     private

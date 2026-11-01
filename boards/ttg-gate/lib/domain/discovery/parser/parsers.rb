@@ -7,7 +7,8 @@ module Discovery
       'nodelist'     => NodelistParser,
       'sbl_html'     => SblHtmlParser,
       'syncterm_lst' => SynctermLstParser,
-      'cbbs_json'    => CbbsJsonParser
+      'cbbs_json'    => CbbsJsonParser,
+      'tbg_zip'      => TbgZipParser
     }.freeze
 
     module_function

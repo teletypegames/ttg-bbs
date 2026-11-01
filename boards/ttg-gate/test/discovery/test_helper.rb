@@ -15,7 +15,7 @@ module Discovery
 
     def source(id = 'test', format: 'nodelist', network: nil, member: nil)
       SourceModel.new(id: id, name: id.capitalize, url: "https://#{id}.example.org/list", format: format,
-                      member: member, network: network, licence: '', attribution: '', enabled: true)
+                      link: nil, member: member, network: network, licence: '', attribution: '', enabled: true)
     end
 
     def config = @config ||= ConfigRepository.new(CONFIG)

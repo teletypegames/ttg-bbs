@@ -3,8 +3,8 @@
 # TTG_DISCOVERY.md §6.2. This is code-level config, not curation: it names no board.
 #
 # A rule: the source, the field (a hint the parser keeps: screen_mode, service, comment,
-# networks, platform), a regular expression (case-insensitive; a list field matches when any of
-# its values does) and the tag.
+# networks, platform, mentions; or a field of the record, like software), a regular expression
+# (case-insensitive; a list field matches when any of its values does) and the tag.
 
 # An encoding a source names is a claim, not a measurement: the tag is claims:<tag> (searchable,
 # never shown). The encoding tags themselves (ansi, petscii, …) come only from the banners of our
@@ -18,6 +18,10 @@ encoding:
   - { source: syncterm, field: service, pattern: '\batascii\b', tag: atascii }
   - { source: sbl, field: comment, pattern: '\bpetscii\b', tag: petscii }
   - { source: sbl, field: comment, pattern: '\batascii\b', tag: atascii }
+  # The Telnet BBS Guide: a description naming PETSCII, or a Commodore BBS program (C-Net is
+  # left out, the list's C-Net boards are Amiga ones).
+  - { source: tbg, field: mentions, pattern: '\APETSCII\z', tag: petscii }
+  - { source: tbg, field: software, pattern: '\A(?:image\s*bbs|color\s*64|c[-*]?\s*base|commodore|petscii\s*bbs|centipede|zelch|vic-bbs)', tag: petscii }
 
 # The networks a source names for a board (the SBL's Networks column), onto net:<network>.
 # An FTN nodelist gives its own network (sources.yml: network) to every node it lists.
