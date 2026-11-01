@@ -71,7 +71,7 @@ every session; **F8 / Wiki > Refresh index** (`R` on the C64) re-reads it for ev
 wiki is down at boot (a stack deploy recreates grav at the same time), the BBS
 still starts and retries the index every 10 seconds until it answers. Page bodies
 are rendered with `BBS::Markdown` and cached for 5 minutes
-(`Wiki::Client::PAGE_TTL`).
+(`WikiRepository::PAGE_TTL`).
 
 Resizing the terminal mid-session re-lays-out the whole UI (rubbs re-runs
 each open window's `relayout` on NAWS updates — rubbs rev `db8a97b`+). Pages flagged `private` (or
@@ -112,9 +112,44 @@ telnet localhost 2323
 | Var | Default | Purpose |
 |---|---|---|
 | `BBS_PORT` | `2323` | Telnet listen port |
+| `BBS_MAX_SESSIONS` | `100` | Callers at once (the compose file sets 50) |
 | `BBS_IDLE` | `900` | Idle disconnect (seconds) |
 | `WIKI_URL` | `http://localhost:9120` | Grav wiki base URL |
 | `SUPERVISOR_PASSWORD` | — | Unlocks private pages (Wiki > Supervisor login) and is sent to the wiki as the API token — must match the grav service's value; empty = private pages stay locked |
 
+`env-example` lists them all with their defaults. `WikiBBS`
+(`lib/domain/wiki_bbs.rb`) is the one place that reads them, apart from
+`BBS_PORT` and `BBS_MAX_SESSIONS`, which rubbs reads itself.
+
 `entrypoint.sh` runs `bundle update bbs` on container start, so the BBS
 always boots with the latest rubbs revision.
+
+## Project structure
+
+```
+wiki.rb                       Entry point: one WikiBBS, its index loading, BBS::Terminal with the two faces
+Gemfile, Gemfile.lock         rubbs from git, rubocop in :development
+entrypoint.sh                 Updates rubbs, then starts wiki.rb
+Dockerfile, .dockerignore     The image; the root docker-compose.yml builds it as wiki-bbs
+.rubocop.yml                  The house RuboCop rules; CI lints bbs/ (root .woodpecker.yaml)
+env-example                   Every environment variable, with its default
+lib/
+  domain.rb                   Requires the domain in dependency order
+  domain/
+    model/page_model.rb       PageModel: one entry of the page index
+    repository/wiki_repository.rb   WikiRepository: the JSON API, the page cache
+    service/wiki_service.rb   WikiService: the shared index, private flags, pages as markdown
+    service/supervisor_service.rb   SupervisorService: the supervisor password
+    wiki_bbs.rb               WikiBBS: the composition root, reads ENV
+  ui/
+    logo.rb                   UI::Logo: TTG WIKI in a block font
+    modern.rb                 UI::Modern: the two-pane browser on an ANSI terminal
+    petscii.rb                UI::Petscii: the C64 face, its masthead and goodbye
+    petscii/screen.rb         UI::Petscii::Screen: the 40×25 screen of one call
+    petscii/browser.rb        UI::Petscii::Browser: the page tree as cursor menus
+```
+
+## Licence
+
+MIT, see `LICENSE`. It covers this folder only: the rest of the wiki-pages
+repository has no licence of its own (Grav's in `core/` is Grav's).

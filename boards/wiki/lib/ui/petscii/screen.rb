@@ -139,7 +139,6 @@ module UI
         BBS::Selector.list(@session, items, width: COLS - 1, height: PAGE, hint: hint, colors: MENU,
                                             exits: commands.keys.to_h { |k| [k, k] }.merge('q' => nil), &label)
       end
-
     end
   end
 end

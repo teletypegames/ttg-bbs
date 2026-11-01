@@ -7,8 +7,9 @@ module UI
   # ANSI markdown on the right. F5 / Alt-Enter (the window's zoom) puts it
   # back into a window and out again.
   module Modern
-    def self.flow(wiki)
-      browser = app(wiki)
+    def self.flow(bbs)
+      wiki    = bbs.wiki
+      browser = app(bbs)
       BBS::Flow.define do
         big_banner 'TTG WIKI', style: :success
         text(style: :muted) { "Teletype Games wiki over telnet — #{wiki.pages.size} pages indexed." }
@@ -19,11 +20,11 @@ module UI
       end
     end
 
-    def self.app(wiki)
+    def self.app(bbs)
       BBS::Application.define do
         theme BBS::Theme.nortoncommander
 
-        services wiki: wiki
+        services bbs.services
 
         helpers do
           def unlocked?
@@ -121,23 +122,22 @@ module UI
           w.empty_message '  (no pages)'
           w.items { |ctx| ctx[:wiki].pages }
           w.item_label do |page, ctx|
-            lock = page[:private] && !ctx[:app].unlocked? ? ' *' : ''
-            "#{'  ' * (page[:depth] - 1)}#{page[:title]}#{lock}"
+            lock = page.private? && !ctx[:app].unlocked? ? ' *' : ''
+            "#{'  ' * (page.depth - 1)}#{page.title}#{lock}"
           end
           w.render_detail do |page, width, ctx|
-            md = if page[:private] && !ctx[:app].unlocked?
-                   "# Supervisor only\n\nThis page is private. " \
-                   "Unlock it via **Wiki > Supervisor login**."
+            md = if page.private? && !ctx[:app].unlocked?
+                   "# Supervisor only\n\nThis page is private. Unlock it via **Wiki > Supervisor login**."
                  else
-                   ctx[:wiki].page_markdown(page[:route])
+                   ctx[:wiki].page_markdown(page.route)
                  end
             BBS::Markdown.to_lines(md, width: width, theme: ctx[:app].theme)
           end
           w.bottom_meta do |page, ctx|
-            if page[:private] && !ctx[:app].unlocked?
-              " #{page[:route]}   SUPERVISOR ONLY"
+            if page.private? && !ctx[:app].unlocked?
+              " #{page.route}   SUPERVISOR ONLY"
             else
-              " #{page[:route]}   updated #{page[:updated_at]}"
+              " #{page.route}   updated #{page.updated_at}"
             end
           end
         end
@@ -150,10 +150,11 @@ module UI
           w.submit_label '&Unlock'
           w.on_submit do |values, form, ctx|
             app = ctx[:app]
-            if SUPERVISOR_PASSWORD.empty?
+            case ctx[:supervisor].unlock(values[:password])
+            when :unconfigured
               form.error('No supervisor password configured.')
               :keep
-            elsif values[:password] == SUPERVISOR_PASSWORD
+            when :granted
               app.context[:unlocked] = true
               app.windows.grep(BBS::Windows::MasterDetail).each(&:reload_detail)
               BBS::Dialogs.message(app, 'Supervisor access granted.', title: ' Unlocked ')

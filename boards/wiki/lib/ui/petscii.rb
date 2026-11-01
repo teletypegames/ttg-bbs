@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative 'logo'
 require_relative 'petscii/screen'
 require_relative 'petscii/browser'
 
@@ -7,23 +8,18 @@ module UI
   # The wiki on a Commodore 64: PETSCII on a 40×25 screen, the page tree as
   # numbered cursor menus, the pages as screenfuls of text that wait for RETURN.
   module Petscii
-    LOGO_FONT = {
-      'T' => %w[### .#. .#. .#. .#.], 'G' => %w[### #.. #.# #.# ###],
-      'W' => %w[#...# #...# #.#.# ##.## #...#], 'I' => %w[### .#. .#. .#. ###],
-      'K' => %w[#.# #.# ##. #.# #.#]
-    }.freeze
     LOGO_COLORS = [CY, CY, LB, LB, "\e[0;34m"].freeze
 
     # TTG WIKI in reversed blocks, five rows.
     def self.logo
-      5.times.map do |row|
-        bits = %w[TTG WIKI].map { |word| word.chars.map { |c| LOGO_FONT[c][row] }.join('.') }.join('...')
+      Logo.rows.each_with_index.map do |bits, row|
         line = bits.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')
         "  #{LOGO_COLORS[row]}#{line}#{LG}"
       end
     end
 
-    def self.flow(wiki)
+    def self.flow(bbs)
+      wiki = bbs.wiki
       BBS::Flow.define do
         call do |ctx, runner|
           screen = Screen.new(runner.session)
@@ -37,7 +33,7 @@ module UI
           screen.puts
           screen.say('CRSR and RETURN, or the number, opens a page; Q goes back. Pages marked * are private.', GR)
           screen.pause('return: enter the wiki')
-          Browser.new(wiki, screen, ctx).run
+          Browser.new(bbs, screen, ctx).run
           Petscii.goodbye(screen, seconds: Time.now - ctx[:call_started])
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
