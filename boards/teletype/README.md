@@ -2,8 +2,12 @@
 
 Telnet-accessible Synchronet-style community BBS server built on the
 [rubbs](https://git.teletypegames.org/engines/rubbs) gem: the clubhouse of the
-Teletype Games BBS Network. It keeps the habits of the old boards: a modem
-handshake and a logon matrix, caller numbers, a logon sequence that scans your
+Teletype Games BBS Network, and it looks like one. The caller comes in at the
+door and signs the guestbook, the desktop is the clubhouse from the street
+with a lit window for everyone inside, and the menus are its rooms: the cork
+board, the mailboxes, the sofa, the games room at the back, the trophy case,
+the town map on the wall (see *The clubhouse* below). It keeps the habits of
+the old boards: a modem handshake, caller numbers, a logon sequence that scans your
 mail and the message bases, nodes, message boards, private mail, feedback to
 the sysop and a page bell, oneliners, a live chat, a voting booth, numbered
 bulletins, a hall of fame, and NO CARRIER at the end. Around them the team's
@@ -18,7 +22,7 @@ files are on [WarpEngine BBS](https://git.teletypegames.org/bbs/warp-engine-bbs)
 (2328), the art on [Pixelia BBS](https://git.teletypegames.org/bbs/pixelia-bbs)
 (2332), the Impostor debrief on [Impostor BBS](https://git.teletypegames.org/bbs/impostor-bbs)
 (2324), and [TTG Gate BBS](https://git.teletypegames.org/bbs/ttg-gate-bbs) (2399)
-dials them all. Board > BBS Network (N on the C64) tells a caller where each
+dials them all. The town map, Board > BBS Network (N on the C64), tells a caller where each
 thing is, and so does the TTG Master.
 
 The board has two faces on one port: the **modern** one for ANSI terminals
@@ -82,7 +86,6 @@ Copy `env-example` to `.env`:
 | `TELETYPE_BBS_LAST_READ_PATH` | `data/last_read.csv` | How far each registered name has read each board (the new-message scan) |
 | `TELETYPE_BBS_VOTES_PATH` | `data/votes.csv` | The ballots of the Voting Booth, a log: a name's later ballot wins |
 | `TELETYPE_BBS_TRIVIA_SCORES_PATH` | `data/trivia_scores.csv` | Every finished TTG Trivia game, for its hall of fame |
-| `TELETYPE_BBS_LOGON_ART` | `lib/content/logon.ans` | The art of the logon matrix, above the name prompt |
 | `TELETYPE_BBS_FTP_HOST` | `ftp.teletypegames.org` | The FTP server whose `/WARP` sizes give the Commodore doors the blocks of each game (anonymous, passive); the catalog API carries no sizes |
 | `SERMO_LLM_URL` | set by compose | SERMO's model, `http://llm:8080`; empty = canned replies only |
 | `SERMO_LLM_MODEL` | set by compose | the model's name in infra/llm, `qwen3.5-0.8b` |
@@ -106,30 +109,45 @@ its escape sequence.
 ### The modern face
 
 A call starts the old way: the modem dials and connects (`CONNECT
-38400/ARQ/V42BIS`), the logon matrix shows the TTG art with the caller number
-and the nodes in use, and asks for a name (and a registered name's password).
+38400/ARQ/V42BIS`), then the caller stands at the entrance of the clubhouse:
+the door under its lamp, the bell, the coats of the callers inside on the
+rack, and the open guestbook with the last three guests and the number of this
+entry (the caller number). The name and a registered name's password are
+written into the guestbook. A terminal under 80×24 gets a plain prompt
+instead.
 Then the logon sequence: *Welcome back*, your caller number, your calls, and
 the scans — new letters in your mailbox, new messages on the boards since your
 last read, open polls in the voting booth — and the quote
 of the day (a member's motto). The board's logo heads it: TTG BBS in a
 three-by-five pixel font (`lib/ui/logo.rb`), yellow to red like the logon art,
 the same on the C64 face. ENTER opens the full-screen Synchronet-style shell
-on the **dashboard**: the logo and the greeting, the TTG Gate BBS banner, four
-live panels (who is on line now, what is new — the newest posts and your
-unread letters —, the last callers, what is coming up, with the days to go)
-and the oneliners running along the bottom (`lib/ui/modern/desktop.rb`).
-It refreshes itself every few seconds; Board > Dashboard closes every window
-and brings it back. Board > Log off (Alt-X) ends the call with the logoff
-screen: the call's length, a tagline, `+++`, `ATH0`, `NO CARRIER`.
+on the **dashboard**, the clubhouse from the street (`lib/ui/modern/desktop.rb`):
+the hanging sign, the house of the time of day in Budapest (dawn, day, dusk,
+night) with a lit window for every node taken (the caller's own brighter), the
+door and the lamp lit while anyone is in, smoke from the chimney while the live
+chat talks, the mailbox flag and the number of the caller's unread letters, and
+the node and caller number in the sky; in winter snow on the roof, pumpkins in
+the last week of October, fireworks on New Year's Eve, bunting on the days of a
+game jam. Under the house two boards: **Inside now** (the nodes, then the
+guestbook: the last callers) and **On the notice board** (what is coming up,
+with a bar filling as the day nears, the new notes on the cork board, the
+mail), and the graffiti wall (the oneliners) running along the bottom. It
+refreshes itself every few seconds; Board > Dashboard closes every window and
+brings it back. While a window of a room is open, the card of that room sits
+over the top of the house. A terminal smaller than 80×23 keeps the boards and
+the wall without the house. Board > Log off (Alt-X) puts the lamps of the
+clubhouse out one by one, with the coat ticket (the caller number and the time
+on line), a tagline, `+++`, `ATH0`, `NO CARRIER`.
 
 The statusbar shows the node, the clock and the time on line on the right;
 while a menu is open it tells what the highlighted item does instead. The
 desktop has a **F1 ▸ Lost? Ask the TTG Master** button in its bottom right
 corner.
 
-Every window wears the colour of its menu on its frame and its title: Board
-pale teal, Messages green, People pink, Doors salmon, You grey, Help yellow (`UI::Modern::Accent`). The dashboard's panels wear the
-colour of what they show.
+Every window wears the colour of its menu on its frame and its title, and the
+icon of its menu in the title: Board pale teal ☼, Messages green ✉, People
+pink ☺, Doors salmon ♫, You grey ♥, Help yellow ¿ (`UI::Modern::Accent`,
+`UI::Modern::Icon`). The dashboard's boards wear the colour of what they show.
 
 #### Keys
 
@@ -159,10 +177,10 @@ statusbar while it is highlighted.
 
 | Menu | Items |
 |---|---|
-| **Board** | Dashboard · Bulletins… · Dev Log · System Info · BBS Network (our boards and what each carries) · Log off |
+| **Board** | Dashboard · Bulletins… · Dev Log · System Info · BBS Network (the town map) · Log off |
 | **Messages** | Boards… · New Post… · Mail… · Oneliners · Live Chat · IRC #teletypegames · Voting Booth · Feedback to the Sysop… · Page the Sysop |
 | **People** | Who is Online · Last Callers · User Listing · Hall of Fame · Team |
-| **Doors** | Door Lobby… · SERMO · Commodore 64 · Commodore Plus/4 · Chat of Ra · TTG Trivia |
+| **Doors** | Games Room… · Door Lobby… · SERMO · Commodore 64 · Commodore Plus/4 · Chat of Ra · TTG Trivia |
 | **You** | Your Stats · Profile… · Register… · Sysop Console (logged-in sysops only) |
 | **Help** | Ask the TTG Master… · What is coming up? · Where do I start? · Where are the games, files, wiki? (the BBS Network) · Which doors are there? · New to BBSes? · Keys · About |
 
@@ -173,7 +191,8 @@ statusbar while it is highlighted.
 - **Oneliners** — a wall of one-line messages (64 characters, a name needed, not Anonymous); the newest run along the bottom of the dashboard.
 - **Live chat** — broadcast hub, 1 Hz polling, history replay on join; at most two lines a second from one caller, and a caller who does not read keeps the last 200 lines.
 - **IRC #teletypegames** — a read-only window on the channel at Libera.Chat: one connection for the whole board under the nick `ttgbbs` (TLS, reconnects with a growing pause), the last 200 lines replayed, the member count and the topic; the window tells how to join, and the input line only repeats it. mIRC formatting and control characters are stripped. The board never speaks on the channel.
-- **Dashboard** — the desktop, live: the nodes, the newest posts of the boards and the caller's unread letters, the last callers, the coming events with their countdown, the message count and the oneliners ticker, refreshed every five seconds.
+- **Dashboard** — the clubhouse from the street, live (see above), refreshed every five seconds from `SceneService`.
+- **Games Room** (Doors) — the five stations at the back of the clubhouse (SERMO's green monitor, the C64 and its TV, the Plus/4, the pyramid of Ra, the quiz table of TTG Trivia), a lamp over each burning while somebody is inside, with the count; the arrows or a click choose a station and switch its screen on, Enter steps in. Under 80 columns it is the Door Lobby.
 - **Door Lobby** (Doors) — every door with what it is, the screen it needs (and whether the C64 face has it) and how many callers are inside; Enter or Open steps in.
 - **Logon sequence** — caller numbers (every logged call before this one, plus one), a name's calls, first and last call and time on line, and the scans: unread mail, the new messages of each board since the name last opened it (registered names; `TELETYPE_BBS_LAST_READ_PATH`), polls without the caller's vote. The quote of the day is a member's motto, the same for everyone until midnight; the logoff screen picks a tagline (`lib/content/taglines.yml`) or a motto.
 - **Nodes** — every caller gets the lowest free node number. People > Who is Online lists the nodes with the name, what the caller is doing (the title of the top window, *At the main menu*, or the door) and the time on line.
@@ -181,11 +200,11 @@ statusbar while it is highlighted.
 - **Page the Sysop** — once a call: the bell, a line in the live chat and on Discord; when no sysop is on line it offers to leave a letter.
 - **Voting Booth** (Messages) — the polls of `lib/content/polls.yml`; `options: catalog` fills one with the released games, `options: doors` with the doors. Results as bars; a name (not Anonymous) votes and can change its vote.
 - **Bulletins** (Board > Bulletins…, Help > New to BBSes?) — numbered: the logon bulletin (the board in numbers, the newest posts, what is coming up, the last callers, the wall), About Teletype Games, what is coming up, the board rules and New to BBSes? (`lib/content/bulletins/*.md`), and the BBS network.
-- **Hall of Fame** (People) — top lists with bars: the top callers, the top posters and the TTG Trivia high scores. **User Listing** has the registered names with their calls, last call and location; **Your Stats** the caller's own numbers.
+- **Hall of Fame** (People) — the trophy case: a gold, a silver and a bronze cup for the first three of the top callers, the top posters and the TTG Trivia high scores, the names on the plates, the places after them under the case with fading bars (the old top lists under 80 columns). **User Listing** has the registered names with their calls, last call and location; **Your Stats** the caller's own numbers.
 - **Dev Log** — the public activity of every organisation on git.teletypegames.org (pushes with their commit messages, tags, releases, new repositories), newest first, read anonymously from the Gitea API, so private repositories never show.
 - **Team** — the members of teletypegames.org with their mottos.
 - **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `BBS::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
-- **BBS Network** (Board > BBS Network, Help > Where are the games, files, wiki?, N on the C64) — every board of the network with its port and what it carries, the TTG Gate BBS that dials them all, bbsweb, and the FTP tree on plain HTTP at archive.teletypegames.org. This board has no gateway doors: a caller goes to another board by calling it, or through TTG Gate BBS.
+- **BBS Network** (Board > BBS Network, Help > Where are the games, files, wiki?, N on the C64) — the town map on the clubhouse wall: every board of the network a building in its bbsweb colour around the clubhouse (the town gate of TTG Gate BBS, the archive of the wiki, the great library of Alexandria, the news kiosk of Feedia, the printing press of the blog, the warehouse of WarpEngine, the scriptorium, the game shop of Commodex, the gallery of Pixelia, the dark alley of the Impostor). The arrows walk from building to building; under the map what the chosen one carries and how to walk over. The list of the boards, with bbsweb and archive.teletypegames.org, is a bulletin. This board has no gateway doors: a caller goes to another board by calling it, or through TTG Gate BBS.
 - **Registered names** — a caller can register the name they logged in with (You > Register…); from then on that name asks for its password, with a 2-second wait after each wrong one. Profiles belong to registered names only. `accounts.csv` is read again whenever it changes, so `bin/account` works on a running server.
 - **Sysop console** — stats + broadcast, for names in `TELETYPE_BBS_SYSOPS` that logged in with their password.
 - **Discord feed** — new board posts and sysop broadcasts go to `TELETYPE_BBS_DISCORD_WEBHOOK`, mentions disabled.
@@ -197,40 +216,65 @@ statusbar while it is highlighted.
 ### The C64 face
 
 The board as the C64 boards had it (`lib/ui/petscii`), on a C64 terminal program
-(CCGMS, StrikeTerm, SyncTERM in C64 mode) in the lowercase character set: the
-TTG BBS logo in reversed blocks (yellow, orange and red, the modern face's
-logo), the name and the password, the logon scans, then the main menu: who is
-calling and what is happening (the callers on line, new mail, the next event
-with its days to go, the newest post), then the sections in two columns, a
-cursor menu of rubbs (`BBS::Selector`). Each section is a band of its colour,
-and its keys and its bar wear it. CRSR moves the bar (left and right to the
-column beside), RETURN opens the lit item, and the letter in front of an item
-opens it at once, as before; under the menu a line about the lit item.
+(CCGMS, StrikeTerm, SyncTERM in C64 mode), in two character sets. The
+**pictures** are drawn in the uppercase/graphics set on rubbs'
+`BBS::Petscii::Canvas`, raw PETSCII, the whole screen once and then only what
+changes: the entrance (the sign, the door, the bell, the guestbook where the
+name and the password are written), the main menu, the town map, the games
+room, the trophy case, the room cards and leaving. The **reading screens**
+(posts, letters, the chat, bulletins, the Master) stay in the lowercase set of
+`BBS::Petscii::Screen`; the board switches to it (`0x0e`) before each.
+
+The main menu is the clubhouse (`UI::Petscii::Clubhouse::MainMenu`): the house
+of the time of day, lit from the same scene as the modern face (a reversed
+yellow window for each node, the caller's white, the door, the smoke puffing
+while the live chat talks, the mailbox flag and the number of letters), who is
+calling and what comes next, and the rooms as a cursor menu on the picture
+(`BBS::Petscii::CanvasMenu`), each in the colour of its part of the board:
+
+```
+ TTG BBS CLUBHOUSE         NODE 2  21:47
+ [the sign]     [the house, lit]   [box]
+ HI TASI!       3 INSIDE  2 NEW LETTERS
+ NEXT: TTG GAME JAM IN 3 DAYS
+ ╭────────────────────────────────────╮
+ │ M CORK BOARD      C GUESTBOOK      │
+ │ E MAILBOX         H TROPHIES       │
+ │ O GRAFFITI WALL   V BALLOT BOX     │
+ │ L SOFA CHAT       S YOU            │
+ │ I RADIO (IRC)     R GAMES ROOM     │
+ │ P RING THE BELL   N TOWN MAP       │
+ │ U NOTICE BOARD    T ASK THE BAR    │
+ │ D WORKSHOP        Q LEAVE          │
+ │ READ AND POST ON THE CORK BOARD    │
+ ╰────────────────────────────────────╯
+ CRSR RETURN  ?:HELP  Y:INFO  *:TEXT
+```
+
+CRSR moves the bar (left and right to the column beside), RETURN opens the lit
+room, the letter in front of it opens it at once; `?` is the help, `Y` the
+system info, `Z` the sysop console. A reading room shows its card once a call
+(the cork board, the mailboxes, the sofa, the notice board, the workshop, the
+guestbook), any key goes in. `N` is the town map: the boards of the network as
+3×3 buildings, CRSR walks between them, under the map the name, two words and
+the port. `R` is the games room: the five stations with their lamps; the C64
+and the Plus/4 open, SERMO, Ra and Trivia are on the modern face. `H` is the
+trophy case, `Q` puts the four lamps out one by one before `NO CARRIER`.
+
+`*` swaps the pictures for the old menu of plain text in the lowercase set, and
+back. A caller whose name comes in capitals gets the text menu at once:
+UltimateTerm (the C64 Ultimate's terminal) in its ANSI mode swaps the case of
+what is typed and cannot show the graphics (no CLR, swapped letters).
 
 ```
  TELETYPE BBS              node 2 13:32
  hi tasi! · 3 on line · 2 new mail
- next: TTG Game Jam in 3 days
- new:  Tasi: who is up for a jam?
  ──────────────────────────────────────
  [messages] ───────  [board] ───────────
  M message boards   U bulletins
  E e-mail 2         D dev log
- O oneliners        N network
- L live chat
- I irc channel
- P page the sysop
- [people] ─────────  [more] ────────────
- C callers & users  R doors
- V voting booth     T ttg master
- S you & your name  Y system info
- H hall of fame     ? help
- Z sysop console    Q log off
- read and post on the boards
- crsr: choose  return: open  q: off
+ …
 ```
-
-The doors list gives each door a few words of what it is.
 
 Lists are numbered cursor menus: CRSR or the number typed lights one, RETURN
 opens it, CRSR left and right turn the pages, `Q` or `←` (RUN/STOP too) goes
@@ -241,15 +285,91 @@ keys move in it, DEL deletes, RETURN ends it, RUN/STOP or `←` goes back);
 posts and letters are written in its full-screen editor (`BBS::Editor`):
 RUN/STOP or `←`, then `S` sends them, `Q` drops them. In
 the live chat the others' lines show up above the one being typed. Bulletins
-are the same Markdown, rendered 38 columns wide. `N` is the BBS Network, 40
-columns wide: our games and files come to a C64 by XMODEM from the WarpEngine
-BBS. The doors are the ones that fit 40 columns (the Commodore 64 and the
-Plus/4); SERMO, Chat of Ra and TTG Trivia are on the modern face. Mail rings
-when it arrives during the call, and `Q` ends the call with `NO CARRIER`.
+are the same Markdown, rendered 38 columns wide. Mail rings when it arrives
+during the call.
 
 The screen is rubbs' PETSCII line (`session.petscii!`, see the rubbs README):
 the PETSCII face writes UTF-8 with ANSI colours, and the line makes PETSCII of it,
 so the shared parts (Markdown, the doors' FakeOS) work there unchanged.
+
+## The clubhouse
+
+The look of the board is a clubhouse: not a library and not a store (those
+are the other buildings of the town), but the place where a caller sits down,
+signs the guestbook, sees who is in, leaves a note and plays a game at the
+back. Every big picture has something drawn from the board's own data, the
+same on both faces (`SceneService` → `SceneModel`): nothing is asked of the
+outside world, and the town map is static.
+
+| Menu (modern) | Room (C64 key) | Live in the picture |
+|---|---|---|
+| the logon | the entrance: door, lamp, bell, guestbook | the last three guests, the entry number (caller #), the coats on the rack (the nodes) |
+| Board > Dashboard | the clubhouse from the street | a lit window a node, the door and lamp, chimney smoke (a chat line in the last minute), the mailbox flag and count |
+| Messages > Boards… | the cork board (M) | the new notes (unread posts; for a guest the posts of the week) |
+| Messages > Mail… | the mailboxes (E) | the flag on the mailbox outside |
+| Messages > Oneliners | the graffiti wall (O) | the wall running under the house |
+| Messages > Live Chat | the sofa corner (L) | the smoke |
+| Messages > IRC | the radio (I) | — |
+| Messages > Page the Sysop | the bell (P) | — |
+| Messages > Voting Booth | the ballot box (V) | — |
+| People > Who is Online, Last Callers | the guestbook (C) | — |
+| People > Hall of Fame | the trophy case (H) | the names on the cups |
+| Board > Bulletins…, Dev Log | the notice board (U), the workshop (D) | — |
+| Board > BBS Network | the town map (N) | static |
+| Doors > Games Room… | the games room (R) | a lamp over each station in use |
+| Help > Ask the TTG Master | the bar (T) | — |
+| Log off | leaving (Q) | the lamps go out, the coat ticket with the time on line |
+
+**The pictures** are `BBS::Art` YAML (rubbs 0.30): a grid of characters, a
+grid of palette letters, optional backgrounds (cp437) or reversed cells
+(PETSCII), and hotspots, the cells the board fills from its data. Each is drawn
+twice, separately for each machine, under `lib/content/art/`: `modern/` in code
+page 437 and 256 colours, 80 columns wide; `c64/` in the C64's
+uppercase/graphics set, 40 wide. `UI::Arts` loads and keeps them.
+
+| Art | Modern | C64 |
+|---|---|---|
+| the sign | `logo.yml` 33×8 | `logo.yml` 40×8 |
+| the clubhouse, by time of day | `house_{dawn,day,dusk,night}.yml` 80×12 | `house_*.yml` 40×10 |
+| its season layers | `{snow,pumpkin,fireworks,bunting}_<time>.yml` | the same |
+| the entrance | `entrance.yml` 80×22 | `entrance.yml` 40×25 |
+| the town and its buildings | `town.yml` 76×17, `building_<id>.yml` 12×4 | `town.yml` 40×17, `building_<id>.yml` 3×3 |
+| the games room | `games_room.yml` 76×12 | `games_room.yml` 40×11 |
+| the trophy case | `trophies.yml` 76×10 | `trophies.yml` 40×9 |
+| the room cards | `card_{cork,mailbox,sofa,notice,workshop,guestbook}.yml` 80×5 | the same, 40×6 |
+| leaving | `leaving.yml` 80×14 + `leaving_out_1..4.yml` | `leaving.yml` 40×13 + `leaving_out_1..4.yml` |
+
+The time of day and the layers come from `BBS::Season` (Budapest): snow from
+December to February, pumpkins on 24–31 October, fireworks on 31 December and
+New Year's night, bunting on the days of a game jam (an event of the site with
+*jam* in its name, `SiteService#jam`). A layer is drawn for each time of day,
+so it keeps the sky behind it.
+
+To draw or change a picture, check it with rubbs' `art-preview` (ANSI on the
+terminal, the PETSCII bytes, a C64 screenshot with VICE's character ROM):
+
+```bash
+bundle exec art-preview lib/content/art/c64/house_night.yml -l snow_night -s
+bundle exec art-preview lib/content/art/c64/town.yml --png town.png
+```
+
+**The town map** reads `lib/content/network.yml`: the clubhouse and every other
+board with its id, name, port, building, a line about it, a short name and two
+words for the C64, its bbsweb accent colour and C64 colour, and where its
+building stands on each map. It is kept in step by hand with TTG Gate BBS's
+`config/boards.yml` and the bbsweb cards. A new board: a row there, and its two
+buildings, `modern/building_<id>.yml` and `c64/building_<id>.yml`.
+
+**The C64 line is slow**, so the pictures have budgets: the first screen at most
+1.2 KB, a step of an animation at most 200 bytes, a room card about 300, a
+frame of the lamps going out under 100. `bin/c64-bytes` measures them with a
+worst-case scene (`docker exec teletype-bbs bin/c64-bytes`); with a folder it
+writes the raw PETSCII of each screen too, to replay through a C64's CHROUT in
+VICE. As measured: the main menu 1105–1123 bytes at every time of day and
+season, a move of its bar 146–205, a puff of smoke about 60; the entrance about
+1.1 KB; the town map 1000, a step 161–209; the games room 770, a step 216–333
+(it rewrites the station's description); the trophy case 609; a room card
+231–265; leaving 570, the lamps out 29–78 each.
 
 ## Project structure
 
@@ -274,6 +394,7 @@ lib/
     mail_repository.rb                 private mail and feedback
     last_read_repository.rb            how far each name has read each board
     vote_repository.rb                 the voting booth's ballots
+    network_repository.rb              the town map's boards (content/network.yml)
     http_json.rb                       JSON GET + 5-minute cache
   domain/service/
     online_service.rb, board_service.rb, games_service.rb,
@@ -281,27 +402,38 @@ lib/
     profile_service.rb, account_service.rb, site_service.rb,
     oneliner_service.rb, warp_sizes.rb, dev_log_service.rb,
     discord_notifier.rb, mail_service.rb, voting_service.rb,
-    tagline_service.rb
+    tagline_service.rb, network_service.rb
+    scene_service.rb                   what the clubhouse pictures show, for both
+                                       faces (SceneModel)
   domain/model/                        value objects (MessageModel, GameModel, …)
   doors/commodore.rb                   the C64 and Plus/4 doors
   doors/commodore/basic.rb             their BASIC V2 interpreter
   doors/ra.rb                          Chat of Ra
   doors/trivia.rb                      TTG Trivia
   content/                             polls.yml, trivia.yml, taglines.yml,
-                                       bulletins/*.md, logon.ans
+                                       bulletins/*.md, network.yml (the town map)
+  content/art/modern/, content/art/c64/ the clubhouse pictures (BBS::Art YAML)
   characters/                          Ra and the TTG Master: personas, riddles,
                                        the Master's knowledge (modern and C64),
                                        eval questions, the shared model client
-  ui/modern.rb                         the modern face: modem, logon matrix,
+  ui/arts.rb                           loads and keeps the pictures (UI::Arts)
+  ui/modern.rb                         the modern face: modem, entrance,
                                        the Application (windows, menus, doors)
   ui/logo.rb                           the board's logo (TTG BBS, BBS::BlockFont) for both faces
-  ui/modern/desktop.rb                 the dashboard and the colours of the menus
+  ui/modern/desktop.rb                 the dashboard (the clubhouse from the street),
+                                       the colours and icons of the menus
+  ui/modern/rooms.rb                   picture windows: the town map, the games room
+  ui/modern/clubhouse.rb               the entrance, leaving, the room cards,
+                                       the trophy case
   ui/modern/formatters.rb              view helpers: bulletin, events, posts, doors,
                                        team, network, users, sysop, oneliners,
                                        dev log, the Master's quick questions
   ui/modern/classic_formatters.rb      logon/logoff, nodes, mail, voting,
                                        bulletins, hall of fame
-  ui/petscii.rb                        the PETSCII face: logo, logon, NO CARRIER
+  ui/petscii.rb                        the PETSCII face: entrance, logon, goodbye
+  ui/petscii/clubhouse.rb              its pictures: the main menu, the town map,
+                                       the games room, trophies, cards, entrance,
+                                       leaving
   ui/petscii/screen.rb                 the 40×25 screen (BBS::Petscii::Screen of
                                        rubbs) and its chat line
   ui/petscii/board.rb                  the main menu, doors, Master, help, sysop
@@ -309,6 +441,7 @@ lib/
                                        the network, dev log)
   ui/petscii/people.rb
 bin/persona-eval                       count a character's slips over many runs
+bin/c64-bytes                          the bytes of the C64 pictures on the line
 data/
   boards/<id>.csv                      per-board messages (auto-created)
   last_callers.csv                     finished calls
@@ -435,7 +568,14 @@ slimming down (2026-11-01), on the new questions: the modern Master went from
 44 slips in 90 replies (27 misses) with the old knowledge to 9 (5 misses),
 the C64 Master from 34 in 87 (27 misses) to 17 (10 misses); the misses left
 are mostly the live game list winning over Commodex BBS for "cheats for C64
-games". Ra, at the last tuning (2026-10-21): 1 slip in 48 replies.
+games". With the rooms of the clubhouse (2026-11-01: the Games Room, the
+town map, the trophy case, and on the C64 a short fact for each room of the
+main menu, with questions about them): the modern Master 16 slips in 99
+replies (11 misses; 12 in 90 before), the C64 Master 21 in 99 (16 misses; 19
+in 87 before); the new questions pass, the misses are the old ones. Woven into
+the old facts ("M on the main menu, the Cork board, opens …") the room names
+cost the small model its key phrases (33 slips in 99), so a room is a short
+fact of its own. Ra, at the last tuning (2026-10-21): 1 slip in 48 replies.
 To add a fact, add an entry to `master_knowledge.yml` (and its C64 twin) and
 a question to the eval.
 
