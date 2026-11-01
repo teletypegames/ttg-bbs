@@ -11,5 +11,5 @@ services:
       - TZ=Europe/Budapest
       # Callers at once: each costs up to ~1.7 MB (more with long articles) on top of ~25 MB.
       - BBS_MAX_SESSIONS=50
-      - ALEXANDRIA_LANGUAGES=${ALEXANDRIA_LANGUAGES:-en,hu}
+      - ALEXANDRIA_BBS_LANGUAGES=${ALEXANDRIA_LANGUAGES:-en,hu}
     restart: unless-stopped

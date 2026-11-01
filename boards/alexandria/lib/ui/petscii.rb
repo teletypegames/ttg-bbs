@@ -75,7 +75,7 @@ module UI
           @screen.puts
           @screen.say(e.message, RD)
           @screen.pause
-          @screen.title('ALEXANDRIA', right)
+          @screen.title('ALEXANDRIA BBS', right)
         end
       end
 
@@ -99,7 +99,7 @@ module UI
 
       # :quit when the caller logs off.
       def menu_choice
-        @screen.title('ALEXANDRIA', right)
+        @screen.title('ALEXANDRIA BBS', right)
         @screen.puts
         items = [BBS::Selector.item('search a title', key: 's', value: :search, about: 'back to the prompt'),
                  BBS::Selector.item('random article', key: 'r', value: :random, about: 'wherever the wiki takes you'),
@@ -112,9 +112,9 @@ module UI
           read(title)
         when :language
           @ctx[:lang] = @articles.next_language(lang)
-          @screen.title('ALEXANDRIA', right)
+          @screen.title('ALEXANDRIA BBS', right)
         when :quit then return :quit
-        else @screen.title('ALEXANDRIA', right)
+        else @screen.title('ALEXANDRIA BBS', right)
         end
         nil
       end
@@ -132,7 +132,7 @@ module UI
 
           read(result.title)
         end
-        @screen.title('ALEXANDRIA', right)
+        @screen.title('ALEXANDRIA BBS', right)
       end
 
       def read(title)
@@ -156,7 +156,7 @@ module UI
             section(article, picked, heading)
           end
         end
-        @screen.title('ALEXANDRIA', right)
+        @screen.title('ALEXANDRIA BBS', right)
       end
 
       def section(article, section, heading)

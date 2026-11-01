@@ -40,7 +40,7 @@ Copy `env-example` to `.env`:
 |---|---|---|
 | `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2326) |
 | `BBS_MAX_SESSIONS` | `100` | Callers at once (compose sets 50) |
-| `ALEXANDRIA_LANGUAGES` | `en,hu` | The Wikipedias a caller can switch between, by their language code; the first one is the default |
+| `ALEXANDRIA_BBS_LANGUAGES` | `en,hu` | The Wikipedias a caller can switch between, by their language code; the first one is the default |
 
 ## Interface
 

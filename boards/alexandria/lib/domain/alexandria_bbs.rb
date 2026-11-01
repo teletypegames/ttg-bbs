@@ -7,7 +7,7 @@ class AlexandriaBBS
   attr_reader :articles
 
   def initialize
-    languages = ENV.fetch('ALEXANDRIA_LANGUAGES', 'en,hu').split(',').map(&:strip).reject(&:empty?)
+    languages = ENV.fetch('ALEXANDRIA_BBS_LANGUAGES', 'en,hu').split(',').map(&:strip).reject(&:empty?)
     @articles = ArticleService.new(WikipediaRepository.new(languages: languages), languages: languages)
   end
 
