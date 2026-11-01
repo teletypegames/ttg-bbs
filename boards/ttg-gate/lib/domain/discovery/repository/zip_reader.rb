@@ -18,7 +18,7 @@ module Discovery
     CHUNK    = 64 * 1024
 
     # A member of the central directory.
-    Entry = Data.define(:name, :method, :csize, :size, :offset)
+    Entry = Data.define(:name, :compression, :csize, :size, :offset)
 
     module_function
 
@@ -34,10 +34,10 @@ module Discovery
       raise ArgumentError, "zip member #{entry.name} is too big" if entry.size > max
 
       data = bytes.byteslice(data_offset(bytes, entry), entry.csize).to_s
-      case entry.method
+      case entry.compression
       when 0 then capped(data, entry.name, max)
       when 8 then inflate(data, entry.name, max)
-      else raise ArgumentError, "zip member #{entry.name}: compression method #{entry.method}"
+      else raise ArgumentError, "zip member #{entry.name}: compression method #{entry.compression}"
       end
     end
 
@@ -63,7 +63,7 @@ module Discovery
       csize, size, name_len, extra_len, comment_len = bytes.byteslice(pos + 20, 14).unpack('VVvvv')
       offset, = bytes.byteslice(pos + 42, 4).unpack('V')
       name = bytes.byteslice(pos + 46, name_len).to_s
-      [Entry.new(name: name, method: method, csize: csize, size: size, offset: offset),
+      [Entry.new(name: name, compression: method, csize: csize, size: size, offset: offset),
        pos + 46 + name_len + extra_len + comment_len]
     end
 

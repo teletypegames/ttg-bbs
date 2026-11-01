@@ -15,30 +15,35 @@ module Discovery
     # The telnet nodes of +bytes+ as RecordModels of +source+ (a SourceModel),
     # one an endpoint (the first node wins).
     def parse(bytes, source)
-      zone = net = nil
-      records = []
-      TextDecoder.decode(bytes).each_line do |raw|
-        line = raw.strip
-        next if line.empty? || line.start_with?(';', "\x1A")
-
-        fields = line.split(',', -1)
-        number = Integer(fields[1].to_s, 10, exception: false)
-        next if fields.size < 7 || number.nil?
-
-        keyword = fields[0].strip.downcase
-        node = 0
-        case keyword
-        when 'zone' then zone = net = number
-        when 'region', 'host' then net = number
-        when 'down' then next
-        else node = number
-        end
-        next if zone.nil?
-
-        record = record(fields, "#{zone}:#{net}/#{node}", source)
-        records << record if record
+      place = { zone: nil, net: nil }
+      records = TextDecoder.decode(bytes).each_line.filter_map do |raw|
+        fields = node_fields(raw) or next
+        node = advance(place, fields[0].strip.downcase, Integer(fields[1], 10))
+        record(fields, "#{place[:zone]}:#{place[:net]}/#{node}", source) if node && place[:zone]
       end
       records.uniq(&:key)
+    end
+
+    # The fields of a node line; nil for a comment, an empty or a broken line.
+    def node_fields(raw)
+      line = raw.strip
+      return if line.empty? || line.start_with?(';', "\x1A")
+
+      fields = line.split(',', -1)
+      fields if fields.size >= 7 && Integer(fields[1].to_s, 10, exception: false)
+    end
+
+    # Moves +place+ (zone and net) past a line of +keyword+ and +number+;
+    # returns the node's number (0 for a zone, region or host), nil for a
+    # down node.
+    def advance(place, keyword, number)
+      case keyword
+      when 'zone' then place.update(zone: number, net: number)
+      when 'region', 'host' then place[:net] = number
+      when 'down' then return
+      else return number
+      end
+      0
     end
 
     def record(fields, address, source)
@@ -56,15 +61,19 @@ module Discovery
       itn = flags.map(&:strip).find { |f| f.match?(/\AITN(?::|\z)/i) }
       return unless itn
 
-      value = itn.split(':', 2)[1].to_s
-      host, port = if value.empty? then [nil, TELNET_PORT]
-                   elsif value.match?(/\A\d+\z/) then [nil, value]
-                   elsif value.include?(':') then value.split(':', 2)
-                   else [value, TELNET_PORT]
-                   end
+      host, port = itn_value(itn.split(':', 2)[1].to_s)
       host = Address.host(host || ina(flags) || name.to_s.tr('_', '.'))
       port = Address.port(port)
       host && port ? [host, port] : nil
+    end
+
+    # [host, port] of the value of an ITN flag, host nil when it names none.
+    def itn_value(value)
+      if value.empty? then [nil, TELNET_PORT]
+      elsif value.match?(/\A\d+\z/) then [nil, value]
+      elsif value.include?(':') then value.split(':', 2)
+      else [value, TELNET_PORT]
+      end
     end
 
     def ina(flags)

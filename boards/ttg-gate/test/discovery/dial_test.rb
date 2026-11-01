@@ -154,12 +154,12 @@ module Discovery
       assert_equal 'line:abc', DialService.caller_key('fd00::1', 'abc')
     end
 
-    def test_an_ipv6_caller_is_its_64
+    def test_an_ipv6_caller_is_its_whole_prefix
       first = DialService.caller_key('2a01:4f8:1:2:aaaa::1', 'abc')
       assert_equal '2a01:4f8:1:2::/64', first
       assert_equal first, DialService.caller_key('2a01:4f8:1:2:ffff:ffff:ffff:ffff', 'xyz')
       refute_equal first, DialService.caller_key('2a01:4f8:1:3::1', 'abc')
-      10.times { assert_kind_of DialService::Call, dial(DialService.caller_key("2a01:4f8:1:2::#{_1 + 1}", 's')) }
+      10.times { |i| assert_kind_of DialService::Call, dial(DialService.caller_key("2a01:4f8:1:2::#{i + 1}", 's')) }
       assert_equal :rate, dial(DialService.caller_key('2a01:4f8:1:2::beef', 's')).reason
     end
 

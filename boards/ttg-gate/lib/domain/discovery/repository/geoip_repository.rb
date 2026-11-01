@@ -109,25 +109,34 @@ module Discovery
         CREATE TABLE v6 (start BLOB PRIMARY KEY, stop BLOB NOT NULL, cc TEXT NOT NULL) WITHOUT ROWID;
       SQL
       db.transaction do
-        v4 = db.prepare('INSERT OR REPLACE INTO v4 VALUES (?, ?, ?)')
-        v6 = db.prepare('INSERT OR REPLACE INTO v6 VALUES (?, ?, ?)')
-        Zlib::GzipReader.new(StringIO.new(bytes)).each_line do |line|
-          start, stop, cc = line.chomp.split(',', 3)
-          next unless cc&.match?(/\A[A-Z]{2}\z/)
-
-          from = IPAddr.new(start)
-          to   = IPAddr.new(stop)
-          if from.ipv4? then v4.execute(from.to_i, to.to_i, cc)
-          else v6.execute(SQLite3::Blob.new(from.hton), SQLite3::Blob.new(to.hton), cc)
-          end
-        rescue IPAddr::Error
-          next
-        end
-        v4.close
-        v6.close
+        insert_ranges(db, bytes)
         db.execute('INSERT INTO meta VALUES (?, ?)', ['month', month])
       end
       db.close
+    end
+
+    # The ranges of the gzipped CSV +bytes+ into the v4 and v6 tables.
+    def insert_ranges(db, bytes)
+      tables = { v4: db.prepare('INSERT OR REPLACE INTO v4 VALUES (?, ?, ?)'),
+                 v6: db.prepare('INSERT OR REPLACE INTO v6 VALUES (?, ?, ?)') }
+      Zlib::GzipReader.new(StringIO.new(bytes)).each_line { |line| insert_range(tables, line) }
+    ensure
+      tables&.each_value(&:close)
+    end
+
+    # One "start,stop,cc" line into its table; a line without a country or
+    # with a broken address is left out.
+    def insert_range(tables, line)
+      start, stop, cc = line.chomp.split(',', 3)
+      return unless cc&.match?(/\A[A-Z]{2}\z/)
+
+      from = IPAddr.new(start)
+      to   = IPAddr.new(stop)
+      if from.ipv4? then tables[:v4].execute(from.to_i, to.to_i, cc)
+      else tables[:v6].execute(SQLite3::Blob.new(from.hton), SQLite3::Blob.new(to.hton), cc)
+      end
+    rescue IPAddr::Error
+      nil
     end
   end
 end

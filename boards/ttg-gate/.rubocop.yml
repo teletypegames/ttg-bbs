@@ -5,6 +5,7 @@ AllCops:
   Exclude:
     - "data/**/*"
     - "vendor/**/*"
+    - "tmp/**/*"
 
 # The house style aligns hashes and keyword arguments as tables.
 Layout/HashAlignment:
@@ -38,10 +39,34 @@ Style/RescueStandardError:
 Style/FetchEnvVar:
   Enabled: false
 
-# The modern face is one long Application DSL block, and the feed parser a
-# set of small readers for three formats; size metrics say nothing useful.
-Metrics:
-  Enabled: false
+# Small methods, one thing each: the haiku rule. The DSL blocks of a face
+# (Application.define, a window spec) are configuration, not logic, so only
+# their length is free; what they call must still be small.
+# This board's minitest suite is old and long: a test is one scenario read top
+# to bottom, its assertions in a row; cutting it into helpers hides what it checks.
+Metrics/MethodLength:
+  Max: 20
+  Exclude: ["test/**/*"]
+Metrics/AbcSize:
+  Max: 25
+  Exclude: ["test/**/*"]
+Metrics/CyclomaticComplexity:
+  Max: 10
+Metrics/PerceivedComplexity:
+  Max: 10
+Metrics/ParameterLists:
+  Max: 6
+  CountKeywordArgs: false
+Metrics/ClassLength:
+  Max: 200
+  Exclude: ["test/**/*"]
+Metrics/ModuleLength:
+  Max: 200
+Metrics/BlockLength:
+  Max: 30
+  AllowedMethods: [define, flow, window, app, describe, it]
+  Exclude:
+    - "test/**/*"
 
 Style/Documentation:
   Enabled: false
@@ -55,3 +80,4 @@ Lint/NestedMethodDefinition:
 # Short names (f, el, w) are the idiom of the window callbacks and the parser.
 Naming/MethodParameterName:
   MinNameLength: 1
+

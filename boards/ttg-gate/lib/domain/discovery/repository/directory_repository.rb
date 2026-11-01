@@ -21,30 +21,33 @@ module Discovery
     # The ListingModels a ListingFilter lets through, unsorted. An FTS query
     # the index cannot read gives none.
     def listings(filter)
-      sql  = +COLUMNS
-      args = []
-      sql << " AND COALESCE(s.state, 'unknown') != 'dead'" unless filter.dead
-      if filter.state
-        sql << " AND COALESCE(s.state, 'unknown') = ?"
-        args << filter.state
-      end
-      sql << " AND b.id NOT IN (SELECT board_id FROM tags WHERE tag = '#{ListingFilter::MAILER}')" unless filter.mailers
-      tags = filter.tags + (filter.petscii ? ['petscii'] : [])
-      tags.uniq!
-      if tags.any?
-        sql << " AND b.id IN (SELECT board_id FROM tags WHERE tag IN (#{(['?'] * tags.size).join(', ')}) " \
-               'GROUP BY board_id HAVING COUNT(*) = ?)'
-        args.concat(tags) << tags.size
-      end
-      if filter.match
-        sql << ' AND b.id IN (SELECT rowid FROM boards_fts WHERE boards_fts MATCH ?)'
-        args << filter.match
-      end
-      @db.query(sql, *args).map { |row| ListingModel.from(row) }
+      where = conditions(filter)
+      sql = COLUMNS + where.map { |condition| " AND #{condition.first}" }.join
+      @db.query(sql, *where.flat_map { |condition| condition.drop(1) }).map { |row| ListingModel.from(row) }
     rescue SQLite3::SQLException => e
       raise unless filter.match && e.message.match?(/fts5|syntax|MATCH/i)
 
       []
+    end
+
+    # The conditions of +filter+, each [SQL, its arguments…].
+    def conditions(filter)
+      list = []
+      list << ["COALESCE(s.state, 'unknown') != 'dead'"] unless filter.dead
+      list << ["COALESCE(s.state, 'unknown') = ?", filter.state] if filter.state
+      list << ["b.id NOT IN (SELECT board_id FROM tags WHERE tag = '#{ListingFilter::MAILER}')"] unless filter.mailers
+      list << tags_condition(filter)
+      list << ['b.id IN (SELECT rowid FROM boards_fts WHERE boards_fts MATCH ?)', filter.match] if filter.match
+      list.compact
+    end
+
+    # Every tag of +filter+ (petscii too, when asked), or nil.
+    def tags_condition(filter)
+      tags = (filter.tags + (filter.petscii ? ['petscii'] : [])).uniq
+      return if tags.empty?
+
+      ["b.id IN (SELECT board_id FROM tags WHERE tag IN (#{(['?'] * tags.size).join(', ')}) " \
+       'GROUP BY board_id HAVING COUNT(*) = ?)', *tags, tags.size]
     end
 
     # One board's ListingModel, nil when it is not shown.

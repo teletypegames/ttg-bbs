@@ -26,23 +26,32 @@ module Discovery
       out = +''.b
       lines = 0
       until rest.empty? || lines >= rows
-        if (m = CSI.match(rest))
-          rest = m.post_match
-          next unless CSI_FINALS.include?(m[3]) && m[2].empty?
-          break if m[3] == 'J' && m[1] == '2' && visible?(out)
+        rest, piece = step(rest, out)
+        break if piece == :end
 
-          out << m[0]
-        elsif rest.start_with?("\e")
-          rest = rest.sub(OTHER, '')
-        else
-          byte = rest.getbyte(0)
-          rest = rest.byteslice(1..)
-          lines += 1 if byte == 0x0A
-          out << byte if byte >= 0x20 || [0x0A, 0x0D, 0x09].include?(byte)
-        end
+        out << piece
+        lines += 1 if piece == "\n"
       end
       decode(out.delete("\x7F"))
     end
+
+    # [what is left of +rest+, the piece of it kept]: a CSI that draws, a
+    # printable byte, or nothing; :end at the clear-screen after +out+ drew.
+    def step(rest, out)
+      if (m = CSI.match(rest)) then [m.post_match, csi(m, out)]
+      elsif rest.start_with?("\e") then [rest.sub(OTHER, ''), '']
+      else [rest.byteslice(1..), printable(rest.getbyte(0))]
+      end
+    end
+
+    def csi(match, out)
+      return '' unless CSI_FINALS.include?(match[3]) && match[2].empty?
+      return :end if match[3] == 'J' && match[1] == '2' && visible?(out)
+
+      match[0]
+    end
+
+    def printable(byte) = byte >= 0x20 || [0x0A, 0x0D, 0x09].include?(byte) ? byte.chr : ''
 
     # +bytes+ (a PETSCII banner) up to the end of its first screen: the
     # second CLR after something was drawn, or +rows+ RETURNs. Raw PETSCII.

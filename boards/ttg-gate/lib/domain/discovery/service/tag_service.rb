@@ -50,19 +50,29 @@ module Discovery
     # The tags of +board+ (a boards row) with its board_sources rows and its
     # board_state row (or nil).
     def tags(board, sources, state, now)
-      tags = sources.map { |s| "src:#{s['source_id']}" }
-      tags += encodings(sources, state)
-      tags << "sw:#{software(board, state)}" if software(board, state)
-      tags += networks(sources).map { |n| "net:#{n}" }
-      tags << "cc:#{state['country']}" if state&.dig('country')
-      tags << state['state'] if state && STATES.include?(state['state'])
-      tags << 'new' if new?(board, now)
-      tags << 'veteran' if board['since'] && board['since'] < VETERAN_BEFORE
-      tags += JSON.parse(state&.dig('options') || '[]').filter_map { |o| OPTIONS[o.split.last] }
-      tags.uniq.sort
+      (listed_tags(board, sources, state) + called_tags(board, state || {}, now)).uniq.sort
     end
 
     private
+
+    # What the lists and the banner tell: the sources, the encodings, the
+    # software and the networks.
+    def listed_tags(board, sources, state)
+      software = software(board, state)
+      [*sources.map { |s| "src:#{s['source_id']}" }, *encodings(sources, state), software && "sw:#{software}",
+       *networks(sources).map { |n| "net:#{n}" }].compact
+    end
+
+    # What our calls tell: the country, the state, new and veteran, the
+    # telnet options.
+    def called_tags(board, state, now)
+      tags = []
+      tags << "cc:#{state['country']}" if state['country']
+      tags << state['state'] if STATES.include?(state['state'])
+      tags << 'new' if new?(board, now)
+      tags << 'veteran' if board['since'] && board['since'] < VETERAN_BEFORE
+      tags + JSON.parse(state['options'] || '[]').filter_map { |o| OPTIONS[o.split.last] }
+    end
 
     def encodings(sources, state)
       measured = [state&.dig('encoding'), state&.dig('c64_encoding')] & ENCODINGS

@@ -36,26 +36,35 @@ module UI
           return canvas.text(Layout.row(2), 1, @empty, Canvas::YELLOW) if @items.empty?
 
           on_page.each_with_index { |entry, slot| row(canvas, Layout.row(2 + slot), entry, slot) }
-          top = Layout.row(3 + PER_PAGE)
+          about(canvas, Layout.row(3 + PER_PAGE))
+        end
+
+        private
+
+        # The chosen entry's about lines under a rule at +top+.
+        def about(canvas, top)
           Layout.rule(canvas, top)
           Array(selected&.about).first(4).each_with_index do |line, i|
             canvas.text(top + 1 + i, 1, Layout.plain(line)[0, Layout::EDGE - 1], i.zero? ? Canvas::WHITE : Canvas::LIGHT_GREY)
           end
         end
 
-        private
-
         def row(canvas, row, entry, slot)
           number = format('%02d', ((@page * PER_PAGE) + slot + 1) % 100)
           count  = entry.count.to_s
-          name   = Layout.plain(entry.name)[0, Layout::WIDTH - 6 - count.length - 2]
-          leader = " #{'.' * [Layout::WIDTH - 4 - name.length - count.length - 2, 0].max} "
+          name, leader = name_and_leader(entry, count)
           if slot == @index
             canvas.text(row, 0, "#{number} #{name}#{leader}#{count}".ljust(Layout::WIDTH), Canvas::CYAN, rvs: true)
           else
             Layout.runs(canvas, row, 0, [[number, Canvas::YELLOW], [' ', nil], [name, Canvas::WHITE],
                                          [leader, Canvas::DARK_GREY], [count, Canvas::CYAN]])
           end
+        end
+
+        # The entry's name cut to fit beside +count+, and the dots between.
+        def name_and_leader(entry, count)
+          name = Layout.plain(entry.name)[0, Layout::WIDTH - 6 - count.length - 2]
+          [name, " #{'.' * [Layout::WIDTH - 4 - name.length - count.length - 2, 0].max} "]
         end
       end
     end

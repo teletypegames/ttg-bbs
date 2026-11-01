@@ -46,19 +46,7 @@ module Discovery
       ips = @resolver.call(host)
       return ProbeResultModel.new(result: 'dns_fail', at: at, duration_ms: since(begun)) unless @callable.call(ips, port)
 
-      ip = ips.first
-
-      started = @clock.call
-      socket = connect(ip, port)
-      return ProbeResultModel.new(result: socket, at: at, ip: ip, duration_ms: since(begun)) if socket.is_a?(String)
-
-      latency = since(started)
-      window = c64 ? [@c64_first, @c64_total] : [@read_timeout, @read_timeout]
-      result, banner, options = converse(socket, TelnetNegotiator.new(c64: c64), *window)
-      ProbeResultModel.new(result: result, at: at, latency_ms: latency, ip: ip, banner: banner, options: options,
-                           duration_ms: since(begun))
-    ensure
-      socket.close if socket.is_a?(Socket) && !socket.closed?
+      probe(ips.first, port, c64, at: at, begun: begun)
     end
 
     # The addresses of +host+, IPv4 first; an IP address is its own.
@@ -78,6 +66,20 @@ module Discovery
 
     def since(start) = ((@clock.call - start) * 1000).round
 
+    # The ProbeResultModel of a call to +ip+ that began at +begun+.
+    def probe(ip, port, c64, at:, begun:)
+      started = @clock.call
+      socket = connect(ip, port)
+      return ProbeResultModel.new(result: socket, at: at, ip: ip, duration_ms: since(begun)) if socket.is_a?(String)
+
+      latency = since(started)
+      result, banner, options = converse(socket, c64)
+      ProbeResultModel.new(result: result, at: at, latency_ms: latency, ip: ip, banner: banner, options: options,
+                           duration_ms: since(begun))
+    ensure
+      socket.close if socket.is_a?(Socket) && !socket.closed?
+    end
+
     # A connected Socket, or the result: refused or timeout.
     def connect(ip, port)
       Socket.tcp(ip, port, connect_timeout: @connect_timeout)
@@ -87,39 +89,76 @@ module Discovery
       'timeout'
     end
 
-    # [result, banner, options] of the conversation on +socket+: reading
-    # until +total+ seconds, or +first+ seconds when no byte came.
-    def converse(socket, telnet, first, total)
-      banner  = +''.b
-      start   = @clock.call
-      nudged  = false
-      eof     = false
-      loop do
-        elapsed = @clock.call - start
-        limit = banner.empty? ? first : total
-        break if elapsed >= limit || banner.bytesize >= MAX_BANNER
+    # [result, banner, options] of the conversation on +socket+.
+    def converse(socket, c64)
+      first, total = c64 ? [@c64_first, @c64_total] : [@read_timeout, @read_timeout]
+      Conversation.new(socket, TelnetNegotiator.new(c64: c64), first: first, total: total, nudge_after: @nudge_after,
+                                                               clock: @clock).run
+    end
 
-        if banner.empty? && !nudged && elapsed >= @nudge_after
-          socket.write("\r")
-          nudged = true
-        end
-        wait = [limit - elapsed, nudged || !banner.empty? ? limit : @nudge_after - elapsed].min
-        next unless socket.wait_readable([wait, 0.05].max)
-
-        data, reply = telnet.feed(socket.read_nonblock(4096))
-        socket.write(reply) unless reply.empty?
-        banner << data
-      rescue IO::WaitReadable
-        next
-      rescue EOFError, Errno::ECONNRESET, Errno::EPIPE
-        eof = true
-        break
+    # The reading of a board's line: until +total+ seconds, or +first+
+    # seconds when no byte came, or MAX_BANNER bytes; one CR after
+    # +nudge_after+ silent seconds.
+    class Conversation
+      def initialize(socket, telnet, first:, total:, nudge_after:, clock:)
+        @socket      = socket
+        @telnet      = telnet
+        @first       = first
+        @total       = total
+        @nudge_after = nudge_after
+        @clock       = clock
+        @start       = clock.call
+        @banner      = +''.b
+        @nudged      = false
+        @eof         = false
       end
-      banner = banner.byteslice(0, MAX_BANNER)
-      result = if banner.empty? then eof ? 'closed' : 'silent'
-               else 'ok'
-               end
-      [result, banner, telnet.options]
+
+      # [result (ok, silent or closed), banner, telnet options].
+      def run
+        while (wait = wait_time)
+          read if @socket.wait_readable(wait)
+        end
+        [result, @banner.byteslice(0, MAX_BANNER), @telnet.options]
+      end
+
+      private
+
+      # The seconds to wait for the next bytes, nudging once when it is time;
+      # nil when the reading is over.
+      def wait_time
+        return if @eof
+
+        elapsed = @clock.call - @start
+        limit = @banner.empty? ? @first : @total
+        return if elapsed >= limit || @banner.bytesize >= MAX_BANNER
+
+        nudge if @banner.empty? && !@nudged && elapsed >= @nudge_after
+        wait = [limit - elapsed, @nudged || !@banner.empty? ? limit : @nudge_after - elapsed].min
+        [wait, 0.05].max
+      end
+
+      def nudge
+        @nudged = true
+        @socket.write("\r")
+      rescue Errno::ECONNRESET, Errno::EPIPE
+        @eof = true
+      end
+
+      def read
+        data, reply = @telnet.feed(@socket.read_nonblock(4096))
+        @socket.write(reply) unless reply.empty?
+        @banner << data
+      rescue IO::WaitReadable
+        nil
+      rescue EOFError, Errno::ECONNRESET, Errno::EPIPE
+        @eof = true
+      end
+
+      def result
+        return 'ok' unless @banner.empty?
+
+        @eof ? 'closed' : 'silent'
+      end
     end
   end
 end

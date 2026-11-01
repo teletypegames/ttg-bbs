@@ -22,7 +22,7 @@ module Discovery
   #   from the environment);
   # - the C64 face dials PETSCII boards only; the modern face warns before a
   #   board made for a C64 only, and either warns before a dead board;
-  # - the outcome is recorded as a probe of kind dial (ProberService#record),
+  # - the outcome is recorded as a probe of kind dial (ProbeRecorder#record),
   #   and a failed one asks the prober for a probe at once; its time on the
   #   line and the bytes relayed, and every refused dial, go to +history+
   #   (DialRepository).
@@ -74,7 +74,7 @@ module Discovery
 
     attr_reader :window, :per_caller, :per_host, :idle
 
-    # [recorder]  ProberService (anything with #record(id, result, kind:))
+    # [recorder]  ProbeRecorder (anything with #record(id, result, kind:))
     # [history]   DialRepository, or nil
     # [live_path] the JSON file of the live dials, or nil
     # [resolver]  host → its IP addresses (TelnetProbe#resolve)
@@ -230,11 +230,16 @@ module Discovery
 
       result = probe_result(call)
       @recorder.record(call.board.id, result, kind: 'dial')
-      @history&.dialled(at: call.ended_at || call.at, board_id: call.board.id, face: DialService.face(call.face),
-                        result: result.result, seconds: call.seconds, bytes: call.report.received)
+      remember(call, result.result)
       @log.call("ttg-gate-bbs: dial #{call.board.address} #{result.result}")
     rescue StandardError => e
       @log.call("ttg-gate-bbs: recording the dial of #{call.board.address}: #{e.class}: #{e.message}")
+    end
+
+    # The time and traffic of +call+ into the history.
+    def remember(call, result)
+      @history&.dialled(at: call.ended_at || call.at, board_id: call.board.id, face: DialService.face(call.face),
+                        result: result, seconds: call.seconds, bytes: call.report.received)
     end
 
     # The dial of +call+ as a probe of its board.

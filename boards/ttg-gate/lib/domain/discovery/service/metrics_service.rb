@@ -46,24 +46,10 @@ module Discovery
 
     def text(now, in_flight: 0)
       lines = []
-      gauge(lines, 'boards', 'Boards of the catalog by state (aliases and hidden boards apart).',
-            (BoardStateModel::STATES + ['archived']).to_h { |s| [{ state: s }, @probes.state_counts.fetch(s, 0)] })
-      counts = @probes.result_counts(now - 3600)
-      gauge(lines, 'probes_last_hour', 'Probes of the last hour by result.',
-            ProbeResultModel::RESULTS.to_h { |r| [{ result: r }, counts.fetch(r, 0)] })
-      dials = @probes.result_counts(now - 3600, kind: 'dial')
-      gauge(lines, 'dials_last_hour', "The Gate's dials of the last hour by result.",
-            ProbeResultModel::RESULTS.to_h { |r| [{ result: r }, dials.fetch(r, 0)] })
-      gauge(lines, 'dials_live', "The Gate's dials in progress.", { {} => live_dials })
+      catalog(lines, now)
       dial_limits(lines, now)
       gauge(lines, 'last_probe_timestamp_seconds', 'When the last probe was made.', { {} => @probes.last_probe_at.to_i })
-      sources = @catalog.sources
-      gauge(lines, 'source_records', 'Records of the last applied import a source.',
-            sources.to_h { |s| [{ source: s['id'] }, s['record_count'].to_i] })
-      gauge(lines, 'source_last_import_timestamp_seconds', 'When a source was last applied.',
-            sources.to_h { |s| [{ source: s['id'] }, s['last_parse_at'].to_i] })
-      gauge(lines, 'source_failing', '1 when the last import of a source failed or was refused.',
-            sources.to_h { |s| [{ source: s['id'] }, s['last_error'] ? 1 : 0] })
+      sources(lines)
       prober(lines, now, in_flight)
       boards_by(lines)
       files(lines, now)
@@ -73,18 +59,50 @@ module Discovery
 
     private
 
+    # The boards by state, the probes and dials of the last hour, the dials
+    # in progress.
+    def catalog(lines, now)
+      gauge(lines, 'boards', 'Boards of the catalog by state (aliases and hidden boards apart).',
+            (BoardStateModel::STATES + ['archived']).to_h { |s| [{ state: s }, @probes.state_counts.fetch(s, 0)] })
+      gauge(lines, 'probes_last_hour', 'Probes of the last hour by result.', by_result(@probes.result_counts(now - 3600)))
+      gauge(lines, 'dials_last_hour', "The Gate's dials of the last hour by result.",
+            by_result(@probes.result_counts(now - 3600, kind: 'dial')))
+      gauge(lines, 'dials_live', "The Gate's dials in progress.", { {} => live_dials })
+    end
+
+    # +counts+ by result as gauge values, every result named.
+    def by_result(counts) = ProbeResultModel::RESULTS.to_h { |r| [{ result: r }, counts.fetch(r, 0)] }
+
+    def sources(lines)
+      sources = @catalog.sources
+      gauge(lines, 'source_records', 'Records of the last applied import a source.',
+            sources.to_h { |s| [{ source: s['id'] }, s['record_count'].to_i] })
+      gauge(lines, 'source_last_import_timestamp_seconds', 'When a source was last applied.',
+            sources.to_h { |s| [{ source: s['id'] }, s['last_parse_at'].to_i] })
+      gauge(lines, 'source_failing', '1 when the last import of a source failed or was refused.',
+            sources.to_h { |s| [{ source: s['id'] }, s['last_error'] ? 1 : 0] })
+    end
+
     def prober(lines, now, in_flight)
       gauge(lines, 'probes_in_flight', 'Probes running right now.', { {} => in_flight })
-      schedule = @probes.schedule(now)
-      gauge(lines, 'probes_due', 'Boards whose next probe time has passed (the backlog).', { {} => schedule['due'].to_i })
-      next_at = schedule['next_at']
-      gauge(lines, 'next_probe_due_seconds', 'Seconds until the earliest next probe, 0 when one is overdue.',
-            { {} => next_at ? [next_at - now, 0].max : 0 })
+      schedule(lines, now)
       totals = @probes.totals
       gauge(lines, 'probes_total', 'Every stored probe by result and kind (scheduled, c64, dial; counted in the catalog).',
             ProbeResultModel::RESULTS.product(%w[scheduled c64 dial]).to_h do |r, k|
               [{ result: r, kind: k }, totals.fetch([r, k], 0)]
             end)
+      durations(lines, now)
+    end
+
+    def schedule(lines, now)
+      schedule = @probes.schedule(now)
+      gauge(lines, 'probes_due', 'Boards whose next probe time has passed (the backlog).', { {} => schedule['due'].to_i })
+      next_at = schedule['next_at']
+      gauge(lines, 'next_probe_due_seconds', 'Seconds until the earliest next probe, 0 when one is overdue.',
+            { {} => next_at ? [next_at - now, 0].max : 0 })
+    end
+
+    def durations(lines, now)
       avg, max = @probes.durations(now - 3600)
       gauge(lines, 'probe_duration_seconds_avg_last_hour', 'The average whole call (DNS to hang-up) of the last hour.',
             ProbeResultModel::RESULTS.to_h { |r| [{ result: r }, seconds(avg[r])] })
@@ -103,12 +121,15 @@ module Discovery
             prefixed(tags, 'net:').transform_keys { |n| { network: n } })
       gauge(lines, 'boards_by_country', "Answering boards by country, the top #{TOP} and other.",
             top(prefixed(tags, 'cc:'), boards).transform_keys { |c| { country: c } })
+      gauge(lines, 'boards_by_software', "Answering boards by software, the top #{TOP}, other, and FTN mailers.",
+            by_software(tags, boards).transform_keys { |s| { software: s } })
+    end
+
+    # The top software of +boards+, other, and the FTN mailers apart.
+    def by_software(tags, boards)
       software = prefixed(tags, 'sw:')
       mailers = software.delete(MAILER).to_i
-      by_software = top(software, boards - mailers)
-      by_software[MAILER] = mailers
-      gauge(lines, 'boards_by_software', "Answering boards by software, the top #{TOP}, other, and FTN mailers.",
-            by_software.transform_keys { |s| { software: s } })
+      top(software, boards - mailers).merge(MAILER => mailers)
     end
 
     def files(lines, now)
@@ -151,24 +172,33 @@ module Discovery
       limits = LIMITS.to_h { |k| [k, state.dig('limits', k).to_i] }
       gauge(lines, 'dial_limit', "The Gate's dial limits (window_seconds, per_caller, per_host).",
             limits.transform_keys { |k| { kind: k } })
+      callers(lines, state, limits, now)
+      gauge(lines, 'dial_host_lines_max', 'The most lines in use to one host now.',
+            { {} => state.fetch('host_lines_max', 0).to_i })
+      refusals(lines, now)
+      traffic(lines, now)
+    end
+
+    # The callers nearest the per-caller limit.
+    def callers(lines, state, limits, now)
       window = limits['window_seconds']
       counts = Array(state['caller_dials']).map { |times| Array(times).count { |t| t.to_i > now - window } }
       gauge(lines, 'dial_caller_max_in_window', 'The most dials one caller has in the current window.',
             { {} => counts.max.to_i })
       at_limit = limits['per_caller'].positive? ? counts.count { |n| n >= limits['per_caller'] } : 0
       gauge(lines, 'dial_callers_at_limit', 'Callers at the per-caller dial limit now.', { {} => at_limit })
-      gauge(lines, 'dial_host_lines_max', 'The most lines in use to one host now.',
-            { {} => state.fetch('host_lines_max', 0).to_i })
-      dial_history(lines, now)
     end
 
-    def dial_history(lines, now)
+    def refusals(lines, now)
       totals = @history ? @history.refusal_totals : DialRepository::REASONS.product(DialRepository::FACES).to_h { |p| [p, 0] }
       gauge(lines, 'dial_refusals_total', 'Dials the Gate refused, by reason and face (kept as a running total).',
             totals.to_h { |(reason, face), n| [{ reason: reason, face: face }, n] })
       hour = @history ? @history.refusals_since(now - 3600) : DialRepository::REASONS.to_h { |r| [r, 0] }
       gauge(lines, 'dial_refusals_last_hour', 'Dials the Gate refused in the last hour, by reason.',
             hour.transform_keys { |r| { reason: r } })
+    end
+
+    def traffic(lines, now)
       count, seconds, bytes = @history ? @history.traffic_since(now - 3600) : [0, 0, 0]
       gauge(lines, 'dial_seconds_last_hour', 'Seconds on the line of the dials that ended in the last hour.',
             { {} => seconds })

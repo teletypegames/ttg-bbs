@@ -61,9 +61,7 @@ module UI
         end
 
         def draw(canvas)
-          color = ListView::STATE_COLORS.fetch(listing.state, Canvas::LIGHT_GREY)
-          Layout.band(canvas, Layout.plain(listing.title), listing.state.capitalize, color)
-          down = Layout.address(canvas, Layout.row(1), 1, listing.host, listing.port) - 1
+          down = head(canvas)
           answer(canvas, Layout.row(2 + down))
           strip(canvas, Layout.row(4 + down))
           fields(canvas, Layout.row(7 + down), Layout.row(TAGS_LINE - 1))
@@ -73,6 +71,13 @@ module UI
         end
 
         private
+
+        # The band and the address; the rows a long address took beyond one.
+        def head(canvas)
+          color = ListView::STATE_COLORS.fetch(listing.state, Canvas::LIGHT_GREY)
+          Layout.band(canvas, Layout.plain(listing.title), listing.state.capitalize, color)
+          Layout.address(canvas, Layout.row(1), 1, listing.host, listing.port) - 1
+        end
 
         # The banner note and the opt-out link.
         def footer(canvas, line)
@@ -119,26 +124,38 @@ module UI
         # (a long one wraps), and in dark grey the list it came from; the
         # terminals and the lists last.
         def fields(canvas, row, last)
-          shown = @page.fields.reject { |f| %w[Name Encoding Website].include?(f.label) }
           extra = []
           extra << ['Terminal', terminals, 'CALL'] if terminals.any?
           extra << ['Sources', lists, ''] if lists.any?
-          room = last - row + 1 - extra.size
-          shown.first(FIELDS - extra.size).each do |f|
+          row = listed(canvas, row, last - row + 1 - extra.size, FIELDS - extra.size)
+          extra.each_with_index do |(label, parts, source), i|
+            field(canvas, row + i, label, source)
+            Layout.runs(canvas, row + i, VALUE, parts, limit: limit(source))
+          end
+        end
+
+        # At most +count+ fields of the lists in +room+ rows from +row+;
+        # the row after them.
+        def listed(canvas, row, room, count)
+          shown = @page.fields.reject { |f| %w[Name Encoding Website].include?(f.label) }
+          shown.first(count).each do |f|
             break if room <= 0
 
-            source = short(f)
-            lines = Layout.wrap(f.value, limit(source) - VALUE, [VALUE_ROWS, room].min)
-            field(canvas, row, Layout.plain(f.label.sub('FTN address', 'FTN')), source)
-            lines.each_with_index { |line, i| canvas.text(row + i, VALUE, line, Canvas::WHITE) }
-            row += lines.size
-            room -= lines.size
+            used = value(canvas, row, f, room)
+            row += used
+            room -= used
           end
-          extra.each do |label, parts, source|
-            field(canvas, row, label, source)
-            Layout.runs(canvas, row, VALUE, parts, limit: limit(source))
-            row += 1
-          end
+          row
+        end
+
+        # One field at +row+, its value wrapped into at most +room+ rows; the
+        # rows it took.
+        def value(canvas, row, field, room)
+          source = short(field)
+          lines = Layout.wrap(field.value, limit(source) - VALUE, [VALUE_ROWS, room].min)
+          field(canvas, row, Layout.plain(field.label.sub('FTN address', 'FTN')), source)
+          lines.each_with_index { |line, i| canvas.text(row + i, VALUE, line, Canvas::WHITE) }
+          lines.size
         end
 
         def field(canvas, row, label, source)

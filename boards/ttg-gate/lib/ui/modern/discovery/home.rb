@@ -42,19 +42,24 @@ module UI
 
         def browse = @ctx.browse
 
-        def items
+        def items = finding_items + passing_items
+
+        # Every board, Search, Browse and New this week.
+        def finding_items
           all = browse.search('')
           online = all.count { |b| b.state == 'online' }
-          [
-            item('Every board', "#{all.size} listed · #{online} online, the dead ones apart") { every },
-            item('Search…', 'words and tags: petscii hu online · synchronet · all') { search },
-            item('Browse', 'by Terminal · Software · Country · Network') { browse_menu },
-            item('New this week', count(browse.new_this_week.size)) { new_this_week },
-            item('Random board', 'an online one, at random') { random },
-            item('Recently died', count(browse.recently_died.size)) { recently_died },
-            item('Graveyard', "#{count(browse.graveyard.size)}, never deleted") { graveyard },
-            item('Sources', SOURCES_NOTE) { Sources.new(@session, browse).run }
-          ]
+          [item('Every board', "#{all.size} listed · #{online} online, the dead ones apart") { every },
+           item('Search…', 'words and tags: petscii hu online · synchronet · all') { search },
+           item('Browse', 'by Terminal · Software · Country · Network') { browse_menu },
+           item('New this week', count(browse.new_this_week.size)) { new_this_week }]
+        end
+
+        # A random board, the dead ones, and where the list comes from.
+        def passing_items
+          [item('Random board', 'an online one, at random') { random },
+           item('Recently died', count(browse.recently_died.size)) { recently_died },
+           item('Graveyard', "#{count(browse.graveyard.size)}, never deleted") { graveyard },
+           item('Sources', SOURCES_NOTE) { Sources.new(@session, browse).run }]
         end
 
         def item(label, note, &action) = MenuView::Item.new(label: label, note: note, action: action)
@@ -63,11 +68,7 @@ module UI
 
         def draw(items)
           lines = [*masthead(:discovery), '']
-          items.each_with_index do |entry, i|
-            lit = i == @index
-            lines << "#{lit ? "#{SELECT}#{GREEN}▸ " : '  '}#{BOLD}#{fit(entry.label, 16)}#{RESET}" \
-                     "#{SELECT if lit}#{DIM}#{fit(entry.note, width - 18)}#{RESET}"
-          end
+          items.each_with_index { |entry, i| lines << menu_row(entry.label, entry.note, 16, lit: i == @index) }
           lines.push('', "#{DIM}The world's telnet BBSes, called daily: " \
                          "#{GREEN}●#{DIM} online #{YELLOW}◐#{DIM} flaky #{RED}✗#{DIM} down † dead ? new#{RESET}")
           lines.fill('', lines.size...(rows - 3))
@@ -83,14 +84,18 @@ module UI
         end
 
         def browse_menu
-          items = browse.axes.map do |axis, spec|
+          all = [item('All', 'every board, every state') { list('ALL BOARDS') { |s| browse.all(state: s) } },
+                 item('All PETSCII', 'PETSCII only') { list('ALL PETSCII') { |s| browse.all(petscii: true, state: s) } }]
+          MenuView.new(@session, 'BROWSE', all + axis_items).run
+        end
+
+        # One item an axis of Browse, its biggest facets as the note.
+        def axis_items
+          browse.axes.map do |axis, spec|
             item("by #{spec[:label]}", browse.facets(axis).first(4).map { |f| "#{f.label} #{f.count}" }.join(' · ')) do
               facets(axis, spec[:label])
             end
           end
-          items.unshift(item('All', 'every board, every state') { list('ALL BOARDS') { |s| browse.all(state: s) } },
-                        item('All PETSCII', 'PETSCII only') { list('ALL PETSCII') { |s| browse.all(petscii: true, state: s) } })
-          MenuView.new(@session, 'BROWSE', items).run
         end
 
         def facets(axis, label)

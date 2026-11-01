@@ -22,21 +22,11 @@ module Discovery
       @data    = env.fetch('TTG_GATE_BBS_DATA', File.join(ROOT, 'data'))
       @db      = Database.new(env.fetch('TTG_GATE_BBS_DISCOVERY_DB', File.join(@data, 'discovery.sqlite3')))
       @config  = ConfigRepository.new(File.join(ROOT, 'config/discovery'))
-      @catalog = CatalogRepository.new(@db)
-      @probes  = ProbeRepository.new(@db)
       @optout  = OptoutRepository.new(env.fetch('TTG_GATE_BBS_DISCOVERY_OPTOUT',
                                                 File.join(ROOT, 'config/discovery-optout.yml')))
-      @fetcher = SourceFetcher.new
-      @geoip   = GeoipRepository.new(File.join(@data, 'geoip'), fetcher: @fetcher)
-      @tags    = TagService.new(@catalog, @probes, @config)
-      @aliases = AliasService.new(@catalog)
       @webhook = env['TTG_GATE_BBS_DISCORD_WEBHOOK'].to_s
-      @dial_limits = {
-        window:     limit(env, 'TTG_GATE_BBS_DIAL_WINDOW', DialService::WINDOW),
-        per_caller: limit(env, 'TTG_GATE_BBS_DIAL_PER_CALLER', DialService::PER_CALLER),
-        per_host:   limit(env, 'TTG_GATE_BBS_DIAL_PER_HOST', DialService::PER_HOST),
-        idle:       limit(env, 'TTG_GATE_BBS_DIAL_IDLE', DialService::IDLE)
-      }
+      @dial_limits = DialService::LIMITS.to_h { |key, default| [key, limit(env, "TTG_GATE_BBS_DIAL_#{key.upcase}", default)] }
+      build
     end
 
     # The Gate's dial limits: window, per_caller, per_host, idle.
@@ -63,8 +53,7 @@ module Discovery
 
     # The Gate's side: the dial rules, recording each dial as a probe.
     def dials(log: ->(line) { warn line })
-      recorder = ProberService.new(catalog: @catalog, probes: @probes, probe: nil, tags: @tags, aliases: @aliases,
-                                   optout: @optout, geoip: @geoip, config: @config, log: log)
+      recorder = ProbeRecorder.new(catalog: @catalog, probes: @probes, tags: @tags, geoip: @geoip, config: @config)
       DialService.new(recorder: recorder, history: history, live_path: dials_path, log: log, **@dial_limits)
     end
 
@@ -87,6 +76,16 @@ module Discovery
     end
 
     private
+
+    # The repositories and services on the catalog.
+    def build
+      @catalog = CatalogRepository.new(@db)
+      @probes  = ProbeRepository.new(@db)
+      @fetcher = SourceFetcher.new
+      @geoip   = GeoipRepository.new(File.join(@data, 'geoip'), fetcher: @fetcher)
+      @tags    = TagService.new(@catalog, @probes, @config)
+      @aliases = AliasService.new(@catalog)
+    end
 
     # A positive whole number of the environment, else +default+.
     def limit(env, key, default)

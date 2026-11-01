@@ -51,6 +51,13 @@ module UI
       # +text+ on one line with no control or bidi character (BBS::Text.clean).
       def plain(text) = BBS::Text.clean(text, keep_newlines: false).tr("\t", ' ')
 
+      # A row of a menu: +label+ in +size+ columns and +note+, lit with an
+      # arrow when chosen.
+      def menu_row(label, note, size, lit:)
+        "#{lit ? "#{SELECT}#{GREEN}▸ " : '  '}#{BOLD}#{fit(label, size)}#{RESET}" \
+          "#{SELECT if lit}#{DIM}#{fit(note, width - size - 2)}#{RESET}"
+      end
+
       def mark(listing) = "#{STATE_COLORS.fetch(listing.state, TEXT)}#{listing.mark}#{RESET}"
 
       # The logo and the two-way chooser of the gate, +tab+ lit.

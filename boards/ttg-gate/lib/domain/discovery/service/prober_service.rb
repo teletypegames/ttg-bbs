@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'json'
+require 'forwardable'
 
 module Discovery
   # The prober (bin/discovery-prober, the ttg-gate-bbs-prober service): calls
@@ -29,6 +29,8 @@ module Discovery
   # C64-style call counts in the calls in flight but not against the pool;
   # at most C64_BACKLOG boards wait for a first one alone.
   class ProberService
+    extend Forwardable
+
     CONCURRENCY = 8
     TICK        = 1
     HOUSEKEEPING_EVERY = 3600
@@ -44,14 +46,13 @@ module Discovery
     # [config]  ConfigRepository   [metrics] MetricsService, or nil
     def initialize(catalog:, probes:, probe:, tags:, aliases:, optout:, geoip:, config:, metrics: nil,
                    concurrency: CONCURRENCY, c64_gap: C64_GAP, log: ->(line) { $stdout.puts(line) })
+      @recorder    = ProbeRecorder.new(catalog: catalog, probes: probes, tags: tags, geoip: geoip, config: config)
       @catalog     = catalog
       @probes      = probes
       @probe       = probe
-      @tags        = tags
       @aliases     = aliases
       @optout      = optout
       @geoip       = geoip
-      @config      = config
       @metrics     = metrics
       @concurrency = concurrency
       @c64_gap     = c64_gap
@@ -66,85 +67,30 @@ module Discovery
     # that many calls (a local test run).
     def run(stop: -> { false }, limit: nil)
       queue = Queue.new
-      @c64_queue = Queue.new
-      @stopping = false
-      started = 0
-      workers = Array.new(@concurrency) { Thread.new { work(queue) } }
-      c64_workers = Array.new(C64_CONCURRENCY) { Thread.new { work_c64 } }
+      workers = start_workers(queue)
       housekeeping(force: true)
+      started = 0
       until stop.call || (limit && started >= limit && idle?)
         housekeeping
         started += dispatch(queue, limit && (limit - started))
         sleep TICK
       end
     ensure
-      @stopping = true
-      queue&.close
-      workers&.each(&:join)
-      @c64_queue&.close
-      c64_workers&.each(&:join)
-      @metrics&.write(in_flight: 0)
+      stop_workers(queue, workers)
     end
 
-    # Records +result+ (a ProbeResultModel) of board +id+, +kind+ scheduled or
-    # dial, and updates its state, schedule and tags. A failed dial asks for a
-    # probe at once; a dial carries no banner and no telnet options of ours,
-    # so it leaves those of the last probe as they are.
-    def record(id, result, kind: 'scheduled')
-      board = @catalog.board(id)
-      return unless board
+    # Records a call of a board (ProbeRecorder).
+    def_delegators :@recorder, :record, :record_c64, :c64?
 
-      before   = @probes.state(id) || {}
-      analysis = analyse(result)
-      @probes.add(id, result, kind: kind, banner_hash: analysis[:banner_hash])
-      columns = state_columns(board, before, result, kind)
-      columns.merge!(banner_columns(before, result, analysis)) if result.result == 'ok' && !result.banner.empty?
-      columns[:options] = JSON.generate(result.options) if result.latency_ms && kind != 'dial'
-      @probes.save_state(id, **columns)
-      @tags.refresh(id, now: result.at)
-      columns
-    end
-
-    # Records +result+ of a C64-style call of board +id+: the probe (kind
-    # c64), what its banner was, and the tags. The state and the schedule
-    # are the scheduled calls'.
-    def record_c64(id, result)
-      return unless @catalog.board(id)
-
-      analysis = analyse(result)
-      @probes.add(id, result, kind: ProbeRepository::C64, banner_hash: analysis[:banner_hash])
-      columns = { c64_probe_at: result.at, c64_result: result.result, c64_window: TelnetProbe::C64_TOTAL }
-      if result.result == 'ok' && !result.banner.empty?
-        columns.merge!(c64_encoding: analysis[:encoding], c64_banner: result.banner,
-                       c64_banner_hash: analysis[:banner_hash], c64_banner_at: result.at)
-      end
-      @probes.save_state(id, **columns)
-      @tags.refresh(id, now: result.at)
-      columns
-    end
-
-    # Whether board +id+ gets a C64-style call: a source calls it a PETSCII
-    # board, or a call of ours saw PETSCII.
-    def c64?(id)
-      state = @probes.state(id) || {}
-      [state['encoding'], state['c64_encoding']].include?('petscii') ||
-        @catalog.tags(id).include?(ProbeRepository::CLAIMS_PETSCII)
-    end
-
+    # Writes the metrics every METRICS_EVERY seconds, and every
+    # HOUSEKEEPING_EVERY (or when the opt-out list changed) refreshes the
+    # country lookup, the aliases and the opt-outs and prunes old banners.
     def housekeeping(force: false, now: Time.now.to_i)
-      if force || now - @metrics_at.to_i >= METRICS_EVERY
-        @metrics&.write(in_flight: @mutex.synchronize { @busy.size })
-        @metrics_at = now
-      end
+      write_metrics(now) if force || now - @metrics_at.to_i >= METRICS_EVERY
       return unless force || now - @housekeeping_at.to_i >= HOUSEKEEPING_EVERY || @optout.refresh
 
       @housekeeping_at = now
-      @geoip.refresh(Time.at(now).utc)
-      @aliases.rebuild
-      @catalog.transaction do
-        @catalog.addresses.each { |r| @catalog.set_optout(r['id'], @optout.level(r['host'], r['ip'])) }
-      end
-      @probes.prune_banners(now)
+      tidy(now)
     rescue StandardError => e
       @log.call("ttg-gate-bbs-prober: housekeeping: #{e.class}: #{e.message}")
     end
@@ -152,6 +98,39 @@ module Discovery
     private
 
     def idle? = @mutex.synchronize { @busy.empty? }
+
+    # [the scheduled workers on +queue+, the C64-style ones], started.
+    def start_workers(queue)
+      @c64_queue = Queue.new
+      @stopping = false
+      [Array.new(@concurrency) { Thread.new { work(queue) } }, Array.new(C64_CONCURRENCY) { Thread.new { work_c64 } }]
+    end
+
+    # Closes the queues, the scheduled one first (its workers may still hand
+    # a board over), waits for the workers and writes the last metrics.
+    def stop_workers(queue, workers)
+      @stopping = true
+      scheduled, c64 = workers
+      queue&.close
+      scheduled&.each(&:join)
+      @c64_queue&.close
+      c64&.each(&:join)
+      @metrics&.write(in_flight: 0)
+    end
+
+    def write_metrics(now)
+      @metrics&.write(in_flight: @mutex.synchronize { @busy.size })
+      @metrics_at = now
+    end
+
+    def tidy(now)
+      @geoip.refresh(Time.at(now).utc)
+      @aliases.rebuild
+      @catalog.transaction do
+        @catalog.addresses.each { |r| @catalog.set_optout(r['id'], @optout.level(r['host'], r['ip'])) }
+      end
+      @probes.prune_banners(now)
+    end
 
     # Puts due boards on +queue+ while a worker is free, one a host and IP.
     # Returns how many.
@@ -247,48 +226,6 @@ module Discovery
       parts << "sw:#{columns[:software_id]}" if columns&.dig(:software_id)
       parts << "-> #{columns[:state]}" if columns&.dig(:state)
       parts.join(' ')
-    end
-
-    def analyse(result)
-      return {} unless result.result == 'ok'
-
-      encoding = BannerAnalyzer.encoding(result.banner)
-      text = BannerAnalyzer.text(result.banner, petscii: encoding == 'petscii')
-      { encoding: encoding, signature: BannerAnalyzer.software(text, @config.signatures),
-        banner_hash: BannerAnalyzer.digest(result.banner) }
-    end
-
-    def state_columns(board, before, result, kind)
-      at = result.at
-      first = before['first_probe_at'] || at
-      success = result.success? ? at : before['last_success_at']
-      window = @probes.since(board['id'], at - StateRules::DEAD_AFTER)
-      state = StateRules.state(window, last_success_at: success, first_probe_at: first, now: at)
-      archived = StateRules.archived?(state, delisted: board['delisted'] == 1, last_success_at: success,
-                                             first_probe_at: first, now: at)
-      { state: state.state, success_rate_7d: state.success_rate_7d, failures: state.failures,
-        state_since: before['state'] == state.state ? before['state_since'] || at : at,
-        first_probe_at: first, last_probe_at: at, last_result: result.result, last_success_at: success,
-        next_probe_at: next_probe(board, before, state, result, kind, archived), archived: archived ? 1 : 0,
-        ip: result.ip || before['ip'], country: (result.ip && @geoip.country(result.ip)) || before['country'],
-        latency_ms: result.latency_ms || before['latency_ms'] }
-    end
-
-    # A successful dial keeps the schedule; a failed one asks for a probe now.
-    def next_probe(board, before, state, result, kind, archived)
-      return nil if archived
-      return result.at if kind == 'dial' && !result.success?
-      return before['next_probe_at'] if kind == 'dial' && before['next_probe_at']
-      return result.at + StateRules::DEAD_EVERY if board['alias_of']
-
-      StateRules.next_probe_at(state, now: result.at)
-    end
-
-    def banner_columns(before, result, analysis)
-      changed = before['banner_hash'] && before['banner_hash'] != analysis[:banner_hash]
-      { encoding: analysis[:encoding], software_id: analysis[:signature]&.id, software: analysis[:signature]&.name,
-        banner: result.banner, banner_hash: analysis[:banner_hash], banner_at: result.at,
-        banner_changed_at: changed ? result.at : before['banner_changed_at'] }
     end
   end
 end

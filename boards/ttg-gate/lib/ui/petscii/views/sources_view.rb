@@ -79,18 +79,18 @@ module UI
           if source['last_error']
             canvas.text(row, 1, 'ERR', Canvas::RED, rvs: true)
             canvas.text(row, 5, Layout.plain(source['last_error'])[0, Layout::EDGE - 5], Canvas::LIGHT_RED)
-            return
-          end
-          unless source['last_parse_at']
+          elsif source['last_parse_at'] then read(canvas, row, source)
+          else
             canvas.text(row, 1, 'Not read yet', Canvas::GREY)
-            return
           end
+        end
 
+        # OK, the terminals the list names, and how long ago it was read.
+        def read(canvas, row, source)
           canvas.text(row, 1, 'OK', Canvas::GREEN, rvs: true)
           age = "read #{Layout.age(source['last_parse_at'], @now.call)} ago"
           terms = TERMS.fetch(source['id']) { Layout.plain(source['format']) }
-          terms = terms[0, Layout::EDGE - 4 - age.length - 1]
-          terms.split('/').each_with_index.reduce(4) do |col, (part, i)|
+          terms[0, Layout::EDGE - 4 - age.length - 1].split('/').each_with_index.reduce(4) do |col, (part, i)|
             col = Layout.runs(canvas, row, col, [['/', Canvas::DARK_GREY]]) if i.positive?
             Layout.runs(canvas, row, col, [[part, Canvas::LIGHT_GREY]])
           end
@@ -106,9 +106,7 @@ module UI
         def petscii(canvas, row)
           measured = @stats[:petscii].to_i
           claimed  = @stats[:claimed].to_i
-          whole    = [measured, claimed, 1].max
-          green    = measured.positive? ? [(measured * BAR.to_f / whole).round, 1].max : 0
-          purple   = [(claimed * BAR.to_f / whole).round - green, 0].max
+          green, purple = petscii_bars(measured, claimed)
           canvas.text(row, 1, 'PETSCII', Canvas::GREY)
           canvas.text(row, BAR_COL, '█' * green, Canvas::GREEN)
           canvas.text(row, BAR_COL + green, '▒' * purple, Canvas::PURPLE)
@@ -116,6 +114,13 @@ module UI
           canvas.text(row, Layout::EDGE - count.length, count, Canvas::WHITE)
           Layout.runs(canvas, row + 1, BAR_COL, [['█', Canvas::GREEN], [' measured  ', Canvas::LIGHT_GREY], ['▒', Canvas::PURPLE],
                                                  [' claimed', Canvas::LIGHT_GREY]])
+        end
+
+        # The cells of the measured (green) and the claimed-only (purple) bar.
+        def petscii_bars(measured, claimed)
+          whole  = [measured, claimed, 1].max
+          green  = measured.positive? ? [(measured * BAR.to_f / whole).round, 1].max : 0
+          [green, [(claimed * BAR.to_f / whole).round - green, 0].max]
         end
       end
     end

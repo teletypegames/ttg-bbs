@@ -62,7 +62,21 @@ module Discovery
 
     def record(block, names, source)
       lines = block.lines.map(&:rstrip)
-      title = lines.find { |l| !l.strip.empty? && !l.strip.casecmp?('&nbsp;') }
+      fields, last = labelled(lines)
+      return unless last && fields.key?('last updated')
+
+      host, port = endpoint(fields['telnet'])
+      return unless host && port
+
+      RecordModel.new(source_id: source.id, host: host, port: port,
+                      name: names["#{host}:#{port}"] || title(lines),
+                      location: location(fields['location']), software: software(fields['software']),
+                      website: website(fields['web']), hints: hints(fields, lines[(last + 1)..].join("\n")))
+    end
+
+    # The "Label: value" fields of a block by their lowercase label, and the
+    # index of the last one (the description follows it).
+    def labelled(lines)
       fields = {}
       last = nil
       lines.each_with_index do |line, i|
@@ -71,19 +85,21 @@ module Discovery
         fields[m[1].downcase] = m[2]
         last = i
       end
-      return unless last && fields.key?('last updated')
+      [fields, last]
+    end
 
-      host, port = endpoint(fields['telnet'])
-      return unless host && port
+    # The block's first line that is not empty, without its star.
+    def title(lines)
+      title = lines.find { |l| !l.strip.empty? && !l.strip.casecmp?('&nbsp;') }
+      text(title.to_s.sub(/\A\s*\*\s*/, ''))
+    end
 
-      software = fields['software'].to_s.sub(/\s*Total Nodes:.*\z/i, '')
-      description = lines[(last + 1)..].join("\n")
+    def software(value) = text(value.to_s.sub(/\s*Total Nodes:.*\z/i, ''))
+
+    # The update date and what the +description+ mentions.
+    def hints(fields, description)
       mentions = MENTIONS.select { |_, pattern| description.match?(pattern) }.keys
-      hints = { 'updated_at' => text(fields['last updated']), 'mentions' => mentions.empty? ? nil : mentions }.compact
-      RecordModel.new(source_id: source.id, host: host, port: port,
-                      name: names["#{host}:#{port}"] || text(title.to_s.sub(/\A\s*\*\s*/, '')),
-                      location: location(fields['location']), software: text(software),
-                      website: website(fields['web']), hints: hints)
+      { 'updated_at' => text(fields['last updated']), 'mentions' => mentions.empty? ? nil : mentions }.compact
     end
 
     # [host, port] of a Telnet line ("host" or "host:port"), or nil.

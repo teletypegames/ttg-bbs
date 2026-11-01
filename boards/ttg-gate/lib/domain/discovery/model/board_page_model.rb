@@ -26,15 +26,20 @@ module Discovery
     # a list's name, "our call" for what the banner said, "DB-IP" for the
     # country.
     def fields
-      provenance = JSON.parse(board['provenance'] || '{}')
-      list = %w[name sysop location since ftn_address hardware website].filter_map do |key|
-        value = board[key]
-        Field.new(label: LABELS.fetch(key), value: value.to_s, source: source_name(provenance[key])) if value
-      end
+      list = listed_fields
       list.insert(1, software_field) if software_field
       list << Field.new(label: 'Country', value: state['country'].upcase, source: 'DB-IP') if state['country']
       list << Field.new(label: 'Encoding', value: encodings, source: 'our call') if encoding || c64_encoding
       list
+    end
+
+    # The fields the lists gave, each with the list it came from.
+    def listed_fields
+      provenance = JSON.parse(board['provenance'] || '{}')
+      %w[name sysop location since ftn_address hardware website].filter_map do |key|
+        value = board[key]
+        Field.new(label: LABELS.fetch(key), value: value.to_s, source: source_name(provenance[key])) if value
+      end
     end
 
     LABELS = { 'name' => 'Name', 'sysop' => 'Sysop', 'location' => 'Location', 'since' => 'Since',

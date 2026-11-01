@@ -63,13 +63,18 @@ module UI
           Layout.wrap(board.summary, Layout::EDGE - 1, 2).each_with_index do |line, i|
             canvas.text(top + 2 + i, 1, line, Canvas::LIGHT_GREY)
           end
-          canvas.text(top + 5, 1, 'Telnet ', Canvas::GREY)
-          down = Layout.address(canvas, top + 5, 8, board.public_host, nil) - 1
-          Layout.runs(canvas, top + 6 + down, 1, [['Port   ', Canvas::GREY], [board.port.to_s, Canvas::CYAN]])
-          return if top + 7 + down > Layout::BOTTOM
+          address(canvas, top + 5, board)
+        end
+
+        # The board's host and port from +top+, and its tags when they fit.
+        def address(canvas, top, board)
+          canvas.text(top, 1, 'Telnet ', Canvas::GREY)
+          down = Layout.address(canvas, top, 8, board.public_host, nil) - 1
+          Layout.runs(canvas, top + 1 + down, 1, [['Port   ', Canvas::GREY], [board.port.to_s, Canvas::CYAN]])
+          return if top + 2 + down > Layout::BOTTOM
 
           tags = board.tags.map { |t| Layout.plain(t) }
-          Layout.runs(canvas, top + 7 + down, 1, tags.flat_map { |t| [['/', Canvas::DARK_GREY], [t, Canvas::PURPLE]] }.drop(1))
+          Layout.runs(canvas, top + 2 + down, 1, tags.flat_map { |t| [['/', Canvas::DARK_GREY], [t, Canvas::PURPLE]] }.drop(1))
         end
       end
     end

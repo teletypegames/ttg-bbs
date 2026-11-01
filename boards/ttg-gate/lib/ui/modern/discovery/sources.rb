@@ -15,13 +15,7 @@ module UI
         end
 
         def run
-          lines = [crumbs('SOURCES'), rule, '']
-          @browse.sources.each do |s|
-            next unless s['last_parse_at']
-
-            lines << "#{GREEN}#{BOLD}#{s['name']}#{RESET}#{DIM}  #{s['record_count'].to_i} telnet boards#{RESET}"
-            lines << "#{TEXT}#{fit(s['attribution'], width)}#{RESET}"
-          end
+          lines = [crumbs('SOURCES'), rule, '', *lists]
           lines.push('', "#{GREEN}#{BOLD}DB-IP#{RESET}#{DIM}  the countries#{RESET}",
                      "#{TEXT}IP Geolocation by DB-IP (db-ip.com), IP to Country Lite, CC BY 4.0#{RESET}", '')
           wrap('Nothing is scanned: we only call the addresses these lists publish, once a day, and never log in. ' \
@@ -34,6 +28,14 @@ module UI
         end
 
         private
+
+        # Each list applied once: its name, records and credit.
+        def lists
+          @browse.sources.select { |s| s['last_parse_at'] }.flat_map do |s|
+            ["#{GREEN}#{BOLD}#{s['name']}#{RESET}#{DIM}  #{s['record_count'].to_i} telnet boards#{RESET}",
+             "#{TEXT}#{fit(s['attribution'], width)}#{RESET}"]
+          end
+        end
 
         def wrap(text) = BBS::FrameBuffer.wrap_ansi(text, width)
       end

@@ -61,15 +61,13 @@ module UI
         color   = Colors.ansi256(board.rgb)
         lit     = index == @index ? SELECT : ''
         address = "  #{width >= 90 ? board.address : board.port}"
-        tags    = width - (1 + 1 + 1 + 2 + NAME + 2) - address.length - (2 + 6 + 1)
-        cells = [
-          "#{color}▌#{RESET}#{lit} #{DIM}#{index + 1}  ",
-          "#{color}#{BOLD}#{fit(board.name, NAME)}#{RESET}#{lit}  ",
-          "#{DIM}#{fit(board.tags.join(' · '), tags)}#{address}  ",
-          "#{color}#{(lit.empty? ? '' : 'DIAL >').ljust(6)} "
-        ]
-        "#{cells.join}#{RESET}"
+        "#{color}▌#{RESET}#{lit} #{DIM}#{index + 1}  #{color}#{BOLD}#{fit(board.name, NAME)}#{RESET}#{lit}  " \
+          "#{DIM}#{fit(board.tags.join(' · '), tags_width(address))}#{address}  " \
+          "#{color}#{(lit.empty? ? '' : 'DIAL >').ljust(6)} #{RESET}"
       end
+
+      # The columns left for a row's tags beside its +address+.
+      def tags_width(address) = width - (1 + 1 + 1 + 2 + NAME + 2) - address.length - (2 + 6 + 1)
 
       def detail(board, lines)
         color = Colors.ansi256(board.rgb)

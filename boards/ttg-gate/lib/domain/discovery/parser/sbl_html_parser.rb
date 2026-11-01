@@ -25,19 +25,28 @@ module Discovery
       cells = chunk.split('</table>')
       return [] if cells.size < 7
 
-      fields = { name:     name(cells[0]),
-                 since:    cells[1][/\b(?:19|20)\d\d\b/]&.to_i,
-                 sysop:    rows(cells[2]).join(', '),
-                 location: rows(cells[3]).first,
-                 software: software(cells[6]) }
-      networks = cells[5].scan(%r{<div(?:\s+title="([^"]*)")?>\s*([^<]+?)\s*</div>}m)
-      ftn = networks.filter_map { |title, _| title.to_s[%r{\b\d+:\d+/\d+\b}] }.first
-      names = networks.map { |_, n| clean(n) }.compact.uniq
+      fields = system_fields(cells)
+      ftn, names = networks(cells[5])
       services(cells[4]).map do |host, port, comment|
-        RecordModel.new(source_id: source.id, host: host, port: port, ftn_address: ftn,
-                        **fields.transform_values { |v| v.is_a?(String) ? Address.text(v) : v },
+        RecordModel.new(source_id: source.id, host: host, port: port, ftn_address: ftn, **fields,
                         hints: { 'comment' => comment, 'networks' => names }.reject { |_, v| v.nil? || v.empty? })
       end
+    end
+
+    # The fields of a system that hold for each of its services.
+    def system_fields(cells)
+      { name:     name(cells[0]),
+        since:    cells[1][/\b(?:19|20)\d\d\b/]&.to_i,
+        sysop:    Address.text(rows(cells[2]).join(', ')),
+        location: rows(cells[3]).first,
+        software: software(cells[6]) }
+    end
+
+    # [the first FTN address, the network names] of the networks cell.
+    def networks(cell)
+      networks = cell.scan(%r{<div(?:\s+title="([^"]*)")?>\s*([^<]+?)\s*</div>}m)
+      ftn = networks.filter_map { |title, _| title.to_s[%r{\b\d+:\d+/\d+\b}] }.first
+      [ftn, networks.map { |_, n| clean(n) }.compact.uniq]
     end
 
     # The system's name: the link's text, or the bare text after the anchor.

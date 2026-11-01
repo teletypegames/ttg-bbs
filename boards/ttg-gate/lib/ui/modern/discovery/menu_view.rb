@@ -33,18 +33,22 @@ module UI
         private
 
         def draw
-          label = [@items.map { |i| i.label.length }.max.to_i + 2, width / 2].min
-          lines = [crumbs(@path), rule, '']
-          room  = rows - 1 - 6
-          first = (@index - room + 1).clamp(0, [@items.size - room, 0].max)
-          @items[first, room].each_with_index do |item, i|
-            lit = first + i == @index
-            lines << "#{lit ? "#{SELECT}#{GREEN}▸ " : '  '}#{BOLD}#{fit(item.label, label)}#{RESET}" \
-                     "#{SELECT if lit}#{DIM}#{fit(item.note, width - label - 2)}#{RESET}"
-          end
+          lines = [crumbs(@path), rule, '', *visible_rows]
           lines.push('', "#{DIM}↑↓ choose   RETURN open   Q back#{RESET}")
           paint(lines)
         end
+
+        # The rows that fit, the chosen one among them.
+        def visible_rows
+          room  = rows - 1 - 6
+          first = (@index - room + 1).clamp(0, [@items.size - room, 0].max)
+          @items[first, room].each_with_index.map do |item, i|
+            menu_row(item.label, item.note, label_width, lit: first + i == @index)
+          end
+        end
+
+        # The longest label and a gap, at most half the width.
+        def label_width = [@items.map { |i| i.label.length }.max.to_i + 2, width / 2].min
       end
     end
   end

@@ -11,6 +11,8 @@ module UI
         include Style
 
         WIKI = 'wiki.teletypegames.org/services/ttg-gate-bbs'
+        # The width of a field's label.
+        LABEL = 13
         # Why a call failed, from our server: the words of a probe's result.
         FAILURES = {
           'dns_fail' => 'the name does not resolve (the domain may be gone)',
@@ -59,24 +61,34 @@ module UI
         def listing = @page.listing
 
         def draw
-          lines = [crumbs("#{@path} › #{listing.title}", listing.address), rule, '']
-          lines << "#{mark(listing)} #{STATE_COLORS.fetch(listing.state, TEXT)}#{BOLD}#{listing.state.upcase}#{RESET}  " \
-                   "#{TEXT}#{answer}#{RESET}"
-          lines << "#{DIM}  #{failure}#{RESET}" if failure
-          lines << "#{DIM}Last 30 days #{RESET}#{LINE}[#{GREEN}#{strip}#{LINE}]#{RESET}#{DIM} █ answered  · no answer#{RESET}"
-          lines << ''
-          label = 13
-          @page.fields.each do |f|
-            value = width - label - 21
-            lines << "#{DIM}#{fit(f.label, label)}#{TEXT}#{fit(f.value, value)}#{RESET} #{DIM}#{fit(f.source, 20)}#{RESET}"
-          end
-          lines << "#{DIM}#{fit('Listed by', label)}#{TEXT}#{fit(@page.source_names.join(', '), width - label)}#{RESET}"
-          tags = BBS::FrameBuffer.wrap_ansi(shown_tags.join(' · '), width - label)
-          tags.first(2).each_with_index { |t, i| lines << "#{DIM}#{fit(i.zero? ? 'Tags' : '', label)}#{TEXT}#{t}#{RESET}" }
-          lines << "#{DIM}#{fit('Banner', label)}#{TEXT}#{banner_note}#{RESET}"
+          lines = [header, rule, '', *status, '', *fields, *tag_lines]
+          lines << "#{DIM}#{fit('Banner', LABEL)}#{TEXT}#{banner_note}#{RESET}"
           lines.fill('', lines.size...(rows - 4))
           lines.push(rule, dial_line, "#{DIM}#{fit("How we call boards, and opting out: #{WIKI}", width)}#{RESET}")
           paint(lines)
+        end
+
+        def header = crumbs("#{@path} › #{listing.title}", listing.address)
+
+        # The state, the last answer, why the last call failed, the strip.
+        def status
+          color = STATE_COLORS.fetch(listing.state, TEXT)
+          ["#{mark(listing)} #{color}#{BOLD}#{listing.state.upcase}#{RESET}  #{TEXT}#{answer}#{RESET}",
+           failure && "#{DIM}  #{failure}#{RESET}",
+           "#{DIM}Last 30 days #{RESET}#{LINE}[#{GREEN}#{strip}#{LINE}]#{RESET}#{DIM} █ answered  · no answer#{RESET}"].compact
+        end
+
+        # The fields with their sources, and the lists that name the board.
+        def fields
+          lines = @page.fields.map do |f|
+            "#{DIM}#{fit(f.label, LABEL)}#{TEXT}#{fit(f.value, width - LABEL - 21)}#{RESET} #{DIM}#{fit(f.source, 20)}#{RESET}"
+          end
+          lines << "#{DIM}#{fit('Listed by', LABEL)}#{TEXT}#{fit(@page.source_names.join(', '), width - LABEL)}#{RESET}"
+        end
+
+        def tag_lines
+          tags = BBS::FrameBuffer.wrap_ansi(shown_tags.join(' · '), width - LABEL)
+          tags.first(2).each_with_index.map { |t, i| "#{DIM}#{fit(i.zero? ? 'Tags' : '', LABEL)}#{TEXT}#{t}#{RESET}" }
         end
 
         # The tags but the claims of the sources (claims:petscii is searched,
@@ -132,7 +144,7 @@ module UI
         end
 
         def confirm(warning)
-          lines = [crumbs("#{@path} › #{listing.title}", listing.address), rule, '']
+          lines = [header, rule, '']
           WARNINGS.fetch(warning).each { |l| lines << "#{YELLOW}#{l}#{RESET}" }
           lines.push('', "#{GREEN}#{BOLD}Y#{RESET}#{DIM} dial   #{RESET}#{GREEN}#{BOLD}N#{RESET}#{DIM} back#{RESET}")
           paint(lines)
@@ -146,7 +158,7 @@ module UI
 
         def refused(refusal)
           text = format(REFUSALS.fetch(refusal.reason), limit: limit(refusal.reason), wait: wait(refusal.wait))
-          lines = [crumbs("#{@path} › #{listing.title}", listing.address), rule, '', "#{YELLOW}#{text}#{RESET}", '',
+          lines = [header, rule, '', "#{YELLOW}#{text}#{RESET}", '',
                    "#{DIM}Press a key.#{RESET}"]
           paint(lines)
           key
@@ -167,8 +179,8 @@ module UI
 
           clear
           @session.write(::Discovery::BannerPreview.ansi(bytes))
-          @session.write("#{RESET}\e[#{rows};1H\e[K#{SELECT}#{DIM} The banner of #{plain(listing.title)}, #{date(@page.banner_at)}. " \
-                         "Press a key. #{RESET}")
+          @session.write("#{RESET}\e[#{rows};1H\e[K#{SELECT}#{DIM} The banner of #{plain(listing.title)}, " \
+                         "#{date(@page.banner_at)}. Press a key. #{RESET}")
           key
           restore
         end

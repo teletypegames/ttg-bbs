@@ -14,17 +14,22 @@ module Discovery
     # Returns the number of aliases.
     def rebuild
       rows = @catalog.addresses
-      wanted = {}
-      rows.select { |r| r['ip'] }.group_by { |r| [r['ip'], r['port']] }.each_value do |group|
-        next if group.size < 2
-
-        canonical = group.min_by { |r| [-r['sources'], r['host']] }
-        (group - [canonical]).each { |r| wanted[r['id']] = canonical['id'] }
-      end
+      wanted = aliases(rows)
       @catalog.transaction do
         rows.each { |r| @catalog.set_alias(r['id'], wanted[r['id']]) if r['alias_of'] != wanted[r['id']] }
       end
       wanted.size
+    end
+
+    private
+
+    # The canonical board's id by the id of each alias among +rows+.
+    def aliases(rows)
+      groups = rows.select { |r| r['ip'] }.group_by { |r| [r['ip'], r['port']] }.values.select { |g| g.size > 1 }
+      groups.each_with_object({}) do |group, wanted|
+        canonical = group.min_by { |r| [-r['sources'], r['host']] }
+        (group - [canonical]).each { |r| wanted[r['id']] = canonical['id'] }
+      end
     end
   end
 end

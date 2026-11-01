@@ -48,10 +48,7 @@ module Discovery
 
     # Fetches, parses and applies one source.
     def import(source, file, now)
-      @catalog.save_source(source)
-      bytes = file ? File.binread(file) : @fetcher.fetch(source)
-      @catalog.save_source(source, last_fetch_at: now)
-      records = Parsers.for(source.format).parse(bytes, source)
+      records = records(source, file, now)
       previous = @catalog.source(source.id)['record_count'].to_i
       return refuse(source, records.size, previous, now) if previous.positive? && records.size < previous * KEEP
 
@@ -63,6 +60,14 @@ module Discovery
     end
 
     private
+
+    # The RecordModels of +source+, from +file+ when given, else fetched.
+    def records(source, file, now)
+      @catalog.save_source(source)
+      bytes = file ? File.binread(file) : @fetcher.fetch(source)
+      @catalog.save_source(source, last_fetch_at: now)
+      Parsers.for(source.format).parse(bytes, source)
+    end
 
     def refuse(source, count, previous, now)
       message = "#{source.name}: the parse gave #{count} records against #{previous} last time " \
@@ -82,22 +87,25 @@ module Discovery
     # it ever had when it is delisted), with their provenance.
     def resolve(now)
       rank = @config.priority.each_with_index.to_h
-      @catalog.transaction do
-        @catalog.board_ids.each do |id|
-          rows = @catalog.board_sources(id)
-          active = rows.select { |r| r['active'] == 1 }
-          ranked = (active.empty? ? rows : active).sort_by { |r| [rank.fetch(r['source_id'], rank.size), -r['last_seen_at']] }
-          fields = {}
-          provenance = {}
-          RecordModel::FIELDS.map(&:to_s).each do |field|
-            row = ranked.find { |r| !r['fields'][field].to_s.empty? }
-            next unless row
+      @catalog.transaction { @catalog.board_ids.each { |id| resolve_board(id, rank, now) } }
+    end
 
-            fields[field] = row['fields'][field]
-            provenance[field] = row['source_id']
-          end
-          @catalog.update_board(id, fields, provenance, active.empty?, now)
-        end
+    def resolve_board(id, rank, now)
+      rows = @catalog.board_sources(id)
+      active = rows.select { |r| r['active'] == 1 }
+      ranked = (active.empty? ? rows : active).sort_by { |r| [rank.fetch(r['source_id'], rank.size), -r['last_seen_at']] }
+      @catalog.update_board(id, *best_fields(ranked), active.empty?, now)
+    end
+
+    # [the fields, the source of each] of +ranked+ source rows: each field
+    # from the first row that has it, text cleaned again (Address.text), as
+    # the rows of an older import may hold control characters.
+    def best_fields(ranked)
+      RecordModel::FIELDS.map(&:to_s).each_with_object([{}, {}]) do |field, (fields, provenance)|
+        row = ranked.find { |r| !r['fields'][field].to_s.empty? } or next
+        value = row['fields'][field]
+        fields[field] = value.is_a?(String) ? Address.text(value) : value
+        provenance[field] = row['source_id']
       end
     end
 

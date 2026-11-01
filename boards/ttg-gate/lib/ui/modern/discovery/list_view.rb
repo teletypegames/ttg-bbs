@@ -42,13 +42,10 @@ module UI
         def run
           loop do
             draw
-            case key
-            when :up then @index = [@index - 1, 0].max
-            when :down then @index = (@index + 1).clamp(0, [@boards.size - 1, 0].max)
-            when :left, :page_up then @index = [@index - per_page, 0].max
-            when :right, :page_down then @index = (@index + per_page).clamp(0, [@boards.size - 1, 0].max)
-            when :home then @index = 0
-            when :end then @index = [@boards.size - 1, 0].max
+            k = key
+            next if moved?(k)
+
+            case k
             when :enter then open
             when '/' then search
             when 'f', 'F' then filter
@@ -67,6 +64,22 @@ module UI
         end
 
         def per_page = [rows - 5, 3].max
+
+        def last = [@boards.size - 1, 0].max
+
+        # Moves the choice by +key+; whether +key+ was a move.
+        def moved?(key)
+          @index = case key
+                   when :up then [@index - 1, 0].max
+                   when :down then (@index + 1).clamp(0, last)
+                   when :left, :page_up then [@index - per_page, 0].max
+                   when :right, :page_down then (@index + per_page).clamp(0, last)
+                   when :home then 0
+                   when :end then last
+                   else return false
+                   end
+          true
+        end
 
         def open
           board = @boards[@index]
@@ -100,40 +113,55 @@ module UI
         end
 
         def draw
-          pages = [(@boards.size + per_page - 1) / per_page, 1].max
-          page  = @index / per_page
-          right = "#{@boards.size} board#{'s' unless @boards.size == 1}" \
-                  "#{"  ·  #{@state}" if @state}#{"  ·  page #{page + 1}/#{pages}" if pages > 1}"
-          lines = [crumbs(@path, right), rule]
+          lines = [crumbs(@path, counts), rule]
           if @boards.empty?
             lines.push('', "#{TEXT}#{@state ? "No #{@state} board here." : @empty}#{RESET}")
           else
-            now = Time.now.to_i
-            @boards[page * per_page, per_page].each_with_index do |b, i|
-              lines << row(b, (page * per_page) + i == @index, now)
-            end
+            lines.concat(page_rows)
           end
           lines.fill('', lines.size...(rows - 3))
           lines.push(rule, hints)
           paint(lines)
         end
 
+        # The boards, the state filter and the page, for the top line.
+        def counts
+          pages = [(@boards.size + per_page - 1) / per_page, 1].max
+          "#{@boards.size} board#{'s' unless @boards.size == 1}" \
+            "#{"  ·  #{@state}" if @state}#{"  ·  page #{(@index / per_page) + 1}/#{pages}" if pages > 1}"
+        end
+
+        # The rows of the page the choice is on.
+        def page_rows
+          first = @index / per_page * per_page
+          now = Time.now.to_i
+          @boards[first, per_page].each_with_index.map { |b, i| row(b, first + i == @index, now) }
+        end
+
         def row(board, lit, now)
           status = board.status(now)
-          status = '' if status == 'flaky'
-          cc     = board.country.to_s.upcase.ljust(2)
-          rest   = width - 2 - 2 - 4 - 22
-          name   = [rest * 3 / 5, 12].max
-          soft   = [rest - name, 0].max
-          bg     = lit ? SELECT : ''
-          ports  = @twins[board.title]
-          title  = if ports.nil? then board.title
-                   elsif ports[board.port] > 1 then "#{board.title} · #{board.host}"
-                   else "#{board.title} :#{board.port}"
-                   end
-          "#{bg}#{mark(board)}#{bg} #{lit ? GREEN + BOLD : TEXT}#{fit(title, name)}#{RESET}#{bg} " \
-            "#{DIM}#{fit(board.software.to_s, soft)} #{TEXT}#{cc}#{RESET}#{bg}  " \
-            "#{board.state == 'down' ? RED : DIM}#{fit(status, 22)}#{RESET}"
+          bg = lit ? SELECT : ''
+          name, soft = columns
+          "#{bg}#{mark(board)}#{bg} #{lit ? GREEN + BOLD : TEXT}#{fit(title(board), name)}#{RESET}#{bg} " \
+            "#{DIM}#{fit(board.software.to_s, soft)} #{TEXT}#{board.country.to_s.upcase.ljust(2)}#{RESET}#{bg}  " \
+            "#{board.state == 'down' ? RED : DIM}#{fit(status == 'flaky' ? '' : status, 22)}#{RESET}"
+        end
+
+        # The widths of the name and the software columns.
+        def columns
+          rest = width - 2 - 2 - 4 - 22
+          name = [rest * 3 / 5, 12].max
+          [name, [rest - name, 0].max]
+        end
+
+        # The board's name; with its host or port when another board of the
+        # list has the same name.
+        def title(board)
+          ports = @twins[board.title]
+          if ports.nil? then board.title
+          elsif ports[board.port] > 1 then "#{board.title} · #{board.host}"
+          else "#{board.title} :#{board.port}"
+          end
         end
 
         def hints
