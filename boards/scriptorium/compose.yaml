@@ -1,0 +1,15 @@
+services:
+  scriptorium:
+    mem_limit: 160m
+    cpus: 1.0
+    pids_limit: 256
+    build: .
+    container_name: scriptorium
+    ports:
+      - "2330:2323"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TZ=Europe/Budapest
+      - BBS_MAX_SESSIONS=50
+    restart: unless-stopped

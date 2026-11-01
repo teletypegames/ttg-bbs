@@ -1,0 +1,15 @@
+# frozen_string_literal: true
+
+require_relative 'domain/model/book_model'
+require_relative 'domain/model/shelf_model'
+require_relative 'domain/model/chapter_model'
+require_relative 'domain/model/text_model'
+require_relative 'domain/repository/gutenberg_repository'
+require_relative 'domain/repository/catalog_repository'
+require_relative 'domain/repository/classics_repository'
+require_relative 'domain/repository/read_repository'
+require_relative 'domain/repository/text_cache_repository'
+require_relative 'domain/service/chapter_service'
+require_relative 'domain/service/library_service'
+require_relative 'domain/service/reading_service'
+require_relative 'domain/scriptorium_bbs'
