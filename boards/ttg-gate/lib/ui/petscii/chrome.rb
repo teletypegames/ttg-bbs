@@ -5,7 +5,7 @@ require_relative 'layout'
 module UI
   module Petscii
     # The frame around every screen of the C64 face: the header (the colour
-    # logo, the node and the clock), the two tabs (Own Servers, Global
+    # logo, the rest of the row in HEADER), the two tabs in one colour (TAB) (Own Servers, Global
     # Discovery), the active tab's sub-menu under them and the hint bar at
     # the bottom. The sub-menu is a cursor menu: Item is one of its places,
     # each with a hotkey that works from anywhere.
@@ -13,10 +13,15 @@ module UI
       LOGO = [['T', Canvas::RED], ['T', Canvas::ORANGE], ['G', Canvas::YELLOW], [' ', nil],
               ['G', Canvas::LIGHT_GREEN], ['A', Canvas::CYAN], ['T', Canvas::LIGHT_BLUE], ['E', Canvas::PURPLE]].freeze
 
-      # A tab: its +key+, +label+, its +color+ and the column it starts at.
-      Tab = Data.define(:key, :label, :color, :col)
-      TABS = [Tab.new(:own, 'OWN SERVERS', Canvas::YELLOW, 1),
-              Tab.new(:discover, 'GLOBAL DISCOVERY', Canvas::LIGHT_GREEN, 15)].freeze
+      # The colour of the header row but the logo: BBS, the node, the clock.
+      HEADER = Canvas::LIGHT_GREY
+      # The one colour of the tab switch: the active tab a band in it, the
+      # other its plain letters, and the boards online on the right.
+      TAB = Canvas::CYAN
+
+      # A tab: its +key+, +label+ and the column it starts at.
+      Tab = Data.define(:key, :label, :col)
+      TABS = [Tab.new(:own, 'OWN SERVERS', 1), Tab.new(:discover, 'GLOBAL DISCOVERY', 15)].freeze
 
       # A place of the sub-menu of Global Discovery: +key+ the section it
       # opens, +label+, the index of its +hotkey+ sign in the label, and the
@@ -46,33 +51,31 @@ module UI
         LOGO.each_with_index do |(ch, color), i|
           canvas.text(Layout::HEADER_ROW, 1 + i, ch, color, rvs: true) if color
         end
-        canvas.text(Layout::HEADER_ROW, 9, ' BBS', Canvas::WHITE)
+        canvas.text(Layout::HEADER_ROW, 9, ' BBS', HEADER)
         clock(canvas, node: node, time: time)
       end
 
       def clock(canvas, node:, time:)
         node = "Node #{node}"
-        canvas.text(Layout::HEADER_ROW, 33 - node.length, node, Canvas::GREY)
-        canvas.text(Layout::HEADER_ROW, 34, time.strftime('%H:%M'), Canvas::CYAN)
+        canvas.text(Layout::HEADER_ROW, 33 - node.length, node, HEADER)
+        canvas.text(Layout::HEADER_ROW, 34, time.strftime('%H:%M'), HEADER)
       end
 
-      # The tabs, +active+ a band in its colour, the other dim with its
-      # yellow letter, and the boards online of +stats+ on the right.
+      # The tabs in TAB, +active+ a band, and the boards online of +stats+
+      # on the right.
       def tabs(canvas, active:, stats:)
         TABS.each do |tab|
           if tab.key == active
-            canvas.text(Layout::TABS_ROW, tab.col - 1, " #{tab.label} ", tab.color, rvs: true)
+            canvas.text(Layout::TABS_ROW, tab.col - 1, " #{tab.label} ", TAB, rvs: true)
           else
-            canvas.text(Layout::TABS_ROW, tab.col, tab.label, Canvas::GREY)
-            canvas.text(Layout::TABS_ROW, tab.col, tab.label[0], Canvas::YELLOW)
+            canvas.text(Layout::TABS_ROW, tab.col, tab.label, TAB)
           end
         end
         online = stats && stats[:online]
         return unless online
 
-        count = online.to_s
-        canvas.text(Layout::TABS_ROW, Layout::EDGE - count.length - 1, '▌', Canvas::LIGHT_GREEN)
-        canvas.text(Layout::TABS_ROW, Layout::EDGE - count.length, count, Canvas::WHITE)
+        count = "▌#{online}"
+        canvas.text(Layout::TABS_ROW, Layout::EDGE - count.length, count, TAB)
       end
 
       # The sub-menu of Global Discovery: +lit+ (an Item's key) a reversed

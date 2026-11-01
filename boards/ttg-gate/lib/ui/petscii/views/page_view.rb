@@ -48,7 +48,7 @@ module UI
         def banner? = !@page.c64_banner.nil?
 
         def hint
-          return HINT[4, 2] unless listing.petscii?
+          return HINT[4, 2] unless listing.c64?
 
           banner? ? HINT : HINT[0, 2] + HINT[4, 2]
         end
@@ -203,10 +203,11 @@ module UI
         end
 
         def buttons(canvas, row)
-          return canvas.text(row, 1, 'No PETSCII: no dial from a C64', Canvas::LIGHT_RED) unless listing.petscii?
+          return canvas.text(row, 1, 'No PETSCII or ASCII: no dial', Canvas::LIGHT_RED) unless listing.c64?
 
           col = Layout.chip(canvas, row, 1, 'RETURN', Canvas::LIGHT_GREEN)
           col = Layout.chip(canvas, row, col, 'Dial', Canvas::GREEN) + 2
+          return canvas.text(row, col, 'ASCII, translated', Canvas::LIGHT_GREY) if listing.translated_for_c64?
           return canvas.text(row, col, 'No banner', Canvas::DARK_GREY) unless banner?
 
           col = Layout.chip(canvas, row, col, 'B', Canvas::YELLOW)

@@ -25,10 +25,11 @@ hosts and labels keep their case), in its sixteen colours, one frame around
 every screen:
 
 - **row 0**, the header: `TTG GATE` letter by letter in reversed colours, the
-  node number (the C64 callers on the gate now) and the clock;
-- **row 1**, the two tabs, `OWN SERVERS` and `GLOBAL DISCOVERY`: the active one
-  a reversed band in its colour (Own yellow, Discovery light green), the other
-  dim with its yellow letter, and on the right the boards online now;
+  rest of the row (`BBS`, the node number: the C64 callers on the gate now, and
+  the clock) in one colour, light grey;
+- **row 1**, the two tabs, `OWN SERVERS` and `GLOBAL DISCOVERY`, in one colour,
+  cyan: the active one a reversed band, the other plain, and on the right the
+  boards online now (`O` and `D` switch them);
 - **row 2**, the active tab's sub-menu: on Global Discovery `/Find`, `Browse`,
   `New`, `Random`, `Sources`, their keys yellow,
   the lit one a reversed bar (cyan while the menu has the focus); on Own
@@ -347,9 +348,10 @@ grey not called yet), its name, its country and its software; the
 lit one a light blue bar. Under a rule the lit board's name, host and port,
 state with the latency of the last answer and the country, software and
 terminals, and the legend of the marks. `All` (Browse) lists every board of
-the catalog, every encoding (chip `Any`): a board without PETSCII has a dark
-grey name, its encoding (`ANSI`, `ASCII`) in the software column, and its page
-says the C64 cannot dial it. On the other lists only PETSCII boards are shown
+the catalog, every encoding (chip `Any`): a board the C64 cannot call (neither
+PETSCII nor plain ASCII) has a dark grey name, its encoding (`ANSI`, `ASCII`)
+in the software column, and its page says so. An ASCII board without PETSCII is
+white and dials: its page says `ASCII, translated` (see the dial rules). On the other lists only PETSCII boards are shown
 (measured: the `petscii` tag of a call's banner, see above), and not the dead
 ones but in All, All PETSCII, Recently died, the Graveyard or a search with `all` (the gate
 carries the bytes as they are, and an ANSI board on a C64 is noise).
@@ -394,7 +396,13 @@ Only a board of the catalog can be dialled, by its page: there is no free
   default, with a warning).
 - On the modern face a board made for a C64 only (PETSCII and no other
   encoding seen) asks first: it would be noise there. The C64 face dials
-  PETSCII boards only. A dead board asks first too, on either face.
+  PETSCII boards as they are, and plain ASCII ones (the `ascii` tag, no
+  `petscii`) through rubbs' translation (`BBS::Gateway` `translate:`, an
+  `AsciiBridge`): the board's text comes down as PETSCII in the C64's letter
+  case, ANSI colours as C64 colours, CP437 line drawing as PETSCII glyphs, and
+  the C64's keys go up as an ANSI terminal's; the board sees an `ANSI` terminal
+  of 40 columns. An ANSI-only board stays refused on the C64. A dead board asks
+  first too, on either face.
 - After the board hangs up (and a key), the caller is back on the board's page,
   and `Q` returns to the same place of the same list or search.
 - The dial is recorded as a probe of kind `dial`: `ok` when the board sent

@@ -43,6 +43,16 @@ module Discovery
 
     def petscii? = tags.include?('petscii')
 
+    def ascii? = tags.include?('ascii')
+
+    # Whether a Commodore 64 can call it: in PETSCII, or in plain ASCII
+    # through the gate's translation (#translated_for_c64?).
+    def c64? = petscii? || ascii?
+
+    # Whether a C64's call goes through the gate's translation (an ASCII
+    # board without PETSCII; BBS::Gateway::AsciiBridge).
+    def translated_for_c64? = ascii? && !petscii?
+
     # A board for a Commodore only: PETSCII, and no other encoding seen.
     def petscii_only? = petscii? && !tags.intersect?(ENCODINGS - ['petscii'])
 

@@ -10,6 +10,7 @@ module Discovery
   # bytes they cost.
   class C64Test < Minitest::Test
     Canvas = UI::Petscii::Canvas
+    Chrome = UI::Petscii::Chrome
     Layout = UI::Petscii::Layout
     NOW = Time.now.to_i
 
@@ -124,11 +125,12 @@ module Discovery
       assert_equal [Canvas::RED, Canvas::ORANGE, Canvas::YELLOW], logo.first(3).map(&:color)
       assert(logo.first(3).all?(&:rvs))
       assert_equal 'Node 2 14:52', text_at(screen, 0, 27, 12)
+      assert_equal [Chrome::HEADER], [10, 27, 34, 38].map { |c| screen.cell(0, c).color }.uniq
       own = screen.cell(1, 1)
-      assert_equal ['O'.ord + 0x80, Canvas::YELLOW, true], [own.code, own.color, own.rvs]
+      assert_equal ['O'.ord + 0x80, Chrome::TAB, true], [own.code, own.color, own.rvs]
       assert_equal 'GLOBAL DISCOVERY', text_at(screen, 1, 15, 16)
-      assert_equal [Canvas::YELLOW, false], [screen.cell(1, 15).color, screen.cell(1, 15).rvs]
-      assert_equal [Canvas::GREY, false], [screen.cell(1, 16).color, screen.cell(1, 16).rvs]
+      assert_equal [[Chrome::TAB, false]], (15..30).map { |c| [screen.cell(1, c).color, screen.cell(1, c).rvs] }.uniq
+      assert_equal [Chrome::TAB], (34..38).map { |c| screen.cell(1, c).color }.uniq
       assert_equal '1090', text_at(screen, 1, 35, 4)
       assert_equal '10 boards', text_at(screen, 2, 1, 9)
       assert_equal 'OWN SERVERS', text_at(screen, 3, 1, 11)
@@ -168,7 +170,7 @@ module Discovery
       screen = shown
       assert_equal '/Find Browse New Random Sources         ', text_at(screen, 2, 0, 40)
       assert_equal [Canvas::LIGHT_GREEN, true], [screen.cell(2, 6).color, screen.cell(2, 6).rvs]
-      assert_equal [Canvas::LIGHT_GREEN, true], [screen.cell(1, 15).color, screen.cell(1, 15).rvs]
+      assert_equal [Chrome::TAB, true], [screen.cell(1, 15).color, screen.cell(1, 15).rvs]
       g.press(:down)
       g.press(:up)
       assert_equal :main, g.focus

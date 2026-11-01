@@ -149,7 +149,7 @@ module UI
                                 .ljust(Layout::WIDTH), Canvas::LIGHT_BLUE, rvs: true)
           else
             Layout.runs(canvas, row, 0, [[number, Canvas::YELLOW], [' ', nil], [mark, color], [' ', nil],
-                                         [name(listing), listing.petscii? ? Canvas::WHITE : Canvas::DARK_GREY]])
+                                         [name(listing), listing.c64? ? Canvas::WHITE : Canvas::DARK_GREY]])
             Layout.runs(canvas, row, 6 + NAME, [[cc, Canvas::CYAN], [' ', nil], [software(listing), Canvas::LIGHT_BLUE]])
           end
         end

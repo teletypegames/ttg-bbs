@@ -20,7 +20,8 @@ module Discovery
   #   share them), and a line silent both ways for +idle+ seconds ends
   #   (PER_CALLER, WINDOW, PER_HOST and IDLE by default; Root reads them
   #   from the environment);
-  # - the C64 face dials PETSCII boards only; the modern face warns before a
+  # - the C64 face dials PETSCII boards, and plain ASCII ones through the
+  #   gateway's translation (ListingModel#c64?); the modern face warns before a
   #   board made for a C64 only, and either warns before a dead board;
   # - the outcome is recorded as a probe of kind dial (ProbeRecorder#record),
   #   and a failed one asks the prober for a probe at once; its time on the
@@ -42,8 +43,8 @@ module Discovery
 
     # Why a dial is refused: +rate+ (the caller dialled PER_CALLER times in
     # WINDOW; +wait+ seconds until the next one), +busy+ (PER_HOST lines to
-    # the host are taken), +not_petscii+ (a C64 caller, a board without
-    # PETSCII), +not_public+ (the board's name resolves to no address on the
+    # the host are taken), +not_petscii+ (a C64 caller, a board with
+    # neither PETSCII nor plain ASCII), +not_public+ (the board's name resolves to no address on the
     # public internet) or +unknown+ (no such board in the catalog).
     Refusal = Data.define(:reason, :wait)
 
@@ -173,7 +174,7 @@ module Discovery
 
     def refusal(caller, board, face, now, ips)
       return Refusal.new(reason: :unknown, wait: nil) unless board
-      return Refusal.new(reason: :not_petscii, wait: nil) if face == :petscii && !board.petscii?
+      return Refusal.new(reason: :not_petscii, wait: nil) if face == :petscii && !board.c64?
       return Refusal.new(reason: :not_public, wait: nil) unless @callable.call(ips, board.port)
 
       limited(caller, ips.first, now)

@@ -12,12 +12,14 @@ module UI
   # Dials +board+ of Global Discovery (a Discovery::ListingModel) by the rules
   # of +dials+ (Discovery::DialService): the gateway's report becomes the
   # dial's probe, and a line silent both ways for the rules' +idle+ seconds
-  # ends. Returns the Refusal when the rules keep the call from going,
+  # ends. A C64 calling an ASCII board gets it translated
+  # (ListingModel#translated_for_c64?). Returns the Refusal when the rules keep the call from going,
   # else the dial's Call. Raises IOError when the caller hangs up meanwhile.
   def self.dial_catalog(session, dials, caller, board, face:)
     dials.dial(caller, board, face: face) do |call|
       gateway = BBS::Gateway.new(host: call.ip, port: board.port, name: board.title,
-                                 connect_timeout: ::Discovery::DialService::CONNECT_TIMEOUT, idle: dials.idle)
+                                 connect_timeout: ::Discovery::DialService::CONNECT_TIMEOUT, idle: dials.idle,
+                                 translate: face == :petscii && board.translated_for_c64?)
       gateway.call(session) { |report| call.report = report }
     end
   end

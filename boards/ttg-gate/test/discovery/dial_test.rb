@@ -93,9 +93,10 @@ module Discovery
       assert_equal [[7, 'silent', 'dial', nil, nil]], @recorder.records
     end
 
-    def test_the_c64_dials_petscii_boards_only_and_warnings
+    def test_the_c64_dials_petscii_and_ascii_boards_and_warnings
       assert_equal :not_petscii, dial(face: :petscii).reason
       assert_kind_of DialService::Call, dial('a', board(tags: %w[petscii]), face: :petscii)
+      assert_kind_of DialService::Call, dial('b', board(tags: %w[ascii online]), face: :petscii)
       assert_equal :unknown, @dials.check('a', nil, face: :modern).reason
       assert_equal [:petscii_only], @dials.warnings(board(tags: %w[petscii]), face: :modern)
       assert_empty @dials.warnings(board(tags: %w[petscii]), face: :petscii)
@@ -143,6 +144,13 @@ module Discovery
         UI.dial_catalog(Object.new, dials, 'a', board, face: :modern)
       end
       assert_equal [PUBLIC, 23, 90], gateway.options.values_at(:host, :port, :idle)
+    end
+
+    def test_only_an_ascii_board_without_petscii_is_translated_for_a_c64
+      assert_predicate board(tags: %w[ascii]), :translated_for_c64?
+      refute_predicate board(tags: %w[ascii petscii]), :translated_for_c64?
+      refute_predicate board(tags: %w[ansi]), :c64?
+      assert_predicate board(tags: %w[ascii]), :c64?
     end
 
     def test_a_caller_is_its_address_and_a_local_line_its_session

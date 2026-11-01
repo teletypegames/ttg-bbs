@@ -46,7 +46,7 @@ module UI
       REFUSALS = {
         rate: ['You dialled 10 boards in', '10 minutes. Try again later.'],
         busy: ['3 callers are on this board', 'already. Try again soon.'],
-        not_petscii: ['This board has no PETSCII face.'],
+        not_petscii: ['This board speaks neither', 'PETSCII nor plain ASCII.'],
         not_public: ['This board is not on the', 'public internet.'],
         unknown: ['This board is gone from the list.']
       }.freeze
