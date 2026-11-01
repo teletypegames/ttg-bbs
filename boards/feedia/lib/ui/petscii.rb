@@ -27,8 +27,8 @@ module UI
 
     def self.flow(bbs)
       BBS::Flow.define do
-        call do |ctx, runner|
-          Reader.new(bbs.feeds, bbs.inbox, Screen.new(runner.session), ctx).run
+        call do |_ctx, runner|
+          Reader.new(bbs.feeds, bbs.inbox, Screen.new(runner.session), BBS::RateLimit.caller_key(runner.session)).run
           nil
         end
         call do |_ctx, runner|
@@ -43,11 +43,11 @@ module UI
 
     # One call: the menu, the feeds, their items, the messages.
     class Reader
-      def initialize(feeds, inbox, screen, ctx)
+      def initialize(feeds, inbox, screen, caller)
         @feeds  = feeds
         @inbox  = inbox
         @screen = screen
-        @ctx    = ctx
+        @caller = caller
       end
 
       def run
@@ -113,22 +113,31 @@ module UI
       end
 
       def show(heading, item, feed)
+        @screen.page(heading, [*head(item), '', *body(item), *address(item)], right: feed.lang)
+      end
+
+      # The title and the byline of +item+.
+      def head(item)
         byline = [item.date&.localtime&.strftime('%Y-%m-%d %H:%M'), item.author].compact.reject(&:empty?).join(' ')
-        body   = item.markdown.empty? ? '*(no text in the feed)*' : item.markdown
-        lines  = [*@screen.wrap(item.title, WIDTH).map { |l| " #{WH}#{l}#{LG}" }]
-        lines << " #{GR}#{byline}#{LG}" unless byline.empty?
-        lines << ''
-        lines.concat(BBS::Markdown.to_lines(body, width: WIDTH, theme: MARKDOWN).map { |l| " #{l}" })
-        lines += ['', " #{GR}read it all at:#{LG}", *item.link.to_s.scan(/.{1,37}/).map { |w| " #{CY}#{w}#{LG}" }] if item.link
-        @screen.page(heading, lines, right: feed.lang)
+        lines  = @screen.wrap(item.title, WIDTH).map { |l| " #{WH}#{l}#{LG}" }
+        byline.empty? ? lines : [*lines, " #{GR}#{byline}#{LG}"]
+      end
+
+      def body(item)
+        text = item.markdown.empty? ? '*(no text in the feed)*' : item.markdown
+        BBS::Markdown.to_lines(text, width: WIDTH, theme: MARKDOWN).map { |l| " #{l}" }
+      end
+
+      def address(item)
+        return [] unless item.link
+
+        ['', " #{GR}read it all at:#{LG}", *item.link.scan(/.{1,37}/).map { |w| " #{CY}#{w}#{LG}" }]
       end
 
       def can_send?
-        return true if @ctx[:sent].to_i < InboxService::PER_CALL
+        return true if @inbox.open?(@caller)
 
-        @screen.puts
-        @screen.say('That is all the messages one call can send. Thank you!', GR)
-        @screen.pause
+        answer(:limited)
         false
       end
 
@@ -145,7 +154,7 @@ module UI
         name = @screen.ask(" #{WH}its name#{LG}> ", max: InboxService::MAX_FIELD)
         from = @screen.ask(" #{WH}your name#{LG}> ", max: InboxService::MAX_FIELD)
         note = @screen.ask(" #{WH}why#{LG}> ", max: InboxService::MAX_TEXT)
-        answer(@inbox.suggest(url: url, name: name, from: from, note: note))
+        answer(@inbox.suggest(caller: @caller, url: url, name: name, from: from, note: note))
       end
 
       def feedback
@@ -159,15 +168,14 @@ module UI
         text = @screen.editor(InboxService::MAX_TEXT, 'WRITE TO THE ADMINS')
         return if text.strip.empty?
 
-        answer(@inbox.feedback(text: text, from: from))
+        answer(@inbox.feedback(caller: @caller, text: text, from: from))
       end
 
       def answer(result)
         @screen.puts
         case result
-        when :ok
-          @ctx[:sent] = @ctx[:sent].to_i + 1
-          @screen.say('Sent to the admins. Thank you!', GN)
+        when :ok      then @screen.say('Sent to the admins. Thank you!', GN)
+        when :limited then @screen.say('That is all the messages the admins can take for now. Thank you!', GR)
         when :bad_url then @screen.say('That is not an http:// or https:// address.', RD)
         else @screen.say('The message could not be saved. Try again later.', RD)
         end

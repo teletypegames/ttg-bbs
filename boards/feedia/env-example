@@ -5,9 +5,9 @@
 BBS_PORT=2323
 BBS_MAX_SESSIONS=50
 
-# The feed list, and the inbox file that keeps suggestions and feedback
+# The feed list, and the board's database (the admins' inbox)
 FEEDIA_BBS_FEEDS=config/feeds.yml
-FEEDIA_BBS_INBOX=data/inbox.jsonl
+FEEDIA_BBS_DB=data/feedia.sqlite3
 
-# Suggestions and feedback ring this Discord webhook too; without it they only go to data/inbox.jsonl.
+# Suggestions and feedback ring this Discord webhook too; without it they are only kept in the database.
 FEEDIA_BBS_DISCORD_WEBHOOK=

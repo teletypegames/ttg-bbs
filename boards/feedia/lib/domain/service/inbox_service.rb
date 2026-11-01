@@ -1,40 +1,53 @@
 # frozen_string_literal: true
 
 require 'time'
+require 'bbs/rate_limit'
+require 'bbs/text'
 
 # What callers send the admins: a feed to add, or feedback. Every message
 # is kept in the inbox and rings the admins' Discord channel. The board
 # never fetches a suggested address: that is the admins' call, from their
-# own machine. Results are symbols for the faces to word.
+# own machine. A caller (BBS::RateLimit.caller_key) may send PER_CALLER
+# messages an hour, all callers together GLOBAL. Results are symbols for
+# the faces to word.
 class InboxService
-  MAX_TEXT  = 1000
-  MAX_FIELD = 200
-  # The messages one call may send: enough for anyone, too few for a flood.
-  PER_CALL  = 5
+  MAX_TEXT   = 1000
+  MAX_FIELD  = 200
+  # Messages an hour: enough for anyone, too few for a flood.
+  PER_CALLER = 5
+  GLOBAL     = 30
+  HOUR       = 3600
 
   def self.url?(url) = url.to_s.strip.match?(%r{\Ahttps?://[^\s/]+\.[^\s]+\z}i)
 
-  def initialize(inbox, discord:)
-    @inbox   = inbox
-    @discord = discord
+  def initialize(inbox, discord:, per_caller: BBS::RateLimit.new(limit: PER_CALLER, per: HOUR),
+                 global: BBS::RateLimit.new(limit: GLOBAL, per: HOUR))
+    @inbox      = inbox
+    @discord    = discord
+    @per_caller = per_caller
+    @global     = global
   end
 
-  # :ok, or why not: :no_url, :bad_url, :failed.
-  def suggest(url:, name: '', note: '', from: '')
+  # Whether +caller+ may send a message now, for a face to ask before it
+  # opens a form.
+  def open?(caller) = @per_caller.wait(caller).zero? && @global.wait(:all).zero?
+
+  # :ok, or why not: :no_url, :bad_url, :limited, :failed.
+  def suggest(caller:, url:, name: '', note: '', from: '')
     url = field(url)
     return :no_url if url.empty?
     return :bad_url unless InboxService.url?(url)
 
-    deliver(MessageModel.from_h(kind: 'suggestion', at: Time.now.iso8601, from: field(from), name: field(name), url: url,
-                                text: text(note)))
+    deliver(caller, MessageModel.from_h(kind: 'suggestion', at: Time.now.iso8601, from: field(from), name: field(name),
+                                        url: url, text: text(note)))
   end
 
-  # :ok, or why not: :empty, :failed.
-  def feedback(text:, from: '')
+  # :ok, or why not: :empty, :limited, :failed.
+  def feedback(caller:, text:, from: '')
     body = text(text)
     return :empty if body.empty?
 
-    deliver(MessageModel.from_h(kind: 'feedback', at: Time.now.iso8601, from: field(from), text: body))
+    deliver(caller, MessageModel.from_h(kind: 'feedback', at: Time.now.iso8601, from: field(from), text: body))
   end
 
   # The newest messages first, for the admins' look at the inbox.
@@ -42,26 +55,28 @@ class InboxService
 
   private
 
-  def deliver(message)
+  def deliver(caller, message)
+    return :limited unless open?(caller) && @per_caller.allow?(caller) && @global.allow?(:all)
     return :failed unless @inbox.append(message)
 
     @discord.post(discord_text(message))
     :ok
   end
 
-  def field(value) = HtmlText.clean(value).gsub(/\s+/, ' ').strip[0, MAX_FIELD]
+  def field(value) = BBS::Text.clean(value, keep_newlines: false).gsub(/\s+/, ' ').strip[0, MAX_FIELD]
 
-  def text(value) = HtmlText.clean(value).gsub(/[ \t]+/, ' ').gsub(/\n{3,}/, "\n\n").strip[0, MAX_TEXT]
+  def text(value) = BBS::Text.clean(value).gsub(/[ \t]+/, ' ').gsub(/\n{3,}/, "\n\n").strip[0, MAX_TEXT]
 
   def discord_text(message)
-    who  = message.from.to_s.empty? ? 'a caller' : "**#{escape(message.from)}**"
-    head = if message.kind == 'suggestion'
-             "📰 Feedia BBS: #{who} suggests a feed: #{escape(message.name.to_s)} <#{message.url}>"
-           else
-             "💬 Feedia BBS: feedback from #{who}"
-           end
+    head = message.kind == 'suggestion' ? suggestion_head(message) : "💬 Feedia BBS: feedback from #{who(message)}"
     message.text.to_s.empty? ? head : "#{head}\n>>> #{escape(message.text)}"
   end
+
+  def suggestion_head(message)
+    "📰 Feedia BBS: #{who(message)} suggests a feed: #{escape(message.name.to_s)} <#{message.url}>"
+  end
+
+  def who(message) = message.from.to_s.empty? ? 'a caller' : "**#{escape(message.from)}**"
 
   # Discord markdown off, links included: a caller's [text](url) stays text.
   def escape(text) = BBS::DiscordWebhook.escape(text)
