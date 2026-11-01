@@ -62,12 +62,13 @@ module Discovery
     # hidden, not archived, their next probe time passed or never set; the
     # longest-waiting first. id, host, port, ip, state and c64_only.
     #
-    # c64_only is 1 for a board that only wants its first C64-style call: an
+    # c64_only is 1 for a board that only wants a C64-style call now: an
     # answering board that a source calls a PETSCII board, or whose banner is
-    # PETSCII, and that had no such call yet (the boards of before the
-    # C64-style call; later the call follows the scheduled one).
-    def due(now, limit:)
-      @db.query(<<~SQL, now, CLAIMS_PETSCII, now, limit)
+    # PETSCII, and that had no such call yet, or one with a shorter reading
+    # window than +window+ (TelnetProbe::C64_TOTAL) that found no PETSCII.
+    # Later the call follows the scheduled one, once a round.
+    def due(now, limit:, window: TelnetProbe::C64_TOTAL)
+      @db.query(<<~SQL, now, window, CLAIMS_PETSCII, now, limit)
         SELECT * FROM (
           SELECT b.id, b.host, b.port, b.alias_of, s.ip, COALESCE(s.state, 'unknown') AS state, 0 AS c64_only,
                  COALESCE(s.next_probe_at, 0) AS due_at
@@ -79,7 +80,8 @@ module Discovery
           SELECT b.id, b.host, b.port, b.alias_of, s.ip, s.state, 1, s.last_probe_at
           FROM boards b JOIN board_state s ON s.board_id = b.id
           WHERE (b.optout IS NULL OR b.optout != 'hide') AND b.alias_of IS NULL
-            AND s.archived = 0 AND s.state IN ('online', 'flaky') AND s.c64_probe_at IS NULL
+            AND s.archived = 0 AND s.state IN ('online', 'flaky')
+            AND (s.c64_probe_at IS NULL OR (COALESCE(s.c64_window, 0) < ? AND COALESCE(s.c64_encoding, '') != 'petscii'))
             AND (s.encoding = 'petscii' OR b.id IN (SELECT board_id FROM tags WHERE tag = ?))
             AND s.next_probe_at > ?
         )

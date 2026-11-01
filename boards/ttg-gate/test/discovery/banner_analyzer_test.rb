@@ -40,6 +40,15 @@ module Discovery
       assert_equal 'unknown', BannerAnalyzer.encoding(''.b)
     end
 
+    def test_form_feed_and_other_plain_text_controls_are_ascii
+      assert_equal 'ascii', BannerAnalyzer.encoding("\f\r\npress del/backspace:".b)
+      assert_equal 'ascii', BannerAnalyzer.encoding("Welcome\a\b\v\fBBS\r\n\x1A\x1A".b)
+      assert_equal 'unknown', BannerAnalyzer.encoding("Welcome\x1Ain the middle".b)
+      assert_equal 'petscii', encoding([0x0C, 0x93, 0x05] + 'HELLO'.bytes)
+      assert_equal 'ansi', BannerAnalyzer.encoding("\f\e[2JHello".b)
+      assert_equal 'atascii', encoding([0x0C] + 'READY'.bytes + [0x9B])
+    end
+
     def test_text_folds_petscii_capitals_and_drops_escapes
       assert_equal ' Synchronet BBS ', BannerAnalyzer.text("\e[1;36mSynchronet\e[0m BBS\r\n".b)
       petscii = [0x93, 0x0E] + 'WELCOME TO '.bytes.map { |c| c.between?(0x41, 0x5A) ? c + 0x80 : c } + 'color 64'.bytes

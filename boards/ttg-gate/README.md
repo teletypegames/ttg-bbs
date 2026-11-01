@@ -195,12 +195,17 @@ program behind a WiFi modem: plain TCP, no telnet) would get PETSCII. So a board
 a source calls a PETSCII board (the CBBS Outpost's boards, a SyncTERM entry in
 C64 mode, a PETSCII comment in the SBL: the tag `claims:petscii`), or whose
 banner was PETSCII, is called a second time 30 s after its scheduled call
-answered, as a C64 would: the same connection and reading, one CR (0x0D) after
-4 s of silence, but every telnet option declined (WONT/DONT, no terminal type,
-no window size). It is the same round, on the same claim of the host, so these
-boards get at most two calls a day; a failed scheduled call gets no C64-style
-one. The call is recorded as a probe of kind `c64`, with its own banner; it does
-not count towards the state.
+answered, as a C64 would: the same connection, one CR (0x0D) after 4 s of
+silence, but every telnet option declined (WONT/DONT, no terminal type, no
+window size), and a longer window for a real C64 behind tcpser that answers
+late: up to 20 s for the first byte, reading until 25 s or 4 KB. It is the same
+round, on the same claim of the host, so these boards get at most two calls a
+day; a failed scheduled call gets no C64-style one, a silent C64-style call is
+tried again the next day. These calls run on two workers of their own, so a
+slow board never holds up the eight of the scheduled calls; a board called
+with a shorter window that found no PETSCII gets one new call on its own. The
+call is recorded as a probe of kind `c64`, with its own banner; it does not
+count towards the state.
 
 An answering board is called once a day (± 2 hours, so they spread), a failing
 one again after 1, then 6, then 24 hours, a dead one weekly; a board that is
@@ -213,7 +218,8 @@ in a row), **dead** (no answer for 30 days; these go to the Graveyard and stay
 there with their history) or **unknown** (not called yet).
 
 The banner gives the encoding (`ansi`, `petscii`, `atascii`, `ascii`, by fixed
-byte rules) and the software (`config/discovery/software.yml`, a table of
+byte rules; plain text with a form feed, bell, backspace, tab or vertical tab,
+or SUB at the end, is still `ascii`) and the software (`config/discovery/software.yml`, a table of
 patterns). Tags come from a closed vocabulary only: the encoding, `sw:`, `net:`
 (the nodelists, and the SBL's networks through `config/discovery/source-map.yml`),
 `cc:`, the state, `new` and `veteran`, the telnet options `binary`, `naws` and

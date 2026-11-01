@@ -17,15 +17,25 @@ module Discovery
   # second time after its scheduled call answered, C64_GAP seconds later
   # (a real C64 board has one line, and needs a while after a hang-up) on
   # the same claim of its host, as a Commodore 64 would call it (no telnet).
-  # Only a PETSCII banner of a call gives it the tag petscii. A board of
-  # before the C64-style call gets its first one on its own (+c64_only+ of
-  # ProbeRepository#due).
+  # Only a PETSCII banner of a call gives it the tag petscii. A board never
+  # called so, or called with a shorter window without PETSCII, gets one on
+  # its own (+c64_only+ of ProbeRepository#due); a silent one is tried again
+  # with every daily round.
+  #
+  # A C64-style call may take TelnetProbe::C64_TOTAL seconds (slow real C64
+  # boards), so they run on C64_CONCURRENCY workers of their own: the
+  # scheduled call's worker hands the board over, keeping its claim on the
+  # host, and goes back to the pool of +concurrency+. A board waiting for its
+  # C64-style call counts in the calls in flight but not against the pool;
+  # at most C64_BACKLOG boards wait for a first one alone.
   class ProberService
     CONCURRENCY = 8
     TICK        = 1
     HOUSEKEEPING_EVERY = 3600
     METRICS_EVERY      = 60
     C64_GAP            = 30
+    C64_CONCURRENCY    = 2
+    C64_BACKLOG        = 4
 
     # [catalog] CatalogRepository  [probes] ProbeRepository
     # [probe]   TelnetProbe (anything with #call(host, port, c64:))
@@ -47,6 +57,7 @@ module Discovery
       @c64_gap     = c64_gap
       @log         = log
       @busy        = {}
+      @c64_stage   = {}
       @mutex       = Mutex.new
     end
 
@@ -55,8 +66,11 @@ module Discovery
     # that many calls (a local test run).
     def run(stop: -> { false }, limit: nil)
       queue = Queue.new
+      @c64_queue = Queue.new
+      @stopping = false
       started = 0
       workers = Array.new(@concurrency) { Thread.new { work(queue) } }
+      c64_workers = Array.new(C64_CONCURRENCY) { Thread.new { work_c64 } }
       housekeeping(force: true)
       until stop.call || (limit && started >= limit && idle?)
         housekeeping
@@ -64,8 +78,11 @@ module Discovery
         sleep TICK
       end
     ensure
+      @stopping = true
       queue&.close
       workers&.each(&:join)
+      @c64_queue&.close
+      c64_workers&.each(&:join)
       @metrics&.write(in_flight: 0)
     end
 
@@ -96,7 +113,7 @@ module Discovery
 
       analysis = analyse(result)
       @probes.add(id, result, kind: ProbeRepository::C64, banner_hash: analysis[:banner_hash])
-      columns = { c64_probe_at: result.at, c64_result: result.result }
+      columns = { c64_probe_at: result.at, c64_result: result.result, c64_window: TelnetProbe::C64_TOTAL }
       if result.result == 'ok' && !result.banner.empty?
         columns.merge!(c64_encoding: analysis[:encoding], c64_banner: result.banner,
                        c64_banner_hash: analysis[:banner_hash], c64_banner_at: result.at)
@@ -139,19 +156,34 @@ module Discovery
     # Puts due boards on +queue+ while a worker is free, one a host and IP.
     # Returns how many.
     def dispatch(queue, limit)
-      free = @concurrency - @mutex.synchronize { @busy.size }
+      free = @concurrency - @mutex.synchronize { @busy.size - @c64_stage.size }
       free = [free, limit].min if limit
       return 0 unless free.positive?
 
       sent = 0
-      @probes.due(Time.now.to_i, limit: (free + @concurrency) * 4).each do |row|
+      now = Time.now.to_i
+      @probes.due(now, limit: (free + @concurrency) * 4).each do |row|
         break if sent >= free
+        next if row['c64_only'] == 1 && @mutex.synchronize { @c64_stage.size } >= C64_BACKLOG
         next unless claim(row)
 
-        queue << row
+        row['c64_only'] == 1 ? hand_over(row, now) : queue << row
         sent += 1
       end
       sent
+    end
+
+    # Gives +row+ (claimed) to the C64-style workers, for a call at +at+.
+    def hand_over(row, at)
+      @mutex.synchronize { @c64_stage[row['id']] = true }
+      @c64_queue << [row, at]
+    end
+
+    def release(id)
+      @mutex.synchronize do
+        @busy.delete(id)
+        @c64_stage.delete(id)
+      end
     end
 
     def claim(row)
@@ -164,33 +196,48 @@ module Discovery
       end
     end
 
+    # The scheduled calls: a board that answered and wants a C64-style call
+    # goes on to the C64-style workers, C64_GAP seconds later, still claimed.
     def work(queue)
       while (row = queue.pop)
+        handed = false
         begin
-          call(row)
+          result = @probe.call(row['host'], row['port'])
+          columns = record(row['id'], result)
+          @log.call(line(row, result, columns))
+          handed = result.success? && c64?(row['id']) && hand_over(row, Time.now.to_i + @c64_gap)
         rescue StandardError => e
-          @log.call("ttg-gate-bbs-prober: #{row['host']}:#{row['port']}: #{e.class}: #{e.message}")
+          log_error(row, e)
         ensure
-          @mutex.synchronize { @busy.delete(row['id']) }
+          release(row['id']) unless handed
         end
       end
     end
 
-    # The scheduled call of +row+, and the C64-style one after it when the
-    # board answered and wants one; only the C64-style call for a c64_only
-    # row.
-    def call(row)
-      unless row['c64_only'] == 1
-        result = @probe.call(row['host'], row['port'])
-        columns = record(row['id'], result)
-        @log.call(line(row, result, columns))
-        return unless result.success? && c64?(row['id'])
-
-        sleep @c64_gap
+    # The C64-style calls, each when its time comes; when the prober stops,
+    # the waiting ones are dropped.
+    def work_c64
+      while (item = @c64_queue.pop)
+        row, at = item
+        begin
+          sleep 0.2 while !@stopping && Time.now.to_i < at
+          call_c64(row) unless @stopping
+        rescue StandardError => e
+          log_error(row, e)
+        ensure
+          release(row['id'])
+        end
       end
+    end
+
+    def call_c64(row)
       result = @probe.call(row['host'], row['port'], c64: true)
       columns = record_c64(row['id'], result)
       @log.call(line(row, result, columns && { encoding: columns[:c64_encoding] }, kind: 'c64'))
+    end
+
+    def log_error(row, error)
+      @log.call("ttg-gate-bbs-prober: #{row['host']}:#{row['port']}: #{error.class}: #{error.message}")
     end
 
     def line(row, result, columns, kind: nil)

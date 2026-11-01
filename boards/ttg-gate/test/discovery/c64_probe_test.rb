@@ -91,6 +91,103 @@ module Discovery
       id
     end
 
+    # A slow real C64 behind tcpser: nothing for +delay+ seconds, then
+    # PETSCII to a caller without telnet; ANSI to a terminal at once.
+    def slow_board(delay)
+      server = TCPServer.new('127.0.0.1', 0)
+      @servers << server
+      @threads << Thread.new do
+        loop do
+          client = server.accept
+          Thread.new(client) do |c|
+            c.write(bytes(N::IAC, N::DO, N::TTYPE))
+            answer = c.wait_readable(0.3) ? c.readpartial(64) : ''.b
+            if answer.include?(bytes(N::IAC, N::WILL, N::TTYPE))
+              c.write(ANSI)
+            else
+              sleep delay
+              c.write(PETSCII)
+            end
+            sleep 1
+          rescue IOError, SystemCallError
+            nil
+          ensure
+            c.close
+          end
+        end
+      rescue IOError, SystemCallError
+        nil
+      end
+      server.addr[1]
+    end
+
+    def test_a_slow_c64_board_is_measured_in_the_longer_window
+      port = slow_board(15)
+      probe = TelnetProbe.new(connect_timeout: 2, read_timeout: 1.2, nudge_after: 0.4, c64_first: 20, c64_total: 25)
+      assert_equal %w[ok ansi], [probe.call('127.0.0.1', port)].map { |r| [r.result, BannerAnalyzer.encoding(r.banner)] }.first
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      result = probe.call('127.0.0.1', port, c64: true)
+      assert_equal ['ok', PETSCII], [result.result, result.banner]
+      assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 26
+      short = TelnetProbe.new(connect_timeout: 2, read_timeout: 1.2, nudge_after: 0.4, c64_first: 2, c64_total: 3)
+      assert_equal 'silent', short.call('127.0.0.1', port, c64: true).result
+    end
+
+    def test_the_normal_call_keeps_its_8_second_window
+      port = slow_board(15)
+      result = TelnetProbe.new(connect_timeout: 2, read_timeout: 1.2, nudge_after: 0.4, c64_first: 20, c64_total: 25)
+                          .call('127.0.0.1', port)
+      assert_operator result.duration_ms, :<, 2500
+    end
+
+    def test_a_board_measured_with_a_shorter_window_is_called_again
+      id = catalog_board(2364, claimed: true)
+      now = Time.now.to_i
+      p = prober
+      p.record(id, probe('ok', at: now - 60, banner: ANSI))
+      @probes.save_state(id, c64_probe_at: now - 50, c64_result: 'silent', c64_window: 8)
+      assert_equal([[id, 1]], @probes.due(now, limit: 10).map { |r| [r['id'], r['c64_only']] })
+      p.record_c64(id, probe('silent', at: now))
+      assert_empty @probes.due(now, limit: 10)
+      @probes.save_state(id, c64_window: 8, c64_encoding: 'petscii')
+      assert_empty @probes.due(now, limit: 10)
+    end
+
+    # A probe whose C64-style calls take +seconds+; counts them at once.
+    class Slow
+      attr_reader :most
+
+      def initialize(seconds)
+        @seconds = seconds
+        @now = 0
+        @most = 0
+        @lock = Mutex.new
+      end
+
+      def call(_host, _port, c64: false)
+        return ProbeResultModel.new(result: 'ok', at: Time.now.to_i, ip: '192.0.2.1', banner: ANSI) unless c64
+
+        @lock.synchronize { @most = [@most, @now += 1].max }
+        sleep @seconds
+        @lock.synchronize { @now -= 1 }
+        ProbeResultModel.new(result: 'silent', at: Time.now.to_i, ip: '192.0.2.1')
+      end
+    end
+
+    def test_slow_c64_calls_run_two_at_once_and_leave_the_pool_free
+      record = RecordModel.new(source_id: 'cbbs', host: 'x', port: 1, hints: { 'platform' => 'Commodore' })
+      ids = Array.new(6) { |i| @catalog.board_id("c#{i}.example.org", 64, 0) }
+      @catalog.apply('cbbs', ids.each_index.map { |i| record.with(host: "c#{i}.example.org", port: 64) }, 0)
+      ids.each { |id| TagService.new(@catalog, @probes, config).refresh(id, now: 0) }
+      slow = Slow.new(1.5)
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      prober(slow).run(limit: 6)
+      assert_equal 2, slow.most
+      assert_equal 6, @db.value("SELECT COUNT(*) FROM probes WHERE kind = 'c64'")
+      assert_equal 6, @db.value("SELECT COUNT(*) FROM probes WHERE kind = 'scheduled'")
+      assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 12
+    end
+
     def test_the_c64_negotiator_refuses_every_option
       telnet = N.new(c64: true)
       _, reply = telnet.feed(bytes(N::IAC, N::DO, N::TTYPE, N::IAC, N::DO, N::NAWS, N::IAC, N::WILL, 1,
