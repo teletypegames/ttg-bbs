@@ -58,3 +58,11 @@
   expect: [Impostor BBS, '2324']
 - q: can I reach all your boards from one port?
   expect: [TTG Gate BBS, '2399']
+- q: what is the cork board?
+  expect: [M on the main menu]
+- q: where is the games room?
+  expect: [R on the main menu]
+- q: what is the town map?
+  expect: [N on the main menu]
+- q: where are the trophies?
+  expect: [H on the main menu]

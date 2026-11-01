@@ -59,3 +59,9 @@
   expect: [Impostor BBS, '2324']
 - q: can I reach all your boards from one port?
   expect: [TTG Gate BBS, '2399']
+- q: where are the trophies?
+  expect: [People > Hall of Fame]
+- q: where is the games room?
+  expect: [Doors > Games Room]
+- q: what is the town map?
+  expect: [Board > BBS Network]
