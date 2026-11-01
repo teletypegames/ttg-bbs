@@ -62,3 +62,4 @@ hotspots:
   mail: [36, 6, 3, 1]
   flag: [39, 5]
   status: [21, 0, 19, 1]
+layers: [snow_dusk, pumpkin_dusk, fireworks_dusk, bunting_dusk]

@@ -96,3 +96,4 @@ hotspots:
   mail: [74, 8, 5, 1]
   flag: [79, 6, 1, 2]
   status: [57, 0, 23, 2]
+layers: [snow_night, pumpkin_night, fireworks_night, bunting_night]

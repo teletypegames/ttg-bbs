@@ -21,8 +21,12 @@ module UI
     end
 
     # The clubhouse from the street for +season+ (a BBS::Season): the
-    # picture of its time of day with the layers of its season.
-    def self.house(face, season) = load(face, "house_#{season.time_of_day}", season.layers)
+    # picture of its time of day (house_<time>) with the layers of its
+    # season drawn for that time (snow_<time>, pumpkin_<time>, …).
+    def self.house(face, season)
+      time = season.time_of_day
+      load(face, "house_#{time}", season.layers.map { |layer| "#{layer}_#{time}" })
+    end
 
     # The ANSI colour of the background of +art+'s cell at +col+, +row+, as
     # an SGR parameter (<tt>48;5;n</tt>), or '' for none: a hotspot's
