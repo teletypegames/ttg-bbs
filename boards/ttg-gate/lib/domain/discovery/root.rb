@@ -11,7 +11,8 @@ module Discovery
   # [TTG_GATE_BBS_DISCORD_WEBHOOK]   where import alerts go; empty: nowhere
   # [TTG_GATE_BBS_DIAL_WINDOW]       the Gate's dial limits: the window in
   # [TTG_GATE_BBS_DIAL_PER_CALLER]   seconds, the dials a caller in it, the
-  # [TTG_GATE_BBS_DIAL_PER_HOST]     lines to one host at once (DialService)
+  # [TTG_GATE_BBS_DIAL_PER_HOST]     lines to one address at once, the
+  # [TTG_GATE_BBS_DIAL_IDLE]         seconds a silent line lasts (DialService)
   class Root
     ROOT = File.expand_path('../../..', __dir__)
 
@@ -33,11 +34,12 @@ module Discovery
       @dial_limits = {
         window:     limit(env, 'TTG_GATE_BBS_DIAL_WINDOW', DialService::WINDOW),
         per_caller: limit(env, 'TTG_GATE_BBS_DIAL_PER_CALLER', DialService::PER_CALLER),
-        per_host:   limit(env, 'TTG_GATE_BBS_DIAL_PER_HOST', DialService::PER_HOST)
+        per_host:   limit(env, 'TTG_GATE_BBS_DIAL_PER_HOST', DialService::PER_HOST),
+        idle:       limit(env, 'TTG_GATE_BBS_DIAL_IDLE', DialService::IDLE)
       }
     end
 
-    # The Gate's dial limits: window, per_caller, per_host.
+    # The Gate's dial limits: window, per_caller, per_host, idle.
     attr_reader :dial_limits
 
     def importer

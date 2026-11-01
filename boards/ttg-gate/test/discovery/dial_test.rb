@@ -1,12 +1,17 @@
 # frozen_string_literal: true
 
 require_relative 'test_helper'
+require 'minitest/mock'
+require_relative '../../lib/ui/dial'
 
 module Discovery
   class DialTest < Minitest::Test
     include TestHelper
 
     PUBLIC = '93.184.215.14'
+    OTHER  = '93.184.215.15'
+    # Each name of the tests and the address it resolves to.
+    ADDRESSES = { 'bbs.example.org' => PUBLIC, 'alias.example.org' => PUBLIC, 'other.example.org' => OTHER }.freeze
 
     Report = Struct.new(:connected, :error, :address, :connect_seconds, :received, :hung_up, keyword_init: true)
 
@@ -24,7 +29,7 @@ module Discovery
       @live = File.join(@tmp, 'gate-dials.json')
       @history = DialRepository.new(@db)
       @dials = DialService.new(recorder: @recorder, history: @history, live_path: @live, clock: -> { @now }, log: ->(_) {},
-                               resolver: ->(_) { [PUBLIC] })
+                               resolver: ->(host) { [ADDRESSES.fetch(host)] })
     end
 
     def board(host = 'bbs.example.org', state: 'online', tags: %w[ansi online])
@@ -63,6 +68,18 @@ module Discovery
       assert_equal :busy, inner.reason
       assert_equal 0, @dials.live
       assert_equal 0, JSON.parse(File.read(@live))['live']
+    end
+
+    def test_two_names_of_one_address_share_its_lines
+      @dials.dial('a', board, face: :modern) do
+        @dials.dial('b', board('alias.example.org'), face: :modern) do
+          @dials.dial('c', board, face: :modern) do
+            assert_equal :busy, @dials.check('d', board('alias.example.org'), face: :modern).reason
+            assert_nil @dials.check('d', board('other.example.org'), face: :modern)
+          end
+        end
+      end
+      assert_nil @dials.check('d', board('alias.example.org'), face: :modern)
     end
 
     def test_the_line_is_freed_and_recorded_when_the_caller_hangs_up
@@ -110,12 +127,40 @@ module Discovery
       assert_equal PUBLIC, call.ip
     end
 
+    # A stand-in for BBS::Gateway that keeps what it was built with.
+    class Gateway
+      attr_reader :options
+
+      def initialize(**options) = @options = options
+      def call(_session) = yield(Report.new(connected: true, received: 1))
+    end
+
+    def test_a_catalog_dial_goes_to_the_address_and_ends_when_idle
+      gateway = nil
+      dials = DialService.new(recorder: @recorder, clock: -> { @now }, log: ->(_) {}, idle: 90,
+                              resolver: ->(_) { [PUBLIC] })
+      BBS::Gateway.stub(:new, ->(**options) { gateway = Gateway.new(**options) }) do
+        UI.dial_catalog(Object.new, dials, 'a', board, face: :modern)
+      end
+      assert_equal [PUBLIC, 23, 90], gateway.options.values_at(:host, :port, :idle)
+    end
+
     def test_a_caller_is_its_address_and_a_local_line_its_session
       assert_equal '203.0.113.5', DialService.caller_key('203.0.113.5', 'abc')
       assert_equal '203.0.113.5', DialService.caller_key('::ffff:203.0.113.5', 'abc')
       assert_equal 'line:abc', DialService.caller_key('172.17.0.1', 'abc')
       assert_equal 'line:abc', DialService.caller_key('127.0.0.1', 'abc')
       assert_equal 'line:abc', DialService.caller_key(nil, 'abc')
+      assert_equal 'line:abc', DialService.caller_key('fd00::1', 'abc')
+    end
+
+    def test_an_ipv6_caller_is_its_64
+      first = DialService.caller_key('2a01:4f8:1:2:aaaa::1', 'abc')
+      assert_equal '2a01:4f8:1:2::/64', first
+      assert_equal first, DialService.caller_key('2a01:4f8:1:2:ffff:ffff:ffff:ffff', 'xyz')
+      refute_equal first, DialService.caller_key('2a01:4f8:1:3::1', 'abc')
+      10.times { assert_kind_of DialService::Call, dial(DialService.caller_key("2a01:4f8:1:2::#{_1 + 1}", 's')) }
+      assert_equal :rate, dial(DialService.caller_key('2a01:4f8:1:2::beef', 's')).reason
     end
 
     def test_the_metrics_read_the_live_dials
@@ -159,21 +204,22 @@ module Discovery
 
     def test_the_limits_come_from_the_environment
       env = { 'TTG_GATE_BBS_DATA' => @tmp, 'TTG_GATE_BBS_DISCOVERY_DB' => File.join(@tmp, 'root.sqlite3'),
-              'TTG_GATE_BBS_DIAL_WINDOW' => '300', 'TTG_GATE_BBS_DIAL_PER_CALLER' => '4', 'TTG_GATE_BBS_DIAL_PER_HOST' => '2' }
+              'TTG_GATE_BBS_DIAL_WINDOW' => '300', 'TTG_GATE_BBS_DIAL_PER_CALLER' => '4', 'TTG_GATE_BBS_DIAL_PER_HOST' => '2',
+              'TTG_GATE_BBS_DIAL_IDLE' => '120' }
       root = Root.new(env)
-      assert_equal({ window: 300, per_caller: 4, per_host: 2 }, root.dial_limits)
+      assert_equal({ window: 300, per_caller: 4, per_host: 2, idle: 120 }, root.dial_limits)
       dials = root.dials(log: ->(_) {})
-      assert_equal [300, 4, 2], [dials.window, dials.per_caller, dials.per_host]
+      assert_equal [300, 4, 2, 120], [dials.window, dials.per_caller, dials.per_host, dials.idle]
       assert_equal({ 'window_seconds' => 300, 'per_caller' => 4, 'per_host' => 2 },
                    JSON.parse(File.read(root.dials_path))['limits'])
       root.db.close
       _, err = capture_io do
         bad = Root.new(env.merge('TTG_GATE_BBS_DIAL_WINDOW' => 'soon', 'TTG_GATE_BBS_DIAL_PER_HOST' => '0'))
-        assert_equal({ window: 600, per_caller: 4, per_host: 3 }, bad.dial_limits)
+        assert_equal({ window: 600, per_caller: 4, per_host: 3, idle: 120 }, bad.dial_limits)
         bad.db.close
       end
       assert_includes err, 'TTG_GATE_BBS_DIAL_WINDOW=soon'
-      assert_equal({ window: 600, per_caller: 10, per_host: 3 }, Root.new(env.slice('TTG_GATE_BBS_DATA')).dial_limits)
+      assert_equal({ window: 600, per_caller: 10, per_host: 3, idle: 600 }, Root.new(env.slice('TTG_GATE_BBS_DATA')).dial_limits)
     end
 
     def test_the_limits_given_hold
