@@ -10,33 +10,33 @@ module UI
 
         def self.body(username:, registered:, online_count:, total_messages:,
                       recent_callers:, posts:, events:, oneliners:)
-          callers = recent_callers.map do |c|
-            "  · #{c.username}  \e[2;37m#{c.timestamp[0, 16].sub('T', ' ')}\e[0m"
-          end
-          status = if registered then ''
-                   elsif username == 'Anonymous' then "  \e[2;37m(call with a name to register it)\e[0m"
-                   else "  \e[2;37m(guest — You > Register keeps your name)\e[0m"
-                   end
           [
             *BANNER,
             :spacer,
-            "Logged in as \e[1;33m#{username}\e[0m#{status}",
+            "Logged in as \e[1;33m#{username}\e[0m#{status(username, registered)}",
             "Online now: #{online_count}   Messages: #{total_messages}",
             :spacer,
             { text: 'Lost? Press F1: the TTG Master, the sysop, answers your questions.', style: :accent },
-            :spacer,
-            'New on the boards:',
-            *(posts.empty? ? ['  (nothing posted yet — Messages > Boards)'] : posts.map { |b, m| Posts.line(b, m) }),
-            :spacer,
-            'Coming up:',
-            *(events.empty? ? ['  (nothing scheduled)'] : events.map { |e| Events.line(e) }),
-            :spacer,
-            'Last callers:',
-            *(callers.empty? ? ['  (none yet)'] : callers),
-            :spacer,
-            'Oneliners:',
-            *(oneliners.empty? ? ['  (the wall is empty — Messages > Oneliners)'] : Oneliners.lines(oneliners))
+            *section('New on the boards:', posts.map { |b, m| Posts.line(b, m) },
+                     '  (nothing posted yet — Messages > Boards)'),
+            *section('Coming up:', events.map { |e| Events.line(e) }, '  (nothing scheduled)'),
+            *section('Last callers:', recent_callers.map { |c| caller_line(c) }, '  (none yet)'),
+            *section('Oneliners:', Oneliners.lines(oneliners), '  (the wall is empty — Messages > Oneliners)')
           ]
+        end
+
+        # A spacer, the +title+, then the +lines+ or the +empty+ line.
+        def self.section(title, lines, empty) = [:spacer, title, *(lines.empty? ? [empty] : lines)]
+
+        def self.caller_line(entry)
+          "  · #{entry.username}  \e[2;37m#{entry.timestamp[0, 16].sub('T', ' ')}\e[0m"
+        end
+
+        def self.status(username, registered)
+          if registered then ''
+          elsif username == 'Anonymous' then "  \e[2;37m(call with a name to register it)\e[0m"
+          else "  \e[2;37m(guest — You > Register keeps your name)\e[0m"
+          end
         end
       end
 
@@ -202,16 +202,19 @@ module UI
           head  = " #{board_title} · #{messages.size} message#{'s' if messages.size != 1} "[0, inner].ljust(inner)
           lines = ["\e[0;38;5;16;48;5;78m#{head}\e[0m", '']
           messages.each_with_index do |m, i|
-            stamp = m.timestamp.to_s
-            left  = "\e[0;38;5;78m##{i + 1}\e[0m \e[1;33m#{m.username}\e[0m"
-            pad   = [inner - BBS::FrameBuffer.visible_width(left) - stamp.length, 1].max
-            lines << "#{left}#{' ' * pad}\e[2;37m#{stamp}\e[0m"
-            m.text.to_s.split("\n").each do |text|
-              BBS::FrameBuffer.wrap_ansi(text, inner - 2).each { |l| lines << "  #{l}" }
-            end
+            lines.concat(message(m, i + 1, inner))
             lines << "\e[2;37m#{'┄' * inner}\e[0m" unless i == messages.size - 1
           end
           lines
+        end
+
+        # Message +number+: its author and date, then its text indented.
+        def self.message(msg, number, inner)
+          stamp = msg.timestamp.to_s
+          left  = "\e[0;38;5;78m##{number}\e[0m \e[1;33m#{msg.username}\e[0m"
+          pad   = [inner - BBS::FrameBuffer.visible_width(left) - stamp.length, 1].max
+          ["#{left}#{' ' * pad}\e[2;37m#{stamp}\e[0m",
+           *msg.text.to_s.split("\n").flat_map { |text| BBS::FrameBuffer.wrap_ansi(text, inner - 2).map { |l| "  #{l}" } }]
         end
       end
 

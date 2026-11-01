@@ -66,23 +66,25 @@ module UI
       def self.house(canvas, scene, node:, status:)
         art = Arts.house(:c64, scene.season)
         art.draw_canvas(canvas)
-        (1..7).each do |n|
-          spot = art.hotspot(:"node_#{n}")
-          canvas.text(spot.row, spot.col, ' ' * spot.width, n == node ? :white : :yellow, rvs: true) if scene.lit?(n)
-        end
-        if scene.inside.positive?
-          door = art.hotspot(:door)
-          canvas.text(door.row, door.col, '▒' * door.width, :yellow, rvs: true)
-        end
-        if scene.mail.positive?
-          flag = art.hotspot(:flag)
-          canvas.text(flag.row, flag.col, ' ', :red, rvs: true)
-          box = art.hotspot(:mail)
-          canvas.text(box.row, box.col, scene.mail.clamp(0, 99).to_s.center(box.width), :blue, rvs: true)
-        end
+        (1..7).each { |n| at(canvas, art, :"node_#{n}", '', n == node ? :white : :yellow) if scene.lit?(n) }
+        at(canvas, art, :door, '▒' * art.hotspot(:door).width, :yellow) if scene.inside.positive?
+        mailbox(canvas, art, scene.mail) if scene.mail.positive?
         spot = art.hotspot(:status)
         canvas.text(spot.row, spot.col, status[0, spot.width].rjust(spot.width), :light_grey)
         art
+      end
+
+      # +text+ reversed in +color+, over the whole hotspot +name+ of +art+.
+      def self.at(canvas, art, name, text, color)
+        spot = art.hotspot(name)
+        canvas.text(spot.row, spot.col, text.center(spot.width), color, rvs: true)
+      end
+
+      # The flag up and the count of the letters on the mailbox.
+      def self.mailbox(canvas, art, mail)
+        flag = art.hotspot(:flag)
+        canvas.text(flag.row, flag.col, ' ', :red, rvs: true)
+        at(canvas, art, :mail, mail.clamp(0, 99).to_s, :blue)
       end
 
       # One puff of the chimney's smoke on +canvas+ (+step+ counts them).
@@ -139,10 +141,8 @@ module UI
 
         def run(lit: nil, unread: 0)
           scene  = @bbs.scene.scene(name, registered: registered?, sysop: sysop?)
-          node   = @bbs.online.node(@ctx[:session_id])&.number
           canvas = C.new
-          art    = Clubhouse.house(canvas, scene, node: node,
-                                                  status: "#{"NODE #{node}  " if node}#{Time.now.strftime('%H:%M')}")
+          art    = house(canvas, scene)
           live(canvas, scene, unread)
           Clubhouse.box(canvas, MENU_ROW - 1, 1, 38, 11, C::DARK_GREY)
           canvas.text(MENU_ROW + 10, 2, HINT, :dark_grey)
@@ -158,15 +158,21 @@ module UI
         def registered? = @ctx[:authenticated] == true
         def sysop? = @bbs.sysop?(name, @ctx[:authenticated])
 
+        def house(canvas, scene)
+          node = @bbs.online.node(@ctx[:session_id])&.number
+          Clubhouse.house(canvas, scene, node: node, status: "#{"NODE #{node}  " if node}#{Time.now.strftime('%H:%M')}")
+        end
+
         # Who is calling and what is going on, under the house.
         def live(canvas, scene, unread)
           mail = unread.positive? ? "  #{unread} NEW LETTER#{'S' unless unread == 1}" : ''
           canvas.text(HOUSE_ROWS, 1, "HI #{BBS::Petscii.plain(name).upcase[0, 14]}!", :white)
           inside = "#{scene.inside} INSIDE#{mail}"
           canvas.text(HOUSE_ROWS, 39 - inside.length, inside, unread.positive? ? :light_green : :yellow)
-          event = scene.events.first
-          return unless event
+          next_event(canvas, scene.events.first) if scene.events.first
+        end
 
+        def next_event(canvas, event)
           days  = ((event.date - Time.now) / 86_400).ceil
           when_ = days <= 0 ? 'TODAY' : "IN #{days} DAY#{'S' unless days == 1}"
           what  = BBS::Petscii.plain(event.name).upcase[0, 38 - 6 - when_.length - 1]
@@ -215,6 +221,17 @@ module UI
           places.each { |p| mark(p, p.equal?(chosen)) }
           info
           @session.write_raw(@canvas.frame + rest)
+          walk
+        end
+
+        # The bytes of the last move (for measuring).
+        attr_reader :last
+
+        private
+
+        def rest = @canvas.cursor(C::ROWS - 1, 0)
+
+        def walk
           loop do
             key = @session.readkey
             raise IOError, 'the caller hung up' if key.nil?
@@ -227,28 +244,26 @@ module UI
           end
         end
 
-        # The bytes of the last move (for measuring).
-        attr_reader :last
-
-        private
-
-        def rest = @canvas.cursor(C::ROWS - 1, 0)
-
+        # To the place nearest in the direction +dr+, +dc+: the cross
+        # distance weighs more, so a row stays a row.
         def move(dr, dc)
-          r0, c0 = at(chosen)
-          best = places.each_index.select do |i|
-            r, c = at(places[i])
-            dr.zero? ? ((c - c0) * dc).positive? : ((r - r0) * dr).positive?
-          end
-          best = best.min_by do |i|
-            r, c = at(places[i])
-            dr.zero? ? (c - c0).abs + ((r - r0).abs * 8) : (r - r0).abs + ((c - c0).abs * 3)
-          end
+          from = at(chosen)
+          best = places.each_index.select { |i| ahead?(at(places[i]), from, dr, dc) }
+                       .min_by { |i| distance(at(places[i]), from, dr) }
           return unless best && best != @index
 
+          show_move(best)
+        end
+
+        def ahead?((r, c), (r0, c0), dr, dc) = dr.zero? ? ((c - c0) * dc).positive? : ((r - r0) * dr).positive?
+
+        def distance((r, c), (r0, c0), dr) = dr.zero? ? (c - c0).abs + ((r - r0).abs * 8) : (r - r0).abs + ((c - c0).abs * 3)
+
+        # The marks and the info moved to place +index+, as a patch.
+        def show_move(index)
           before = @canvas.dup
           mark(chosen, false)
-          @index = best
+          @index = index
           mark(chosen, true)
           info
           @last = Clubhouse.changes(@canvas, before) + rest
@@ -398,10 +413,7 @@ module UI
         def show
           @canvas = @art.draw_canvas(C.new)
           put(:entry, @bbs.last_callers.caller_number.to_s, :white)
-          @bbs.last_callers.recent(3).each_with_index do |c, i|
-            put(:"guest_#{i + 1}", "#{BBS::Petscii.plain(c.username).upcase[0, 15].ljust(16)}#{c.timestamp.to_s[11, 5]}",
-                :light_grey)
-          end
+          guests
           count = @bbs.online.count
           put(:coats, count.zero? ? 'NONE YET' : '♠' * count.clamp(0, 15), :orange)
           @screen.session.write_raw(@canvas.frame)
@@ -418,6 +430,13 @@ module UI
         end
 
         private
+
+        def guests
+          @bbs.last_callers.recent(3).each_with_index do |c, i|
+            put(:"guest_#{i + 1}", "#{BBS::Petscii.plain(c.username).upcase[0, 15].ljust(16)}#{c.timestamp.to_s[11, 5]}",
+                :light_grey)
+          end
+        end
 
         def ask(name, mask: nil)
           spot = @art.hotspot(name)
@@ -444,22 +463,31 @@ module UI
           canvas.text(0, 1, 'TROPHIES', :purple)
           canvas.text(0, 10, '- THE HALL OF FAME', :dark_grey)
           art.draw_canvas(canvas, row: 2)
-          TITLES.each_with_index do |(list, title), i|
-            rows = fame.fetch(list)
-            spot = art.hotspot(:"title_#{list}")
-            canvas.text(2 + spot.row, spot.col, title.center(spot.width), :white)
-            plate = art.hotspot(:"plate_#{list}")
-            first = rows.first ? BBS::Petscii.plain(rows.first.first).upcase[0, plate.width] : '-'
-            canvas.text(2 + plate.row, plate.col, first.center(plate.width), :yellow)
-            rows.drop(1).first(6).each_with_index do |(name, n), j|
-              line = "#{j + 2} #{BBS::Petscii.plain(name).upcase[0, 6].ljust(6)}#{n.to_s.rjust(3)}"
-              canvas.text(12 + j, 1 + (i * 13), line[0, 12], j.zero? ? :light_grey : :grey)
-            end
-          end
+          TITLES.each_with_index { |(list, title), i| compartment(canvas, art, list, title, fame.fetch(list), i) }
           canvas.text(23, 1, 'RETURN OR <-: BACK', :dark_grey)
           session.write_raw(canvas.frame + canvas.cursor(C::ROWS - 1, 0))
           session.readkey
         end
+
+        # One cup: its title and the first name on its plate, the places
+        # after it in column +column+ under the case.
+        def self.compartment(canvas, art, list, title, rows, column)
+          label(canvas, art.hotspot(:"title_#{list}"), title, :white)
+          plate = art.hotspot(:"plate_#{list}")
+          label(canvas, plate, rows.first ? upper(rows.first.first)[0, plate.width] : '-', :yellow)
+          places(canvas, rows.drop(1).first(6), 1 + (column * 13))
+        end
+
+        def self.places(canvas, rows, col)
+          rows.each_with_index do |(name, n), j|
+            line = "#{j + 2} #{upper(name)[0, 6].ljust(6)}#{n.to_s.rjust(3)}"
+            canvas.text(12 + j, col, line[0, 12], j.zero? ? :light_grey : :grey)
+          end
+        end
+
+        def self.label(canvas, spot, text, color) = canvas.text(2 + spot.row, spot.col, text.center(spot.width), color)
+
+        def self.upper(name) = BBS::Petscii.plain(name).upcase
       end
 
       # The card of a room, once a call before the room opens: its picture,
@@ -485,14 +513,18 @@ module UI
           seen << room
           art = Arts.load(:c64, "card_#{room}")
           canvas = art.draw_canvas(C.new, row: TOP)
-          about = art.hotspot(:about)
-          BBS::FrameBuffer.wrap_ansi(ABOUT.fetch(room), about.width).first(about.height).each_with_index do |l, i|
-            canvas.text(TOP + about.row + i, about.col, l, :light_grey)
-          end
+          about(canvas, art, room)
           hint = art.hotspot(:hint)
           canvas.text(TOP + hint.row, hint.col, 'RETURN: GO IN', :dark_grey)
           session.write_raw(canvas.frame + canvas.cursor(C::ROWS - 1, 0))
           session.readkey
+        end
+
+        def self.about(canvas, art, room)
+          about = art.hotspot(:about)
+          BBS::FrameBuffer.wrap_ansi(ABOUT.fetch(room), about.width).first(about.height).each_with_index do |l, i|
+            canvas.text(TOP + about.row + i, about.col, l, :light_grey)
+          end
         end
       end
 
@@ -507,24 +539,31 @@ module UI
           canvas = C.new
           canvas.text(0, 1, 'LEAVING THE CLUBHOUSE', :light_green)
           room(canvas, [], caller_number, seconds)
-          canvas.text(TOP + 14, 1, "THANKS FOR CALLING, #{BBS::Petscii.plain(name).upcase[0, 16]}!", :white)
-          text, who = quote
-          words = BBS::FrameBuffer.wrap_ansi(BBS::Petscii.plain("\"#{text}\"#{" - #{who}" if who}").upcase, 38)
-          words.first(3).each_with_index { |l, i| canvas.text(TOP + 16 + i, 1, l, :grey) }
+          thanks(canvas, name, quote)
           session.write_raw(canvas.frame + canvas.cursor(C::ROWS - 1, 0))
-          steps = (1..4).map do |n|
-            sleep STEP
-            before = canvas.dup
-            room(canvas, (1..n).map { |i| "leaving_out_#{i}" }, caller_number, seconds)
-            bytes = canvas.update(before)
-            session.write_raw(bytes)
-            bytes.bytesize
-          end
+          steps = (1..4).map { |n| lamp_out(session, canvas, n, caller_number, seconds) }
           sleep STEP
           canvas.text(22, 1, '+++  ATH0', :grey)
           canvas.text(22, 12, 'NO CARRIER', :light_red)
           session.write_raw(canvas.span(22, 0, 22) + canvas.cursor(C::ROWS - 1, 0))
           steps
+        end
+
+        def self.thanks(canvas, name, quote)
+          canvas.text(TOP + 14, 1, "THANKS FOR CALLING, #{BBS::Petscii.plain(name).upcase[0, 16]}!", :white)
+          text, who = quote
+          words = BBS::FrameBuffer.wrap_ansi(BBS::Petscii.plain("\"#{text}\"#{" - #{who}" if who}").upcase, 38)
+          words.first(3).each_with_index { |l, i| canvas.text(TOP + 16 + i, 1, l, :grey) }
+        end
+
+        # Lamp +n+ goes out, as a patch; returns its bytes.
+        def self.lamp_out(session, canvas, n, caller_number, seconds)
+          sleep STEP
+          before = canvas.dup
+          room(canvas, (1..n).map { |i| "leaving_out_#{i}" }, caller_number, seconds)
+          bytes = canvas.update(before)
+          session.write_raw(bytes)
+          bytes.bytesize
         end
 
         def self.room(canvas, layers, caller_number, seconds)

@@ -59,6 +59,9 @@ module UI
       # The smoke from the chimney, a frame a second.
       SMOKE = [' ░▒░  ', ' ▒░ ░ ', '░ ▒░  ', ' ░ ▒░ '].freeze
 
+      # Where a panel goes on the frame.
+      Box = Struct.new(:x, :y, :width, :height)
+
       attr_writer :data
       # The room whose window is open (Clubhouse::Cards), its card over the
       # top of the house; nil for none.
@@ -79,22 +82,31 @@ module UI
         return if @data.nil? || bounds.width < 40 || bounds.height < 12
 
         width = [bounds.width - 4, WIDTH].min
-        x = bounds.x + ((bounds.width - width) / 2)
-        y = bounds.y
-        if bounds.width >= WIDTH && bounds.height >= 23
-          house(frame, bounds.x + ((bounds.width - WIDTH) / 2), y)
-          y += HOUSE
-        else
-          header(frame, x, y + 1, width)
-          y += 4
-        end
+        x = centred(width)
+        y = top(frame, x, width)
         y += boards(frame, x, y, width)
-        ticker(frame, x, [y + 1, bounds.y + bounds.height - 3].min, width)
+        ticker(frame, x, [y + 1, bottom - 3].min, width)
       end
 
       private
 
       def scene = @data.scene
+
+      def bottom = bounds.y + bounds.height
+
+      # The column where something +width+ wide sits in the middle.
+      def centred(width) = bounds.x + ((bounds.width - width) / 2)
+
+      # The house, or on a small terminal the logo; returns the row under it.
+      def top(frame, x, width)
+        if bounds.width >= WIDTH && bounds.height >= 23
+          house(frame, centred(WIDTH), bounds.y)
+          bounds.y + HOUSE
+        else
+          header(frame, x, bounds.y + 1, width)
+          bounds.y + 4
+        end
+      end
 
       # ── the house ────────────────────────────────────────────────────────
 
@@ -118,14 +130,19 @@ module UI
       def house_scene(art)
         s = BBS::Widgets::Scene.new(art: art)
         (1..WINDOWS).each { |n| s.fill(:"node_#{n}") { |spot| window(art, spot, n) } }
-        s.fill(:door)   { |spot| fill(art, spot, 220, '▒▒') if scene.inside.positive? }
-        s.fill(:lamp)   { |spot| fill(art, spot, 226, '☼') if scene.inside.positive? }
-        s.fill(:inside) { |spot| fill(art, spot, 230, "#{scene.inside}☺") if scene.inside.positive? }
-        s.fill(:smoke)  { |spot| fill(art, spot, 250, SMOKE[@ticks % SMOKE.size]) if scene.smoking }
+        light_up(s, art)
         s.fill(:flag)   { |spot| flag(art, spot) if scene.mail.positive? }
         s.fill(:mail)   { |spot| fill(art, spot, 231, "✉ #{scene.mail}".center(spot.width)) if scene.mail.positive? }
         s.fill(:status) { |spot| status(art, spot) }
         s
+      end
+
+      # The door, the lamp and the count while anyone is in; the smoke.
+      def light_up(s, art)
+        s.fill(:door)   { |spot| fill(art, spot, 220, '▒▒') if scene.inside.positive? }
+        s.fill(:lamp)   { |spot| fill(art, spot, 226, '☼') if scene.inside.positive? }
+        s.fill(:inside) { |spot| fill(art, spot, 230, "#{scene.inside}☺") if scene.inside.positive? }
+        s.fill(:smoke)  { |spot| fill(art, spot, 250, SMOKE[@ticks % SMOKE.size]) if scene.smoking }
       end
 
       # A lit window: a node taken. The caller's own burns brighter.
@@ -173,29 +190,33 @@ module UI
 
       # The two boards; returns the rows they take.
       def boards(frame, x, y, width)
-        room    = bounds.y + bounds.height - 4 - y
-        two     = width >= 70
-        panel_w = two ? (width - 2) / 2 : width
-        @inner  = panel_w - 4
-        if two
-          height = room.clamp(4, 9)
-          panel(frame, x, y, panel_w, height, :people, 'INSIDE NOW', inside_lines(height - 2))
-          panel(frame, x + panel_w + 2, y, panel_w, height, :board, 'ON THE NOTICE BOARD', notice_lines)
-          height
-        else
-          height = (room / 2).clamp(3, 6)
-          panel(frame, x, y, width, height, :people, 'INSIDE NOW', inside_lines(height - 2))
-          panel(frame, x, y + height, width, height, :board, 'ON THE NOTICE BOARD', notice_lines)
-          height * 2
-        end
+        room = bottom - 4 - y
+        width >= 70 ? side_by_side(frame, x, y, width, room) : stacked(frame, x, y, width, room)
       end
 
-      def panel(frame, x, y, width, height, section, title, lines)
-        frame.box(x: x, y: y, width: width, height: height, sgr: Accent.fg(section), style: :single,
+      def side_by_side(frame, x, y, width, room)
+        panel_w = (width - 2) / 2
+        @inner  = panel_w - 4
+        height  = room.clamp(4, 9)
+        panel(frame, Box.new(x, y, panel_w, height), :people, 'INSIDE NOW', inside_lines(height - 2))
+        panel(frame, Box.new(x + panel_w + 2, y, panel_w, height), :board, 'ON THE NOTICE BOARD', notice_lines)
+        height
+      end
+
+      def stacked(frame, x, y, width, room)
+        @inner = width - 4
+        height = (room / 2).clamp(3, 6)
+        panel(frame, Box.new(x, y, width, height), :people, 'INSIDE NOW', inside_lines(height - 2))
+        panel(frame, Box.new(x, y + height, width, height), :board, 'ON THE NOTICE BOARD', notice_lines)
+        height * 2
+      end
+
+      def panel(frame, box, section, title, lines)
+        frame.box(x: box.x, y: box.y, width: box.width, height: box.height, sgr: Accent.fg(section), style: :single,
                   title: " #{title} ", title_sgr: Accent.styles(section)[:window_title_focused])
-        lines.first(height - 2).each_with_index do |line, i|
-          frame.move(x + 2, y + 1 + i)
-          frame.write_ansi(BBS::FrameBuffer.clip_ansi(line, width - 4), base_sgr: T)
+        lines.first(box.height - 2).each_with_index do |line, i|
+          frame.move(box.x + 2, box.y + 1 + i)
+          frame.write_ansi(BBS::FrameBuffer.clip_ansi(line, box.width - 4), base_sgr: T)
         end
       end
 
@@ -203,34 +224,45 @@ module UI
       def inside_lines(rows)
         nodes = scene.nodes
         shown = nodes.size > rows - 1 ? nodes.first(rows - 2) : nodes
-        lines = shown.map do |n|
-          on  = Formatters.duration(Time.now - n.since)
-          dot = n.number == @data.node ? "#{Y}●" : "#{G}●"
-          "#{dot} #{W}#{n.name.to_s[0, 9].ljust(10)}#{D}#{n.activity.to_s[0, @inner - 18].ljust(@inner - 17)}#{T}#{on}"
-        end
+        lines = shown.map { |n| node_line(n) }
         lines << "#{D}  and #{nodes.size - shown.size} more inside" if shown.size < nodes.size
+        lines << guestbook_line
+      end
+
+      def node_line(node)
+        on  = Formatters.duration(Time.now - node.since)
+        dot = node.number == @data.node ? "#{Y}●" : "#{G}●"
+        "#{dot} #{W}#{node.name.to_s[0, 9].ljust(10)}#{D}#{node.activity.to_s[0, @inner - 18].ljust(@inner - 17)}#{T}#{on}"
+      end
+
+      def guestbook_line
         guests = scene.guestbook.map { |c| "#{c.username} #{c.timestamp.to_s[11, 5]}" }
-        lines << "#{D}guestbook: #{T}#{guests.empty? ? '(empty)' : guests.join(' · ')}"
+        "#{D}guestbook: #{T}#{guests.empty? ? '(empty)' : guests.join(' · ')}"
       end
 
       # What is coming up, with a bar that fills as the day nears, then the
       # new notes on the cork board and the caller's letters.
       def notice_lines
-        lines = scene.events.map do |e|
-          days = [((e.date - Time.now) / 86_400).ceil, 0].max
-          left = days.zero? ? 'today' : "#{days} day#{'s' unless days == 1}"
-          bar  = ((30 - days.clamp(0, 30)) * 3 / 30.0).round
-          "#{W}#{e.name[0, @inner - 12].ljust(@inner - 11)}#{Y}#{'▓' * bar}#{D}#{'░' * (3 - bar)} #{T}#{left.rjust(7)}"
-        end
+        lines = scene.events.map { |e| event_line(e) }
         lines = ["#{D}(nothing scheduled yet)"] if lines.empty?
-        notes = scene.notes
-        lines << if notes.zero? then "#{D}no new notes on the cork board"
-                 else "#{G}#{notes} new note#{'s' unless notes == 1} #{D}on the cork board (F2)"
-                 end
-        if scene.mail.positive?
-          lines << "#{Y}✉ #{scene.mail} unread letter#{'s' unless scene.mail == 1}#{D} · F7 opens the mailbox"
-        end
+        lines << notes_line
+        lines << "#{Y}✉ #{scene.mail} unread letter#{'s' unless scene.mail == 1}#{D} · F7 opens the mailbox" if
+          scene.mail.positive?
         lines
+      end
+
+      def event_line(event)
+        days = [((event.date - Time.now) / 86_400).ceil, 0].max
+        left = days.zero? ? 'today' : "#{days} day#{'s' unless days == 1}"
+        bar  = ((30 - days.clamp(0, 30)) * 3 / 30.0).round
+        "#{W}#{event.name[0, @inner - 12].ljust(@inner - 11)}#{Y}#{'▓' * bar}#{D}#{'░' * (3 - bar)} #{T}#{left.rjust(7)}"
+      end
+
+      def notes_line
+        notes = scene.notes
+        return "#{D}no new notes on the cork board" if notes.zero?
+
+        "#{G}#{notes} new note#{'s' unless notes == 1} #{D}on the cork board (F2)"
       end
 
       # The graffiti wall (the oneliners) as one line running from right to left.

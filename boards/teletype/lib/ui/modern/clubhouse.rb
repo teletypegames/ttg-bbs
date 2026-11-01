@@ -39,17 +39,11 @@ module UI
 
         def show
           number = @bbs.last_callers.caller_number
-          unless @fits
-            @session.write("\e[0m\e[2J\e[H\r\n")
-            Logo.half_blocks.each { |l| @session.write("  #{l}\e[0m\r\n") }
-            return @session.write("\r\n  Teletype BBS · caller ##{number} · #{@bbs.online.count} online\r\n\r\n")
-          end
+          return plain(number) unless @fits
 
           @session.write("\e[0m\e[2J")
           Clubhouse.draw(@session, @art)
-          @bbs.last_callers.recent(3).each_with_index do |c, i|
-            put(:"guest_#{i + 1}", "#{c.username.to_s[0, 10].ljust(11)}#{c.timestamp.to_s[11, 5]}", INK)
-          end
+          guests
           put(:entry, Formatters.number(number), PEN)
           coats(@bbs.online.count)
           put(:status, "  Teletype BBS · telnet teletypegames.org 2323 · caller ##{Formatters.number(number)} · " \
@@ -70,6 +64,20 @@ module UI
         end
 
         private
+
+        # The logo and one line, for a terminal under 80×24.
+        def plain(number)
+          @session.write("\e[0m\e[2J\e[H\r\n")
+          Logo.half_blocks.each { |l| @session.write("  #{l}\e[0m\r\n") }
+          @session.write("\r\n  Teletype BBS · caller ##{number} · #{@bbs.online.count} online\r\n\r\n")
+        end
+
+        # The last three callers on the left page of the guestbook.
+        def guests
+          @bbs.last_callers.recent(3).each_with_index do |c, i|
+            put(:"guest_#{i + 1}", "#{c.username.to_s[0, 10].ljust(11)}#{c.timestamp.to_s[11, 5]}", INK)
+          end
+        end
 
         def ask(name, prompt, mask: nil)
           unless @fits
@@ -112,26 +120,34 @@ module UI
 
         def self.play(runner, name:, seconds:, caller_number:, quote:)
           session = runner.session
-          unless Clubhouse.fits?(session)
-            return Formatters::Logon.goodbye(runner, name: name, seconds: seconds, caller_number: caller_number,
-                                                     quote: quote)
-          end
+          return plain(runner, seconds, caller_number) unless Clubhouse.fits?(session)
 
           session.write("\e[0m\e[2J")
           frame(session, [], caller_number, seconds)
-          y = 16
-          session.write("#{Clubhouse.at(y, 3)}\e[1;37mThanks for calling the Teletype BBS, \e[1;33m#{name}\e[1;37m!\e[0m")
-          Formatters.wrap(Formatters::Taglines.line(quote), 72).first(2).each_with_index do |l, i|
-            session.write("#{Clubhouse.at(y + 1 + i, 3)}\e[1;30m...\e[0;37m#{l}\e[0m")
-          end
-          session.write("#{Clubhouse.at(y + 4, 3)}\e[0;37mOur games: \e[1;36mteletypegames.org\e[0;37m · every " \
-                        "board: \e[1;36mtelnet teletypegames.org 2399\e[0m")
+          thanks(session, name, quote)
           (1..4).each do |n|
             sleep STEP
             frame(session, (1..n).map { |i| "leaving_out_#{i}" }, caller_number, seconds)
           end
           sleep 0.8
           session.write("#{Clubhouse.at(22, 3)}\e[0;37m+++   ATH0   \e[1;31mNO CARRIER\e[0m\r\n\r\n")
+        end
+
+        # The goodbye of the rubbs boards, for a terminal under 80×24.
+        def self.plain(runner, seconds, caller_number)
+          BBS::Goodbye.modern(runner, title: 'the Teletype BBS',
+                                      note: "Caller ##{Formatters.number(caller_number)}, " \
+                                            "on line for #{Formatters.duration(seconds)}.")
+        end
+
+        # The thanks, the quote and where to find us, under the picture.
+        def self.thanks(session, name, quote, y = 16)
+          session.write("#{Clubhouse.at(y, 3)}\e[1;37mThanks for calling the Teletype BBS, \e[1;33m#{name}\e[1;37m!\e[0m")
+          Formatters.wrap(Formatters::Taglines.line(quote), 72).first(2).each_with_index do |l, i|
+            session.write("#{Clubhouse.at(y + 1 + i, 3)}\e[1;30m...\e[0;37m#{l}\e[0m")
+          end
+          session.write("#{Clubhouse.at(y + 4, 3)}\e[0;37mOur games: \e[1;36mteletypegames.org\e[0;37m · every " \
+                        "board: \e[1;36mtelnet teletypegames.org 2399\e[0m")
         end
 
         def self.frame(session, layers, caller_number, seconds)
@@ -198,19 +214,29 @@ module UI
           @art.draw(frame, x: x, y: y)
           LISTS.each_with_index do |list, i|
             rows = @fame.fetch(list)
-            spot = @art.hotspot(:"title_#{list}")
-            write(frame, x + spot.col, y + spot.row, TITLES[list].center(spot.width), "\e[0;1;38;5;230;48;5;236m")
-            (1..3).each do |place|
-              name, = rows[place - 1]
-              spot = @art.hotspot(:"plate_#{list}_#{place}")
-              write(frame, x + spot.col, y + spot.row, (name || '-').to_s[0, spot.width].center(spot.width), INK)
-            end
-            score = @art.hotspot(:"score_#{list}_1")
-            first = rows.first ? "#{rows.first.last} #{UNITS[list]}" : ''
-            write(frame, x + score.col, y + score.row, first.center(score.width), "\e[0;38;5;230;48;5;94m")
+            compartment(frame, x, y, list, rows)
             rest(frame, x + (i * 25) + 1, y + @art.rows + 1, rows.drop(3), list)
           end
           write(frame, x, y + height - 1, 'Esc: back to the clubhouse'.ljust(width), "\e[0;38;5;66m")
+        end
+
+        # One compartment of the case: its title, the first three on the
+        # plates and the score of the first.
+        def compartment(frame, x, y, list, rows)
+          label(frame, x, y, :"title_#{list}", TITLES[list], "\e[0;1;38;5;230;48;5;236m")
+          (1..3).each do |place|
+            name, = rows[place - 1]
+            spot = :"plate_#{list}_#{place}"
+            label(frame, x, y, spot, (name || '-').to_s[0, @art.hotspot(spot).width], INK)
+          end
+          first = rows.first ? "#{rows.first.last} #{UNITS[list]}" : ''
+          label(frame, x, y, :"score_#{list}_1", first, "\e[0;38;5;230;48;5;94m")
+        end
+
+        # +text+ centred on the hotspot +name+ of the case at +x+, +y+.
+        def label(frame, x, y, name, text, sgr)
+          spot = @art.hotspot(name)
+          write(frame, x + spot.col, y + spot.row, text.center(spot.width), sgr)
         end
 
         # The fourth place on, a bar each fading from gold to brown.
@@ -218,14 +244,18 @@ module UI
           return write(frame, x, y, '(nobody else yet)', "\e[0;38;5;240m") if rows.empty?
 
           max = rows.first.last.to_f
-          rows.first(5).each_with_index do |(name, n), i|
-            bar = max.positive? ? (n / max * 6).round.clamp(1, 6) : 1
-            color = [220, 214, 178, 172, 136][i]
-            write(frame, x, y + i, "#{i + 4}. #{name.to_s[0, 10].ljust(10)}", "\e[0;38;5;252m")
-            write(frame, x + 14, y + i, '▆' * bar, "\e[0;38;5;#{color}m")
-            write(frame, x + 20, y + i, n.to_s.rjust(4), "\e[0;38;5;#{color}m")
-          end
+          rows.first(5).each_with_index { |row, i| place(frame, x, y + i, i, row, max) }
           list
+        end
+
+        # The place +index+ (from the fourth) of a [name, count] +row+.
+        def place(frame, x, y, index, row, max)
+          name, count = row
+          bar = max.positive? ? (count / max * 6).round.clamp(1, 6) : 1
+          color = "\e[0;38;5;#{[220, 214, 178, 172, 136][index]}m"
+          write(frame, x, y, "#{index + 4}. #{name.to_s[0, 10].ljust(10)}", "\e[0;38;5;252m")
+          write(frame, x + 14, y, '▆' * bar, color)
+          write(frame, x + 20, y, count.to_s.rjust(4), color)
         end
       end
     end

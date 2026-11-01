@@ -11,14 +11,19 @@ module UI
       def self.open(app, view, title:, accent:)
         window = new(title: title, maximizable: false)
         window.accent = accent
-        width  = view.width + 4
-        height = view.height + 2
-        window.layout(((app.cols - width) / 2) + 1, [((app.rows - height) / 2) + 1, 2].max, width, height)
-        view.layout(window.bounds.x + 2, window.bounds.y + 1, view.width, view.height)
-        window.add(view)
+        window.centre_on(app, view)
         app.open_window(window)
         window.reset_focus
         window
+      end
+
+      # The window in the middle of +app+, +view+ inside it.
+      def centre_on(app, view)
+        width  = view.width + 4
+        height = view.height + 2
+        layout(((app.cols - width) / 2) + 1, [((app.rows - height) / 2) + 1, 2].max, width, height)
+        view.layout(bounds.x + 2, bounds.y + 1, view.width, view.height)
+        add(view)
       end
     end
 
@@ -58,17 +63,17 @@ module UI
       # The place nearest in the direction +dx+, +dy+, by where the places
       # are (#at): the cross distance weighs more, so a row stays a row.
       def step(dx, dy)
-        x0, y0 = at(chosen)
-        best = places.each_index.select do |i|
-          x, y = at(places[i])
-          dx.zero? ? ((y - y0) * dy).positive? : ((x - x0) * dx).positive?
-        end
-        best = best.min_by do |i|
-          x, y = at(places[i])
-          dx.zero? ? ((y - y0).abs * 1) + ((x - x0).abs * 3) : ((x - x0).abs * 1) + ((y - y0).abs * 8)
-        end
+        from = at(chosen)
+        best = places.each_index.select { |i| ahead?(at(places[i]), from, dx, dy) }
+                     .min_by { |i| distance(at(places[i]), from, dx) }
         @index = best if best
         :handled
+      end
+
+      def ahead?((x, y), (x0, y0), dx, dy) = dx.zero? ? ((y - y0) * dy).positive? : ((x - x0) * dx).positive?
+
+      def distance((x, y), (x0, y0), dx)
+        dx.zero? ? ((y - y0).abs * 1) + ((x - x0).abs * 3) : ((x - x0).abs * 1) + ((y - y0).abs * 8)
       end
 
       def write(frame, x, y, text, sgr)
@@ -173,13 +178,19 @@ module UI
         @art.draw(frame, x: x, y: y)
         @doors.each do |door|
           lamp(frame, x, y, door)
-          label = @art.hotspot(:"label_#{door.name}")
-          sgr = door.equal?(chosen) ? "\e[0;1;38;5;16;48;5;209m" : "\e[0;38;5;209;48;5;236m"
-          title = door.title.length > label.width ? door.title.sub('Commodore ', '') : door.title
-          write(frame, x + label.col, y + label.row, title.center(label.width), sgr)
+          label(frame, x, y, door)
         end
         screen(frame, x, y, chosen)
         info(frame, x, y + @art.rows + 1)
+      end
+
+      # The station's name under it, lit when chosen; "Commodore " goes when
+      # the name does not fit.
+      def label(frame, x, y, door)
+        spot  = @art.hotspot(:"label_#{door.name}")
+        sgr   = door.equal?(chosen) ? "\e[0;1;38;5;16;48;5;209m" : "\e[0;38;5;209;48;5;236m"
+        title = door.title.length > spot.width ? door.title.sub('Commodore ', '') : door.title
+        write(frame, x + spot.col, y + spot.row, title.center(spot.width), sgr)
       end
 
       def inside(door) = @scene ? @scene.in_door(door.title) : 0

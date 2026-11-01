@@ -160,16 +160,16 @@ module Commodore
 
     # The game as a BASIC program: LIST shows it, RUN prints it.
     def program_for(game)
-      lines = ["REM *** #{file_name(game)} #{game.version} ***", 'PRINT CHR$(147)', print_line(game.title.upcase)]
-      date = game.released_at&.strftime('%Y-%m-%d')
-      lines << print_line("VERSION #{game.version}#{" (#{date})" if date}")
-      lines << 'PRINT'
-      wrap(game.desc).each { |l| lines << print_line(l) }
-      lines << 'PRINT'
-      lines << print_line('PLAY IT IN A BROWSER OR DOWNLOAD IT:')
-      wrap(@games.catalog_url(game).sub(%r{\Ahttps?://}, '')).each { |l| lines << print_line(l) }
-      lines << 'END'
+      lines = ["REM *** #{file_name(game)} #{game.version} ***", 'PRINT CHR$(147)', print_line(game.title.upcase),
+               print_line(version_line(game)), 'PRINT', *wrap(game.desc).map { |l| print_line(l) }, 'PRINT',
+               print_line('PLAY IT IN A BROWSER OR DOWNLOAD IT:'),
+               *wrap(@games.catalog_url(game).sub(%r{\Ahttps?://}, '')).map { |l| print_line(l) }, 'END']
       lines.each_with_index.map { |text, i| [(i + 1) * 10, text] }
+    end
+
+    def version_line(game)
+      date = game.released_at&.strftime('%Y-%m-%d')
+      "VERSION #{game.version}#{" (#{date})" if date}"
     end
 
     def print_line(text) = %(PRINT "#{text.delete('"')}")

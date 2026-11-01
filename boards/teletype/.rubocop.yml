@@ -5,6 +5,7 @@ AllCops:
   Exclude:
     - "data/**/*"
     - "vendor/**/*"
+    - "tmp/**/*"
 
 # The house style aligns hashes and keyword arguments as tables.
 Layout/HashAlignment:
@@ -38,10 +39,29 @@ Style/RescueStandardError:
 Style/FetchEnvVar:
   Enabled: false
 
-# bbs.rb is one long Application DSL block, and the BASIC interpreter is a
-# set of big case statements; size metrics say nothing useful about either.
-Metrics:
-  Enabled: false
+# Small methods, one thing each: the haiku rule. The DSL blocks of a face
+# (Application.define, a window spec) are configuration, not logic, so only
+# their length is free; what they call must still be small.
+Metrics/MethodLength:
+  Max: 20
+Metrics/AbcSize:
+  Max: 25
+Metrics/CyclomaticComplexity:
+  Max: 10
+Metrics/PerceivedComplexity:
+  Max: 10
+Metrics/ParameterLists:
+  Max: 6
+  CountKeywordArgs: false
+Metrics/ClassLength:
+  Max: 200
+Metrics/ModuleLength:
+  Max: 200
+Metrics/BlockLength:
+  Max: 30
+  AllowedMethods: [define, flow, window, app, describe, it]
+  Exclude:
+    - "test/**/*"
 
 Style/Documentation:
   Enabled: false
@@ -52,6 +72,6 @@ Lint/NestedMethodDefinition:
   Exclude:
     - lib/ui/modern.rb
 
-# Short names (a, n, f, kw) are the idiom of the formatters and the interpreter.
+# Short names (f, el, w) are the idiom of the window callbacks and the parser.
 Naming/MethodParameterName:
   MinNameLength: 1

@@ -65,19 +65,28 @@ class TtgMaster
 
   def facts_for(question)
     words = question.downcase.scan(/[[:alnum:]]+/).map { |w| self.class.stem(w) }
+    (live_facts(words) + known_facts(words)).uniq(&:text).first(MAX_FACTS + 1)
+  end
+
+  private
+
+  # The facts of the knowledge file the words point at, the best first.
+  def known_facts(words)
     phrase = " #{words.join(' ')} "
-    found = @knowledge.map { |keys, text| [score(keys, words, phrase), text] }
-                      .select { |score, _| score.positive? }
-                      .sort_by { |score, _| -score }.first(MAX_FACTS)
-                      .map { |_, text| Fact.new(text, text.scan(MENU_PATH)) }
+    @knowledge.map { |keys, text| [score(keys, words, phrase), text] }
+              .select { |score, _| score.positive? }
+              .sort_by { |score, _| -score }.first(MAX_FACTS)
+              .map { |_, text| Fact.new(text, text.scan(MENU_PATH)) }
+  end
+
+  # The facts read from the site now: the news, the events, the catalog.
+  def live_facts(words)
     live = []
     live << releases if words.intersect?(NEWS_WORDS)
     live << events if words.intersect?(EVENT_WORDS)
     live << catalog if words.intersect?(platforms) || (words.include?('game') && words.intersect?(LIST_WORDS))
-    (live.compact + found).uniq(&:text).first(MAX_FACTS + 1)
+    live.compact
   end
-
-  private
 
   # A phrase key ("who made") counts double, a generic word half.
   def score(keys, words, phrase)
