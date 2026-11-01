@@ -4,10 +4,10 @@
 require 'bundler/setup'
 
 # The admins' look at the tips callers sent:
-#   docker exec commodex bin/tips list              (the pending ones, oldest last)
-#   docker exec commodex bin/tips approved          (the approved ones)
-#   docker exec commodex bin/tips approve ID        (shown on the board from now on)
-#   docker exec commodex bin/tips reject ID         (never shown)
+#   docker exec commodex-bbs bin/tips list              (the pending ones, oldest last)
+#   docker exec commodex-bbs bin/tips approved          (the approved ones)
+#   docker exec commodex-bbs bin/tips approve ID        (shown on the board from now on)
+#   docker exec commodex-bbs bin/tips reject ID         (never shown)
 require_relative '../lib/domain'
 
 def show(tips, list)

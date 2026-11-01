@@ -73,10 +73,10 @@ with its default.
 ## Admin
 
 ```bash
-docker exec commodex bin/tips list           # the pending tips
-docker exec commodex bin/tips approved       # the approved ones
-docker exec commodex bin/tips approve ID     # shown from now on
-docker exec commodex bin/tips reject ID      # never shown
+docker exec commodex-bbs bin/tips list           # the pending tips
+docker exec commodex-bbs bin/tips approved       # the approved ones
+docker exec commodex-bbs bin/tips approve ID     # shown from now on
+docker exec commodex-bbs bin/tips reject ID      # never shown
 bin/refresh-catalog [path]                   # a new seed from Wikidata (in a dev checkout)
 ```
 

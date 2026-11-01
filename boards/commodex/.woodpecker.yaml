@@ -1,8 +1,8 @@
 # Every push is linted with RuboCop. A push to master that changes the server deploys it:
-# the stack runs in /srv/stacks/commodex on the server.
+# the stack runs in /srv/stacks/commodex-bbs on the server.
 #
 # The deploy step only asks the server to deploy. Its key (secret deploy_ssh_key) is bound
-# on the server to one fixed command, `ci-deploy commodex` (infra/host-config), which
+# on the server to one fixed command, `ci-deploy commodex-bbs` (infra/host-config), which
 # clones master from Gitea itself, checks compose.yaml against a policy (no privileged, no
 # extra capabilities or host namespaces, no docker socket, bind mounts only in the stack,
 # public port 2331 only), copies the server's files into the stack and runs docker compose

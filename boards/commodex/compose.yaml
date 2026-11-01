@@ -1,10 +1,10 @@
 services:
-  commodex:
+  commodex-bbs:
     mem_limit: 160m
     cpus: 1.0
     pids_limit: 256
     build: .
-    container_name: commodex
+    container_name: commodex-bbs
     ports:
       - "2331:2323"
     volumes:
@@ -12,5 +12,5 @@ services:
     environment:
       - TZ=Europe/Budapest
       - BBS_MAX_SESSIONS=50
-      - COMMODEX_BBS_DISCORD_WEBHOOK=${COMMODEX_DISCORD_WEBHOOK:-}
+      - COMMODEX_BBS_DISCORD_WEBHOOK=${COMMODEX_BBS_DISCORD_WEBHOOK:-}
     restart: unless-stopped

@@ -13,7 +13,7 @@ class DiscordNotifier
 
   def call(tip, game)
     @hook.post("🕹️ Commodex: a tip for **#{escape(game.title)}** from #{escape(tip.author)} (##{tip.id}, pending)\n" \
-               ">>> #{escape(tip.text)}\n\n`docker exec commodex bin/tips approve #{tip.id}`")
+               ">>> #{escape(tip.text)}\n\n`docker exec commodex-bbs bin/tips approve #{tip.id}`")
   end
 
   private
