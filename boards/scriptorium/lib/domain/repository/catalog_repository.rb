@@ -13,6 +13,8 @@ require 'zlib'
 # old catalog meanwhile. One connection, read-only, behind a Mutex.
 class CatalogRepository
   COLUMNS = 'id, title, authors, language, issued, subjects, bookshelves'
+  # The same, of the books table under the name b.
+  B_COLUMNS = COLUMNS.split(', ').map { |c| "b.#{c}" }.join(', ')
 
   def initialize(path)
     @path = path
@@ -56,16 +58,7 @@ class CatalogRepository
 
     lang_sql = language ? ' AND instr(b.language, ?) > 0' : ''
     lang     = language ? [language] : []
-    rows = if @fts
-             match = words.map { |w| %("#{w.delete('"')}"*) }.join(' ')
-             query("SELECT #{COLUMNS.split(', ').map { |c| "b.#{c}" }.join(', ')} FROM books_fts f " \
-                   "JOIN books b ON b.id = f.rowid WHERE books_fts MATCH ?#{lang_sql} " \
-                   'ORDER BY bm25(books_fts, 10.0, 5.0), b.id LIMIT ?', [match, *lang, limit])
-           else
-             like = words.map { ' AND b.search LIKE ?' }.join
-             query("SELECT #{COLUMNS.split(', ').map { |c| "b.#{c}" }.join(', ')} FROM books b WHERE 1#{like}#{lang_sql} " \
-                   'ORDER BY b.id LIMIT ?', [*words.map { |w| "%#{w.downcase}%" }, *lang, limit])
-           end
+    rows = @fts ? match(words, lang_sql, lang, limit) : like(words, lang_sql, lang, limit)
     rows.map { |r| BookModel.from_row(r) }
   end
 
@@ -79,7 +72,7 @@ class CatalogRepository
   # The first +limit+ books of bookshelf +shelf_id+, lowest numbers first:
   # the oldest ebooks of Project Gutenberg are its best known ones.
   def shelf_books(shelf_id, limit: 200)
-    query("SELECT #{COLUMNS.split(', ').map { |c| "b.#{c}" }.join(', ')} FROM shelf_books s JOIN books b ON b.id = s.book_id " \
+    query("SELECT #{B_COLUMNS} FROM shelf_books s JOIN books b ON b.id = s.book_id " \
           'WHERE s.shelf_id = ? ORDER BY b.id LIMIT ?', [shelf_id, limit]).map { |r| BookModel.from_row(r) }
   end
 
@@ -87,26 +80,50 @@ class CatalogRepository
   # Returns the number of books, or nil when the file could not be read.
   def import(csv_gz)
     tmp = "#{@path}.new"
+    n = build(tmp, csv_gz)
+    swap(tmp)
+    n
+  rescue StandardError => e
+    warn "scriptorium-bbs: catalog import: #{e.class}: #{e.message}"
+    FileUtils.rm_f(tmp)
+    nil
+  end
+
+  private
+
+  # The full-text search: every word a prefix, best matches first.
+  def match(words, lang_sql, lang, limit)
+    terms = words.map { |w| %("#{w.delete('"')}"*) }.join(' ')
+    query("SELECT #{B_COLUMNS} FROM books_fts f JOIN books b ON b.id = f.rowid WHERE books_fts MATCH ?#{lang_sql} " \
+          'ORDER BY bm25(books_fts, 10.0, 5.0), b.id LIMIT ?', [terms, *lang, limit])
+  end
+
+  # The search of an SQLite without FTS5: every word somewhere.
+  def like(words, lang_sql, lang, limit)
+    likes = words.map { ' AND b.search LIKE ?' }.join
+    query("SELECT #{B_COLUMNS} FROM books b WHERE 1#{likes}#{lang_sql} ORDER BY b.id LIMIT ?",
+          [*words.map { |w| "%#{w.downcase}%" }, *lang, limit])
+  end
+
+  # Writes a new catalog database at +tmp+ from +csv_gz+; the number of
+  # books.
+  def build(tmp, csv_gz)
     FileUtils.rm_f(tmp)
     db = SQLite3::Database.new(tmp)
-    fts = create_schema(db)
-    n = fill(db, csv_gz, fts)
-    db.close
+    fill(db, csv_gz, create_schema(db))
+  ensure
+    db.close if db && !db.closed?
+  end
+
+  # Puts the database at +tmp+ in the place of the open one.
+  def swap(tmp)
     @lock.synchronize do
       @db&.close
       File.rename(tmp, @path)
       @db = nil
       open_db
     end
-    n
-  rescue StandardError => e
-    warn "scriptorium-bbs: catalog import: #{e.class}: #{e.message}"
-    db&.close unless db&.closed?
-    FileUtils.rm_f(tmp)
-    nil
   end
-
-  private
 
   def open_db
     db = SQLite3::Database.new(@path, readonly: true)
@@ -151,34 +168,52 @@ class CatalogRepository
   end
 
   def fill(db, csv_gz, fts)
-    n = 0
-    db.transaction do
-      book = db.prepare('INSERT INTO books VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-      member = db.prepare('INSERT INTO memberships VALUES (?, ?)')
-      Zlib::GzipReader.open(csv_gz, encoding: Encoding::UTF_8) do |gz|
-        CSV.new(gz, headers: true).each do |row|
-          next unless row['Type'] == 'Text'
-
-          id = Integer(row['Text#'], exception: false) or next
-          title = row['Title'].to_s.gsub(/\r\n?/, "\n").strip
-          authors = row['Authors'].to_s
-          book.execute(id, title, authors, row['Language'].to_s, row['Issued'].to_s, row['Subjects'].to_s,
-                       row['Bookshelves'].to_s, fts ? nil : "#{title} #{authors}".downcase)
-          row['Bookshelves'].to_s.split('; ').each { |s| member.execute(s.strip, id) unless s.strip.empty? }
-          n += 1
-        end
-      end
-      book.close
-      member.close
-      db.execute_batch(<<~SQL)
-        INSERT INTO shelves (name, books) SELECT name, COUNT(*) FROM memberships GROUP BY name;
-        INSERT INTO shelf_books SELECT s.id, m.book_id FROM memberships m JOIN shelves s ON s.name = m.name;
-        DROP TABLE memberships;
-        CREATE INDEX shelf_books_shelf ON shelf_books (shelf_id, book_id);
-      SQL
-      db.execute("INSERT INTO books_fts (books_fts) VALUES ('rebuild')") if fts
-    end
+    n = db.transaction { insert_books(db, csv_gz, fts).tap { index_shelves(db, fts) } }
     db.execute('VACUUM')
     n
+  end
+
+  # The Text rows of the catalog file into books and memberships; the
+  # number of books.
+  def insert_books(db, csv_gz, fts)
+    book   = db.prepare('INSERT INTO books VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    member = db.prepare('INSERT INTO memberships VALUES (?, ?)')
+    n = 0
+    each_book(csv_gz) do |values|
+      book.execute(*values, fts ? nil : "#{values[1]} #{values[2]}".downcase)
+      values[6].split('; ').each { |s| member.execute(s.strip, values[0]) unless s.strip.empty? }
+      n += 1
+    end
+    n
+  ensure
+    book&.close
+    member&.close
+  end
+
+  # Yields [id, title, authors, language, issued, subjects, bookshelves] of
+  # every Text row of +csv_gz+, the remote text cleaned of control
+  # characters (a title keeps its line breaks: a subtitle is on its own).
+  def each_book(csv_gz)
+    Zlib::GzipReader.open(csv_gz, encoding: Encoding::UTF_8) do |gz|
+      CSV.new(gz, headers: true).each do |row|
+        next unless row['Type'] == 'Text'
+
+        id = Integer(row['Text#'], exception: false) or next
+        yield [id, clean(row['Title'].to_s.gsub(/\r\n?/, "\n").strip, keep_newlines: true),
+               *%w[Authors Language Issued Subjects Bookshelves].map { |c| clean(row[c]) }]
+      end
+    end
+  end
+
+  def clean(text, keep_newlines: false) = BBS::Text.clean(text, keep_newlines: keep_newlines)
+
+  def index_shelves(db, fts)
+    db.execute_batch(<<~SQL)
+      INSERT INTO shelves (name, books) SELECT name, COUNT(*) FROM memberships GROUP BY name;
+      INSERT INTO shelf_books SELECT s.id, m.book_id FROM memberships m JOIN shelves s ON s.name = m.name;
+      DROP TABLE memberships;
+      CREATE INDEX shelf_books_shelf ON shelf_books (shelf_id, book_id);
+    SQL
+    db.execute("INSERT INTO books_fts (books_fts) VALUES ('rebuild')") if fts
   end
 end

@@ -45,19 +45,17 @@ class TextCacheRepository
     nil
   end
 
-  # The text of +chapter+ of book +id+ (UTF-8), or nil.
+  # The text of +chapter+ of book +id+ (UTF-8, without control characters:
+  # a text cached by an older board may have them), or nil.
   def read(id, chapter)
     File.open(text_path(id), 'rb') do |f|
       f.seek(chapter.offset)
-      f.read(chapter.length).to_s.force_encoding(Encoding::UTF_8).scrub
+      BBS::Text.clean(f.read(chapter.length))
     end
   rescue SystemCallError => e
     warn "scriptorium-bbs: #{text_path(id)}: #{e.class}: #{e.message}"
     nil
   end
-
-  # The bytes the cache takes.
-  def size = Dir.glob(File.join(@dir, '*.{txt,json}')).sum { |f| File.size(f) }
 
   private
 
@@ -79,12 +77,8 @@ class TextCacheRepository
   # Deletes the least recently read books until the folder fits.
   def evict
     @lock.synchronize do
-      books = Dir.glob(File.join(@dir, '*.json')).map do |json|
-        txt = json.sub(/\.json\z/, '.txt')
-        [File.mtime(json), json, txt, File.size(json) + (File.exist?(txt) ? File.size(txt) : 0)]
-      end
+      books = cached_books.sort_by!(&:first)
       total = books.sum(&:last)
-      books.sort_by!(&:first)
       while total > @max_bytes && books.size > 1
         _, json, txt, bytes = books.shift
         FileUtils.rm_f([json, txt])
@@ -93,5 +87,13 @@ class TextCacheRepository
     end
   rescue SystemCallError => e
     warn "scriptorium-bbs: #{@dir}: #{e.class}: #{e.message}"
+  end
+
+  # Every cached book as [last read, index file, text file, bytes].
+  def cached_books
+    Dir.glob(File.join(@dir, '*.json')).map do |json|
+      txt = json.sub(/\.json\z/, '.txt')
+      [File.mtime(json), json, txt, File.size(json) + (File.exist?(txt) ? File.size(txt) : 0)]
+    end
   end
 end

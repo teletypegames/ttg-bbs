@@ -42,13 +42,20 @@ class ChapterService
   end
 
   # The readable text of +raw+ (the bytes of a pg<N>.txt): UTF-8, LF line
-  # ends, paragraphs separated by one empty line, a prose paragraph on one
-  # line.
+  # ends, no control characters (a form feed would clear a C64's screen),
+  # paragraphs separated by one empty line, a prose paragraph on one line.
+  # +raw+ is consumed: it is cleaned in place, so a big book is not copied
+  # more than once more.
   def clean(raw)
-    text = utf8(raw).delete_prefix('﻿').gsub(/\r\n?/, "\n").tr("\t", ' ')
-    text = body(text)
-    blocks = text.split(/\n[ \t]*\n+/).flat_map { |b| split_long(b.split("\n").map(&:rstrip).reject(&:empty?)) }
-    blocks.filter_map { |lines| reflow(lines) }.join("\n\n")
+    out = +''
+    plain(raw).each_line('') do |block|
+      split_long(block.split("\n").map(&:rstrip).reject(&:empty?)).each do |lines|
+        para = reflow(lines) or next
+        out << "\n\n" unless out.empty?
+        out << para
+      end
+    end
+    out
   end
 
   # The chapters of a #clean text as [title, byte offset, byte length].
@@ -63,20 +70,27 @@ class ChapterService
 
   private
 
-  def utf8(raw)
-    s = raw.dup.force_encoding(Encoding::UTF_8)
-    return s if s.valid_encoding?
-
-    raw.dup.force_encoding(Encoding::ISO_8859_1).encode(Encoding::UTF_8)
+  # +raw+ as UTF-8 with LF line ends, spaces for tabs, no other control
+  # characters, empty lines for the blank ones, and without the licence.
+  def plain(raw)
+    text = utf8(raw)
+    text.delete_prefix!("\uFEFF")
+    text.gsub!(/\r\n?/, "\n")
+    text.tr!("\t", ' ')
+    text.gsub!(BBS::Text::CONTROLS, '')
+    text.gsub!(/^ +$/, '')
+    body!(text)
   end
 
-  def body(text)
-    if (m = START_RE.match(text))
-      text = text[m.end(0)..]
-    end
-    if (m = END_RE.match(text) || OLD_END_RE.match(text))
-      text = text[0...m.begin(0)]
-    end
+  def utf8(raw)
+    text = raw.force_encoding(Encoding::UTF_8)
+    text.valid_encoding? ? text : raw.force_encoding(Encoding::ISO_8859_1).encode(Encoding::UTF_8)
+  end
+
+  # Takes the licence header and footer off +text+, in place.
+  def body!(text)
+    (m = START_RE.match(text)) and text.slice!(0, m.end(0))
+    (m = END_RE.match(text) || OLD_END_RE.match(text)) and text.slice!(m.begin(0)..)
     text
   end
 
@@ -118,11 +132,12 @@ class ChapterService
     body.count { |n| n >= wide * 0.75 } >= body.size * 0.75
   end
 
-  # [byte offset, text] of every paragraph.
+  # [byte offset, byte length, heading title or nil] of every paragraph;
+  # the paragraphs themselves are not kept.
   def paragraphs(text)
     pos = 0
-    text.split("\n\n").map do |p|
-      para = [pos, p]
+    text.each_line("\n\n", chomp: true).map do |p|
+      para = [pos, p.bytesize, heading(p)]
       pos += p.bytesize + 2
       para
     end
@@ -141,58 +156,54 @@ class ChapterService
   end
 
   # The headings that start a chapter, as [paragraph index, title]: the
-  # entries of a table of contents (a short heading whose title comes again
-  # later) are left out, and a short one is put on top of the next.
+  # entries of a table of contents are left out, and a short one is put on
+  # top of the next.
   def headings(paras)
-    heads = paras.each_with_index.filter_map { |(_, p), i| (t = heading(p)) && [i, t] }
-    sizes = heads.each_with_index.map { |(i, _), k| body_size(paras, i, heads[k + 1]&.first) }
-    later = Hash.new(0)
-    heads.each { |head| later[key(head[1])] += 1 }
-    kept = heads.zip(sizes).filter_map do |(i, t), size|
-      later[key(t)] -= 1
-      next if size < SHORT && later[key(t)].positive?
+    heads = paras.each_with_index.filter_map { |(_, _, title), i| title && [i, title] }
+    merge_short(without_contents(paras, heads))
+  end
 
-      [i, t, size]
+  # The headings as [paragraph index, title, body size], without the
+  # entries of a table of contents: a short heading whose title comes again
+  # later.
+  def without_contents(paras, heads)
+    later = Hash.new(0)
+    heads.each { |(_, t)| later[key(t)] += 1 }
+    heads.each_with_index.filter_map do |(i, t), k|
+      size = body_size(paras, i, heads[k + 1]&.first)
+      later[key(t)] -= 1
+      [i, t, size] unless size < SHORT && later[key(t)].positive?
     end
-    merge_short(kept)
   end
 
   def key(title) = title.upcase.gsub(/[^\p{L}\p{N}]+/, ' ').strip
 
   def body_size(paras, from, to)
     to ||= paras.size
-    paras[(from + 1)...to].sum { |_, p| p.bytesize + 2 }
+    paras[(from + 1)...to].sum { |_, length| length + 2 }
   end
 
+  # The headings as [paragraph index, title], a short one ("BOOK I" right
+  # above "CHAPTER I") joined to the next: "BOOK I · CHAPTER I".
   def merge_short(heads)
-    out = []
     pending = nil
-    heads.each_with_index do |(i, t, size), k|
+    heads.each_with_index.filter_map do |(i, t, size), k|
       if pending
-        i = pending[0]
         t = "#{pending[1]} · #{t}"[0, 60]
-        pending = nil
+        i = pending[0]
       end
-      if size < SHORT && k < heads.size - 1
-        pending = [i, t]
-      else
-        out << [i, t]
-      end
+      pending = size < SHORT && k < heads.size - 1 ? [i, t] : nil
+      [i, t] unless pending
     end
-    out << pending if pending
-    out
   end
 
   # [title, from, to] byte ranges; the text before the first heading is an
   # opening chapter of its own when there is enough of it.
   def by_headings(paras, heads, total)
-    first = paras[heads.first.first].first
-    chapters = heads.each_with_index.map do |(i, t), k|
-      to = heads[k + 1] ? paras[heads[k + 1].first].first : total
-      [t, paras[i].first, to]
-    end
-    if first >= SHORT * 2
-      chapters.unshift(['Opening pages', 0, first])
+    starts = heads.map { |i, _| paras[i].first }
+    chapters = heads.each_with_index.map { |(_, t), k| [t, starts[k], starts[k + 1] || total] }
+    if starts.first >= SHORT * 2
+      chapters.unshift(['Opening pages', 0, starts.first])
     else
       chapters.first[1] = 0
     end
@@ -219,17 +230,18 @@ class ChapterService
   # paragraph boundaries nearest after every +size+ bytes.
   def chunk(paras, from, to, size)
     starts = [from]
-    paras.map(&:first).each do |off|
-      next if off <= from || off >= to
-
-      starts << off if off - starts.last >= size
-    end
+    paras.map(&:first).each { |off| starts << off if off > from && off < to && off - starts.last >= size }
     starts << to
-    pieces = starts.each_cons(2).map { |a, b| [a, b - a] }
-    if pieces.size > 1 && pieces.last[1] < size / 4
-      last = pieces.pop
-      pieces[-1] = [pieces[-1][0], pieces[-1][1] + last[1]]
-    end
+    fold_tail(starts.each_cons(2).map { |a, b| [a, b - a] }, size)
+  end
+
+  # The pieces with a last one under a quarter of +size+ added to the one
+  # before it.
+  def fold_tail(pieces, size)
+    return pieces unless pieces.size > 1 && pieces.last[1] < size / 4
+
+    last = pieces.pop
+    pieces[-1] = [pieces[-1][0], pieces[-1][1] + last[1]]
     pieces
   end
 end
