@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require 'bundler/setup'
+
 # The editors of the blog, from the server's shell:
 #   docker exec -it ttgblog bin/user list
 #   docker exec -it ttgblog bin/user add NAME      (asks the password twice; without a tty, two lines of stdin)
