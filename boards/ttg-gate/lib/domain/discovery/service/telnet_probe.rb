@@ -9,7 +9,8 @@ module Discovery
   # connection in at most 10 s, the telnet answers of TelnetNegotiator, then
   # reading for at most 8 s or 4 KB. When 4 s pass without a byte of banner,
   # one CR goes out (many boards wait for ENTER); nothing else is ever sent,
-  # and it never logs in. Returns a ProbeResultModel.
+  # and it never logs in. Returns a ProbeResultModel; a name that resolves to
+  # no public address (Address.callable?) is a dns_fail, and is not called.
   #
   # With +c64+ the call is a Commodore 64's (TTG_DISCOVERY.md §5.1): the same
   # connection and one CR (0x0D), but no telnet option is accepted, so a board
@@ -27,7 +28,9 @@ module Discovery
 
     def initialize(connect_timeout: CONNECT_TIMEOUT, read_timeout: READ_TIMEOUT, nudge_after: NUDGE_AFTER,
                    c64_first: C64_FIRST, c64_total: C64_TOTAL,
-                   resolver: method(:resolve), clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
+                   resolver: method(:resolve), callable: Address.method(:callable?),
+                   clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
+      @callable        = callable
       @connect_timeout = connect_timeout
       @read_timeout    = read_timeout
       @c64_first       = c64_first
@@ -40,8 +43,10 @@ module Discovery
     def call(host, port, c64: false)
       at = Time.now.to_i
       begun = @clock.call
-      ip = @resolver.call(host).first
-      return ProbeResultModel.new(result: 'dns_fail', at: at, duration_ms: since(begun)) unless ip
+      ips = @resolver.call(host)
+      return ProbeResultModel.new(result: 'dns_fail', at: at, duration_ms: since(begun)) unless @callable.call(ips, port)
+
+      ip = ips.first
 
       started = @clock.call
       socket = connect(ip, port)

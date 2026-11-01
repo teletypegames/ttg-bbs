@@ -15,7 +15,7 @@ module UI
   # else the dial's Call. Raises IOError when the caller hangs up meanwhile.
   def self.dial_catalog(session, dials, caller, board, face:)
     dials.dial(caller, board, face: face) do |call|
-      gateway = BBS::Gateway.new(host: board.host, port: board.port, name: board.title,
+      gateway = BBS::Gateway.new(host: call.ip, port: board.port, name: board.title,
                                  connect_timeout: ::Discovery::DialService::CONNECT_TIMEOUT)
       gateway.call(session) { |report| call.report = report }
     end

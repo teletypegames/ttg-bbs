@@ -22,6 +22,7 @@ module UI
           rate: 'You have dialled %<limit>d boards in 10 minutes. The next line is free in %<wait>s.',
           busy: '%<limit>d callers of the gate are on this board already. Try again in a minute.',
           not_petscii: 'This board has no PETSCII face.',
+          not_public: 'This board is not on the public internet; the gate does not call it.',
           unknown: 'This board is not in the catalog any more.'
         }.freeze
 

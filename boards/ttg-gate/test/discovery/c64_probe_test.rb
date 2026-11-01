@@ -32,9 +32,12 @@ module Discovery
       super
     end
 
+    # A probe that calls the local test boards: the Gate itself calls none.
+    def probe_of(**) = TelnetProbe.new(connect_timeout: 2, read_timeout: 1.2, nudge_after: 0.4, callable: ->(*) { true }, **)
+
     def bytes(*codes) = codes.flat_map { |c| c.is_a?(String) ? c.bytes : [c] }.pack('C*')
 
-    def prober(probe = TelnetProbe.new(connect_timeout: 2, read_timeout: 1.2, nudge_after: 0.4))
+    def prober(probe = probe_of)
       optout = File.join(@tmp, 'optout.yml')
       File.write(optout, "{}\n")
       ProberService.new(catalog: @catalog, probes: @probes, probe: probe, tags: TagService.new(@catalog, @probes, config),
@@ -123,20 +126,20 @@ module Discovery
 
     def test_a_slow_c64_board_is_measured_in_the_longer_window
       port = slow_board(15)
-      probe = TelnetProbe.new(connect_timeout: 2, read_timeout: 1.2, nudge_after: 0.4, c64_first: 20, c64_total: 25)
+      probe = probe_of(c64_first: 20, c64_total: 25)
       assert_equal %w[ok ansi], [probe.call('127.0.0.1', port)].map { |r| [r.result, BannerAnalyzer.encoding(r.banner)] }.first
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       result = probe.call('127.0.0.1', port, c64: true)
       assert_equal ['ok', PETSCII], [result.result, result.banner]
       assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 26
-      short = TelnetProbe.new(connect_timeout: 2, read_timeout: 1.2, nudge_after: 0.4, c64_first: 2, c64_total: 3)
+      short = probe_of(c64_first: 2, c64_total: 3)
       assert_equal 'silent', short.call('127.0.0.1', port, c64: true).result
     end
 
     def test_the_normal_call_keeps_its_8_second_window
       port = slow_board(15)
-      result = TelnetProbe.new(connect_timeout: 2, read_timeout: 1.2, nudge_after: 0.4, c64_first: 20, c64_total: 25)
-                          .call('127.0.0.1', port)
+      result = probe_of(c64_first: 20, c64_total: 25)
+               .call('127.0.0.1', port)
       assert_operator result.duration_ms, :<, 2500
     end
 

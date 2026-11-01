@@ -8,7 +8,7 @@ module Discovery
   class DialRepository
     KEEP = 30 * 86_400
     # The refused dials' reasons (DialService::Refusal) and the faces.
-    REASONS = %w[rate busy not_petscii unknown].freeze
+    REASONS = %w[rate busy not_petscii not_public unknown].freeze
     FACES   = %w[modern c64].freeze
     PRUNE_EVERY = 3600
     PRUNED = 'dial_refusals_pruned'

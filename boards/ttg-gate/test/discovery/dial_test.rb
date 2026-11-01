@@ -6,6 +6,8 @@ module Discovery
   class DialTest < Minitest::Test
     include TestHelper
 
+    PUBLIC = '93.184.215.14'
+
     Report = Struct.new(:connected, :error, :address, :connect_seconds, :received, :hung_up, keyword_init: true)
 
     class Recorder
@@ -21,7 +23,8 @@ module Discovery
       @recorder = Recorder.new
       @live = File.join(@tmp, 'gate-dials.json')
       @history = DialRepository.new(@db)
-      @dials = DialService.new(recorder: @recorder, history: @history, live_path: @live, clock: -> { @now }, log: ->(_) {})
+      @dials = DialService.new(recorder: @recorder, history: @history, live_path: @live, clock: -> { @now }, log: ->(_) {},
+                               resolver: ->(_) { [PUBLIC] })
     end
 
     def board(host = 'bbs.example.org', state: 'online', tags: %w[ansi online])
@@ -94,6 +97,19 @@ module Discovery
       assert_equal [7, 'ok', 'dial', 42, '192.0.2.1'], @recorder.records.last
     end
 
+    def test_a_board_inside_the_network_is_not_dialled
+      dials = DialService.new(recorder: @recorder, history: @history, clock: -> { @now }, log: ->(_) {},
+                              resolver: ->(_) { ['172.17.0.1'] })
+      refusal = dials.dial('203.0.113.5', board, face: :modern) { flunk 'dialled' }
+      assert_equal :not_public, refusal.reason
+      assert_equal 1, @history.refusals_since(0)['not_public']
+    end
+
+    def test_the_line_goes_to_the_resolved_address
+      call = dial
+      assert_equal PUBLIC, call.ip
+    end
+
     def test_a_caller_is_its_address_and_a_local_line_its_session
       assert_equal '203.0.113.5', DialService.caller_key('203.0.113.5', 'abc')
       assert_equal '203.0.113.5', DialService.caller_key('::ffff:203.0.113.5', 'abc')
@@ -161,7 +177,8 @@ module Discovery
     end
 
     def test_the_limits_given_hold
-      dials = DialService.new(recorder: @recorder, clock: -> { @now }, log: ->(_) {}, window: 60, per_caller: 2, per_host: 1)
+      dials = DialService.new(recorder: @recorder, clock: -> { @now }, log: ->(_) {}, window: 60, per_caller: 2, per_host: 1,
+                              resolver: ->(_) { [PUBLIC] })
       2.times { dials.dial('a', board, face: :modern) { |c| c.report = Report.new(connected: true, received: 1) } }
       assert_equal [:rate, 60], dials.check('a', board, face: :modern).deconstruct
       dials.dial('b', board, face: :modern) { assert_equal :busy, dials.check('c', board, face: :modern).reason }

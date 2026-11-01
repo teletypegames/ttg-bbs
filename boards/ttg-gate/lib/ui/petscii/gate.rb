@@ -40,6 +40,7 @@ module UI
         rate: ['You dialled 10 boards in', '10 minutes. Try again later.'],
         busy: ['3 callers are on this board', 'already. Try again soon.'],
         not_petscii: ['This board has no PETSCII face.'],
+        not_public: ['This board is not on the', 'public internet.'],
         unknown: ['This board is gone from the list.']
       }.freeze
       # The lists of their own: the title, the chip, its colour, the words of

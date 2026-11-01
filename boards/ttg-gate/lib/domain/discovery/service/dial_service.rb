@@ -10,7 +10,10 @@ module Discovery
   # (TTG_DISCOVERY.md §8.4), and the record of each dial:
   #
   # - only a board of the catalog, by its id: there is no free host:port, so
-  #   the Gate is no open telnet relay;
+  #   the Gate is no open telnet relay; and only on the public internet: the
+  #   name is resolved once, every address must be public (Address.callable?),
+  #   and the line goes to that address, so a name that changes its answer
+  #   meanwhile cannot turn the Gate inward;
   # - at most +per_caller+ dials in +window+ seconds a caller, and at most
   #   +per_host+ connections at once from the Gate to one host (PER_CALLER,
   #   WINDOW and PER_HOST by default; Root reads them from the environment);
@@ -35,7 +38,8 @@ module Discovery
     # Why a dial is refused: +rate+ (the caller dialled PER_CALLER times in
     # WINDOW; +wait+ seconds until the next one), +busy+ (PER_HOST lines to
     # the host are taken), +not_petscii+ (a C64 caller, a board without
-    # PETSCII) or +unknown+ (no such board in the catalog).
+    # PETSCII), +not_public+ (the board's name resolves to no address on the
+    # public internet) or +unknown+ (no such board in the catalog).
     Refusal = Data.define(:reason, :wait)
 
     # One dial in progress: the caller's line hands the gateway's report to
@@ -43,12 +47,13 @@ module Discovery
     # received, hung_up).
     class Call
       attr_accessor :report, :ended_at
-      attr_reader :board, :at, :face
+      attr_reader :board, :at, :face, :ip
 
-      def initialize(board, at, face = :modern)
+      def initialize(board, at, face = :modern, ip: nil)
         @board = board
         @at    = at
         @face  = face
+        @ip    = ip
       end
 
       # The seconds the line was connected to the board, whole.
@@ -67,8 +72,12 @@ module Discovery
     # [recorder]  ProberService (anything with #record(id, result, kind:))
     # [history]   DialRepository, or nil
     # [live_path] the JSON file of the live dials, or nil
+    # [resolver]  host → its IP addresses (TelnetProbe#resolve)
     def initialize(recorder:, history: nil, live_path: nil, window: WINDOW, per_caller: PER_CALLER, per_host: PER_HOST,
-                   clock: -> { Time.now.to_f }, log: ->(line) { warn line })
+                   clock: -> { Time.now.to_f }, log: ->(line) { warn line },
+                   resolver: TelnetProbe.new.method(:resolve), callable: Address.method(:callable?))
+      @resolver   = resolver
+      @callable   = callable
       @recorder   = recorder
       @history    = history
       @live_path  = live_path
@@ -113,14 +122,16 @@ module Discovery
     end
 
     # Dials +board+ for +caller+: when the rules let it, counts the dial,
-    # yields a Call (the block puts the gateway's report on it), records the
-    # outcome and returns the Call; else returns the Refusal and yields
-    # nothing. The lines are freed and the outcome recorded also when the
-    # caller hangs up inside (the IOError goes on).
+    # yields a Call (the block puts the gateway's report on it, and connects
+    # to its +ip+, never to the name), records the outcome and returns the
+    # Call; else returns the Refusal and yields nothing. The lines are freed
+    # and the outcome recorded also when the caller hangs up inside (the
+    # IOError goes on).
     def dial(caller, board, face:)
       now = @clock.call
+      ips = board ? @resolver.call(board.host) : []
       refusal = @mutex.synchronize do
-        refusal(caller, board, face, now).tap do |r|
+        refusal(caller, board, face, now, ips).tap do |r|
           unless r
             @dials[caller] << now
             @lines[board.host] += 1
@@ -130,7 +141,7 @@ module Discovery
       return refused(refusal, board, face, now) if refusal
 
       write_live
-      call = Call.new(board, now.to_i, face)
+      call = Call.new(board, now.to_i, face, ip: ips.first)
       begin
         yield call
         call
@@ -167,9 +178,10 @@ module Discovery
 
     private
 
-    def refusal(caller, board, face, now)
+    def refusal(caller, board, face, now, ips = nil)
       return Refusal.new(reason: :unknown, wait: nil) unless board
       return Refusal.new(reason: :not_petscii, wait: nil) if face == :petscii && !board.petscii?
+      return Refusal.new(reason: :not_public, wait: nil) if ips && !@callable.call(ips, board.port)
 
       recent = @dials[caller].select! { |t| t > now - @window } || @dials[caller]
       @dials.delete(caller) if recent.empty?

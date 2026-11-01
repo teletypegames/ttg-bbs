@@ -53,7 +53,8 @@ module Discovery
     end
 
     def call(port, **)
-      TelnetProbe.new(connect_timeout: 2, read_timeout: 1.5, nudge_after: 0.5, **).call('127.0.0.1', port)
+      TelnetProbe.new(connect_timeout: 2, read_timeout: 1.5, nudge_after: 0.5, callable: ->(*) { true }, **)
+                 .call('127.0.0.1', port)
     end
 
     def test_a_banner
@@ -130,6 +131,22 @@ module Discovery
       result = TelnetProbe.new(resolver: ->(_) { [] }).call('gone.invalid', 23)
       assert_equal 'dns_fail', result.result
       assert_nil result.ip
+    end
+
+    def test_a_name_inside_the_network_is_not_called
+      %w[127.0.0.1 10.1.2.3 172.17.0.1 192.168.1.1 169.254.169.254 100.64.0.1 ::1 fd00::1 ::ffff:127.0.0.1].each do |ip|
+        result = TelnetProbe.new(resolver: ->(_) { [ip] }).call('evil.example.org', 23)
+        assert_equal 'dns_fail', result.result, ip
+      end
+    end
+
+    def test_the_public_internet_is_callable_on_a_bbs_port
+      assert Address.callable?(['93.184.215.14'], 23)
+      assert Address.callable?(['2606:2800:220:1::1'], 6400)
+      refute Address.callable?(['93.184.215.14'], 25)
+      refute Address.callable?(['93.184.215.14', '10.0.0.1'], 23)
+      refute Address.callable?([], 23)
+      refute Address.callable?(['not an ip'], 23)
     end
   end
 end
