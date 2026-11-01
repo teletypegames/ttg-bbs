@@ -28,12 +28,18 @@ class CatalogService
   def fetch(title)
     return :too_big if title.size > @max_bytes
 
-    data = @archive.file(title.path)
+    data = @archive.file(title.path, max_bytes: @max_bytes)
     return :unavailable unless data
     return :changed unless data.bytesize == title.size && Zlib.crc32(data) == title.crc32
 
     data
   end
 
-  def downloaded(title, protocol) = @downloads.add(title.key, version: title.version, protocol: protocol.to_s)
+  # Counts a download that went through; a log that cannot be written does
+  # not spoil it for the caller.
+  def downloaded(title, protocol)
+    @downloads.add(title.key, version: title.version, protocol: protocol)
+  rescue SQLite3::Exception => e
+    warn "warp-engine-bbs: the download of #{title.key} is not counted: #{e.class}: #{e.message}"
+  end
 end

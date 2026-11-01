@@ -1,60 +1,62 @@
 # frozen_string_literal: true
 
-require 'net/http'
-require 'uri'
-
 # The archive's plain HTTP (archive.teletypegames.org): the INDEX.TXT of a
 # shelf, kept for +ttl+ seconds, and the bytes of a file. A dead archive
 # gives the last index it sent, or nil.
 class ArchiveRepository
   INDEX = 'INDEX.TXT'
-  OPEN_TIMEOUT = 5
-  READ_TIMEOUT = 15
+  # An INDEX.TXT is a line a title; a shelf of thousands fits in this.
+  INDEX_MAX_BYTES = 512 * 1024
+  # The shelves are a handful; each one's titles are kept.
+  SHELVES_KEPT = 32
 
   attr_reader :base_url
 
   def initialize(base_url, ttl:)
     @base_url = base_url.delete_suffix('/')
-    @ttl      = ttl
-    @indexes  = {}
-    @lock     = Mutex.new
+    @titles   = BBS::Cache.new(ttl: ttl, max_entries: SHELVES_KEPT)
   end
 
   def url(path) = "#{@base_url}#{path}"
 
-  # The titles of +shelf+ in the order of its index; nil when the archive
-  # has never answered for it.
+  # The titles of +shelf+ in the order of its index, read again when
+  # +fresh+; nil when the archive has never answered for it.
   def titles(shelf, fresh: false)
-    cached = @lock.synchronize { @indexes[shelf.id] }
-    return cached[:titles] if cached && !fresh && now - cached[:at] < @ttl
-
-    body = get("#{shelf.path}/#{INDEX}")
-    return cached&.dig(:titles) unless body
-
-    titles = body.force_encoding(Encoding::UTF_8).scrub.each_line.filter_map { |line| TitleModel.parse(line, shelf) }.freeze
-    @lock.synchronize { @indexes[shelf.id] = { titles: titles, at: now } }
-    titles
+    fresh ? reread(shelf) : @titles.fetch(shelf.id) { index(shelf) }
+  rescue BBS::HTTP::Error => e
+    warn "warp-engine-bbs: #{e.message}"
+    nil
   end
 
-  # The bytes of +path+, nil when the archive does not give them.
-  def file(path) = get(path)
+  # The bytes of +path+, at most +max_bytes+; nil when the archive does
+  # not give them.
+  def file(path, max_bytes:)
+    get(path, max_bytes)
+  rescue BBS::HTTP::Error => e
+    warn "warp-engine-bbs: #{e.message}"
+    nil
+  end
 
   private
 
-  def get(path)
-    uri = URI(url(path))
-    res = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https',
-                                              open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT) do |http|
-      http.get(uri.request_uri)
-    end
-    return res.body.b if res.is_a?(Net::HTTPSuccess)
-
-    warn "warp-engine-bbs: #{uri} answered #{res.code}"
-    nil
-  rescue StandardError => e
-    warn "warp-engine-bbs: #{uri}: #{e.class}: #{e.message}"
-    nil
+  # The index read now; when that fails, the one kept (an expired one too).
+  def reread(shelf)
+    titles = index(shelf)
+    @titles.delete(shelf.id)
+    @titles.fetch(shelf.id) { titles }
+  rescue BBS::HTTP::Error => e
+    @titles.fetch(shelf.id) { raise e }
   end
 
-  def now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  def index(shelf)
+    body = BBS::Text.clean(get("#{shelf.path}/#{INDEX}", INDEX_MAX_BYTES))
+    body.each_line.filter_map { |line| TitleModel.parse(line, shelf) }.freeze
+  end
+
+  def get(path, max_bytes)
+    response = BBS::HTTP.get(url(path), max_bytes: max_bytes)
+    raise BBS::HTTP::Error, "GET #{url(path)}: answered #{response.status}" unless response.ok?
+
+    response.body
+  end
 end

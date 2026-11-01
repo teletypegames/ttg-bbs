@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'uri'
+
 # One title of a shelf: a line of its INDEX.TXT,
 # file|version|size|crc32|title|author|description.
 TitleModel = Data.define(:shelf, :file, :version, :size, :crc32, :title, :author, :description) do
@@ -14,7 +16,9 @@ TitleModel = Data.define(:shelf, :file, :version, :size, :crc32, :title, :author
         title: title.empty? ? file : title, author: author, description: description)
   end
 
-  def path = "#{shelf.path}/#{file}"
+  # The file's address on the archive; the name is encoded, so a space,
+  # a slash or a question mark in it stays part of the name.
+  def path = "#{shelf.path}/#{URI.encode_uri_component(file)}"
 
   # The description; the shelf cuts it short, and then it ends in an ellipsis.
   def about = description.match?(/[.!?)]\z/) ? description : "#{description}…"
