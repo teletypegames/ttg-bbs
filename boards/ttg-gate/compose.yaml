@@ -1,10 +1,10 @@
 services:
-  ttggate:
+  ttg-gate-bbs:
     mem_limit: 160m
     cpus: 1.0
     pids_limit: 256
     build: .
-    container_name: ttggate
+    container_name: ttg-gate-bbs
     ports:
       - "2399:2323"
     environment:
