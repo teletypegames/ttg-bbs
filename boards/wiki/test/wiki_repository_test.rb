@@ -4,7 +4,7 @@ require 'test_helper'
 
 class WikiRepositoryTest < Minitest::Test
   SITEMAP = { 'pages' => [{ 'route' => '/a', 'title' => "A\e]52;c;x\a page", 'updatedAt' => '2026-10-01T10:00',
-                            'tags' => ['t‮'], 'private' => false }] }.freeze
+                            'tags' => ["t\u202e"], 'private' => false }] }.freeze
   PAGE    = { 'title' => "Hi\e[2J", 'markdown' => "line\n\e[31mred" }.freeze
 
   def repository = @repository ||= WikiRepository.new('http://wiki-grav', user_agent: 'Test/1', token: 'secret')
