@@ -30,7 +30,7 @@ every screen:
   a reversed band in its colour (Own yellow, Discovery light green), the other
   dim with its yellow letter, and on the right the boards online now;
 - **row 2**, the active tab's sub-menu: on Global Discovery `/Find`, `Browse`,
-  `New`, `Random`, `Died`, `Graves`, `Srcs` (the Sources), their keys yellow,
+  `New`, `Random`, `Sources`, their keys yellow,
   the lit one a reversed bar (cyan while the menu has the focus); on Own
   Servers a line of how many boards there are and how they are dialled;
 - **rows 3-23**, the content, across all 40 columns;
@@ -38,18 +38,18 @@ every screen:
 
 Each screen of the content starts with its title row in its own colour (Own
 Servers yellow, Discovery light green, Search white, Browse orange, New purple,
-Recently died light red, Graveyard grey, Sources cyan, a board's page in the
+Sources cyan, a board's page in the
 colour of its state) with a count and the page on the right. A board's
 address is never cut: past the row it goes on in the next one, broken after a
 dot or before the port.
 
 | Key | |
 |---|---|
-| O / D | the tab Own Servers / Global Discovery, from anywhere |
+| O / D or G | the tab Own Servers / Global Discovery (it opens All PETSCII), from anywhere |
 | CRSR up / down | move the lit row of a list (past the edge of a page, the page turns); on Global Discovery CRSR up from the top of a list (or from a page) goes to the sub-menu, and there CRSR down goes back |
 | CRSR left / right | in the sub-menu: move its bar |
 | RETURN | open the place of the sub-menu; in a list open the board's page (dial our own board); on a board's page dial it |
-| a yellow sign | that place from anywhere: `/` Find, `B`rowse, `N`ew, `R`andom, di`E`d, `G`raves, `S`ources (or `U`, as before), Browse's soft`W`are, `C`ountry, networ`K`, `H`elp, `Q`uit |
+| a yellow sign | that place from anywhere: `/` Find, `B`rowse, `N`ew, `R`andom, `S`ources (or `U`, as before), Browse's soft`W`are, `C`ountry, networ`K`, `H`elp, `Q`uit |
 | 1-9, 0 | that row of the page (on Own Servers: dial it) |
 | + / - | the next / previous page |
 | F | in a list: the state filter, alive (all but the dead) → online → flaky → down → not called yet |
@@ -328,7 +328,7 @@ preview, and a PETSCII banner only on the C64 face). RETURN or `D` dials it.
 
 ### On a Commodore 64
 
-`D` (or the `GLOBAL DISCOVERY` tab) opens Global Discovery in the frame of the
+`D` or `G` (or the `GLOBAL DISCOVERY` tab) opens Global Discovery in the frame of the
 C64 face on `ALL PETSCII` (the first lists of Browse): every PETSCII board in
 every state, online and flaky first, then down, not called and dead, then by
 name, ten a page. The row under the title shows the

@@ -26,17 +26,17 @@ module UI
       end
 
       PLACES = [[:search, '/Find', 0], [:browse, 'Browse', 0], [:new, 'New', 0], [:random, 'Random', 0],
-                [:died, 'Died', 2], [:graves, 'Graves', 0], [:sources, 'Srcs', 0]].freeze
+                [:sources, 'Sources', 0]].freeze
       MENU = PLACES.each_with_object([]) do |(key, label, hotkey), items|
         col = items.empty? ? 0 : items.last.col + items.last.label.length + 1
         items << Item.new(key, label, hotkey, col)
       end.freeze
       # The sections that light a place of the sub-menu other than their own.
       UNDER = { all: :browse, software: :browse, country: :browse, network: :browse }.freeze
-      # The keys that open a place from anywhere: the tabs, the sub-menu's
-      # yellow signs, the axes of Browse (soft_w_are, _c_ountry, networ_k_),
-      # U for the Sources as before, Help and Quit.
-      HOTKEYS = { 'o' => :own, 'd' => :discover, 'w' => :software, 'c' => :country, 'k' => :network,
+      # The keys that open a place from anywhere: the tabs (G as in Global
+      # Discovery too), the sub-menu's yellow signs, the axes of Browse
+      # (soft_w_are, _c_ountry, networ_k_), U for the Sources as before, Help and Quit.
+      HOTKEYS = { 'o' => :own, 'd' => :discover, 'g' => :discover, 'w' => :software, 'c' => :country, 'k' => :network,
                   'u' => :sources, 'h' => :help, 'q' => :quit }.merge(MENU.to_h { |i| [i.letter, i.key] }).freeze
 
       module_function
