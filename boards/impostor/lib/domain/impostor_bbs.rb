@@ -10,7 +10,7 @@ class ImpostorBBS
   attr_reader :sessions
 
   def initialize
-    @sessions = Impostor.sessions_store(File.expand_path(ENV.fetch('IMPOSTOR_SESSIONS', 'data/sessions.csv'), ROOT))
+    @sessions = Impostor.sessions_store(File.expand_path(ENV.fetch('IMPOSTOR_BBS_SESSIONS', 'data/sessions.csv'), ROOT))
   end
 
   # The services by name.

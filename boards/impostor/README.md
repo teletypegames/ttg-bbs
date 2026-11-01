@@ -43,14 +43,14 @@ telnet localhost 2323
 
 Docker Compose publishes it on port 2324 (`telnet localhost 2324`), the public port on the server. Run directly,
 the port can be changed via the `BBS_PORT` environment variable. `env-example` lists every
-variable with its default: `BBS_PORT`, `BBS_MAX_SESSIONS` and `IMPOSTOR_SESSIONS`, the sessions file.
+variable with its default: `BBS_PORT`, `BBS_MAX_SESSIONS` and `IMPOSTOR_BBS_SESSIONS`, the sessions file.
 
 ## Generating a code
 
-To generate the personal code for a player name, use the CLI tool. It reads the name from the `PLAYER_NAME` environment variable:
+To generate the personal code for a player name, use the CLI tool. It reads the name from the `IMPOSTOR_BBS_PLAYER_NAME` environment variable:
 
 ```bash
-PLAYER_NAME=norman bin/generate_code
+IMPOSTOR_BBS_PLAYER_NAME=norman bin/generate_code
 # => 2J5GFN
 ```
 
@@ -72,7 +72,7 @@ Dockerfile, .dockerignore, compose.yaml
 .woodpecker.yaml, .rubocop.yml
 env-example                   Every environment variable, with its default
 bin/
-  generate_code               CLI tool: generates a player's code from PLAYER_NAME
+  generate_code               CLI tool: generates a player's code from IMPOSTOR_BBS_PLAYER_NAME
 lib/
   domain.rb                   Requires the gem, then the composition root
   domain/impostor_bbs.rb      ImpostorBBS: reads ENV, builds the sessions store
@@ -122,7 +122,7 @@ a3f1b2c4...,2026-04-28T10:00:00Z,NORMAN,2J5GFN,Great puzzle!,norman@example.com
 
 Each row is created when the player submits their name and code, then updated in place as feedback and email are collected. Multiple sessions with the same player name are kept separate by their session ID.
 
-`IMPOSTOR_SESSIONS` moves the file. When running via Docker Compose the `data/` directory is mounted as a volume so records survive container restarts.
+`IMPOSTOR_BBS_SESSIONS` moves the file. When running via Docker Compose the `data/` directory is mounted as a volume so records survive container restarts.
 
 ## BBS engine
 
