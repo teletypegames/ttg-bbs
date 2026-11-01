@@ -43,7 +43,6 @@ module UI
       NODE_COL     = FRAME_LEFT + 1
       NODE_WIDTH   = FRAME_RIGHT - FRAME_LEFT - 1
       NAME_WIDTH   = 16
-      PORT_COL     = 31
 
       ADDR_ROW    = FRAME_BOTTOM + 2
       TAGS_ROW    = ADDR_ROW + 1
@@ -54,12 +53,16 @@ module UI
 
       HELP_ROW   = 23
       REST_ROW   = 24
-      HELP       = [['CRSR', true], [' SELECT   ', false], ['RETURN', true], [' JACK IN   ', false],
-                    ['Q', true], [' EXIT', false]].freeze
-      HELP_PAGES = [['CRSR', true], ['  ', false], ['RETURN', true], [' JACK IN  ', false],
-                    ['+/-', true], [' PAGE  ', false], ['Q', true], [' EXIT', false]].freeze
+      HELP       = [['CRSR', true], ['  ', false], ['RETURN', true], [' JACK IN  ', false],
+                    ['G', true], [' WORLD  ', false], ['Q', true], [' EXIT', false]].freeze
+      HELP_PAGES = [['RETURN', true], [' JACK IN ', false], ['+/-', true], [' PAGE  ', false],
+                    ['G', true], [' WORLD  ', false], ['Q', true], [' EXIT', false]].freeze
 
       Drop = Struct.new(:col, :head, :glyphs)
+      # What a node shows: its +name+, the +right+ text at the frame's edge,
+      # the +mark+ glyph in +mark_color+ (+lit_mark+ when chosen, reversed),
+      # and the three info lines under the frame.
+      Node = Data.define(:name, :right, :mark, :mark_color, :lit_mark, :addr, :tags, :link)
 
       attr_reader :page, :index
 
@@ -87,7 +90,7 @@ module UI
         residue(canvas)
         @drops.each { |drop| trail(canvas, drop) }
         logo(canvas)
-        canvas.text(TAGLINE_ROW, centre(TAGLINE), TAGLINE, Canvas::GREEN)
+        canvas.text(TAGLINE_ROW, centre(tagline), tagline, Canvas::GREEN)
         border(canvas)
         PER_PAGE.times { |slot| node(canvas, slot) }
         labels(canvas)
@@ -171,6 +174,24 @@ module UI
 
       private
 
+      # -- what a subclass changes: the nodes, the words, the help ---------
+
+      # The Node of +board+ (a BoardModel): a block of its colour, the port.
+      def node_view(board)
+        Node.new(name: board.name, right: board.port.to_s, mark: '▌', mark_color: Switchboard.color(board), lit_mark: ' ',
+                 addr: board.address, tags: board.tags.join('/'), link: 'STANDBY')
+      end
+
+      def name_width = NAME_WIDTH
+
+      def title = ' TTG NETWORK '
+
+      def tagline = TAGLINE
+
+      def info_labels = %w[ADDR TAGS LINK]
+
+      def help_parts = pages > 1 ? HELP_PAGES : HELP
+
       def rest = Canvas.new.cursor(REST_ROW, 0)
 
       def centre(text) = (Canvas::COLS - text.length) / 2
@@ -193,7 +214,7 @@ module UI
           rows = logo.map(&:first)
           cols = logo.map(&:last)
           [[rows.minmax, cols.minmax],
-           [[TAGLINE_ROW] * 2, [centre(TAGLINE), centre(TAGLINE) + TAGLINE.length - 1]],
+           [[TAGLINE_ROW] * 2, [centre(tagline), centre(tagline) + tagline.length - 1]],
            [[FRAME_TOP, FRAME_BOTTOM], [FRAME_LEFT, FRAME_RIGHT]],
            [[ADDR_ROW, LINK_ROW], [FRAME_LEFT, FRAME_RIGHT]]].each_with_object({}) do |((top, bottom), (left, right)), cells|
             (top..bottom).each { |row| (left..right).each { |col| cells[[row, col]] = true } }
@@ -258,19 +279,17 @@ module UI
       end
 
       def labels(canvas)
-        canvas.text(FRAME_TOP, FRAME_LEFT + 2, ' TTG NETWORK ', Canvas::GREEN)
+        canvas.text(FRAME_TOP, FRAME_LEFT + 2, title, Canvas::GREEN)
         page = " PAGE #{@page + 1}/#{pages} "
         canvas.text(FRAME_TOP, FRAME_RIGHT - 1 - page.length, page, Canvas::GREEN)
         site = ' TELETYPEGAMES.ORG '
         canvas.text(FRAME_BOTTOM, FRAME_RIGHT - 1 - site.length, site, Canvas::DARK_GREY)
-        canvas.text(ADDR_ROW, NODE_COL, 'ADDR', Canvas::DARK_GREY)
-        canvas.text(TAGS_ROW, NODE_COL, 'TAGS', Canvas::DARK_GREY)
-        canvas.text(LINK_ROW, NODE_COL, 'LINK', Canvas::DARK_GREY)
+        [ADDR_ROW, TAGS_ROW, LINK_ROW].zip(info_labels) { |row, label| canvas.text(row, NODE_COL, label, Canvas::DARK_GREY) }
       end
 
-      # A node: its key, the board's colour, its name, a dotted leader and
-      # the port; the chosen one lit in green, or white while it flashes. An
-      # empty place is unassigned.
+      # A node: its key, its mark (a board's colour), its name, a dotted
+      # leader and the text at the edge (the port); the chosen one lit in
+      # green, or white while it flashes. An empty place is unassigned.
       def node(canvas, slot, flash: false)
         row   = FRAME_TOP + 1 + slot
         board = on_page[slot]
@@ -278,18 +297,21 @@ module UI
         key = format('%02d', slot + 1)
         return canvas.text(row, NODE_COL + 1, "#{key}   [ UNASSIGNED ]", Canvas::DARK_GREY) unless board
 
-        name   = board.name.upcase[0, NAME_WIDTH]
-        leader = '.' * (PORT_COL - 1 - (NODE_COL + 6 + name.length + 1))
+        view   = node_view(board)
+        right  = view.right.to_s.upcase
+        edge   = FRAME_RIGHT - 1 - right.length
+        name   = view.name.to_s.upcase[0, [name_width, edge - 2 - (NODE_COL + 6)].min]
+        leader = '.' * [edge - 1 - (NODE_COL + 6 + name.length + 1), 0].max
         if slot == @index
           lit = flash ? Canvas::WHITE : Canvas::LIGHT_GREEN
-          canvas.text(row, NODE_COL, ">#{key}   #{name} #{leader} #{board.port}".ljust(NODE_WIDTH), lit, rvs: true)
-          canvas.text(row, NODE_COL + 4, ' ', Switchboard.color(board), rvs: true)
+          canvas.text(row, NODE_COL, ">#{key}   #{name} #{leader} #{right}".ljust(NODE_WIDTH), lit, rvs: true)
+          canvas.text(row, NODE_COL + 4, view.lit_mark, view.mark_color, rvs: true)
         else
           canvas.text(row, NODE_COL + 1, key, Canvas::DARK_GREY)
-          canvas.text(row, NODE_COL + 4, '▌', Switchboard.color(board))
+          canvas.text(row, NODE_COL + 4, view.mark, view.mark_color)
           canvas.text(row, NODE_COL + 6, name, Canvas::GREEN)
           canvas.text(row, NODE_COL + 6 + name.length + 1, leader, Canvas::DARK_GREY)
-          canvas.text(row, PORT_COL, board.port.to_s, Canvas::GREEN)
+          canvas.text(row, edge, right, Canvas::GREEN)
         end
       end
 
@@ -304,9 +326,10 @@ module UI
         board = selected
         return unless board
 
-        canvas.text(ADDR_ROW, VALUE_COL, board.address.upcase[0, VALUE_WIDTH], Canvas::LIGHT_GREEN)
-        canvas.text(TAGS_ROW, VALUE_COL, board.tags.join('/').upcase[0, VALUE_WIDTH], Canvas::GREEN)
-        canvas.text(LINK_ROW, VALUE_COL, 'STANDBY', Canvas::GREEN)
+        view = node_view(board)
+        canvas.text(ADDR_ROW, VALUE_COL, view.addr.to_s.upcase[0, VALUE_WIDTH], Canvas::LIGHT_GREEN)
+        canvas.text(TAGS_ROW, VALUE_COL, view.tags.to_s.upcase[0, VALUE_WIDTH], Canvas::GREEN)
+        canvas.text(LINK_ROW, VALUE_COL, view.link.to_s.upcase[0, VALUE_WIDTH], Canvas::GREEN)
       end
 
       def info_spans
@@ -327,7 +350,7 @@ module UI
       end
 
       def help(canvas)
-        parts = pages > 1 ? HELP_PAGES : HELP
+        parts = help_parts
         col = centre(parts.map(&:first).join)
         parts.each do |text, key|
           canvas.text(HELP_ROW, col, text, key ? Canvas::GREEN : Canvas::DARK_GREY)

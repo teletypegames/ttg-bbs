@@ -33,6 +33,7 @@ in green, and its address, tags and link state are under the frame.
 | CRSR up / down | move between the nodes; past the first or the last one, the page turns |
 | CRSR left / right, + / - | the previous / next page |
 | RETURN or 1-8 | jack in: the node flashes, the HANDSHAKE bar fills, the line goes to the board |
+| G | Global Discovery, the world's PETSCII boards (see [On a Commodore 64](#on-a-commodore-64)) |
 | Q or RUN/STOP | hang up |
 
 A page holds eight nodes. The empty places of the last page are **unassigned**,
@@ -117,9 +118,8 @@ number dials it, `Q` or Esc hangs up. The rows show the board's colour bar,
 name, tags and port; the description and the full address of the chosen one are
 under the list. Global Discovery is described [below](#the-gate-ui).
 
-**Commodore 64:** the logo in reversed blocks, the boards numbered in their own
-colours (the nearest of the C64's) with their tags under them. The number dials,
-`Q` or RUN/STOP hangs up.
+**Commodore 64:** the switchboard (above); `G` turns to Global Discovery and
+back, the number dials, `Q` or RUN/STOP hangs up.
 
 Either way the board asks its own terminal question first: the gate reports the
 caller's window size to it, so a modern terminal is its default, and a C64,
@@ -245,6 +245,23 @@ that name it and its tags. `B` plays the first screen of its stored banner (only
 its text, colours and cursor moves; never for a board whose sysop asked for no
 preview, and a PETSCII banner only on the C64 face). RETURN or `D` dials it.
 
+### On a Commodore 64
+
+`G` on the C64 switchboard turns to Global Discovery (and back): the same
+switchboard, frame, rain and pages, eight nodes a page, but a node is a board of
+the catalog with its state mark where our boards have their colour block (a
+green ball online, a yellow one flaky, a red cross down, a grey cross dead, `?`
+not called yet), its country at the edge, and its address, software and state
+under the frame. Only PETSCII boards are on it, and not the dead ones (the gate
+carries the bytes as they are, and an ANSI board on a C64 is noise): the home
+menu has every PETSCII board, Search (`/` anywhere, a 40-column input line;
+`all` takes the dead in), Browse by Software, Country and Network (by Terminal
+would be PETSCII only), New this week, a Random board, Recently died, the
+Graveyard and the Sources. RETURN opens a board's page (the 30-day strip, the
+fields, the tags, the lists); there RETURN dials and `B` shows the first screen
+of a PETSCII banner. Moving between the nodes sends only the changed cells, as
+on our own switchboard (a whole screen about 1.3 KB, a step under 360 bytes).
+
 ### Dialling
 
 Only a board of the catalog can be dialled, by its page: there is no free
@@ -256,8 +273,8 @@ Only a board of the catalog can be dialled, by its page: there is no free
   by its connection.
 - **3 lines to one host at once** from the gate.
 - On the modern face a board made for a C64 only (PETSCII and no other
-  encoding seen) asks first: it would be noise there. A dead board asks first
-  too, on either face.
+  encoding seen) asks first: it would be noise there. The C64 face dials
+  PETSCII boards only. A dead board asks first too, on either face.
 - After the board hangs up (and a key), the caller is back on the board's page,
   and `Q` returns to the same place of the same list or search.
 - The dial is recorded as a probe of kind `dial`: `ok` when the board sent
@@ -309,7 +326,10 @@ lib/
   ui/modern/selector.rb                the dialing menu of our own boards on an ANSI terminal
   ui/modern/discovery/                 Global Discovery: home, menus, lists, the board page, search, sources
   ui/petscii.rb                        the PETSCII face: keys, dialling, goodbye
-  ui/petscii/switchboard.rb            the C64 menu: logo, stars, candy buttons, pages
+  ui/petscii/switchboard.rb            the C64 menu: logo, rain, the nodes, pages
+  ui/petscii/discovery.rb              Global Discovery on the C64: menus, search, lists, pages, dialling
+  ui/petscii/discovery_board.rb        its switchboard: a state mark a node
+  ui/petscii/board_screen.rb           a board's page on the C64
   ui/petscii/canvas.rb                 UI::Petscii::Canvas = rubbs' BBS::Petscii::Canvas (40×25, raw PETSCII)
   ui/petscii/screen.rb                 the C64 line of one call: raw out, keys in
   ui/colors.rb                         a board's accent on either face

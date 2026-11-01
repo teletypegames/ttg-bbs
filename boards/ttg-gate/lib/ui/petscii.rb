@@ -4,11 +4,13 @@ require_relative 'colors'
 require_relative 'dial'
 require_relative 'petscii/screen'
 require_relative 'petscii/switchboard'
+require_relative 'petscii/discovery'
 
 module UI
   # TTG Gate BBS on a Commodore 64: the Switchboard, raw PETSCII in the
   # graphics set. CRSR up and down move between the nodes, left and right or
-  # + and - turn the pages, RETURN or a digit dials, Q or RUN/STOP hangs up.
+  # + and - turn the pages, RETURN or a digit dials, G turns to Global
+  # Discovery (UI::Petscii::Discovery) and back, Q or RUN/STOP hangs up.
   # While the caller thinks, the code rain falls.
   module Petscii
     # Seconds between two rows of rain.
@@ -21,7 +23,8 @@ module UI
     def self.flow(bbs)
       BBS::Flow.define do
         call do |_ctx, runner|
-          Petscii.menu(Screen.new(runner.session), bbs.directory.boards(petscii: true))
+          screen = Screen.new(runner.session)
+          Petscii.menu(screen, bbs.directory.boards(petscii: true), Discovery.new(screen, bbs.browse, bbs.dials))
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           nil
@@ -29,7 +32,7 @@ module UI
       end
     end
 
-    def self.menu(screen, boards)
+    def self.menu(screen, boards, discovery = nil)
       board = Switchboard.new(boards)
       screen.raw(board.frame)
       idle = 0.0
@@ -49,6 +52,11 @@ module UI
         when *MOVES.keys then screen.raw(board.move(MOVES[key]))
         when *PAGES.keys then screen.raw(board.turn(PAGES[key]))
         when :enter then dial(screen, board)
+        when 'g', 'G'
+          next unless discovery
+
+          discovery.run
+          screen.raw(board.frame)
         when /\A[1-#{Switchboard::PER_PAGE}]\z/
           next unless board.board_at(key.to_i)
 
