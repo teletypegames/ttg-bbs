@@ -12,18 +12,20 @@ class TeletypeBBS
   CONTENT_DIR   = File.expand_path('../content', __dir__)
   BULLETINS_DIR = File.join(CONTENT_DIR, 'bulletins')
   LOGON_ART     = ENV.fetch('TELETYPE_BBS_LOGON_ART', File.join(CONTENT_DIR, 'logon.ans'))
+  # Every board of the network and what it carries: the BBS Network window,
+  # where a caller finds what this board leaves to the others.
   NETWORK       = [
-    ['Teletype BBS',   'teletypegames.org:2323', 'this board: messages, chat, news, catalog'],
-    ['Impostor BBS',   'teletypegames.org:2324', 'post-game terminal of Definitely not an Impostor'],
-    ['TTG Wiki BBS',   'teletypegames.org:2325', 'the whole wiki in a two-pane browser'],
-    ['Alexandria BBS', 'teletypegames.org:2326', 'Wikipedia on a telnet line'],
-    ['Feedia BBS',     'teletypegames.org:2327', 'an RSS reader: the news as text'],
-    ['TTG Blog BBS',   'teletypegames.org:2328', 'the Teletype Games blog'],
-    ['WarpEngine BBS', 'teletypegames.org:2329', 'the file area: C64 and Plus/4 titles'],
+    ['Teletype BBS',    'teletypegames.org:2323', 'this board: messages, mail, chat and our own doors'],
+    ['Impostor BBS',    'teletypegames.org:2324', 'the debrief terminal of Definitely not an Impostor'],
+    ['TTG Wiki BBS',    'teletypegames.org:2325', 'our wiki: the guides, the how-tos, the DOS corner'],
+    ['Alexandria BBS',  'teletypegames.org:2326', 'Wikipedia on a telnet line'],
+    ['Feedia BBS',      'teletypegames.org:2327', 'an RSS reader: the news as text'],
+    ['TTG Blog BBS',    'teletypegames.org:2328', 'our blog, written on the line'],
+    ['WarpEngine BBS',  'teletypegames.org:2329', 'our games and files: ZMODEM, XMODEM onto a C64'],
     ['Scriptorium BBS', 'teletypegames.org:2330', 'Project Gutenberg books, a chapter at a time'],
-    ['Commodex BBS',   'teletypegames.org:2331', 'the C64 game compendium, with cheats and tips'],
-    ['Pixelia BBS',    'teletypegames.org:2332', 'ANSI and PETSCII art and a shared canvas'],
-    ['TTG Gate BBS',   'teletypegames.org:2399', 'one port for all of these: a dialing menu']
+    ['Commodex BBS',    'teletypegames.org:2331', 'the C64 game compendium, with cheats and tips'],
+    ['Pixelia BBS',     'teletypegames.org:2332', 'ANSI and PETSCII art and a shared canvas'],
+    ['TTG Gate BBS',    'teletypegames.org:2399', 'one port for all of these: a dialing menu']
   ].freeze
   DOOR_NAMES = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Chat of Ra', 'TTG Trivia'].freeze
 
@@ -135,11 +137,9 @@ class TeletypeBBS
   end
 
   # What the logon sequence tells a caller: who they are, then the scans of
-  # the old boards (mail, message bases, voting booth, new files).
+  # the old boards (mail, message bases, voting booth).
   def logon_summary(name, registered:, session_id:)
     sysop      = sysop?(name, registered)
-    fresh      = Time.now - (30 * 86_400)
-    new_files  = @games.latest_releases(5).select { |g| g.released_at > fresh }.map { |g| "#{g.title} #{g.version}" }
     polls_open = name == AccountService::ANONYMOUS ? 0 : @voting.polls.count { |p| @voting.ballot(p, name).nil? }
     {
       name:          name,
@@ -150,12 +150,11 @@ class TeletypeBBS
       mail:          registered ? @mail.unread_count(name, sysop: sysop) : nil,
       new_scan:      registered ? @boards.new_scan(name) : nil,
       polls_open:    polls_open,
-      new_files:     new_files,
       quote:         @taglines.of_the_day
     }
   end
 
-  # The welcome bulletin's news: the board in numbers, the latest releases,
+  # The welcome bulletin's news: the board in numbers, the newest posts,
   # what is coming up, who called last and the wall.
   def bulletin(name, registered:)
     {
@@ -164,7 +163,7 @@ class TeletypeBBS
       online_count:   @online.count,
       total_messages: @boards.total_count,
       recent_callers: @last_callers.recent(3),
-      releases:       @games.latest_releases(3),
+      posts:          @boards.latest(3),
       events:         @site.upcoming_events(2),
       oneliners:      @oneliners.recent(5)
     }
@@ -227,7 +226,6 @@ class TeletypeBBS
   # The best of the board: [[name, number], ...] lists, eight each.
   def hall_of_fame
     {
-      downloads: @games.top_downloads(8).map { |g| [g.title, g.downloads] },
       callers:   @last_callers.top_callers(8),
       posters:   @boards.top_posters(8),
       trivia:    @trivia.best(8).map { |sc| [sc.username, sc.points.to_i] }

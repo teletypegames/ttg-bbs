@@ -9,7 +9,7 @@ module UI
         BANNER = Logo.half_blocks.map { |l| "  #{l}" }.freeze
 
         def self.body(username:, registered:, online_count:, total_messages:,
-                      recent_callers:, releases:, events:, oneliners:)
+                      recent_callers:, posts:, events:, oneliners:)
           callers = recent_callers.map do |c|
             "  · #{c.username}  \e[2;37m#{c.timestamp[0, 16].sub('T', ' ')}\e[0m"
           end
@@ -25,11 +25,11 @@ module UI
             :spacer,
             { text: 'Lost? Press F1: the TTG Master, the sysop, answers your questions.', style: :accent },
             :spacer,
-            "What's new:",
-            *(releases.empty? ? ['  (no releases)'] : releases.map { |g| News.release_line(g) }),
+            'New on the boards:',
+            *(posts.empty? ? ['  (nothing posted yet — Messages > Boards)'] : posts.map { |b, m| Posts.line(b, m) }),
             :spacer,
             'Coming up:',
-            *(events.empty? ? ['  (nothing scheduled)'] : events.map { |e| News.event_line(e) }),
+            *(events.empty? ? ['  (nothing scheduled)'] : events.map { |e| Events.line(e) }),
             :spacer,
             'Last callers:',
             *(callers.empty? ? ['  (none yet)'] : callers),
@@ -101,7 +101,6 @@ module UI
 
         # A question for the TTG Master, or :network, the BBS Network window.
         QUICK_QUESTIONS = [
-          ['&What is new?', 'What is new? What was released lately?'],
           ['What is &coming up?', 'What events are coming up?'],
           ['&Where do I start?', 'I am new here. Where do I start?'],
           ['Where are the &games, files, wiki?', :network],
@@ -117,41 +116,17 @@ module UI
         end
       end
 
-      module News
-        def self.release_line(game)
-          date = game.released_at&.strftime('%Y-%m-%d')
-          "  · \e[1;33m#{game.title}\e[0m #{game.version}  \e[2;37m#{game.platform} · #{date}\e[0m"
-        end
-
-        def self.event_line(event)
+      module Events
+        def self.line(event)
           "  · #{event.date.strftime('%Y-%m-%d')}  #{event.name}"
         end
+      end
 
-        def self.body(releases:, events:, posts:, catalog_url:)
-          body = ['  Latest releases']
-          if releases.empty?
-            body << '  (no releases)'
-          else
-            releases.each do |g|
-              body << release_line(g)
-              body << "    \e[1;36m#{catalog_url.call(g)}\e[0m"
-            end
-          end
-          body << :spacer
-          body << '  Upcoming events'
-          body.concat(events.empty? ? ['  (nothing scheduled)'] : events.map { |e| event_line(e) })
-          body << :spacer
-          body << '  From the blog (TTG Blog BBS, port 2328)'
-          if posts.empty?
-            body << '  (no posts yet — they will show up here and on teletypegames.org/blog)'
-          else
-            posts.each do |p|
-              body << "  · #{p.created_at.localtime.strftime('%Y-%m-%d')}  \e[1;33m#{p.title}\e[0m" \
-                      "#{"  \e[2;37m#{p.author}\e[0m" if p.author}"
-              body << "    \e[1;36m#{p.url}\e[0m"
-            end
-          end
-          body
+      module Posts
+        # A post in one line: the board, the writer, the start of the text.
+        def self.line(board, message)
+          text = message.text.to_s.gsub(/\s+/, ' ')
+          "  · \e[1;33m#{message.username}\e[0m on #{board.title}: #{text[0, 48]}#{'…' if text.length > 48}"
         end
       end
 
@@ -194,11 +169,15 @@ module UI
 
         def self.body
           rows = SYSTEMS.flat_map do |name, address, note|
-            ["  \e[1;33m#{name.ljust(14)}\e[0m \e[1;36m#{address}\e[0m", "  #{' ' * 15}#{note}"]
+            ["  \e[1;33m#{name.ljust(15)}\e[0m \e[1;36m#{address}\e[0m", "  #{' ' * 16}#{note}"]
           end
-          [*rows, :spacer, '  What each door here is: Doors > Door Lobby.',
+          ['  Each kind of thing has a board of its own: our games and files,',
+           '  the wiki, the blog and the art. TTG Gate BBS dials them all.',
+           :spacer, *rows, :spacer, '  What each door here is: Doors > Door Lobby.',
            :spacer, '  In a browser, no telnet client needed:',
-           "  \e[1;36mhttps://bbsweb.teletypegames.org\e[0m"]
+           "  \e[1;36mhttps://bbsweb.teletypegames.org\e[0m",
+           '  The whole FTP tree on plain HTTP, for old machines:',
+           "  \e[1;36mhttp://archive.teletypegames.org\e[0m"]
         end
       end
 

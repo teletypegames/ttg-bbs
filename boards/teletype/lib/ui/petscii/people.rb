@@ -67,7 +67,7 @@ module UI
       def hall_of_fame
         doing('Hall of Fame')
         fame = @bbs.hall_of_fame
-        lines = [['most downloaded games', fame[:downloads]], ['top callers', fame[:callers]],
+        lines = [['top callers', fame[:callers]],
                  ['top posters', fame[:posters]], ['ttg trivia high scores', fame[:trivia]]]
                 .flat_map do |heading, rows|
           [" #{WH}#{heading}#{LG}", *(rows.empty? ? [" #{GR}(nobody yet)#{LG}"] : fame_rows(rows)), '']

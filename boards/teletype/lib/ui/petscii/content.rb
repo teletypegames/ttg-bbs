@@ -7,9 +7,8 @@ module UI
       MARKDOWN = { text: LG, text_bright: WH, accent: YE, label: CY, text_dim: GR }.freeze
 
       BULLETINS = [
-        ['The logon bulletin', :logon], ['About Teletype Games', 'about.md'], ['The story so far', :history],
-        ['Coming up', :events], ['Board rules', 'rules.md'], ['New to BBSes?', 'newcomers_c64.md'],
-        ['Our BBS network', :network]
+        ['The logon bulletin', :logon], ['About Teletype Games', 'about.md'], ['Coming up', :events],
+        ['Board rules', 'rules.md'], ['New to BBSes?', 'newcomers_c64.md'], ['Our BBS network', :network]
       ].freeze
 
       private
@@ -18,24 +17,7 @@ module UI
 
       def urls(*list) = list.compact.flat_map { |u| u.scan(/.{1,37}/).map { |w| " #{CY}#{w}#{LG}" } }
 
-      # ── news, bulletins, dev log ───────────────────────────────────────
-
-      def news
-        doing('News')
-        lines = [" #{WH}latest releases#{LG}"]
-        @bbs.games.latest_releases(5).each { |g| lines += [release_line(g), *urls(@bbs.games.catalog_url(g))] }
-        lines += ['', " #{WH}coming up#{LG}", *events(5), '', " #{WH}blog#{LG} #{GR}(ttg blog bbs, 2328)#{LG}"]
-        posts = @bbs.site.blog_posts(5)
-        lines << " #{GR}(no posts yet)#{LG}" if posts.empty?
-        posts.each do |p|
-          lines += [" #{GR}#{p.created_at.localtime.strftime('%Y-%m-%d')}#{LG} #{p.title}", *urls(p.url)]
-        end
-        @screen.page('NEWS', lines)
-      end
-
-      def release_line(game)
-        " #{YE}#{game.title}#{LG} #{game.version} #{GR}#{game.platform} #{game.released_at&.strftime('%m-%d')}#{LG}"
-      end
+      # ── bulletins, the network, dev log ───────────────────────────────────────
 
       def events(count)
         coming = @bbs.site.upcoming_events(count)
@@ -57,10 +39,8 @@ module UI
       def bulletin_lines(kind)
         case kind
         when :logon   then logon_bulletin
-        when :history then history
         when :events  then events(10)
-        when :network
-          TeletypeBBS::NETWORK.flat_map { |b, address, note| [" #{YE}#{b}#{LG}", "   #{CY}#{address}#{LG}", "   #{note}", ''] }
+        when :network then network_lines
         else markdown(File.read(File.join(TeletypeBBS::BULLETINS_DIR, kind)))
         end
       end
@@ -68,7 +48,7 @@ module UI
       def logon_bulletin
         b = @bbs.bulletin(name, registered: registered?)
         [" #{GR}online now#{LG} #{b[:online_count]}  #{GR}messages#{LG} #{b[:total_messages]}", '',
-         " #{WH}what's new#{LG}", *b[:releases].map { |g| release_line(g) }, '',
+         " #{WH}new on the boards#{LG}", *b[:posts].map { |bd, m| post_line(bd, m) }, '',
          " #{WH}coming up#{LG}", *events(2), '',
          " #{WH}last callers#{LG}", *b[:recent_callers].map { |c|
                                       " #{c.username} #{GR}#{c.timestamp[5, 11].sub('T', ' ')}#{LG}"
@@ -76,14 +56,25 @@ module UI
          '', " #{WH}oneliners#{LG}", *b[:oneliners].map { |o| " #{YE}#{o.username}#{LG}: #{o.text}" }]
       end
 
-      def history
-        list = @bbs.games.release_history
-        return [" #{GR}(the catalog did not answer)#{LG}"] if list.empty?
+      # The BBS Network: where each kind of thing has its board.
+      def network
+        doing('BBS Network')
+        @screen.page('BBS NETWORK', network_lines)
+      end
 
-        list.group_by { |_, r| r.released_at.strftime('%Y-%m') }.flat_map do |month, releases|
-          [" #{YE}#{Time.strptime(month, '%Y-%m').strftime('%B %Y').downcase}#{LG}",
-           *releases.map { |g, r| "  #{GR}#{r.released_at.strftime('%d')}#{LG} #{g.title} #{CY}#{r.version}#{LG}" }, '']
+      def network_lines
+        lines = @screen.wrap('Each kind of thing has a board of its own; TTG Gate BBS dials them all.', 37).map { |l| " #{l}" }
+        TeletypeBBS::NETWORK.each do |board, address, note|
+          lines += ['', " #{YE}#{board}#{LG}", "   #{CY}#{address}#{LG}", *@screen.wrap(note, 35).map { |l| "   #{l}" }]
         end
+        lines + ['', " #{GR}in a browser:#{LG}", " #{CY}bbsweb.teletypegames.org#{LG}",
+                 " #{GR}every file on plain http:#{LG}", " #{CY}archive.teletypegames.org#{LG}"]
+      end
+
+      # A post in one line: who wrote it, where, and how it starts.
+      def post_line(board, message)
+        text = message.text.to_s.gsub(/\s+/, ' ')[0, 120]
+        " #{YE}#{message.username.to_s[0, 12]}#{LG} #{GR}#{board.title.downcase}#{LG} #{text}"
       end
 
       def dev_log

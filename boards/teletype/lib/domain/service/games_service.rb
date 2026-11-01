@@ -25,7 +25,7 @@ class GamesService
     platform ? games.select { |g| g.platform == platform } : games
   end
 
-  # Latest proper releases first; development builds stay out of the news.
+  # Latest proper releases first; development builds stay out of them.
   def latest_releases(n = 3)
     all.select { |g| g.released? && !g.dev_build? && g.released_at }
        .sort_by { |g| -g.released_at.to_i }
@@ -33,14 +33,4 @@ class GamesService
   end
 
   def catalog_url(game) = @repo.catalog_url(game)
-
-  # Every proper release of every game, newest first: the board's history.
-  # [[game, release], ...]
-  def release_history
-    all.flat_map { |g| g.releases.map { |r| [g, r] } }
-       .reject { |_, r| r.version.start_with?('dev-') || r.released_at.nil? }
-       .sort_by { |_, r| -r.released_at.to_i }
-  end
-
-  def top_downloads(n = 10) = all.reject(&:dev_build?).sort_by { |g| [-g.downloads, g.title] }.first(n)
 end

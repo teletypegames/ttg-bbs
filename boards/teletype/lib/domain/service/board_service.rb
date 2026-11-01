@@ -33,6 +33,13 @@ class BoardService
     @last_read&.set(username, board_id, count(board_id)) if username
   end
 
+  # The newest posts over every board, newest first: [[board, message], ...].
+  # A post's stamp is month, day and time, so it sorts within a year.
+  def latest(n = 5)
+    boards.flat_map { |b| messages(b.id, n).map { |m| [b, m] } }
+          .sort_by { |_, m| m.timestamp.to_s }.reverse.first(n)
+  end
+
   # [[name, posts], ...] most posts first.
   def top_posters(n = 10)
     @repo.posters.values.reject { |name, _| name.casecmp?(AccountService::ANONYMOUS) }

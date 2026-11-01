@@ -71,9 +71,8 @@ module UI
 
         # The logon sequence after the name: who you are, then the scans.
         def self.screen(runner, name:, node:, caller_number:, stats:, registered:, mail:, new_scan:,
-                        polls_open:, new_files:, quote:)
+                        polls_open:, quote:)
           out = ->(text) { runner.write(text) }
-          room = [(runner.session.term_cols || 80) - DOTS - 5, 20].max
           out.call "\e[0m\e[2J\e[H\r\n"
           Logo.half_blocks.each { |l| out.call "  #{l}\r\n" }
           out.call "  #{C}═══#{O} #{W}Teletype BBS#{O} #{C}#{'═' * 47}#{O} #{W}Node #{node}#{O} #{C}═══#{O}\r\n" if node
@@ -107,11 +106,6 @@ module UI
             if polls_open.zero? then "#{D}you voted on every poll#{O}"
             else "#{Y}#{polls_open} poll#{'s' if polls_open != 1}#{O} #{D}wait for your vote#{O}"
             end
-          end
-          scan(out, 'Looking for new files') do
-            next "#{D}no new files this month#{O}" if new_files.empty?
-
-            BBS::FrameBuffer.clip_ansi(new_files.first(2).join(' · '), room)
           end
           out.call "\r\n  #{C}Quote of the day#{O}\r\n"
           Formatters.wrap(Taglines.line(quote), 72).each { |l| out.call "  #{W}#{l}#{O}\r\n" }
@@ -245,26 +239,6 @@ module UI
         end
       end
 
-      module History
-        # The story of the collective in releases, by month, newest first.
-        def self.lines(history, width)
-          return ['  (the catalog did not answer — try again later)'] if history.empty?
-
-          first = history.last[1].released_at
-          lines = ["  #{W}#{history.size} releases of #{history.map { |g, _| g.name }.uniq.size} titles " \
-                   "since #{first.strftime('%B %Y')}#{O}", '']
-          history.group_by { |_, r| r.released_at.strftime('%Y-%m') }.each do |month, rel|
-            lines << "  #{Y}#{Time.strptime(month, '%Y-%m').strftime('%B %Y')}#{O} #{K}#{'─' * [width - 22, 4].max}#{O}"
-            rel.each do |g, r|
-              day = r.released_at.strftime('%d')
-              lines << "    #{D}#{day}#{O}  #{K}#{g.platform.ljust(10)}#{O} #{W}#{g.title}#{O} #{C}#{r.version}#{O}"
-            end
-            lines << ''
-          end
-          lines
-        end
-      end
-
       module HallOfFame
         def self.section(title, rows, width, unit)
           lines = ["  #{Y}#{title}#{O}", "  #{K}#{'─' * [width - 5, 10].max}#{O}"]
@@ -281,9 +255,8 @@ module UI
           lines + ['']
         end
 
-        def self.body(downloads:, callers:, posters:, trivia:, width:)
-          section('Most downloaded games', downloads, width, 'DLs') +
-            section('Top callers', callers, width, 'calls') +
+        def self.body(callers:, posters:, trivia:, width:)
+          section('Top callers', callers, width, 'calls') +
             section('Top posters', posters, width, 'posts') +
             section('TTG Trivia high scores', trivia, width, 'pts')
         end
@@ -293,11 +266,10 @@ module UI
         LIST = [
           { label: ' 1  The logon bulletin',      kind: :logon },
           { label: ' 2  About Teletype Games',    kind: :file, file: 'about.md' },
-          { label: ' 3  The story so far',        kind: :history },
-          { label: ' 4  Coming up',               kind: :events },
-          { label: ' 5  Board rules',             kind: :file, file: 'rules.md' },
-          { label: ' 6  New to BBSes?',           kind: :file, file: 'newcomers.md' },
-          { label: ' 7  Our BBS network',         kind: :network }
+          { label: ' 3  Coming up',               kind: :events },
+          { label: ' 4  Board rules',             kind: :file, file: 'rules.md' },
+          { label: ' 5  New to BBSes?',           kind: :file, file: 'newcomers.md' },
+          { label: ' 6  Our BBS network',         kind: :network }
         ].freeze
       end
 

@@ -195,7 +195,8 @@ module UI
                 name: context[:username] || AccountService::ANONYMOUS, registered: registered?,
                 caller_number: context[:caller_number], node: services[:online].node(session_id)&.number,
                 nodes: services[:online].nodes, callers: services[:last_callers].recent(5),
-                releases: services[:games].latest_releases(5), events: services[:site].upcoming_events(3),
+                posts: services[:boards].latest(5), events: services[:site].upcoming_events(3),
+                mail: registered? ? services[:mail].unread_count(context[:username], sysop: sysop?) : nil,
                 oneliners: services[:oneliners].recent(8), messages: services[:boards].total_count
               )
             rescue StandardError => e
@@ -285,23 +286,6 @@ module UI
             end
           end
 
-          window :news, type: :info do |window_spec|
-            window_spec.accent Accent::STYLES[:board]
-            window_spec.maximizable true
-            window_spec.title  ' News '
-            window_spec.width  { |ctx| [ctx[:app].cols - 6, 76].min }
-            window_spec.height { |ctx| [ctx[:app].rows - 4, 24].min }
-            window_spec.scroll true
-            window_spec.body do |ctx|
-              Formatters::News.body(
-                releases:    ctx[:games].latest_releases(5),
-                events:      ctx[:site].upcoming_events(5),
-                posts:       ctx[:site].blog_posts(5),
-                catalog_url: ->(game) { ctx[:games].catalog_url(game) }
-              )
-            end
-          end
-
           window :team, type: :info do |window_spec|
             window_spec.accent Accent::STYLES[:people]
             window_spec.maximizable true
@@ -315,7 +299,7 @@ module UI
           window :network, type: :info do |window_spec|
             window_spec.accent Accent::STYLES[:board]
             window_spec.title  ' BBS Network '
-            window_spec.width  72
+            window_spec.width  { |ctx| [ctx[:app].cols - 4, 76].min }
             window_spec.height { |ctx| [Formatters::Network.body.size + 6, ctx[:app].rows - 3].min }
             window_spec.scroll true
             window_spec.body   { |_ctx| Formatters::Network.body }
@@ -669,11 +653,9 @@ module UI
                     (l == :spacer ? '' : " #{l}")
                   end
                 }
-              when :history
-                Formatters::History.lines(ctx[:games].release_history, width)
               when :events
                 events = ctx[:site].upcoming_events(10)
-                events.empty? ? ['  (nothing scheduled)'] : events.map { |e| Formatters::News.event_line(e) }
+                events.empty? ? ['  (nothing scheduled)'] : events.map { |e| Formatters::Events.line(e) }
               when :network
                 Formatters::Network.body.map { |l| l == :spacer ? '' : l }
               when :file
@@ -710,10 +692,7 @@ module UI
               item '&Dashboard', hint: 'The live desktop: who is on, the last callers, what is new and coming up' do
                 show_dashboard
               end
-              item '&News', hint: 'The latest releases, the coming events and the newest blog posts' do
-                open_window(:news)
-              end
-              item '&Bulletins…', hint: 'Numbered bulletins: the rules, the story so far, New to BBSes?' do
+              item '&Bulletins…', hint: 'Numbered bulletins: about us, what is coming up, the rules, New to BBSes?' do
                 open_window(:bulletins)
               end
               item 'Dev &Log', hint: 'What the team pushed, tagged and released on git.teletypegames.org' do
@@ -723,7 +702,7 @@ module UI
               item '&System Info', hint: 'Nodes, calls, messages and uptime of this board' do
                 open_window(:system_info)
               end
-              item 'BBS Net&work', hint: 'Our other boards, their telnet addresses, and the board in a browser' do
+              item 'BBS Net&work', hint: 'Our boards and what each carries: the games, the wiki, the blog, the art' do
                 open_window(:network)
               end
               separator
@@ -762,7 +741,7 @@ module UI
               item '&User Listing', hint: 'The registered names with their calls and where they are from' do
                 open_window(:user_list)
               end
-              item '&Hall of Fame', hint: 'Top downloads, callers, posters and TTG Trivia scores' do
+              item '&Hall of Fame', hint: 'Top callers, top posters and the TTG Trivia high scores' do
                 open_window(:hall_of_fame)
               end
               separator
@@ -827,9 +806,9 @@ module UI
               item 'A&bout', hint: 'What this board is' do
                 BBS::Dialogs.message(self,
                   'Teletype BBS — the telnet clubhouse of Teletype Games, powered by rubbs. ' \
-                  'Board: the dashboard, news, bulletins, the dev log. Messages: boards, mail, oneliners, live chat, ' \
-                  'IRC and the voting booth. People, Doors, You. Our games and files, the wiki, the blog and the art ' \
-                  'have boards of their own: Board > BBS Network. Lost? F1 asks the TTG Master.',
+                  'Board: the dashboard, bulletins, the dev log, the BBS Network. Messages: boards, mail, oneliners, ' \
+                  'live chat, IRC and the voting booth. People, Doors, You. Our games and files, the wiki, the blog ' \
+                  'and the art have boards of their own: Board > BBS Network. Lost? F1 asks the TTG Master.',
                   title: ' About ', width: 64)
               end
             end

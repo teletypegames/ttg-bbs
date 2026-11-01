@@ -87,7 +87,6 @@ s[:name] == AccountService::ANONYMOUS ? 'Call with a name to keep one.' : 'A gue
                        end)
           Petscii.scan(screen, 'voting booth',
 s[:polls_open].zero? ? 'all voted' : "#{s[:polls_open]} poll#{'s' if s[:polls_open] != 1} open")
-          Petscii.scan(screen, 'new files', s[:new_files].empty? ? 'none this month' : s[:new_files].first)
           screen.puts
           screen.puts " #{CY}quote of the day#{LG}"
           text, who = s[:quote]

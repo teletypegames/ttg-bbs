@@ -6,7 +6,7 @@ module UI
     # menu on its frame and on its focused title, the dashboard's panels the
     # colour of what they show, so a caller sees where a window belongs.
     module Accent
-      COLORS = { board: 116, messages: 78, files: 214, people: 176, doors: 209, you: 146,
+      COLORS = { board: 116, messages: 78, people: 176, doors: 209, you: 146,
                  help: 220 }.freeze
 
       def self.fg(section) = "\e[0;38;5;#{COLORS.fetch(section)};48;5;16m"
@@ -20,13 +20,13 @@ module UI
       STYLES = COLORS.keys.to_h { |section| [section, styles(section)] }.freeze
     end
 
-    # The desktop: the board as it is now. The logo
-    # and the greeting, the TTG Gate BBS banner, then four panels (the nodes, the last callers, the
-    # new releases, what is coming up) and the oneliners wall running along
+    # The desktop: the board as it is now. The logo and the greeting, the
+    # TTG Gate BBS banner, then four panels (the nodes, the newest posts and
+    # your mail, the last callers, what is coming up) and the oneliners wall running along
     # the bottom. The application gives it its Data on start and every few
     # seconds after, and steps the ticker once a second.
     class Dashboard < BBS::Widget
-      Data = Struct.new(:name, :registered, :caller_number, :node, :nodes, :callers, :releases, :events,
+      Data = Struct.new(:name, :registered, :caller_number, :node, :nodes, :callers, :posts, :mail, :events,
                         :oneliners, :messages, keyword_init: true)
 
       W = "\e[0;38;5;231;48;5;16m"
@@ -113,7 +113,7 @@ module UI
       end
 
       def panels
-        [[:people, 'On line now', nodes_lines], [:files, "What's new", release_lines],
+        [[:people, 'On line now', nodes_lines], [:messages, "What's new", post_lines],
          [:people, 'Last callers', caller_lines], [:board, 'Coming up', event_lines]]
       end
 
@@ -143,12 +143,16 @@ module UI
         end
       end
 
-      def release_lines
-        return ["#{D}(no releases)"] if @data.releases.empty?
-
-        @data.releases.map do |g|
-          "#{Y}#{g.title}#{T} #{g.version} #{D}#{g.platform} #{g.released_at&.strftime('%m-%d')}"
+      # The newest posts, and the caller's unread letters when there are any.
+      def post_lines
+        lines = @data.posts.map do |b, m|
+          "#{Y}#{m.username.to_s[0, 12]}#{D} #{b.title}: #{T}#{m.text.to_s.gsub(/\s+/, ' ')}"
         end
+        lines = ["#{D}(nothing posted yet: F2 opens the boards)"] if lines.empty?
+        if @data.mail.to_i.positive?
+          lines.unshift("#{Y}#{@data.mail} unread letter#{'s' if @data.mail != 1}#{D} · F7 opens your mail")
+        end
+        lines
       end
 
       # Each event on two lines at most: when, then its name, wrapped under it.

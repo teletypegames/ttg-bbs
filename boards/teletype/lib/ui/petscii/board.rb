@@ -15,16 +15,16 @@ module UI
                            ['l', 'live chat', 'talk with whoever is on line'],
                            ['i', 'irc channel', 'the irc channel, from a c64'],
                            ['p', 'page the sysop', 'call the sysop to a chat']]],
-         ['content', CY, [['n', 'news', 'news from teletype games'],
-                          ['u', 'bulletins', 'the bulletins of the board'],
-                          ['d', 'dev log', 'what we are making, commit by commit']]]],
+         ['board', CY, [['u', 'bulletins', 'the bulletins of the board'],
+                        ['d', 'dev log', 'what we are making, commit by commit'],
+                        ['n', 'network', 'our boards: games, wiki, blog, art']]]],
         [['people', PU, [['c', 'callers & users', 'who is on line, who called'],
                          ['v', 'voting booth', 'the polls of the board'],
                          ['s', 'you & your name', 'your stats, profile and registration'],
                          ['h', 'hall of fame', 'the top callers and posters']]],
          ['more', YE, [['r', 'doors', 'games and programs behind the doors'],
                        ['t', 'ttg master', 'ask the sysop where things are'],
-                       ['y', 'system info', 'this board and the network of boards'],
+                       ['y', 'system info', 'the numbers of this board'],
                        ['?', 'help', 'how the keys of this board work'],
                        ['q', 'log off', 'hang up. see you on the wire!']]]]
       ].freeze
@@ -55,7 +55,7 @@ module UI
 
       ACTIONS = {
         'm' => :boards, 'e' => :mail, 'o' => :oneliners, 'l' => :live_chat, 'i' => :irc, 'p' => :page_sysop,
-        'n' => :news, 'u' => :bulletins,
+        'n' => :network, 'u' => :bulletins,
         'd' => :dev_log, 'c' => :people, 'v' => :voting, 's' => :you, 'h' => :hall_of_fame, 'r' => :doors,
         't' => :master, 'y' => :system_info, '?' => :help, 'z' => :sysop_console
       }.freeze
@@ -135,7 +135,7 @@ module UI
       end
 
       # Who is calling and what is happening, over the menu: the caller and
-      # the nodes, the next event and the newest release, one line each. New
+      # the nodes, the next event and the newest post, one line each. New
       # mail since the last look rings once, as on the old boards.
       def live_strip
         online = @bbs.online.count
@@ -154,8 +154,11 @@ module UI
           when_ = days <= 0 ? 'today' : "in #{days} day#{'s' unless days == 1}"
           @screen.puts " #{GR}next:#{LG} #{event.name[0, 38 - 7 - when_.length - 1]} #{CY}#{when_}#{LG}"
         end
-        game = @bbs.games.latest_releases(1).first
-        @screen.puts " #{GR}new:#{LG}  #{YE}#{game.title[0, 38 - 7 - game.version.length - 1]}#{LG} #{game.version}" if game
+        _board, post = @bbs.boards.latest(1).first
+        return unless post
+
+        text = "#{post.username}: #{post.text.to_s.gsub(/\s+/, ' ')}"
+        @screen.puts " #{GR}new:#{LG}  #{YE}#{text[0, 38 - 7]}#{LG}"
       end
 
       def logoff?
@@ -209,11 +212,7 @@ module UI
           ['ruby', RUBY_VERSION]
         ]
         lines = rows.map { |k, v| " #{GR}#{k.ljust(13)}#{LG}#{v}" }
-        lines += ['', " #{WH}the boards of teletype games#{LG}"]
-        TeletypeBBS::NETWORK.each do |board, address, note|
-          lines += ['', " #{YE}#{board}#{LG}", "   #{CY}#{address}#{LG}", *@screen.wrap(note, 35).map { |l| "   #{l}" }]
-        end
-        lines += ['', " #{GR}in a browser:#{LG}", " #{CY}bbsweb.teletypegames.org#{LG}"]
+        lines += ['', " #{GR}our other boards: n on the main menu#{LG}"]
         @screen.page('SYSTEM INFO', lines)
       end
 

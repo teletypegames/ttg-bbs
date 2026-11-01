@@ -9,6 +9,4 @@ class SiteService
   end
 
   def members = @repo.members
-
-  def blog_posts(n = 5) = @repo.blog_posts.first(n)
 end
