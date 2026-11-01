@@ -7,10 +7,11 @@ GIT
 
 GIT
   remote: https://git.teletypegames.org/engines/rubbs.git
-  revision: 30346e4a859ebf0a800457e161ebecada4759766
+  revision: e32daa94c8c62706a7d5c2d1ad500c70760e2c77
   specs:
-    bbs (0.32.0)
+    bbs (0.33.0)
       artii (~> 2.1)
+      sqlite3 (~> 2.1)
 
 GEM
   remote: https://rubygems.org/
@@ -21,6 +22,7 @@ GEM
     json (3.1.0)
     language_server-protocol (3.17.0.6)
     lint_roller (1.1.0)
+    mini_portile2 (2.8.9)
     net-ftp (0.3.9)
       net-protocol
       time
@@ -49,6 +51,11 @@ GEM
       parser (>= 3.3.7.2)
       prism (~> 1.7)
     ruby-progressbar (1.13.0)
+    sqlite3 (2.10.2)
+      mini_portile2 (~> 2.8.0)
+    sqlite3 (2.10.2-aarch64-linux-musl)
+    sqlite3 (2.10.2-arm64-darwin)
+    sqlite3 (2.10.2-x86_64-linux-musl)
     time (0.5.0)
       date
     timeout (0.6.1)
