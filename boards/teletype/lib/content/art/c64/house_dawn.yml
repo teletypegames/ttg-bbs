@@ -1,0 +1,64 @@
+# The clubhouse from the street, dawn, for the C64 main menu (rows 0-9 of the screen).
+# A C64 has one background, so the sky is reversed spaces (black at night). Windows node_1..node_7
+# (1-4 downstairs from the left, 5-7 upstairs), the door, the smoke, the mailbox flag and count
+# and the status in the top row are filled from the board.
+size: [40, 10]
+charset: petscii-upper
+palette:
+  s: purple
+  y: yellow
+  o: orange
+  r: red
+  R: light_red
+  b: brown
+  g: dark_grey
+  G: grey
+  L: light_grey
+  u: blue
+  e: green
+chars: |2
+   TTG BBS CLUBHOUSE                      
+                                          
+     │      │                             
+                          ●               
+     TTG BBS                              
+    CLUBHOUSE                             
+                                          
+                         ▒▒▒              
+                           .              
+                                          
+colors: |2
+  .yyyyyyyyyyyyyyyyy......................
+  gggggggggggggsssssssssssssssssssssssssss
+  gssssssssssssssssssrrrrrrrrrrbbssyysssss
+  grrrrrrrrrrrrssssrrrrrrrLrrrrrrrrsssssss
+  gryyyyyyyyyyrssRRRRRRRRRRRRRRRRRRRRsssss
+  groooooooooorsssbbggbbbgggbbggbbbbssssss
+  grrrrrrrrrrrrsssbbbbbbbbbbbbbbbbbbssuuus
+  gsssssssssssssssbggbggbbbbbggbggbbsssbss
+  gsssssssssssssssbbbbbbbggybbbbbbbbsssbss
+  eeeeeeeeeeeeeeeeeeeeeeGGGGGeeeeeeeeeeeee
+reverse: |2
+  ........................................
+  RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+  RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+  RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+  RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+  RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+  RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+  RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+  RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+  RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+hotspots:
+  smoke: [28, 1, 5, 1]
+  node_1: [17, 7, 2, 1]
+  node_2: [20, 7, 2, 1]
+  node_3: [27, 7, 2, 1]
+  node_4: [30, 7, 2, 1]
+  node_5: [18, 5, 2, 1]
+  node_6: [23, 5, 3, 1]
+  node_7: [28, 5, 2, 1]
+  door: [23, 7, 3, 1]
+  mail: [36, 6, 3, 1]
+  flag: [39, 5]
+  status: [21, 0, 19, 1]

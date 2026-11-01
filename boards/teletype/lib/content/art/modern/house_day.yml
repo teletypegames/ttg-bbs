@@ -1,0 +1,97 @@
+# The clubhouse from the street, day: the dashboard of the modern face.
+# Windows node_1..node_7 (1-4 downstairs from the left, 5-7 upstairs), the door, the lamp,
+# the chimney smoke, the mailbox flag and count, and the status text are filled from the board.
+size: [80, 12]
+charset: cp437
+palette:
+  S: 234
+  B: 178
+  Y: 226
+  O: 208
+  D: 196
+  T: 230
+  p: 240
+  P: 245
+  R: 124
+  r: 160
+  c: 95
+  C: 131
+  w: 130
+  x: 136
+  g: 67
+  f: 231
+  d: 52
+  k: 214
+  e: 34
+  E: 28
+  s: 240
+  K: 248
+  m: 26
+  b: 94
+  U: 226
+  h: 101
+  0: 33
+  1: 39
+  2: 75
+  3: 75
+  4: 111
+  5: 117
+  6: 117
+  7: 153
+  8: 153
+  9: 153
+  j: 153
+chars: |2
+                                                     \│/                          
+  █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄             ▄▄▄  ─☼─                          
+  █     │                   │                ▄▄▄▓▓▓▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄             
+  █ ╔═════════════════════════════╗        ▄▄▒▒▒▒▒▒▒▒▒▒◘▒▒▒▒▒▒▒▒▒▒▒▒▒▄▄           
+  █ ║  ▀█▀ ▀█▀ █▀▀   █▀▄ █▀▄ █▀▀  ║      ▄▄▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▄▄         
+  █ ║   █   █  █ █   █▀▄ █▀▄ ▀▀█  ║    ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀       
+  █ ║   ▀   ▀  ▀▀▀   ▀▀  ▀▀  ▀▀▀  ║     ·  ▐▓▓▌   ·    ▐▓▓▌ ·    · ▐▓▓▌           
+  █ ║ ☼    C L U B H O U S E    ☼ ║        ▐▓▓▌        ▐▓▓▌        ▐▓▓▌     ▄▄▄▄▄ 
+  █ ╚═════════════════════════════╝       ·    ·    ·  ▄▄▄▄ ☼ ·    ·    ·         
+  █                                        ▐▓▓▌ ▐▓▓▌   █▒▒█   ▐▓▓▌ ▐▓▓▌       █   
+  █                                  ▄█▄ · ▐▓▓▌ ▐▓▓▌   █ ∙█  ·▐▓▓▌·▐▓▓▌·  ▄█  █   
+  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+colors: |2
+  ...................................................UUU..........................
+  ppppppppppppppppppppppppppppppppp.............ccc..UUU..........................
+  p.....P...................P................RRRCCCRRRRRRRRRRRRRRRRRR.............
+  p.BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB........RRrrrrrrrrrrfrrrrrrrrrrrrrRR...........
+  p.B..YYYYYYYYYYYYYYYYYYYYYYYYY..B......RRrrrrrrrrrrrrrrrrrrrrrrrrrrrrRR.........
+  p.B..OOOOOOOOOOOOOOOOOOOOOOOOO..B....RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.......
+  p.B..DDDDDDDDDDDDDDDDDDDDDDDDD..B.....x..fggf...x....fggf.x....x.fggf...........
+  p.B.O....TTTTTTTTTTTTTTTTT....O.B........fggf........fggf........fggf.....mmmmm.
+  p.BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.......x....x....x..dddd.f.x....x....x.........
+  p........................................fggf.fggf...dddd...fggf.fggf.......b...
+  p..................................EEE.x.fggf.fggf...ddkd..xfggfxfggfx..EE..b...
+  eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeKKKKKKeeeeeeeeeeeeeeeeeeeeee
+background: |2
+  00000000000000000000000000000000000000000000000000000000000000000000000000000000
+  11111111111111111111111111111111111111111111111111111111111111111111111111111111
+  2222222222222222222222222222222222222222222222ccc2222222222222222222222222222222
+  33SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS3333333333RRRRRRRRRRRRRRRRRRRRRRRR3333333333333
+  44SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS44444444RRRRRRRRRRRRRRRRRRRRRRRRRRRR44444444444
+  55SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS55555wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww55555555
+  66SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS66666wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww66666666
+  77SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS77777wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww77777777
+  88SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS88888wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww88mmmmm8
+  99999999999999999999999999999999999999wwwwwwwwwwwwwwwhhhhwwwwwwwwwwwwwww99999999
+  jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjwwwwwwwwwwwwwwwddddwwwwwwwwwwwwwwwjjjjjjjj
+  ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+hotspots:
+  smoke: [45, 0, 7, 1]
+  node_1: [42, 9, 2, 2]
+  node_2: [47, 9, 2, 2]
+  node_3: [61, 9, 2, 2]
+  node_4: [66, 9, 2, 2]
+  node_5: [42, 6, 2, 2]
+  node_6: [54, 6, 2, 2]
+  node_7: [66, 6, 2, 2]
+  door: [54, 9, 2, 1]
+  lamp: [58, 8]
+  inside: [59, 7, 4, 1]
+  mail: [74, 8, 5, 1]
+  flag: [79, 6, 1, 2]
+  status: [57, 0, 23, 2]

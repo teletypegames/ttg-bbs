@@ -1,0 +1,40 @@
+# The sign of the clubhouse: TTG BBS in the three-by-five font of rubbs, yellow to red,
+# CLUBHOUSE under it, hanging on two chains. The logon and the goodbye of the modern face.
+size: [33, 8]
+charset: cp437
+palette:
+  S: 234
+  B: 178
+  Y: 226
+  O: 208
+  D: 196
+  T: 230
+  p: 240
+  P: 245
+chars: |2
+  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+        │                   │      
+   ╔═════════════════════════════╗ 
+   ║  ▀█▀ ▀█▀ █▀▀   █▀▄ █▀▄ █▀▀  ║ 
+   ║   █   █  █ █   █▀▄ █▀▄ ▀▀█  ║ 
+   ║   ▀   ▀  ▀▀▀   ▀▀  ▀▀  ▀▀▀  ║ 
+   ║ ☼    C L U B H O U S E    ☼ ║ 
+   ╚═════════════════════════════╝ 
+colors: |2
+  ppppppppppppppppppppppppppppppppp
+  ......P...................P......
+  .BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.
+  .B..YYYYYYYYYYYYYYYYYYYYYYYYY..B.
+  .B..OOOOOOOOOOOOOOOOOOOOOOOOO..B.
+  .B..DDDDDDDDDDDDDDDDDDDDDDDDD..B.
+  .B.O....TTTTTTTTTTTTTTTTT....O.B.
+  .BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.
+background: |2
+  .................................
+  .................................
+  .SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS.
+  .SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS.
+  .SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS.
+  .SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS.
+  .SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS.
+  .SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS.
