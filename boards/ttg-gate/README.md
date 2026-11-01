@@ -73,6 +73,10 @@ telnet localhost 2323      # directly (BBS_PORT)
 | `TTG_GATE_BBS_GATEWAY_HOST` | `host.docker.internal` | where the boards are dialled; compose maps it to the host |
 | `TTG_GATE_BBS_PUBLIC_HOST` | `teletypegames.org` | the address shown with every board |
 | `TTG_GATE_BBS_BOARDS` | `config/boards.yml` | the boards list |
+| `TTG_GATE_BBS_DISCORD_WEBHOOK` | empty | Discovery: where import alerts go; empty: off |
+| `TTG_GATE_BBS_DATA` | `data` | Discovery: the data folder |
+| `TTG_GATE_BBS_DISCOVERY_DB` | `data/discovery.sqlite3` | Discovery: the catalog |
+| `TTG_GATE_BBS_DISCOVERY_OPTOUT` | `config/discovery-optout.yml` | Discovery: the opt-out list |
 | `BBS_PORT` | `2323` | the port inside the container (rubbs) |
 | `BBS_MAX_SESSIONS` | `50` | callers at once (rubbs) |
 
@@ -113,11 +117,112 @@ Either way the board asks its own terminal question first: the gate reports the
 caller's window size to it, so a modern terminal is its default, and a C64,
 which has none, is taken for a C64.
 
+## Global Discovery
+
+Besides the boards of our own network, the gate is growing a phone book of the
+world's other telnet BBSes: a searchable catalog that always shows which board
+answered our last call and which did not. The plan is in the workspace,
+`TTG_DISCOVERY.md`. The catalog and its prober run now; the gate does not show
+them yet (the menu, the search and the dialling come next).
+
+Everything in the catalog is generated: a field comes from a source list, from
+our own call to the board, from DNS or from a fixed rule table, never from a
+hand-written category, and no language model is involved. Only telnet: no SSH,
+rlogin or web addresses.
+
+### Sources
+
+The daily import (`bin/discovery-import`) reads the lists below, the ones a
+program can download and read. Nothing is scanned: we only call the addresses
+these lists publish.
+
+| Source | Format | Telnet boards (2026-11-01) | Credit |
+|---|---|---|---|
+| [FidoNet nodelist](https://nodelist.fidonet.cc) (Z2DAILY, zones 1-4) | FTS-5000 nodelist, the ITN flag | 95 | FidoNet nodelist, via NodelistDB |
+| [fsxNet nodelist](https://fsxnet.nz) | nodelist in the info pack | 38 | fsxNet |
+| [Micronet nodelist](https://minftn.outpostbbs.net) | nodelist | 14 | Micronet |
+| [Synchronet BBS List](https://www.synchro.net/sbbslist.html) | HTML export of Vertrauen | 235 | Synchronet BBS List, synchro.net |
+| [SyncTERM BBS list](http://synchro.net/syncterm.lst) | SyncTERM ini (the SBL export) | 243 | SyncTERM BBS list, synchro.net |
+
+Together they give 366 boards (245 in more than one list). The Telnet BBS Guide
+and the CBBS Outpost are in `config/discovery/sources.yml` too, switched off
+until they answer our request for permission. The country of a board comes from
+[DB-IP](https://db-ip.com)'s IP to Country Lite database (CC BY 4.0: "IP
+Geolocation by DB-IP"), our own copy downloaded monthly into `data/geoip/`.
+
+Each format has its own parser with a test fixture (synthetic samples in
+`test/fixtures/discovery/`). One endpoint is one `host:port`: two lists naming
+it are one board, and the fields come from the more trusted list
+(`priority` in `sources.yml`; nodelist > SBL > SyncTERM), the other value kept
+too. Two hosts on the same IP and port are one board with an alias; the same
+name on two addresses is two boards. A board no list names any more is
+**delisted** but still called. If a list loses more than half of its records
+from one day to the next, the import does not apply it, keeps the old records
+and posts an alert to Discord (`TTG_GATE_BBS_DISCORD_WEBHOOK`).
+
+### How we call a board
+
+The prober (`bin/discovery-prober`, its own container `ttg-gate-bbs-prober`)
+calls each board like this:
+
+1. It looks the host up (A, then AAAA) and connects, giving up after 10 s.
+2. It answers the telnet questions with fixed replies: the terminal type is
+   `ANSI`, the window 80×25, every other option is declined.
+3. It reads for at most 8 s or 4 KB. If nothing comes in 4 s, it sends one
+   Enter, nothing else. **It never logs in.**
+4. It hangs up. The result is `ok` (a banner came), `silent` (connected, no
+   bytes), `closed`, `refused`, `timeout` or `dns_fail`.
+
+An answering board is called once a day (± 2 hours, so they spread), a failing
+one again after 1, then 6, then 24 hours, a dead one weekly; a board that is
+delisted and has been dead for a year is no longer called. At most 8 calls run
+at once, and never two to the same host or IP.
+
+From the calls: **online** (the last call answered and at least 80% of the
+week's did), **flaky** (the last answered, fewer did), **down** (two failures
+in a row), **dead** (no answer for 30 days; these go to the Graveyard and stay
+there with their history) or **unknown** (not called yet).
+
+The banner gives the encoding (`ansi`, `petscii`, `atascii`, `ascii`, by fixed
+byte rules) and the software (`config/discovery/software.yml`, a table of
+patterns). Tags come from a closed vocabulary only: the encoding, `sw:`, `net:`
+(the nodelists, and the SBL's networks through `config/discovery/source-map.yml`),
+`cc:`, the state, `new` and `veteran`, the telnet options `binary`, `naws` and
+`ttype`, and `src:`.
+
+### Opt-out
+
+A sysop can ask to be left out: `config/discovery-optout.yml` takes a host or
+an IP address under `hide` (never called, never shown) or `no_preview` (listed
+and called, but its banner is never shown). The prober reads the file again
+when it changes.
+
+### Running it
+
+```bash
+bin/discovery-import            # fetch every list into data/discovery.sqlite3
+bin/discovery-report            # boards a source and their overlap, states, tags
+bin/discovery-prober --limit 20 # 20 calls, then stop (without --limit: a daemon)
+bin/discovery-test              # the tests (minitest)
+```
+
+On the server the prober runs as the `ttg-gate-bbs-prober` service of
+`compose.yaml` (128 MB, half a CPU, no port); the import runs daily in its
+container from cron (`docker exec ttg-gate-bbs-prober bin/discovery-import`).
+Both write `data/discovery-metrics.prom` in the Prometheus text format: the
+boards a state, the probes of the last hour a result, the records a source.
+
 ## Project structure
 
 ```
 bbs.rb                                 entry point: the terminal question, then a face
+bin/discovery-import                   Discovery: the daily import of the source lists
+bin/discovery-prober                   Discovery: the prober daemon
+bin/discovery-report                   Discovery: the catalog in numbers
+bin/discovery-test                     Discovery: the tests (test/discovery/)
 config/boards.yml                      the boards of the menu
+config/discovery/                      Discovery: sources, software signatures, source-to-tag rules
+config/discovery-optout.yml            Discovery: the sysops who asked to be left out
 lib/
   domain.rb                            requires the domain
   domain/model/board_model.rb          one board of the list
@@ -132,11 +237,17 @@ lib/
   ui/petscii/screen.rb                 the C64 line of one call: raw out, keys in
   ui/colors.rb                         a board's accent on either face
   ui/dial.rb                           hands the line to a board (BBS::Gateway)
+  domain/discovery.rb                  requires Global Discovery
+  domain/discovery/root.rb             its composition root (Discovery::Root)
+  domain/discovery/model/              a source record, a probe result, a board state, a source
+  domain/discovery/parser/             one parser a list format
+  domain/discovery/repository/         the SQLite catalog, the config, the opt-outs, HTTP, zip, DB-IP
+  domain/discovery/service/            import, prober, telnet probe, state rules, banner rules, tags, report
 ```
 
 ## Deploy
 
-A push to master deploys from Woodpecker: RuboCop, a compose check, then
+A push to master deploys from Woodpecker: RuboCop and the Discovery tests, a compose check, then
 `ci-deploy ttg-gate-bbs` on the server (infra/host-config), which runs the stack in
 `/srv/stacks/ttg-gate-bbs`. The entrypoint updates rubbs on start.
 
