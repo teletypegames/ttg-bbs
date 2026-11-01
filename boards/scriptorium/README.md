@@ -119,11 +119,11 @@ lib/domain/
   service/reading_service.rb            opening a book (fetch, cut, cache) and its chapters
   scriptorium_bbs.rb        the composition root (ScriptoriumBBS)
 lib/ui/
-  logo.rb                   SCRIPTORIUM in blocks, both faces
+  logo.rb                   SCRIPTORIUM in blocks (BBS::BlockFont), both faces
   modern.rb                 UI::Modern: the rubbs Application
   modern/reader_window.rb   the reader window
   petscii.rb                UI::Petscii: the C64 board and its reader
-  petscii/screen.rb         the 40×25 screen: title bar, pages, numbered lists, plain text
+  petscii/screen.rb         the 40×25 screen: rubbs' BBS::Petscii::Screen
 ```
 
 ## License

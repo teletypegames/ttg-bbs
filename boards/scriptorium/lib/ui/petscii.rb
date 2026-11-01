@@ -12,11 +12,7 @@ module UI
     LOGO_COLORS = [WH, WH, YE, YE, CY].freeze
 
     # SCRIPTORIUM in reversed blocks, five rows.
-    def self.logo
-      Logo.rows.map.with_index do |line, row|
-        "#{LOGO_COLORS[row]}#{line.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')}#{LG}"
-      end
-    end
+    def self.logo = BBS::BlockFont.petscii(Logo::WORD, colors: LOGO_COLORS, glyphs: Logo::GLYPHS)
 
     def self.masthead
       rule = " #{DG}#{'─' * (COLS - 2)}#{LG}"
@@ -31,28 +27,13 @@ module UI
           nil
         end
         call do |_ctx, runner|
-          Petscii.goodbye(Screen.new(runner.session))
+          BBS::Goodbye.petscii(Screen.new(runner.session), title: 'scriptorium bbs', color: LB, width: 38,
+                                                            note: 'The books are the gift of Project Gutenberg.')
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           nil
         end
       end
-    end
-
-    def self.goodbye(screen)
-      screen.cls
-      screen.puts
-      screen.puts " #{LB}#{RV}#{' thanks for calling scriptorium bbs'.ljust(38)}#{RO}#{LG}"
-      screen.puts
-      screen.say('The books are the gift of Project Gutenberg. More of us: teletypegames.org', GR)
-      screen.puts
-      sleep 1.2
-      screen.puts " #{LG}+++"
-      sleep 0.6
-      screen.puts ' ATH0'
-      sleep 0.4
-      screen.puts " #{RD}NO CARRIER#{LG}"
-      screen.puts
     end
 
     # One call: the menu, the shelves, the books, the reader.
