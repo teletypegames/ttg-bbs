@@ -508,8 +508,7 @@ made-up ones, whose motto), the rest come from `lib/content/trivia.yml` (the
 first answer is the right one). A finished game of a named caller goes to
 `TELETYPE_BBS_TRIVIA_SCORES_PATH`; the best ten are its hall of fame.
 
-The `sermo` gem is pinned to a revision in `Gemfile.lock`; the entrypoint
-updates only rubbs on start. After a change in sermo-bbs:
+The `sermo` gem, like rubbs, is pinned to a revision in `Gemfile.lock`. After a change in sermo-bbs:
 
 ```bash
 bundle lock --update sermo
