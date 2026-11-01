@@ -13,11 +13,13 @@ module UI
       MARKDOWN = { text: LG, text_bright: WH, accent: YE, label: CY, text_dim: GR }.freeze
       TOP = { 's' => 'login', 'r' => 'refresh' }.freeze
 
-      def initialize(bbs, screen, ctx)
+      # +caller_key+ is who a refresh is counted for (BBS::RateLimit.caller_key).
+      def initialize(bbs, screen, ctx, caller_key:)
         @wiki       = bbs.wiki
         @supervisor = bbs.supervisor
         @screen     = screen
         @ctx        = ctx
+        @caller_key = caller_key
       end
 
       def run
@@ -33,23 +35,27 @@ module UI
       # One level of the tree under +parent+ (nil: the top), until q.
       def level(parent)
         loop do
-          children = tree[parent&.route] || []
-          items    = parent ? [parent, *children] : children
-          heading  = parent ? parent.title.upcase : 'TTG WIKI BBS'
-          right    = parent ? '' : "#{'sv ' if unlocked?}#{@wiki.pages.size} pages "
-          choice   = @screen.pick(heading, items, commands: parent ? {} : TOP, right: right) do |page|
-            label(page, own: page.equal?(parent))
-          end
+          choice = pick(parent)
           case choice
           when nil then return
           when 's' then supervisor_login
           when 'r' then refresh
-          else
-            next read(choice) if choice.equal?(parent) || (tree[choice.route] || []).empty?
-
-            level(choice)
+          else enter(choice, parent)
           end
         end
+      end
+
+      # The page picked on the level of +parent+, a top-level command, or nil.
+      def pick(parent)
+        return @screen.pick('TTG WIKI BBS', tree[nil] || [], commands: TOP, right: top_right) { |page| label(page) } unless parent
+        @screen.pick(parent.title.upcase, [parent, *tree[parent.route]]) { |page| label(page, own: page.equal?(parent)) }
+      end
+
+      def top_right = "#{'sv ' if unlocked?}#{@wiki.pages.size} pages "
+
+      # Reads +page+, or goes down to its level when it has pages under it.
+      def enter(page, parent)
+        page.equal?(parent) || (tree[page.route] || []).empty? ? read(page) : level(page)
       end
 
       def label(page, own: false)
@@ -123,10 +129,11 @@ module UI
       def refresh
         @screen.title('TTG WIKI BBS')
         @screen.say('refreshing the index...', GR)
-        @wiki.clear_cache
-        @wiki.refresh_index!
-      rescue StandardError
-        @screen.say('Could not reach the wiki.', RD)
+        case @wiki.refresh(@caller_key)
+        when :refreshed then return
+        when :limited   then @screen.say('The index was just refreshed. Try again in a minute.', RD)
+        else                 @screen.say('Could not reach the wiki.', RD)
+        end
         @screen.pause
       end
     end

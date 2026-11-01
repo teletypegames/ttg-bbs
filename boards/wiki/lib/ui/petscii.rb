@@ -18,22 +18,26 @@ module UI
         call do |ctx, runner|
           screen = Screen.new(runner.session)
           ctx[:call_started] = Time.now
-          screen.cls
-          screen.puts
-          Petscii.logo.each { |l| screen.puts l }
-          screen.puts
-          screen.puts "  #{WH}ttg wiki bbs#{LG}, the c64 side"
-          screen.puts "  #{GR}#{wiki.pages.size} pages indexed#{LG}"
-          screen.puts
-          screen.say('CRSR and RETURN, or the number, opens a page; Q goes back. Pages marked * are private.', GR)
-          screen.pause('return: enter the wiki')
-          Browser.new(bbs, screen, ctx).run
+          Petscii.welcome(screen, wiki)
+          Browser.new(bbs, screen, ctx, caller_key: BBS::RateLimit.caller_key(runner.session)).run
           Petscii.goodbye(screen, seconds: Time.now - ctx[:call_started])
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           :halt
         end
       end
+    end
+
+    def self.welcome(screen, wiki)
+      screen.cls
+      screen.puts
+      logo.each { |l| screen.puts l }
+      screen.puts
+      screen.puts "  #{WH}ttg wiki bbs#{LG}, the c64 side"
+      screen.puts "  #{GR}#{wiki.pages.size} pages indexed#{LG}"
+      screen.puts
+      screen.say('CRSR and RETURN, or the number, opens a page; Q goes back. Pages marked * are private.', GR)
+      screen.pause('return: enter the wiki')
     end
 
     def self.goodbye(screen, seconds:)

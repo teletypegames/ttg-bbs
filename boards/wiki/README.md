@@ -69,9 +69,16 @@ Two endpoints on the Grav wiki (templates in
 The page index (`sitemap.json`) is loaded once at server boot and shared by
 every session; **F8 / Wiki > Refresh index** (`R` on the C64) re-reads it for everyone. If the
 wiki is down at boot (a stack deploy recreates grav at the same time), the BBS
-still starts and retries the index every 10 seconds until it answers. Page bodies
-are rendered with `BBS::Markdown` and cached for 5 minutes
-(`WikiRepository::PAGE_TTL`).
+still starts and retries the index every 10 seconds until it answers. A caller
+may refresh twice a minute, the whole board ten times a minute (rubbs'
+`BBS::RateLimit`, counted by the caller's address), so nobody can hammer Grav
+with it. Page bodies are rendered with `BBS::Markdown` and cached for 5 minutes
+(`WikiRepository::PAGE_TTL`) in a `BBS::Cache` of at most 200 pages and 8 MiB.
+
+Requests go through rubbs' `BBS::HTTP` (timeouts, a deadline, a body cap; the wiki is
+on the Docker network, so `public_only: false`) with the board's User-Agent, and every
+text from the wiki (titles, routes, tags, markdown) is cleaned of control characters
+(`BBS::Text.clean`) before it reaches a screen.
 
 Resizing the terminal mid-session re-lays-out the whole UI (rubbs re-runs
 each open window's `relayout` on NAWS updates — rubbs rev `db8a97b`+). Pages flagged `private` (or
@@ -114,7 +121,7 @@ telnet localhost 2323
 |---|---|---|
 | `BBS_PORT` | `2323` | Telnet listen port |
 | `BBS_MAX_SESSIONS` | `100` | Callers at once (the compose file sets 50) |
-| `BBS_IDLE` | `900` | Idle disconnect (seconds) |
+| `WIKI_BBS_IDLE` | `900` | Idle disconnect (seconds; the compose file sets 600) |
 | `WIKI_BBS_URL` | `http://localhost:9120` | Grav wiki base URL |
 | `WIKI_BBS_SUPERVISOR_PASSWORD` | — | Unlocks private pages (Wiki > Supervisor login) and is sent to the wiki as the API token — must match the grav service's `SUPERVISOR_PASSWORD`; empty = private pages stay locked |
 
@@ -129,26 +136,41 @@ reaches the board with a lock bump (devarea `scripts/bbs-lock-bump.sh`).
 
 ```
 bbs.rb                        Entry point: one WikiBBS, its index loading, BBS::Terminal with the two faces
-Gemfile, Gemfile.lock         rubbs from git, rubocop in :development
+Gemfile, Gemfile.lock         rubbs from git; rubocop, minitest and rake in :development
+Rakefile                      rake test
 Dockerfile, .dockerignore     The image
 compose.yaml                  The wiki-bbs service on 2325, on the interstack network
 .rubocop.yml                  The house RuboCop rules
-.woodpecker.yaml              RuboCop, compose check, ci-deploy wiki-bbs
+.woodpecker.yaml              RuboCop, tests, compose check, ci-deploy wiki-bbs
 env-example                   Every environment variable, with its default
 lib/
   domain.rb                   Requires the domain in dependency order
   domain/
     model/page_model.rb       PageModel: one entry of the page index
-    repository/wiki_repository.rb   WikiRepository: the JSON API, the page cache
-    service/wiki_service.rb   WikiService: the shared index, private flags, pages as markdown
+    repository/wiki_repository.rb   WikiRepository: the JSON API over BBS::HTTP, the page cache
+    service/wiki_service.rb   WikiService: the shared index, private flags, pages as markdown, refreshes
     service/supervisor_service.rb   SupervisorService: the supervisor password
     wiki_bbs.rb               WikiBBS: the composition root, reads ENV
   ui/
     modern.rb                 UI::Modern: the two-pane browser on an ANSI terminal
+    modern/helpers.rb         UI::Modern::Helpers: the lock, the browser, refresh, About
+    modern/menu.rb            UI::Modern::Menu: the menubar and the status bar's hints
+    modern/browser_window.rb  UI::Modern::BrowserWindow: the page tree and the reader
+    modern/supervisor_window.rb  UI::Modern::SupervisorWindow: the supervisor login form
     petscii.rb                UI::Petscii: the C64 face, its masthead and goodbye
     petscii/screen.rb         UI::Petscii::Screen: rubbs' BBS::Petscii::Screen, back key n
     petscii/browser.rb        UI::Petscii::Browser: the page tree as cursor menus
+test/                         Minitest tests of the domain (no network: BBS::HTTP is stubbed)
 ```
+
+## Tests
+
+```bash
+bundle exec rake test
+```
+
+The repository (cleaning, the cache, the token only on private pages and never in an error),
+the index and its refresh limits, and the supervisor lock. CI runs them before a deploy.
 
 ## Licence
 
