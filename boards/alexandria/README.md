@@ -129,4 +129,4 @@ shows its address.
 
 A push to master deploys from Woodpecker: RuboCop, a compose check, then
 `ci-deploy alexandria-bbs` on the server (infra/host-config), which runs the stack in
-`/srv/stacks/alexandria-bbs`. The entrypoint updates rubbs on start.
+`/srv/stacks/alexandria-bbs`. The image runs the rubbs revision of `Gemfile.lock`, as uid 1000.

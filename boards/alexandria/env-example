@@ -3,7 +3,7 @@
 
 # rubbs
 BBS_PORT=2323
-BBS_MAX_SESSIONS=100
+BBS_MAX_SESSIONS=50
 
 # The Wikipedias a caller can switch between (F4 / L), the first one is the default.
 ALEXANDRIA_BBS_LANGUAGES=en,hu
