@@ -76,16 +76,7 @@ Copy `env-example` to `.env`:
 | `TELETYPE_BBS_IRC_CHANNEL` | `#teletypegames` | The channel the board listens on |
 | `TELETYPE_BBS_IRC_NICK` | `ttgbbs` | The board's nick there; taken at login → `ttgbbs_` |
 | `TELETYPE_BBS_IRC_PASSWORD` | empty | NickServ password of the nick (SASL PLAIN); empty = no login |
-| `TELETYPE_BBS_ACCOUNTS_PATH` | `data/accounts.csv` | Registered names with salted PBKDF2-SHA256 password hashes |
-| `TELETYPE_BBS_BOARDS_PATH` | `data/boards` | Directory of per-board CSV files |
-| `TELETYPE_BBS_MESSAGES_PATH` | `data/messages.dat` | Legacy single-board file; auto-migrated into the General board on first run |
-| `TELETYPE_BBS_LAST_CALLERS_PATH` | `data/last_callers.csv` | Finished calls (see *Last callers* below) |
-| `TELETYPE_BBS_PROFILE_PATH` | `data/profiles.csv` | User profile CSV (its old `art` column stays in the file, unread) |
-| `TELETYPE_BBS_ONELINERS_PATH` | `data/oneliners.csv` | The oneliners wall |
-| `TELETYPE_BBS_MAIL_PATH` | `data/mail.csv` | Private mail and the feedback to the sysop (mode 600) |
-| `TELETYPE_BBS_LAST_READ_PATH` | `data/last_read.csv` | How far each registered name has read each board (the new-message scan) |
-| `TELETYPE_BBS_VOTES_PATH` | `data/votes.csv` | The ballots of the Voting Booth, a log: a name's later ballot wins |
-| `TELETYPE_BBS_TRIVIA_SCORES_PATH` | `data/trivia_scores.csv` | Every finished TTG Trivia game, for its hall of fame |
+| `TELETYPE_BBS_DB` | `data/teletype.sqlite3` | The board's SQLite database: accounts (salted PBKDF2-SHA256), the boards' posts, mail, calls, last-read marks, the wall, profiles, votes and TTG Trivia scores (see *Data*) |
 | `TELETYPE_BBS_FTP_HOST` | `ftp.teletypegames.org` | The FTP server whose `/WARP` sizes give the Commodore doors the blocks of each game (anonymous, passive); the catalog API carries no sizes |
 | `SERMO_LLM_URL` | set by compose | SERMO's model, `http://llm:8080`; empty = canned replies only |
 | `SERMO_LLM_MODEL` | set by compose | the model's name in infra/llm, `qwen3.5-0.8b` |
@@ -186,7 +177,7 @@ statusbar while it is highlighted.
 
 #### Features
 
-- **Multi-board messaging** — separate sub-boards (General / Tech / Off-Topic / Sysop), each in its own CSV file under `data/boards/`.
+- **Multi-board messaging** — separate sub-boards (General / Tech / Off-Topic / Sysop), their posts in one table of the database. One post every 30 seconds a name and a line (the caller's IP address), so redialling does not reset it; the same for letters and oneliners, a burst of four lines in four seconds in the live chat (a line at most 240 characters).
 - **Multi-line composer** — `TextArea` widget, up to 1000 chars per post, one post per 30 seconds from a call.
 - **Oneliners** — a wall of one-line messages (64 characters, a name needed, not Anonymous); the newest run along the bottom of the dashboard.
 - **Live chat** — broadcast hub, 1 Hz polling, history replay on join; at most two lines a second from one caller, and a caller who does not read keeps the last 200 lines.
@@ -194,7 +185,7 @@ statusbar while it is highlighted.
 - **Dashboard** — the clubhouse from the street, live (see above), refreshed every five seconds from `SceneService`.
 - **Games Room** (Doors) — the five stations at the back of the clubhouse (SERMO's green monitor, the C64 and its TV, the Plus/4, the pyramid of Ra, the quiz table of TTG Trivia), a lamp over each burning while somebody is inside, with the count; the arrows or a click choose a station and switch its screen on, Enter steps in. Under 80 columns it is the Door Lobby.
 - **Door Lobby** (Doors) — every door with what it is, the screen it needs (and whether the C64 face has it) and how many callers are inside; Enter or Open steps in.
-- **Logon sequence** — caller numbers (every logged call before this one, plus one), a name's calls, first and last call and time on line, and the scans: unread mail, the new messages of each board since the name last opened it (registered names; `TELETYPE_BBS_LAST_READ_PATH`), polls without the caller's vote. The quote of the day is a member's motto, the same for everyone until midnight; the logoff screen picks a tagline (`lib/content/taglines.yml`) or a motto.
+- **Logon sequence** — caller numbers (every logged call before this one, plus one), a name's calls, first and last call and time on line, and the scans: unread mail, the new messages of each board since the name last opened it (registered names), polls without the caller's vote. The quote of the day is a member's motto, the same for everyone until midnight; the logoff screen picks a tagline (`lib/content/taglines.yml`) or a motto.
 - **Nodes** — every caller gets the lowest free node number. People > Who is Online lists the nodes with the name, what the caller is doing (the title of the top window, *At the main menu*, or the door) and the time on line.
 - **Mail** (Messages > Mail…, F7) — private letters between registered names: Write, Reply, Delete; `•` marks the unread ones. **Feedback to the Sysop…** is a letter to `Sysop`, which anyone with a name may write and every sysop reads in their own mailbox; the Discord feed gets only that a letter came, never what it says. A letter arriving during a call rings the bell and says so. One letter every 30 seconds from a call.
 - **Page the Sysop** — once a call: the bell, a line in the live chat and on Discord; when no sysop is on line it offers to leave a letter.
@@ -205,8 +196,9 @@ statusbar while it is highlighted.
 - **Team** — the members of teletypegames.org with their mottos.
 - **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `BBS::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
 - **BBS Network** (Board > BBS Network, Help > Where are the games, files, wiki?, N on the C64) — the town map on the clubhouse wall: every board of the network a building in its bbsweb colour around the clubhouse (the town gate of TTG Gate BBS, the archive of the wiki, the great library of Alexandria, the news kiosk of Feedia, the printing press of the blog, the warehouse of WarpEngine, the scriptorium, the game shop of Commodex, the gallery of Pixelia, the dark alley of the Impostor). The arrows walk from building to building; under the map what the chosen one carries and how to walk over. The list of the boards, with bbsweb and archive.teletypegames.org, is a bulletin. This board has no gateway doors: a caller goes to another board by calling it, or through TTG Gate BBS.
-- **Registered names** — a caller can register the name they logged in with (You > Register…); from then on that name asks for its password, with a 2-second wait after each wrong one. Profiles belong to registered names only. `accounts.csv` is read again whenever it changes, so `bin/account` works on a running server.
-- **Sysop console** — stats + broadcast, for names in `TELETYPE_BBS_SYSOPS` that logged in with their password.
+- **Registered names** — a caller can register the name they logged in with (You > Register…); from then on that name asks for its password, three tries a call with a growing wait after each wrong one (2, 4, 6 seconds). Wrong passwords are counted by the name and by the line: past 10 for a name or 6 from a line in 15 minutes, it waits out the quarter hour before the board even checks a password again. One login (`AccountService#log_on`) serves both faces, and one PBKDF2 runs at a time. A name that looks like a registered or a sysop one (a Cyrillic а for an a, an l or a 1 for an i: `Names.skeleton`) can neither register nor call as a guest. Profiles belong to registered names only. `bin/account` writes the same database, so it works on a running server.
+- **Sysop console** — stats + broadcast, for names in `TELETYPE_BBS_SYSOPS` that logged in with their password (the domain checks it again for the broadcast).
+- **Feedback for the sysop** — a guest (a name without a password) may leave three letters a day, from a name and from a line, and all the guests together thirty.
 - **Discord feed** — new board posts and sysop broadcasts go to `TELETYPE_BBS_DISCORD_WEBHOOK`, mentions disabled.
 - **Last callers** — a call is logged when it ends, and only if the terminal reported its window size (telnet NAWS) and stayed at least 10 seconds. Telnet password-guessing bots never get listed, and neither do they show up as online.
 - **TTG Master** (F1, the desktop button, Help) — the sysop who answers callers' questions about the board; the menu also has ready questions. See *Characters* below.
@@ -377,16 +369,22 @@ season, a move of its bar 146–205, a puff of smoke about 60; the entrance abou
 bbs.rb                                 entry point: the terminal question, then a face
 lib/
   domain.rb                            loads the domain (and the doors and characters)
-  domain/teletype_bbs.rb               the board: services wired to their stores, the
-                                       doors, and what a call does across services
-                                       (logon, posting, mail, paging, statistics)
+  domain/teletype_bbs.rb               the board: services wired to their stores, and
+                                       what a call does across services (logon,
+                                       posting, mail, paging, statistics); the only
+                                       reader of the environment
+  domain/teletype_doors.rb             the doors (DoorModel), in menu order
   domain/repository/
+    database.rb                        the SQLite file and its schema (Database)
+    legacy_import.rb                   the CSV files of earlier versions, imported once
     online_users_repository.rb         the nodes: who, since when, doing what
-    board_repository.rb                multi-board CSV store
+    board_repository.rb                the boards' posts
     catalog_repository.rb              games API client (the doors, the Master)
-    last_callers_repository.rb         finished-call log
+    last_callers_repository.rb         finished calls and their statistics (SQL)
     profile_repository.rb              per-user persistent profile
-    account_repository.rb              registered names, PBKDF2 hashes
+    account_repository.rb              registered names, PBKDF2 hashes, look-alikes
+    trivia_score_repository.rb         TTG Trivia's hall of fame
+    bulletin_repository.rb             the Markdown bulletins
     site_repository.rb                 teletypegames.org events + members
     oneliner_repository.rb             the oneliners wall
     ftp_repository.rb                  anonymous FTP: the file sizes of a folder
@@ -395,7 +393,7 @@ lib/
     last_read_repository.rb            how far each name has read each board
     vote_repository.rb                 the voting booth's ballots
     network_repository.rb              the town map's boards (content/network.yml)
-    http_json.rb                       JSON GET + 5-minute cache
+    http_json.rb                       JSON GET (BBS::HTTP) + BBS::Cache
   domain/service/
     online_service.rb, board_service.rb, games_service.rb,
     chat_service.rb, irc_relay.rb, last_callers_service.rb,
@@ -403,11 +401,16 @@ lib/
     oneliner_service.rb, warp_sizes.rb, dev_log_service.rb,
     discord_notifier.rb, mail_service.rb, voting_service.rb,
     tagline_service.rb, network_service.rb
+    throttle.rb                        a limit by name and by line (BBS::RateLimit)
+    login_guard.rb                     wrong passwords by name and by line
+    tls_connect.rb                     TLS with a deadline (the IRC relay)
     scene_service.rb                   what the clubhouse pictures show, for both
                                        faces (SceneModel)
-  domain/model/                        value objects (MessageModel, GameModel, …)
+  domain/model/                        value objects (MessageModel, GameModel, …),
+                                       Names (keys, skeletons), Password (PBKDF2)
   doors/commodore.rb                   the C64 and Plus/4 doors
-  doors/commodore/basic.rb             their BASIC V2 interpreter
+  doors/commodore/basic.rb, basic/     their BASIC V2 interpreter (tokenizer,
+                                       expressions, statements)
   doors/ra.rb                          Chat of Ra
   doors/trivia.rb                      TTG Trivia
   content/                             polls.yml, trivia.yml, taglines.yml,
@@ -417,8 +420,13 @@ lib/
                                        the Master's knowledge (modern and C64),
                                        eval questions, the shared model client
   ui/arts.rb                           loads and keeps the pictures (UI::Arts)
-  ui/modern.rb                         the modern face: modem, entrance,
-                                       the Application (windows, menus, doors)
+  ui/wording.rb                        what both faces say about the domain's answers
+  ui/modern.rb                         the modern face: the steps of a call and the
+                                       Application (windows, menus, doors, status keys)
+  ui/modern/steps.rb                   modem and entrance, logon screen, leaving
+  ui/modern/helpers.rb                 the desktop's own methods (menus, buttons, tick)
+  ui/modern/windows.rb, windows/       one module a window, listed with its kind
+  ui/modern/menus.rb                   the menubar, one method a menu
   ui/logo.rb                           the board's logo (TTG BBS, BBS::BlockFont) for both faces
   ui/modern/desktop.rb                 the dashboard (the clubhouse from the street),
                                        the colours and icons of the menus
@@ -436,22 +444,17 @@ lib/
                                        leaving
   ui/petscii/screen.rb                 the 40×25 screen (BBS::Petscii::Screen of
                                        rubbs) and its chat line
-  ui/petscii/board.rb                  the main menu, doors, Master, help, sysop
+  ui/petscii/board.rb                  the main menu
+  ui/petscii/more.rb                   doors, Master, system info, help, sysop
   ui/petscii/messages.rb, content.rb,  its sections (content.rb: bulletins,
                                        the network, dev log)
   ui/petscii/people.rb
 bin/persona-eval                       count a character's slips over many runs
+test/                                  minitest: the domain, the legacy import, BASIC
+Rakefile                               bundle exec rake test
 bin/c64-bytes                          the bytes of the C64 pictures on the line
 data/
-  boards/<id>.csv                      per-board messages (auto-created)
-  last_callers.csv                     finished calls
-  profiles.csv                         persistent user profiles
-  accounts.csv                         registered names (mode 600)
-  oneliners.csv                        the oneliners wall
-  mail.csv                             private mail and feedback (mode 600)
-  last_read.csv                        the new-message scan's marks
-  votes.csv                            the voting booth's ballots
-  trivia_scores.csv                    TTG Trivia games
+  teletype.sqlite3                     the board's database (TELETYPE_BBS_DB)
 bin/account                            create an account / reset a password
 ```
 
@@ -506,7 +509,7 @@ questions, 20 seconds each, A–D to answer; a quick answer is worth more (50 +
 are made from the catalog and the team (a game's platform, a real title among
 made-up ones, whose motto), the rest come from `lib/content/trivia.yml` (the
 first answer is the right one). A finished game of a named caller goes to
-`TELETYPE_BBS_TRIVIA_SCORES_PATH`; the best ten are its hall of fame.
+the `trivia_scores` table; the best ten are its hall of fame.
 
 The `sermo` gem, like rubbs, is pinned to a revision in `Gemfile.lock`. After a change in sermo-bbs:
 
@@ -582,3 +585,31 @@ a question to the eval.
 
 All persisted state lives under `data/` which is mounted as a volume in Docker
 so it survives container restarts.
+
+Everything the callers leave is in one SQLite file, `data/teletype.sqlite3`
+(WAL mode; `bin/account` and the board use it at the same time). Its schema is
+`lib/domain/repository/database.rb`, and each repository answers with SQL: the
+caller numbers, a name's calls, the top callers and posters and the trivia
+hall of fame are aggregates, not loops over the whole history. The server's
+nightly backup copies every `data/*.sqlite3`.
+
+Earlier versions kept CSV files. On the first start each one whose table is
+still empty is imported in one transaction and renamed to `<file>.imported`:
+`accounts.csv` (the PBKDF2 salts and digests as they were, so passwords keep
+working), `boards/*.csv`, `last_callers.csv`, `last_read.csv`, `oneliners.csv`,
+`profiles.csv` (or `profiles.sqlite3`, the BBS::Store file rubbs 0.33 made of
+it), `trivia_scores.csv`, `votes.csv` and `mail.csv`. A row that does not parse
+(the half line a killed write left) is skipped and counted; the rows after it
+still come in. One log line tells the counts. Anything else under `data/`
+(such as `archive/`) is left alone.
+
+## Tests
+
+```bash
+bundle exec rake test
+```
+
+Minitest, no network: the legacy import (with torn rows), logins and their
+limits, registration, look-alike names, the rate limits of posts, mail, chat
+and oneliners, the sysop's broadcast, the SQL statistics, and the BASIC
+interpreter of the Commodore doors. CI runs them with RuboCop before a deploy.

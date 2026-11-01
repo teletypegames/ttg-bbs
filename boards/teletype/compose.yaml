@@ -10,7 +10,6 @@ services:
     volumes:
       - ./data:/app/data
     environment:
-      - TELETYPE_BBS_MESSAGES_PATH=/app/data/messages.dat
       - TZ=Europe/Budapest
       # Callers at once: each costs up to ~1.7 MB on top of ~40 MB, sized to mem_limit.
       - BBS_MAX_SESSIONS=60
