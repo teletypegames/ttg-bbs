@@ -5,7 +5,7 @@
 # [name]      shown in the menu
 # [summary]   the description on the modern face
 # [tags]      the line under the name on the C64 face
-# [port]      the board's port; the gate dials it on TTGGATE_GATEWAY_HOST
+# [port]      the board's port; the gate dials it on TTG_GATE_BBS_GATEWAY_HOST
 # [accent]    the board's colour, #rrggbb
 # [petscii]   true when the board has a C64 face; only those show on the C64
 # [enabled]   false keeps a board in the file but out of the menu
