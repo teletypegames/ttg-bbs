@@ -118,8 +118,8 @@ it and, if it stays, adds it to `config/feeds.yml`. To read the inbox on the
 server:
 
 ```bash
-docker exec feedia bin/inbox        # the newest 20
-docker exec feedia bin/inbox 100
+docker exec feedia-bbs bin/inbox        # the newest 20
+docker exec feedia-bbs bin/inbox 100
 ```
 
 ## Project structure
@@ -153,6 +153,6 @@ lib/
 ## Deploy
 
 A push to master deploys from Woodpecker: RuboCop, a compose check, then
-`ci-deploy feedia` on the server (infra/host-config), which runs the stack in
-`/srv/stacks/feedia`; `data/` and `.env` stay. The entrypoint updates rubbs on
+`ci-deploy feedia-bbs` on the server (infra/host-config), which runs the stack in
+`/srv/stacks/feedia-bbs`; `data/` and `.env` stay. The entrypoint updates rubbs on
 start.

@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 # The admins' look at what callers sent, newest first:
-#   docker exec feedia bin/inbox [count]
+#   docker exec feedia-bbs bin/inbox [count]
 require 'bundler/setup'
 require_relative '../lib/domain'
 
