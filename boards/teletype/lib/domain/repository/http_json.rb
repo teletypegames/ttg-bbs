@@ -1,45 +1,66 @@
 # frozen_string_literal: true
 
-require 'net/http'
 require 'json'
 require 'uri'
 
-# GET + JSON parse with short timeouts, and a small time-based cache so a
-# screen redraw does not hit the remote API every time.
+# The JSON APIs of teletypegames.org and the Gitea server: one GET through
+# BBS::HTTP with short timeouts, every string of the answer cleaned of
+# control characters before a screen can show it.
 module HttpJson
-  TTL = 300
-  FAILURE_TTL = 60
+  module_function
 
-  def get_json(url, params = {})
+  # The parsed answer of +url+ with the query +params+. Raises
+  # BBS::HTTP::Error on a failed request or a non-2xx answer.
+  def get(url, params = {})
     uri = URI(url)
     uri.query = URI.encode_www_form(params) unless params.empty?
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl      = uri.scheme == 'https'
-    http.open_timeout = 12
-    http.read_timeout = 12
-    JSON.parse(http.get(uri.request_uri).body)
+    response = BBS::HTTP.get(uri.to_s, open_timeout: 5, read_timeout: 12, deadline: 20)
+    raise BBS::HTTP::Error, "HTTP #{response.status} from #{uri.host}" unless response.ok?
+
+    clean(JSON.parse(BBS::Text.utf8(response.body)))
   end
 
-  # A source that failed is not asked again for FAILURE_TTL seconds: the
-  # last good answer stands meanwhile, or the failure is raised again.
-  def cached(key, ttl: TTL)
-    @cache_mu ||= Mutex.new
-    @cache    ||= {}
-    hit = @cache_mu.synchronize { @cache[key] }
-    if hit && Time.now - hit[0] < ttl
-      raise hit[1] if hit[1].is_a?(Exception)
+  # +tree+ (parsed JSON) with every String through BBS::Text.clean.
+  def clean(tree)
+    case tree
+    when String then BBS::Text.clean(tree)
+    when Array  then tree.map { |value| clean(value) }
+    when Hash   then tree.transform_values { |value| clean(value) }
+    else tree
+    end
+  end
 
-      return hit[1]
+  # A BBS::Cache of remote answers that also remembers a failure for
+  # FAILURE_TTL seconds: meanwhile the last good answer stands (or the
+  # failure is raised again), so a dead API is not asked on every redraw.
+  class Cache
+    FAILURE_TTL = 60
+
+    def initialize(ttl:, max_entries: 16)
+      @values   = BBS::Cache.new(ttl: ttl, max_entries: max_entries)
+      @failures = {}
+      @mu       = Mutex.new
     end
 
-    begin
-      value = yield
+    def fetch(key, &) = @values.fetch(key) { attempt(key, &) }
+
+    private
+
+    def attempt(key)
+      failed = recent_failure(key)
+      raise failed if failed
+
+      yield
     rescue StandardError => e
-      retry_at = Time.now - ttl + FAILURE_TTL
-      @cache_mu.synchronize { @cache[key] = [retry_at, hit && !hit[1].is_a?(Exception) ? hit[1] : e] }
+      @mu.synchronize { @failures[key] = [monotonic, e] } unless e.equal?(failed)
       raise
     end
-    @cache_mu.synchronize { @cache[key] = [Time.now, value] }
-    value
+
+    def recent_failure(key)
+      at, error = @mu.synchronize { @failures[key] }
+      error if at && monotonic - at < FAILURE_TTL
+    end
+
+    def monotonic = Process.clock_gettime(Process::CLOCK_MONOTONIC)
   end
 end

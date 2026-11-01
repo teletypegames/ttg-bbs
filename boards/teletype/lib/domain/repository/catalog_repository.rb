@@ -3,29 +3,37 @@
 require_relative 'http_json'
 require_relative '../model/game_model'
 
+# The game catalog of teletypegames.org, every page of it, kept five
+# minutes.
 class CatalogRepository
-  include HttpJson
-
-  API_URL  = 'https://teletypegames.org/api/software'
-  SITE_URL = 'https://teletypegames.org'
+  API_URL   = 'https://teletypegames.org/api/software'
+  SITE_URL  = 'https://teletypegames.org'
   MAX_PAGES = 20
+  TTL       = 300
+
+  def initialize
+    @cache = HttpJson::Cache.new(ttl: TTL)
+  end
 
   def fetch
-    cached(:all) do
-      games = []
-      page  = 1
-      loop do
-        data = get_json(API_URL, page: page)
-        games.concat((data['softwares'] || []).filter_map { |e| GameModel.new(e) if e.is_a?(Hash) })
-        page = data['nextPage']
-        break if page.nil? || page > MAX_PAGES
-      end
-      games
-    end
+    @cache.fetch(:all) { pages }
   rescue StandardError => e
     warn "CatalogRepository fetch error: #{e}"
     []
   end
 
   def catalog_url(game) = "#{SITE_URL}/catalog/#{game.name}"
+
+  private
+
+  def pages
+    games = []
+    page  = 1
+    while page && page <= MAX_PAGES
+      data = HttpJson.get(API_URL, page: page)
+      games.concat((data['softwares'] || []).filter_map { |e| GameModel.new(e) if e.is_a?(Hash) })
+      page = data['nextPage']
+    end
+    games
+  end
 end
