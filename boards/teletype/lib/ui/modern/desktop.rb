@@ -219,8 +219,8 @@ module UI
         lines = scene.events.map do |e|
           days = [((e.date - Time.now) / 86_400).ceil, 0].max
           left = days.zero? ? 'today' : "#{days} day#{'s' unless days == 1}"
-          bar  = ((30 - days.clamp(0, 30)) * 4 / 30.0).round
-          "#{W}#{e.name[0, @inner - 13].ljust(@inner - 12)}#{Y}#{'▓' * bar}#{D}#{'░' * (4 - bar)} #{T}#{left.rjust(7)}"
+          bar  = ((30 - days.clamp(0, 30)) * 3 / 30.0).round
+          "#{W}#{e.name[0, @inner - 12].ljust(@inner - 11)}#{Y}#{'▓' * bar}#{D}#{'░' * (3 - bar)} #{T}#{left.rjust(7)}"
         end
         lines = ["#{D}(nothing scheduled yet)"] if lines.empty?
         notes = scene.notes
