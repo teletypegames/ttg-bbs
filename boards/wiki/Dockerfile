@@ -9,11 +9,12 @@ ENV BUNDLE_WITHOUT=development
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
-COPY bbs.rb entrypoint.sh ./
-COPY lib/ ./lib/
+COPY . .
+RUN mkdir -p data && chown 1000:1000 data
 
-RUN chmod +x entrypoint.sh
+USER 1000:1000
 
 EXPOSE 2323
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["bundle", "exec"]
+CMD ["ruby", "bbs.rb"]

@@ -122,15 +122,14 @@ telnet localhost 2323
 (`lib/domain/wiki_bbs.rb`) is the one place that reads them, apart from
 `BBS_PORT` and `BBS_MAX_SESSIONS`, which rubbs reads itself.
 
-`entrypoint.sh` runs `bundle update bbs` on container start, so the BBS
-always boots with the latest rubbs revision.
+The image runs the rubbs revision of `Gemfile.lock`, as uid 1000; a new rubbs
+reaches the board with a lock bump (devarea `scripts/bbs-lock-bump.sh`).
 
 ## Project structure
 
 ```
 bbs.rb                        Entry point: one WikiBBS, its index loading, BBS::Terminal with the two faces
 Gemfile, Gemfile.lock         rubbs from git, rubocop in :development
-entrypoint.sh                 Updates rubbs, then starts bbs.rb
 Dockerfile, .dockerignore     The image
 compose.yaml                  The wiki-bbs service on 2325, on the interstack network
 .rubocop.yml                  The house RuboCop rules
