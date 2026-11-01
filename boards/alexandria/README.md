@@ -39,6 +39,7 @@ Copy `env-example` to `.env`:
 | Variable | Default | Description |
 |---|---|---|
 | `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2326) |
+| `BBS_MAX_SESSIONS` | `100` | Callers at once (compose sets 50) |
 | `ALEXANDRIA_LANGUAGES` | `en,hu` | The Wikipedias a caller can switch between, by their language code; the first one is the default |
 
 ## Interface
@@ -97,14 +98,22 @@ rubbs).
 ## Project structure
 
 ```
-bbs.rb                    entry point: the terminal question, then a face
+bbs.rb                        entry point: the board, the terminal question, then a face
 lib/
-  domain/wikipedia.rb     the Action API client: search, article, random;
-                          the plain extract → sections in Markdown
-  ui/modern.rb            the modern face: desktop, search, results, article
-  ui/modern/pharos.rb     the desktop's title: the lighthouse and the name
-  ui/petscii.rb           the PETSCII face: logo, prompt, menu, lists, pages
-  ui/petscii/screen.rb    title bar, pages, the cursor menus on the 40×25 screen
+  domain.rb                   requires the domain in dependency order
+  domain/
+    alexandria_bbs.rb         AlexandriaBBS, the composition root: reads ENV, wires the rest
+    model/article_model.rb    an article: title, address, language, sections
+    model/section_model.rb    one section: heading and Markdown
+    model/search_result_model.rb  one search hit: title, snippet, word count
+    model/extract_text.rb     the plain extract → sections in Markdown, TeX made readable
+    repository/wikipedia_repository.rb  the Action API: search, article, random; pace, cache
+    service/article_service.rb  look up, search, read, random, the languages
+  ui/logo.rb                  ALEXANDRIA in a block font, for the PETSCII masthead
+  ui/modern.rb                the modern face: desktop, search, results, article
+  ui/modern/pharos.rb         the desktop's title: the lighthouse and the name
+  ui/petscii.rb               the PETSCII face: logo, prompt, menu, lists, pages
+  ui/petscii/screen.rb        title bar, pages, the cursor menus on the 40×25 screen
 ```
 
 ## Wikipedia

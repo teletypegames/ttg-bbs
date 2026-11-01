@@ -9,10 +9,10 @@ module UI
   module Modern
     LANGUAGES = { 'en' => 'English', 'hu' => 'Magyar', 'de' => 'Deutsch' }.freeze
 
-    def self.flow(wikipedia)
+    def self.flow(bbs)
       app = BBS::Application.define do
         theme BBS::Theme.synchronet
-        services wikipedia: wikipedia
+        services bbs.services
 
         helpers do
           def lang = context[:lang]
@@ -26,7 +26,7 @@ module UI
 
           # The article titled as typed opens at once; otherwise the results.
           def look_up(query)
-            article, results = with_loading('Searching Wikipedia…') { services[:wikipedia].look_up(query, lang: lang) }
+            article, results = with_loading('Searching Wikipedia…') { services[:articles].look_up(query, lang: lang) }
             if article
               open_window(:article, article: article)
             elsif results.nil?
@@ -39,7 +39,7 @@ module UI
           end
 
           def read(title)
-            article = with_loading('Loading the article…') { services[:wikipedia].article(title, lang: lang) }
+            article = with_loading('Loading the article…') { services[:articles].article(title, lang: lang) }
             if article
               open_window(:article, article: article)
             else
@@ -48,12 +48,12 @@ module UI
           end
 
           def random
-            title = with_loading('Picking an article…') { services[:wikipedia].random(lang: lang) }
+            title = with_loading('Picking an article…') { services[:articles].random(lang: lang) }
             title ? read(title) : BBS::Dialogs.message(self, 'Wikipedia did not answer. Try again later.', title: ' Random ')
           end
 
           def switch_language
-            context[:lang] = services[:wikipedia].next_language(lang)
+            context[:lang] = services[:articles].next_language(lang)
             statusbar.right_text = status_text
             BBS::Dialogs.message(self, "Searching #{lang}.wikipedia.org (#{language_name}) from now on.", title: ' Language ')
           end
@@ -141,7 +141,7 @@ module UI
         end
 
         init do
-          context[:lang] ||= services[:wikipedia].languages.first
+          context[:lang] ||= services[:articles].languages.first
           dialog_top = ((rows - 7) / 2) + 1
           @pharos = add(Pharos.new)
           @pharos.layout(1, [dialog_top - Pharos::HEIGHT - 1, 2].max, cols, Pharos::HEIGHT)

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative 'logo'
 require_relative 'petscii/screen'
 
 module UI
@@ -7,11 +8,6 @@ module UI
   # the prompt is looked up, the results come as a numbered list, and an
   # article as its contents, each section paged a screenful at a time.
   module Petscii
-    LOGO_FONT = {
-      'A' => %w[.#. #.# ### #.# #.#], 'L' => %w[#.. #.. #.. #.. ###], 'E' => %w[### #.. ##. #.. ###],
-      'X' => %w[#.# #.# .#. #.# #.#], 'N' => %w[##. #.# #.# #.# #.#], 'D' => %w[##. #.# #.# #.# ##.],
-      'R' => %w[##. #.# ##. #.# #.#], 'I' => %w[# # # # #]
-    }.freeze
     LOGO_COLORS = [CY, CY, LB, LB, BL].freeze
 
     # The colours of an article, in the keys of a BBS::Theme.
@@ -33,17 +29,16 @@ module UI
 
     # ALEXANDRIA in reversed blocks, five rows.
     def self.logo
-      5.times.map do |row|
-        bits = 'ALEXANDRIA'.chars.map { |c| LOGO_FONT[c][row] }.join('.')
+      Logo.rows.each_with_index.map do |bits, row|
         line = bits.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')
         "  #{LOGO_COLORS[row]}#{line}#{LG}"
       end
     end
 
-    def self.flow(wikipedia)
+    def self.flow(bbs)
       BBS::Flow.define do
         call do |ctx, runner|
-          Proxy.new(wikipedia, Screen.new(runner.session), ctx).run
+          Proxy.new(bbs.articles, Screen.new(runner.session), ctx).run
           nil
         end
         call do |_ctx, runner|
@@ -73,11 +68,11 @@ module UI
 
     # One call: the prompt, the results, the article.
     class Proxy
-      def initialize(wikipedia, screen, ctx)
-        @wikipedia = wikipedia
-        @screen    = screen
-        @ctx       = ctx
-        @ctx[:lang] ||= wikipedia.languages.first
+      def initialize(articles, screen, ctx)
+        @articles = articles
+        @screen   = screen
+        @ctx      = ctx
+        @ctx[:lang] ||= articles.languages.first
       end
 
       def run
@@ -132,10 +127,10 @@ module UI
                  BBS::Selector.item('log off', key: 'q', value: :quit, about: 'hang up. see you!')]
         case @screen.menu(items, back: :search, hint: 'crsr: choose  return: take')
         when :random
-          title = @wikipedia.random(lang: lang) or raise LookupFailed, 'Wikipedia did not answer. Try again later.'
+          title = @articles.random(lang: lang) or raise LookupFailed, 'Wikipedia did not answer. Try again later.'
           read(title)
         when :language
-          @ctx[:lang] = @wikipedia.next_language(lang)
+          @ctx[:lang] = @articles.next_language(lang)
           @screen.title('ALEXANDRIA', right)
         when :quit then return :quit
         else @screen.title('ALEXANDRIA', right)
@@ -145,7 +140,7 @@ module UI
 
       def look_up(query)
         @screen.puts " #{GR}searching…#{LG}"
-        article, results = @wikipedia.look_up(query, lang: lang)
+        article, results = @articles.look_up(query, lang: lang)
         return show(article) if article
         raise LookupFailed, 'Wikipedia did not answer. Try again later.' if results.nil?
         raise LookupFailed, "Nothing found for \"#{query}\"." if results.empty?
@@ -161,7 +156,7 @@ module UI
 
       def read(title)
         @screen.puts " #{GR}loading…#{LG}"
-        article = @wikipedia.article(title, lang: lang)
+        article = @articles.article(title, lang: lang)
         raise LookupFailed, "Wikipedia has no article \"#{title}\", or did not answer." if article.nil?
 
         show(article)
