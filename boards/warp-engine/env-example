@@ -3,7 +3,7 @@
 
 # rubbs
 BBS_PORT=2323
-BBS_MAX_SESSIONS=100
+BBS_MAX_SESSIONS=50
 
 # The archive's plain HTTP and the shelves read from it
 WARP_ENGINE_BBS_ARCHIVE_URL=http://archive.teletypegames.org
