@@ -8,7 +8,7 @@ require 'bbs/discord_webhook'
 # text.
 class DiscordNotifier
   def initialize(webhook:, site:)
-    @hook = BBS::DiscordWebhook.new(webhook, relay_max: nil, label: 'ttgblog: Discord')
+    @hook = BBS::DiscordWebhook.new(webhook, relay_max: nil, label: 'ttg-blog-bbs: Discord')
     @site = site.chomp('/')
   end
 

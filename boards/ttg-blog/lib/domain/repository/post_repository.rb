@@ -80,7 +80,7 @@ class PostRepository
       conn.last_insert_row_id
     end
   rescue SQLite3::Exception => e
-    warn "ttgblog: saving a post failed: #{e.message}"
+    warn "ttg-blog-bbs: saving a post failed: #{e.message}"
     nil
   end
 
@@ -90,7 +90,7 @@ class PostRepository
               title, summary, body, category, stamp, id.to_i)
     true
   rescue SQLite3::Exception => e
-    warn "ttgblog: saving post #{id} failed: #{e.message}"
+    warn "ttg-blog-bbs: saving post #{id} failed: #{e.message}"
     false
   end
 

@@ -246,7 +246,7 @@ module UI
         @screen.say("Welcome, #{found.name}. Open a post to edit it, or write a new one.", GN)
       else
         @ctx[:tries] = @ctx[:tries].to_i + 1
-        warn "ttgblog: failed login for #{name.inspect} (#{@ctx[:session_id]})"
+        warn "ttg-blog-bbs: failed login for #{name.inspect} (#{@ctx[:session_id]})"
         sleep 1
         @screen.say('Wrong name or password.', RD)
       end

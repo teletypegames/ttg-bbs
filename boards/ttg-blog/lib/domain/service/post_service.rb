@@ -80,7 +80,7 @@ class PostService
     @listeners.each do |listener|
       listener.call(post)
     rescue StandardError => e
-      warn "ttgblog: on_publish failed: #{e.class}: #{e.message}"
+      warn "ttg-blog-bbs: on_publish failed: #{e.class}: #{e.message}"
     end
   end
 end

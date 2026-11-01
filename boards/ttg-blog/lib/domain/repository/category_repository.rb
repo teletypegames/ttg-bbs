@@ -10,7 +10,7 @@ class CategoryRepository
   def initialize(path)
     @all = Array(YAML.safe_load_file(path)).map { |entry| CategoryModel.from_entry(entry) }.freeze
   rescue SystemCallError, Psych::Exception, KeyError => e
-    warn "ttgblog: no categories from #{path}: #{e.class}: #{e.message}"
+    warn "ttg-blog-bbs: no categories from #{path}: #{e.class}: #{e.message}"
     @all = [].freeze
   end
 end

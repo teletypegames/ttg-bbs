@@ -40,7 +40,7 @@ module Web
       res['Content-Type'] = 'application/json; charset=utf-8'
       res.body = JSON.generate(body)
     rescue StandardError => e
-      warn "ttgblog web: #{e.class}: #{e.message}"
+      warn "ttg-blog-bbs web: #{e.class}: #{e.message}"
       res.status = 500
       res.body = JSON.generate(error: 'internal error')
     end

@@ -4,9 +4,9 @@ The Teletype Games blog on a telnet line. Readers browse the latest posts or
 the posts of a category and read them paged; the editors log in from the same
 menu and write, edit and delete posts. Built on the
 [rubbs](https://git.teletypegames.org/engines/rubbs) gem, like the
-[Teletype BBS](https://git.teletypegames.org/bbs/bbs-server),
-[Alexandria BBS](https://git.teletypegames.org/bbs/alexandria) and
-[Feedia BBS](https://git.teletypegames.org/bbs/feedia).
+[Teletype BBS](https://git.teletypegames.org/bbs/teletype-bbs),
+[Alexandria BBS](https://git.teletypegames.org/bbs/alexandria-bbs) and
+[Feedia BBS](https://git.teletypegames.org/bbs/feedia-bbs).
 
 It has two faces on one port, and both are line by line, with no windows: a
 **modern** one for ANSI terminals (up to 80 columns, the caller's window
@@ -20,7 +20,7 @@ are cursor menus of rubbs (`BBS::Selector`), and the front page is its own.
 
 ```bash
 docker compose up --build
-docker exec -it ttgblog bin/user add NAME    # the first editor
+docker exec -it ttg-blog-bbs bin/user add NAME    # the first editor
 ```
 
 **Directly (Ruby 3.x):**
@@ -88,10 +88,10 @@ its posts get slugs.
 Readers need no account. The editors are managed from the server's shell:
 
 ```bash
-docker exec -it ttgblog bin/user list
-docker exec -it ttgblog bin/user add NAME       # asks the password twice
-docker exec -it ttgblog bin/user passwd NAME
-docker exec -it ttgblog bin/user remove NAME    # their posts stay, without an author
+docker exec -it ttg-blog-bbs bin/user list
+docker exec -it ttg-blog-bbs bin/user add NAME       # asks the password twice
+docker exec -it ttg-blog-bbs bin/user passwd NAME
+docker exec -it ttg-blog-bbs bin/user remove NAME    # their posts stay, without an author
 ```
 
 A logged-in editor can change their own password from the menu too. Three
@@ -159,7 +159,7 @@ In the editor:
 The posts are the blog of [teletypegames.org](https://teletypegames.org/blog).
 The board serves them read-only over HTTP, beside the telnet line, in the same
 process (`Web::Api`); the container joins the `interstack` network and the
-site's API reads it there as `http://ttgblog:8080`. The port is never
+site's API reads it there as `http://ttg-blog-bbs:8080`. The port is never
 published.
 
 | Request | Answer |

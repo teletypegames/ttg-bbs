@@ -4,10 +4,10 @@
 require 'bundler/setup'
 
 # The editors of the blog, from the server's shell:
-#   docker exec -it ttgblog bin/user list
-#   docker exec -it ttgblog bin/user add NAME      (asks the password twice; without a tty, two lines of stdin)
-#   docker exec -it ttgblog bin/user passwd NAME
-#   docker exec -it ttgblog bin/user remove NAME   (their posts stay, without an author)
+#   docker exec -it ttg-blog-bbs bin/user list
+#   docker exec -it ttg-blog-bbs bin/user add NAME      (asks the password twice; without a tty, two lines of stdin)
+#   docker exec -it ttg-blog-bbs bin/user passwd NAME
+#   docker exec -it ttg-blog-bbs bin/user remove NAME   (their posts stay, without an author)
 require 'io/console'
 require_relative '../lib/domain'
 
