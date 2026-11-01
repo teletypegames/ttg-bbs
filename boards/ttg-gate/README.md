@@ -85,8 +85,8 @@ descriptions, tags and accent colours of their bbsweb cards:
 
 ```yaml
 boards:
-  - id: ttgblog
-    name: "TTGBLOG"
+  - id: ttg-blog-bbs
+    name: "TTG Blog BBS"
     summary: "The Teletype Games blog on a telnet line: …"
     tags: ["blog", "news", "C64"]
     port: 2328

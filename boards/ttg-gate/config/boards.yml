@@ -1,7 +1,7 @@
 # The boards TTG Gate dials, in the order of its menu. The names, descriptions, tags and
 # accent colours follow the cards of bbsweb (services/bbs-web config/config.json).
 #
-# [id]        a short name, unique
+# [id]        the board's technical name, <slug>-bbs, unique
 # [name]      shown in the menu
 # [summary]   the description on the modern face
 # [tags]      the line under the name on the C64 face
@@ -11,7 +11,7 @@
 # [enabled]   false keeps a board in the file but out of the menu
 
 boards:
-  - id: teletype
+  - id: teletype-bbs
     name: "Teletype BBS"
     summary: "The community main line: news and releases, the game catalogue, wiki guides, message boards, a multi-user chat and the SERMO door, on a full-screen Synchronet-style ANSI interface."
     tags: ["news", "games", "boards", "chat"]
@@ -20,7 +20,7 @@ boards:
     petscii: true
     enabled: true
 
-  - id: impostor
+  - id: impostor-bbs
     name: "Impostor BBS"
     summary: "The post-game terminal of Definitely not an Impostor: players who finish the game bring their personal code here to find out what comes next."
     tags: ["game", "ARG", "debrief"]
@@ -29,8 +29,8 @@ boards:
     petscii: true
     enabled: true
 
-  - id: wiki
-    name: "TTG WIKI BBS"
+  - id: wiki-bbs
+    name: "TTG Wiki BBS"
     summary: "The telnet reader for the Teletype wiki. It arranges the Grav pages into pageable, searchable BBS menus; a supervisor login also opens the private pages."
     tags: ["wiki", "documentation", "reader"]
     port: 2325
@@ -38,7 +38,7 @@ boards:
     petscii: true
     enabled: true
 
-  - id: alexandria
+  - id: alexandria-bbs
     name: "Alexandria BBS"
     summary: "Wikipedia on a telnet line: type a title and read the article, cut into its sections. On a modern terminal or, in PETSCII, on a Commodore 64."
     tags: ["wikipedia", "reader", "C64"]
@@ -47,7 +47,7 @@ boards:
     petscii: true
     enabled: true
 
-  - id: feedia
+  - id: feedia-bbs
     name: "Feedia BBS"
     summary: "An RSS reader on a telnet line: pick a feed, read its stories as text, and suggest new feeds to the admins. On a modern terminal or, in PETSCII, on a Commodore 64."
     tags: ["RSS", "news", "reader", "C64"]
@@ -56,8 +56,8 @@ boards:
     petscii: true
     enabled: true
 
-  - id: ttgblog
-    name: "TTGBLOG"
+  - id: ttg-blog-bbs
+    name: "TTG Blog BBS"
     summary: "The Teletype Games blog on a telnet line: the latest posts and the categories, read a screenful at a time; the editors write theirs on the same line. On a modern terminal or, in PETSCII, on a Commodore 64."
     tags: ["blog", "news", "C64"]
     port: 2328
@@ -74,7 +74,7 @@ boards:
     petscii: true
     enabled: true
 
-  - id: scriptorium
+  - id: scriptorium-bbs
     name: "Scriptorium BBS"
     summary: "The classic literature vault: thousands of books from Project Gutenberg, cut into pageable chapters for your terminal or Commodore 64."
     tags: ["books", "literature", "C64"]
@@ -83,7 +83,7 @@ boards:
     petscii: true
     enabled: true
 
-  - id: commodex
+  - id: commodex-bbs
     name: "Commodex BBS"
     summary: "The Commodore 64 game compendium: search thousands of titles, read about them, and trade cheats and tips with other callers. On a modern terminal or, in PETSCII, on a Commodore 64."
     tags: ["games", "cheats", "C64"]
@@ -92,7 +92,7 @@ boards:
     petscii: true
     enabled: true
 
-  - id: pixelia
+  - id: pixelia-bbs
     name: "Pixelia BBS"
     summary: "The PETSCII & ANSI art gallery: classic 8-bit masterpieces and a collaborative text-art canvas for your terminal or Commodore 64."
     tags: ["art", "ANSI", "PETSCII"]
