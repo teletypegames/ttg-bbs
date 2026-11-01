@@ -58,10 +58,10 @@
   fact: 'Board > Bulletins… has the numbered bulletins: the logon bulletin, About Teletype Games, what is coming up, the board rules, New to BBSes? and our BBS network.'
 - keys: [dashboard, desktop, home, start screen, main screen, overview, what is happening, clubhouse, house, smoke, chimney, mailbox flag]
   fact: 'Board > Dashboard is the clubhouse from the street: a lit window for each caller inside, smoke from the chimney while the Live Chat talks, the mailbox flag for your unread letters, then who is inside with the guestbook, the notice board with what is coming up and the new notes, and the graffiti wall of the oneliners running along the bottom. It closes every window.'
-- keys: [door, doors, program, lobby, games room, station, stations]
-  fact: 'Doors > Games Room… is the games room at the back: the five stations, a lamp burning over each one somebody is in; Enter steps in. Doors > Door Lobby… lists every door with what it is and who is inside; Enter steps in. The doors take over the screen and give it back when you leave them: SERMO, Commodore 64, Commodore Plus/4, Chat of Ra and the TTG Trivia game.'
-- keys: [network, bbs, other, telnet, bbsweb, port, moved, gone, town, map, town map, buildings]
-  fact: 'Board > BBS Network is the town map on the clubhouse wall, our boards as the buildings of the town, each with what it carries: the Teletype BBS here at teletypegames.org:2323, the Impostor BBS at 2324, the TTG Wiki BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia BBS (news feeds) at 2327, TTG Blog BBS at 2328, WarpEngine BBS (our games and files) at 2329, Scriptorium BBS (books) at 2330, Commodex BBS (C64 games, cheats) at 2331, Pixelia BBS (art) at 2332, and TTG Gate BBS at 2399 for all of them. Help > Where are the games, files, wiki? opens it too.'
+- keys: [door, doors, program, lobby]
+  fact: 'Doors > Door Lobby… lists every door with what it is and who is inside; Enter steps in. The doors take over the screen and give it back when you leave them: SERMO, Commodore 64, Commodore Plus/4, Chat of Ra and the TTG Trivia game.'
+- keys: [network, bbs, other, telnet, bbsweb, port, moved, gone]
+  fact: 'Board > BBS Network lists our boards and what each carries: the Teletype BBS here at teletypegames.org:2323, the Impostor BBS at 2324, the TTG Wiki BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia BBS (news feeds) at 2327, TTG Blog BBS at 2328, WarpEngine BBS (our games and files) at 2329, Scriptorium BBS (books) at 2330, Commodex BBS (C64 games, cheats) at 2331, Pixelia BBS (art) at 2332, and TTG Gate BBS at 2399 for all of them. Help > Where are the games, files, wiki? opens it too.'
 - keys: [game, games, download, downloads, file, files, zmodem, xmodem, prg, warpengine, warp-engine, shelf, catalog, release, releases, library]
   fact: 'Our games and files are on the WarpEngine BBS at teletypegames.org:2329: the Commodore 64 and Plus/4 shelves, a title a page, downloaded by ZMODEM or by XMODEM onto a C64 disk. Every game is on teletypegames.org/catalog too, most of them playable right in a browser.'
 - keys: [ftp, apps, warp, folder, archive, http]
@@ -86,3 +86,7 @@
   fact: 'The debrief terminal of our game Definitely not an Impostor is the Impostor BBS at teletypegames.org:2324: type what the game gave you at its end, and tell us how it went.'
 - keys: [gate, ttggate, dial, dialing, '2399', one port, all boards]
   fact: 'TTG Gate BBS at teletypegames.org:2399 is one port for our whole network: a dialing menu that puts your call through to any of our boards, this one too, and takes it back when that board hangs up.'
+- keys: [games room, station, stations, lamp, back room]
+  fact: 'Doors > Games Room… is the games room at the back of the clubhouse: five stations, a lamp burning over each one somebody is in; Enter steps in.'
+- keys: [town, map, town map, buildings, building]
+  fact: 'Board > BBS Network is the town map on the clubhouse wall: each of our boards a building, and under the map what the chosen one carries and its port.'
