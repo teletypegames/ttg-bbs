@@ -12,5 +12,5 @@ services:
     environment:
       - TZ=Europe/Budapest
       - BBS_MAX_SESSIONS=50
-      - COMMODEX_DISCORD_WEBHOOK=${COMMODEX_DISCORD_WEBHOOK:-}
+      - COMMODEX_BBS_DISCORD_WEBHOOK=${COMMODEX_DISCORD_WEBHOOK:-}
     restart: unless-stopped

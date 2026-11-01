@@ -10,7 +10,7 @@ module UI
               ['c', 'publishers & developers', 'the games of one company'],
               ['r', 'random game', 'a game picked at random'],
               ['t', 'games with tips', 'the games callers left tips for'],
-              ['i', 'about commodex', 'where the games come from'],
+              ['i', 'about commodex bbs', 'where the games come from'],
               ['q', 'log off', 'hang up. see you!']].freeze
       MENU_ITEMS = MENU.map { |key, label, about| BBS::Selector.item(label, key: key, value: key, about: about) }.freeze
       # The letters of the companies side by side, each with its count.
@@ -39,7 +39,7 @@ module UI
           when 'c' then companies
           when 'r' then game(@catalog.random)
           when 't' then games('GAMES WITH TIPS', @tips.games_with_tips, empty: 'no game has a tip yet. be the first!')
-          when 'i' then @screen.page('ABOUT COMMODEX', [Words::ABOUT, '', Words::SOURCES])
+          when 'i' then @screen.page('ABOUT COMMODEX BBS', [Words::ABOUT, '', Words::SOURCES])
           when 'q' then return
           end
           @screen.title('COMMODEX BBS', "#{@catalog.count} games")

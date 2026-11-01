@@ -26,7 +26,7 @@ It has two faces on one port, like every board of the network:
   modes (P404), series (P179) and the English Wikipedia article.
   A snapshot ships with the board (`config/catalog.json.gz`, written by
   `bin/refresh-catalog`). The running board reads Wikidata again when its
-  copy is older than `COMMODEX_CATALOG_TTL` (a week) and keeps the result in
+  copy is older than `COMMODEX_BBS_CATALOG_TTL` (a week) and keeps the result in
   `data/catalog.json.gz`; a failed refresh keeps the previous snapshot and
   tries again an hour later.
 - **About** is the lead of the game's English Wikipedia article, fetched on
@@ -60,13 +60,13 @@ with its default.
 
 | Variable | Default | |
 |---|---|---|
-| `COMMODEX_CATALOG_SEED` | `config/catalog.json.gz` | the snapshot shipped with the image |
-| `COMMODEX_CATALOG` | `data/catalog.json.gz` | the snapshot a refresh writes |
-| `COMMODEX_CATALOG_TTL` | `604800` | seconds before Wikidata is read again; `0` never |
-| `COMMODEX_WIKIPEDIA_CACHE` | `200` | Wikipedia leads kept in memory |
-| `COMMODEX_TIPS_DB` | `data/tips.sqlite3` | the tips |
-| `COMMODEX_TIPS_SEED` | `config/tips.yml` | tips shipped with the board, approved from the start |
-| `COMMODEX_DISCORD_WEBHOOK` | *(empty: off)* | rung for every new tip; a secret, in `.env` on the server |
+| `COMMODEX_BBS_CATALOG_SEED` | `config/catalog.json.gz` | the snapshot shipped with the image |
+| `COMMODEX_BBS_CATALOG` | `data/catalog.json.gz` | the snapshot a refresh writes |
+| `COMMODEX_BBS_CATALOG_TTL` | `604800` | seconds before Wikidata is read again; `0` never |
+| `COMMODEX_BBS_WIKIPEDIA_CACHE` | `200` | Wikipedia leads kept in memory |
+| `COMMODEX_BBS_TIPS_DB` | `data/tips.sqlite3` | the tips |
+| `COMMODEX_BBS_TIPS_SEED` | `config/tips.yml` | tips shipped with the board, approved from the start |
+| `COMMODEX_BBS_DISCORD_WEBHOOK` | *(empty: off)* | rung for every new tip; a secret, in `.env` on the server |
 
 `data/` is a volume.
 
