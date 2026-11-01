@@ -3,7 +3,7 @@
 
 # rubbs
 BBS_PORT=2323
-BBS_MAX_SESSIONS=100
+BBS_MAX_SESSIONS=50
 
 # The catalog: the seed that ships with the image, the copy a refresh writes,
 # and the seconds after which the board reads Wikidata again (0: never)
