@@ -15,8 +15,8 @@ require_relative 'lib/ui/petscii'
 # Pages flagged private on the wiki (access: site.login) stay locked until the
 # caller unlocks the session with the supervisor password (Wiki menu >
 # Supervisor login, S on the C64). The wiki holds the same secret and only
-# serves private page bodies to requests carrying it as ?token= — so the lock
-# is enforced server-side too.
+# serves private page bodies to requests carrying it as ?token=, which the
+# board sends for private pages only (WikiRepository#page).
 $stdout.sync = true
 
 # The page index loads at boot, in the background, and sessions share it.

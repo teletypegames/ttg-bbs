@@ -20,20 +20,18 @@ class WikiService
     @pages = index(@repository.sitemap)
   end
 
-  # The markdown of the page at +route+, under its title as an H1.
-  def page_markdown(route)
-    data = @repository.page(route)
+  # The markdown of +page+ (a PageModel), under its title as an H1. What went
+  # wrong goes to the log; the caller only learns that it did.
+  def page_markdown(page)
+    data = @repository.page(page.route, private: page.private?)
     case data['error']
-    when 'forbidden'
-      "# Forbidden\n\nThe wiki refused the supervisor token for `#{route}` — " \
-      "check that WIKI_BBS_SUPERVISOR_PASSWORD matches the wiki's SUPERVISOR_PASSWORD."
-    when nil
-      "# #{data['title']}\n\n#{data['markdown']}"
-    else
-      "# Not found\n\nNo wiki page at `#{route}`."
+    when 'forbidden' then "# Forbidden\n\nThe wiki refused the supervisor access for `#{page.route}`."
+    when nil         then "# #{data['title']}\n\n#{data['markdown']}"
+    else                  "# Not found\n\nNo wiki page at `#{page.route}`."
     end
   rescue StandardError => e
-    "# Error\n\nCould not fetch `#{route}`:\n\n`#{e.class}: #{e.message}`"
+    warn "wiki-bbs: #{page.route}: #{e.class}: #{e.message}"
+    "# Error\n\nThe wiki did not answer for `#{page.route}`. Try again in a minute."
   end
 
   def clear_cache = @repository.clear_cache

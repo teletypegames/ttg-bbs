@@ -129,7 +129,7 @@ module UI
             md = if page.private? && !ctx[:app].unlocked?
                    "# Supervisor only\n\nThis page is private. Unlock it via **Wiki > Supervisor login**."
                  else
-                   ctx[:wiki].page_markdown(page.route)
+                   ctx[:wiki].page_markdown(page)
                  end
             BBS::Markdown.to_lines(md, width: width, theme: ctx[:app].theme)
           end
@@ -159,6 +159,9 @@ module UI
               app.windows.grep(BBS::Windows::MasterDetail).each(&:reload_detail)
               BBS::Dialogs.message(app, 'Supervisor access granted.', title: ' Unlocked ')
               :close
+            when :locked
+              form.error('Too many wrong passwords. Try again later.')
+              :keep
             else
               form.error('Wrong password.')
               :keep

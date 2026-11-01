@@ -11,10 +11,14 @@ require 'uri'
 class WikiRepository
   PAGE_TTL = 300 # seconds
 
+  # The wiki did not answer with a page. Its message names the path and the
+  # status only, never the query: that carries the supervisor token.
+  class Error < StandardError; end
+
   attr_reader :base_url
 
-  # +token+ is sent as ?token= on page requests: the wiki only serves private
-  # page bodies when it matches its own SUPERVISOR_PASSWORD.
+  # +token+ is sent as ?token= on private page requests only: the wiki serves
+  # private page bodies when it matches its own SUPERVISOR_PASSWORD.
   def initialize(base_url, token: nil)
     @base_url = base_url.chomp('/')
     @token    = token.to_s
@@ -29,15 +33,16 @@ class WikiRepository
   end
 
   # The /custom/page.json answer for +route+ (cached for PAGE_TTL): the page's
-  # title and markdown, or its error ('forbidden', 'not_found').
-  def page(route)
+  # title and markdown, or its error ('forbidden', 'not_found'). Only a
+  # +private+ page is asked for with the token.
+  def page(route, private: false)
     @mutex.synchronize do
       hit = @cache[route]
       return hit[:data] if hit && Time.now - hit[:at] < PAGE_TTL
     end
 
     params = { route: route }
-    params[:token] = @token unless @token.empty?
+    params[:token] = @token if private && !@token.empty?
     data = get_json('/custom/page.json', **params)
     @mutex.synchronize { @cache[route] = { data: data, at: Time.now } }
     data
@@ -57,7 +62,7 @@ class WikiRepository
                           open_timeout: 5, read_timeout: 15) do |http|
       http.get(uri.request_uri)
     end
-    raise "HTTP #{res.code} for #{uri}" unless res.is_a?(Net::HTTPSuccess)
+    raise Error, "HTTP #{res.code} for #{path}" unless res.is_a?(Net::HTTPSuccess)
 
     parse_json(res.body)
   end

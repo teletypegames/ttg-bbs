@@ -89,7 +89,7 @@ module UI
         end
         @screen.title(heading)
         @screen.say('loading...', GR)
-        md    = @wiki.page_markdown(page.route)
+        md    = @wiki.page_markdown(page)
         lines = BBS::Markdown.to_lines(md, width: WIDTH, theme: MARKDOWN).map { |l| " #{l}" }
         @screen.page(heading, lines + ['', " #{GR}updated #{page.updated_at}#{LG}",
                                        " #{CY}#{PUBLIC_HOST}#{page.route}#{LG}"], numbers: true)
@@ -102,16 +102,21 @@ module UI
           @ctx[:unlocked] = false if @screen.choose(" #{WH}supervisor access is on. lock it? (y/n)#{LG} ", %w[y n]) == 'y'
           return
         end
-        if !@supervisor.configured?
-          @screen.say('No supervisor password configured.', RD)
-        elsif @supervisor.unlock(@screen.ask(" #{WH}password#{LG}: ", mask: '*')) == :granted
-          @ctx[:unlocked] = true
-          @screen.say('Supervisor access granted.', GN)
+        if @supervisor.configured?
+          unlock(@screen.ask(" #{WH}password#{LG}: ", mask: '*'))
         else
-          sleep 2
-          @screen.say('Wrong password.', RD)
+          @screen.say('No supervisor password configured.', RD)
         end
         @screen.pause
+      end
+
+      def unlock(password)
+        case @supervisor.unlock(password)
+        when :granted then @ctx[:unlocked] = true
+                           @screen.say('Supervisor access granted.', GN)
+        when :locked  then @screen.say('Too many wrong passwords. Try later.', RD)
+        else               @screen.say('Wrong password.', RD)
+        end
       end
 
       # Re-reads the shared index: every session sees the new one.
