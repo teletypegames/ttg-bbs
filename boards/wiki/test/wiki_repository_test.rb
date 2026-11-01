@@ -32,8 +32,9 @@ class WikiRepositoryTest < Minitest::Test
       repository.page('/open')
       repository.page('/closed', private: true)
     end
-    refute_includes wiki.urls[0][0], 'token'
-    assert_includes wiki.urls[1][0], 'token=secret'
+    refute wiki.urls[0][1].key?(:headers)
+    assert_equal({ 'X-Wiki-Token' => 'secret' }, wiki.urls[1][1][:headers])
+    refute_includes wiki.urls[1][0], 'secret'
   end
 
   def test_an_error_never_names_the_token

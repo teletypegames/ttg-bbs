@@ -61,7 +61,7 @@ Two endpoints on the Grav wiki (templates in
   `modified`, `updatedAt`, `tags`, `private` (true when the page or any
   ancestor has `access: site.login` in its frontmatter). Titles/routes only,
   no bodies.
-- `GET /custom/page.json?route=/platforms/tic80[&token=...]` — one page: the
+- `GET /custom/page.json?route=/platforms/tic80` (+ header `X-Wiki-Token`, or `&token=`) — one page: the
   above plus `markdown` (raw) and `html` (rendered). Private pages require
   `token` to match the wiki's `SUPERVISOR_PASSWORD`, otherwise
   `{"error": "forbidden"}`. Unknown route → `{"error": "not_found"}`.
@@ -87,8 +87,9 @@ enters the supervisor password.
 
 The lock is enforced server-side: the Grav entrypoint injects
 `SUPERVISOR_PASSWORD` into `config.site.supervisor_password`, and the JSON
-API refuses private page bodies without a matching `?token=`. The BBS sends
-its own `WIKI_BBS_SUPERVISOR_PASSWORD` as that token, so **the two services must share
+API refuses private page bodies without a matching token (the `X-Wiki-Token`
+header, or `?token=`). The BBS sends its own `WIKI_BBS_SUPERVISOR_PASSWORD` in the
+header, for private pages only, so it stays out of the wiki's access log, so **the two services must share
 the same value** (the compose file wires both from one variable). The older
 `updates.json` / `pages.json` endpoints hide private bodies the same way
 (`body=1` only includes them with a valid token).

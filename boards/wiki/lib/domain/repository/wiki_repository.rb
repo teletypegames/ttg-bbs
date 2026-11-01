@@ -15,12 +15,13 @@ class WikiRepository
   PAGE_BYTES = 8 * 1024 * 1024
 
   # The wiki did not answer with a page. Its message names the path and the
-  # status only, never the query: that carries the supervisor token.
+  # status only.
   class Error < StandardError; end
 
   attr_reader :base_url
 
-  # +token+ is sent as ?token= on private page requests only: the wiki serves
+  # +token+ is sent as the X-Wiki-Token header on private page requests only
+  # (a header stays out of the wiki's access log): the wiki serves
   # private page bodies when it matches its own SUPERVISOR_PASSWORD.
   # +user_agent+ names the board in every request.
   def initialize(base_url, user_agent:, token: nil)
@@ -40,9 +41,8 @@ class WikiRepository
   # title and markdown, or its error ('forbidden', 'not_found'). Only a
   # +private+ page is asked for with the token.
   def page(route, private: false)
-    params = { route: route }
-    params[:token] = @token if private && !@token.empty?
-    data = parse_json(@pages.fetch(route) { get('/custom/page.json', **params) })
+    headers = private && !@token.empty? ? { 'X-Wiki-Token' => @token } : {}
+    data = parse_json(@pages.fetch(route) { get('/custom/page.json', headers, route: route) })
     data.slice('title', 'markdown', 'error').transform_values { |text| BBS::Text.clean(text.to_s) }
   end
 
@@ -50,14 +50,16 @@ class WikiRepository
 
   private
 
-  def get_json(path, **params) = parse_json(get(path, **params))
+  def get_json(path, **params) = parse_json(get(path, {}, **params))
 
   # The body of +path+ as UTF-8 text; the wiki is on the Docker network, so
   # not on the public internet.
-  def get(path, **params)
+  def get(path, headers, **params)
     uri = URI("#{@base_url}#{path}")
     uri.query = URI.encode_www_form(params) unless params.empty?
-    response = BBS::HTTP.get(uri.to_s, user_agent: @user_agent, public_only: false)
+    options = { user_agent: @user_agent, public_only: false }
+    options[:headers] = headers unless headers.empty?
+    response = BBS::HTTP.get(uri.to_s, **options)
     raise Error, "HTTP #{response.status} for #{path}" unless response.ok?
     BBS::Text.utf8(response.body)
   rescue BBS::HTTP::Error => e
