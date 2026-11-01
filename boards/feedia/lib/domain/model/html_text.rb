@@ -2,11 +2,12 @@
 
 require 'cgi'
 
-# The HTML of a feed item as Markdown a terminal can render: paragraphs,
-# headings, lists and quotes kept, everything else made plain text. A link
-# keeps its text and gets a number, its address listed under the text, the
-# way lynx does it; an image keeps its alt text. Control characters go, so
-# a feed cannot send escape sequences down the line.
+# The model side's text helper, pure functions with no I/O: the HTML of a
+# feed item as Markdown a terminal can render, paragraphs, headings, lists
+# and quotes kept, everything else made plain text. A link keeps its text
+# and gets a number, its address listed under the text, the way lynx does
+# it; an image keeps its alt text. Control characters go, so a feed (or a
+# caller's message) cannot send escape sequences down the line.
 module HtmlText
   ENTITIES = {
     'nbsp' => ' ', 'hellip' => '…', 'ndash' => '–', 'mdash' => '—', 'lsquo' => '‘', 'rsquo' => '’',

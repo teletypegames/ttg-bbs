@@ -1,22 +1,16 @@
 # frozen_string_literal: true
 
+require_relative 'logo'
+
 module UI
   # The reader on a modern terminal (ANSI colours, UTF-8, a mouse): a desktop
   # under a menubar, the feeds in a two-pane window, a feed's items with the
   # one picked on the right, and two forms that write to the admins.
   module Modern
-    # A newspaper's masthead in half blocks, two rows under an empty one:
-    # the feed windows are four rows shorter than the desktop's default,
-    # so three rows stay free above them and three below.
-    MASTHEAD = [
-      '█▀▀ █▀▀ █▀▀ █▀▄ █ ▄▀█',
-      '█▀  ██▄ ██▄ █▄▀ █ █▀█'
-    ].freeze
-
-    def self.flow(feeds, inbox)
+    def self.flow(bbs)
       app = BBS::Application.define do
         theme BBS::Theme.synchronet
-        services feeds: feeds, inbox: inbox
+        services bbs.services
 
         helpers do
           def feed_list = open_window(:feeds)
@@ -42,7 +36,7 @@ module UI
 
           # Five messages a call: enough for anyone, too few for a flood.
           def can_send?
-            return true if context[:sent].to_i < Inbox::PER_CALL
+            return true if context[:sent].to_i < InboxService::PER_CALL
 
             BBS::Dialogs.message(self, 'That is all the messages one call can send. Thank you!', title: ' Admins ')
             false
@@ -120,10 +114,10 @@ module UI
           w.title ' Suggest a feed '
           w.width 70
           w.hint  'Why this feed? Write it in the box below (optional). Alt-S sends.'
-          w.field :url,  label: 'Feed address', max_length: Inbox::MAX_FIELD, placeholder: 'https://…'
-          w.field :name, label: 'Its name', max_length: Inbox::MAX_FIELD
-          w.field :from, label: 'Your name', max_length: Inbox::MAX_FIELD, placeholder: 'optional'
-          w.field :note, type: :textarea, rows: 4, max_length: Inbox::MAX_TEXT
+          w.field :url,  label: 'Feed address', max_length: InboxService::MAX_FIELD, placeholder: 'https://…'
+          w.field :name, label: 'Its name', max_length: InboxService::MAX_FIELD
+          w.field :from, label: 'Your name', max_length: InboxService::MAX_FIELD, placeholder: 'optional'
+          w.field :note, type: :textarea, rows: 4, max_length: InboxService::MAX_TEXT
           w.submit_label '&Send'
           w.on_submit do |values, form, ctx|
             case ctx[:inbox].suggest(**values)
@@ -139,8 +133,8 @@ module UI
           w.title ' Feedback to the admins '
           w.width 70
           w.hint  'A bug, an idea, a word of thanks: write it below. Alt-S sends.'
-          w.field :from, label: 'Your name', max_length: Inbox::MAX_FIELD, placeholder: 'optional'
-          w.field :text, type: :textarea, rows: 8, max_length: Inbox::MAX_TEXT
+          w.field :from, label: 'Your name', max_length: InboxService::MAX_FIELD, placeholder: 'optional'
+          w.field :text, type: :textarea, rows: 8, max_length: InboxService::MAX_TEXT
           w.submit_label '&Send'
           w.on_submit do |values, form, ctx|
             case ctx[:inbox].feedback(**values)
@@ -191,9 +185,12 @@ module UI
         init do
           left  = ['VOL. I · NO. 2327', 'THE TELNET EDITION']
           right = [Time.now.strftime('%A %-d %b %Y').upcase, "#{services[:feeds].list.size} FEEDS · NO CHARGE"]
-          mark  = ((cols - MASTHEAD.first.length) / 2) + 1
+          # The masthead's two rows under an empty one: the feed windows are
+          # four rows shorter than the desktop's default, so three rows stay
+          # free above them and three below.
+          mark  = ((cols - Logo::HALF_BLOCKS.first.length) / 2) + 1
           ear   = mark - 4
-          MASTHEAD.each_with_index do |row, i|
+          Logo::HALF_BLOCKS.each_with_index do |row, i|
             desktop_label(row, :accent, mark, 3 + i, row.length)
             desktop_label(left[i], :text_dim, 3, 3 + i, ear)
             desktop_label(right[i], :text_dim, mark + row.length + 2, 3 + i, ear, align: :right)

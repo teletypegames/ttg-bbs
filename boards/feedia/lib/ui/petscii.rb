@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative 'logo'
 require_relative 'petscii/screen'
 
 module UI
@@ -7,10 +8,6 @@ module UI
   # the feeds and their items as numbered lists, an item paged a screenful at
   # a time, and the messages to the admins typed line by line.
   module Petscii
-    LOGO_FONT = {
-      'F' => %w[### #.. ##. #.. #..], 'E' => %w[### #.. ##. #.. ###], 'D' => %w[##. #.# #.# #.# ##.],
-      'I' => %w[### .#. .#. .#. ###], 'A' => %w[.#. #.# ### #.# #.#]
-    }.freeze
     LOGO_COLORS = [YE, YE, "\e[0;33m", "\e[0;33m", "\e[0;31m"].freeze
 
     # The colours of an item, in the keys of a BBS::Theme.
@@ -18,8 +15,7 @@ module UI
 
     # FEEDIA in reversed blocks, five rows.
     def self.logo
-      5.times.map do |row|
-        bits = 'FEEDIA'.chars.map { |c| LOGO_FONT[c][row] }.join('.')
+      Logo.rows.each_with_index.map do |bits, row|
         line = bits.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')
         "  #{LOGO_COLORS[row]}#{line}#{LG}"
       end
@@ -35,10 +31,10 @@ module UI
        "  #{WH}all the news that fits in 40 columns#{LG}"]
     end
 
-    def self.flow(feeds, inbox)
+    def self.flow(bbs)
       BBS::Flow.define do
         call do |ctx, runner|
-          Reader.new(feeds, inbox, Screen.new(runner.session), ctx).run
+          Reader.new(bbs.feeds, bbs.inbox, Screen.new(runner.session), ctx).run
           nil
         end
         call do |_ctx, runner|
@@ -149,7 +145,7 @@ module UI
       end
 
       def can_send?
-        return true if @ctx[:sent].to_i < Inbox::PER_CALL
+        return true if @ctx[:sent].to_i < InboxService::PER_CALL
 
         @screen.puts
         @screen.say('That is all the messages one call can send. Thank you!', GR)
@@ -163,13 +159,13 @@ module UI
         @screen.title('SUGGEST A FEED', right)
         @screen.say('The admins look at every address before it goes on the list. Return alone: back.', GR)
         @screen.puts
-        url = @screen.ask(" #{WH}address#{LG}> ", max: Inbox::MAX_FIELD)
+        url = @screen.ask(" #{WH}address#{LG}> ", max: InboxService::MAX_FIELD)
         return if url.empty?
-        return answer(:bad_url) unless Inbox.url?(url)
+        return answer(:bad_url) unless InboxService.url?(url)
 
-        name = @screen.ask(" #{WH}its name#{LG}> ", max: Inbox::MAX_FIELD)
-        from = @screen.ask(" #{WH}your name#{LG}> ", max: Inbox::MAX_FIELD)
-        note = @screen.ask(" #{WH}why#{LG}> ", max: Inbox::MAX_TEXT)
+        name = @screen.ask(" #{WH}its name#{LG}> ", max: InboxService::MAX_FIELD)
+        from = @screen.ask(" #{WH}your name#{LG}> ", max: InboxService::MAX_FIELD)
+        note = @screen.ask(" #{WH}why#{LG}> ", max: InboxService::MAX_TEXT)
         answer(@inbox.suggest(url: url, name: name, from: from, note: note))
       end
 
@@ -180,8 +176,8 @@ module UI
         @screen.say('A bug, an idea, a word of thanks. Your name, then the message in the editor: ' \
                     'stop or ← and S sends it, Q goes back.', GR)
         @screen.puts
-        from = @screen.ask(" #{WH}your name#{LG}> ", max: Inbox::MAX_FIELD)
-        text = @screen.editor(Inbox::MAX_TEXT, 'WRITE TO THE ADMINS')
+        from = @screen.ask(" #{WH}your name#{LG}> ", max: InboxService::MAX_FIELD)
+        text = @screen.editor(InboxService::MAX_TEXT, 'WRITE TO THE ADMINS')
         return if text.strip.empty?
 
         answer(@inbox.feedback(text: text, from: from))

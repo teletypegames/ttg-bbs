@@ -3,10 +3,9 @@
 
 # The admins' look at what callers sent, newest first:
 #   docker exec feedia bin/inbox [count]
-require_relative '../lib/domain/inbox'
+require_relative '../lib/domain'
 
-inbox = Inbox.new(path: ENV.fetch('FEEDIA_INBOX', File.expand_path('../data/inbox.jsonl', __dir__)))
-messages = inbox.messages((ARGV.first || 20).to_i)
+messages = FeediaBBS.new.inbox.messages((ARGV.first || 20).to_i)
 puts 'The inbox is empty.' if messages.empty?
 messages.each do |m|
   puts "#{m.at}  #{m.kind.upcase}  from #{m.from.to_s.empty? ? '(anonymous)' : m.from}"

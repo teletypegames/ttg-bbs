@@ -55,6 +55,7 @@ Copy `env-example` to `.env`:
 | Variable | Default | Description |
 |---|---|---|
 | `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2327) |
+| `BBS_MAX_SESSIONS` | `100` | Callers at once (compose sets 50) |
 | `FEEDIA_FEEDS` | `config/feeds.yml` | The feed list |
 | `FEEDIA_INBOX` | `data/inbox.jsonl` | Where suggestions and feedback are kept (compose mounts `./data`) |
 | `FEEDIA_DISCORD_WEBHOOK` | — | Suggestions and feedback ring this Discord webhook too |
@@ -124,16 +125,29 @@ docker exec feedia bin/inbox 100
 ## Project structure
 
 ```
-bbs.rb                    entry point: the terminal question, then a face
-bin/inbox                 the admins' look at the inbox
-config/feeds.yml          the feed list
+bbs.rb                          entry point: the board, the terminal question, then a face
+bin/inbox                       the admins' look at the inbox
+config/feeds.yml                the feed list
 lib/
-  domain/feeds.rb         the feed list; fetch, RSS/RDF/Atom → items, cache
-  domain/html_text.rb     an item's HTML → Markdown, numbered links
-  domain/inbox.rb         suggestions and feedback: the inbox file, Discord
-  ui/modern.rb            the modern face: desktop, feeds, items, forms
-  ui/petscii.rb           the PETSCII face: logo, menu, lists, pages, messages
-  ui/petscii/screen.rb    title bar, pages, the cursor menus on the 40×25 screen
+  domain.rb                     requires the domain in dependency order
+  domain/
+    feedia_bbs.rb               FeediaBBS, the composition root: reads ENV, wires the rest
+    model/feed_model.rb         one feed of the list
+    model/channel_model.rb      what a feed said: title, link, description, items
+    model/item_model.rb         one item: title, link, date, author, Markdown
+    model/message_model.rb      a suggestion or feedback to the admins
+    model/feed_xml.rb           RSS/RDF/Atom → a channel and its items
+    model/html_text.rb          an item's HTML → Markdown, numbered links
+    repository/feed_list_repository.rb  config/feeds.yml
+    repository/feed_repository.rb       fetching a feed over HTTP(S), the cache
+    repository/inbox_repository.rb      data/inbox.jsonl
+    repository/discord_repository.rb    the admins' Discord webhook, rate-limited
+    service/feed_service.rb     the feed list, reading a feed
+    service/inbox_service.rb    suggestions and feedback: checks, the inbox, Discord
+  ui/logo.rb                    FEEDIA in blocks for both mastheads
+  ui/modern.rb                  the modern face: desktop, feeds, items, forms
+  ui/petscii.rb                 the PETSCII face: logo, menu, lists, pages, messages
+  ui/petscii/screen.rb          title bar, pages, the cursor menus on the 40×25 screen
 ```
 
 ## Deploy
