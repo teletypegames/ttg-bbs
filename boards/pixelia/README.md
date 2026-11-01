@@ -154,7 +154,7 @@ lib/domain/
   service/wall_service.rb                   saving to the Wall, its limits
   pixelia_bbs.rb            the composition root (PixeliaBBS)
 lib/ui/
-  logo.rb                   PIXELIA in blocks, a colour a letter, both faces
+  logo.rb                   PIXELIA in blocks (BBS::BlockFont), a colour a letter, both faces
   glyph_keys.rb             glyph mode's keyboard, both faces
   wall_text.rb              what a caller is told about a save, both faces
   modern.rb                 UI::Modern: the rubbs Application
@@ -163,7 +163,7 @@ lib/ui/
   modern/art_lines.rb       rows of cells as ANSI lines
   modern/logo_widget.rb     the logo on the desktop
   petscii.rb                UI::Petscii: the C64 board and its menu
-  petscii/screen.rb         the 40×25 screen: title bar, pages, cursor menus
+  petscii/screen.rb         the 40×25 screen: rubbs' BBS::Petscii::Screen
   petscii/pen.rb            cells in C64 colours and reverse; ANSI cells to C64 ones
   petscii/canvas_view.rb    the canvas on a C64 screen, sending only what changed
   petscii/canvas.rb         painting on a C64

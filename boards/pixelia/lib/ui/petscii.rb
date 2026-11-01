@@ -15,7 +15,7 @@ module UI
     def self.logo
       Logo.rows.map do |runs|
         line = runs.map do |text, color|
-          blocks = text.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')
+          blocks = BBS::BlockFont.reversed(text)
           color ? "#{Pen::CODES[color]}#{blocks}" : blocks
         end
         "      #{line.join}#{LG}"
@@ -35,28 +35,12 @@ module UI
           nil
         end
         call do |_ctx, runner|
-          Petscii.goodbye(Screen.new(runner.session))
+          BBS::Goodbye.petscii(Screen.new(runner.session), title: 'pixelia bbs', color: PU)
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           nil
         end
       end
-    end
-
-    def self.goodbye(screen)
-      screen.cls
-      screen.puts
-      screen.puts " #{PU}#{RV}#{' thanks for calling pixelia bbs'.ljust(39)}#{RO}#{LG}"
-      screen.puts
-      screen.say('More of us: teletypegames.org', GR)
-      screen.puts
-      sleep 1.2
-      screen.puts " #{LG}+++"
-      sleep 0.6
-      screen.puts ' ATH0'
-      sleep 0.4
-      screen.puts " #{RD}NO CARRIER#{LG}"
-      screen.puts
     end
 
     # One call: the menu and its sections.
