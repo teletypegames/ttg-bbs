@@ -230,7 +230,7 @@ module UI
 
       # The first screen of a PETSCII banner as it came, until a key.
       def banner(page)
-        @screen.raw([Canvas::CLEAR].pack('C*') + ::Discovery::BannerPreview.petscii(page.banner))
+        @screen.raw([Canvas::CLEAR].pack('C*') + ::Discovery::BannerPreview.petscii(page.c64_banner))
         key
       end
 

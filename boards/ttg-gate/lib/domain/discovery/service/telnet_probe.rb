@@ -10,6 +10,10 @@ module Discovery
   # reading for at most 8 s or 4 KB. When 4 s pass without a byte of banner,
   # one CR goes out (many boards wait for ENTER); nothing else is ever sent,
   # and it never logs in. Returns a ProbeResultModel.
+  #
+  # With +c64+ the call is a Commodore 64's (TTG_DISCOVERY.md §5.1): the same
+  # connection, reading and one CR (0x0D), but no telnet option is accepted,
+  # so a board that adapts to its caller shows what a C64 would get.
   class TelnetProbe
     CONNECT_TIMEOUT = 10
     READ_TIMEOUT    = 8
@@ -26,7 +30,7 @@ module Discovery
       @clock           = clock
     end
 
-    def call(host, port)
+    def call(host, port, c64: false)
       at = Time.now.to_i
       begun = @clock.call
       ip = @resolver.call(host).first
@@ -37,7 +41,7 @@ module Discovery
       return ProbeResultModel.new(result: socket, at: at, ip: ip, duration_ms: since(begun)) if socket.is_a?(String)
 
       latency = since(started)
-      result, banner, options = converse(socket)
+      result, banner, options = converse(socket, TelnetNegotiator.new(c64: c64))
       ProbeResultModel.new(result: result, at: at, latency_ms: latency, ip: ip, banner: banner, options: options,
                            duration_ms: since(begun))
     ensure
@@ -71,8 +75,7 @@ module Discovery
     end
 
     # [result, banner, options] of the conversation on +socket+.
-    def converse(socket)
-      telnet  = TelnetNegotiator.new
+    def converse(socket, telnet)
       banner  = +''.b
       start   = @clock.call
       nudged  = false

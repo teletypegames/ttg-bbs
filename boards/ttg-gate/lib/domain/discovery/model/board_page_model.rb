@@ -5,7 +5,8 @@ require 'json'
 module Discovery
   # Everything the board page of the Gate shows (DirectoryRepository#page):
   # the listing, the fields with the source each came from, the 30-day uptime
-  # strip, and the banner for the preview.
+  # strip, and the banners for the preview: the one of the scheduled call
+  # (an ANSI terminal's) and the one of the C64-style call.
   #
   # [listing]  its ListingModel
   # [board]    its boards row
@@ -26,23 +27,38 @@ module Discovery
     # country.
     def fields
       provenance = JSON.parse(board['provenance'] || '{}')
-      list = %w[name sysop location since ftn_address].filter_map do |key|
+      list = %w[name sysop location since ftn_address hardware website].filter_map do |key|
         value = board[key]
         Field.new(label: LABELS.fetch(key), value: value.to_s, source: source_name(provenance[key])) if value
       end
       list.insert(1, software_field) if software_field
       list << Field.new(label: 'Country', value: state['country'].upcase, source: 'DB-IP') if state['country']
-      list << Field.new(label: 'Encoding', value: state['encoding'], source: 'our call') if encoding
+      list << Field.new(label: 'Encoding', value: encodings, source: 'our call') if encoding || c64_encoding
       list
     end
 
     LABELS = { 'name' => 'Name', 'sysop' => 'Sysop', 'location' => 'Location', 'since' => 'Since',
-               'ftn_address' => 'FTN address', 'software' => 'Software' }.freeze
+               'ftn_address' => 'FTN address', 'software' => 'Software', 'hardware' => 'Hardware',
+               'website' => 'Website' }.freeze
+    ENCODINGS = %w[ansi petscii atascii ascii].freeze
 
     def ftn_address = board['ftn_address']
 
     # The encoding the banner of our last call showed, nil when unknown.
-    def encoding = %w[ansi petscii atascii ascii].include?(state['encoding']) ? state['encoding'] : nil
+    def encoding = ENCODINGS.include?(state['encoding']) ? state['encoding'] : nil
+
+    # The encoding the banner of our last C64-style call showed, nil when
+    # unknown or never called so.
+    def c64_encoding = ENCODINGS.include?(state['c64_encoding']) ? state['c64_encoding'] : nil
+
+    # The Encoding field: the scheduled call's, and the C64-style call's when
+    # it differs ("ansi, petscii to a C64").
+    def encodings
+      return "#{c64_encoding} to a C64" unless encoding
+      return encoding if c64_encoding.nil? || c64_encoding == encoding
+
+      "#{encoding}, #{c64_encoding} to a C64"
+    end
 
     def last_success_at = state['last_success_at']
 
@@ -57,11 +73,22 @@ module Discovery
     def banner
       return unless listing.preview?
 
-      bytes = state['banner']
-      bytes.nil? || bytes.empty? ? nil : bytes.b
+      bytes(state['banner'])
     end
 
     def banner_at = state['banner_at']
+
+    # The PETSCII banner for the C64 face: the C64-style call's, else the
+    # scheduled call's when that was PETSCII; nil without one, or when its
+    # sysop opted out of the preview.
+    def c64_banner
+      return unless listing.preview?
+      return bytes(state['c64_banner']) if c64_encoding == 'petscii'
+
+      banner if encoding == 'petscii'
+    end
+
+    def c64_banner_at = c64_encoding == 'petscii' ? state['c64_banner_at'] : banner_at
 
     # The uptime strip of the last STRIP_DAYS days, the oldest first, today
     # last, a day by +utc_offset+'s calendar: UP when a probe or a dial
@@ -84,6 +111,8 @@ module Discovery
 
     private
 
+    def bytes(blob) = blob.nil? || blob.empty? ? nil : blob.b
+
     def software_field
       return Field.new(label: 'Software', value: state['software'], source: 'our call') if state['software']
       return unless board['software']
@@ -95,7 +124,8 @@ module Discovery
     def source_name(id)
       return unless id
 
-      sources.find { |s| s['source_id'] == id }&.dig('name') || id
+      name = sources.find { |s| s['source_id'] == id }&.dig('name') || id
+      name.sub(/\s*\([^)]*\)\z/, '')
     end
   end
 end

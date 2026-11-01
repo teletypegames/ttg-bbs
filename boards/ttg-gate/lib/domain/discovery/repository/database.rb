@@ -106,6 +106,17 @@ module Discovery
       CREATE VIRTUAL TABLE IF NOT EXISTS boards_fts USING fts5 (name, sysop, location, software, host);
     SQL
 
+    # The columns added after the first release: the whole call's time and
+    # the banner's size of a probe (the banner itself is not kept for long);
+    # the hardware and website a list (the CBBS Outpost) gives a board; what
+    # the C64-style call of a board found.
+    ADDED = {
+      'probes'      => { 'duration_ms' => 'INTEGER', 'banner_bytes' => 'INTEGER' },
+      'boards'      => { 'hardware' => 'TEXT', 'website' => 'TEXT' },
+      'board_state' => { 'c64_probe_at' => 'INTEGER', 'c64_result' => 'TEXT', 'c64_encoding' => 'TEXT',
+                         'c64_banner' => 'BLOB', 'c64_banner_hash' => 'TEXT', 'c64_banner_at' => 'INTEGER' }
+    }.freeze
+
     attr_reader :path
 
     def initialize(path)
@@ -159,12 +170,12 @@ module Discovery
 
     private
 
-    # The columns added after the first release: the whole call's time and
-    # the banner's size of a probe (the banner itself is not kept for long).
     def migrate
-      columns = @db.execute('PRAGMA table_info(probes)').map { |c| c['name'] }
-      { 'duration_ms' => 'INTEGER', 'banner_bytes' => 'INTEGER' }.each do |name, type|
-        @db.execute("ALTER TABLE probes ADD COLUMN #{name} #{type}") unless columns.include?(name)
+      ADDED.each do |table, added|
+        columns = @db.execute("PRAGMA table_info(#{table})").map { |c| c['name'] }
+        added.each do |name, type|
+          @db.execute("ALTER TABLE #{table} ADD COLUMN #{name} #{type}") unless columns.include?(name)
+        end
       end
     end
   end

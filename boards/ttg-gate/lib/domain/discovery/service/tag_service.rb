@@ -6,8 +6,12 @@ module Discovery
   # The tags of a board, all generated, from a closed vocabulary
   # (TTG_DISCOVERY.md §6.2):
   #
-  # - encoding: ansi, petscii, atascii, ascii, from the banner, plus what a
-  #   source-map rule reads from a source (both when they differ);
+  # - encoding: ansi, petscii, atascii, ascii, measured only: the banner of
+  #   the scheduled call, and of the C64-style call (both when they differ);
+  # - claims:<encoding>: what a source-map rule reads from a source (the
+  #   SyncTERM ScreenMode, a PETSCII comment, the CBBS Outpost's list). A
+  #   claim is no encoding tag: it is not shown, only searched, and makes the
+  #   prober call the board as a C64 (claims:petscii);
   # - sw:<id>: the software signature of the banner, else of the source's
   #   software field;
   # - net:<network>: the nodelists that list it, and source-map rules;
@@ -24,6 +28,7 @@ module Discovery
     ENCODINGS = %w[ansi petscii atascii ascii].freeze
     OPTIONS = { 'BINARY' => 'binary', 'NAWS' => 'naws', 'TTYPE' => 'ttype' }.freeze
     STATES = %w[online flaky down dead].freeze
+    CLAIMS = 'claims:'
 
     def initialize(catalog, probes, config)
       @catalog = catalog
@@ -60,8 +65,8 @@ module Discovery
     private
 
     def encodings(sources, state)
-      from_banner = [state&.dig('encoding')] & ENCODINGS
-      from_banner + mapped(:encoding, sources)
+      measured = [state&.dig('encoding'), state&.dig('c64_encoding')] & ENCODINGS
+      measured + mapped(:encoding, sources).map { |e| "#{CLAIMS}#{e}" }
     end
 
     def networks(sources)

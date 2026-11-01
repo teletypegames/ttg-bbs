@@ -5,14 +5,15 @@ module Discovery
   # the normalized +host+ and +port+, the fields the list has (nil when it has
   # none), and +hints+, the list's own fields that only a rule of
   # config/discovery/source-map.yml may turn into a tag (a SyncTERM ScreenMode,
-  # an SBL service comment, the SBL networks).
+  # an SBL service comment, the SBL networks, the platform of the CBBS
+  # list).
   class RecordModel < Data.define(:source_id, :host, :port, :name, :sysop, :location, :software, :since, :ftn_address,
-                                  :hints)
+                                  :hardware, :website, :hints)
     # The fields a board takes from its sources, in the order of the board's page.
-    FIELDS = %i[name sysop location software since ftn_address].freeze
+    FIELDS = %i[name sysop location software since ftn_address hardware website].freeze
 
     def initialize(source_id:, host:, port:, name: nil, sysop: nil, location: nil, software: nil, since: nil,
-                   ftn_address: nil, hints: {})
+                   ftn_address: nil, hardware: nil, website: nil, hints: {})
       super
     end
 

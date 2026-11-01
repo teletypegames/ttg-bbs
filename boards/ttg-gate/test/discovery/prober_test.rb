@@ -14,8 +14,8 @@ module Discovery
         @calls = Queue.new
       end
 
-      def call(host, port)
-        @calls << "#{host}:#{port}"
+      def call(host, port, c64: false)
+        @calls << "#{host}:#{port}#{' c64' if c64}"
         sleep 0.05
         @results.fetch(host) { ProbeResultModel.new(result: 'timeout', at: Time.now.to_i, ip: '192.0.2.50') }
       end

@@ -3,10 +3,15 @@
 # TTG_DISCOVERY.md §6.2. This is code-level config, not curation: it names no board.
 #
 # A rule: the source, the field (a hint the parser keeps: screen_mode, service, comment,
-# networks), a regular expression (case-insensitive; a list field matches when any of its
-# values does) and the tag.
+# networks, platform), a regular expression (case-insensitive; a list field matches when any of
+# its values does) and the tag.
 
+# An encoding a source names is a claim, not a measurement: the tag is claims:<tag> (searchable,
+# never shown). The encoding tags themselves (ansi, petscii, …) come only from the banners of our
+# calls; claims:petscii makes the prober call the board a second time as a C64 would (no telnet),
+# and only a PETSCII banner of a call gives the tag petscii.
 encoding:
+  - { source: cbbs, field: platform, pattern: '\Acommodore\z', tag: petscii }
   - { source: syncterm, field: screen_mode, pattern: '\A(?:C64|C128-40col|C128-80col)\z', tag: petscii }
   - { source: syncterm, field: screen_mode, pattern: '\AAtari', tag: atascii }
   - { source: syncterm, field: service, pattern: '\bpetscii\b', tag: petscii }

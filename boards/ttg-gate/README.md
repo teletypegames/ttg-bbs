@@ -150,18 +150,27 @@ these lists publish.
 | [Micronet nodelist](https://minftn.outpostbbs.net) | nodelist | 14 | Micronet |
 | [Synchronet BBS List](https://www.synchro.net/sbbslist.html) | HTML export of Vertrauen | 235 | Synchronet BBS List, synchro.net |
 | [SyncTERM BBS list](http://synchro.net/syncterm.lst) | SyncTERM ini (the SBL export) | 243 | SyncTERM BBS list, synchro.net |
+| [CBBS Outpost](https://www.commodorebbs.com) (Commodore boards) | the site's public JSON (`/api/bbs`) | 198 | CBBS Outpost (commodorebbs.com) |
 
-Together they give 366 boards (245 in more than one list). The Telnet BBS Guide
-and the CBBS Outpost are in `config/discovery/sources.yml` too, switched off
-until they answer our request for permission. The country of a board comes from
+Together they give 561 boards (245 in more than one list; the CBBS Outpost
+shares only a handful with the others). From the CBBS Outpost we take the facts
+only: name, address, port, location, software, hardware, website and the date
+of the entry; never the sysop, the e-mail, the owner, the screenshot, the
+comment or the site's own online mark (our calls decide that). The import is
+one request a day with our User-Agent, and its credit is on every board page it
+names and on the Sources screen; its sysops can ask us to take an entry down.
+The Telnet BBS Guide is in `config/discovery/sources.yml` too, switched off
+until it answers our request for permission. The country of a board comes from
 [DB-IP](https://db-ip.com)'s IP to Country Lite database (CC BY 4.0: "IP
 Geolocation by DB-IP"), our own copy downloaded monthly into `data/geoip/`.
 
 Each format has its own parser with a test fixture (synthetic samples in
 `test/fixtures/discovery/`). One endpoint is one `host:port`: two lists naming
 it are one board, and the fields come from the more trusted list
-(`priority` in `sources.yml`; nodelist > SBL > SyncTERM), the other value kept
-too. Two hosts on the same IP and port are one board with an alias; the same
+(`priority` in `sources.yml`; CBBS > nodelist > SBL > SyncTERM), the other value kept
+too. The CBBS Outpost comes first: it lists only Commodore boards, kept by
+their sysops, so for those its software and location are the best we have.
+Two hosts on the same IP and port are one board with an alias; the same
 name on two addresses is two boards. A board no list names any more is
 **delisted** but still called. If a list loses more than half of its records
 from one day to the next, the import does not apply it, keeps the old records
@@ -180,6 +189,19 @@ calls each board like this:
 4. It hangs up. The result is `ok` (a banner came), `silent` (connected, no
    bytes), `closed`, `refused`, `timeout` or `dns_fail`.
 
+**The C64-style call.** Our prober says it is an ANSI terminal, so a board that
+adapts to its caller shows it ANSI, while a real Commodore 64 (a terminal
+program behind a WiFi modem: plain TCP, no telnet) would get PETSCII. So a board
+a source calls a PETSCII board (the CBBS Outpost's boards, a SyncTERM entry in
+C64 mode, a PETSCII comment in the SBL: the tag `claims:petscii`), or whose
+banner was PETSCII, is called a second time 30 s after its scheduled call
+answered, as a C64 would: the same connection and reading, one CR (0x0D) after
+4 s of silence, but every telnet option declined (WONT/DONT, no terminal type,
+no window size). It is the same round, on the same claim of the host, so these
+boards get at most two calls a day; a failed scheduled call gets no C64-style
+one. The call is recorded as a probe of kind `c64`, with its own banner; it does
+not count towards the state.
+
 An answering board is called once a day (± 2 hours, so they spread), a failing
 one again after 1, then 6, then 24 hours, a dead one weekly; a board that is
 delisted and has been dead for a year is no longer called. At most 8 calls run
@@ -195,7 +217,15 @@ byte rules) and the software (`config/discovery/software.yml`, a table of
 patterns). Tags come from a closed vocabulary only: the encoding, `sw:`, `net:`
 (the nodelists, and the SBL's networks through `config/discovery/source-map.yml`),
 `cc:`, the state, `new` and `veteran`, the telnet options `binary`, `naws` and
-`ttype`, and `src:`.
+`ttype`, `src:`, and `claims:`.
+
+**An encoding tag is measured, never claimed.** `petscii` comes only from a
+PETSCII banner of one of our calls, the scheduled or the C64-style one; what a
+source says is `claims:petscii` (or `claims:atascii`), a tag that is searched
+(`claims:petscii` in the search) but not shown. A board whose C64-style call
+gets ANSI or ASCII has no `petscii` tag whatever its list says; a board that
+shows ANSI to our terminal and PETSCII to a C64 has both, and both banners are
+kept: the modern face plays the ANSI one, the C64 face the PETSCII one.
 
 ### Opt-out
 
@@ -252,7 +282,8 @@ switchboard, frame, rain and pages, eight nodes a page, but a node is a board of
 the catalog with its state mark where our boards have their colour block (a
 green ball online, a yellow one flaky, a red cross down, a grey cross dead, `?`
 not called yet), its country at the edge, and its address, software and state
-under the frame. Only PETSCII boards are on it, and not the dead ones (the gate
+under the frame. Only PETSCII boards are on it (measured: the `petscii` tag of
+a call's banner, see above), and not the dead ones (the gate
 carries the bytes as they are, and an ANSI board on a C64 is noise): the home
 menu has every PETSCII board, Search (`/` anywhere, a 40-column input line;
 `all` takes the dead in), Browse by Software, Country and Network (by Terminal
@@ -292,7 +323,7 @@ dials of the last hour a result (`ttg_gate_bbs_discovery_dials_last_hour`).
 
 ```bash
 bin/discovery-import            # fetch every list into data/discovery.sqlite3
-bin/discovery-report            # boards a source and their overlap, states, tags
+bin/discovery-report            # boards a source and their overlap, states, PETSCII measured vs claimed, tags
 bin/discovery-prober --limit 20 # 20 calls, then stop (without --limit: a daemon)
 bin/discovery-test              # the tests (minitest)
 ```
@@ -303,7 +334,8 @@ container from cron (`docker exec ttg-gate-bbs-prober bin/discovery-import`).
 Both write `data/discovery-metrics.prom` in the Prometheus text format (every
 name starts `ttg_gate_bbs_discovery_`): the boards a state (`boards`), the
 prober's work (`probes_in_flight`, `probes_due`, `next_probe_due_seconds`,
-`probes_total{result,kind}` counted in the catalog, `probes_last_hour`,
+`probes_total{result,kind}` counted in the catalog (`kind` is `scheduled`,
+`c64` or `dial`), `probes_last_hour`,
 `probe_duration_seconds_avg_last_hour`, `probe_duration_seconds_max_last_hour`,
 `banner_bytes_avg_last_hour`, `last_probe_timestamp_seconds`), the answering
 boards by `boards_by_encoding`, `boards_by_network`, `boards_by_country` and

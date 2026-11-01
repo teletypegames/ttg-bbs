@@ -81,7 +81,42 @@ module Discovery
       assert_equal 'Port In Address', syncterm[2].name
     end
 
+    def cbbs = CbbsJsonParser.parse(fixture('cbbs.json'), source('cbbs', format: 'cbbs_json'))
+
+    def test_cbbs_takes_the_telnet_addresses
+      assert_equal %w[corner.example.org:6400 two.example.org:23 url.example.org:64128 bracket.example.org:23],
+                   cbbs.map(&:key)
+    end
+
+    def test_cbbs_facts
+      corner = cbbs.first
+      assert_equal 'Commodore Corner', corner.name
+      assert_equal 'Springfield, IL', corner.location
+      assert_equal 'Image 1.2b', corner.software
+      assert_equal 'C128, SD2IEC, SwiftLink', corner.hardware
+      assert_equal 'http://corner.example.org', corner.website
+      assert_equal({ 'platform' => 'Commodore', 'updated_at' => '2025-08-15 23:05:39' }, corner.hints)
+      assert_nil cbbs[1].website
+      assert_nil cbbs[1].location
+      assert_equal 'url.example.org', cbbs[2].website
+    end
+
+    def test_cbbs_keeps_nothing_personal
+      stored = JSON.generate(cbbs.map(&:stored_fields))
+      ['ann@example.org', 'cy@example.org', 'annsysop', 'Ann Sysop', 'finest', 'img.example.org', 'Bob'].each do |personal|
+        refute_includes stored, personal
+      end
+      assert(cbbs.all? { |r| r.sysop.nil? })
+      refute_match(/online|isFavorite|flashterm|comment|image/, stored)
+    end
+
+    def test_cbbs_refuses_what_is_not_its_list
+      assert_raises(ArgumentError) { CbbsJsonParser.parse('<html>', source('cbbs', format: 'cbbs_json')) }
+      assert_raises(ArgumentError) { CbbsJsonParser.parse('{"a": 1}', source('cbbs', format: 'cbbs_json')) }
+    end
+
     def test_parsers_by_format
+      assert_equal CbbsJsonParser, Parsers.for('cbbs_json')
       assert_equal SblHtmlParser, Parsers.for('sbl_html')
       assert_raises(KeyError) { Parsers.for('gopher') }
     end

@@ -9,11 +9,11 @@ module Discovery
   #
   # A word is a tag when it is one of the fixed tags (the encodings, the
   # states, new, veteran, the telnet options), or a tag with its prefix
-  # (cc:hu), or when a board has the tag cc:, sw:, net: or src: with it (hu,
-  # synchronet, fidonet, sbl).
+  # (cc:hu, claims:petscii), or when a board has the tag cc:, sw:, net: or
+  # src: with it (hu, synchronet, fidonet, sbl).
   class SearchQuery < Data.define(:text, :tags, :words, :all)
     FIXED    = %w[ansi petscii atascii ascii online flaky down dead new veteran binary naws ttype].freeze
-    PREFIXES = %w[cc sw net src].freeze
+    PREFIXES = %w[cc sw net src claims].freeze
     ALL      = 'all'
 
     # +text+ read against +vocabulary+, the tags the catalog has (a Set or an

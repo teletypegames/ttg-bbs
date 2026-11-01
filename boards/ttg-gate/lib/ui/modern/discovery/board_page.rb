@@ -70,13 +70,17 @@ module UI
             lines << "#{DIM}#{fit(f.label, label)}#{TEXT}#{fit(f.value, value)}#{RESET} #{DIM}#{fit(f.source, 20)}#{RESET}"
           end
           lines << "#{DIM}#{fit('Listed by', label)}#{TEXT}#{fit(@page.source_names.join(', '), width - label)}#{RESET}"
-          tags = BBS::FrameBuffer.wrap_ansi(listing.tags.join(' · '), width - label)
+          tags = BBS::FrameBuffer.wrap_ansi(shown_tags.join(' · '), width - label)
           tags.first(2).each_with_index { |t, i| lines << "#{DIM}#{fit(i.zero? ? 'Tags' : '', label)}#{TEXT}#{t}#{RESET}" }
           lines << "#{DIM}#{fit('Banner', label)}#{TEXT}#{banner_note}#{RESET}"
           lines.fill('', lines.size...(rows - 4))
           lines.push(rule, dial_line, "#{DIM}#{fit("How we call boards, and opting out: #{WIKI}", width)}#{RESET}")
           paint(lines)
         end
+
+        # The tags but the claims of the sources (claims:petscii is searched,
+        # not shown: only our calls say what a board speaks).
+        def shown_tags = listing.tags.reject { |t| t.start_with?(::Discovery::TagService::CLAIMS) }
 
         def answer
           return 'not called yet' unless listing.first_probe_at
@@ -99,10 +103,12 @@ module UI
 
         def banner_note
           return "hidden at the sysop's request" unless listing.preview?
+          return 'PETSCII to a C64: it shows on the C64 face' if !@page.banner && @page.c64_banner
           return 'none stored yet' unless @page.banner
           return 'PETSCII: it shows on the C64 face' if @page.encoding == 'petscii'
 
-          "#{@page.banner.bytesize} bytes of #{date(@page.banner_at)} · B shows it"
+          note = "#{@page.banner.bytesize} bytes of #{date(@page.banner_at)} · B shows it"
+          @page.c64_banner ? "#{note} · a C64 gets PETSCII" : note
         end
 
         def dial_line

@@ -6,7 +6,8 @@ module Discovery
     BY_FORMAT = {
       'nodelist'     => NodelistParser,
       'sbl_html'     => SblHtmlParser,
-      'syncterm_lst' => SynctermLstParser
+      'syncterm_lst' => SynctermLstParser,
+      'cbbs_json'    => CbbsJsonParser
     }.freeze
 
     module_function

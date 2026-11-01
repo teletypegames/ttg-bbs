@@ -76,8 +76,8 @@ module Discovery
       gauge(lines, 'next_probe_due_seconds', 'Seconds until the earliest next probe, 0 when one is overdue.',
             { {} => next_at ? [next_at - now, 0].max : 0 })
       totals = @probes.totals
-      gauge(lines, 'probes_total', 'Every stored probe by result and kind (a counter kept in the catalog).',
-            ProbeResultModel::RESULTS.product(%w[scheduled dial]).to_h do |r, k|
+      gauge(lines, 'probes_total', 'Every stored probe by result and kind (scheduled, c64, dial; counted in the catalog).',
+            ProbeResultModel::RESULTS.product(%w[scheduled c64 dial]).to_h do |r, k|
               [{ result: r, kind: k }, totals.fetch([r, k], 0)]
             end)
       avg, max = @probes.durations(now - 3600)

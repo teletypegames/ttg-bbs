@@ -6,6 +6,10 @@ module Discovery
   # NAWS and 80×25, any other DO gets WONT and any WILL gets DONT; WONT and
   # DONT get nothing (we never turned anything on). Every option the board
   # asks for or offers is kept as "DO TTYPE", "WILL ECHO", ….
+  #
+  # With +c64+ it plays a Commodore 64 behind a WiFi modem, which knows no
+  # telnet: every DO gets WONT and every WILL gets DONT, TTYPE and NAWS too,
+  # so the board learns no terminal type and no window size.
   class TelnetNegotiator
     IAC  = 255
     DONT = 254
@@ -29,7 +33,8 @@ module Discovery
 
     attr_reader :options
 
-    def initialize
+    def initialize(c64: false)
+      @c64      = c64
       @state    = :data
       @verb     = nil
       @sub      = +''.b
@@ -86,6 +91,8 @@ module Discovery
     end
 
     def do_option(c, reply)
+      return reply << [IAC, WONT, c].pack('C*') if @c64
+
       reply << case c
                when TTYPE then [IAC, WILL, TTYPE].pack('C*')
                when NAWS then [IAC, WILL, NAWS, IAC, SB, NAWS, 0, COLUMNS, 0, ROWS, IAC, SE].pack('C*')
@@ -96,8 +103,8 @@ module Discovery
     def sb_iac(c, reply)
       if c == SE
         @state = :data
-        reply << [IAC, SB, TTYPE, TTYPE_IS].pack('C*') << TERMINAL << [IAC, SE].pack('C*') if @sub.bytes.first(2) == [TTYPE,
-                                                                                                                      TTYPE_SEND]
+        ttype = !@c64 && @sub.bytes.first(2) == [TTYPE, TTYPE_SEND]
+        reply << [IAC, SB, TTYPE, TTYPE_IS].pack('C*') << TERMINAL << [IAC, SE].pack('C*') if ttype
       else
         @sub << c if c == IAC
         @state = :sb

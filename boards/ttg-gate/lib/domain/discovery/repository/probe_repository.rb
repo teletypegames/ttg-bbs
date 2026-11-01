@@ -10,6 +10,10 @@ module Discovery
     # board stays (in board_state), so the history keeps its hashes, not 4 KB
     # a day a board.
     BANNER_DAYS = 30
+    # The kind of a C64-style probe.
+    C64 = 'c64'
+    # The tag of a board a source says is a PETSCII board.
+    CLAIMS_PETSCII = 'claims:petscii'
 
     def initialize(db)
       @db = db
@@ -18,9 +22,11 @@ module Discovery
     def transaction(&) = @db.transaction(&)
 
     # Stores +probe+ (a ProbeResultModel) of a board. The banner is kept only
-    # when its hash differs from the board's last one.
+    # when its hash differs from the board's last one of the same kind of
+    # call (a C64-style call has a banner of its own).
     def add(board_id, probe, kind:, banner_hash:)
-      last = @db.value('SELECT banner_hash FROM board_state WHERE board_id = ?', board_id)
+      column = kind == C64 ? 'c64_banner_hash' : 'banner_hash'
+      last = @db.value("SELECT #{column} FROM board_state WHERE board_id = ?", board_id)
       banner = probe.banner.empty? || banner_hash == last ? nil : SQLite3::Blob.new(probe.banner)
       args = [board_id, probe.at, kind, probe.result, probe.latency_ms, probe.ip, banner, banner_hash,
               JSON.generate(probe.options), probe.duration_ms, probe.banner.bytesize]
@@ -32,9 +38,11 @@ module Discovery
     end
 
     # The probes of a board since +from+ (epoch seconds), oldest first: at,
-    # kind and result.
+    # kind and result. The C64-style calls are left out: the state is of the
+    # scheduled calls and the dials, one a round.
     def since(board_id, from)
-      @db.query('SELECT at, kind, result FROM probes WHERE board_id = ? AND at >= ? ORDER BY at, id', board_id, from)
+      @db.query('SELECT at, kind, result FROM probes WHERE board_id = ? AND at >= ? AND kind != ? ORDER BY at, id',
+                board_id, from, C64)
     end
 
     # The board_state row of a board, or nil.
@@ -52,15 +60,30 @@ module Discovery
 
     # The boards due a probe at +now+: not aliases (unless +aliases+), not
     # hidden, not archived, their next probe time passed or never set; the
-    # longest-waiting first. id, host, port, ip and state.
+    # longest-waiting first. id, host, port, ip, state and c64_only.
+    #
+    # c64_only is 1 for a board that only wants its first C64-style call: an
+    # answering board that a source calls a PETSCII board, or whose banner is
+    # PETSCII, and that had no such call yet (the boards of before the
+    # C64-style call; later the call follows the scheduled one).
     def due(now, limit:)
-      @db.query(<<~SQL, now, limit)
-        SELECT b.id, b.host, b.port, b.alias_of, s.ip, COALESCE(s.state, 'unknown') AS state
-        FROM boards b LEFT JOIN board_state s ON s.board_id = b.id
-        WHERE (b.optout IS NULL OR b.optout != 'hide')
-          AND COALESCE(s.archived, 0) = 0
-          AND (s.next_probe_at IS NULL OR s.next_probe_at <= ?)
-        ORDER BY COALESCE(s.next_probe_at, 0), b.id
+      @db.query(<<~SQL, now, CLAIMS_PETSCII, now, limit)
+        SELECT * FROM (
+          SELECT b.id, b.host, b.port, b.alias_of, s.ip, COALESCE(s.state, 'unknown') AS state, 0 AS c64_only,
+                 COALESCE(s.next_probe_at, 0) AS due_at
+          FROM boards b LEFT JOIN board_state s ON s.board_id = b.id
+          WHERE (b.optout IS NULL OR b.optout != 'hide')
+            AND COALESCE(s.archived, 0) = 0
+            AND (s.next_probe_at IS NULL OR s.next_probe_at <= ?)
+          UNION ALL
+          SELECT b.id, b.host, b.port, b.alias_of, s.ip, s.state, 1, s.last_probe_at
+          FROM boards b JOIN board_state s ON s.board_id = b.id
+          WHERE (b.optout IS NULL OR b.optout != 'hide') AND b.alias_of IS NULL
+            AND s.archived = 0 AND s.state IN ('online', 'flaky') AND s.c64_probe_at IS NULL
+            AND (s.encoding = 'petscii' OR b.id IN (SELECT board_id FROM tags WHERE tag = ?))
+            AND s.next_probe_at > ?
+        )
+        ORDER BY due_at, id
         LIMIT ?
       SQL
     end

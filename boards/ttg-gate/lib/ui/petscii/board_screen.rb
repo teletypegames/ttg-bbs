@@ -42,7 +42,8 @@ module UI
           canvas.text(row, 1 + LABEL, value.to_s.upcase[0, VALUE], Canvas::GREEN)
           row += 1
         end
-        row = wrapped(canvas, row, 'TAGS', listing.tags.reject { |t| t.start_with?('src:') }.join(' '), 2)
+        tags = listing.tags.reject { |t| t.start_with?('src:', ::Discovery::TagService::CLAIMS) }
+        row = wrapped(canvas, row, 'TAGS', tags.join(' '), 2)
         row = wrapped(canvas, row, 'LISTS', @page.source_names.join(', '), 2)
         canvas.text(row, 1, 'BANNER', Canvas::DARK_GREY)
         canvas.text(row, 1 + LABEL, banner_note, Canvas::GREEN)
@@ -50,8 +51,9 @@ module UI
         canvas.frame
       end
 
-      # Whether there is a banner the C64 can show.
-      def banner? = !@page.banner.nil? && @page.encoding == 'petscii'
+      # Whether there is a banner the C64 can show: a PETSCII one, of the
+      # C64-style call or of the scheduled one.
+      def banner? = !@page.c64_banner.nil?
 
       # A question or a message: +lines+ in the middle, +keys+ under them.
       def self.notice(title, lines, keys)
@@ -101,10 +103,10 @@ module UI
 
       def banner_note
         return 'HIDDEN AT THE SYSOP\'S REQUEST' unless listing.preview?
+        return 'B SHOWS IT' if banner?
         return 'NONE STORED YET' unless @page.banner
-        return "#{@page.encoding.to_s.upcase}: MODERN FACE ONLY" unless banner?
 
-        'B SHOWS IT'
+        "#{@page.encoding.to_s.upcase}: MODERN FACE ONLY"
       end
 
       def keys(canvas)

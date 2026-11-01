@@ -4,7 +4,7 @@
 # [id]          the source's technical name; the src:<id> tag
 # [name]        shown on the Sources screen
 # [url]         where it is downloaded from
-# [format]      the parser: nodelist, sbl_html or syncterm_lst
+# [format]      the parser: nodelist, sbl_html, syncterm_lst or cbbs_json
 # [member]      in a .zip download, the file to read (a regular expression)
 # [network]     an FTN nodelist: the net:<network> tag of its nodes
 # [licence]     what we may do with it
@@ -14,8 +14,11 @@
 # The counts are of 2026-11-01; the catalog keeps the telnet endpoints (host:port) of a list.
 
 # A field two sources disagree on is taken from the earlier source of this list; the other
-# value stays in board_source. Nodelist > SBL > SyncTERM > TBG.
-priority: [fidonet, fsxnet, micronet, sbl, syncterm, tbg, cbbs]
+# value stays in board_source. CBBS > nodelist > SBL > SyncTERM > TBG: the CBBS Outpost lists only
+# Commodore boards, and its entries are kept by their sysops, so for a board it names its
+# software and location are the best we have (and the nodelists still give the FTN address,
+# which it has not); the banner's software is shown over all of them.
+priority: [cbbs, fidonet, fsxnet, micronet, sbl, syncterm, tbg]
 
 sources:
   - id: fidonet
@@ -93,9 +96,17 @@ sources:
     enabled: false
 
   - id: cbbs
-    name: "CBBS Outpost"
-    url: "https://commodorebbs.com"
-    format: cbbs
-    licence: "Permission and an export asked (CBBS_OUTPOST_PERMISSION_REQUEST.md); off until an answer."
-    attribution: "CBBS Outpost, commodorebbs.com"
-    enabled: false
+    name: "CBBS Outpost (commodorebbs.com)"
+    # The site's own public JSON of its list (no key), one request a day with our User-Agent.
+    # Only the facts are read: name, address, port, location, software, hardware, website and
+    # the entry's update time. The sysop, the e-mail, the owner, the screenshot, the comment and
+    # the site's online flag are never stored (CbbsJsonParser).
+    url: "https://www.commodorebbs.com/api/bbs"
+    format: cbbs_json
+    licence: >-
+      The facts of a board only (name, address, port, software, location), with credit and a
+      link, no personal data; taken down on request (CBBS_OUTPOST_PERMISSION_REQUEST.md, sent as
+      a courtesy notice). Every board it lists is claims:petscii, never petscii by itself.
+    attribution: "CBBS Outpost (commodorebbs.com)"
+    # 2026-11-01: 209 entries.
+    enabled: true

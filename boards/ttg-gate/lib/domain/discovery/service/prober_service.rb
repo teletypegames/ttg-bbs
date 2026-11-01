@@ -11,19 +11,29 @@ module Discovery
   # once, at most one a host and one an IP address; the next call of a board
   # comes from StateRules; hidden boards (opt-out) and archived ones are never
   # called; an alias is called weekly only, to notice when its IP moves.
+  #
+  # The C64-style call (TTG_DISCOVERY.md §5.1): a board a source calls a
+  # PETSCII board (the tag claims:petscii) or that showed PETSCII is called a
+  # second time after its scheduled call answered, C64_GAP seconds later
+  # (a real C64 board has one line, and needs a while after a hang-up) on
+  # the same claim of its host, as a Commodore 64 would call it (no telnet).
+  # Only a PETSCII banner of a call gives it the tag petscii. A board of
+  # before the C64-style call gets its first one on its own (+c64_only+ of
+  # ProbeRepository#due).
   class ProberService
     CONCURRENCY = 8
     TICK        = 1
     HOUSEKEEPING_EVERY = 3600
     METRICS_EVERY      = 60
+    C64_GAP            = 30
 
     # [catalog] CatalogRepository  [probes] ProbeRepository
-    # [probe]   TelnetProbe (anything with #call(host, port))
+    # [probe]   TelnetProbe (anything with #call(host, port, c64:))
     # [tags]    TagService         [aliases] AliasService
     # [optout]  OptoutRepository   [geoip]   GeoipRepository
     # [config]  ConfigRepository   [metrics] MetricsService, or nil
     def initialize(catalog:, probes:, probe:, tags:, aliases:, optout:, geoip:, config:, metrics: nil,
-                   concurrency: CONCURRENCY, log: ->(line) { $stdout.puts(line) })
+                   concurrency: CONCURRENCY, c64_gap: C64_GAP, log: ->(line) { $stdout.puts(line) })
       @catalog     = catalog
       @probes      = probes
       @probe       = probe
@@ -34,6 +44,7 @@ module Discovery
       @config      = config
       @metrics     = metrics
       @concurrency = concurrency
+      @c64_gap     = c64_gap
       @log         = log
       @busy        = {}
       @mutex       = Mutex.new
@@ -75,6 +86,32 @@ module Discovery
       @probes.save_state(id, **columns)
       @tags.refresh(id, now: result.at)
       columns
+    end
+
+    # Records +result+ of a C64-style call of board +id+: the probe (kind
+    # c64), what its banner was, and the tags. The state and the schedule
+    # are the scheduled calls'.
+    def record_c64(id, result)
+      return unless @catalog.board(id)
+
+      analysis = analyse(result)
+      @probes.add(id, result, kind: ProbeRepository::C64, banner_hash: analysis[:banner_hash])
+      columns = { c64_probe_at: result.at, c64_result: result.result }
+      if result.result == 'ok' && !result.banner.empty?
+        columns.merge!(c64_encoding: analysis[:encoding], c64_banner: result.banner,
+                       c64_banner_hash: analysis[:banner_hash], c64_banner_at: result.at)
+      end
+      @probes.save_state(id, **columns)
+      @tags.refresh(id, now: result.at)
+      columns
+    end
+
+    # Whether board +id+ gets a C64-style call: a source calls it a PETSCII
+    # board, or a call of ours saw PETSCII.
+    def c64?(id)
+      state = @probes.state(id) || {}
+      [state['encoding'], state['c64_encoding']].include?('petscii') ||
+        @catalog.tags(id).include?(ProbeRepository::CLAIMS_PETSCII)
     end
 
     def housekeeping(force: false, now: Time.now.to_i)
@@ -130,9 +167,7 @@ module Discovery
     def work(queue)
       while (row = queue.pop)
         begin
-          result = @probe.call(row['host'], row['port'])
-          columns = record(row['id'], result)
-          @log.call(line(row, result, columns))
+          call(row)
         rescue StandardError => e
           @log.call("ttg-gate-bbs-prober: #{row['host']}:#{row['port']}: #{e.class}: #{e.message}")
         ensure
@@ -141,12 +176,29 @@ module Discovery
       end
     end
 
-    def line(row, result, columns)
-      parts = ["ttg-gate-bbs-prober: #{row['host']}:#{row['port']}", result.result]
+    # The scheduled call of +row+, and the C64-style one after it when the
+    # board answered and wants one; only the C64-style call for a c64_only
+    # row.
+    def call(row)
+      unless row['c64_only'] == 1
+        result = @probe.call(row['host'], row['port'])
+        columns = record(row['id'], result)
+        @log.call(line(row, result, columns))
+        return unless result.success? && c64?(row['id'])
+
+        sleep @c64_gap
+      end
+      result = @probe.call(row['host'], row['port'], c64: true)
+      columns = record_c64(row['id'], result)
+      @log.call(line(row, result, columns && { encoding: columns[:c64_encoding] }, kind: 'c64'))
+    end
+
+    def line(row, result, columns, kind: nil)
+      parts = ["ttg-gate-bbs-prober: #{row['host']}:#{row['port']}#{" #{kind}" if kind}", result.result]
       parts << "#{result.latency_ms}ms" if result.latency_ms
       parts << columns[:encoding] if columns&.dig(:encoding)
       parts << "sw:#{columns[:software_id]}" if columns&.dig(:software_id)
-      parts << "-> #{columns[:state]}" if columns
+      parts << "-> #{columns[:state]}" if columns&.dig(:state)
       parts.join(' ')
     end
 

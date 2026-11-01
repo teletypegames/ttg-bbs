@@ -15,7 +15,7 @@ module Discovery
       delisted = @db.value('SELECT COUNT(*) FROM boards WHERE delisted = 1')
       hidden = @db.value("SELECT COUNT(*) FROM boards WHERE optout = 'hide'")
       lines << "Boards: #{total} (#{total - aliases} after aliases; #{aliases} aliases, #{delisted} delisted, #{hidden} hidden)"
-      lines << '' << sources_table << '' << overlap_table << '' << states << '' << tags
+      lines << '' << sources_table << '' << overlap_table << '' << states << '' << petscii << '' << tags
       lines.join("\n")
     end
 
@@ -67,6 +67,26 @@ module Discovery
       results = @db.query('SELECT result, COUNT(*) AS n FROM probes GROUP BY 1 ORDER BY 2 DESC')
       ["States: #{rows.map { |r| "#{r['state']} #{r['n']}" }.join(', ')}",
        "Probes: #{results.map { |r| "#{r['result']} #{r['n']}" }.join(', ')}"].join("\n")
+    end
+
+    # PETSCII measured against claimed: the boards a source calls PETSCII,
+    # how many of them had a C64-style call, how many showed PETSCII, and the
+    # boards with PETSCII no source claims.
+    def petscii
+      row = @db.first(<<~SQL)
+        SELECT COUNT(*) AS claimed,
+          COUNT(*) FILTER (WHERE s.c64_probe_at IS NOT NULL) AS called,
+          COUNT(*) FILTER (WHERE b.id IN (SELECT board_id FROM tags WHERE tag = 'petscii')) AS measured,
+          COUNT(*) FILTER (WHERE s.c64_encoding IN ('ansi', 'ascii')) AS other
+        FROM boards b JOIN tags t ON t.board_id = b.id AND t.tag = 'claims:petscii'
+        LEFT JOIN board_state s ON s.board_id = b.id WHERE b.alias_of IS NULL
+      SQL
+      unclaimed = @db.value(<<~SQL)
+        SELECT COUNT(*) FROM tags t JOIN boards b ON b.id = t.board_id WHERE t.tag = 'petscii' AND b.alias_of IS NULL
+          AND b.id NOT IN (SELECT board_id FROM tags WHERE tag = 'claims:petscii')
+      SQL
+      "PETSCII: #{row['claimed']} claimed by a source, #{row['called']} called as a C64, #{row['measured']} of them " \
+        "PETSCII, #{row['other']} ANSI/ASCII to a C64; #{unclaimed} PETSCII without a claim"
     end
 
     def tags

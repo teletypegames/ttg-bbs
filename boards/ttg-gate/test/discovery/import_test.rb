@@ -161,7 +161,9 @@ module Discovery
       assert_includes tags, 'sw:synchronet'
       assert_includes tags, 'veteran'
       refute_includes tags, 'new'
-      assert_includes @catalog.tags(board('one.example.org', 64)['id']), 'petscii'
+      claimed = @catalog.tags(board('one.example.org', 64)['id'])
+      assert_includes claimed, 'claims:petscii'
+      refute_includes claimed, 'petscii'
       assert_includes @catalog.tags(board('plain.example.org', 23)['id']), 'net:fidonet'
       assert_includes @catalog.search('springfield'), one['id']
       assert_includes @catalog.search('host:bare'), board('bare.example.org', 2323)['id']
