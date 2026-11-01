@@ -40,4 +40,4 @@ steps:
       - event: [push, manual]
         branch: master
         path:
-          include: [compose.yaml, Dockerfile, Gemfile, Gemfile.lock, bbs.rb, entrypoint.sh, "lib/**", "bin/**", "data/art/**"]
+          include: [compose.yaml, Dockerfile, Gemfile, Gemfile.lock, bbs.rb, entrypoint.sh, "lib/**", "bin/**"]

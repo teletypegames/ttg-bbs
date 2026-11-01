@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # View helpers of the classic BBS parts: the logon and logoff screens,
-# nodes, mail, the voting booth, file areas, bulletins and the hall of
+# nodes, mail, the voting booth, bulletins and the hall of
 # fame. Like formatters.rb: data and a width in, lines out.
 module UI
   module Modern
@@ -241,84 +241,6 @@ module UI
           end
           lines << ''
           lines << "  #{D}Enter or Vote, then the number of your choice.#{O}"
-          lines
-        end
-      end
-
-      module FileAreas
-        KINDS = {
-          'win_x64' => 'Windows', 'win_x86' => 'Windows 32-bit', 'linux_x64' => 'Linux', 'linux_arm64' => 'Linux ARM',
-          'mac_x64' => 'macOS Intel', 'mac_arm64' => 'macOS ARM', 'mac_universal' => 'macOS',
-          'html' => 'web build', 'cartridge' => 'cartridge', 'source' => 'source', 'docs' => 'docs',
-          'prg' => 'C64/264 program'
-        }.freeze
-
-        def self.area_label(area)
-          "#{area.title.ljust(18)} #{area.files.size.to_s.rjust(3)} files"
-        end
-
-        def self.area_detail(area, width)
-          newest = area.files.map(&:date).compact.max
-          games  = area.files.map(&:game).uniq
-          lines  = ["  #{Y}#{area.title}#{O}",
-                    "  #{D}#{games.size} title#{'s' if games.size != 1} · #{area.files.size} files · " \
-                    "#{Ftp.size(area.files.sum(&:bytes))}#{O}"]
-          lines << "  #{D}newest: #{newest.strftime('%Y-%m-%d')}#{O}" if newest
-          lines << ''
-          games.each do |g|
-            lines << "  #{W}#{g.title}#{O} #{D}#{g.version}#{O}"
-            Formatters.wrap(g.desc, width - 6).first(2).each { |l| lines << "    #{D}#{l}#{O}" }
-          end
-          lines << ''
-          lines << "  #{K}Enter opens the area.#{O}"
-          lines
-        end
-
-        def self.file_label(item, service)
-          flag = service.new?(item) ? '*' : ' '
-          name = item.name.length > 24 ? "#{item.name[0, 23]}…" : item.name
-          "#{flag}#{name.ljust(24)} #{size(item.bytes).rjust(7)}"
-        end
-
-        # At most seven characters, for the file list's column.
-        def self.size(bytes)
-          return "#{bytes} B" if bytes < 1024
-          return format(bytes < 100 * 1024 ? '%.1f KB' : '%.0f KB', bytes / 1024.0) if bytes < 1024 * 1024
-
-          format('%.1f MB', bytes / 1024.0 / 1024)
-        end
-
-        # The file's FILE_ID.DIZ: a 44-column box, the way uploaders made them.
-        def self.diz(item, inner = 42)
-          g = item.game
-          body = [g.title.center(inner), "v#{g.version} · #{GamesService.platform_name(g.platform)}".center(inner),
-                  '-' * inner]
-          body.concat(Formatters.wrap(g.desc, inner).first(5))
-          body << ''
-          body << "#{KINDS.fetch(item.kind, item.kind)} · #{g.license.empty? ? 'free' : g.license}".center(inner)
-          body << '(c) Teletype Games'.center(inner)
-          ["#{C}┌#{'─' * inner}┐#{O}",
-           *body.map { |l| "#{C}│#{O}#{W}#{BBS::FrameBuffer.clip_ansi(l, inner).ljust(inner)}#{O}#{C}│#{O}" },
-           "#{C}└#{'─' * inner}┘#{O}"]
-        end
-
-        def self.file_detail(item, width, files:, catalog_url:)
-          rows = [['File', item.name], ['Size', Ftp.size(item.bytes)],
-                  ['Date', item.date&.strftime('%Y-%m-%d').to_s], ['Kind', KINDS.fetch(item.kind, item.kind)],
-                  ['DLs', "#{item.downloads} (#{item.game.downloads} all versions)"]]
-          lines = rows.map { |k, v| "  #{K}#{k.ljust(5)}#{O} #{v}" }
-          lines << ''
-          lines.concat(diz(item, (width - 6).clamp(20, 42)).map { |l| "  #{l}" })
-          lines << ''
-          lines << "  #{C}#{catalog_url}#{O}"
-          lines << "  #{C}#{files.url(item.path)}#{O}"
-          lines << ''
-          how = if files.downloadable?(FtpEntry.new(bytes: item.bytes, dir: false))
-                  'Enter or Download sends it to your terminal by ZMODEM.'
-                else
-                  'Too big for ZMODEM from here: fetch it from the addresses above.'
-                end
-          Formatters.wrap(how, width - 4).each { |l| lines << "  #{D}#{l}#{O}" }
           lines
         end
       end

@@ -11,9 +11,9 @@ opens what it lights; the letter in front of an item opens it at once.
 Lists are numbered: the cursor or the number typed, then RETURN. CRSR
 left and right turn the pages, Q (or the ← key) goes back.
 
-**Files.** F opens the file areas, B the whole FTP server. Every file
-is on plain HTTP too, at archive.teletypegames.org, ready for a C64
-with a network cartridge or a WiFi modem.
+**Files.** Our games and files have a board of their own, the
+WarpEngine BBS on port 2329: it sends them by XMODEM onto a C64 disk,
+CCGMS takes them. Y lists every board of ours.
 
 **Doors.** R hands your line to another program: a Commodore 64, the
 SERMO machine, a sun god. Each one tells how to come back.

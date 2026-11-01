@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative '../../domain/model/ftp_models'
-
 # Pure view-layer helpers used by the window DSL in lib/ui/modern.rb. No business
 # logic here — each method takes data + width and returns lines/strings.
 module UI
@@ -56,110 +54,6 @@ module UI
         end
       end
 
-      module Ftp
-        UP = FtpEntry.new(name: '..', dir: true, bytes: 0).freeze
-
-        def self.size(bytes)
-          return "#{bytes} B" if bytes < 1024
-          return format('%.1f KB', bytes / 1024.0) if bytes < 1024 * 1024
-
-          format('%.1f MB', bytes / 1024.0 / 1024)
-        end
-
-        def self.title(host, path) = " FTP — #{host}#{path} "
-
-        def self.items(path, entries)
-          return [] if entries.nil?
-
-          up = path == FileLibraryService::ROOT ? [] : [UP.dup.tap { |e| e.path = File.dirname(path) }]
-          up + entries
-        end
-
-        def self.label(entry)
-          return "\u25B8 #{entry.name}/" if entry.dir
-
-          name = entry.name.length > 26 ? "#{entry.name[0, 25]}…" : entry.name
-          "  #{name.ljust(26)} #{size(entry.bytes).rjust(9)}"
-        end
-
-        def self.date(entry) = entry.modified&.strftime('%Y-%m-%d %H:%M').to_s
-
-        def self.detail(entry, width, files:, theme:)
-          return folder(entry, files) if entry.dir
-
-          lines = ["  \e[1;33m#{entry.name}\e[0m",
-                   "  \e[0;37m#{size(entry.bytes)} (#{entry.bytes} bytes) · #{date(entry)}\e[0m", '',
-                   "  \e[1;36m#{files.url(entry.path)}\e[0m"]
-          https = files.https_url(entry.path)
-          lines << "  \e[1;36m#{https}\e[0m" if https
-          lines << ''
-          how = if files.downloadable?(entry)
-                  'Enter or Download sends it to your terminal by ZMODEM (SyncTERM, NetRunner, ' \
-                    'Qodem, rz, or the web terminal). Or fetch it with any FTP client from the address above.'
-                else
-                  "Too big for a ZMODEM download from here (over #{size(FileLibraryService::DOWNLOAD_MAX)}): " \
-                    'fetch it with an FTP client from the address above.'
-                end
-          BBS::FrameBuffer.wrap_ansi(how, width - 4).each { |l| lines << "  #{l}" }
-          if files.preview?(entry)
-            text = files.preview(entry)
-            unless text.strip.empty?
-              lines << ''
-              lines << "  \e[2;37m#{'─' * [width - 5, 1].max}\e[0m"
-              lines.concat(preview_lines(entry, text, width, theme))
-            end
-          end
-          lines
-        end
-
-        def self.preview_lines(entry, text, width, theme)
-          return BBS::Markdown.to_lines(text, width: width - 1, theme: theme) if entry.name.match?(/\.md\z/i)
-
-          text.delete("\r").split("\n").flat_map do |line|
-            line = line.gsub("\t", '    ').gsub(/[\x00-\x1f\x7f]/, '')
-            line.empty? ? [''] : BBS::FrameBuffer.wrap_ansi(line, width - 4).map { |l| "  #{l}" }
-          end
-        end
-
-        def self.folder(entry, files)
-          path = entry.path || '/'
-          ["  \e[1;33m#{entry.name == '..' ? '.. (up)' : "#{entry.name}/"}\e[0m",
-           "  \e[0;37m#{path}\e[0m", '', "  \e[1;36m#{files.url(path)}\e[0m", '',
-           '  Enter opens it.']
-        end
-
-        def self.meta(entry, files)
-          files.downloadable?(entry) ? "Enter: download #{entry.name} by ZMODEM" : "#{size(entry.bytes)}: FTP client only"
-        end
-
-        def self.offer(entry)
-          "Send #{entry.name} (#{size(entry.bytes)}) to your terminal by ZMODEM? " \
-            'Most BBS terminals start receiving by themselves; with rz, start it by hand. Esc cancels the wait.'
-        end
-
-        def self.too_big(entry, files)
-          ["#{entry.name} is #{size(entry.bytes)}: too big to send from the BBS. Fetch it with an FTP client:",
-           files.url(entry.path), files.https_url(entry.path)].compact.join(' ')
-        end
-
-        def self.fetching(entry) = "\r\n  Fetching #{entry.name} from the FTP server...\r\n"
-
-        def self.sending(entry)
-          "  Sending #{entry.name} by ZMODEM. Start receiving if your terminal does not; Esc gives up.\r\n\r\n"
-        end
-
-        def self.result(result, entry, files)
-          case result
-          when :ok         then "#{entry.name} sent."
-          when :cancelled  then 'Download cancelled.'
-          when :timeout
-            "Your terminal did not answer in ZMODEM. Fetch #{entry.name} by FTP instead: #{files.url(entry.path)}"
-          when :unreadable then 'The FTP server did not hand over the file. Try again later.'
-          else 'The download stopped.'
-          end
-        end
-      end
-
       module DevLog
         MARKS = { push: '·', tag: '◆', release: '★', repo: '+' }.freeze
 
@@ -205,12 +99,13 @@ module UI
       module Master
         DESKTOP_LABEL = 'F1 ▸ Lost? Ask the TTG Master'
 
+        # A question for the TTG Master, or :network, the BBS Network window.
         QUICK_QUESTIONS = [
-          ['&What is new?',                   'What is new? What was released lately?'],
-          ['What is &coming up?',             'What events are coming up?'],
-          ['&Where do I start?',              'I am new here. Where do I start?'],
-          ['How do I &download files?',       'How do I download files from the FTP server?'],
-          ['Which &doors are there?',         'Which doors are there?']
+          ['&What is new?', 'What is new? What was released lately?'],
+          ['What is &coming up?', 'What events are coming up?'],
+          ['&Where do I start?', 'I am new here. Where do I start?'],
+          ['Where are the &games, files, wiki?', :network],
+          ['Which &doors are there?', 'Which doors are there?']
         ].freeze
 
         # One speaker's turn, wrapped to the Stream window (cols - 8 wide, a
@@ -219,20 +114,6 @@ module UI
           color = you ? "\e[1;36m" : "\e[1;33m"
           width = [cols - 14, 20].max
           BBS::FrameBuffer.wrap_ansi("#{color}#{who}\e[0m: #{text}", width).map { |l| "  #{l}" } + ['']
-        end
-      end
-
-      module Gallery
-        def self.detail(name, sauce, size, preview, width)
-          meta = [['File', name], ['Size', Ftp.size(size)]]
-          if sauce
-            meta << ['Title', sauce.title] unless sauce.title.empty?
-            meta << ['Artist', sauce.author] unless sauce.author.empty?
-            meta << ['Group', sauce.group] unless sauce.group.empty?
-            meta << ['Date', sauce.date] unless sauce.date.empty?
-          end
-          [*meta.map { |k, v| "  \e[0;37m#{k.ljust(7)}\e[0m #{v}" }, '',
-           *preview.map { |l| BBS::FrameBuffer.clip_ansi(l, width) }]
         end
       end
 
@@ -350,64 +231,6 @@ module UI
               BBS::FrameBuffer.wrap_ansi(text, inner - 2).each { |l| lines << "  #{l}" }
             end
             lines << "\e[2;37m#{'┄' * inner}\e[0m" unless i == messages.size - 1
-          end
-          lines
-        end
-      end
-
-      module Game
-        LABEL_TITLE = 21
-
-        # The title first, the platform after it, each in its own column.
-        def self.label(game)
-          title = game.title.length > LABEL_TITLE ? "#{game.title[0, LABEL_TITLE - 1]}…" : game.title
-          "#{title.ljust(LABEL_TITLE)} #{game.platform[0, 10]}"
-        end
-
-        # A long address cut at the width, the rest on the next lines.
-        def self.url_lines(url, width, indent = '  ')
-          url.to_s.scan(/.{1,#{[width - indent.length, 10].max}}/).map { |part| "#{indent}\e[1;36m#{part}\e[0m" }
-        end
-
-        def self.card(game, width, catalog_url:)
-          wrap  = ->(text, w = width - 4) { BBS::FrameBuffer.wrap_ansi(text.to_s, w) }
-          lines = wrap.call(game.title).map { |l| "  \e[1;33m#{l}\e[0m" }
-          meta = [game.platform, game.category, game.author].reject(&:empty?).join(' · ')
-          wrap.call(meta).each { |l| lines << "  \e[0;36m#{l}\e[0m" }
-          if game.released?
-            date = game.released_at&.strftime('%Y-%m-%d')
-            lines << "  \e[0;37mLatest: #{game.version}#{"  (#{date})" if date}\e[0m"
-          end
-          facts = [(game.status.empty? ? nil : game.status), (game.license.empty? ? nil : game.license),
-                   "#{game.downloads} downloads"].compact.join(' · ')
-          wrap.call(facts).each { |l| lines << "  \e[0;37m#{l}\e[0m" }
-          lines.concat(url_lines(catalog_url.to_s.delete_prefix('https://'), width - 2))
-          lines << ''
-          BBS::FrameBuffer.wrap_ansi(game.desc.to_s, width - 4).each { |l| lines << "  #{l}" }
-          unless game.story.to_s.strip.empty?
-            lines << ''
-            BBS::FrameBuffer.wrap_ansi(game.story.to_s, width - 4).each { |l| lines << "  #{l}" }
-          end
-          unless game.assets.empty?
-            lines << ''
-            wrap.call('Downloads, on the catalog page above:').each { |l| lines << "  #{l}" }
-            kinds = game.assets.map(&:kind).join(' · ')
-            BBS::FrameBuffer.wrap_ansi(kinds, width - 6).each { |l| lines << "    \e[0;37m#{l}\e[0m" }
-          end
-          if game.releases.size > 1
-            lines << ''
-            lines << '  Release history:'
-            game.releases.reverse_each do |r|
-              lines << "    \e[1;33m#{r.version.ljust(16)}\e[0m \e[0;37m#{r.released_at&.strftime('%Y-%m-%d')}  " \
-                       "#{r.downloads} DLs\e[0m"
-            end
-          end
-          unless game.external_links.empty?
-            lines << ''
-            game.external_links.each do |link|
-              lines << "  \e[0;37m#{link[:label]}\e[0m"
-              lines.concat(url_lines(link[:url], width - 2, '    '))
-            end
           end
           lines
         end

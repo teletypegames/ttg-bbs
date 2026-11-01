@@ -15,10 +15,7 @@ module UI
                            ['l', 'live chat', 'talk with whoever is on line'],
                            ['i', 'irc channel', 'the irc channel, from a c64'],
                            ['p', 'page the sysop', 'call the sysop to a chat']]],
-         ['content', CY, [['f', 'file areas', 'games, demos and tools to download'],
-                          ['b', 'ftp browser', 'browse ftp.teletypegames.org'],
-                          ['g', 'game catalog', 'every game of teletype games'],
-                          ['n', 'news', 'news from teletype games'],
+         ['content', CY, [['n', 'news', 'news from teletype games'],
                           ['u', 'bulletins', 'the bulletins of the board'],
                           ['d', 'dev log', 'what we are making, commit by commit']]]],
         [['people', PU, [['c', 'callers & users', 'who is on line, who called'],
@@ -48,17 +45,17 @@ module UI
         '',
         'In the live chat what the others say shows up above your line. An empty line leaves.',
         '',
-        'Files cannot come down this line, but each one is on plain HTTP at archive.teletypegames.org, ' \
-        'and on ftp.teletypegames.org.',
+        'Our games and files are on the WarpEngine BBS, port 2329: it sends them by XMODEM onto a C64 disk. ' \
+        'Y lists every board of the network.',
         '',
-        'The board has a modern face too, with windows and ANSI art: call with a PC terminal and choose 1.',
+        'The board has a modern face too, with windows: call with a PC terminal and choose 1.',
         '',
         'Lost? T asks the TTG Master.'
       ].freeze
 
       ACTIONS = {
         'm' => :boards, 'e' => :mail, 'o' => :oneliners, 'l' => :live_chat, 'i' => :irc, 'p' => :page_sysop,
-        'f' => :file_areas, 'b' => :ftp, 'g' => :games, 'n' => :news, 'u' => :bulletins,
+        'n' => :news, 'u' => :bulletins,
         'd' => :dev_log, 'c' => :people, 'v' => :voting, 's' => :you, 'h' => :hall_of_fame, 'r' => :doors,
         't' => :master, 'y' => :system_info, '?' => :help, 'z' => :sysop_console
       }.freeze

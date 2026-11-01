@@ -34,15 +34,15 @@ module Commodore
   ).freeze
 
   # A FakeOS definition for +machine+. +games+ is the catalog (GamesService),
-  # +files+ the file library, for the size of each program on the disk.
-  def self.os(machine, games:, files:)
+  # +sizes+ the WarpSizes, for the size of each program on the disk.
+  def self.os(machine, games:, sizes:)
     BBS::FakeOS.define do
       name   machine.platform
       prompt ''
       colors machine.colors
 
       boot do
-        ctx[:commodore] = Shell.new(self, machine, games: games, files: files)
+        ctx[:commodore] = Shell.new(self, machine, games: games, sizes: sizes)
         ctx[:commodore].power_on
       end
 
@@ -56,11 +56,11 @@ module Commodore
     BLOCK = 254
     DISK_BLOCKS = 664
 
-    def initialize(io, machine, games:, files:)
+    def initialize(io, machine, games:, sizes:)
       @io      = io
       @machine = machine
       @games   = games
-      @files   = files
+      @sizes   = sizes
       @column  = 0
       @basic   = Basic.new(screen, reset_address: machine.reset_address)
     end
@@ -154,7 +154,7 @@ module Commodore
 
     def blocks(game)
       prg  = game.assets.find { |a| a.path.end_with?('.prg') }
-      size = prg && @files.warp_size(File.basename(prg.path))
+      size = prg && @sizes.of(File.basename(prg.path))
       size ? (size.to_f / BLOCK).ceil : 1
     end
 

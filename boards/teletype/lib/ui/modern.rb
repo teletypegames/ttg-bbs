@@ -184,67 +184,13 @@ module UI
               end
             end
 
-            def ftp_open(window, ctx, path)
-              entries = services[:files].list(path)
-              if entries
-                ctx[:ftp_path] = context[:ftp_path] = path
-                window.replace_items(Formatters::Ftp.items(path, entries),
-                                     title: Formatters::Ftp.title(services[:files].host, path))
-              else
-                BBS::Dialogs.message(self, "The FTP server did not answer for #{path}. Try again later.", title: ' FTP ')
-              end
-            end
-
-            def ftp_download(entry)
-              files = services[:files]
-              unless files.downloadable?(entry)
-                return BBS::Dialogs.message(self, Formatters::Ftp.too_big(entry, files), title: ' Download ', width: 70)
-              end
-
-              BBS::Dialogs.confirm(self, Formatters::Ftp.offer(entry), title: ' Download ',
-                                         on_yes: -> { ftp_send(entry) })
-            end
-
-            def ftp_send(entry)
-              result = with_line do |session|
-                session.write(Formatters::Ftp.fetching(entry))
-                data = services[:files].download(entry)
-                next :unreadable unless data
-
-                session.write(Formatters::Ftp.sending(entry))
-                BBS::Zmodem.send_files(session, [[entry.name, data, entry.modified]])
-              end
-              BBS::Dialogs.message(self, Formatters::Ftp.result(result, entry, services[:files]),
-                                   title: ' Download ', width: 64)
-            end
-
-            def view_art(name)
-              lines = services[:art].lines(name)
-              title = services[:art].sauce(name)&.title.to_s
-              with_line do |session|
-                BBS::Widgets::AnsiArt.view(session, lines, title: title.empty? ? name : "#{name} — #{title}")
-              end
-            end
-
-            def show_art(name)
-              lines = services[:art].lines(name)
-              @desktop_art.lines      = lines
-              @desktop_art.art_height = lines.size
-              context[:desktop_art]   = name
-              @dashboard.data = nil
-            end
-
-            # Back to the live desktop: every window closed, the art put away.
+            # Back to the live desktop: every window closed.
             def show_dashboard
               windows.dup.each { |w| close_window(w) }
-              context[:desktop_art] = nil
-              @desktop_art.lines    = []
               refresh_dashboard
             end
 
             def refresh_dashboard
-              return if context[:desktop_art]
-
               @dashboard.data = Dashboard::Data.new(
                 name: context[:username] || AccountService::ANONYMOUS, registered: registered?,
                 caller_number: context[:caller_number], node: services[:online].node(session_id)&.number,
@@ -336,25 +282,6 @@ module UI
                   :close
                 end
               end
-            end
-          end
-
-          window :games, type: :master_detail do |window_spec|
-            window_spec.accent Accent::STYLES[:files]
-            window_spec.maximizable true
-            window_spec.title         { |ctx| ctx[:platform] ? " Game Catalog — #{ctx[:platform]} " : ' Game Catalog ' }
-            window_spec.list_width    34
-            window_spec.empty_message '  (no games)'
-            window_spec.items         { |ctx| ctx[:games].by_platform(ctx[:platform]) }
-            window_spec.item_label    { |game, _ctx| Formatters::Game.label(game) }
-            window_spec.render_detail do |game, width, ctx|
-              Formatters::Game.card(game, width, catalog_url: ctx[:games].catalog_url(game))
-            end
-            window_spec.action label: '&Platform', align: :left do |_window, ctx|
-              cycle = [nil, *ctx[:games].platforms]
-              following = cycle[(cycle.index(ctx[:platform]) || 0) + 1]
-              ctx[:app].open_window(:games, platform: following)
-              :close
             end
           end
 
@@ -529,46 +456,6 @@ module UI
             window_spec.button label: '&Close', cancel: true
           end
 
-          # A plain FTP client: Enter opens a folder (or sends a file), .. goes up.
-          window :ftp, type: :master_detail do |window_spec|
-            window_spec.accent Accent::STYLES[:files]
-            window_spec.maximizable true
-            window_spec.title do |ctx|
-              ctx[:ftp_path] ||= ctx[:app].context[:ftp_path] || FileLibraryService::ROOT
-              Formatters::Ftp.title(ctx[:files].host, ctx[:ftp_path])
-            end
-            window_spec.list_width    { |ctx| [40, (ctx[:app].cols / 2) - 4].min }
-            window_spec.empty_message '  (the FTP server did not answer — try again later)'
-            window_spec.close_button  false
-            window_spec.items do |ctx|
-              Formatters::Ftp.items(ctx[:ftp_path], ctx[:files].list(ctx[:ftp_path]))
-            end
-            window_spec.item_label    { |entry, _ctx| Formatters::Ftp.label(entry) }
-            window_spec.render_detail do |entry, width, ctx|
-              Formatters::Ftp.detail(entry, width, files: ctx[:files], theme: ctx[:app].theme)
-            end
-            window_spec.bottom_meta do |entry, ctx|
-              entry.dir ? 'Enter: open the folder' : Formatters::Ftp.meta(entry, ctx[:files])
-            end
-            window_spec.on_activate do |entry, window, ctx|
-              if entry.dir
-                ctx[:app].ftp_open(window, ctx, entry.path)
-              else
-                ctx[:app].ftp_download(entry)
-              end
-            end
-            window_spec.action label: '&Up', align: :left do |window, ctx|
-              ctx[:app].ftp_open(window, ctx, ctx[:files].parent(ctx[:ftp_path]))
-              :keep
-            end
-            window_spec.action label: '&Download', align: :left do |window, ctx|
-              entry = window.list_widget.selected_item
-              ctx[:app].ftp_download(entry) if entry && !entry.dir
-              :keep
-            end
-            window_spec.action label: '&Close', cancel: true
-          end
-
           window :dev_log, type: :master_detail do |window_spec|
             window_spec.accent Accent::STYLES[:board]
             window_spec.maximizable true
@@ -584,50 +471,6 @@ module UI
                                             repo_url:    ctx[:dev_log].repo_url(activity))
             end
             window_spec.bottom_meta { |_activity, _ctx| '· push   ◆ tag   ★ release   + repository' }
-          end
-
-          window :gallery, type: :master_detail do |window_spec|
-            window_spec.accent Accent::STYLES[:files]
-            window_spec.maximizable true
-            window_spec.title         ' ANSI Gallery '
-            window_spec.list_width    24
-            window_spec.empty_message '  (no art files)'
-            window_spec.items         { |ctx| ctx[:art].files }
-            window_spec.item_label do |name, ctx|
-              name == ctx[:app].context[:desktop_art] ? "#{name} ◄" : name
-            end
-            window_spec.render_detail do |name, width, ctx|
-              Formatters::Gallery.detail(name, ctx[:art].sauce(name), ctx[:art].size(name), ctx[:art].lines(name), width)
-            end
-            window_spec.bottom_meta do |_name, _ctx|
-              'Enter/View: full screen · Desktop: for this call · Favourite: for every call'
-            end
-            window_spec.on_activate { |name, _window, ctx| ctx[:app].view_art(name) }
-            window_spec.action label: '&View', align: :left do |window, ctx|
-              name = window.list_widget.selected_item
-              ctx[:app].view_art(name) if name
-              :keep
-            end
-            window_spec.action label: '&Desktop', align: :left do |window, ctx|
-              name = window.list_widget.selected_item
-              ctx[:app].show_art(name) if name
-              :close
-            end
-            window_spec.action label: '&Favourite', align: :left do |window, ctx|
-              app  = ctx[:app]
-              name = window.list_widget.selected_item
-              if name.nil?
-                nil
-              elsif app.context[:authenticated]
-                ctx[:art].set_favourite(app.context[:username], name)
-                app.show_art(name)
-                BBS::Dialogs.message(app, "#{name} is your desktop from now on.", title: ' Favourite ')
-              else
-                BBS::Dialogs.message(app, 'Register your name first (You > Register…): ' \
-                                          'a favourite belongs to a registered name.', title: ' Favourite ', width: 60)
-              end
-              :keep
-            end
           end
 
           window :master, type: :stream do |window_spec|
@@ -809,40 +652,6 @@ module UI
             end
           end
 
-          window :file_areas, type: :master_detail do |window_spec|
-            window_spec.accent Accent::STYLES[:files]
-            window_spec.maximizable true
-            window_spec.title         ' File Areas '
-            window_spec.list_width    32
-            window_spec.empty_message '  (the catalog or the FTP server did not answer — try again later)'
-            window_spec.items         { |ctx| ctx[:file_areas].areas }
-            window_spec.item_label    { |area, _ctx| Formatters::FileAreas.area_label(area) }
-            window_spec.render_detail { |area, width, _ctx| Formatters::FileAreas.area_detail(area, width) }
-            window_spec.bottom_meta   { |_area, _ctx| 'Enter: open the area' }
-            window_spec.on_activate   { |area, _window, ctx| ctx[:app].open_window(:file_area, area: area) }
-          end
-
-          window :file_area, type: :master_detail do |window_spec|
-            window_spec.accent Accent::STYLES[:files]
-            window_spec.maximizable true
-            window_spec.title         { |ctx| " Files — #{ctx[:area].title} " }
-            window_spec.list_width    37
-            window_spec.empty_message '  (no files)'
-            window_spec.items         { |ctx| ctx[:area].files }
-            window_spec.item_label    { |item, ctx| Formatters::FileAreas.file_label(item, ctx[:file_areas]) }
-            window_spec.render_detail do |item, width, ctx|
-              Formatters::FileAreas.file_detail(item, width, files: ctx[:files],
-                                                                 catalog_url: ctx[:games].catalog_url(item.game))
-            end
-            window_spec.bottom_meta   { |item, _ctx| "#{item.downloads} DLs · Enter: download by ZMODEM" }
-            window_spec.on_activate   { |item, _window, ctx| ctx[:app].ftp_download(ctx[:file_areas].entry(item)) }
-            window_spec.action label: '&Download', align: :left do |window, ctx|
-              item = window.list_widget.selected_item
-              ctx[:app].ftp_download(ctx[:file_areas].entry(item)) if item
-              :keep
-            end
-          end
-
           window :bulletins, type: :master_detail do |window_spec|
             window_spec.accent Accent::STYLES[:board]
             window_spec.maximizable true
@@ -945,22 +754,6 @@ module UI
               item '&Page the Sysop', hint: 'Ring the bell for a sysop, once a call' do page_sysop end
             end
 
-            menu '&Files' do
-              item '&File Areas', hint: 'Our games by platform, the old way: FILE_ID.DIZ, ZMODEM downloads' do
-                open_window(:file_areas)
-              end
-              item '&Game Catalog', hint: 'Every game of Teletype Games with its card and release history' do
-                open_window(:games)
-              end
-              item 'FTP &Browser', hint: 'ftp.teletypegames.org: the APPS, WARP and WIKI folders, ZMODEM downloads' do
-                open_window(:ftp)
-              end
-              separator
-              item '&ANSI Gallery', hint: 'The art of the board: view it full screen, or make it your desktop' do
-                open_window(:gallery)
-              end
-            end
-
             menu '&People' do
               item '&Who is Online', hint: 'The nodes: who is on, what they are doing, for how long' do
                 open_window(:online_users)
@@ -1012,7 +805,13 @@ module UI
                 open_window(:master)
               end
               Formatters::Master::QUICK_QUESTIONS.each do |label, question|
-                item(label, hint: "Ask the TTG Master: #{question}") { open_window(:master, question: question) }
+                if question == :network
+                  item(label, hint: 'Our other boards: the games and files, the wiki, the blog, the art') do
+                    open_window(:network)
+                  end
+                else
+                  item(label, hint: "Ask the TTG Master: #{question}") { open_window(:master, question: question) }
+                end
               end
               separator
               item '&New to BBSes?', hint: 'How a board like this works, in a bulletin' do open_window(:bulletins) end
@@ -1027,10 +826,10 @@ module UI
               end
               item 'A&bout', hint: 'What this board is' do
                 BBS::Dialogs.message(self,
-                  'Teletype BBS — the telnet board of Teletype Games, powered by rubbs. ' \
+                  'Teletype BBS — the telnet clubhouse of Teletype Games, powered by rubbs. ' \
                   'Board: the dashboard, news, bulletins, the dev log. Messages: boards, mail, oneliners, live chat, ' \
-                  'IRC and the voting booth. Files: the file areas, the game catalog, the FTP server and the ANSI art. ' \
-                  'People, Doors, You. The wiki is on the TTG Wiki BBS (Board > BBS Network). Lost? F1 asks the TTG Master.',
+                  'IRC and the voting booth. People, Doors, You. Our games and files, the wiki, the blog and the art ' \
+                  'have boards of their own: Board > BBS Network. Lost? F1 asks the TTG Master.',
                   title: ' About ', width: 64)
               end
             end
@@ -1059,13 +858,6 @@ module UI
           end
 
           init do
-            unless context.key?(:desktop_art)
-              context[:desktop_art] = services[:art].for_caller(context[:authenticated] ? context[:username] : nil)
-            end
-            name = context[:desktop_art]
-            @desktop_art = BBS::Widgets::AnsiArt.new(lines: name ? services[:art].lines(name) : [])
-            @desktop_art.layout(1, 1, cols, rows - 2)
-            add(@desktop_art)
             @dashboard = Dashboard.new
             add(@dashboard)
             refresh_dashboard

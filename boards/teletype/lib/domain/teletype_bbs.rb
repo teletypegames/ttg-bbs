@@ -12,7 +12,6 @@ class TeletypeBBS
   CONTENT_DIR   = File.expand_path('../content', __dir__)
   BULLETINS_DIR = File.join(CONTENT_DIR, 'bulletins')
   LOGON_ART     = ENV.fetch('TELETYPE_BBS_LOGON_ART', File.join(CONTENT_DIR, 'logon.ans'))
-  DESKTOP_ART   = ENV.fetch('TELETYPE_BBS_DESKTOP_ART', 'data/art/teletype.ansi')
   NETWORK       = [
     ['Teletype BBS',   'teletypegames.org:2323', 'this board: messages, chat, news, catalog'],
     ['Impostor BBS',   'teletypegames.org:2324', 'post-game terminal of Definitely not an Impostor'],
@@ -38,7 +37,7 @@ class TeletypeBBS
   end
 
   attr_reader :online, :boards, :games, :chat, :irc, :last_callers, :profile, :accounts, :site,
-              :discord, :oneliners, :files, :dev_log, :art, :master, :mail, :voting, :file_areas, :trivia,
+              :discord, :oneliners, :warp_sizes, :dev_log, :master, :mail, :voting, :trivia,
               :taglines, :c64_master
 
   def initialize
@@ -60,7 +59,7 @@ class TeletypeBBS
     @site         = SiteService.new(SiteRepository.new)
     @discord      = DiscordNotifier.new(ENV['TELETYPE_BBS_DISCORD_WEBHOOK'])
     @oneliners    = OnelinerService.new(OnelinerRepository.new(ENV.fetch('TELETYPE_BBS_ONELINERS_PATH', 'data/oneliners.csv')))
-    @files        = FileLibraryService.new(FtpRepository.new(ENV.fetch('TELETYPE_BBS_FTP_HOST', 'ftp.teletypegames.org')))
+    @warp_sizes   = WarpSizes.new(FtpRepository.new(ENV.fetch('TELETYPE_BBS_FTP_HOST', 'ftp.teletypegames.org')))
     @dev_log      = DevLogService.new(GiteaRepository.new)
     @master       = TtgMaster.new(games: @games, site: @site)
     @c64_master   = TtgMaster.new(games: @games, site: @site, **TtgMaster::C64)
@@ -70,9 +69,7 @@ class TeletypeBBS
                                     accounts: @accounts, sysops: SYSOPS)
     @voting       = VotingService.new(VoteRepository.new(ENV.fetch('TELETYPE_BBS_VOTES_PATH', 'data/votes.csv')),
                                       path: File.join(CONTENT_DIR, 'polls.yml'), games: @games, doors: DOOR_NAMES)
-    @file_areas   = FileAreaService.new(games: @games, files: @files)
     @trivia       = Trivia::Scores.new(ENV.fetch('TELETYPE_BBS_TRIVIA_SCORES_PATH', 'data/trivia_scores.csv'))
-    @art          = ArtService.new(DESKTOP_ART, profile: @profile)
     @taglines     = TaglineService.new(@site)
   end
 
@@ -80,8 +77,8 @@ class TeletypeBBS
   def services
     { online: @online, boards: @boards, games: @games, chat: @chat, irc: @irc,
       last_callers: @last_callers, profile: @profile, accounts: @accounts, site: @site, discord: @discord,
-      oneliners: @oneliners, files: @files, dev_log: @dev_log, art: @art, master: @master, mail: @mail,
-      voting: @voting, file_areas: @file_areas, trivia: @trivia, bbs: self, uptime: STARTED_AT }
+      oneliners: @oneliners, dev_log: @dev_log, master: @master, mail: @mail, voting: @voting, trivia: @trivia,
+      bbs: self, uptime: STARTED_AT }
   end
 
   # The doors, in the order of the Doors menu; each label marks its hotkey with &.
@@ -92,12 +89,12 @@ class TeletypeBBS
                hint: 'SERMO: a dual machine of the Neumatronic universe; type a command, or just talk to it',
                about: 'The Margittai machine of the Neumatronic universe, running SERMO. Type its commands, ' \
                       'or talk to it: its Lapis-ACP answers. EXIT brings you back.'),
-      Door.new(name: :c64, program: Commodore.os(Commodore::C64, games: @games, files: @files),
+      Door.new(name: :c64, program: Commodore.os(Commodore::C64, games: @games, sizes: @warp_sizes),
                label: '&Commodore 64', cols: 40, tag: 'c64 + our games',
                hint: 'A Commodore 64 at READY., with our C64 games on its disk: LOAD"$",8 lists them',
                about: 'A Commodore 64 at its READY. prompt, with a small BASIC V2. The disk holds our C64 games: ' \
                       'LOAD"$",8 and LIST show the directory, LOAD"NAME",8 and RUN show a game. EXIT returns.'),
-      Door.new(name: :plus4, program: Commodore.os(Commodore::PLUS4, games: @games, files: @files),
+      Door.new(name: :plus4, program: Commodore.os(Commodore::PLUS4, games: @games, sizes: @warp_sizes),
                label: 'Commodore &Plus/4', cols: 40, tag: 'plus/4 + our games',
                hint: 'A Commodore Plus/4 with our Plus/4 games on its disk: DIRECTORY lists them',
                about: 'The grey screen of the Plus/4 and its BASIC 3.5 habits: DIRECTORY and DLOAD work, and ' \
@@ -141,7 +138,7 @@ class TeletypeBBS
   # the old boards (mail, message bases, voting booth, new files).
   def logon_summary(name, registered:, session_id:)
     sysop      = sysop?(name, registered)
-    fresh      = Time.now - (FileAreaService::NEW_DAYS * 86_400)
+    fresh      = Time.now - (30 * 86_400)
     new_files  = @games.latest_releases(5).select { |g| g.released_at > fresh }.map { |g| "#{g.title} #{g.version}" }
     polls_open = name == AccountService::ANONYMOUS ? 0 : @voting.polls.count { |p| @voting.ballot(p, name).nil? }
     {

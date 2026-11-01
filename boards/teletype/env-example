@@ -4,7 +4,7 @@ TELETYPE_BBS_LAST_CALLERS_PATH=data/last_callers.csv
 TELETYPE_BBS_PROFILE_PATH=data/profiles.csv
 TELETYPE_BBS_ACCOUNTS_PATH=data/accounts.csv
 TELETYPE_BBS_ONELINERS_PATH=data/oneliners.csv
-# The FTP server of the File Library (anonymous, passive mode).
+# The FTP server whose WARP folder gives the Commodore doors the size of each game (anonymous, passive mode).
 TELETYPE_BBS_FTP_HOST=ftp.teletypegames.org
 # Sysop names, comma-separated. Their accounts are created only with bin/account.
 TELETYPE_BBS_SYSOPS=
@@ -21,7 +21,3 @@ BBS_PORT=2323
 SERMO_LLM_API_KEY=
 # The key of the BBS's own characters (Ra, the TTG Master); empty = SERMO's key.
 TELETYPE_BBS_LLM_API_KEY=
-# TELETYPE_BBS_DESKTOP_ART — a single .ans/.ansi/.asc/.nfo/.txt file shown on the
-# main screen, or a folder of them (a random one per call). Its folder is the
-# ANSI Gallery. Defaults to data/art/teletype.ansi.
-TELETYPE_BBS_DESKTOP_ART=data/art/teletype.ansi

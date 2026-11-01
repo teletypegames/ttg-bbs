@@ -20,7 +20,7 @@ module UI
       STYLES = COLORS.keys.to_h { |section| [section, styles(section)] }.freeze
     end
 
-    # The desktop while no art is chosen: the board as it is now. The logo
+    # The desktop: the board as it is now. The logo
     # and the greeting, the TTG Gate BBS banner, then four panels (the nodes, the last callers, the
     # new releases, what is coming up) and the oneliners wall running along
     # the bottom. The application gives it its Data on start and every few

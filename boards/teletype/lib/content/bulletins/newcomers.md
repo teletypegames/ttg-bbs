@@ -15,9 +15,9 @@ browser too: **https://bbsweb.teletypegames.org**.
 Esc closes a window, Tab moves inside it, F5 makes it full screen. The
 mouse works too.
 
-**Files.** Files > File Areas has our games by platform; Enter sends a
-file to your terminal by ZMODEM. The FTP Browser shows the whole FTP
-server, DOS tools included.
+**Files.** Our games and files have a board of their own, the
+WarpEngine BBS on port 2329: it sends them to your terminal by ZMODEM.
+Board > BBS Network lists every board of ours.
 
 **Doors.** The Doors menu hands your line to another program: a
 Commodore 64, the SERMO machine, a sun god. Each one tells how to come

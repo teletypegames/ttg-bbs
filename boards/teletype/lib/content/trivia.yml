@@ -11,7 +11,7 @@
   answers: ["6502", Z80, "68000", x86]
 - question: What is CP437?
   answers: [The character set of the IBM PC, A modem protocol, A Commodore BASIC command, A TIC-80 cartridge format]
-- question: Which protocol sends files from this board to your terminal?
+- question: Which protocol sends files from the WarpEngine BBS to your terminal?
   answers: [ZMODEM, Kermit, HTTP/3, Bluetooth]
 - question: What carries a push to master all the way into our catalog?
   answers: [The CI pipeline with WarpEngine, A floppy disk by post, The sysop by hand, A Discord bot]

@@ -128,8 +128,8 @@ s[:polls_open].zero? ? 'all voted' : "#{s[:polls_open]} poll#{'s' if s[:polls_op
         s.puts
         s.puts " #{GR}our games:#{LG}"
         s.puts " #{CY}teletypegames.org#{LG}"
-        s.puts " #{GR}every file on plain http:#{LG}"
-        s.puts " #{CY}archive.teletypegames.org#{LG}"
+        s.puts " #{GR}every board of ours, one port:#{LG}"
+        s.puts " #{CY}teletypegames.org:2399#{LG}"
       end
     end
   end
