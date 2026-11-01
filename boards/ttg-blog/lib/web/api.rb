@@ -15,10 +15,12 @@ module Web
   #
   #   GET /health              {"ok":true}
   #   GET /categories          the categories, with their post counts
-  #   GET /posts[?limit=N]     the posts newest first, without their bodies
+  #   GET /posts[?limit=N]     the posts newest first, without their bodies:
+  #                            DEFAULT_LIMIT of them, at most MAX_LIMIT
   #   GET /posts/SLUG          one post: its Markdown, its HTML, its C64 screen
   class Api
-    MAX_LIMIT = 200
+    DEFAULT_LIMIT = 100
+    MAX_LIMIT     = 200
 
     def initialize(bbs, port:, host: '0.0.0.0')
       @bbs    = bbs
@@ -61,7 +63,7 @@ module Web
 
     def limit(req)
       n = req.query['limit'].to_i
-      n.positive? ? [n, MAX_LIMIT].min : nil
+      n.positive? ? [n, MAX_LIMIT].min : DEFAULT_LIMIT
     end
 
     def categories

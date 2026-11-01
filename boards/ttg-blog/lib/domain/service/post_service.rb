@@ -2,7 +2,8 @@
 
 # The rules of the posts: what a post may hold, who sees it, and what
 # happens when it is first published. Readers see the published posts; the
-# editors see all of them.
+# editors see all of them. What an editor typed is cleaned of control
+# characters (BBS::Text.clean) before it is checked and kept.
 class PostService
   MAX_TITLE   = 80
   MAX_SUMMARY = 280
@@ -31,20 +32,21 @@ class PostService
   def find_by_slug(slug) = @repo.find_by_slug(slug)
 
   # The new, unpublished PostModel, or a Symbol naming what is wrong with it.
-  def create(author:, title:, summary:, body:, category:, face: 'modern')
-    problem = check(title, summary, body, category)
+  def create(author:, face: 'modern', **draft)
+    draft   = clean(**draft)
+    problem = check(**draft)
     return problem if problem
 
-    id = @repo.insert(title: title.strip, summary: summary.strip, body: body, category: category,
-                      face: PostModel::FACES.include?(face) ? face : 'modern', author_id: author.id)
+    id = @repo.insert(**draft, face: PostModel::FACES.include?(face) ? face : 'modern', author_id: author.id)
     id ? find(id) : :not_saved
   end
 
   # The PostModel as saved, or a Symbol naming what is wrong with it.
-  def update(id, title:, summary:, body:, category:)
-    problem = check(title, summary, body, category)
+  def update(id, **draft)
+    draft   = clean(**draft)
+    problem = check(**draft)
     return problem if problem
-    return :not_saved unless @repo.update(id, title: title.strip, summary: summary.strip, body: body, category: category)
+    return :not_saved unless @repo.update(id, **draft)
 
     find(id)
   end
@@ -65,11 +67,19 @@ class PostService
 
   private
 
-  def check(title, summary, body, category)
-    return :no_title if title.to_s.strip.empty?
+  # The draft as it is kept: no control characters, the title and the
+  # summary on one line and trimmed.
+  def clean(title:, summary:, body:, category:)
+    { title: BBS::Text.clean(title, keep_newlines: false).strip,
+      summary: BBS::Text.clean(summary, keep_newlines: false).strip,
+      body: BBS::Text.clean(body), category: category.to_s }
+  end
+
+  def check(title:, summary:, body:, category:)
+    return :no_title if title.empty?
     return :long_title if title.length > MAX_TITLE
-    return :long_summary if summary.to_s.length > MAX_SUMMARY
-    return :long_body if body.to_s.bytesize > MAX_BODY
+    return :long_summary if summary.length > MAX_SUMMARY
+    return :long_body if body.bytesize > MAX_BODY
     return :bad_category unless @categories.listed?(category)
 
     nil

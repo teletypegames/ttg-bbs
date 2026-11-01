@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'bbs/discord_webhook'
-
 # A new post on the Discord channel of a webhook, with its link on the web,
 # through BBS::DiscordWebhook: in the background, so a slow webhook never
 # stalls the editor's call; mentions are off, and the text goes in as plain
