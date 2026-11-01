@@ -166,7 +166,7 @@ module Discovery
       assert_equal :discover, g.tab
       assert_instance_of UI::Petscii::Views::ListView, g.view
       screen = shown
-      assert_equal '/Find Browse New Random Died Graves Srcs', text_at(screen, 2, 0, 40)
+      assert_equal '/Find Browse New Random Sources         ', text_at(screen, 2, 0, 40)
       assert_equal [Canvas::LIGHT_GREEN, true], [screen.cell(2, 6).color, screen.cell(2, 6).rvs]
       assert_equal [Canvas::LIGHT_GREEN, true], [screen.cell(1, 15).color, screen.cell(1, 15).rvs]
       g.press(:down)
