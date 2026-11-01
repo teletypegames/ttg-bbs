@@ -99,6 +99,9 @@ telnet localhost 2323      # directly (BBS_PORT)
 | `TTG_GATE_BBS_PUBLIC_HOST` | `teletypegames.org` | the address shown with every board |
 | `TTG_GATE_BBS_BOARDS` | `config/boards.yml` | the boards list |
 | `TTG_GATE_BBS_DISCORD_WEBHOOK` | empty | Discovery: where import alerts go; empty: off |
+| `TTG_GATE_BBS_DIAL_WINDOW` | `600` | Discovery: the window of the per-caller dial limit, seconds |
+| `TTG_GATE_BBS_DIAL_PER_CALLER` | `10` | Discovery: the dials one caller may make in the window |
+| `TTG_GATE_BBS_DIAL_PER_HOST` | `3` | Discovery: the lines from the gate to one host at once |
 | `TTG_GATE_BBS_DATA` | `data` | Discovery: the data folder |
 | `TTG_GATE_BBS_DISCOVERY_DB` | `data/discovery.sqlite3` | Discovery: the catalog |
 | `TTG_GATE_BBS_DISCOVERY_OPTOUT` | `config/discovery-optout.yml` | Discovery: the opt-out list |
@@ -356,6 +359,9 @@ Only a board of the catalog can be dialled, by its page: there is no free
   a private address (bbsweb carries all its callers from the same host) counts
   by its connection.
 - **3 lines to one host at once** from the gate.
+- Both limits are the defaults of `TTG_GATE_BBS_DIAL_WINDOW`,
+  `TTG_GATE_BBS_DIAL_PER_CALLER` and `TTG_GATE_BBS_DIAL_PER_HOST` (a value that
+  is not a positive number keeps the default, with a warning).
 - On the modern face a board made for a C64 only (PETSCII and no other
   encoding seen) asks first: it would be noise there. The C64 face dials
   PETSCII boards only. A dead board asks first too, on either face.
@@ -367,10 +373,36 @@ Only a board of the catalog can be dialled, by its page: there is no free
   probe turns a board down) and a failed one asks the prober to call the board
   at once; a dial leaves the stored banner and telnet options as they are.
 
-The gate opens the catalog read only but for these dial records. The dials in
-progress go to `data/gate-dials.json`; the prober puts them into
-`data/discovery-metrics.prom` as `ttg_gate_bbs_discovery_dials_live`, with the
-dials of the last hour a result (`ttg_gate_bbs_discovery_dials_last_hour`).
+The gate opens the catalog read only but for these dial records. Besides the
+probe, each dial that went leaves a row in `dials` (when it ended, the board,
+the face, the result, the seconds connected, the bytes the board sent through
+the gate; the gateway does not count the caller's side), and each refused one a
+row in `dial_refusals` (when, the reason: `rate`, `busy`, `not_petscii` or
+`unknown`, the board, the face: `modern` or `c64`). Neither has anything of the
+caller. Both keep 30 days; the refusals that go are added to running totals in
+`meta`, so the counts only grow.
+
+The dials in progress go to `data/gate-dials.json`, with the limits, the lines
+in use to the busiest host, and the dial times in the window of each caller (a
+list of lists: no caller is named). The prober reads it and the tables into
+`data/discovery-metrics.prom` (every name starts `ttg_gate_bbs_discovery_`):
+
+| Metric | |
+|---|---|
+| `dials_live` | dials in progress |
+| `dials_last_hour{result}`, `dials_total{result}` | dials of the last hour, and every dial (its probes of kind `dial`) |
+| `dial_limit{kind}` | the limits: `window_seconds`, `per_caller`, `per_host` |
+| `dial_caller_max_in_window` | the most dials one caller has in the current window (0 … per_caller) |
+| `dial_callers_at_limit` | callers at the per-caller limit now |
+| `dial_host_lines_max` | the most lines in use to one host now (0 … per_host) |
+| `dial_refusals_total{reason,face}` | every refused dial |
+| `dial_refusals_last_hour{reason}` | refused dials of the last hour |
+| `dial_seconds_last_hour`, `dial_seconds_avg_last_hour` | seconds on the line of the dials that ended in the last hour, summed and on average |
+| `dial_bytes_last_hour` | bytes the boards sent through the gate in those dials |
+
+A refusal for `rate` or `busy` is the gate's own limit keeping a caller from a
+board; `not_petscii` and `unknown` are a C64 at an ANSI board and a board gone
+from the list.
 
 ### Running it
 
@@ -394,7 +426,7 @@ prober's work (`probes_in_flight`, `probes_due`, `next_probe_due_seconds`,
 boards by `boards_by_encoding`, `boards_by_network`, `boards_by_country` and
 `boards_by_software` (the top 15 and `other`), the sources (`source_records`,
 `source_last_import_timestamp_seconds`, `source_failing`), the gate's dials
-(`dials_live`, `dials_last_hour`), and `geoip_age_seconds`, `db_bytes`,
+(`dials_live`, `dials_*`, `dial_*`, see [Dialling](#dialling)), and `geoip_age_seconds`, `db_bytes`,
 `optout_hosts{level}`.
 
 ## Project structure

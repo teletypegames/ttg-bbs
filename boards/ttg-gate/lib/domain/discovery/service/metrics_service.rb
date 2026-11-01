@@ -17,10 +17,13 @@ module Discovery
     TOP = 15
     ENCODINGS = %w[ansi petscii atascii ascii].freeze
     MAILER = 'ftn-mailer'
+    # The Gate's dial limits, as the live file names them.
+    LIMITS = %w[window_seconds per_caller per_host].freeze
 
     # [dials_path] the Gate's live dials (JSON)   [db_path] the catalog file
     # [geoip_path] the DB-IP lookup file          [optout]  OptoutRepository
-    def initialize(path, catalog:, probes:, dials_path: nil, db_path: nil, geoip_path: nil, optout: nil)
+    # [history]    DialRepository: the refused dials, the dials' time and bytes
+    def initialize(path, catalog:, probes:, dials_path: nil, db_path: nil, geoip_path: nil, optout: nil, history: nil)
       @path       = path
       @catalog    = catalog
       @probes     = probes
@@ -28,6 +31,7 @@ module Discovery
       @db_path    = db_path
       @geoip_path = geoip_path
       @optout     = optout
+      @history    = history
     end
 
     # Writes the file; +in_flight+ is the prober's calls in progress.
@@ -51,6 +55,7 @@ module Discovery
       gauge(lines, 'dials_last_hour', "The Gate's dials of the last hour by result.",
             ProbeResultModel::RESULTS.to_h { |r| [{ result: r }, dials.fetch(r, 0)] })
       gauge(lines, 'dials_live', "The Gate's dials in progress.", { {} => live_dials })
+      dial_limits(lines, now)
       gauge(lines, 'last_probe_timestamp_seconds', 'When the last probe was made.', { {} => @probes.last_probe_at.to_i })
       sources = @catalog.sources
       gauge(lines, 'source_records', 'Records of the last applied import a source.',
@@ -128,12 +133,52 @@ module Discovery
 
     def seconds(ms) = ms ? (ms / 1000.0).round(3) : 0
 
-    def live_dials
-      return 0 unless @dials_path && File.exist?(@dials_path)
+    def live_dials = live.fetch('live', 0).to_i
 
-      JSON.parse(File.read(@dials_path)).fetch('live', 0).to_i
+    # The Gate's live file (DialService#live_state), {} without one.
+    def live
+      return {} unless @dials_path && File.exist?(@dials_path)
+
+      JSON.parse(File.read(@dials_path))
     rescue SystemCallError, JSON::ParserError
-      0
+      {}
+    end
+
+    # How near the callers and the boards are to the dial limits, the dials
+    # we refused, and the time and traffic of the dials.
+    def dial_limits(lines, now)
+      state  = live
+      limits = LIMITS.to_h { |k| [k, state.dig('limits', k).to_i] }
+      gauge(lines, 'dial_limit', "The Gate's dial limits (window_seconds, per_caller, per_host).",
+            limits.transform_keys { |k| { kind: k } })
+      window = limits['window_seconds']
+      counts = Array(state['caller_dials']).map { |times| Array(times).count { |t| t.to_i > now - window } }
+      gauge(lines, 'dial_caller_max_in_window', 'The most dials one caller has in the current window.',
+            { {} => counts.max.to_i })
+      at_limit = limits['per_caller'].positive? ? counts.count { |n| n >= limits['per_caller'] } : 0
+      gauge(lines, 'dial_callers_at_limit', 'Callers at the per-caller dial limit now.', { {} => at_limit })
+      gauge(lines, 'dial_host_lines_max', 'The most lines in use to one host now.',
+            { {} => state.fetch('host_lines_max', 0).to_i })
+      dial_history(lines, now)
+    end
+
+    def dial_history(lines, now)
+      totals = @history ? @history.refusal_totals : DialRepository::REASONS.product(DialRepository::FACES).to_h { |p| [p, 0] }
+      gauge(lines, 'dial_refusals_total', 'Dials the Gate refused, by reason and face (kept as a running total).',
+            totals.to_h { |(reason, face), n| [{ reason: reason, face: face }, n] })
+      hour = @history ? @history.refusals_since(now - 3600) : DialRepository::REASONS.to_h { |r| [r, 0] }
+      gauge(lines, 'dial_refusals_last_hour', 'Dials the Gate refused in the last hour, by reason.',
+            hour.transform_keys { |r| { reason: r } })
+      count, seconds, bytes = @history ? @history.traffic_since(now - 3600) : [0, 0, 0]
+      gauge(lines, 'dial_seconds_last_hour', 'Seconds on the line of the dials that ended in the last hour.',
+            { {} => seconds })
+      gauge(lines, 'dial_seconds_avg_last_hour', 'The average seconds on the line of those dials.',
+            { {} => count.positive? ? (seconds.to_f / count).round(1) : 0 })
+      gauge(lines, 'dial_bytes_last_hour', 'Bytes the boards sent through the Gate in the dials of the last hour.',
+            { {} => bytes })
+      totals = @probes.totals
+      gauge(lines, 'dials_total', 'Every dial of the Gate by result (its probes of kind dial).',
+            ProbeResultModel::RESULTS.to_h { |r| [{ result: r }, totals.fetch([r, 'dial'], 0)] })
     end
 
     def gauge(lines, name, help, values)

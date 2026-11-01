@@ -13,6 +13,6 @@
   repository/optout_repository repository/zip_reader repository/source_fetcher repository/geoip_repository
   service/banner_analyzer service/state_rules service/telnet_negotiator service/telnet_probe service/tag_service
   service/alias_service service/import_service service/prober_service service/metrics_service service/report_service
-  repository/directory_repository service/browse_service service/banner_preview service/dial_service
+  repository/directory_repository repository/dial_repository service/browse_service service/banner_preview service/dial_service
   root
 ].each { |file| require_relative "discovery/#{file}" }

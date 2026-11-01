@@ -13,3 +13,8 @@ TTG_GATE_BBS_DISCORD_WEBHOOK=
 TTG_GATE_BBS_DATA=data
 TTG_GATE_BBS_DISCOVERY_DB=data/discovery.sqlite3
 TTG_GATE_BBS_DISCOVERY_OPTOUT=config/discovery-optout.yml
+# The Gate's dial limits for the catalog's boards: the window in seconds, the dials one caller
+# may make in it, the lines to one host at once.
+TTG_GATE_BBS_DIAL_WINDOW=600
+TTG_GATE_BBS_DIAL_PER_CALLER=10
+TTG_GATE_BBS_DIAL_PER_HOST=3

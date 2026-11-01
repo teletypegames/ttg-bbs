@@ -9,6 +9,9 @@ module Discovery
   # [TTG_GATE_BBS_DISCOVERY_DB]      the catalog (data/discovery.sqlite3)
   # [TTG_GATE_BBS_DISCOVERY_OPTOUT]  the opt-out list (config/discovery-optout.yml)
   # [TTG_GATE_BBS_DISCORD_WEBHOOK]   where import alerts go; empty: nowhere
+  # [TTG_GATE_BBS_DIAL_WINDOW]       the Gate's dial limits: the window in
+  # [TTG_GATE_BBS_DIAL_PER_CALLER]   seconds, the dials a caller in it, the
+  # [TTG_GATE_BBS_DIAL_PER_HOST]     lines to one host at once (DialService)
   class Root
     ROOT = File.expand_path('../../..', __dir__)
 
@@ -27,7 +30,15 @@ module Discovery
       @tags    = TagService.new(@catalog, @probes, @config)
       @aliases = AliasService.new(@catalog)
       @webhook = env['TTG_GATE_BBS_DISCORD_WEBHOOK'].to_s
+      @dial_limits = {
+        window:     limit(env, 'TTG_GATE_BBS_DIAL_WINDOW', DialService::WINDOW),
+        per_caller: limit(env, 'TTG_GATE_BBS_DIAL_PER_CALLER', DialService::PER_CALLER),
+        per_host:   limit(env, 'TTG_GATE_BBS_DIAL_PER_HOST', DialService::PER_HOST)
+      }
     end
+
+    # The Gate's dial limits: window, per_caller, per_host.
+    attr_reader :dial_limits
 
     def importer
       ImportService.new(catalog: @catalog, config: @config, fetcher: @fetcher, tags: @tags, aliases: @aliases,
@@ -41,7 +52,7 @@ module Discovery
 
     def metrics
       MetricsService.new(File.join(@data, 'discovery-metrics.prom'), catalog: @catalog, probes: @probes,
-                                                                     dials_path: dials_path, db_path: @db.path,
+                                                                     dials_path: dials_path, db_path: @db.path, history: history,
                                                                      geoip_path: @geoip.path, optout: @optout)
     end
 
@@ -52,8 +63,11 @@ module Discovery
     def dials(log: ->(line) { warn line })
       recorder = ProberService.new(catalog: @catalog, probes: @probes, probe: nil, tags: @tags, aliases: @aliases,
                                    optout: @optout, geoip: @geoip, config: @config, log: log)
-      DialService.new(recorder: recorder, live_path: dials_path, log: log)
+      DialService.new(recorder: recorder, history: history, live_path: dials_path, log: log, **@dial_limits)
     end
+
+    # The Gate's refused dials and its dials' time and traffic.
+    def history = @history ||= DialRepository.new(@db)
 
     # The Gate's dials in progress (JSON), for the metrics of the prober.
     def dials_path = File.join(@data, 'gate-dials.json')
@@ -68,6 +82,23 @@ module Discovery
       require 'bbs/discord_webhook'
       hook = BBS::DiscordWebhook.new(@webhook, relay_max: nil, embeds: false, label: 'ttg-gate-bbs-discovery: Discord')
       hook.post(BBS::DiscordWebhook.escape(message))&.join
+    end
+
+    private
+
+    # A positive whole number of the environment, else +default+.
+    def limit(env, key, default)
+      value = env[key].to_s.strip
+      return default if value.empty?
+
+      number = Integer(value, 10)
+      return number if number.positive?
+
+      warn "ttg-gate-bbs: #{key}=#{value} is not positive, #{default} it is"
+      default
+    rescue ArgumentError
+      warn "ttg-gate-bbs: #{key}=#{value} is not a number, #{default} it is"
+      default
     end
   end
 end

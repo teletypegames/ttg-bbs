@@ -104,6 +104,24 @@ module Discovery
       );
       CREATE INDEX IF NOT EXISTS tags_tag ON tags (tag);
       CREATE VIRTUAL TABLE IF NOT EXISTS boards_fts USING fts5 (name, sysop, location, software, host);
+      CREATE TABLE IF NOT EXISTS dial_refusals (
+        id       INTEGER PRIMARY KEY,
+        at       INTEGER NOT NULL,
+        reason   TEXT NOT NULL,
+        board_id INTEGER,
+        face     TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS dial_refusals_at ON dial_refusals (at);
+      CREATE TABLE IF NOT EXISTS dials (
+        id       INTEGER PRIMARY KEY,
+        at       INTEGER NOT NULL,
+        board_id INTEGER NOT NULL,
+        face     TEXT NOT NULL,
+        result   TEXT NOT NULL,
+        seconds  INTEGER NOT NULL,
+        bytes    INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS dials_at ON dials (at);
     SQL
 
     # The columns added after the first release: the whole call's time and

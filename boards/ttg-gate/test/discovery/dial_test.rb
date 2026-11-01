@@ -20,7 +20,8 @@ module Discovery
       @now = 1_000.0
       @recorder = Recorder.new
       @live = File.join(@tmp, 'gate-dials.json')
-      @dials = DialService.new(recorder: @recorder, live_path: @live, clock: -> { @now }, log: ->(_) {})
+      @history = DialRepository.new(@db)
+      @dials = DialService.new(recorder: @recorder, history: @history, live_path: @live, clock: -> { @now }, log: ->(_) {})
     end
 
     def board(host = 'bbs.example.org', state: 'online', tags: %w[ansi online])
@@ -138,6 +139,110 @@ module Discovery
         assert_includes text, "ttg_gate_bbs_discovery_#{line}\n"
       end
       assert_match(/ttg_gate_bbs_discovery_db_bytes [1-9]/, text)
+    end
+
+    def test_the_limits_come_from_the_environment
+      env = { 'TTG_GATE_BBS_DATA' => @tmp, 'TTG_GATE_BBS_DISCOVERY_DB' => File.join(@tmp, 'root.sqlite3'),
+              'TTG_GATE_BBS_DIAL_WINDOW' => '300', 'TTG_GATE_BBS_DIAL_PER_CALLER' => '4', 'TTG_GATE_BBS_DIAL_PER_HOST' => '2' }
+      root = Root.new(env)
+      assert_equal({ window: 300, per_caller: 4, per_host: 2 }, root.dial_limits)
+      dials = root.dials(log: ->(_) {})
+      assert_equal [300, 4, 2], [dials.window, dials.per_caller, dials.per_host]
+      assert_equal({ 'window_seconds' => 300, 'per_caller' => 4, 'per_host' => 2 },
+                   JSON.parse(File.read(root.dials_path))['limits'])
+      root.db.close
+      _, err = capture_io do
+        bad = Root.new(env.merge('TTG_GATE_BBS_DIAL_WINDOW' => 'soon', 'TTG_GATE_BBS_DIAL_PER_HOST' => '0'))
+        assert_equal({ window: 600, per_caller: 4, per_host: 3 }, bad.dial_limits)
+        bad.db.close
+      end
+      assert_includes err, 'TTG_GATE_BBS_DIAL_WINDOW=soon'
+      assert_equal({ window: 600, per_caller: 10, per_host: 3 }, Root.new(env.slice('TTG_GATE_BBS_DATA')).dial_limits)
+    end
+
+    def test_the_limits_given_hold
+      dials = DialService.new(recorder: @recorder, clock: -> { @now }, log: ->(_) {}, window: 60, per_caller: 2, per_host: 1)
+      2.times { dials.dial('a', board, face: :modern) { |c| c.report = Report.new(connected: true, received: 1) } }
+      assert_equal [:rate, 60], dials.check('a', board, face: :modern).deconstruct
+      dials.dial('b', board, face: :modern) { assert_equal :busy, dials.check('c', board, face: :modern).reason }
+    end
+
+    def test_every_refusal_is_recorded_without_the_caller
+      10.times { dial }
+      assert_equal :rate, dial.reason
+      assert_equal :rate, @dials.check('203.0.113.5', board(tags: %w[petscii]), face: :petscii).reason
+      @dials.dial('a', board, face: :modern) do
+        @dials.dial('c', board, face: :modern) do
+          @dials.dial('d', board, face: :modern) do
+            assert_equal :busy, @dials.dial('b', board, face: :modern) { nil }.reason
+            assert_equal :busy, @dials.check('e', board(tags: %w[petscii]), face: :petscii).reason
+          end
+        end
+      end
+      assert_equal :not_petscii, @dials.check('a', board, face: :petscii).reason
+      assert_equal :unknown, @dials.check('a', nil, face: :modern).reason
+      assert_equal :unknown, @dials.check('a', nil, face: :petscii).reason
+      rows = @db.query('SELECT * FROM dial_refusals ORDER BY id')
+      assert_equal %w[id at reason board_id face], rows.first.keys
+      assert_equal([%w[rate modern], %w[rate c64], %w[busy modern], %w[busy c64], %w[not_petscii c64], %w[unknown modern],
+                    %w[unknown c64]], rows.map { |r| [r['reason'], r['face']] })
+      assert_equal [7, nil], [rows.first['board_id'], rows.last['board_id']]
+      refute(rows.any? { |r| r.values.any? { |v| v.to_s.include?('203.0.113') || %w[a b c d e].include?(v) } })
+      totals = @history.refusal_totals
+      assert_equal 1, totals[%w[rate c64]]
+      assert_equal 0, totals[%w[not_petscii modern]]
+      assert_equal 1, @history.refusals_since(0)['not_petscii']
+    end
+
+    def test_old_refusals_are_pruned_into_the_running_total
+      @history.refused(at: 1_000, reason: :rate, board_id: 7, face: 'modern')
+      @history.dialled(at: 1_000, board_id: 7, face: 'c64', result: 'ok', seconds: 5, bytes: 10)
+      @history.prune(1_000 + DialRepository::KEEP + 1, force: true)
+      assert_equal 0, @db.value('SELECT COUNT(*) FROM dial_refusals')
+      assert_equal 0, @db.value('SELECT COUNT(*) FROM dials')
+      @history.refused(at: 2_000_000_000, reason: :rate, board_id: 7, face: 'modern')
+      assert_equal 2, @history.refusal_totals[%w[rate modern]]
+    end
+
+    def test_a_dial_records_its_time_and_bytes
+      @dials.dial('a', board(tags: %w[petscii]), face: :petscii) do |call|
+        @now += 30
+        call.report = Report.new(connected: true, received: 4096, connect_seconds: 0.2)
+      end
+      row = @db.first('SELECT * FROM dials')
+      assert_equal [7, 'c64', 'ok', 30, 4096, 1_030], row.values_at('board_id', 'face', 'result', 'seconds', 'bytes', 'at')
+      @dials.dial('a', board, face: :modern) { |call| call.report = Report.new(connected: false, error: SocketError.new) }
+      assert_equal [2, 30, 4096], @history.traffic_since(0)
+    end
+
+    def test_the_metrics_of_the_dial_limits
+      catalog = CatalogRepository.new(@db)
+      probes = ProbeRepository.new(@db)
+      id = catalog.board_id('bbs.example.org', 23, 1)
+      probes.add(id, probe('ok', at: 900), kind: 'dial', banner_hash: nil)
+      9.times { dial }
+      2.times { dial('198.51.100.9') }
+      dial(report: Report.new(connected: true, received: 500, connect_seconds: 0.1))
+      @dials.check('203.0.113.5', board, face: :modern)
+      text = nil
+      @dials.dial('x', board, face: :modern) do
+        @dials.dial('y', board, face: :modern) do
+          refute_includes File.read(@live), '203.0.113.5'
+          text = MetricsService.new(File.join(@tmp, 'm.prom'), catalog: catalog, probes: probes, dials_path: @live,
+                                                                history: @history).text(@now.to_i + 10)
+        end
+      end
+      ['dial_limit{kind="window_seconds"} 600', 'dial_limit{kind="per_caller"} 10', 'dial_limit{kind="per_host"} 3',
+       'dial_caller_max_in_window 10', 'dial_callers_at_limit 1', 'dial_host_lines_max 2',
+       'dial_refusals_total{reason="rate",face="modern"} 1', 'dial_refusals_total{reason="busy",face="c64"} 0',
+       'dial_refusals_last_hour{reason="rate"} 1', 'dial_refusals_last_hour{reason="unknown"} 0',
+       'dial_bytes_last_hour 599', 'dials_total{result="ok"} 1'].each do |line|
+        assert_includes text, "ttg_gate_bbs_discovery_#{line}\n"
+      end
+      assert_match(/dial_seconds_last_hour 0\n/, text)
+      later = MetricsService.new(File.join(@tmp, 'm.prom'), catalog: catalog, probes: probes, dials_path: @live,
+                                                             history: @history).text(@now.to_i + 601)
+      assert_includes later, "ttg_gate_bbs_discovery_dial_caller_max_in_window 0\n"
     end
 
     def test_banner_preview_keeps_what_draws
