@@ -87,6 +87,9 @@ module Discovery
 
     def sources = @directory.sources
 
+    # The counts of the catalog (DirectoryRepository#stats).
+    def stats = @directory.stats
+
     # The shown name of a tag: the software's name, the country code in
     # capitals, the network, the encoding in capitals.
     def label(tag)

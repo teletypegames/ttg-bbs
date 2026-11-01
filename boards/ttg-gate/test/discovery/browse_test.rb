@@ -41,6 +41,11 @@ module Discovery
 
     def names(list) = list.map(&:title)
 
+    def test_the_counts_of_the_c64_sidebar_and_sources
+      @catalog.replace_tags(@ids['beta.example.org'], %w[petscii claims:petscii online cc:hu])
+      assert_equal({ boards: 7, online: 3, petscii: 2, claimed: 1, shared: 0 }, @browse.stats)
+    end
+
     def test_a_list_puts_online_first_and_leaves_dead_hidden_aliases_and_mailers_out
       assert_equal ['Alpha BBS', 'Beta Commodore', 'Gamma Lounge', 'Fresh BBS'], names(@browse.search(''))
     end

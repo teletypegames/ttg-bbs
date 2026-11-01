@@ -79,5 +79,23 @@ module Discovery
     # The sources, for the Sources screen: id, name, url, attribution, licence,
     # record_count, last_parse_at.
     def sources = @db.query('SELECT * FROM sources ORDER BY id')
+
+    # The counts of the C64 face's sidebar and Sources screen: the shown
+    # boards, those online, those that showed PETSCII (measured) and those a
+    # list calls PETSCII (claimed), and those more than one list names.
+    def stats
+      shown = "SELECT b.id FROM boards b WHERE b.alias_of IS NULL AND (b.optout IS NULL OR b.optout != 'hide')"
+      tagged = ->(tag) { @db.value("SELECT COUNT(*) FROM tags WHERE tag = ? AND board_id IN (#{shown})", tag).to_i }
+      {
+        boards:  @db.value("SELECT COUNT(*) FROM (#{shown})").to_i,
+        online:  @db.value("SELECT COUNT(*) FROM board_state WHERE state = 'online' AND board_id IN (#{shown})").to_i,
+        petscii: tagged.call('petscii'),
+        claimed: tagged.call('claims:petscii'),
+        shared:  @db.value(<<~SQL).to_i
+          SELECT COUNT(*) FROM (SELECT board_id FROM board_sources WHERE active = 1 AND board_id IN (#{shown})
+                                GROUP BY board_id HAVING COUNT(*) > 1)
+        SQL
+      }
+    end
   end
 end
