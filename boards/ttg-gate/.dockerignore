@@ -1,6 +1,12 @@
 .git
+.gitignore
 .env
-tmp
+.claude
+.ruby-lsp
+.rubocop.yml
+.woodpecker.yaml
+.DS_Store
 data
 test
+tmp
 vendor

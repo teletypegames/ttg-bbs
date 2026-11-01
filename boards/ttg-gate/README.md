@@ -487,7 +487,7 @@ lib/
 
 A push to master deploys from Woodpecker: RuboCop and the Discovery tests, a compose check, then
 `ci-deploy ttg-gate-bbs` on the server (infra/host-config), which runs the stack in
-`/srv/stacks/ttg-gate-bbs`. The entrypoint updates rubbs on start.
+`/srv/stacks/ttg-gate-bbs`. The image runs the rubbs revision of `Gemfile.lock`, as uid 1000.
 
 ## License
 
