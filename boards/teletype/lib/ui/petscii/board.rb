@@ -18,7 +18,6 @@ module UI
          ['content', CY, [['f', 'file areas', 'games, demos and tools to download'],
                           ['b', 'ftp browser', 'browse ftp.teletypegames.org'],
                           ['g', 'game catalog', 'every game of teletype games'],
-                          ['w', 'wiki & how-tos', 'the wiki and the how-tos'],
                           ['n', 'news', 'news from teletype games'],
                           ['u', 'bulletins', 'the bulletins of the board'],
                           ['d', 'dev log', 'what we are making, commit by commit']]]],
@@ -59,7 +58,7 @@ module UI
 
       ACTIONS = {
         'm' => :boards, 'e' => :mail, 'o' => :oneliners, 'l' => :live_chat, 'i' => :irc, 'p' => :page_sysop,
-        'f' => :file_areas, 'b' => :ftp, 'g' => :games, 'w' => :wiki, 'n' => :news, 'u' => :bulletins,
+        'f' => :file_areas, 'b' => :ftp, 'g' => :games, 'n' => :news, 'u' => :bulletins,
         'd' => :dev_log, 'c' => :people, 'v' => :voting, 's' => :you, 'h' => :hall_of_fame, 'r' => :doors,
         't' => :master, 'y' => :system_info, '?' => :help, 'z' => :sysop_console
       }.freeze

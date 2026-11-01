@@ -31,7 +31,6 @@ module UI
         call do |ctx, runner|
           screen = Screen.new(runner.session)
           ctx[:call_started] = Time.now
-          ctx[:lang] = 'en'
           ctx[:authenticated] = false
           screen.cls
           screen.puts

@@ -26,12 +26,7 @@ class TeletypeBBS
     ['Pixelia BBS',    'teletypegames.org:2332', 'ANSI and PETSCII art and a shared canvas'],
     ['TTG Gate BBS',   'teletypegames.org:2399', 'one port for all of these: a dialing menu']
   ].freeze
-  DOOR_NAMES    = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Chat of Ra', 'TTG Trivia'].freeze
-  WIKI_SECTIONS = {
-    platforms: { prefix: '/platforms', title: 'Platform Guides' },
-    engines:   { prefix: '/engines',   title: 'Engines' },
-    dos:       { prefix: '/dos',       title: 'DOS Corner' }
-  }.freeze
+  DOOR_NAMES = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Chat of Ra', 'TTG Trivia'].freeze
 
   # +cols+: the narrowest screen the program draws for; +petscii+: the same door
   # drawn for 40 columns, when the program itself needs more. +tag+ is a few
@@ -42,7 +37,7 @@ class TeletypeBBS
     def c64? = cols <= 40 || !petscii.nil?
   end
 
-  attr_reader :online, :boards, :wiki, :games, :chat, :irc, :last_callers, :profile, :accounts, :site,
+  attr_reader :online, :boards, :games, :chat, :irc, :last_callers, :profile, :accounts, :site,
               :discord, :oneliners, :files, :dev_log, :art, :master, :mail, :voting, :file_areas, :trivia,
               :taglines, :c64_master
 
@@ -52,7 +47,6 @@ class TeletypeBBS
                       ENV.fetch('TELETYPE_BBS_BOARDS_PATH', 'data/boards'),
                       legacy_path: ENV.fetch('TELETYPE_BBS_MESSAGES_PATH', 'data/messages.dat')),
                       last_read: LastReadRepository.new(ENV.fetch('TELETYPE_BBS_LAST_READ_PATH', 'data/last_read.csv')))
-    @wiki         = WikiService.new(WikiRepository.new)
     @games        = GamesService.new(CatalogRepository.new)
     @chat         = ChatService.new
     @irc          = IrcRelay.new(server:   ENV.fetch('TELETYPE_BBS_IRC_SERVER', 'irc.libera.chat'),
@@ -84,7 +78,7 @@ class TeletypeBBS
 
   # The services by name, the way an Application's windows reach them.
   def services
-    { online: @online, boards: @boards, wiki: @wiki, games: @games, chat: @chat, irc: @irc,
+    { online: @online, boards: @boards, games: @games, chat: @chat, irc: @irc,
       last_callers: @last_callers, profile: @profile, accounts: @accounts, site: @site, discord: @discord,
       oneliners: @oneliners, files: @files, dev_log: @dev_log, art: @art, master: @master, mail: @mail,
       voting: @voting, file_areas: @file_areas, trivia: @trivia, bbs: self, uptime: STARTED_AT }

@@ -24,7 +24,6 @@ module UI
             transform: ->(value) { AccountService.normalize_name(value) }
         call do |ctx, runner|
           name = ctx[:username]
-          ctx[:lang] = 'en'
           ctx[:authenticated] = false
           if bbs.accounts.registered?(name)
             3.times do
@@ -337,35 +336,6 @@ module UI
                   :close
                 end
               end
-            end
-          end
-
-          window :wiki, type: :master_detail do |window_spec|
-            window_spec.accent Accent::STYLES[:read]
-            window_spec.maximizable true
-            window_spec.title         { |ctx| " #{TeletypeBBS::WIKI_SECTIONS[ctx[:section]][:title]} " }
-            window_spec.list_width    { |ctx| [32, ctx[:app].cols / 3].max }
-            window_spec.empty_message '  (no pages found)'
-            window_spec.close_button  false
-            window_spec.items do |ctx|
-              pages = ctx[:wiki].section(TeletypeBBS::WIKI_SECTIONS[ctx[:section]][:prefix], lang: ctx[:lang])
-              if ctx[:section] == :dos
-                intro = WikiPageModel.new(title: 'FTP & DOSINST', description: Formatters::Dos::FTP_INTRO)
-                [intro, *pages]
-              else
-                pages
-              end
-            end
-            window_spec.item_label do |page, ctx|
-              depth = page.path ? page.path.count('/') - TeletypeBBS::WIKI_SECTIONS[ctx[:section]][:prefix].count('/') : 0
-              "#{'  ' * depth}#{page.title}"
-            end
-            window_spec.render_detail do |page, width, ctx|
-              text = page.path ? ctx[:wiki].content(page.path, lang: ctx[:lang]) : page.description
-              BBS::Markdown.to_lines(text, width: width - 1, theme: ctx[:app].theme)
-            end
-            window_spec.bottom_meta do |page, ctx|
-              page.path ? ctx[:wiki].page_url(page.path, lang: ctx[:lang]) : 'ftp://ftp.teletypegames.org'
             end
           end
 
@@ -890,8 +860,6 @@ module UI
                     (l == :spacer ? '' : " #{l}")
                   end
                 }
-              when :about
-                BBS::Markdown.to_lines(ctx[:wiki].content('', lang: ctx[:lang]), width: width - 1, theme: ctx[:app].theme)
               when :history
                 Formatters::History.lines(ctx[:games].release_history, width)
               when :events
@@ -904,23 +872,6 @@ module UI
                 BBS::Markdown.to_lines(text, width: width - 1, theme: ctx[:app].theme)
               end
             end
-          end
-
-          window :howtos, type: :master_detail do |window_spec|
-            window_spec.accent Accent::STYLES[:read]
-            window_spec.maximizable true
-            window_spec.title         ' Tech HowTos '
-            window_spec.list_width    { |ctx| [34, ctx[:app].cols / 3].max }
-            window_spec.empty_message '  (the how-to feed did not answer — try again later)'
-            window_spec.items         { |ctx| ctx[:site].howtos }
-            window_spec.item_label    { |h, _ctx| h.title }
-            window_spec.render_detail do |h, width, ctx|
-              path = h.url.sub(%r{\Ahttps://wiki\.teletypegames\.org/?}, '')
-              text = ctx[:wiki].content(path)
-              text = "# #{h.title}\n\n#{h.description}" if text.to_s.strip.empty?
-              BBS::Markdown.to_lines(text, width: width - 1, theme: ctx[:app].theme)
-            end
-            window_spec.bottom_meta { |h, _ctx| h.url }
           end
 
           # Every door with what it is, the way the old boards had a door menu.
@@ -1010,19 +961,6 @@ module UI
               end
             end
 
-            menu '&Read' do
-              item '&Platform Guides', hint: 'The wiki on the platforms we make games for' do
-                open_window(:wiki, section: :platforms)
-              end
-              item '&Engines', hint: 'The wiki on our engines and tools: rubbs, WarpEngine and the rest' do
-                open_window(:wiki, section: :engines)
-              end
-              item '&DOS Corner', hint: 'Our DOS programs and how DOSINST installs them over the network' do
-                open_window(:wiki, section: :dos)
-              end
-              item 'Tech &HowTos', hint: 'The how-tos of teletypegames.org/howtos' do open_window(:howtos) end
-            end
-
             menu '&People' do
               item '&Who is Online', hint: 'The nodes: who is on, what they are doing, for how long' do
                 open_window(:online_users)
@@ -1063,11 +1001,6 @@ module UI
                   open_window(:register)
                 end
               end
-              item 'Lan&guage EN/HU', hint: 'The wiki pages in English or in Hungarian' do
-                context[:lang] = context[:lang] == 'hu' ? 'en' : 'hu'
-                BBS::Dialogs.message(self, context[:lang] == 'hu' ? 'Wiki pages now in Hungarian.' : 'Wiki pages now in English.',
-                                     title: ' Language ')
-              end
               separator
               item 'Sysop &Console', enabled: -> { sysop? }, hint: 'Stats and broadcasts, for the sysops' do
                 open_window(:sysop_console)
@@ -1097,7 +1030,7 @@ module UI
                   'Teletype BBS — the telnet board of Teletype Games, powered by rubbs. ' \
                   'Board: the dashboard, news, bulletins, the dev log. Messages: boards, mail, oneliners, live chat, ' \
                   'IRC and the voting booth. Files: the file areas, the game catalog, the FTP server and the ANSI art. ' \
-                  'Read: the wiki guides and how-tos. People, Doors, You. Lost? F1 asks the TTG Master.',
+                  'People, Doors, You. The wiki is on the TTG Wiki BBS (Board > BBS Network). Lost? F1 asks the TTG Master.',
                   title: ' About ', width: 64)
               end
             end

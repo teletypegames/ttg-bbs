@@ -3,11 +3,11 @@
 module UI
   module Petscii
     class Board
-      # The colours of a wiki page on the C64, in the keys of a BBS::Theme.
+      # The colours of a bulletin on the C64, in the keys of a BBS::Theme.
       MARKDOWN = { text: LG, text_bright: WH, accent: YE, label: CY, text_dim: GR }.freeze
 
       BULLETINS = [
-        ['The logon bulletin', :logon], ['About Teletype Games', :about], ['The story so far', :history],
+        ['The logon bulletin', :logon], ['About Teletype Games', 'about.md'], ['The story so far', :history],
         ['Coming up', :events], ['Board rules', 'rules.md'], ['New to BBSes?', 'newcomers_c64.md'],
         ['Our BBS network', :network]
       ].freeze
@@ -141,57 +141,6 @@ module UI
         @screen.page(game.title.upcase[0, 30], lines)
       end
 
-      # ── the wiki ───────────────────────────────────────────────────────
-
-      def wiki
-        loop do
-          doing('Wiki')
-          sections = [*TeletypeBBS::WIKI_SECTIONS.keys, :howtos, :language]
-          section = @screen.pick('WIKI & HOW-TOS', sections, right: "#{@ctx[:lang] || 'en'} ") do |s|
-            case s
-            when :howtos   then 'Tech How-tos'
-            when :language then "#{WH}language: #{@ctx[:lang] == 'hu' ? 'magyar' : 'english'}#{LG}"
-            else TeletypeBBS::WIKI_SECTIONS[s][:title]
-            end
-          end
-          case section
-          when nil       then return
-          when :language then @ctx[:lang] = @ctx[:lang] == 'hu' ? 'en' : 'hu'
-          when :howtos   then howtos
-          else wiki_section(section)
-          end
-        end
-      end
-
-      def wiki_section(section)
-        spec = TeletypeBBS::WIKI_SECTIONS[section]
-        loop do
-          pages = @bbs.wiki.section(spec[:prefix], lang: lang)
-          page  = @screen.pick(spec[:title].upcase, pages, empty: '(no pages found)') do |p|
-            depth = p.path.count('/') - spec[:prefix].count('/')
-            "#{' ' * depth}#{p.title}"
-          end
-          return unless page
-
-          @screen.page(page.title.upcase[0, 30],
-                       markdown(@bbs.wiki.content(page.path, lang: lang)) +
-                       ['', *urls(@bbs.wiki.page_url(page.path, lang: lang))])
-        end
-      end
-
-      def howtos
-        loop do
-          howto = @screen.pick('TECH HOW-TOS', @bbs.site.howtos, empty: '(the how-to feed did not answer)', &:title)
-          return unless howto
-
-          text = @bbs.wiki.content(howto.url.sub(%r{\Ahttps://wiki\.teletypegames\.org/?}, ''))
-          text = "# #{howto.title}\n\n#{howto.description}" if text.to_s.strip.empty?
-          @screen.page(howto.title.upcase[0, 30], markdown(text) + ['', *urls(howto.url)])
-        end
-      end
-
-      def lang = @ctx[:lang] || 'en'
-
       # ── news, bulletins, dev log ───────────────────────────────────────
 
       def news
@@ -231,7 +180,6 @@ module UI
       def bulletin_lines(kind)
         case kind
         when :logon   then logon_bulletin
-        when :about   then markdown(@bbs.wiki.content('', lang: lang))
         when :history then history
         when :events  then events(10)
         when :network

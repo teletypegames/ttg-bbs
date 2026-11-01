@@ -321,23 +321,6 @@ module UI
         end
       end
 
-      module Dos
-        FTP_INTRO = <<~MD
-          # The DOS corner
-
-          Our DOS programs live on the FTP server, and they install each other.
-
-          - **Server:** `ftp.teletypegames.org`, port 21, anonymous, read-only, passive mode
-          - **/APPS** — DOS programs (GMENU, DOSINST, BMAGIC, TTGWIKI…)
-          - **/WIKI** — this wiki exported for DOS, read by TTGWIKI
-          - **/WARP** — every game file of the teletypegames.org catalog
-
-          Start with **DOSINST**: it installs, updates and removes the others
-          over the network (mTCP, packet driver). The pages on the left tell
-          each program's story.
-        MD
-      end
-
       module SystemInfo
         def self.format_uptime(start)
           return '–' unless start

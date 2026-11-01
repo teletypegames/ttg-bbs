@@ -370,7 +370,7 @@ module UI
       module Bulletins
         LIST = [
           { label: ' 1  The logon bulletin',      kind: :logon },
-          { label: ' 2  About Teletype Games',    kind: :about },
+          { label: ' 2  About Teletype Games',    kind: :file, file: 'about.md' },
           { label: ' 3  The story so far',        kind: :history },
           { label: ' 4  Coming up',               kind: :events },
           { label: ' 5  Board rules',             kind: :file, file: 'rules.md' },

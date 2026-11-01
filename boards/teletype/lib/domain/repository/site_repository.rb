@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
 require 'time'
-require 'cgi'
 require_relative 'http_json'
 
 # The public teletypegames.org endpoints that are not the catalog:
-# upcoming events, the team roster, the how-tos and the blog (written on
+# upcoming events, the team roster and the blog (written on
 # TTG Blog BBS, served by the site's API).
 class SiteRepository
   include HttpJson
@@ -14,7 +13,6 @@ class SiteRepository
 
   Event  = Struct.new(:name, :date)
   Member = Struct.new(:nick, :real_nick, :motto)
-  HowTo  = Struct.new(:title, :url, :description)
   Post   = Struct.new(:title, :summary, :slug, :author, :created_at) do
     def url = "https://teletypegames.org/blog/#{slug}"
   end
@@ -43,21 +41,6 @@ class SiteRepository
     []
   end
 
-  # The tech how-tos of teletypegames.org/howtos: wiki pages, from the RSS
-  # feed. A feed this plain needs no XML parser.
-  def howtos
-    cached(:howtos) do
-      uri = URI("#{API_URL}/rss/howtos")
-      xml = Net::HTTP.get(uri).force_encoding(Encoding::UTF_8)
-      xml.scan(%r{<item>(.*?)</item>}m).map do |(item)|
-        HowTo.new(tag(item, 'title'), tag(item, 'link'), tag(item, 'description'))
-      end
-    end
-  rescue StandardError => e
-    warn "SiteRepository howtos error: #{e}"
-    []
-  end
-
   def blog_posts
     cached(:blog_posts) do
       get_json("#{API_URL}/blog/posts").fetch('posts', []).filter_map do |p|
@@ -69,13 +52,5 @@ class SiteRepository
   rescue StandardError => e
     warn "SiteRepository blog error: #{e}"
     []
-  end
-
-  private
-
-  def tag(item, name)
-    raw = item[%r{<#{name}>(.*?)</#{name}>}m, 1].to_s
-    raw = raw.sub(/\A<!\[CDATA\[(.*)\]\]>\z/m, '\\1')
-    CGI.unescapeHTML(raw).strip
   end
 end

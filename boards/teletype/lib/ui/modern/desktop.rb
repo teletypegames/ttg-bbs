@@ -6,7 +6,7 @@ module UI
     # menu on its frame and on its focused title, the dashboard's panels the
     # colour of what they show, so a caller sees where a window belongs.
     module Accent
-      COLORS = { board: 116, messages: 78, files: 214, read: 111, people: 176, doors: 209, you: 146,
+      COLORS = { board: 116, messages: 78, files: 214, people: 176, doors: 209, you: 146,
                  help: 220 }.freeze
 
       def self.fg(section) = "\e[0;38;5;#{COLORS.fetch(section)};48;5;16m"
