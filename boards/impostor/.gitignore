@@ -3,4 +3,4 @@
 .ruby-lsp
 tmp
 vendor
-data/sessions.csv
+data/

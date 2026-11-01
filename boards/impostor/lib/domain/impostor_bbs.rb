@@ -1,18 +1,19 @@
 # frozen_string_literal: true
 
-# The board itself, whatever terminal a caller has. The debrief terminal and
-# its rules live in the impostor gem (lib/impostor), which the Teletype BBS
-# mounts as a door too; the board only gives it a sessions store. Both faces
-# (lib/ui/modern, lib/ui/petscii) work on one instance of it.
+# The board itself, whatever terminal a caller has, and the only place that
+# reads ENV. The debrief terminal and its code check live in the impostor gem
+# (lib/impostor), which another rubbs BBS can mount as a door; the board gives
+# it its sessions, kept by the domain (lib/domain). Both faces (lib/ui/modern,
+# lib/ui/petscii) work on one instance of it.
 class ImpostorBBS
   ROOT = File.expand_path('../..', __dir__)
 
   attr_reader :sessions
 
-  def initialize
-    @sessions = Impostor.sessions_store(File.expand_path(ENV.fetch('IMPOSTOR_BBS_SESSIONS', 'data/sessions.csv'), ROOT))
+  def initialize(env = ENV)
+    path      = File.expand_path(env.fetch('IMPOSTOR_BBS_SESSIONS', 'data/sessions.sqlite3'), ROOT)
+    sessions  = SessionRepository.new(path)
+    warn "impostor-bbs: #{sessions.count} sessions in #{path}"
+    @sessions = SessionService.new(sessions)
   end
-
-  # The services by name.
-  def services = { sessions: @sessions }
 end

@@ -11,10 +11,12 @@ GEM
   specs:
     artii (2.1.2)
     ast (2.4.3)
+    csv (3.3.7)
     json (3.1.0)
     language_server-protocol (3.17.0.6)
     lint_roller (1.1.0)
     mini_portile2 (2.8.9)
+    minitest (5.27.0)
     parallel (2.3.0)
     parser (3.3.13.0)
       ast (~> 2.4.1)
@@ -22,6 +24,7 @@ GEM
     prism (1.9.0)
     racc (1.8.1)
     rainbow (3.1.1)
+    rake (13.4.2)
     regexp_parser (2.13.1)
     rubocop (1.92.2)
       json (>= 2.3)
@@ -55,6 +58,9 @@ PLATFORMS
 
 DEPENDENCIES
   bbs!
+  csv (~> 3.3)
+  minitest (~> 5.25)
+  rake (~> 13.0)
   rubocop
 
 BUNDLED WITH
