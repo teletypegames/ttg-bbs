@@ -110,7 +110,8 @@ telnet localhost 2323      # directly (BBS_PORT)
 | `TTG_GATE_BBS_DISCORD_WEBHOOK` | empty | Discovery: where import alerts go; empty: off |
 | `TTG_GATE_BBS_DIAL_WINDOW` | `600` | Discovery: the window of the per-caller dial limit, seconds |
 | `TTG_GATE_BBS_DIAL_PER_CALLER` | `10` | Discovery: the dials one caller may make in the window |
-| `TTG_GATE_BBS_DIAL_PER_HOST` | `3` | Discovery: the lines from the gate to one host at once |
+| `TTG_GATE_BBS_DIAL_PER_HOST` | `3` | Discovery: the lines from the gate to one address at once |
+| `TTG_GATE_BBS_DIAL_IDLE` | `600` | Discovery: the seconds a relayed line may stay silent both ways |
 | `TTG_GATE_BBS_DATA` | `data` | Discovery: the data folder |
 | `TTG_GATE_BBS_DISCOVERY_DB` | `data/discovery.sqlite3` | Discovery: the catalog |
 | `TTG_GATE_BBS_DISCOVERY_OPTOUT` | `config/discovery-optout.yml` | Discovery: the opt-out list |
@@ -181,7 +182,7 @@ these lists publish.
 | [fsxNet nodelist](https://fsxnet.nz) | nodelist in the info pack | 38 | fsxNet |
 | [Micronet nodelist](https://minftn.outpostbbs.net) | nodelist | 14 | Micronet |
 | [Synchronet BBS List](https://www.synchro.net/sbbslist.html) | HTML export of Vertrauen | 235 | Synchronet BBS List, synchro.net |
-| [SyncTERM BBS list](http://synchro.net/syncterm.lst) | SyncTERM ini (the SBL export) | 243 | SyncTERM BBS list, synchro.net |
+| [SyncTERM BBS list](https://synchro.net/syncterm.lst) | SyncTERM ini (the SBL export) | 243 | SyncTERM BBS list, synchro.net |
 | [CBBS Outpost](https://www.commodorebbs.com) (Commodore boards) | the site's public JSON (`/api/bbs`) | 198 | CBBS Outpost (commodorebbs.com) |
 | [Telnet BBS Guide](https://www.telnetbbsguide.com) | the monthly IBBSmmyy.ZIP: its full listing and EtherTerm phonebook | 1060 | Telnet BBS Guide (telnetbbsguide.com), used with permission |
 
@@ -203,6 +204,13 @@ never the e-mail or the description (a description only tells whether it names
 PETSCII), and the SSH, web-only and dial-up entries are left out. The country of a board comes from
 [DB-IP](https://db-ip.com)'s IP to Country Lite database (CC BY 4.0: "IP
 Geolocation by DB-IP"), our own copy downloaded monthly into `data/geoip/`.
+
+Every list is downloaded over https through `BBS::HTTP` (at most 32 MB, five
+redirects, each to an http or https host on the public internet only), a zip
+member is inflated 64 KB at a time and stops at 16 MB, and every text field is
+cleaned of control and bidi characters (`BBS::Text.clean`) before it is stored,
+so a list cannot point the importer at the Docker network, fill the prober's
+memory, or draw on a caller's screen.
 
 Each format has its own parser with a test fixture (synthetic samples in
 `test/fixtures/discovery/`). One endpoint is one `host:port`: two lists naming
@@ -369,13 +377,21 @@ Only a board of the catalog can be dialled, by its page: there is no free
 `host:port`, so the gate is no open telnet relay. The rules
 (`Discovery::DialService`):
 
-- **10 dials in 10 minutes a caller.** A caller is its IP address; a line from
-  a private address (bbsweb carries all its callers from the same host) counts
-  by its connection.
-- **3 lines to one host at once** from the gate.
-- Both limits are the defaults of `TTG_GATE_BBS_DIAL_WINDOW`,
-  `TTG_GATE_BBS_DIAL_PER_CALLER` and `TTG_GATE_BBS_DIAL_PER_HOST` (a value that
-  is not a positive number keeps the default, with a warning).
+- **Only the public internet.** The board's name is resolved once; every
+  address must be public (`BBS::Address.public?`: no private, loopback,
+  link-local, CGNAT, documentation, multicast or reserved range) and the port no
+  well-known port of another service (`Address::SERVICE_PORTS`). The line goes
+  to that address, never to the name again.
+- **10 dials in 10 minutes a caller.** A caller is its IP address, an IPv6 one
+  its /64; a line from a private address (bbsweb carries all its callers from
+  the same host) counts by its connection.
+- **3 lines to one address at once** from the gate: the address the board's
+  name resolved to, so two listed names of one machine share them.
+- **A silent line ends** after 600 seconds with no byte either way.
+- The limits are the defaults of `TTG_GATE_BBS_DIAL_WINDOW`,
+  `TTG_GATE_BBS_DIAL_PER_CALLER`, `TTG_GATE_BBS_DIAL_PER_HOST` and
+  `TTG_GATE_BBS_DIAL_IDLE` (a value that is not a positive number keeps the
+  default, with a warning).
 - On the modern face a board made for a C64 only (PETSCII and no other
   encoding seen) asks first: it would be noise there. The C64 face dials
   PETSCII boards only. A dead board asks first too, on either face.
@@ -424,7 +440,7 @@ from the list.
 bin/discovery-import            # fetch every list into data/discovery.sqlite3
 bin/discovery-report            # boards a source and their overlap, states, PETSCII measured vs claimed, tags
 bin/discovery-prober --limit 20 # 20 calls, then stop (without --limit: a daemon)
-bin/discovery-test              # the tests (minitest)
+bin/discovery-test              # the tests (minitest, no network)
 ```
 
 On the server the prober runs as the `ttg-gate-bbs-prober` service of
@@ -465,7 +481,8 @@ lib/
   ui/modern/own_servers.rb             the dialing menu of our own boards on an ANSI terminal
   ui/modern/discovery/                 Global Discovery: home, menus, lists, the board page, search, sources
   ui/petscii.rb                        the PETSCII face: the call, its node number, goodbye
-  ui/petscii/gate.rb                   one C64 call: the frame, the tabs, the sub-menu focus, the keys, dialling, find
+  ui/petscii/gate.rb                   one C64 call: the frame, the tabs, the sub-menu focus, the keys
+  ui/petscii/gate/                     its places (Places), its calls (Dialing) and its find line (Input)
   ui/petscii/chrome.rb                 the header, the tabs, the sub-menu and the hint bar
   ui/petscii/layout.rb                 the 40×25 grid of the frame and the drawing helpers
   ui/petscii/diff.rb                   the changed cells as PETSCII, row by row
@@ -479,13 +496,14 @@ lib/
   domain/discovery/model/              a source record, a probe result, a board state, a source; a listing, a board page, a search
   domain/discovery/parser/             one parser a list format
   domain/discovery/repository/         the SQLite catalog, the config, the opt-outs, HTTP, zip, DB-IP; the gate's reads
-  domain/discovery/service/            import, prober, telnet probe, state rules, banner rules, tags, report;
+  domain/discovery/service/            import, prober, probe recorder, telnet probe, state rules, banner rules, tags, report;
                                        the gate's browse, banner preview and dial rules
 ```
 
 ## Deploy
 
-A push to master deploys from Woodpecker: RuboCop and the Discovery tests, a compose check, then
+A push to master deploys from Woodpecker: RuboCop (the bbs-board template, Metrics on), the Discovery
+tests, a compose check, then
 `ci-deploy ttg-gate-bbs` on the server (infra/host-config), which runs the stack in
 `/srv/stacks/ttg-gate-bbs`. The image runs the rubbs revision of `Gemfile.lock`, as uid 1000.
 
