@@ -33,13 +33,10 @@ module UI
 
       # A numbered list filling the screen under its title bar.
       def pick(heading, items, empty: EMPTY, right: '', &label)
+        return nothing(heading, empty, right: right) if items.empty?
+
         label ||= :to_s.to_proc
         title(heading, right)
-        if items.empty?
-          say(empty, GR)
-          pause
-          return nil
-        end
         choice = BBS::Selector.list(session, items, width: cols - 1, height: footer_row - 2, fill: true,
                                                     hint: 'crsr/number  return: open  q: back', colors: FULL,
                                                     exits: { 'q' => nil }) { |item| plain(label.call(item)) }
@@ -61,33 +58,20 @@ module UI
       #
       # Returns the key of an action, or nil.
       def view(heading, lines, right: '', actions: [])
-        lines = fit(lines)
-        lines = [" #{GR}#{EMPTY}#{LG}"] if lines.empty?
-        size  = footer_row - 2 - (actions.empty? ? 0 : 1)
-        pages = lines.each_slice(size).to_a
+        pages = view_pages(lines, actions)
         keys  = actions.to_h { |k, _| [k, k] }
         index = 0
         loop do
-          view_page(heading, right, pages, index, size, actions)
-          loop do
-            k    = key
-            last = index == pages.size - 1
-            k    = k.downcase if k.is_a?(String)
-            return nil if [:escape, :interrupt, 'q'].include?(k) || (k == :enter && last)
-            return keys[k] if keys.key?(k)
+          view_page(heading, right, pages, index, actions)
+          move = turn(keys, index, pages.size)
+          return move.key if move.is_a?(Leave)
 
-            turn = case k
-                   when :enter, ' ', '+', :down, :right, :page_down then last ? 0 : 1
-                   when '-', :up, :left, :page_up then index.zero? ? 0 : -1
-                   else 0
-                   end
-            next if turn.zero?
-
-            index += turn
-            break
-          end
+          index += move
         end
       end
+
+      # A key that leaves the #view: +key+ is the action's, nil for none.
+      Leave = Data.define(:key)
 
       # +question+ in the footer when the view has one, a yes/no row the
       # cursor moves along under it; elsewhere the question under the text.
@@ -121,30 +105,75 @@ module UI
 
       private
 
-      def view_page(heading, right, pages, index, size, actions)
+      # The lines of a #view in pages, as many as fit over its footer.
+      def view_pages(lines, actions)
+        lines = fit(lines)
+        lines = [" #{GR}#{EMPTY}#{LG}"] if lines.empty?
+        lines.each_slice(view_rows(actions)).to_a
+      end
+
+      def view_rows(actions) = footer_row - 2 - (actions.empty? ? 0 : 1)
+
+      # The keys of a page until one turns it or leaves the view: the step
+      # (1 or -1), or a Leave.
+      def turn(keys, index, count)
+        last = index == count - 1
+        loop do
+          k = view_key
+          return Leave.new(nil) if [:escape, :interrupt, 'q'].include?(k) || (k == :enter && last)
+          return Leave.new(keys[k]) if keys.key?(k)
+
+          step = step(k, index, last)
+          return step unless step.zero?
+        end
+      end
+
+      def view_key
+        k = key
+        k.is_a?(String) ? k.downcase : k
+      end
+
+      def step(k, index, last)
+        case k
+        when :enter, ' ', '+', :down, :right, :page_down then last ? 0 : 1
+        when '-', :up, :left, :page_up then index.zero? ? 0 : -1
+        else 0
+        end
+      end
+
+      def view_page(heading, right, pages, index, actions)
         title(heading, right)
-        chunk = pages[index]
-        chunk.each { |l| puts l }
-        (size - chunk.size).times { puts }
+        pages[index].each { |l| puts l }
+        (view_rows(actions) - pages[index].size).times { puts }
         puts " #{GR}editor#{LG} #{actions.map { |k, label| "#{YE}#{k.upcase}#{LG} #{label}" }.join('  ')}" if actions.any?
+        write page_footer(pages, index)
+        @at = [footer_row, cols]
+      end
+
+      def page_footer(pages, index)
         last = index == pages.size - 1
         keys = [last ? 'return: back' : 'return: more', ('-: before' unless index.zero?), ('q: back' unless last)]
-        write footer_bar(keys.compact.join('  '), pages.size > 1 ? "#{index + 1}/#{pages.size} " : '')
-        @at = [footer_row, cols]
+        footer_bar(keys.compact.join('  '), pages.size > 1 ? "#{index + 1}/#{pages.size} " : '')
       end
 
       # +text+ on the two rows over the footer bar, and the cursor
       # at the start of the footer bar.
       def footer_text(text, color)
-        lines = wrap(plain(text), cols - 2).first(2)
-        lines.unshift('') while lines.size < 2
         cursor = BBS::Cursor.new(session, row: @at[0], col: @at[1])
         out    = +''
+        lines  = footer_lines(text)
         lines.each_with_index do |line, i|
           out << cursor.move(footer_row - lines.size + i, 1) << " #{color}#{line.ljust(cols - 2)}#{LG}"
           cursor.wrote(cols - 1)
         end
         write(out << cursor.move(footer_row, 1))
+      end
+
+      # +text+ on two rows, at the bottom of them.
+      def footer_lines(text)
+        lines = wrap(plain(text), cols - 2).first(2)
+        lines.unshift('') while lines.size < 2
+        lines
       end
     end
   end

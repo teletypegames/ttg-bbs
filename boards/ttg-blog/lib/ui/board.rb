@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 require_relative 'screen'
+require_relative 'post_page'
+require_relative 'board/account'
+require_relative 'board/composer'
 
 module UI
   # One call of the blog, line by line on either face: the readers' menu (the
@@ -11,38 +14,17 @@ module UI
   # TTGBlogBBS; a face (UI::Modern::Board, UI::Petscii::Board) gives it its
   # FACE, its screen and its masthead.
   class Board
-    LOGIN_TRIES = 3
+    include Account
+    include Composer
 
     MOTTO = 'news from teletype games'
-
-    ERRORS = {
-      no_title:     'The post needs a title.',
-      long_title:   "The title is longer than #{PostService::MAX_TITLE} characters.",
-      long_summary: "The summary is longer than #{PostService::MAX_SUMMARY} characters.",
-      long_body:    'The body is too long.',
-      bad_category: 'Pick a category from the list.',
-      not_saved:    'The post could not be saved. Try again later.'
-    }.freeze
 
     # The name on the masthead, in BBS::BlockFont.
     LOGO = 'TTG BLOG'
 
-    # A post as the board pages it, +width+ columns wide; the web shows the
-    # C64 screen of a post from the same lines.
-    def self.post_lines(categories, post, width:, long_dates: width >= 58)
-      wrap = ->(text) { BBS::FrameBuffer.wrap_ansi(text.to_s, width) }
-      date = ->(time) { time.localtime.strftime(long_dates ? '%Y-%m-%d %H:%M' : '%Y-%m-%d') }
-      meta = [categories.find(post.category).name, date.call(post.created_at), post.author].compact.join(' · ')
-      lines = wrap.call(post.title).map { |l| " #{WH}#{l}#{LG}" }
-      lines << " #{GR}#{meta}#{LG}"
-      lines << " #{GR}updated #{date.call(post.updated_at)}#{LG}" if post.updated?
-      lines << " #{RD}unpublished: only the editors see it#{LG}" unless post.published
-      lines << ''
-      lines.concat(wrap.call(post.summary).map { |l| " #{CY}#{l}#{LG}" }) unless post.summary.empty?
-      lines << " #{DG}#{'─' * (width - 1)}#{LG}"
-      body = post.body.strip.empty? ? '*(no text yet)*' : post.body
-      lines.concat(BBS::Markdown.to_lines(body, width: width, theme: MARKDOWN).map { |l| " #{l}" })
-    end
+    # The main menu's keys and what they do; q hangs up.
+    ACTIONS = { 'l' => :latest, 'u' => :unpublished, 'c' => :categories, 'g' => :go_to, 'e' => :login,
+                'w' => :compose, 'p' => :password, 'o' => :log_out }.freeze
 
     def initialize(bbs, screen, ctx)
       @posts      = bbs.posts
@@ -56,18 +38,9 @@ module UI
       start
       loop do
         choice = main_choice
-        case choice
-        when PostModel then show(choice.id)
-        when 'l' then browse('LATEST POSTS') { @posts.all(published: shown) }
-        when 'u' then browse('UNPUBLISHED POSTS') { @posts.all(published: false) }
-        when 'c' then categories
-        when 'g' then go_to
-        when 'e' then login
-        when 'w' then compose
-        when 'p' then password
-        when 'o' then @ctx.delete(:user)
-        when 'q' then return
-        end
+        return if choice == 'q'
+
+        choice.is_a?(PostModel) ? show(choice.id) : ACTIONS[choice]&.then { |action| __send__(action) }
       end
     end
 
@@ -120,6 +93,12 @@ module UI
     end
 
     def face = self.class::FACE
+
+    def latest = browse('LATEST POSTS') { @posts.all(published: shown) }
+
+    def unpublished = browse('UNPUBLISHED POSTS') { @posts.all(published: false) }
+
+    def log_out = @ctx.delete(:user)
 
     def user = @ctx[:user]
 
@@ -198,7 +177,7 @@ module UI
       end
     end
 
-    def post_lines(post) = Board.post_lines(@categories, post, width: @screen.width, long_dates: wide?)
+    def post_lines(post) = PostPage.lines(@categories, post, width: @screen.width, long_dates: wide?)
 
     # Publishes the post, or takes it back to the editors. True when changed.
     def publish?(post, published)
@@ -216,159 +195,6 @@ module UI
       @posts.delete(post.id)
       @screen.notice('Deleted.', GN, gap: false)
       true
-    end
-
-    def login
-      if @ctx[:tries].to_i >= LOGIN_TRIES
-        @screen.puts
-        @screen.say('No more tries on this call.', RD)
-        @screen.pause
-        return
-      end
-
-      @screen.title('EDITOR LOGIN', right)
-      @screen.say('For the editors of the blog. Return alone: back.', GR)
-      @screen.puts
-      name = @screen.ask(" #{WH}name#{LG}> ", max: EditorService::MAX_NAME)
-      return if name.empty?
-
-      pass = @screen.ask(" #{WH}password#{LG}> ", mask: '*', max: 200)
-      found = @editors.authenticate(name, pass)
-      @screen.puts
-      if found
-        @ctx[:user] = found
-        @screen.say("Welcome, #{found.name}. Open a post to edit it, or write a new one.", GN)
-      else
-        @ctx[:tries] = @ctx[:tries].to_i + 1
-        warn "ttg-blog-bbs: failed login for #{name.inspect} (#{@ctx[:session_id]})"
-        sleep 1
-        @screen.say('Wrong name or password.', RD)
-      end
-      @screen.pause
-    end
-
-    def password
-      @screen.title('CHANGE PASSWORD', right)
-      @screen.say("At least #{EditorService::MIN_PASS} characters. Return alone: back.", GR)
-      @screen.puts
-      old = @screen.ask(" #{WH}current#{LG}> ", mask: '*', max: 200)
-      return if old.empty?
-
-      fresh = @screen.ask(" #{WH}new#{LG}> ", mask: '*', max: 200)
-      again = @screen.ask(" #{WH}again#{LG}> ", mask: '*', max: 200)
-      @screen.puts
-      if !@editors.authenticate(user.name, old)
-        @screen.say('The current password is wrong.', RD)
-      elsif fresh != again
-        @screen.say('The two new ones differ.', RD)
-      elsif @editors.set_password(user.name, fresh) == :ok
-        @screen.say('Password changed.', GN)
-      else
-        @screen.say("The new password needs at least #{EditorService::MIN_PASS} characters.", RD)
-      end
-      @screen.pause
-    end
-
-    # A new post, or +post+ edited: the fields one after the other for a new
-    # one, then a menu of fields until it is saved or dropped. True when saved.
-    def compose(post = nil)
-      draft = if post
-                { title: post.title, summary: post.summary, body: post.body, category: post.category }
-              else
-                new_draft
-              end
-      return false unless draft
-
-      saved = post ? draft.dup : {}
-      loop do
-        case draft_choice(draft, post)
-        when 't' then (t = ask_title(draft[:title])) && draft[:title] = t
-        when 'c' then (c = pick_category) && draft[:category] = c
-        when 's' then draft[:summary] = ask_summary(draft[:summary])
-        when 'b' then (b = edit_body(draft[:body])) && draft[:body] = b
-        when 'v' then preview(draft)
-        when 'w' then return true if save?(draft, post)
-        when 'q' then return false if draft == saved || drop?
-        end
-      end
-    end
-
-    def new_draft
-      title = ask_title('')
-      return nil unless title
-
-      category = pick_category
-      return nil unless category
-
-      summary = ask_summary('')
-      body    = edit_body('')
-      { title: title, summary: summary, body: body || '', category: category }
-    end
-
-    def draft_screen(draft, post)
-      @screen.title(post ? "EDIT POST #{post.id}" : 'NEW POST', right)
-      field('T', 'title', draft[:title])
-      field('C', 'category', @categories.find(draft[:category]).name)
-      field('S', 'summary', draft[:summary].empty? ? '-' : draft[:summary])
-      field('B', 'body', "#{draft[:body].lines.size} lines")
-      @screen.puts
-      @screen.puts " #{YE}V#{LG} view  #{YE}W#{LG} save  #{YE}Q#{LG} quit"
-    end
-
-    def field(key, name, value)
-      @screen.puts " #{YE}#{key}#{LG} #{GR}#{name}#{LG}"
-      @screen.wrap(value, @screen.width - 3).first(3).each { |l| @screen.puts "    #{l}" }
-    end
-
-    # The title in a field, the current one to start from. Nil when the
-    # caller quit or left it empty.
-    def ask_title(current)
-      @screen.title('TITLE', right)
-      @screen.say("Up to #{PostService::MAX_TITLE} characters. Return alone or Stop: back.", GR)
-      @screen.puts
-      title = @screen.ask(" #{WH}title#{LG}> ", text: current, max: PostService::MAX_TITLE)
-      title.empty? ? nil : title
-    end
-
-    # The summary in the editor; the current one when the caller quit.
-    def ask_summary(current)
-      summary = @screen.edit(current, title: 'SUMMARY', single_line: true, max: PostService::MAX_SUMMARY)
-      summary.nil? ? current : summary.strip
-    end
-
-    def pick_category
-      @screen.pick('CATEGORY', @categories.all, empty: 'no categories are configured.', right: right, &:name)&.id
-    end
-
-    def preview(draft)
-      post = PostModel.new(id: 0, slug: '', **draft, author: user.name, face: face, published: true,
-                            published_at: nil, created_at: Time.now, updated_at: Time.now)
-      @screen.page('PREVIEW', post_lines(post), right: right)
-    end
-
-    def save?(draft, post)
-      result = if post
-                 @posts.update(post.id, **draft)
-               else
-                 @posts.create(author: user, face: face, **draft)
-               end
-      if result.is_a?(Symbol)
-        @screen.notice(ERRORS.fetch(result, 'The post could not be saved.'), RD)
-        return false
-      end
-      @screen.notice(post ? 'Saved.' : saved_new(result), GN)
-      true
-    end
-
-    def saved_new(post)
-      "Saved as number #{post.id}, unpublished: only the editors see it. Open it and press P to publish it."
-    end
-
-    def drop? = @screen.confirm?('Drop the changes?', RD)
-
-    # The body in the editor, in Markdown; nil when the caller quit.
-    def edit_body(body)
-      @screen.edit(body.to_s, title: 'BODY (MARKDOWN)', max: PostService::MAX_BODY)&.rstrip
     end
   end
 end

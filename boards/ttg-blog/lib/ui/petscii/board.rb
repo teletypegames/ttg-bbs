@@ -31,11 +31,7 @@ module UI
       def start; end
 
       def main_choice
-        menu  = menu_items
-        room  = @screen.footer_row - MASTHEAD_ROWS - 2 - 2 - menu.size
-        posts = @posts.all(published: shown, limit: room)
-        latest = posts.empty? ? [S.heading("#{GR}no posts yet")] : posts.each_with_index.map { |p, i| headline(p, i) }
-        items = [S.heading(rule_label('latest')), *latest, S.heading(rule_label('menu')), *menu]
+        items = front_items
         @screen.cls
         @screen.puts
         Board.logo.each { |l| @screen.puts l }
@@ -43,6 +39,15 @@ module UI
         index = items.index { |i| i.selectable? && same?(i.value, @front) }
         @front = @screen.full_menu(items, top: MASTHEAD_ROWS + 1, index: index, back: 'q',
                                           hint: 'crsr: move  return: open  q: log off')
+      end
+
+      # The newest posts, as many as the screen holds over the menu items.
+      def front_items
+        menu   = menu_items
+        room   = @screen.footer_row - MASTHEAD_ROWS - 2 - 2 - menu.size
+        posts  = @posts.all(published: shown, limit: room)
+        latest = posts.empty? ? [S.heading("#{GR}no posts yet")] : posts.each_with_index.map { |p, i| headline(p, i) }
+        [S.heading(rule_label('latest')), *latest, S.heading(rule_label('menu')), *menu]
       end
 
       def same?(value, other) = value.is_a?(PostModel) ? other.is_a?(PostModel) && other.id == value.id : value == other
@@ -110,20 +115,28 @@ module UI
       def draft_choice(draft, post)
         @screen.title(post ? "EDIT POST #{post.id}" : 'NEW POST', right)
         @screen.puts
-        summary = draft[:summary].empty? ? '-' : draft[:summary]
-        items = [field('t', 'title   ', draft[:title], 'the title of the post'),
-                 field('c', 'category', @categories.find(draft[:category]).name, 'pick another category'),
-                 field('s', 'summary ', summary, 'one paragraph over the body'),
-                 field('b', 'body    ', "#{draft[:body].lines.size} lines", 'the text, in markdown'),
-                 S.heading('─' * (COLS - 4)),
-                 S.item('view, as a reader will', key: 'v', value: 'v', about: 'the post as it will show'),
-                 S.item(post ? 'save' : "save#{GR}, unpublished#{LG}", key: 'w', value: 'w', about: save_about(post)),
-                 S.item('quit', key: 'q', value: 'q', about: 'back, without saving')]
+        items = draft_items(draft, post)
         items.concat(body_preview(draft[:body], room: draft_rows - items.size))
         choice = @screen.full_menu(items, top: 3, index: @draft_index, back: 'q',
                                           hint: 'crsr: choose  return: take  q: quit')
         @draft_index = items.index { |i| i.value == choice }
         choice
+      end
+
+      def draft_items(draft, post)
+        [*draft_fields(draft),
+         S.heading('─' * (COLS - 4)),
+         S.item('view, as a reader will', key: 'v', value: 'v', about: 'the post as it will show'),
+         S.item(post ? 'save' : "save#{GR}, unpublished#{LG}", key: 'w', value: 'w', about: save_about(post)),
+         S.item('quit', key: 'q', value: 'q', about: 'back, without saving')]
+      end
+
+      def draft_fields(draft)
+        summary = draft[:summary].empty? ? '-' : draft[:summary]
+        [field('t', 'title   ', draft[:title], 'the title of the post'),
+         field('c', 'category', @categories.find(draft[:category]).name, 'pick another category'),
+         field('s', 'summary ', summary, 'one paragraph over the body'),
+         field('b', 'body    ', "#{draft[:body].lines.size} lines", 'the text, in markdown')]
       end
 
       def save_about(post) = post ? 'keep the changes' : 'publish it with P later'

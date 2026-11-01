@@ -16,7 +16,7 @@ module UI
     # board pages it, PAGE lines a screenful. The web draws it in C64 colours.
     def self.post_screen(bbs, post)
       screen = Screen.new(nil, cols: COLS, rows: ROWS)
-      lines  = screen.fit(UI::Board.post_lines(bbs.categories, post, width: screen.width))
+      lines  = screen.fit(PostPage.lines(bbs.categories, post, width: screen.width))
       [screen.title_bar(bbs.categories.find(post.category).name.upcase, "#{bbs.posts.total(published: true)} posts "),
        *lines]
     end
