@@ -158,7 +158,7 @@ module UI
           menu '&Help' do
             item '&About' do
               BBS::Dialogs.message(self,
-                'Feedia — an RSS reader on a telnet line, from Teletype Games, powered by rubbs. ' \
+                'Feedia BBS — an RSS reader on a telnet line, from Teletype Games, powered by rubbs. ' \
                 'Pick a feed, then an item: its text opens on the right, its links numbered under it. ' \
                 'A feed missing from the list? Suggest it in the Admins menu.',
                 title: ' About ', width: 64)
@@ -207,7 +207,7 @@ module UI
           nil
         end
         call do |_ctx, runner|
-          BBS::Goodbye.modern(runner, title: 'Feedia', note: "The stories are their publishers'.")
+          BBS::Goodbye.modern(runner, title: 'Feedia BBS', note: "The stories are their publishers'.")
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           nil

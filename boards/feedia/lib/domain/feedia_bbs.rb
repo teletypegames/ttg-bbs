@@ -10,10 +10,10 @@ class FeediaBBS
   attr_reader :feeds, :inbox
 
   def initialize
-    @feeds = FeedService.new(FeedListRepository.new(ENV.fetch('FEEDIA_FEEDS', File.join(ROOT, 'config/feeds.yml'))),
+    @feeds = FeedService.new(FeedListRepository.new(ENV.fetch('FEEDIA_BBS_FEEDS', File.join(ROOT, 'config/feeds.yml'))),
                              FeedRepository.new)
-    @inbox = InboxService.new(InboxRepository.new(ENV.fetch('FEEDIA_INBOX', File.join(ROOT, 'data/inbox.jsonl'))),
-                              discord: DiscordRepository.new(ENV.fetch('FEEDIA_DISCORD_WEBHOOK', '')))
+    @inbox = InboxService.new(InboxRepository.new(ENV.fetch('FEEDIA_BBS_INBOX', File.join(ROOT, 'data/inbox.jsonl'))),
+                              discord: DiscordRepository.new(ENV.fetch('FEEDIA_BBS_DISCORD_WEBHOOK', '')))
   end
 
   # The services by name.

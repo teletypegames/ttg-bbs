@@ -32,7 +32,7 @@ module UI
           nil
         end
         call do |_ctx, runner|
-          BBS::Goodbye.petscii(Screen.new(runner.session), title: 'feedia', color: YE,
+          BBS::Goodbye.petscii(Screen.new(runner.session), title: 'feedia bbs', color: YE,
                                                            note: "The stories are their publishers'.")
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
@@ -64,7 +64,7 @@ module UI
           when 'w' then feedback
           when 'q' then return
           end
-          @screen.title('FEEDIA', right)
+          @screen.title('FEEDIA BBS', right)
         end
       end
 

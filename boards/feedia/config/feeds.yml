@@ -4,7 +4,7 @@
 - name: TTGBLOG
   url: https://teletypegames.org/api/v1/rss/blog
   group: Teletype Games
-  about: Our own blog, written on the TTGBLOG telnet board.
+  about: Our own blog, written on the TTG Blog BBS telnet board.
 
 - name: Hacker News
   url: https://news.ycombinator.com/rss

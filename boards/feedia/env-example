@@ -1,4 +1,4 @@
-# Every environment variable of Feedia, with its default. On the server the
+# Every environment variable of Feedia BBS, with its default. On the server the
 # secret (the webhook) goes in .env beside compose.yaml, never in the repository.
 
 # rubbs
@@ -6,8 +6,8 @@ BBS_PORT=2323
 BBS_MAX_SESSIONS=100
 
 # The feed list, and the inbox file that keeps suggestions and feedback
-FEEDIA_FEEDS=config/feeds.yml
-FEEDIA_INBOX=data/inbox.jsonl
+FEEDIA_BBS_FEEDS=config/feeds.yml
+FEEDIA_BBS_INBOX=data/inbox.jsonl
 
 # Suggestions and feedback ring this Discord webhook too; without it they only go to data/inbox.jsonl.
-FEEDIA_DISCORD_WEBHOOK=
+FEEDIA_BBS_DISCORD_WEBHOOK=

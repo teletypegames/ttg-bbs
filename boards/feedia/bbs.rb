@@ -16,7 +16,7 @@ BBS.configure do |config|
   config.mouse_on_connect = false
   config.idle_seconds     = 600
 
-  config.flow = BBS::Terminal.flow(title: 'Feedia', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs))
+  config.flow = BBS::Terminal.flow(title: 'Feedia BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs))
 end
 
 BBS.start

@@ -1,6 +1,6 @@
-# Feedia
+# Feedia BBS
 
-An RSS reader on a telnet line. Pick a feed from the list, and Feedia fetches
+An RSS reader on a telnet line. Pick a feed from the list, and Feedia BBS fetches
 it and shows its items in a form a terminal can read: the title, the date and
 the author, the text wrapped to the screen, its links numbered under it.
 Callers can suggest a new feed or send feedback to the admins. Built on the
@@ -56,9 +56,9 @@ Copy `env-example` to `.env`:
 |---|---|---|
 | `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2327) |
 | `BBS_MAX_SESSIONS` | `100` | Callers at once (compose sets 50) |
-| `FEEDIA_FEEDS` | `config/feeds.yml` | The feed list |
-| `FEEDIA_INBOX` | `data/inbox.jsonl` | Where suggestions and feedback are kept (compose mounts `./data`) |
-| `FEEDIA_DISCORD_WEBHOOK` | — | Suggestions and feedback ring this Discord webhook too |
+| `FEEDIA_BBS_FEEDS` | `config/feeds.yml` | The feed list |
+| `FEEDIA_BBS_INBOX` | `data/inbox.jsonl` | Where suggestions and feedback are kept (compose mounts `./data`) |
+| `FEEDIA_BBS_DISCORD_WEBHOOK` | — | Suggestions and feedback ring this Discord webhook too |
 
 ## Interface
 

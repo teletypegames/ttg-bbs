@@ -56,9 +56,9 @@ class InboxService
   def discord_text(message)
     who  = message.from.to_s.empty? ? 'a caller' : "**#{escape(message.from)}**"
     head = if message.kind == 'suggestion'
-             "📰 Feedia: #{who} suggests a feed: #{escape(message.name.to_s)} <#{message.url}>"
+             "📰 Feedia BBS: #{who} suggests a feed: #{escape(message.name.to_s)} <#{message.url}>"
            else
-             "💬 Feedia: feedback from #{who}"
+             "💬 Feedia BBS: feedback from #{who}"
            end
     message.text.to_s.empty? ? head : "#{head}\n>>> #{escape(message.text)}"
   end

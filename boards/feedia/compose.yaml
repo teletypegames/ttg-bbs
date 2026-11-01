@@ -13,5 +13,5 @@ services:
       - TZ=Europe/Budapest
       # Callers at once: each costs up to ~1.7 MB on top of ~30 MB, sized to mem_limit.
       - BBS_MAX_SESSIONS=50
-      - FEEDIA_DISCORD_WEBHOOK=${FEEDIA_DISCORD_WEBHOOK:-}
+      - FEEDIA_BBS_DISCORD_WEBHOOK=${FEEDIA_DISCORD_WEBHOOK:-}
     restart: unless-stopped
