@@ -21,8 +21,8 @@ demand from its public API (`api.16colo.rs/v1`): the years, a year's packs, a
 pack's files, with the artists and groups and the 16colo.rs address of each.
 Nothing is mirrored into the repository and nothing is fetched ahead: a listing
 when it is opened, a file when it is shown. Listings stay in memory for
-`PIXELIA_API_TTL` seconds; files are cached in `data/cache/` up to
-`PIXELIA_CACHE_MB`, the least recently used going first. Requests carry a
+`PIXELIA_BBS_API_TTL` seconds; files are cached in `data/cache/` up to
+`PIXELIA_BBS_CACHE_MB`, the least recently used going first. Requests carry a
 `User-Agent` naming the board and teletypegames.org.
 
 Only text art is listed: `.ans .asc .diz .nfo .txt .ice`, and any file whose
@@ -35,7 +35,7 @@ A piece is rendered by the board itself (`AnsiRenderService`): the SAUCE record
 escape sequences (SGR, cursor moves, save and restore, ED and EL) and the line
 wrap at the SAUCE width or 80, into a grid of cells. It stops at the `\x1A`
 end-of-file mark, skips what it does not understand, and cuts a huge file at
-`PIXELIA_MAX_FILE_KB` and `PIXELIA_MAX_ROWS`.
+`PIXELIA_BBS_MAX_FILE_KB` and `PIXELIA_BBS_MAX_ROWS`.
 
 - **Modern:** the piece on the whole screen in the 16 ANSI colours, iCE
   backgrounds as SGR 100–107; ↑↓ PgUp PgDn Home End scroll, ← → pan when the
@@ -60,7 +60,7 @@ double quote, the backslash, the backtick, the braces and the tilde are refused.
 
 Everybody sees everybody's paint: the modern face draws the canvas on every
 tick, the C64 face sends only the cells that changed, after every key and
-every 3 seconds. A caller paints at most `PIXELIA_PAINT_RATE` cells a second.
+every 3 seconds. A caller paints at most `PIXELIA_BBS_PAINT_RATE` cells a second.
 The canvas is written to `data/canvas.json` at most every 2 seconds, through a
 temporary file.
 
@@ -81,7 +81,7 @@ temporary file.
 
 The canvas saved under a title (32 characters) and a handle (16), newest first,
 one JSON file each in `data/works/`. A caller saves at most once in
-`PIXELIA_WALL_COOLDOWN` seconds.
+`PIXELIA_BBS_WALL_COOLDOWN` seconds.
 
 ## Running
 
@@ -103,16 +103,16 @@ with its default. The board has no secrets.
 
 | Variable | Default | |
 |---|---|---|
-| `PIXELIA_DATA` | `data` | the canvas, the Wall, the archive and the cache |
-| `PIXELIA_API_URL` | `https://api.16colo.rs` | the 16colo.rs API |
-| `PIXELIA_SITE_URL` | `https://16colo.rs` | where the raw files are |
-| `PIXELIA_USER_AGENT` | `PixeliaBBS/1.0 (+https://teletypegames.org; …)` | how the board introduces itself |
-| `PIXELIA_API_TTL` | `3600` | seconds a listing stays in memory |
-| `PIXELIA_MAX_FILE_KB` | `512` | the largest art file fetched |
-| `PIXELIA_CACHE_MB` | `100` | the disk cache of art files |
-| `PIXELIA_MAX_ROWS` | `1000` | a piece is cut after this many rows |
-| `PIXELIA_PAINT_RATE` | `20` | cells a second one caller may paint |
-| `PIXELIA_WALL_COOLDOWN` | `300` | seconds between two saves of one caller |
+| `PIXELIA_BBS_DATA` | `data` | the canvas, the Wall, the archive and the cache |
+| `PIXELIA_BBS_API_URL` | `https://api.16colo.rs` | the 16colo.rs API |
+| `PIXELIA_BBS_SITE_URL` | `https://16colo.rs` | where the raw files are |
+| `PIXELIA_BBS_USER_AGENT` | `PixeliaBBS/1.0 (+https://teletypegames.org; …)` | how the board introduces itself |
+| `PIXELIA_BBS_API_TTL` | `3600` | seconds a listing stays in memory |
+| `PIXELIA_BBS_MAX_FILE_KB` | `512` | the largest art file fetched |
+| `PIXELIA_BBS_CACHE_MB` | `100` | the disk cache of art files |
+| `PIXELIA_BBS_MAX_ROWS` | `1000` | a piece is cut after this many rows |
+| `PIXELIA_BBS_PAINT_RATE` | `20` | cells a second one caller may paint |
+| `PIXELIA_BBS_WALL_COOLDOWN` | `300` | seconds between two saves of one caller |
 
 `data/` is a volume.
 

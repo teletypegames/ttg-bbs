@@ -6,22 +6,22 @@ BBS_PORT=2323
 BBS_MAX_SESSIONS=100
 
 # Where the canvas, the Wall, the canvas archive and the art cache live
-PIXELIA_DATA=data
+PIXELIA_BBS_DATA=data
 
 # 16colo.rs: the API, the site of the raw files, and how the board introduces itself
-PIXELIA_API_URL=https://api.16colo.rs
-PIXELIA_SITE_URL=https://16colo.rs
-PIXELIA_USER_AGENT=PixeliaBBS/1.0 (+https://teletypegames.org; telnet art board of Teletype Games)
+PIXELIA_BBS_API_URL=https://api.16colo.rs
+PIXELIA_BBS_SITE_URL=https://16colo.rs
+PIXELIA_BBS_USER_AGENT=PixeliaBBS/1.0 (+https://teletypegames.org; telnet art board of Teletype Games)
 # Seconds a year's pack list or a pack's file list is kept in memory
-PIXELIA_API_TTL=3600
+PIXELIA_BBS_API_TTL=3600
 # The largest art file the board fetches, in KB
-PIXELIA_MAX_FILE_KB=512
+PIXELIA_BBS_MAX_FILE_KB=512
 # The disk cache of fetched art files (data/cache), in MB; the least recently used go first
-PIXELIA_CACHE_MB=100
+PIXELIA_BBS_CACHE_MB=100
 # A piece is cut after this many rows
-PIXELIA_MAX_ROWS=1000
+PIXELIA_BBS_MAX_ROWS=1000
 
 # The canvas: cells a second one caller may paint
-PIXELIA_PAINT_RATE=20
+PIXELIA_BBS_PAINT_RATE=20
 # The Wall: seconds between two saves of one caller
-PIXELIA_WALL_COOLDOWN=300
+PIXELIA_BBS_WALL_COOLDOWN=300
