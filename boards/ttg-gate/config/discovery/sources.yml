@@ -42,7 +42,7 @@ sources:
   - id: fsxnet
     name: "fsxNet nodelist"
     # The fsxNet info pack, rebuilt weekly; the nodelist is FSXNET.<day> inside.
-    url: "http://fsxnet.nz/fsxnet.zip"
+    url: "https://fsxnet.nz/fsxnet.zip"
     format: nodelist
     member: '\AFSXNET\.\d{3}\z'
     network: fsxnet
@@ -84,7 +84,7 @@ sources:
     # (src/syncterm/getlist.ftp fetches vert.synchro.net/Synchronet/syncterm.lst), it is this
     # export of the SBL in SyncTERM's ini format. It adds ScreenMode (C64, C128), the one
     # machine-readable PETSCII mark of the two.
-    url: "http://synchro.net/syncterm.lst"
+    url: "https://synchro.net/syncterm.lst"
     format: syncterm_lst
     licence: "Meant to be shared; credit is enough (D8)."
     attribution: "SyncTERM BBS list (SBL export), synchro.net"
