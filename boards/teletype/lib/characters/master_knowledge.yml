@@ -2,7 +2,8 @@
 # keys (whole words of the question, or a phrase of them; a trailing s does
 # not matter; board, door, game and the like weigh half). Keep the
 # menu paths the same as the menubar in lib/ui/modern.rb: Board, Messages,
-# Files, Read, People, Doors, You, Help.
+# People, Doors, You, Help. What another board of the network carries is
+# told with that board's name and port, never with a menu path of this one.
 - keys: [register, registration, password, account, signup, keep, reserve]
   fact: 'You > Register… ties the name you called with to a password; from then on that name asks for it. Anonymous cannot register, so call again with a name first.'
 - keys: [profile, signature, location, homepage, note]
@@ -19,74 +20,30 @@
   fact: 'People > User Listing lists the registered names with their calls and last call.'
 - keys: [stats, statistics, my calls, caller number, how many times]
   fact: 'You > Your Stats shows your caller number, your calls, your first and last call, your posts and votes.'
-- keys: [hall, fame, top, best, highscore, high score, most, ranking, toplist]
-  fact: 'People > Hall of Fame has the top lists: the most downloaded games, the top callers, the top posters and the TTG Trivia high scores.'
 - keys: [vote, voting, poll, polls, booth, survey, favourite, favorite]
   fact: 'Messages > Voting Booth has the polls of the board, like your favourite Teletype Games title; Enter or Vote, then the number of your choice. A name is needed to vote, and you can change your vote.'
-- keys: [mail, email, e-mail, letter, private, inbox, message someone, write to]
+- keys: [mail, email, e-mail, letter, private, inbox, message someone, write to, private message]
   fact: 'Messages > Mail… (F7) is private mail between registered names: Write, Reply, Delete. You get a bell when a letter arrives during your call.'
 - keys: [feedback, complain, complaint, contact, suggestion, report, bug]
   fact: 'Messages > Feedback to the Sysop… writes a private letter to the sysop; anyone with a name can send one.'
 - keys: [page, yell, call the sysop, talk to the sysop, sysop online]
   fact: 'Messages > Page the Sysop rings the sysop once a call; when the sysop is away, it offers to leave a letter instead.'
-- keys: [file area, file areas, areas, diz, file_id]
-  fact: 'Files > File Areas has our games as files, one area per platform, with sizes, download counts and a FILE_ID.DIZ; Enter sends a file to your terminal by ZMODEM.'
-- keys: [bulletins, rules, history, story, about, newcomer, new to bbs, what is a bbs]
-  fact: 'Board > Bulletins… has the numbered bulletins: the logon bulletin, About Teletype Games, the story so far (every release), what is coming up, the board rules, New to BBSes? and our BBS network.'
-- keys: [howto, howtos, tutorial, tech]
-  fact: 'Read > Tech HowTos reads the tech how-tos of teletypegames.org/howtos, each a wiki page.'
-- keys: [trivia, quiz, question, score, door game]
+- keys: [trivia, quiz, question, score, door game, play here]
   fact: 'Doors > TTG Trivia is a door game: ten questions about Teletype Games and the old days, 20 seconds each, with a hall of fame.'
 - keys: [team, member, members, motto, crew, group]
   fact: 'People > Team lists the members of Teletype Games with their mottos.'
-- keys: [language, hungarian, magyar, english, translate]
-  fact: 'You > Language EN/HU switches the wiki pages of the board between English and Hungarian.'
-- keys: [news, blog, welcome]
-  fact: 'Board > News shows the latest releases, the upcoming events and the newest posts of our blog, TTG Blog BBS.'
-- keys: [dashboard, desktop, home, start screen, main screen, overview, what is happening]
-  fact: 'Board > Dashboard is the live desktop: who is on the lines, the last callers, what is new, what is coming up, and the oneliners running along the bottom. It closes every window; an art from Files > ANSI Gallery can take its place.'
 - keys: [devlog, dev, log, commit, git, gitea, development, source, repository, repo]
   fact: 'Board > Dev Log shows what the team pushed, tagged and released lately on git.teletypegames.org, where the source of our projects lives.'
 - keys: [exit, quit, logoff, logout, bye, disconnect, get out, log off, leave the board]
   fact: 'Board > Log off, or Alt-X, ends the call. An idle call is disconnected after 10 minutes.'
 - keys: [system, info, uptime, ruby, version]
   fact: 'Board > System Info shows the board''s numbers and uptime.'
-- keys: [game, catalog, release, platform, download, browser, play]
-  fact: 'Files > Game Catalog lists every game of Teletype Games; the Platform button cycles through the platforms, and each card has the catalog link at teletypegames.org/catalog/ with its downloads. Most of our games play right in the browser from their catalog page.'
-- keys: [file, files, library, ftp, apps, warp, download, zmodem, browser, folder]
-  fact: 'Files > FTP Browser is an FTP client on ftp.teletypegames.org (anonymous, read-only, passive mode): Enter opens a folder or downloads a file to your terminal by ZMODEM, Up goes back. APPS holds the DOS programs, WARP every file of every catalog game, WIKI the wiki for DOS.'
-- keys: [dos, dosinst, gmenu, bmagic, ttgwiki, install, mtcp]
-  fact: 'Read > DOS Corner is about our DOS programs. DOSINST installs, updates and removes them over the network from the APPS folder of ftp.teletypegames.org; the others are GMENU, BMAGIC and TTGWIKI.'
-- keys: [wiki, guide, guides, engine, engines, documentation, docs, howto]
-  fact: 'Read > Platform Guides, Read > Engines and Read > DOS Corner read the wiki. The whole wiki is at wiki.teletypegames.org, and on the TTG Wiki BBS at teletypegames.org:2325.'
-- keys: [ansi, ascii, art, gallery, desktop, background, picture, graphics]
-  fact: 'Files > ANSI Gallery shows the ANSI art of the board. Enter or View shows a piece on the full screen, Desktop puts it on the desktop for this call, Favourite keeps it for every call of a registered name.'
-- keys: [door, doors, program, lobby]
-  fact: 'Doors > Door Lobby… lists every door with what it is and who is inside; Enter steps in. The doors take over the screen and give it back when you leave them: SERMO, Commodore 64, Commodore Plus/4, Impostor, Chat of Ra, the TTG Trivia game, and Alexandria, Feedia, TTG Blog, WarpEngine, Scriptorium, Commodex and Pixelia, which take you over to those boards.'
 - keys: [sermo, neumatronic, margittai, acp]
   fact: 'Doors > SERMO is a dual machine of the Neumatronic universe: type a command, or just talk to it. EXIT returns to the board.'
 - keys: [commodore, c64, plus4, basic, load, run, emulator, retro]
   fact: 'Doors > Commodore 64 and Doors > Commodore Plus/4 start the machine at READY. with a BASIC to type into. LOAD"$",8 and then LIST show our games for it; LOAD"NAME",8 and RUN show one. EXIT returns to the board.'
 - keys: [ra, riddle, sun, egypt, pyramid, blessing]
   fact: 'Doors > Chat of Ra lets you talk to Ra, the sun god of our game Blessing of Ra. RIDDLE asks a riddle of the pyramid; solve three and he blesses you. EXIT returns to the board.'
-- keys: [impostor, code, debrief, norman]
-  fact: 'Doors > Impostor is the debrief terminal of our game Definitely not an Impostor; it asks for the personal code the game gave you. It also runs on its own at teletypegames.org:2324.'
-- keys: [network, bbs, other, telnet, bbsweb, port]
-  fact: 'Board > BBS Network lists our boards: the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324, the TTG Wiki BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia BBS (RSS news) at 2327, TTG Blog BBS (our blog) at 2328, WarpEngine BBS (C64 and Plus/4 downloads) at 2329, Scriptorium BBS (Project Gutenberg books) at 2330, Commodex BBS (C64 games, cheats and tips) at 2331 and Pixelia BBS (ANSI and PETSCII art) at 2332, and TTG Gate BBS at 2399 reaches all of them from one port. All of them work in a browser too, at bbsweb.teletypegames.org.'
-- keys: [alexandria, wikipedia, feedia, rss, news, feed, feeds, gateway]
-  fact: 'Doors > Alexandria and Doors > Feedia take your line over to those boards: Alexandria BBS reads Wikipedia, Feedia BBS reads RSS news feeds. Leave them the way they say (Alt-X, or Q on a C64), and you come back here.'
-- keys: [ttgblog, blog, posts, post, editor, editors]
-  fact: 'TTG Blog BBS at teletypegames.org:2328 is our blog on a telnet line: the latest posts and the categories, read a screenful at a time; our editors log in there and write. It is a door here too (Doors > TTG Blog), or call it directly, or on bbsweb.teletypegames.org.'
-- keys: [warpengine, warp-engine, xmodem, shelf, shelves, prg]
-  fact: 'WarpEngine BBS at teletypegames.org:2329 is our file area: the Commodore 64 and Plus/4 shelves of the WarpEngine, a title a page, downloaded by ZMODEM or by XMODEM, which a C64 terminal like CCGMS takes onto its disk. It is a door here too (Doors > WarpEngine), or call it directly, through TTG Gate BBS, or on bbsweb.teletypegames.org.'
-- keys: [scriptorium, gutenberg, book, books, literature, novel, novels, chapter]
-  fact: 'Scriptorium BBS at teletypegames.org:2330 is our library: thousands of public-domain books from Project Gutenberg, searched by title or author and read a chapter at a time. It is a door here too (Doors > Scriptorium), or call it directly, through TTG Gate BBS, or on bbsweb.teletypegames.org.'
-- keys: [commodex, compendium, cheat, cheats, tip, tips, poke, pokes, wikidata]
-  fact: 'Commodex BBS at teletypegames.org:2331 is a Commodore 64 game compendium: search the titles, see the year, publisher and developer, read about a game from Wikipedia, and read or add cheats and tips, which an operator checks before they show. It is a door here too (Doors > Commodex), or call it directly, through TTG Gate BBS, or on bbsweb.teletypegames.org.'
-- keys: [pixelia, petscii, canvas, draw, paint, painting, 16colors, 16colo.rs, wall]
-  fact: 'Pixelia BBS at teletypegames.org:2332 is our art board: ANSI art from the 16colo.rs archive, a 40x25 canvas every caller paints on together, and the Wall of works saved from it. It is a door here too (Doors > Pixelia), or call it directly, through TTG Gate BBS, or on bbsweb.teletypegames.org.'
-- keys: [gate, ttggate, dial, dialing, '2399', one port, all boards]
-  fact: 'TTG Gate BBS at teletypegames.org:2399 is one port for our whole network: a dialing menu that puts your call through to any of our boards, this one too, and takes it back when that board hangs up. On a C64 it lists the boards that have a C64 face.'
 - keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag, switch, window, windows, front]
   fact: 'Alt and a letter opens a menu, F10 the first one, and the bottom line tells what the highlighted menu item does; Tab moves inside a window, Enter presses the button, Esc closes the window. F2 boards, F3 post, F4 chat, F7 mail, F1 asks me. F5 or Alt-Enter puts a big window on the full screen and back, so does the [↑] on its title bar. Several windows can be open: F6 brings the next one to the front, Shift-F6 the previous one, Alt and its number picks one, and a click on a window brings it forward. Ctrl-F5 moves a window with the arrows and sizes it with Shift and the arrows; with the mouse, drag its title bar or its bottom right corner. The mouse works too.'
 - keys: [sysop, admin, operator, console, broadcast]
@@ -95,3 +52,37 @@
   fact: 'Teletype Games is the group behind this board. It makes games for retro and modern platforms, from the Commodore 64 and the Plus/4 to TIC-80 and the browser; its home is teletypegames.org, with the catalog, the blog and the events.'
 - keys: [discord]
   fact: 'New board posts and sysop broadcasts go to the Teletype Games Discord through a feed.'
+- keys: [hall, fame, top, best, highscore, high score, most, ranking, toplist]
+  fact: 'People > Hall of Fame has the top lists: the top callers, the top posters and the TTG Trivia high scores.'
+- keys: [bulletins, rules, about, newcomer, new to bbs, what is a bbs]
+  fact: 'Board > Bulletins… has the numbered bulletins: the logon bulletin, About Teletype Games, what is coming up, the board rules, New to BBSes? and our BBS network.'
+- keys: [dashboard, desktop, home, start screen, main screen, overview, what is happening]
+  fact: 'Board > Dashboard is the live desktop: who is on the lines, the newest posts and your unread letters, the last callers, what is coming up, and the oneliners running along the bottom. It closes every window.'
+- keys: [door, doors, program, lobby]
+  fact: 'Doors > Door Lobby… lists every door with what it is and who is inside; Enter steps in. The doors take over the screen and give it back when you leave them: SERMO, Commodore 64, Commodore Plus/4, Chat of Ra and the TTG Trivia game.'
+- keys: [network, bbs, other, telnet, bbsweb, port, moved, gone]
+  fact: 'Board > BBS Network lists our boards and what each carries: the Teletype BBS here at teletypegames.org:2323, the Impostor BBS at 2324, the TTG Wiki BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia BBS (news feeds) at 2327, TTG Blog BBS at 2328, WarpEngine BBS (our games and files) at 2329, Scriptorium BBS (books) at 2330, Commodex BBS (C64 games, cheats) at 2331, Pixelia BBS (art) at 2332, and TTG Gate BBS at 2399 for all of them. Help > Where are the games, files, wiki? opens it too.'
+- keys: [game, games, download, downloads, file, files, zmodem, xmodem, prg, warpengine, warp-engine, shelf, catalog, release, releases, library]
+  fact: 'Our games and files are on the WarpEngine BBS at teletypegames.org:2329: the Commodore 64 and Plus/4 shelves, a title a page, downloaded by ZMODEM or by XMODEM onto a C64 disk. Every game is on teletypegames.org/catalog too, most of them playable right in a browser.'
+- keys: [ftp, apps, warp, folder, archive, http]
+  fact: 'ftp.teletypegames.org is our FTP server (anonymous, read-only): APPS holds the DOS programs, WARP every file of every catalog game, WIKI the wiki for DOS. The whole tree is on plain HTTP too, at archive.teletypegames.org; the games themselves are on the WarpEngine BBS at teletypegames.org:2329.'
+- keys: [browser, play, web]
+  fact: 'Most of our games play right in a browser from their page on teletypegames.org/catalog. Every board of ours works in a browser too, at bbsweb.teletypegames.org.'
+- keys: [wiki, guide, guides, engine, engines, documentation, docs, howto, howtos, tutorial, dos, dosinst, gmenu, bmagic, ttgwiki, install]
+  fact: 'Our wiki is on the TTG Wiki BBS at teletypegames.org:2325: the platform guides, the engines, the how-tos and the DOS corner with DOSINST, GMENU, BMAGIC and TTGWIKI. On the web it is at wiki.teletypegames.org.'
+- keys: [blog, posts, ttgblog, editor, editors, article]
+  fact: 'Our blog is on the TTG Blog BBS at teletypegames.org:2328: the latest posts read a screenful at a time, and our editors write there. On the web it is at teletypegames.org/blog.'
+- keys: [ansi, ascii, art, gallery, background, picture, graphics, petscii, canvas, draw, paint, pixelia]
+  fact: 'The art is on the Pixelia BBS at teletypegames.org:2332: ANSI art from the 16colo.rs archive, a 40x25 canvas every caller paints on together, and the Wall of works saved from it.'
+- keys: [alexandria, wikipedia, encyclopedia]
+  fact: 'Wikipedia is on the Alexandria BBS at teletypegames.org:2326: search, and read an article a screenful at a time.'
+- keys: [feedia, rss, news, feed, feeds, headlines]
+  fact: 'The news of the day is on the Feedia BBS at teletypegames.org:2327, an RSS reader board: Hacker News, the retro sites and the Hungarian news as plain text.'
+- keys: [scriptorium, gutenberg, book, books, literature, novel, novels, chapter]
+  fact: 'Books are on the Scriptorium BBS at teletypegames.org:2330: thousands of Project Gutenberg books, searched by title or author and read a chapter at a time.'
+- keys: [commodex, compendium, cheat, cheats, tip, tips, poke, pokes]
+  fact: 'The Commodore 64 game compendium is the Commodex BBS at teletypegames.org:2331: search the titles, read about a game, and read or add cheats and tips.'
+- keys: [impostor, code, debrief, norman]
+  fact: 'The debrief terminal of our game Definitely not an Impostor is the Impostor BBS at teletypegames.org:2324: type what the game gave you at its end, and tell us how it went.'
+- keys: [gate, ttggate, dial, dialing, '2399', one port, all boards]
+  fact: 'TTG Gate BBS at teletypegames.org:2399 is one port for our whole network: a dialing menu that puts your call through to any of our boards, this one too, and takes it back when that board hangs up.'

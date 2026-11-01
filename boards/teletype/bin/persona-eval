@@ -11,6 +11,7 @@
 #
 #   TELETYPE_BBS_LLM_URL=http://localhost:8080 bin/persona-eval ra 3
 #   docker exec teletype-bbs bin/persona-eval master 3
+#   docker exec teletype-bbs bin/persona-eval master_c64 3
 
 require 'bundler/setup'
 require_relative '../lib/characters/llm'
@@ -22,7 +23,7 @@ SLIPS = {
 }.freeze
 MAX_WORDS = 45
 
-name = ARGV.fetch(0) { abort 'usage: bin/persona-eval ra|master [runs]' }
+name = ARGV.fetch(0) { abort 'usage: bin/persona-eval ra|master|master_c64 [runs]' }
 runs = ARGV.fetch(1, '3').to_i
 questions = YAML.safe_load_file(File.expand_path("../lib/characters/eval/#{name}.yml", __dir__)).map do |entry|
   entry.is_a?(Hash) ? [entry['q'], Array(entry['expect'])] : [entry, []]
@@ -38,9 +39,10 @@ ask = case name
       when 'ra'
         require_relative '../lib/characters/ra'
         ->(q) { Ra.reply(q, {}, games) }
-      when 'master'
+      when 'master', 'master_c64'
         require_relative '../lib/characters/master'
-        master = TtgMaster.new(games: games, site: SiteService.new(SiteRepository.new))
+        face   = name == 'master_c64' ? TtgMaster::C64 : {}
+        master = TtgMaster.new(games: games, site: SiteService.new(SiteRepository.new), **face)
         ->(q) { master.answer(q, {}) }
       else abort "unknown character: #{name}"
       end

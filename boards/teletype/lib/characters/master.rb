@@ -20,8 +20,7 @@ class TtgMaster
   KNOWLEDGE = knowledge('master_knowledge.yml')
   # The same sysop on the C64 board, where the way around is single keys.
   C64 = { persona:   BBS::AI::Persona.load(File.join(__dir__, 'master_c64.yml')),
-          knowledge: knowledge('master_knowledge_c64.yml'),
-          catalog:   'G on the main menu' }.freeze
+          knowledge: knowledge('master_knowledge_c64.yml') }.freeze
   MAX_FACTS = 2
 
   # Words that sit in many questions weigh half: "board" in "who made this
@@ -32,8 +31,9 @@ class TtgMaster
   EVENT_WORDS  = %w[event party jam meeting deadline upcoming next when coming].freeze
   LIST_WORDS   = %w[which list all what].freeze
 
-  # +catalog+ is where the board keeps the game catalog, for the catalog fact.
-  def initialize(games:, site:, persona: PERSONA, knowledge: KNOWLEDGE, catalog: 'Files > Game Catalog')
+  # +catalog+ is where the games are, for the catalog fact: another board of
+  # the network, as this one keeps no catalog of its own.
+  def initialize(games:, site:, persona: PERSONA, knowledge: KNOWLEDGE, catalog: 'The WarpEngine BBS at teletypegames.org:2329')
     @games     = games
     @site      = site
     @persona   = persona

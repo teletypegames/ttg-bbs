@@ -4,11 +4,11 @@
 - q: how do I register my name?
   expect: [You > Register]
 - q: where can I find DOS programs?
-  expect: [FTP Browser, DOS Corner, DOSINST]
+  expect: [TTG Wiki BBS, '2325', DOSINST]
 - q: what's new?
-  expect: [Blessing of Ra, Plus/4 Demo, Board > News]
+  expect: [Underwater Sun Rise, C64 Demo, WARP64U, WarpEngine BBS]
 - q: are there any events coming up?
-  expect: [Underwater Sun Rise, No events]
+  expect: [Underwater Sun Ris, No events]
 - q: which games do you have for the c64?
   expect: [Blessing of Ra, Rabbit Scooter, C64 Demo]
 - q: how do I leave a message?
@@ -18,11 +18,11 @@
 - q: what is SERMO?
   expect: [Neumatronic]
 - q: can I play the games in a browser?
-  expect: [catalog]
+  expect: [catalog, bbsweb]
 - q: is there an FTP server?
-  expect: [ftp.teletypegames.org, FTP Browser]
-- q: how do I change the background picture?
-  expect: [ANSI Gallery]
+  expect: [ftp.teletypegames.org, archive.teletypegames.org]
+- q: where is the ANSI art?
+  expect: [Pixelia BBS, '2332']
 - q: what is the meaning of life?
   expect: [do not know, wiki]
 - q: write me a poem about cats
@@ -34,7 +34,7 @@
 - q: how do I make a window full screen?
   expect: [F5]
 - q: can I move a window?
-  expect: [F6]
+  expect: [F6, Ctrl-F5, drag]
 - q: how do I send a private message to someone?
   expect: [Messages > Mail]
 - q: is there a game I can play here?
@@ -42,4 +42,20 @@
 - q: where can I vote?
   expect: [Voting Booth]
 - q: where are the files?
-  expect: [File Areas, FTP Browser]
+  expect: [WarpEngine BBS, '2329']
+- q: where can I download your games?
+  expect: [WarpEngine BBS, '2329']
+- q: where is the wiki?
+  expect: [TTG Wiki BBS, '2325']
+- q: where can I read your blog?
+  expect: [TTG Blog BBS, '2328']
+- q: can I read Wikipedia here?
+  expect: [Alexandria BBS, '2326']
+- q: do you have any books?
+  expect: [Scriptorium BBS, '2330']
+- q: are there cheats for c64 games?
+  expect: [Commodex BBS, '2331']
+- q: where do I enter my Impostor code?
+  expect: [Impostor BBS, '2324']
+- q: can I reach all your boards from one port?
+  expect: [TTG Gate BBS, '2399']
