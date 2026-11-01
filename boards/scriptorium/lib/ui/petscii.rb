@@ -4,7 +4,7 @@ require_relative 'petscii/screen'
 require_relative 'logo'
 
 module UI
-  # The board on a Commodore 64: PETSCII on a 40×25 screen. A one-key menu,
+  # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor menu,
   # the shelves and the books as numbered lists, a book's record on a page,
   # its chapters as a numbered list, and the reader: 38-column pages that
   # wait for RETURN, N and P for the next and the previous chapter.
@@ -84,8 +84,11 @@ module UI
         @screen.cls
         Petscii.masthead.each { |l| @screen.puts l }
         loop do
-          menu
-          case @screen.choose("\r\n #{WH}read#{LG}> ", %w[1 2 3 4 a q], back: 'q')
+          @screen.puts
+          @screen.puts " #{GR}#{catalog_line}#{LG}"
+          @choice = @screen.menu(menu_items, index: menu_items.index { |i| i.value == @choice }, back: 'q',
+                                             hint: 'crsr: choose  return: take')
+          case @choice
           when '1' then books('CLASSICS', @library.books_on(@library.classics_shelf))
           when '2' then shelves
           when '3' then search
@@ -99,15 +102,18 @@ module UI
 
       private
 
-      def menu
-        @screen.puts
-        @screen.puts " #{YE}1#{LG} the classics shelf"
-        @screen.puts " #{YE}2#{LG} gutenberg bookshelves"
-        @screen.puts " #{YE}3#{LG} search by title or author"
-        @screen.puts " #{YE}4#{LG} most read on this board"
-        @screen.puts " #{YE}A#{LG} about    #{YE}Q#{LG} log off"
-        @screen.puts " #{GR}#{@library.ready? ? "#{@library.count} books in the catalog" : 'the catalog is being prepared'}#{LG}"
+      def menu_items
+        @menu_items ||= [
+          BBS::Selector.item('the classics shelf', key: '1', value: '1', about: 'the great books, open at once'),
+          BBS::Selector.item('gutenberg bookshelves', key: '2', value: '2', about: 'the shelves of project gutenberg'),
+          BBS::Selector.item('search by title or author', key: '3', value: '3', about: 'words, and lang:fr for one language'),
+          BBS::Selector.item('most read on this board', key: '4', value: '4', about: 'what the callers here read'),
+          BBS::Selector.item('about', key: 'a', value: 'a', about: 'the board, the books, the reader keys'),
+          BBS::Selector.item('log off', key: 'q', value: 'q', about: 'hang up. see you!')
+        ]
       end
+
+      def catalog_line = @library.ready? ? "#{@library.count} books in the catalog" : 'the catalog is being prepared'
 
       def catalog_note = @library.ready? ? "#{@library.count} books" : ''
 
@@ -182,8 +188,7 @@ module UI
         lines.push('', *@screen.wrap("ebook ##{book.id} from project gutenberg, #{book.url} - public domain in the usa.")
                           .map { |l| " #{GR}#{l}#{LG}" })
         @screen.page("EBOOK ##{book.id}", lines, wait: false)
-        @screen.puts " #{YE}R#{LG} read  #{YE}Q#{LG} back"
-        open_book(book) if @screen.choose(" #{WH}book#{LG}> ", %w[r q], back: 'q') == 'r'
+        open_book(book) if @screen.actions(%w[r read], %w[q back]) == 'r'
       end
 
       def facts(book, reads)
