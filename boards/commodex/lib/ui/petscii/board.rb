@@ -137,7 +137,8 @@ module UI
         @screen.say('An empty tip goes back.', GR)
         @screen.puts
         handle = @screen.ask(" #{WH}handle#{LG} (optional)? ", max: TipService::MAX_HANDLE)
-        text = @screen.editor("YOUR TIP FOR #{game.title.upcase}", max: TipService::MAX_TEXT)
+        text = @screen.edit('', title: "YOUR TIP FOR #{game.title.upcase}", single_line: true,
+                                       max: TipService::MAX_TEXT)
         @screen.title("A TIP: #{game.title.upcase}")
         if text.to_s.strip.empty?
           @screen.say('Nothing sent.', GR)

@@ -1,49 +1,22 @@
 # frozen_string_literal: true
 
-require 'json'
-require 'net/http'
-require 'uri'
+require 'bbs/discord_webhook'
 
 # A new pending tip on the admins' Discord channel, with the command that
-# approves it. In the background, so a slow webhook never stalls a call;
-# mentions are off and the caller's text goes in as plain text. At most
-# RELAY_MAX tips ring Discord in RELAY_WINDOW seconds.
+# approves it: a BBS::DiscordWebhook of rubbs, so it posts in the
+# background, mentions off, links without embeds, at most 20 tips in ten
+# minutes.
 class DiscordNotifier
-  MAX          = 1500
-  RELAY_MAX    = 20
-  RELAY_WINDOW = 600
-
   def initialize(webhook:)
-    @webhook = URI(webhook)
-    @lock    = Mutex.new
-    @sent    = []
+    @hook = BBS::DiscordWebhook.new(webhook, embeds: false, label: 'commodex: Discord')
   end
 
   def call(tip, game)
-    return warn('commodex: Discord relay limit reached, not sent') unless slot?
-
-    content = "🕹️ Commodex: a tip for **#{escape(game.title)}** from #{escape(tip.author)} (##{tip.id}, pending)\n" \
-              ">>> #{escape(tip.text)}\n\n`docker exec commodex bin/tips approve #{tip.id}`"
-    body = JSON.generate(content: content[0, MAX], allowed_mentions: { parse: [] }, flags: 4)
-    Thread.new do
-      Net::HTTP.post(@webhook, body, 'Content-Type' => 'application/json')
-    rescue StandardError => e
-      warn "commodex: Discord error: #{e}"
-    end
+    @hook.post("🕹️ Commodex: a tip for **#{escape(game.title)}** from #{escape(tip.author)} (##{tip.id}, pending)\n" \
+               ">>> #{escape(tip.text)}\n\n`docker exec commodex bin/tips approve #{tip.id}`")
   end
 
   private
 
-  def slot?
-    @lock.synchronize do
-      now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      @sent.shift while @sent.any? && now - @sent.first > RELAY_WINDOW
-      next false if @sent.size >= RELAY_MAX
-
-      @sent << now
-      true
-    end
-  end
-
-  def escape(text) = text.to_s.gsub(/([\\*_~`|>\[\]()<#:@-])/) { "\\#{Regexp.last_match(1)}" }
+  def escape(text) = BBS::DiscordWebhook.escape(text)
 end

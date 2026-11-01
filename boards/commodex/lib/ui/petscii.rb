@@ -14,12 +14,7 @@ module UI
     LOGO_COLORS = [LB, LB, CY, CY, WH].freeze
 
     # COMMODEX in reversed blocks, five rows.
-    def self.logo
-      Logo.rows.each_with_index.map do |line, row|
-        blocks = line.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')
-        "    #{LOGO_COLORS[row]}#{blocks}#{LG}"
-      end
-    end
+    def self.logo = BBS::BlockFont.petscii(Logo::WORD, colors: LOGO_COLORS, indent: 4)
 
     def self.masthead(count)
       rule = " #{DG}#{'─' * (COLS - 2)}#{LG}"
@@ -34,28 +29,14 @@ module UI
           nil
         end
         call do |_ctx, runner|
-          Petscii.goodbye(Screen.new(runner.session))
+          BBS::Goodbye.petscii(Screen.new(runner.session), title: 'commodex bbs', color: LB,
+                                                            note: 'Games from wikidata.org (cc0), stories from ' \
+                                                                  'wikipedia.org (cc by-sa).')
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           nil
         end
       end
-    end
-
-    def self.goodbye(screen)
-      screen.cls
-      screen.puts
-      screen.puts " #{LB}#{RV}#{' thanks for calling commodex bbs'.ljust(39)}#{RO}#{LG}"
-      screen.puts
-      screen.say('Games from wikidata.org (cc0), stories from wikipedia.org (cc by-sa). More of us: teletypegames.org', GR)
-      screen.puts
-      sleep 1.2
-      screen.puts " #{LG}+++"
-      sleep 0.6
-      screen.puts ' ATH0'
-      sleep 0.4
-      screen.puts " #{RD}NO CARRIER#{LG}"
-      screen.puts
     end
   end
 end

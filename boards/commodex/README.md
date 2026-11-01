@@ -102,14 +102,14 @@ lib/domain/
   service/catalog_service.rb          search, years, genres, companies, the refresh
   service/about_service.rb            a game's Wikipedia lead
   service/tip_service.rb              tips: submit, limits, approve, reject
-  service/discord_notifier.rb         a new tip on Discord
+  service/discord_notifier.rb         a new tip on Discord (BBS::DiscordWebhook)
   commodex_bbs.rb           the composition root (CommodexBBS)
 lib/ui/
-  logo.rb                   COMMODEX in blocks, both faces
+  logo.rb                   COMMODEX in blocks (BBS::BlockFont), both faces
   words.rb                  a game's facts and the messages, both faces
   modern.rb                 UI::Modern: the rubbs Application
   petscii.rb                UI::Petscii: the masthead, the flow, goodbye
-  petscii/screen.rb         the 40×25 screen: title bar, pages, lists, lines
+  petscii/screen.rb         the 40×25 screen: rubbs' BBS::Petscii::Screen
   petscii/board.rb          the C64 board: menu, lists, game page, tips
 ```
 
