@@ -11,7 +11,8 @@ module UI
       # long ago), then the totals, PETSCII measured against claimed, and
       # the credit of DB-IP for the countries.
       class SourcesView < View
-        BAR = 14
+        BAR = 21
+        BAR_COL = 11
         # The name of a list on this screen.
         NAMES = { 'fidonet' => 'FidoNet', 'fsxnet' => 'fsxNet', 'micronet' => 'MicroNet', 'sbl' => 'SBL',
                   'syncterm' => 'SyncTERM', 'tbg' => 'TBG', 'cbbs' => 'CBBS' }.freeze
@@ -46,12 +47,12 @@ module UI
         def draw(canvas)
           Layout.band(canvas, 'SOURCES', "#{@sources.size} LISTS", Canvas::CYAN)
           largest = @sources.map { |s| s['record_count'].to_i }.max.to_i
-          @sources.each_with_index { |s, i| source(canvas, Layout.row(2 + (2 * i)), s, largest) }
-          Layout.rule(canvas, Layout.row(16))
-          totals(canvas, Layout.row(17))
-          petscii(canvas, Layout.row(18))
-          Layout.runs(canvas, Layout.row(20), 1, [['Countries ', Canvas::GREY], ['db-ip.com', Canvas::WHITE]])
-          canvas.text(Layout.row(21), 1, 'IP to Country Lite, CC BY 4.0', Canvas::GREY)
+          @sources.each_with_index { |s, i| source(canvas, Layout.row(1 + (2 * i)), s, largest) }
+          Layout.rule(canvas, Layout.row(15))
+          totals(canvas, Layout.row(16))
+          petscii(canvas, Layout.row(17))
+          Layout.runs(canvas, Layout.row(19), 1, [['Countries ', Canvas::GREY], ['db-ip.com', Canvas::WHITE]])
+          canvas.text(Layout.row(20), 1, 'IP to Country Lite, CC BY 4.0', Canvas::GREY)
         end
 
         private
@@ -60,8 +61,8 @@ module UI
           id    = source['id']
           count = source['record_count'].to_i
           canvas.text(row, 1, NAMES.fetch(id) { Layout.plain(id)[0, 9] }, SourcesView.color(id))
-          canvas.text(row, 11, bar(count, largest), SourcesView.color(id))
-          canvas.text(row, Layout::WIDTH - count.to_s.length, count.to_s, Canvas::WHITE)
+          canvas.text(row, BAR_COL, bar(count, largest), SourcesView.color(id))
+          canvas.text(row, Layout::EDGE - count.to_s.length, count.to_s, Canvas::WHITE)
           status(canvas, row + 1, source)
         end
 
@@ -77,7 +78,7 @@ module UI
         def status(canvas, row, source)
           if source['last_error']
             canvas.text(row, 1, 'ERR', Canvas::RED, rvs: true)
-            canvas.text(row, 5, Layout.plain(source['last_error'])[0, 24], Canvas::LIGHT_RED)
+            canvas.text(row, 5, Layout.plain(source['last_error'])[0, Layout::EDGE - 5], Canvas::LIGHT_RED)
             return
           end
           unless source['last_parse_at']
@@ -86,14 +87,14 @@ module UI
           end
 
           canvas.text(row, 1, 'OK', Canvas::GREEN, rvs: true)
-          age = Layout.age(source['last_parse_at'], @now.call)
+          age = "read #{Layout.age(source['last_parse_at'], @now.call)} ago"
           terms = TERMS.fetch(source['id']) { Layout.plain(source['format']) }
-          terms = terms[0, Layout::WIDTH - 4 - age.length - 1]
+          terms = terms[0, Layout::EDGE - 4 - age.length - 1]
           terms.split('/').each_with_index.reduce(4) do |col, (part, i)|
             col = Layout.runs(canvas, row, col, [['/', Canvas::DARK_GREY]]) if i.positive?
             Layout.runs(canvas, row, col, [[part, Canvas::LIGHT_GREY]])
           end
-          canvas.text(row, Layout::WIDTH - age.length, age, Canvas::GREY)
+          canvas.text(row, Layout::EDGE - age.length, age, Canvas::GREY)
         end
 
         def totals(canvas, row)
@@ -109,12 +110,12 @@ module UI
           green    = measured.positive? ? [(measured * BAR.to_f / whole).round, 1].max : 0
           purple   = [(claimed * BAR.to_f / whole).round - green, 0].max
           canvas.text(row, 1, 'PETSCII', Canvas::GREY)
-          canvas.text(row, 9, '█' * green, Canvas::GREEN)
-          canvas.text(row, 9 + green, '▒' * purple, Canvas::PURPLE)
+          canvas.text(row, BAR_COL, '█' * green, Canvas::GREEN)
+          canvas.text(row, BAR_COL + green, '▒' * purple, Canvas::PURPLE)
           count = "#{measured}/#{claimed}"
-          canvas.text(row, Layout::WIDTH - count.length, count, Canvas::WHITE)
-          Layout.runs(canvas, row + 1, 9, [['█', Canvas::GREEN], [' measured  ', Canvas::LIGHT_GREY], ['▒', Canvas::PURPLE],
-                                           [' claimed', Canvas::LIGHT_GREY]])
+          canvas.text(row, Layout::EDGE - count.length, count, Canvas::WHITE)
+          Layout.runs(canvas, row + 1, BAR_COL, [['█', Canvas::GREEN], [' measured  ', Canvas::LIGHT_GREY], ['▒', Canvas::PURPLE],
+                                                 [' claimed', Canvas::LIGHT_GREY]])
         end
       end
     end

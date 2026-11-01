@@ -30,10 +30,9 @@ module UI
         def hint = pages > 1 ? HINT[0, 4] + [['+/-', true], [' Page', false]] : HINT
 
         def draw(canvas)
-          right = pages > 1 ? "#{@items.size}  #{page_mark}" : "#{@items.size} BOARDS"
-          Layout.band(canvas, 'OWN SERVERS', right, Canvas::YELLOW)
-          on_page.each_with_index { |board, slot| row(canvas, Layout.row(2 + slot), board, slot) }
-          info(canvas, Layout.row(3 + PER_PAGE))
+          Layout.band(canvas, 'OWN SERVERS', page_mark, Canvas::YELLOW)
+          on_page.each_with_index { |board, slot| row(canvas, Layout.row(1 + slot), board, slot) }
+          info(canvas, Layout.row(1 + PER_PAGE))
         end
 
         def self.color(board) = UI::Colors.c64(board.rgb)
@@ -41,7 +40,7 @@ module UI
         private
 
         def row(canvas, row, board, slot)
-          name   = Layout.plain(board.name)[0, 16]
+          name   = Layout.plain(board.name)[0, 28]
           port   = board.port.to_s
           number = format('%02d', ((@page * PER_PAGE) + slot + 1) % 100)
           leader = " #{'.' * [Layout::WIDTH - 6 - name.length - port.length - 2, 0].max} "
@@ -60,8 +59,8 @@ module UI
           return unless board
 
           Layout.rule(canvas, top)
-          canvas.text(top + 1, 1, Layout.plain(board.name)[0, 28], Canvas::WHITE)
-          Layout.wrap(board.summary, 28, 2).each_with_index do |line, i|
+          canvas.text(top + 1, 1, Layout.plain(board.name)[0, Layout::EDGE - 1], Canvas::WHITE)
+          Layout.wrap(board.summary, Layout::EDGE - 1, 2).each_with_index do |line, i|
             canvas.text(top + 2 + i, 1, line, Canvas::LIGHT_GREY)
           end
           canvas.text(top + 5, 1, 'Telnet ', Canvas::GREY)

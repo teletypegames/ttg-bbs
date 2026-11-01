@@ -20,50 +20,59 @@ that have a C64 face.
 
 ### The C64 face
 
-The C64 face is drawn in the uppercase/graphics character set of the C64, in
-its sixteen colours, one frame around every screen:
+The C64 face is drawn in the lower/upper character set of the C64 (names,
+hosts and labels keep their case), in its sixteen colours, one frame around
+every screen:
 
 - **row 0**, the header: `TTG GATE` letter by letter in reversed colours, the
   node number (the C64 callers on the gate now) and the clock;
-- **row 1**, a raster stripe of half blocks, red to light red;
-- **rows 2-23**, the main area (30 columns) and, behind a divider, the
-  **sidebar** (9 columns): `OWN`, `DISCOVER`, `SEARCH`, `BROWSE` with
-  `SOFTWARE`, `COUNTRY` and `NETWORK` under it, `NEW`, `RANDOM`, `DIED`,
-  `GRAVES`, `SOURCES`, a live counter (the boards of the catalog, the ones
-  online, the ones that showed PETSCII to our C64-style call), `HELP` and
-  `QUIT`;
+- **row 1**, the two tabs, `OWN SERVERS` and `GLOBAL DISCOVERY`: the active one
+  a reversed band in its colour (Own yellow, Discovery light green), the other
+  dim with its yellow letter, and on the right the boards online now;
+- **row 2**, the active tab's sub-menu: on Global Discovery `/Find`, `Browse`,
+  `New`, `Random`, `Died`, `Graves`, `Srcs` (the Sources), their keys yellow,
+  the lit one a reversed bar (cyan while the menu has the focus); on Own
+  Servers a line of how many boards there are and how they are dialled;
+- **rows 3-23**, the content, across all 40 columns;
 - **row 24**, the hint bar: the keys of the screen in yellow.
 
-Each screen of the main area starts with a title band in its own colour (Own
+Each screen of the content starts with its title row in its own colour (Own
 Servers yellow, Discovery light green, Search white, Browse orange, New purple,
 Recently died light red, Graveyard grey, Sources cyan, a board's page in the
-colour of its state) with a count and the page on the right.
+colour of its state) with a count and the page on the right. A board's
+address is never cut: past the row it goes on in the next one, broken after a
+dot or before the port.
 
 | Key | |
 |---|---|
-| CRSR left / right | the focus to the sidebar / to the main area |
-| CRSR up / down | move the cyan bar of the sidebar, or the lit row of a list (past the edge of a page, the page turns) |
-| RETURN | open the sidebar place; in a list open the board's page (dial our own board); on a board's page dial it |
-| a yellow letter | that sidebar place from anywhere: `O`wn, `D`iscover, `S`earch, `B`rowse, soft`W`are, `C`ountry, networ`K`, `N`ew, `R`andom, di`E`d, `G`raves, so`U`rces, `H`elp, `Q`uit |
+| O / D | the tab Own Servers / Global Discovery, from anywhere |
+| CRSR up / down | move the lit row of a list (past the edge of a page, the page turns); on Global Discovery CRSR up from the top of a list (or from a page) goes to the sub-menu, and there CRSR down goes back |
+| CRSR left / right | in the sub-menu: move its bar |
+| RETURN | open the place of the sub-menu; in a list open the board's page (dial our own board); on a board's page dial it |
+| a yellow sign | that place from anywhere: `/` Find, `B`rowse, `N`ew, `R`andom, di`E`d, `G`raves, `S`ources (or `U`, as before), Browse's soft`W`are, `C`ountry, networ`K`, `H`elp, `Q`uit |
 | 1-9, 0 | that row of the page (on Own Servers: dial it) |
 | + / - | the next / previous page |
 | F | in a list: the state filter, alive (all but the dead) → online → flaky → down → not called yet |
-| / | search, like `S` |
-| B | on a board's page: its PETSCII banner (here `B` is not Browse; Browse is on the sidebar) |
+| B | on a board's page: its PETSCII banner (here `B` is not Browse) |
 | ← or RUN/STOP | back a screen; from a section to Own Servers, and from there hang up |
+
+`S` opens the Sources now (it was Search before the tabs; Find is `/`).
 
 **Own Servers** lists our boards with a C64 face, ten a page: the number, a
 block of the board's colour (the C64 colour nearest to its `accent`), the name,
 a dotted leader and the port, the lit one a cyan bar; under a rule the lit
-board's name, description, address and tags. RETURN or its digit dials it: the
+board's name, description, address and tags. **Global Discovery**'s lists show
+ten boards a page (number, state mark, name, country, software), and under
+them the lit board's name, whole address, state, latency and country,
+software and terminals. RETURN or its digit dials it: the
 row flashes, the HANDSHAKE bar fills the hint bar, the line goes to the board.
 
 The screen goes out as raw PETSCII (`Session#write_raw`), past the encoder of
 rubbs, which speaks the lowercase set. Each change is drawn on a new
 `UI::Petscii::Canvas` (rubbs' `BBS::Petscii::Canvas`) and only the cells that
 differ from what the C64 shows go out, row by row (`UI::Petscii::Diff`), or the
-whole screen when that is shorter: a first screen is 1.1-1.2 KB, a step in a
-list 180-310 bytes, the focus moving between the sidebar and a list about 150.
+whole screen when that is shorter: a first screen is 0.95-1.15 KB, a step in a
+list 200-360 bytes, the focus moving between the sub-menu and a list about 150.
 While the caller thinks only the clock changes, once a minute; the call still
 ends after the session's idle time. Before the line goes to a board the gate
 switches back to the lowercase set, and the whole screen comes back, at the
@@ -140,7 +149,7 @@ number dials it, `Q` or Esc hangs up. The rows show the board's colour bar,
 name, tags and port; the description and the full address of the chosen one are
 under the list. Global Discovery is described [below](#the-gate-ui).
 
-**Commodore 64:** the frame and the sidebar ([above](#the-c64-face)); `D`
+**Commodore 64:** the frame and the tabs ([above](#the-c64-face)); `D`
 turns to Global Discovery, `O` back to our own boards, the number dials, `Q`
 hangs up.
 
@@ -319,12 +328,12 @@ preview, and a PETSCII banner only on the C64 face). RETURN or `D` dials it.
 
 ### On a Commodore 64
 
-`D` (or `DISCOVER` on the sidebar) opens Global Discovery in the frame of the
-C64 face: the PETSCII boards, eight a page. The row under the band shows the
-filter as chips (`PETSCII`, and the state: `ALIVE`, or what `F` chose), a dark
-grey header (`NR S NAME CC SOFT`), then a board a row: its number, its state
-mark (a light green ball online, a yellow ring flaky, a red cross down, a grey
-cross dead, `?` not called yet), its name, its country and its software; the
+`D` (or the `GLOBAL DISCOVERY` tab) opens Global Discovery in the frame of the
+C64 face: the PETSCII boards, ten a page. The row under the title shows the
+filter as chips (`PETSCII`, and the state: `Alive`, or what `F` chose), a dark
+grey header (`Nr S Name CC Software`), then a board a row: its number, its state
+mark (a half block: light green online, yellow flaky, red down, grey dead, dark
+grey not called yet), its name, its country and its software; the
 lit one a light blue bar. Under a rule the lit board's name, host and port,
 state with the latency of the last answer and the country, software and
 terminals, and the legend of the marks. Only PETSCII boards are on it
@@ -332,14 +341,14 @@ terminals, and the legend of the marks. Only PETSCII boards are on it
 ones but in Recently died, the Graveyard or a search with `all` (the gate
 carries the bytes as they are, and an ANSI board on a C64 is noise).
 
-Search (`S` or `/`) reads its words on the hint row (`all` takes the dead in);
+Find (`/`) reads its words on the hint row (`all` takes the dead in);
 Browse lists Software, Country and Network with their counts (by Terminal
 would be PETSCII only), each a list of tags and each tag a list of boards;
 New, Random, Died and Graves are the lists of the modern face. RETURN opens a
 **board's page**: the address, the last answer and its latency, why our server
-did not reach a failing board, `30 DAYS` with the 30-day strip (a green block
+did not reach a failing board, `30 days` with the 30-day strip (a green block
 it answered that day, red it did not, a dark grey checker not called), the
-fields with the list each came from in dark grey (`BANNER` or `CALL` for what
+fields (a long value wraps) with the list each came from in dark grey (`BANNER` or `CALL` for what
 our call saw, `DB-IP` for the country), the terminals and the lists, the tags
 as chips, and the buttons: RETURN dials, `B` shows the first screen of a
 PETSCII banner. **Sources** has each list two rows: its name in its colour, a
@@ -451,8 +460,8 @@ lib/
   ui/modern/selector.rb                the dialing menu of our own boards on an ANSI terminal
   ui/modern/discovery/                 Global Discovery: home, menus, lists, the board page, search, sources
   ui/petscii.rb                        the PETSCII face: the call, its node number, goodbye
-  ui/petscii/gate.rb                   one C64 call: the frame, the sidebar focus, the keys, dialling, search
-  ui/petscii/chrome.rb                 the header, the raster stripe, the sidebar and the hint bar
+  ui/petscii/gate.rb                   one C64 call: the frame, the tabs, the sub-menu focus, the keys, dialling, find
+  ui/petscii/chrome.rb                 the header, the tabs, the sub-menu and the hint bar
   ui/petscii/layout.rb                 the 40×25 grid of the frame and the drawing helpers
   ui/petscii/diff.rb                   the changed cells as PETSCII, row by row
   ui/petscii/views/                    Own Servers, a list of boards, a menu, a board's page, Sources, text pages

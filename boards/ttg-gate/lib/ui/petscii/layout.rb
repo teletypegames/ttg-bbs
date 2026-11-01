@@ -5,18 +5,20 @@ require_relative 'canvas'
 module UI
   module Petscii
     # The grid every screen of the C64 face shares (40×25): the header on
-    # row 0, the raster stripe on row 1, the main area (30 columns) and the
-    # sidebar (9 columns) on rows 2 to 23 with a divider between them, the
-    # hint bar on row 24. And the small drawing helpers of the views: runs of
-    # coloured text, the title band, chips, rules.
+    # row 0, the two tabs on row 1, the sub-menu on row 2, the content on
+    # rows 3 to 23 across all 40 columns, the hint bar on row 24. And the
+    # small drawing helpers of the views: runs of coloured text, the title
+    # row, chips, rules.
     module Layout
-      TOP        = 2
-      ROWS       = 22
+      HEADER_ROW = 0
+      TABS_ROW   = 1
+      MENU_ROW   = 2
+      TOP        = 3
+      ROWS       = 21
       BOTTOM     = TOP + ROWS - 1
-      WIDTH      = 30
-      DIVIDER    = 30
-      SIDE       = 31
-      SIDE_WIDTH = 9
+      WIDTH      = Canvas::COLS
+      # The column of air on the right: text ends before it.
+      EDGE       = WIDTH - 1
       HINT_ROW   = 24
       # The C64 cannot print the last cell: the hint bar ends before it, and
       # the cursor rests there between two screens.
@@ -24,13 +26,13 @@ module UI
 
       module_function
 
-      # The main area's +line+ (0-based) as a screen row.
+      # The content's +line+ (0-based) as a screen row.
       def row(line) = TOP + line
 
       # Writes +parts+, [text, colour] or [text, colour, :rvs] each, from
       # +row+, +col+, cut at +limit+ (a column, exclusive). The column after
       # the last one written.
-      def runs(canvas, row, col, parts, limit: WIDTH)
+      def runs(canvas, row, col, parts, limit: EDGE)
         parts.each do |text, color, rvs|
           text = text.to_s[0, [limit - col, 0].max]
           canvas.text(row, col, text, color, rvs: rvs == :rvs)
@@ -39,21 +41,24 @@ module UI
         col
       end
 
-      # The title band of a screen: +title+ left and +right+ right, black on
-      # +color+, the whole width of the main area.
+      # The title row of a screen: +title+ in +color+ on the left, +right+
+      # (a count, the page) grey on the right, a dim rule between them.
       def band(canvas, title, right, color)
-        right = right.to_s.empty? ? '' : "#{right} "
-        canvas.text(TOP, 0, ' ' * WIDTH, color, rvs: true)
-        canvas.text(TOP, 0, " #{title}"[0, WIDTH - right.length - 1], color, rvs: true)
-        canvas.text(TOP, WIDTH - right.length, right, color, rvs: true)
+        right = right.to_s
+        title = title.to_s[0, EDGE - 1 - (right.empty? ? 0 : right.length + 2)]
+        canvas.text(TOP, 1, title, color)
+        from = title.length + 2
+        to = right.empty? ? EDGE : EDGE - right.length - 1
+        canvas.text(TOP, from, '─' * (to - from), Canvas::DARK_GREY) if to > from
+        canvas.text(TOP, EDGE - right.length, right, Canvas::GREY) unless right.empty?
       end
 
-      # A thin rule across the main area.
+      # A thin rule across the content.
       def rule(canvas, row) = canvas.text(row, 0, '─' * WIDTH, Canvas::DARK_GREY)
 
       # A chip: +text+ black on +color+ with a cell of air on each side. The
       # column after it.
-      def chip(canvas, row, col, text, color, limit: WIDTH)
+      def chip(canvas, row, col, text, color, limit: EDGE)
         text = " #{text} "
         return col if col + text.length > limit
 
@@ -75,7 +80,7 @@ module UI
       # +row+, +col+ whole: past +width+ it goes on at +col+ of the next
       # rows, broken after a dot or before the colon where it can be. The
       # number of rows it took.
-      def address(canvas, row, col, host, port, width: WIDTH - col)
+      def address(canvas, row, col, host, port, width: EDGE - col)
         host = plain(host)
         lines = split_address(port.nil? ? host : "#{host}:#{port}", width)
         offset = 0

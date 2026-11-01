@@ -5,7 +5,7 @@ require_relative '../layout'
 module UI
   module Petscii
     module Views
-      # A view in the main area of the C64 face: draws itself on a Canvas,
+      # A view in the content area of the C64 face: draws itself on a Canvas,
       # tells the hint bar its keys, and answers the keys that are its own
       # (#handle: :redraw, an action to call, or nil when the key is not its
       # own).
@@ -16,7 +16,8 @@ module UI
 
         def handle(_key) = nil
 
-        # The place of the sidebar this view lights, nil for its section's.
+        # The section this view belongs to (the place of the sub-menu it
+        # lights), nil for the one it was opened in.
         def section = nil
       end
 
@@ -42,6 +43,9 @@ module UI
         def on_page = @items[@page * @per_page, @per_page] || []
 
         def selected = on_page[@index]
+
+        # Whether the first item of the first page is lit.
+        def at_top? = @page.zero? && @index.zero?
 
         def handle(key)
           case key

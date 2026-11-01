@@ -5,7 +5,7 @@ require_relative 'picker'
 module UI
   module Petscii
     module Views
-      # A menu in the main area: Browse and its axes (Software, Country,
+      # A menu in the content area: Browse and its axes (Software, Country,
       # Network). An entry a row (its number, its name, a dotted leader, its
       # count), the lit one a cyan bar, and under a rule what the lit entry
       # is about. RETURN or its digit takes it (the entry's action).
@@ -39,7 +39,7 @@ module UI
           top = Layout.row(3 + PER_PAGE)
           Layout.rule(canvas, top)
           Array(selected&.about).first(4).each_with_index do |line, i|
-            canvas.text(top + 1 + i, 1, Layout.plain(line)[0, 28], i.zero? ? Canvas::WHITE : Canvas::LIGHT_GREY)
+            canvas.text(top + 1 + i, 1, Layout.plain(line)[0, Layout::EDGE - 1], i.zero? ? Canvas::WHITE : Canvas::LIGHT_GREY)
           end
         end
 

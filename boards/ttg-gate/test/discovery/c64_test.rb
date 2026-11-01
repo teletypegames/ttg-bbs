@@ -6,7 +6,8 @@ require_relative '../../lib/domain'
 require_relative '../../lib/ui/petscii'
 
 module Discovery
-  # The C64 face: the frame, the sidebar, the views, and the bytes they cost.
+  # The C64 face: the frame, the tabs and the sub-menu, the views, and the
+  # bytes they cost.
   class C64Test < Minitest::Test
     Canvas = UI::Petscii::Canvas
     Layout = UI::Petscii::Layout
@@ -109,7 +110,7 @@ module Discovery
 
     def text_at(canvas, row, col, length) = canvas.to_s.lines[row].to_s.chomp.ljust(col + length)[col, length]
 
-    def test_the_frame_has_the_logo_the_raster_the_sidebar_and_the_hint_bar
+    def test_the_frame_has_the_logo_the_tabs_the_own_line_and_the_hint_bar
       g = gate
       g.start
       first = @line.sent.first
@@ -121,19 +122,15 @@ module Discovery
       assert_equal [Canvas::RED, Canvas::ORANGE, Canvas::YELLOW], logo.first(3).map(&:color)
       assert(logo.first(3).all?(&:rvs))
       assert_equal 'Node 2 14:52', text_at(screen, 0, 27, 12)
-      assert_equal [Canvas::RED, Canvas::ORANGE], [screen.cell(1, 0).color, screen.cell(1, 4).color]
-      assert_equal 0xa2, screen.cell(1, 0).code
-      assert screen.cell(1, 0).rvs
-      assert_equal 0xdd, screen.cell(5, Layout::DIVIDER).code
-      own = screen.cell(2, 32)
-      assert_equal ['O'.ord + 0x80, Canvas::CYAN, true], [own.code, own.color, own.rvs]
-      search = screen.cell(5, 32)
-      assert_equal ['S'.ord + 0x80, Canvas::YELLOW, false], [search.code, search.color, search.rvs]
-      assert_equal 0xab, screen.cell(7, 31).code
-      assert_equal 0xad, screen.cell(9, 31).code
-      assert_equal '1359', text_at(screen, 17, 32, 4)
-      assert_equal 'OWN SERVERS', text_at(screen, 2, 1, 11)
-      assert_equal Canvas::YELLOW, screen.cell(2, 1).color
+      own = screen.cell(1, 1)
+      assert_equal ['O'.ord + 0x80, Canvas::YELLOW, true], [own.code, own.color, own.rvs]
+      assert_equal 'GLOBAL DISCOVERY', text_at(screen, 1, 15, 16)
+      assert_equal [Canvas::YELLOW, false], [screen.cell(1, 15).color, screen.cell(1, 15).rvs]
+      assert_equal [Canvas::GREY, false], [screen.cell(1, 16).color, screen.cell(1, 16).rvs]
+      assert_equal '1090', text_at(screen, 1, 35, 4)
+      assert_equal '10 boards', text_at(screen, 2, 1, 9)
+      assert_equal 'OWN SERVERS', text_at(screen, 3, 1, 11)
+      assert_equal Canvas::YELLOW, screen.cell(3, 1).color
       assert_equal 'CRSR', text_at(screen, 24, 1, 4)
       assert_equal Canvas::YELLOW, screen.cell(24, 1).color
     end
@@ -146,7 +143,8 @@ module Discovery
       assert_equal [Canvas::CYAN, true], [lit.color, lit.rvs]
       refute screen.cell(4, 3).rvs
       assert_equal UI::Petscii::Views::OwnView.color(own_boards[1]), screen.cell(5, 3).color
-      assert_equal 'Board 0', text_at(screen, 16, 1, 7)
+      assert_equal '2323', text_at(screen, 4, 35, 4)
+      assert_equal 'Board 0', text_at(screen, 15, 1, 7)
       g.press(:down)
       step = @line.sent.last
       assert_operator step.bytesize, :<=, 360
@@ -154,31 +152,58 @@ module Discovery
       screen = shown
       assert screen.cell(5, 0).rvs
       refute screen.cell(4, 0).rvs
-      assert_equal 'Board 1', text_at(screen, 16, 1, 7)
+      assert_equal 'Board 1', text_at(screen, 15, 1, 7)
     end
 
-    def test_the_sidebar_is_a_cursor_menu_and_the_hotkeys_work_from_anywhere
+    def test_the_tabs_switch_and_the_sub_menu_is_a_cursor_menu
       g = gate
       g.start
-      g.press(:left)
-      assert_equal :side, g.focus
-      g.press(:down)
+      g.press(:up)
+      assert_equal :main, g.focus
+      g.press('d')
+      assert_equal :discover, g.tab
+      assert_instance_of UI::Petscii::Views::ListView, g.view
       screen = shown
-      assert screen.cell(3, 32).rvs
-      refute screen.cell(2, 32).rvs
+      assert_equal '/Find Browse New Random Died Graves Srcs', text_at(screen, 2, 0, 40)
+      assert_equal [Canvas::YELLOW, false], [screen.cell(2, 6).color, screen.cell(2, 6).rvs]
+      assert_equal [Canvas::LIGHT_GREEN, true], [screen.cell(1, 15).color, screen.cell(1, 15).rvs]
+      g.press(:down)
+      g.press(:up)
+      assert_equal :main, g.focus
+      g.press(:up)
+      assert_equal :menu, g.focus
+      screen = shown
+      assert_equal [Canvas::CYAN, true], [screen.cell(2, 1).color, screen.cell(2, 1).rvs]
+      g.press(:down)
+      assert_equal :main, g.focus
+      g.press(:up)
+      g.press(:right)
+      screen = shown
+      assert screen.cell(2, 6).rvs
+      refute screen.cell(2, 1).rvs
       g.press(:enter)
       assert_equal :main, g.focus
-      assert_instance_of UI::Petscii::Views::ListView, g.view
-      g.press('u')
-      assert_instance_of UI::Petscii::Views::SourcesView, g.view
-      g.press('w')
-      assert_equal 'BY SOFTWARE', g.view.title
+      assert_equal 'BROWSE', g.view.title
+      screen = shown
+      assert_equal [Canvas::LIGHT_GREEN, true], [screen.cell(2, 6).color, screen.cell(2, 6).rvs]
       g.press(:enter)
       assert_equal 2, g.stack.size
       g.press(:escape)
       assert_equal 1, g.stack.size
+      g.press('s')
+      assert_instance_of UI::Petscii::Views::SourcesView, g.view
+      g.press('n')
+      assert_equal :new, g.view.section
+      g.press('u')
+      assert_instance_of UI::Petscii::Views::SourcesView, g.view
+      g.press('w')
+      assert_equal 'BY SOFTWARE', g.view.title
       g.press('h')
       assert_equal :help, g.view.section
+      assert_equal :discover, g.tab
+      g.press('o')
+      assert_equal :own, g.tab
+      assert_equal '10 boards', text_at(shown, 2, 1, 9)
       assert_equal :quit, g.press('q')
     end
 
@@ -189,21 +214,25 @@ module Discovery
       first = @line.sent.last
       assert_operator first.bytesize, :<=, 1300
       screen = shown
-      assert_equal 'PETSCII BOARDS', text_at(screen, 2, 1, 14)
-      marks = (6..8).map { |r| screen.cell(r, 3) }
+      assert_equal 'PETSCII BOARDS', text_at(screen, 3, 1, 14)
+      assert_equal '20  1/2', text_at(screen, 3, 32, 7)
+      marks = (7..9).map { |r| screen.cell(r, 3) }
       assert_equal [0xa1] * 3, marks.map(&:code)
       assert_equal [Canvas::YELLOW, Canvas::RED, Canvas::DARK_GREY], marks.map(&:color)
-      assert_equal [Canvas::LIGHT_BLUE, true], [screen.cell(5, 0).color, screen.cell(5, 0).rvs]
-      assert_equal 'Nr S Name', text_at(screen, 4, 0, 9)
-      assert_equal 'Alive', text_at(screen, 3, 19, 5)
+      assert_equal [Canvas::LIGHT_BLUE, true], [screen.cell(6, 0).color, screen.cell(6, 0).rvs]
+      assert_equal [Canvas::LIGHT_BLUE, true], [screen.cell(6, 39).color, screen.cell(6, 39).rvs]
+      assert_equal 'Nr S Name', text_at(screen, 5, 0, 9)
+      assert_equal 'US Synchronet', text_at(screen, 7, 26, 13)
+      assert_equal 'Board 09', text_at(screen, 15, 5, 8)
+      assert_equal 'Alive', text_at(screen, 4, 19, 5)
       g.press(:down)
       step = @line.sent.last
       assert_operator step.bytesize, :<=, 360
-      assert_equal 'Board 01', text_at(shown, 15, 1, 8)
+      assert_equal 'Board 01', text_at(shown, 17, 1, 8)
       g.press('f')
       assert_equal 'online', g.view.state
       assert_equal 5, g.view.items.size
-      assert_equal 'Online', text_at(shown, 3, 19, 6)
+      assert_equal 'Online', text_at(shown, 4, 19, 6)
     end
 
     def test_a_board_page_has_the_strip_the_buttons_and_b_is_its_banner
@@ -215,14 +244,14 @@ module Discovery
       assert_instance_of UI::Petscii::Views::PageView, page
       assert_operator @line.sent.last.bytesize, :<=, 1300
       screen = shown
-      assert_equal 'Board 00', text_at(screen, 2, 1, 8)
+      assert_equal 'Board 00', text_at(screen, 3, 1, 8)
       assert_equal 'board-00.example.org:64', text_at(screen, 4, 1, 23)
-      strip = (0...30).map { |c| screen.cell(8, c) }
+      strip = (1..30).map { |c| screen.cell(8, c) }
       assert_equal [Canvas::GREEN, Canvas::RED], strip.last(2).map(&:color)
       assert_equal Canvas::DARK_GREY, strip.first.color
       assert_equal 0xa6, strip.first.code
-      assert_equal 'RETURN', text_at(screen, 18, 2, 6)
-      assert_equal 'Banner', text_at(screen, 18, 21, 6)
+      assert_equal 'RETURN', text_at(screen, 21, 2, 6)
+      assert_equal 'Banner', text_at(screen, 21, 21, 6)
       assert_includes screen.to_s, 'Sysop    Runstop'
       assert_includes screen.to_s, 'CBBS/TBG'
       g.instance_variable_get(:@screen).instance_variable_set(:@keys, [' '])
@@ -241,7 +270,7 @@ module Discovery
       view.draw(canvas)
       lines = canvas.to_s.lines.map { |line| line[0, Layout::WIDTH].strip }
       assert_equal "#{host}:6400", lines[4] + lines[5]
-      assert_equal 'a-very-long-hostname-of-a-board.'[0, 29], lines[4][0, 29]
+      assert_equal 'a-very-long-hostname-of-a-board.bbs.', lines[4]
       assert_includes canvas.to_s, 'wiki.teletypegames.org'
       list = gate(listings: [l])
       list.start
@@ -267,7 +296,7 @@ module Discovery
       canvas = Canvas.new
       view.draw(canvas)
       text = canvas.to_s.lines
-      assert_equal(14, (11..24).count { |c| canvas.cell(4, c).rvs })
+      assert_equal(21, (11..38).count { |c| canvas.cell(4, c).rvs })
       assert_includes text[4], 'TBG'
       assert_includes text[4], '1060'
       assert_includes text[5], 'monthly ZIP/permission'

@@ -12,12 +12,14 @@ require_relative 'views/text_view'
 
 module UI
   module Petscii
-    # One C64 call of the gate: the frame (Chrome) around a view of the main
-    # area, the sidebar a cursor menu beside it. CRSR left and right move
-    # the focus between the sidebar and the main area, up and down move in
-    # the one that has it, RETURN opens; a sidebar place's yellow letter
-    # opens it from anywhere (a view's own keys first: B on a board's page
-    # is its banner). ← or RUN/STOP goes back, Q hangs up.
+    # One C64 call of the gate: the frame (Chrome) around a view of the
+    # content, two tabs and the active one's sub-menu above it. O and D
+    # switch the tabs from anywhere. On Global Discovery CRSR up from the
+    # top of a list (or from a page) moves the focus to the sub-menu: there
+    # CRSR left and right move its bar, RETURN opens, CRSR down goes back to
+    # the content. A yellow sign of the sub-menu opens its place from
+    # anywhere (a view's own keys first: B on a board's page is its banner).
+    # ← or RUN/STOP goes back, Q hangs up.
     #
     # Each change is drawn on a new Canvas and only the cells that differ
     # from what the C64 shows go out (a patch), or the whole screen when
@@ -29,8 +31,8 @@ module UI
       STEP = 0.12
       INPUT_LABEL = 'Find:'
       INPUT_MAX   = Layout::HINT_WIDTH - INPUT_LABEL.length - 2
-      SIDE_HINT   = [['CRSR', true], [' Move  ', false], ['RETURN', true], [' Open  ', false], ['Q', true],
-                     [' Quit', false]].freeze
+      MENU_HINT   = [['CRSR', true], [' Move  ', false], ['RETURN', true], [' Open  ', false], ['CRSR down', true],
+                     [' List', false]].freeze
       WARNINGS = {
         dead: ['This board has not answered', 'our calls for 30 days.', 'It may be gone. Dial anyway?']
       }.freeze
@@ -50,7 +52,7 @@ module UI
       BANDS = { discover: Canvas::LIGHT_GREEN, search: Canvas::WHITE, browse: Canvas::ORANGE, new: Canvas::PURPLE,
                 died: Canvas::LIGHT_RED, graves: Canvas::GREY }.freeze
 
-      attr_reader :focus, :stack
+      attr_reader :focus, :stack, :tab
 
       # [screen] the C64 line (Screen)
       # [boards] our boards with a C64 face (BoardModel)
@@ -66,6 +68,7 @@ module UI
         @node   = node
         @clock  = clock
         @focus  = :main
+        @tab    = :own
         @cursor = 0
         @stack  = []
         @shown  = nil
@@ -97,6 +100,7 @@ module UI
       def start
         @stats = stats
         @section = :own
+        @tab = :own
         @stack = [own]
         paint(whole: true)
       end
@@ -105,18 +109,14 @@ module UI
 
       # Answers one key; :quit when the call should end.
       def press(key)
-        return side(key) if @focus == :side && %i[up down enter].include?(key)
+        return menu_key(key) if @focus == :menu && %i[left right up down enter].include?(key)
+        return to_menu if key == :up && to_menu?
+        return back if key == :escape
 
-        case key
-        when :left then focus_on(:side)
-        when :right then focus_on(:main)
-        when :escape then back
-        else
-          result = view.handle(key)
-          return act(result) if result
-          return go(:search) if key == '/'
-          go(Chrome::HOTKEYS[key.downcase]) if key.is_a?(String) && Chrome::HOTKEYS.key?(key.downcase)
-        end
+        result = view.handle(key)
+        return act(result) if result
+
+        go(Chrome::HOTKEYS[key.downcase]) if key.is_a?(String) && Chrome::HOTKEYS.key?(key.downcase)
       end
 
       # The clock: a new minute repaints its cells.
@@ -131,15 +131,19 @@ module UI
       def compose
         canvas = Canvas.new
         Chrome.header(canvas, node: @node, time: @clock.call)
-        Chrome.divider(canvas)
-        Chrome.sidebar(canvas, lit: lit, stats: @stats)
+        Chrome.tabs(canvas, active: @tab, stats: @stats)
+        if @tab == :own
+          Chrome.own_line(canvas, @boards.size)
+        else
+          Chrome.menu(canvas, lit: lit, focused: @focus == :menu)
+        end
         view.draw(canvas)
         if @input
           canvas.text(Layout::HINT_ROW, 0, INPUT_LABEL, Canvas::LIGHT_GREEN)
           canvas.text(Layout::HINT_ROW, INPUT_LABEL.length + 1, @input, Canvas::WHITE)
           canvas.text(Layout::HINT_ROW, INPUT_LABEL.length + 1 + @input.length, ' ', Canvas::WHITE, rvs: true)
         else
-          Chrome.hint(canvas, @status || (@focus == :side ? SIDE_HINT : view.hint))
+          Chrome.hint(canvas, @status || (@focus == :menu ? MENU_HINT : view.hint))
         end
         canvas
       end
@@ -169,10 +173,13 @@ module UI
         patch.bytesize <= frame.bytesize ? patch : frame
       end
 
+      # The place of the sub-menu lit: the cursor's while the menu has the
+      # focus, else the section's (Browse for its axes).
       def lit
-        return Chrome::ITEMS[@cursor].key if @focus == :side
+        return Chrome::MENU[@cursor].key if @focus == :menu
 
-        view.section || @section
+        section = view.section || @section
+        Chrome::UNDER.fetch(section, section)
       end
 
       def stats
@@ -181,20 +188,29 @@ module UI
         nil
       end
 
-      def focus_on(focus)
-        return if @focus == focus
+      # CRSR up goes to the sub-menu on Global Discovery from the top of a
+      # list, or from a screen without one.
+      def to_menu?
+        return false unless @tab == :discover && @focus == :main
 
-        @cursor = Chrome::ITEMS.index { |i| i.key == lit } || 0 if focus == :side
-        @focus = focus
+        !view.is_a?(Views::Picker) || view.at_top?
+      end
+
+      def to_menu
+        @cursor = Chrome::MENU.index { |i| i.key == lit } || 0
+        @focus = :menu
         paint
       end
 
-      def side(key)
+      def menu_key(key)
         case key
-        when :up, :down
-          @cursor = (@cursor + (key == :up ? -1 : 1)).clamp(0, Chrome::ITEMS.size - 1)
+        when :left, :right
+          @cursor = (@cursor + (key == :left ? -1 : 1)) % Chrome::MENU.size
           paint
-        when :enter then go(Chrome::ITEMS[@cursor].key)
+        when :down
+          @focus = :main
+          paint
+        when :enter then go(Chrome::MENU[@cursor].key)
         end
       end
 
@@ -209,6 +225,7 @@ module UI
       # Back a screen; from a section's first one to our own boards, and from
       # there the call ends.
       def back
+        @focus = :main
         if @stack.size > 1
           @stack.pop
           view.reload if view.respond_to?(:reload)
@@ -219,7 +236,7 @@ module UI
         go(:own)
       end
 
-      # Opens the place +key+ of the sidebar.
+      # Opens the place +key+: a tab, a place of the sub-menu, Help.
       def go(key)
         return :quit if key == :quit
 
@@ -230,6 +247,7 @@ module UI
         return paint unless target
 
         @section = key
+        @tab = key == :own ? :own : :discover unless key == :help
         @stack = [target]
         paint(whole: true)
       end
@@ -346,6 +364,7 @@ module UI
         return paint if text.nil? || text.empty?
 
         @section = :search
+        @tab = :discover
         @stack = [list("FIND #{text}", :search) { |state| @browse.search(text, petscii: true, state: state) }]
         paint(whole: true)
       end

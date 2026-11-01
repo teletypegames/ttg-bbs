@@ -80,7 +80,7 @@ module Discovery
     # record_count, last_parse_at.
     def sources = @db.query('SELECT * FROM sources ORDER BY id')
 
-    # The counts of the C64 face's sidebar and Sources screen: the shown
+    # The counts of the C64 face's tabs and Sources screen: the shown
     # boards, those online, those that showed PETSCII (measured) and those a
     # list calls PETSCII (claimed), and those more than one list names.
     def stats

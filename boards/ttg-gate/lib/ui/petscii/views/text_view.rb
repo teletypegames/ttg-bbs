@@ -5,7 +5,7 @@ require_relative 'picker'
 module UI
   module Petscii
     module Views
-      # A page of text in the main area: the help, a message, or a question
+      # A page of text in the content area: the help, a message, or a question
       # before a dial. +lines+ are [text, colour] each (a String is light
       # grey); +keys+ the chips under them, [key, word] each.
       class TextView < View
@@ -25,9 +25,9 @@ module UI
 
         def draw(canvas)
           Layout.band(canvas, @title, '', @color)
-          @lines.first(Layout::ROWS - 4).each_with_index do |line, i|
+          @lines.first(Layout::ROWS - 3).each_with_index do |line, i|
             text, color = line.is_a?(String) ? [line, Canvas::LIGHT_GREY] : line
-            canvas.text(Layout.row(2 + i), 1, Layout.plain(text)[0, Layout::WIDTH - 2], color)
+            canvas.text(Layout.row(2 + i), 1, Layout.plain(text)[0, Layout::EDGE - 1], color)
           end
           col = 1
           @keys.each do |key, word|
@@ -39,11 +39,14 @@ module UI
         # The help: the keys of the C64 face.
         def self.help
           lines = [
-            ['The sidebar', Canvas::WHITE], 'CRSR left: to the sidebar', 'CRSR right: to the list',
-            'CRSR up, down: move', 'RETURN: open it', 'A yellow letter opens its', 'place from anywhere.', '',
-            ['The lists', Canvas::WHITE], '1-9, 0: that row  +/-: page', 'F: state filter  /: search',
-            '←, RUN/STOP: back', '',
-            ['A board', Canvas::WHITE], 'RETURN: dial  B: its banner', 'When it hangs up, you are', 'back where you were.'
+            ['The tabs and the menu', Canvas::WHITE], 'O: Own servers  D: Global Discovery',
+            'CRSR up at the top of a list: the menu', 'CRSR left, right: move  RETURN: open',
+            'CRSR down: back to the list', 'A yellow sign opens its place from',
+            'anywhere: / Find, B Browse, N New,', 'R Random, E Died, G Graves, S Sources;',
+            'W Software, C Country, K Network.', '',
+            ['The lists', Canvas::WHITE], '1-9, 0: that row  +/-: page', 'F: state filter  ←, RUN/STOP: back', '',
+            ['A board', Canvas::WHITE], 'RETURN: dial  B: its banner', 'When it hangs up, you are back where',
+            'you were.  Q: hang up'
           ]
           new('HELP', lines, color: Canvas::LIGHT_GREY, section: :help)
         end

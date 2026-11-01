@@ -7,7 +7,7 @@ require_relative 'petscii/gate'
 
 module UI
   # TTG Gate BBS on a Commodore 64: raw PETSCII in the lower/upper set, the
-  # frame of UI::Petscii::Gate (the header, the sidebar, the hint bar)
+  # frame of UI::Petscii::Gate (the header, the tabs, the hint bar)
   # around our own boards, Global Discovery's lists and pages and the
   # Sources.
   module Petscii

@@ -5,102 +5,95 @@ require_relative 'layout'
 module UI
   module Petscii
     # The frame around every screen of the C64 face: the header (the colour
-    # logo, the node and the clock), the raster stripe, the divider, the
-    # sidebar and the hint bar. The sidebar is a cursor menu: Item is one of
-    # its places, each with a hotkey that works from anywhere.
+    # logo, the node and the clock), the two tabs (Own Servers, Global
+    # Discovery), the active tab's sub-menu under them and the hint bar at
+    # the bottom. The sub-menu is a cursor menu: Item is one of its places,
+    # each with a hotkey that works from anywhere.
     module Chrome
       LOGO = [['T', Canvas::RED], ['T', Canvas::ORANGE], ['G', Canvas::YELLOW], [' ', nil],
               ['G', Canvas::LIGHT_GREEN], ['A', Canvas::CYAN], ['T', Canvas::LIGHT_BLUE], ['E', Canvas::PURPLE]].freeze
-      RASTER = [Canvas::RED, Canvas::ORANGE, Canvas::YELLOW, Canvas::LIGHT_GREEN, Canvas::GREEN, Canvas::CYAN,
-                Canvas::LIGHT_BLUE, Canvas::BLUE, Canvas::PURPLE, Canvas::LIGHT_RED].freeze
-      # The tee and the corner of the Browse tree: both character sets have
-      # them, the Canvas glyph table does not.
-      TEE    = 0xab
-      CORNER = 0xad
 
-      # A place of the sidebar: +key+ the section it opens, +label+, the
-      # index of its +hotkey+ letter in the label, the tree +branch+ before
-      # it (nil, :tee or :corner), and whether it is +strong+ (white).
-      Item = Data.define(:key, :label, :hotkey, :branch, :strong) do
+      # A tab: its +key+, +label+, its +color+ and the column it starts at.
+      Tab = Data.define(:key, :label, :color, :col)
+      TABS = [Tab.new(:own, 'OWN SERVERS', Canvas::YELLOW, 1),
+              Tab.new(:discover, 'GLOBAL DISCOVERY', Canvas::LIGHT_GREEN, 15)].freeze
+
+      # A place of the sub-menu of Global Discovery: +key+ the section it
+      # opens, +label+, the index of its +hotkey+ sign in the label, and the
+      # column it starts at.
+      Item = Data.define(:key, :label, :hotkey, :col) do
         def letter = label[hotkey].downcase
       end
 
-      # The sidebar from the top, a line each: an Item, :rule, :blank, or a
-      # line of the counter.
-      LINES = [
-        Item.new(:own, 'Own', 0, nil, true), Item.new(:discover, 'Discover', 0, nil, true), :rule,
-        Item.new(:search, 'Search', 0, nil, false), Item.new(:browse, 'Browse', 0, nil, false),
-        Item.new(:software, 'Software', 4, :tee, false), Item.new(:country, 'Country', 0, :tee, false),
-        Item.new(:network, 'Network', 6, :corner, false), Item.new(:new, 'New', 0, nil, false),
-        Item.new(:random, 'Random', 0, nil, false), Item.new(:died, 'Died', 2, nil, false),
-        Item.new(:graves, 'Graves', 0, nil, false), Item.new(:sources, 'Sources', 2, nil, false), :rule, :blank,
-        :total, :boards, :online, :c64, :blank, Item.new(:help, 'Help', 0, nil, false),
-        Item.new(:quit, 'Quit', 0, nil, false)
-      ].freeze
-      ITEMS   = LINES.grep(Item).freeze
-      HOTKEYS = ITEMS.to_h { |i| [i.letter, i.key] }.freeze
+      PLACES = [[:search, '/Find', 0], [:browse, 'Browse', 0], [:new, 'New', 0], [:random, 'Random', 0],
+                [:died, 'Died', 2], [:graves, 'Graves', 0], [:sources, 'Srcs', 0]].freeze
+      MENU = PLACES.each_with_object([]) do |(key, label, hotkey), items|
+        col = items.empty? ? 0 : items.last.col + items.last.label.length + 1
+        items << Item.new(key, label, hotkey, col)
+      end.freeze
+      # The sections that light a place of the sub-menu other than their own.
+      UNDER = { software: :browse, country: :browse, network: :browse }.freeze
+      # The keys that open a place from anywhere: the tabs, the sub-menu's
+      # yellow signs, the axes of Browse (soft_w_are, _c_ountry, networ_k_),
+      # U for the Sources as before, Help and Quit.
+      HOTKEYS = { 'o' => :own, 'd' => :discover, 'w' => :software, 'c' => :country, 'k' => :network,
+                  'u' => :sources, 'h' => :help, 'q' => :quit }.merge(MENU.to_h { |i| [i.letter, i.key] }).freeze
 
       module_function
 
-      # The header: the logo, the node and the clock, and the raster stripe.
+      # The header: the logo, the node and the clock.
       def header(canvas, node:, time:)
         LOGO.each_with_index do |(ch, color), i|
-          canvas.text(0, 1 + i, ch, color, rvs: true) if color
+          canvas.text(Layout::HEADER_ROW, 1 + i, ch, color, rvs: true) if color
         end
-        canvas.text(0, 9, ' BBS', Canvas::WHITE)
+        canvas.text(Layout::HEADER_ROW, 9, ' BBS', Canvas::WHITE)
         clock(canvas, node: node, time: time)
-        Canvas::COLS.times { |col| canvas.text(1, col, '▀', RASTER[(col / 4) % RASTER.size]) }
       end
 
       def clock(canvas, node:, time:)
         node = "Node #{node}"
-        canvas.text(0, 33 - node.length, node, Canvas::GREY)
-        canvas.text(0, 34, time.strftime('%H:%M'), Canvas::CYAN)
+        canvas.text(Layout::HEADER_ROW, 33 - node.length, node, Canvas::GREY)
+        canvas.text(Layout::HEADER_ROW, 34, time.strftime('%H:%M'), Canvas::CYAN)
       end
 
-      def divider(canvas) = Layout::ROWS.times { |i| canvas.text(Layout.row(i), Layout::DIVIDER, '│', Canvas::DARK_GREY) }
+      # The tabs, +active+ a band in its colour, the other dim with its
+      # yellow letter, and the boards online of +stats+ on the right.
+      def tabs(canvas, active:, stats:)
+        TABS.each do |tab|
+          if tab.key == active
+            canvas.text(Layout::TABS_ROW, tab.col - 1, " #{tab.label} ", tab.color, rvs: true)
+          else
+            canvas.text(Layout::TABS_ROW, tab.col, tab.label, Canvas::GREY)
+            canvas.text(Layout::TABS_ROW, tab.col, tab.label[0], Canvas::YELLOW)
+          end
+        end
+        online = stats && stats[:online]
+        return unless online
 
-      # The sidebar with +lit+ (an Item's key) as the cyan bar, and the
-      # counter of +stats+ (BrowseService#stats, nil without a catalog).
-      def sidebar(canvas, lit:, stats:)
-        LINES.each_with_index do |line, i|
-          row = Layout.row(i)
-          case line
-          when Item then item(canvas, row, line, line.key == lit)
-          when :rule then canvas.text(row, Layout::SIDE, " #{'─' * (Layout::SIDE_WIDTH - 1)}", Canvas::DARK_GREY)
-          when :blank then nil
-          else counter(canvas, row, line, stats)
+        count = online.to_s
+        canvas.text(Layout::TABS_ROW, Layout::EDGE - count.length - 1, '▌', Canvas::LIGHT_GREEN)
+        canvas.text(Layout::TABS_ROW, Layout::EDGE - count.length, count, Canvas::WHITE)
+      end
+
+      # The sub-menu of Global Discovery: +lit+ (an Item's key) a reversed
+      # bar, cyan while the menu has the focus (+focused+), light green
+      # otherwise.
+      def menu(canvas, lit:, focused:)
+        MENU.each do |item|
+          if item.key == lit
+            canvas.text(Layout::MENU_ROW, item.col, item.label, focused ? Canvas::CYAN : Canvas::LIGHT_GREEN, rvs: true)
+          else
+            canvas.text(Layout::MENU_ROW, item.col, item.label, Canvas::LIGHT_GREY)
+            canvas.text(Layout::MENU_ROW, item.col + item.hotkey, item.label[item.hotkey], Canvas::YELLOW)
           end
         end
       end
 
-      def item(canvas, row, item, lit)
-        col = Layout::SIDE + 1
-        if lit
-          canvas.text(row, Layout::SIDE, ' ' * Layout::SIDE_WIDTH, Canvas::CYAN, rvs: true)
-          canvas.text(row, col, item.label, Canvas::CYAN, rvs: true)
-        else
-          canvas.text(row, col, item.label, item.strong ? Canvas::WHITE : Canvas::LIGHT_GREY)
-          canvas.text(row, col + item.hotkey, item.label[item.hotkey], Canvas::YELLOW)
-        end
-        return unless item.branch
-
-        canvas.put(row, Layout::SIDE, item.branch == :tee ? TEE : CORNER, lit ? Canvas::CYAN : Canvas::DARK_GREY, rvs: lit)
-      end
-
-      def counter(canvas, row, line, stats)
-        col = Layout::SIDE + 1
-        value = ->(key) { stats ? stats[key].to_s : '-' }
-        case line
-        when :total then canvas.text(row, col, value.call(:boards), Canvas::WHITE)
-        when :boards then canvas.text(row, col, 'boards', Canvas::GREY)
-        when :online
-          canvas.text(row, col, '▌', Canvas::LIGHT_GREEN)
-          canvas.text(row, col + 2, value.call(:online), Canvas::WHITE)
-        when :c64
-          canvas.text(row, col, 'C64', Canvas::CYAN)
-          canvas.text(row, col + 4, value.call(:petscii), Canvas::WHITE)
-        end
+      # The line under the tabs on Own Servers: how many boards, and how.
+      def own_line(canvas, count)
+        Layout.runs(canvas, Layout::MENU_ROW, 1, [[count.to_s, Canvas::WHITE], [' boards  ', Canvas::GREY],
+                                                  ['RETURN', Canvas::YELLOW], [' dials  ', Canvas::GREY],
+                                                  ['H', Canvas::YELLOW], [' Help', Canvas::GREY]])
       end
 
       # The hint bar: +parts+ of [text, key?], the keys yellow, the words

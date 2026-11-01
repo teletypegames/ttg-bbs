@@ -19,7 +19,13 @@ module UI
         NO_DAY = ['▒', Canvas::DARK_GREY].freeze
         HINT = [['RETURN', true], [' Dial  ', false], ['B', true], [' Banner  ', false], ['←', true],
                 [' Back', false]].freeze
-        FIELDS = 5
+        FIELDS = 8
+        # The column of a field's value, and the rows a long one wraps to.
+        VALUE = 10
+        VALUE_ROWS = 2
+        # The rows of the tag chips, the buttons, the banner note and the
+        # opt-out link, from the top of the content.
+        TAGS_LINE = 16
         WIKI = 'wiki.teletypegames.org'
 
         attr_reader :page, :section
@@ -53,26 +59,21 @@ module UI
         def draw(canvas)
           color = ListView::STATE_COLORS.fetch(listing.state, Canvas::LIGHT_GREY)
           Layout.band(canvas, Layout.plain(listing.title), listing.state.capitalize, color)
-          down = Layout.address(canvas, Layout.row(2), 1, listing.host, listing.port) - 1
-          answer(canvas, Layout.row(3 + down))
-          strip(canvas, Layout.row(5 + down))
-          fields(canvas, Layout.row(8 + down))
-          tags(canvas, Layout.row(14 + down))
-          buttons(canvas, Layout.row(16 + down))
-          footer(canvas, 18 + down)
+          down = Layout.address(canvas, Layout.row(1), 1, listing.host, listing.port) - 1
+          answer(canvas, Layout.row(2 + down))
+          strip(canvas, Layout.row(4 + down))
+          fields(canvas, Layout.row(7 + down), Layout.row(TAGS_LINE - 1))
+          tags(canvas, Layout.row(TAGS_LINE))
+          buttons(canvas, Layout.row(TAGS_LINE + 2))
+          footer(canvas, TAGS_LINE + 3)
         end
 
         private
 
-        # The banner note, and the opt-out link while there is room: a long
-        # address pushes them down.
+        # The banner note and the opt-out link.
         def footer(canvas, line)
-          last = Layout::ROWS - 1
-          canvas.text(Layout.row(line), 1, banner_note, Canvas::GREY) if line <= last
-          return unless line + 2 <= last
-
-          canvas.text(Layout.row(line + 1), 1, 'Opt-out, probe policy:', Canvas::DARK_GREY)
-          canvas.text(Layout.row(line + 2), 1, WIKI, Canvas::GREY)
+          canvas.text(Layout.row(line), 1, banner_note, Canvas::GREY)
+          Layout.runs(canvas, Layout.row(line + 1), 1, [['Opt-out/policy: ', Canvas::DARK_GREY], [WIKI, Canvas::GREY]])
         end
 
         def answer(canvas, row)
@@ -103,29 +104,46 @@ module UI
           up = days.count(::Discovery::BoardPageModel::UP)
           canvas.text(row, 1, '30 days', Canvas::GREY)
           right = "#{up}/#{days.length}"
-          canvas.text(row, Layout::WIDTH - 1 - right.length, right, up.positive? ? Canvas::LIGHT_GREEN : Canvas::LIGHT_RED)
           days.each_char.with_index do |day, i|
             glyph, color = STRIP.fetch(day, NO_DAY)
-            canvas.text(row + 1, i, glyph, color)
+            canvas.text(row + 1, 1 + i, glyph, color)
           end
+          canvas.text(row + 1, days.length + 3, right, up.positive? ? Canvas::LIGHT_GREEN : Canvas::LIGHT_RED)
         end
 
-        # The fields with a value, a row each: the label, the value, and in
-        # dark grey the list it came from; the terminals and the lists last.
-        def fields(canvas, row)
+        # The fields with a value from +row+ to +last+: the label, the value
+        # (a long one wraps), and in dark grey the list it came from; the
+        # terminals and the lists last.
+        def fields(canvas, row, last)
           shown = @page.fields.reject { |f| %w[Name Encoding Website].include?(f.label) }
-          lines = shown.map { |f| [Layout.plain(f.label.sub('FTN address', 'FTN')), [[Layout.plain(f.value), Canvas::WHITE]], short(f)] }
           extra = []
           extra << ['Terminal', terminals, 'CALL'] if terminals.any?
           extra << ['Sources', lists, ''] if lists.any?
-          (lines.first(FIELDS - extra.size) + extra).each do |label, parts, source|
-            canvas.text(row, 1, label[0, 8], Canvas::GREY)
-            limit = Layout::WIDTH - 1 - (source.empty? ? 0 : source.length + 1)
-            Layout.runs(canvas, row, 10, parts, limit: limit)
-            canvas.text(row, Layout::WIDTH - 1 - source.length, source, Canvas::DARK_GREY) unless source.empty?
+          room = last - row + 1 - extra.size
+          shown.first(FIELDS - extra.size).each do |f|
+            break if room <= 0
+
+            source = short(f)
+            lines = Layout.wrap(f.value, limit(source) - VALUE, [VALUE_ROWS, room].min)
+            field(canvas, row, Layout.plain(f.label.sub('FTN address', 'FTN')), source)
+            lines.each_with_index { |line, i| canvas.text(row + i, VALUE, line, Canvas::WHITE) }
+            row += lines.size
+            room -= lines.size
+          end
+          extra.each do |label, parts, source|
+            field(canvas, row, label, source)
+            Layout.runs(canvas, row, VALUE, parts, limit: limit(source))
             row += 1
           end
         end
+
+        def field(canvas, row, label, source)
+          canvas.text(row, 1, label[0, VALUE - 2], Canvas::GREY)
+          canvas.text(row, Layout::EDGE - source.length, source, Canvas::DARK_GREY) unless source.empty?
+        end
+
+        # The column a value stops before, the source's name after it.
+        def limit(source) = Layout::EDGE - (source.empty? ? 0 : source.length + 1)
 
         def terminals
           @terminals ||= begin
@@ -177,7 +195,7 @@ module UI
           return 'Banner: PETSCII, B shows it' if banner?
           return 'No banner stored yet' unless @page.banner
 
-          "#{@page.encoding.to_s.upcase} banner: modern face"[0, 28]
+          "#{@page.encoding.to_s.upcase} banner: modern face"
         end
       end
     end
