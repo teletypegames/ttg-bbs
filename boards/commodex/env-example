@@ -1,0 +1,22 @@
+# Every environment variable of Commodex BBS, with its default. The only
+# secret is the Discord webhook: put it in .env on the server, never here.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=100
+
+# The catalog: the seed that ships with the image, the copy a refresh writes,
+# and the seconds after which the board reads Wikidata again (0: never)
+COMMODEX_CATALOG_SEED=config/catalog.json.gz
+COMMODEX_CATALOG=data/catalog.json.gz
+COMMODEX_CATALOG_TTL=604800
+
+# The Wikipedia leads kept in memory
+COMMODEX_WIKIPEDIA_CACHE=200
+
+# The tips: the SQLite file, the approved tips shipped with the board
+COMMODEX_TIPS_DB=data/tips.sqlite3
+COMMODEX_TIPS_SEED=config/tips.yml
+
+# A Discord webhook rung for every new tip; empty: off
+COMMODEX_DISCORD_WEBHOOK=

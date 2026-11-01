@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Reads the Commodore 64 games from Wikidata now and writes them as a catalog
+# file, by default the seed that ships with the board:
+#   bin/refresh-catalog [path]          (default config/catalog.json.gz)
+# The running board refreshes its own copy in data/ by itself.
+require_relative '../lib/domain'
+
+path    = ARGV.first || File.expand_path('../config/catalog.json.gz', __dir__)
+records = WikidataRepository.new.records
+abort 'Wikidata did not answer; nothing written' if records.nil? || records.empty?
+
+CatalogRepository.write(path, records, Time.now.utc)
+puts "#{records.size} games written to #{path}"

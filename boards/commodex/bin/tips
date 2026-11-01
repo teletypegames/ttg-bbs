@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# The admins' look at the tips callers sent:
+#   docker exec commodex bin/tips list              (the pending ones, oldest last)
+#   docker exec commodex bin/tips approved          (the approved ones)
+#   docker exec commodex bin/tips approve ID        (shown on the board from now on)
+#   docker exec commodex bin/tips reject ID         (never shown)
+require_relative '../lib/domain'
+
+def show(tips, list)
+  return puts('No tips.') if list.empty?
+
+  list.each do |t|
+    game = tips.game_of(t)
+    puts "##{t.id}  #{t.date}  #{game ? game.label : t.game_id} [#{t.game_id}]  from #{t.author}  (#{t.status})"
+    puts "  #{t.text}"
+    puts
+  end
+end
+
+tips = CommodexBBS.new.tips
+command, id = ARGV
+result = case command
+         when 'list', nil then show(tips, tips.pending); :listed
+         when 'approved'  then show(tips, tips.approved_list); :listed
+         when 'approve'   then id ? tips.approve(id) : :usage
+         when 'reject'    then id ? tips.reject(id) : :usage
+         else :usage
+         end
+case result
+when :ok then puts "tip ##{id} #{command}d"
+when :no_tip then abort "no tip ##{id}"
+when :usage then abort 'usage: bin/tips list | approved | approve ID | reject ID'
+end
