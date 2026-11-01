@@ -13,8 +13,8 @@
 boards:
   - id: teletype-bbs
     name: "Teletype BBS"
-    summary: "The community main line: news and releases, the game catalogue, wiki guides, message boards, a multi-user chat and the SERMO door, on a full-screen Synchronet-style ANSI interface."
-    tags: ["news", "games", "boards", "chat"]
+    summary: "The clubhouse of the network: message boards, mail, oneliners, a multi-user chat and the doors that live only here (SERMO, a C64 and a Plus/4, Chat of Ra, TTG Trivia), on a full-screen Synchronet-style ANSI interface."
+    tags: ["boards", "chat", "mail", "doors"]
     port: 2323
     accent: "#3cff7a"
     petscii: true
