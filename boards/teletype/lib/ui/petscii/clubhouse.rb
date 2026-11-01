@@ -113,7 +113,7 @@ module UI
 
         wide  = changed.group_by(&:first).select { |_, cells| cells.size > 6 }.keys
         spans = wide.map { |row| canvas.span(row, 0, C::COLS - 1) }.join.b
-        mixed = spans + canvas.patch(changed.reject { |row, _| wide.include?(row) })
+        mixed = spans + canvas.patch(changed.reject { |pos| wide.include?(pos.first) })
         [mixed, canvas.update(before)].min_by(&:bytesize)
       end
 
