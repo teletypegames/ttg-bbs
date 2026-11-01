@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative 'logo'
 require_relative 'petscii/screen'
 
 module UI
@@ -29,10 +28,7 @@ module UI
 
     # ALEXANDRIA in reversed blocks, five rows.
     def self.logo
-      Logo.rows.each_with_index.map do |bits, row|
-        line = bits.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')
-        "  #{LOGO_COLORS[row]}#{line}#{LG}"
-      end
+      BBS::BlockFont.petscii('ALEXANDRIA', colors: LOGO_COLORS, glyphs: BBS::BlockFont::NARROW_I, indent: 2)
     end
 
     def self.flow(bbs)
@@ -42,28 +38,13 @@ module UI
           nil
         end
         call do |_ctx, runner|
-          Petscii.goodbye(Screen.new(runner.session))
+          BBS::Goodbye.petscii(Screen.new(runner.session), title: 'alexandria bbs',
+                                                           note: 'Articles from wikipedia.org, under CC BY-SA.')
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           nil
         end
       end
-    end
-
-    def self.goodbye(screen)
-      screen.cls
-      screen.puts
-      screen.puts " #{CY}#{RV}#{' thanks for calling alexandria bbs'.ljust(39)}#{RO}#{LG}"
-      screen.puts
-      screen.say('Articles from wikipedia.org, under CC BY-SA. More of us: teletypegames.org', GR)
-      screen.puts
-      sleep 1.2
-      screen.puts " #{LG}+++"
-      sleep 0.6
-      screen.puts ' ATH0'
-      sleep 0.4
-      screen.puts " #{RD}NO CARRIER#{LG}"
-      screen.puts
     end
 
     # One call: the prompt, the results, the article.

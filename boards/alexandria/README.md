@@ -109,11 +109,10 @@ lib/
     model/extract_text.rb     the plain extract → sections in Markdown, TeX made readable
     repository/wikipedia_repository.rb  the Action API: search, article, random; pace, cache
     service/article_service.rb  look up, search, read, random, the languages
-  ui/logo.rb                  ALEXANDRIA in a block font, for the PETSCII masthead
   ui/modern.rb                the modern face: desktop, search, results, article
   ui/modern/pharos.rb         the desktop's title: the lighthouse and the name
   ui/petscii.rb               the PETSCII face: logo, prompt, menu, lists, pages
-  ui/petscii/screen.rb        title bar, pages, the cursor menus on the 40×25 screen
+  ui/petscii/screen.rb        the 40×25 screen: rubbs' BBS::Petscii::Screen
 ```
 
 ## Wikipedia

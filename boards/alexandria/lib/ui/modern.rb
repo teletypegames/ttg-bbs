@@ -160,9 +160,7 @@ module UI
           nil
         end
         call do |_ctx, runner|
-          runner.write "\e[0m\e[2J\e[H\r\n  \e[1;37mThanks for calling Alexandria BBS.\e[0m\r\n  " \
-                       "\e[2;37mArticles from wikipedia.org, under CC BY-SA. More of us: teletypegames.org\e[0m\r\n\r\n  " \
-                       "\e[1;31mNO CARRIER\e[0m\r\n\r\n"
+          BBS::Goodbye.modern(runner, title: 'Alexandria BBS', note: 'Articles from wikipedia.org, under CC BY-SA.')
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           nil
