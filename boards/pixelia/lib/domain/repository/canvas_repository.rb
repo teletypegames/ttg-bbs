@@ -85,7 +85,7 @@ class CanvasRepository
         end
         flush
       rescue StandardError => e
-        warn "pixelia: canvas writer: #{e.class}: #{e.message}"
+        warn "pixelia-bbs: canvas writer: #{e.class}: #{e.message}"
       end
     end
     at_exit { flush }
@@ -102,13 +102,13 @@ class CanvasRepository
 
   def load
     canvas = File.exist?(@path) ? CanvasModel.from_h(JSON.parse(File.read(@path))) : nil
-    warn "pixelia: #{@path} is not a canvas, starting blank" if canvas.nil? && File.exist?(@path)
+    warn "pixelia-bbs: #{@path} is not a canvas, starting blank" if canvas.nil? && File.exist?(@path)
     canvas ||= CanvasModel.blank
     @chars = canvas.chars.dup
     @fg    = canvas.fg.dup
     @bg    = canvas.bg.dup
   rescue SystemCallError, JSON::ParserError => e
-    warn "pixelia: #{@path}: #{e.class}: #{e.message}"
+    warn "pixelia-bbs: #{@path}: #{e.class}: #{e.message}"
     blank = CanvasModel.blank
     @chars = blank.chars.dup
     @fg    = blank.fg.dup
@@ -122,7 +122,7 @@ class CanvasRepository
     File.rename(tmp, @path)
     @dirty = false
   rescue SystemCallError => e
-    warn "pixelia: #{@path}: #{e.class}: #{e.message}"
+    warn "pixelia-bbs: #{@path}: #{e.class}: #{e.message}"
   end
 
   def archive
@@ -131,7 +131,7 @@ class CanvasRepository
     File.write(target, JSON.generate(CanvasModel.new(@chars, @fg, @bg).to_h))
     target
   rescue SystemCallError => e
-    warn "pixelia: #{@archive_dir}: #{e.class}: #{e.message}"
+    warn "pixelia-bbs: #{@archive_dir}: #{e.class}: #{e.message}"
     nil
   end
 end

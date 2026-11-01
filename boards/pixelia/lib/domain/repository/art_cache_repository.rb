@@ -29,7 +29,7 @@ class ArtCacheRepository
       data
     end
   rescue SystemCallError => e
-    warn "pixelia: #{path}: #{e.class}: #{e.message}"
+    warn "pixelia-bbs: #{path}: #{e.class}: #{e.message}"
     @lock.synchronize { @entries.delete(path) }
     nil
   end
@@ -48,7 +48,7 @@ class ArtCacheRepository
       @entries[path] = { size: data.bytesize, used: Time.now }
     end
   rescue SystemCallError => e
-    warn "pixelia: #{path}: #{e.class}: #{e.message}"
+    warn "pixelia-bbs: #{path}: #{e.class}: #{e.message}"
   end
 
   def size = @lock.synchronize { @entries.values.sum { |e| e[:size] } }
@@ -74,6 +74,6 @@ class ArtCacheRepository
       @entries[path] = { size: stat.size, used: stat.mtime }
     end
   rescue SystemCallError => e
-    warn "pixelia: #{@dir}: #{e.class}: #{e.message}"
+    warn "pixelia-bbs: #{@dir}: #{e.class}: #{e.message}"
   end
 end

@@ -102,7 +102,7 @@ class SixteenColorsRepository
     body = get(url, limit: 8 * 1024 * 1024)
     body.is_a?(String) ? JSON.parse(body) : nil
   rescue JSON::ParserError => e
-    warn "pixelia: #{url}: #{e.class}: #{e.message}"
+    warn "pixelia-bbs: #{url}: #{e.class}: #{e.message}"
     nil
   end
 
@@ -113,7 +113,7 @@ class SixteenColorsRepository
       request = Net::HTTP::Get.new(uri.request_uri, 'User-Agent' => @user_agent, 'Accept-Encoding' => 'identity')
       http.request(request) do |res|
         unless res.is_a?(Net::HTTPSuccess)
-          warn "pixelia: #{url} answered #{res.code}"
+          warn "pixelia-bbs: #{url} answered #{res.code}"
           return nil
         end
         return :too_big if res['Content-Length'].to_i > limit
@@ -127,7 +127,7 @@ class SixteenColorsRepository
       end
     end
   rescue StandardError => e
-    warn "pixelia: #{url}: #{e.class}: #{e.message}"
+    warn "pixelia-bbs: #{url}: #{e.class}: #{e.message}"
     nil
   end
 

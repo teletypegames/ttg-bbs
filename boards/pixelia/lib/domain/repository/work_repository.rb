@@ -44,7 +44,7 @@ class WorkRepository
     end
     work
   rescue SystemCallError => e
-    warn "pixelia: #{@dir}: #{e.class}: #{e.message}"
+    warn "pixelia-bbs: #{@dir}: #{e.class}: #{e.message}"
     nil
   end
 
@@ -61,7 +61,7 @@ class WorkRepository
       true
     end
   rescue SystemCallError => e
-    warn "pixelia: #{path}: #{e.class}: #{e.message}"
+    warn "pixelia-bbs: #{path}: #{e.class}: #{e.message}"
     false
   end
 
@@ -78,7 +78,7 @@ class WorkRepository
     Dir.glob(File.join(@dir, '*.json')).filter_map do |path|
       WorkModel.from_h(JSON.parse(File.read(path)))
     rescue SystemCallError, JSON::ParserError => e
-      warn "pixelia: #{path}: #{e.class}: #{e.message}"
+      warn "pixelia-bbs: #{path}: #{e.class}: #{e.message}"
       nil
     end.sort_by(&:id).reverse
   end
