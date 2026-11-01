@@ -27,4 +27,5 @@ outcomes = root.importer.call(only: only, files: files)
 outcomes.each do |o|
   puts [o.source.ljust(10), o.status.to_s.ljust(8), o.records.to_s.rjust(6), o.message].compact.join(' ')
 end
+root.metrics.write
 exit(outcomes.all? { |o| o.status == :ok } ? 0 : 1)

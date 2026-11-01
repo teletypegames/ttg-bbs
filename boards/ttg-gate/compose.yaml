@@ -7,6 +7,8 @@ services:
     container_name: ttg-gate-bbs
     ports:
       - "2399:2323"
+    volumes:
+      - ./data:/app/data
     environment:
       - TZ=Europe/Budapest
       - BBS_MAX_SESSIONS=50
@@ -15,4 +17,21 @@ services:
     extra_hosts:
       # The boards are dialled on their ports on the host.
       - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # Global Discovery's prober: calls the boards of data/discovery.sqlite3 as they fall due (at
+  # most 8 at once, one a host) and writes data/discovery-metrics.prom. The daily import runs in
+  # this container too: docker exec ttg-gate-bbs-prober bin/discovery-import.
+  ttg-gate-bbs-prober:
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
+    build: .
+    container_name: ttg-gate-bbs-prober
+    command: ["ruby", "bin/discovery-prober"]
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TZ=Europe/Budapest
+      - TTG_GATE_BBS_DISCORD_WEBHOOK=${TTG_GATE_BBS_DISCORD_WEBHOOK:-}
     restart: unless-stopped

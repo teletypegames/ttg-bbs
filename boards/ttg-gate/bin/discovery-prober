@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# The prober of Global Discovery, a daemon (the ttg-gate-bbs-prober service):
+# calls the boards of the catalog as they fall due, at most 8 at once and one
+# a host, and writes data/discovery-metrics.prom every minute. TERM or INT
+# stops it after the calls in progress.
+#
+#   bin/discovery-prober              run until stopped
+#   bin/discovery-prober --limit 20   stop after 20 calls (a local test)
+
+require 'bundler/setup'
+require 'optparse'
+require_relative '../lib/domain/discovery'
+
+$stdout.sync = true
+limit = nil
+concurrency = Discovery::ProberService::CONCURRENCY
+OptionParser.new do |o|
+  o.on('--limit N', Integer) { |n| limit = n }
+  o.on('--concurrency N', Integer) { |n| concurrency = n.clamp(1, Discovery::ProberService::CONCURRENCY) }
+end.parse!
+
+stop = false
+%w[TERM INT].each { |signal| trap(signal) { stop = true } }
+puts "ttg-gate-bbs-prober: starting, #{concurrency} at once#{", #{limit} calls" if limit}"
+Discovery::Root.new.prober(concurrency: concurrency).run(stop: -> { stop }, limit: limit)
+puts 'ttg-gate-bbs-prober: stopped'

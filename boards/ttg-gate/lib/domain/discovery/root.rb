@@ -11,7 +11,7 @@ module Discovery
   class Root
     ROOT = File.expand_path('../../..', __dir__)
 
-    attr_reader :db, :config, :catalog, :probes, :optout, :tags, :aliases
+    attr_reader :db, :config, :catalog, :probes, :optout, :geoip, :tags, :aliases
 
     def initialize(env = ENV)
       @data    = env.fetch('TTG_GATE_BBS_DATA', File.join(ROOT, 'data'))
@@ -22,6 +22,7 @@ module Discovery
       @optout  = OptoutRepository.new(env.fetch('TTG_GATE_BBS_DISCOVERY_OPTOUT',
                                                 File.join(ROOT, 'config/discovery-optout.yml')))
       @fetcher = SourceFetcher.new
+      @geoip   = GeoipRepository.new(File.join(@data, 'geoip'), fetcher: @fetcher)
       @tags    = TagService.new(@catalog, @probes, @config)
       @aliases = AliasService.new(@catalog)
       @webhook = env['TTG_GATE_BBS_DISCORD_WEBHOOK'].to_s
@@ -31,6 +32,13 @@ module Discovery
       ImportService.new(catalog: @catalog, config: @config, fetcher: @fetcher, tags: @tags, aliases: @aliases,
                         optout: @optout, alert: method(:alert))
     end
+
+    def prober(concurrency: ProberService::CONCURRENCY)
+      ProberService.new(catalog: @catalog, probes: @probes, probe: TelnetProbe.new, tags: @tags, aliases: @aliases,
+                        optout: @optout, geoip: @geoip, config: @config, metrics: metrics, concurrency: concurrency)
+    end
+
+    def metrics = MetricsService.new(File.join(@data, 'discovery-metrics.prom'), catalog: @catalog, probes: @probes)
 
     def report = ReportService.new(@db)
 
