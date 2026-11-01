@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# The daily import of Global Discovery: fetches the enabled sources of
+# config/discovery/sources.yml and lays them over data/discovery.sqlite3.
+# On the server the cron-job wrapper runs it once a day in the prober's
+# container. Exits 1 when a source failed or was refused (the old records of
+# that source stay).
+#
+#   bin/discovery-import                      every enabled source
+#   bin/discovery-import --source sbl         one source (repeatable)
+#   bin/discovery-import --file sbl=x.html    read a local file instead of the URL
+
+require 'bundler/setup'
+require 'optparse'
+require_relative '../lib/domain/discovery'
+
+only  = nil
+files = {}
+OptionParser.new do |o|
+  o.on('--source ID') { |id| (only ||= []) << id }
+  o.on('--file ID=PATH') { |pair| files.store(*pair.split('=', 2)) }
+end.parse!
+
+root = Discovery::Root.new
+outcomes = root.importer.call(only: only, files: files)
+outcomes.each do |o|
+  puts [o.source.ljust(10), o.status.to_s.ljust(8), o.records.to_s.rjust(6), o.message].compact.join(' ')
+end
+exit(outcomes.all? { |o| o.status == :ok } ? 0 : 1)

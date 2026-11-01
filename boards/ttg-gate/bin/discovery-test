@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# The tests of Global Discovery (minitest): test/discovery/*_test.rb.
+#
+#   bin/discovery-test                 all of them
+#   bin/discovery-test parsers state   the files whose name has one of the words
+
+require 'bundler/setup'
+
+ROOT = File.expand_path('..', __dir__)
+$LOAD_PATH.unshift(File.join(ROOT, 'test'))
+files = Dir[File.join(ROOT, 'test/discovery/*_test.rb')]
+files = files.select { |f| ARGV.any? { |w| File.basename(f).include?(w) } } if ARGV.any?
+ARGV.clear
+require 'minitest/autorun'
+files.each { |f| require f }

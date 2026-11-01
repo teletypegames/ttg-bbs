@@ -1,4 +1,6 @@
 .git
 .env
 tmp
+data
+test
 vendor

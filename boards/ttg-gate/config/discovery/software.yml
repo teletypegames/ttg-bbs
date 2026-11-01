@@ -1,0 +1,35 @@
+# The BBS software of a board, from its banner (the first 4 KB a probe reads). The banner is
+# matched as text: telnet commands and ANSI sequences removed, PETSCII capitals folded to
+# ASCII. The first matching signature wins, so the specific ones come first. The same table
+# reads the software a source list gives, when the banner has no match.
+#
+# [id]      the sw:<id> tag
+# [name]    shown on the board's page
+# [pattern] a Ruby regular expression, matched case-insensitively
+
+signatures:
+  - { id: synchronet, name: "Synchronet",  pattern: '\bsynchronet\b' }
+  - { id: mystic,     name: "Mystic BBS",  pattern: '\bmystic\s*(?:bbs|v?\d+\.\d+)' }
+  - { id: enigma,     name: "ENiGMA½",     pattern: '\benigma\s*(?:½|1/2|bbs)' }
+  - { id: wwiv,       name: "WWIV",        pattern: '\bwwiv\b' }
+  - { id: renegade,   name: "Renegade",    pattern: '\brenegade\s*(?:bbs|v?\d)' }
+  - { id: wildcat,    name: "Wildcat!",    pattern: '\bwildcat!?\s*(?:bbs|interactive|v?\d|!)' }
+  - { id: iniquity,   name: "Iniquity",    pattern: '\biniquity\b' }
+  - { id: telegard,   name: "Telegard",    pattern: '\btelegard\b' }
+  - { id: color64,    name: "Color 64",    pattern: '\bcolor\s*64\b' }
+  - { id: imagebbs,   name: "Image BBS",   pattern: '\bimage\s*(?:bbs|v?\d+\.\d)' }
+  - { id: cnet,       name: "CNet",        pattern: '\bc-?net\s*(?:bbs|amiga|128|64|pro|v?\d)' }
+  - { id: cbase,      name: "C*Base",      pattern: 'c\*base' }
+  - { id: maximus,    name: "Maximus",     pattern: '\bmaximus\b' }
+  - { id: pcboard,    name: "PCBoard",     pattern: '\bpcboard\b' }
+  - { id: searchlight, name: "Searchlight", pattern: '\bsearchlight\s*bbs' }
+  - { id: talisman,   name: "Talisman",    pattern: '\btalisman\s*(?:bbs|v?\d)' }
+  - { id: magicka,    name: "Magicka",     pattern: '\bmagicka\b' }
+  - { id: citadel,    name: "Citadel",     pattern: '\bcitadel\b' }
+  - { id: spitfire,   name: "Spitfire",    pattern: '\bspitfire\s*(?:bbs|v?\d)' }
+  - { id: wildfire,   name: "Wildfire",    pattern: '\bwildfire\s*bbs' }
+  - { id: x84,        name: "x/84",        pattern: '\bx/84\b' }
+  - { id: rubbs,      name: "rubbs",       pattern: '\brubbs\b' }
+  # Not a BBS: an FTN mailer answering on its telnet port (a nodelist ITN flag) with an EMSI
+  # request. Kept as software so the Gate can leave it out of the dialable boards.
+  - { id: ftn-mailer, name: "FTN mailer (EMSI)", pattern: '\*\*emsi_' }

@@ -2,4 +2,5 @@
 .claude
 .ruby-lsp
 tmp
+data
 vendor

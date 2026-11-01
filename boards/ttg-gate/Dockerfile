@@ -10,10 +10,11 @@ COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
 COPY bbs.rb entrypoint.sh ./
+COPY bin/ ./bin/
 COPY config/ ./config/
 COPY lib/ ./lib/
 
-RUN chmod +x entrypoint.sh
+RUN chmod +x entrypoint.sh bin/discovery-*
 
 EXPOSE 2323
 
