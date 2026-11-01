@@ -12,8 +12,8 @@ module UI
       # flashes white.
       class OwnView < Picker
         PER_PAGE = 10
-        HINT = [['CRSR', true], [' MOVE  ', false], ['RETURN', true], [' DIAL  ', false], ['D', true],
-                [' DISCOVER', false]].freeze
+        HINT = [['CRSR', true], [' Move  ', false], ['RETURN', true], [' Dial  ', false], ['D', true],
+                [' Discover', false]].freeze
 
         attr_writer :flash
 
@@ -27,7 +27,7 @@ module UI
 
         def take(board) = -> { @on_dial.call(board) }
 
-        def hint = pages > 1 ? HINT[0, 4] + [['+/-', true], [' PAGE', false]] : HINT
+        def hint = pages > 1 ? HINT[0, 4] + [['+/-', true], [' Page', false]] : HINT
 
         def draw(canvas)
           right = pages > 1 ? "#{@items.size}  #{page_mark}" : "#{@items.size} BOARDS"
@@ -64,10 +64,13 @@ module UI
           Layout.wrap(board.summary, 28, 2).each_with_index do |line, i|
             canvas.text(top + 2 + i, 1, line, Canvas::LIGHT_GREY)
           end
-          Layout.runs(canvas, top + 5, 1, [['TELNET ', Canvas::GREY], [Layout.plain(board.public_host), Canvas::CYAN]])
-          Layout.runs(canvas, top + 6, 1, [['PORT   ', Canvas::GREY], [board.port.to_s, Canvas::CYAN]])
+          canvas.text(top + 5, 1, 'Telnet ', Canvas::GREY)
+          down = Layout.address(canvas, top + 5, 8, board.public_host, nil) - 1
+          Layout.runs(canvas, top + 6 + down, 1, [['Port   ', Canvas::GREY], [board.port.to_s, Canvas::CYAN]])
+          return if top + 7 + down > Layout::BOTTOM
+
           tags = board.tags.map { |t| Layout.plain(t) }
-          Layout.runs(canvas, top + 7, 1, tags.flat_map { |t| [['/', Canvas::DARK_GREY], [t, Canvas::PURPLE]] }.drop(1))
+          Layout.runs(canvas, top + 7 + down, 1, tags.flat_map { |t| [['/', Canvas::DARK_GREY], [t, Canvas::PURPLE]] }.drop(1))
         end
       end
     end

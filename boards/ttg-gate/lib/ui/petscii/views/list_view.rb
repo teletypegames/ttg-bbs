@@ -13,10 +13,10 @@ module UI
       # through the states when the list can be filtered.
       class ListView < Picker
         PER_PAGE = 8
-        # The state marks in the graphics set.
+        # The state marks: a block in the state's colour.
         MARKS = {
-          'online' => ['●', Canvas::LIGHT_GREEN], 'flaky' => ['○', Canvas::YELLOW], 'down' => ['╳', Canvas::RED],
-          'dead' => ['┼', Canvas::GREY], 'unknown' => ['?', Canvas::LIGHT_GREY]
+          'online' => ['▌', Canvas::LIGHT_GREEN], 'flaky' => ['▌', Canvas::YELLOW], 'down' => ['▌', Canvas::RED],
+          'dead' => ['▌', Canvas::GREY], 'unknown' => ['▌', Canvas::DARK_GREY]
         }.freeze
         # The F filter steps through these; nil is every board the list has.
         FILTERS = [nil, 'online', 'flaky', 'down', 'unknown'].freeze
@@ -42,7 +42,7 @@ module UI
         # [details] a board's latency in ms, given its id (or nil)
         # [section] the place of the sidebar it lights
         def initialize(title:, color:, loader:, on_open:, filter: true, chips: [], details: nil, section: :discover,
-                       empty: 'NOTHING HERE.', now: -> { Time.now.to_i })
+                       empty: 'Nothing here.', now: -> { Time.now.to_i })
           @title   = title
           @color   = color
           @loader  = loader
@@ -77,12 +77,12 @@ module UI
         end
 
         def hint
-          return [['/', true], [' FIND', false]] if @items.empty?
+          return [['/', true], [' Find', false]] if @items.empty?
 
-          parts = [['RETURN', true], [' OPEN  ', false]]
-          parts += [['F', true], [' FILTER  ', false]] if @filter
-          parts += [['+/-', true], [' PAGE ', false]] if pages > 1
-          parts + [['/', true], [' FIND', false]]
+          parts = [['RETURN', true], [' Open  ', false]]
+          parts += [['F', true], [' Filter  ', false]] if @filter
+          parts += [['+/-', true], [' Page ', false]] if pages > 1
+          parts + [['/', true], [' Find', false]]
         end
 
         def self.mark(state) = MARKS.fetch(state, MARKS['unknown'])
@@ -90,9 +90,9 @@ module UI
         def draw(canvas)
           Layout.band(canvas, @title, [@items.size, page_mark].reject { |s| s.to_s.empty? }.join('  '), @color)
           chips(canvas, Layout.row(1))
-          canvas.text(Layout.row(2), 0, "NR S #{'NAME'.ljust(16)}CC SOFT", Canvas::DARK_GREY)
+          canvas.text(Layout.row(2), 0, "Nr S #{'Name'.ljust(16)}CC Soft", Canvas::DARK_GREY)
           if @items.empty?
-            canvas.text(Layout.row(4), 1, @state ? "NO #{@state.upcase} BOARD HERE." : @empty, Canvas::YELLOW)
+            canvas.text(Layout.row(4), 1, @state ? "No #{@state} board here." : @empty, Canvas::YELLOW)
             return
           end
           on_page.each_with_index { |listing, slot| row(canvas, Layout.row(3 + slot), listing, slot) }
@@ -104,12 +104,12 @@ module UI
         def twins = @items.group_by(&:title).select { |_, l| l.size > 1 }.keys
 
         def chips(canvas, row)
-          col = Layout.runs(canvas, row, 1, [['FILTER', Canvas::GREY]]) + 1
+          col = Layout.runs(canvas, row, 1, [['Filter', Canvas::GREY]]) + 1
           col = Layout.chip(canvas, row, col, 'PETSCII', Canvas::PURPLE) + 1
           @chips.each { |text, color| col = Layout.chip(canvas, row, col, text, color) + 1 }
           return unless @filter
 
-          Layout.chip(canvas, row, col, @state ? @state.upcase : 'ALIVE', @state ? STATE_COLORS[@state] : Canvas::GREEN)
+          Layout.chip(canvas, row, col, @state ? @state.capitalize : 'Alive', @state ? STATE_COLORS[@state] : Canvas::GREEN)
         end
 
         def name(listing)
@@ -146,19 +146,18 @@ module UI
 
           Layout.rule(canvas, top)
           canvas.text(top + 1, 1, Layout.plain(listing.title)[0, 28], Canvas::WHITE)
-          Layout.runs(canvas, top + 2, 1, [[Layout.plain(listing.host), Canvas::CYAN], [':', Canvas::DARK_GREY],
-                                           [listing.port.to_s, Canvas::CYAN]])
-          state_line(canvas, top + 3, listing)
-          terminals(canvas, top + 4, listing)
-          legend(canvas, top + 6)
+          down = Layout.address(canvas, top + 2, 1, listing.host, listing.port) - 1
+          state_line(canvas, top + 3 + down, listing)
+          terminals(canvas, top + 4 + down, listing)
+          legend(canvas, top + 6 + down) if top + 6 + down <= Layout::BOTTOM
         end
 
         def state_line(canvas, row, listing)
           mark, color = ListView.mark(listing.state)
           status = listing.status(@now.call)
-          words = Layout.plain(status.empty? ? listing.state : status)
+          words = Layout.plain(status.empty? ? listing.state : status).capitalize
           latency = @details.call(listing.id) if listing.state == 'online'
-          extra = [("#{latency}MS" if latency), listing.country&.upcase].compact
+          extra = [("#{latency}ms" if latency), listing.country&.upcase].compact
           Layout.runs(canvas, row, 1, [[mark, color], [" #{words}", STATE_COLORS.fetch(listing.state, Canvas::GREY)],
                                        *extra.flat_map { |e| [[' / ', Canvas::DARK_GREY], [e, Canvas::LIGHT_GREY]] }])
         end
@@ -175,9 +174,9 @@ module UI
         end
 
         def legend(canvas, row)
-          Layout.runs(canvas, row, 1, [['●', Canvas::LIGHT_GREEN], [' UP ', Canvas::LIGHT_GREY], ['○', Canvas::YELLOW],
-                                       [' FLAKY ', Canvas::LIGHT_GREY], ['╳', Canvas::RED], [' DOWN ', Canvas::LIGHT_GREY],
-                                       ['┼', Canvas::GREY], [' DEAD', Canvas::LIGHT_GREY]])
+          Layout.runs(canvas, row, 1, [['▌', Canvas::LIGHT_GREEN], [' Up ', Canvas::LIGHT_GREY], ['▌', Canvas::YELLOW],
+                                       [' Flaky ', Canvas::LIGHT_GREY], ['▌', Canvas::RED], [' Down ', Canvas::LIGHT_GREY],
+                                       ['▌', Canvas::GREY], [' Dead', Canvas::LIGHT_GREY]])
         end
       end
     end

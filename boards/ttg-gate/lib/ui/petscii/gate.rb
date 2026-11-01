@@ -27,25 +27,25 @@ module UI
       TICK = 0.5
       # Seconds between two steps of the dialling.
       STEP = 0.12
-      INPUT_LABEL = 'FIND:'
+      INPUT_LABEL = 'Find:'
       INPUT_MAX   = Layout::HINT_WIDTH - INPUT_LABEL.length - 2
-      SIDE_HINT   = [['CRSR', true], [' MOVE  ', false], ['RETURN', true], [' OPEN  ', false], ['Q', true],
-                     [' QUIT', false]].freeze
+      SIDE_HINT   = [['CRSR', true], [' Move  ', false], ['RETURN', true], [' Open  ', false], ['Q', true],
+                     [' Quit', false]].freeze
       WARNINGS = {
-        dead: ['THIS BOARD HAS NOT ANSWERED', 'OUR CALLS FOR 30 DAYS.', 'IT MAY BE GONE. DIAL ANYWAY?']
+        dead: ['This board has not answered', 'our calls for 30 days.', 'It may be gone. Dial anyway?']
       }.freeze
       REFUSALS = {
-        rate: ['YOU DIALLED 10 BOARDS IN', '10 MINUTES. TRY AGAIN LATER.'],
-        busy: ['3 CALLERS ARE ON THIS BOARD', 'ALREADY. TRY AGAIN SOON.'],
-        not_petscii: ['THIS BOARD HAS NO PETSCII FACE.'],
-        unknown: ['THIS BOARD IS GONE FROM THE LIST.']
+        rate: ['You dialled 10 boards in', '10 minutes. Try again later.'],
+        busy: ['3 callers are on this board', 'already. Try again soon.'],
+        not_petscii: ['This board has no PETSCII face.'],
+        unknown: ['This board is gone from the list.']
       }.freeze
       # The lists of their own: the title, the chip, its colour, the words of
       # an empty one, the BrowseService method.
       FIXED = {
-        new: ['NEW THIS WEEK', '7 DAYS', Canvas::LIGHT_GREY, 'NO NEW BOARD THIS WEEK.', :new_this_week],
-        died: ['RECENTLY DIED', '30 DAYS', Canvas::LIGHT_RED, 'NONE DIED IN 30 DAYS.', :recently_died],
-        graves: ['GRAVEYARD', 'DEAD', Canvas::GREY, 'NO GRAVES YET.', :graveyard]
+        new: ['NEW THIS WEEK', '7 days', Canvas::LIGHT_GREY, 'No new board this week.', :new_this_week],
+        died: ['RECENTLY DIED', '30 days', Canvas::LIGHT_RED, 'None died in 30 days.', :recently_died],
+        graves: ['GRAVEYARD', 'dead', Canvas::GREY, 'No graves yet.', :graveyard]
       }.freeze
       BANDS = { discover: Canvas::LIGHT_GREEN, search: Canvas::WHITE, browse: Canvas::ORANGE, new: Canvas::PURPLE,
                 died: Canvas::LIGHT_RED, graves: Canvas::GREY }.freeze
@@ -136,7 +136,7 @@ module UI
         view.draw(canvas)
         if @input
           canvas.text(Layout::HINT_ROW, 0, INPUT_LABEL, Canvas::LIGHT_GREEN)
-          canvas.text(Layout::HINT_ROW, INPUT_LABEL.length + 1, @input.upcase, Canvas::WHITE)
+          canvas.text(Layout::HINT_ROW, INPUT_LABEL.length + 1, @input, Canvas::WHITE)
           canvas.text(Layout::HINT_ROW, INPUT_LABEL.length + 1 + @input.length, ' ', Canvas::WHITE, rvs: true)
         else
           Chrome.hint(canvas, @status || (@focus == :side ? SIDE_HINT : view.hint))
@@ -296,7 +296,7 @@ module UI
         axis = axis.to_sym
         label = @browse.axes(petscii: true).dig(axis, :label).to_s
         entries = @browse.facets(axis, petscii: true).map do |f|
-          Views::MenuView::Entry.new(name: f.label, count: f.count, about: [f.label, "TAG #{f.tag}", "#{f.count} BOARDS"],
+          Views::MenuView::Entry.new(name: f.label, count: f.count, about: [f.label, "Tag #{f.tag}", "#{f.count} boards"],
                                      action: -> { push(tagged(f, axis)) })
         end
         Views::MenuView.new(entries, title: "BY #{label.upcase}", color: BANDS[:browse], section: axis)
@@ -317,14 +317,14 @@ module UI
 
       def random
         board = @browse.random(petscii: true)
-        return notice('RANDOM BOARD', ['NO PETSCII BOARD ANSWERED', 'OUR LAST CALL.'], section: :random) unless board
+        return notice('RANDOM BOARD', ['No PETSCII board answered', 'our last call.'], section: :random) unless board
 
         page_view(board.id, :random)
       end
 
       def page_view(id, section)
         page = @browse.page(id)
-        return notice('GONE', ['THIS BOARD IS GONE FROM THE LIST.'], section: section) unless page
+        return notice('GONE', ['This board is gone from the list.'], section: section) unless page
 
         Views::PageView.new(page, section: section, on_dial: method(:dial_catalog), on_banner: method(:banner))
       end
@@ -334,7 +334,7 @@ module UI
         push(target)
       end
 
-      def resting = notice('GLOBAL DISCOVERY', ['THE CATALOG IS RESTING.', 'TRY AGAIN LATER.'])
+      def resting = notice('GLOBAL DISCOVERY', ['The catalog is resting.', 'Try again later.'])
 
       def notice(title, lines, section: nil)
         Views::TextView.new(title, lines.map { |l| [l, Canvas::YELLOW] }, color: Canvas::LIGHT_RED, section: section)
@@ -346,7 +346,7 @@ module UI
         return paint if text.nil? || text.empty?
 
         @section = :search
-        @stack = [list("FIND #{text.upcase}", :search) { |state| @browse.search(text, petscii: true, state: state) }]
+        @stack = [list("FIND #{text}", :search) { |state| @browse.search(text, petscii: true, state: state) }]
         paint(whole: true)
       end
 
@@ -388,7 +388,7 @@ module UI
       end
 
       # Shows +target+ over the current view until a key; the key.
-      def show(target, hint: [['PRESS A KEY', false]])
+      def show(target, hint: [['Press a key', false]])
         target.instance_variable_set(:@hint, hint)
         @stack.push(target)
         paint
@@ -410,11 +410,11 @@ module UI
           sleep STEP
         end
         (0..10).step(2) do |filled|
-          @status = [['HANDSHAKE ', false], ['█' * filled, true], ['▒' * (10 - filled), false]]
+          @status = [['Handshake ', false], ['█' * filled, true], ['▒' * (10 - filled), false]]
           paint
           sleep STEP
         end
-        @status = [['CARRIER DETECTED', true]]
+        @status = [['Carrier detected', true]]
         paint
         sleep STEP
         @status = nil
@@ -449,9 +449,9 @@ module UI
 
       def confirm(listing, warning)
         question = Views::TextView.new(Layout.plain(listing.title), WARNINGS.fetch(warning, []).map { |l| [l, Canvas::YELLOW] },
-                                       color: Canvas::YELLOW, keys: [%w[Y DIAL], %w[N BACK]])
+                                       color: Canvas::YELLOW, keys: [%w[Y Dial], %w[N Back]])
         loop do
-          case show(question, hint: [['Y', true], [' DIAL  ', false], ['N', true], [' BACK', false]])
+          case show(question, hint: [['Y', true], [' Dial  ', false], ['N', true], [' Back', false]])
           when 'y', 'Y' then return true
           when 'n', 'N', :escape, 'q', 'Q' then return false
           end
@@ -459,14 +459,14 @@ module UI
       end
 
       def refused(listing, refusal)
-        show(notice(Layout.plain(listing.title), REFUSALS.fetch(refusal.reason, ['THE CALL DID NOT GO.'])))
+        show(notice(Layout.plain(listing.title), REFUSALS.fetch(refusal.reason, ['The call did not go.'])))
         nil
       end
 
       # The first screen of a PETSCII banner as it came, until a key; then
       # the whole screen again.
       def banner(page)
-        @screen.raw([Canvas::CLEAR].pack('C*') + ::Discovery::BannerPreview.petscii(page.c64_banner))
+        @screen.raw([Canvas::UPPERCASE, Canvas::CLEAR].pack('C*') + ::Discovery::BannerPreview.petscii(page.c64_banner))
         wait
         @shown = nil
         nil

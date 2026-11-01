@@ -13,8 +13,8 @@ module UI
               ['G', Canvas::LIGHT_GREEN], ['A', Canvas::CYAN], ['T', Canvas::LIGHT_BLUE], ['E', Canvas::PURPLE]].freeze
       RASTER = [Canvas::RED, Canvas::ORANGE, Canvas::YELLOW, Canvas::LIGHT_GREEN, Canvas::GREEN, Canvas::CYAN,
                 Canvas::LIGHT_BLUE, Canvas::BLUE, Canvas::PURPLE, Canvas::LIGHT_RED].freeze
-      # The tee and the corner of the Browse tree: the graphics set has them,
-      # the Canvas glyph table does not.
+      # The tee and the corner of the Browse tree: both character sets have
+      # them, the Canvas glyph table does not.
       TEE    = 0xab
       CORNER = 0xad
 
@@ -28,14 +28,14 @@ module UI
       # The sidebar from the top, a line each: an Item, :rule, :blank, or a
       # line of the counter.
       LINES = [
-        Item.new(:own, 'OWN', 0, nil, true), Item.new(:discover, 'DISCOVER', 0, nil, true), :rule,
-        Item.new(:search, 'SEARCH', 0, nil, false), Item.new(:browse, 'BROWSE', 0, nil, false),
-        Item.new(:software, 'SOFTWARE', 4, :tee, false), Item.new(:country, 'COUNTRY', 0, :tee, false),
-        Item.new(:network, 'NETWORK', 6, :corner, false), Item.new(:new, 'NEW', 0, nil, false),
-        Item.new(:random, 'RANDOM', 0, nil, false), Item.new(:died, 'DIED', 2, nil, false),
-        Item.new(:graves, 'GRAVES', 0, nil, false), Item.new(:sources, 'SOURCES', 2, nil, false), :rule, :blank,
-        :total, :boards, :online, :c64, :blank, Item.new(:help, 'HELP', 0, nil, false),
-        Item.new(:quit, 'QUIT', 0, nil, false)
+        Item.new(:own, 'Own', 0, nil, true), Item.new(:discover, 'Discover', 0, nil, true), :rule,
+        Item.new(:search, 'Search', 0, nil, false), Item.new(:browse, 'Browse', 0, nil, false),
+        Item.new(:software, 'Software', 4, :tee, false), Item.new(:country, 'Country', 0, :tee, false),
+        Item.new(:network, 'Network', 6, :corner, false), Item.new(:new, 'New', 0, nil, false),
+        Item.new(:random, 'Random', 0, nil, false), Item.new(:died, 'Died', 2, nil, false),
+        Item.new(:graves, 'Graves', 0, nil, false), Item.new(:sources, 'Sources', 2, nil, false), :rule, :blank,
+        :total, :boards, :online, :c64, :blank, Item.new(:help, 'Help', 0, nil, false),
+        Item.new(:quit, 'Quit', 0, nil, false)
       ].freeze
       ITEMS   = LINES.grep(Item).freeze
       HOTKEYS = ITEMS.to_h { |i| [i.letter, i.key] }.freeze
@@ -53,7 +53,7 @@ module UI
       end
 
       def clock(canvas, node:, time:)
-        node = "NODE #{node}"
+        node = "Node #{node}"
         canvas.text(0, 33 - node.length, node, Canvas::GREY)
         canvas.text(0, 34, time.strftime('%H:%M'), Canvas::CYAN)
       end
@@ -93,9 +93,9 @@ module UI
         value = ->(key) { stats ? stats[key].to_s : '-' }
         case line
         when :total then canvas.text(row, col, value.call(:boards), Canvas::WHITE)
-        when :boards then canvas.text(row, col, 'BOARDS', Canvas::GREY)
+        when :boards then canvas.text(row, col, 'boards', Canvas::GREY)
         when :online
-          canvas.text(row, col, '●', Canvas::LIGHT_GREEN)
+          canvas.text(row, col, '▌', Canvas::LIGHT_GREEN)
           canvas.text(row, col + 2, value.call(:online), Canvas::WHITE)
         when :c64
           canvas.text(row, col, 'C64', Canvas::CYAN)

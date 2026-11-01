@@ -3,7 +3,7 @@
 module UI
   module Petscii
     # The C64 line of one call: raw PETSCII out (the session's encoder speaks
-    # the lowercase set, the switchboard draws in the graphics set), keys in.
+    # the lowercase set, and so does the Canvas of the switchboard), keys in.
     class Screen
       attr_reader :session
 

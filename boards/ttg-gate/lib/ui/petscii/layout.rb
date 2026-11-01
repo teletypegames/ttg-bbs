@@ -61,14 +61,42 @@ module UI
         col + text.length
       end
 
-      # +text+ in the capitals and signs the graphics set has.
+      # +text+ in the letters and signs the lower/upper set has.
       def plain(text)
-        text.to_s.upcase.each_char.map do |c|
+        text.to_s.each_char.map do |c|
           next c if Canvas.glyph?(c)
 
-          near = BBS::Petscii.plain(c).upcase
+          near = BBS::Petscii.plain(c)
           near.each_char.all? { |n| Canvas.glyph?(n) } ? near : '?'
         end.join
+      end
+
+      # Draws the address +host+ (and +port+ after a colon, unless nil) from
+      # +row+, +col+ whole: past +width+ it goes on at +col+ of the next
+      # rows, broken after a dot or before the colon where it can be. The
+      # number of rows it took.
+      def address(canvas, row, col, host, port, width: WIDTH - col)
+        host = plain(host)
+        lines = split_address(port.nil? ? host : "#{host}:#{port}", width)
+        offset = 0
+        lines.each_with_index do |line, i|
+          line.each_char.with_index do |ch, j|
+            color = offset + j == host.length ? Canvas::DARK_GREY : Canvas::CYAN
+            canvas.text(row + i, col + j, ch, color)
+          end
+          offset += line.length
+        end
+        lines.size
+      end
+
+      def split_address(text, width)
+        lines = []
+        while text.length > width
+          cut = (1..width).select { |i| text[i - 1] == '.' || text[i] == ':' }.max || width
+          lines << text[0, cut]
+          text = text[cut..]
+        end
+        lines << text
       end
 
       # Lines of at most +width+ columns of +text+, at most +lines+ of them;
@@ -82,13 +110,13 @@ module UI
         shown
       end
 
-      # "40M", "5H", "3D": how long ago +at+ was at +now+, short.
+      # "40m", "5h", "3d": how long ago +at+ was at +now+, short.
       def age(at, now)
         seconds = [now - at.to_i, 0].max
-        return "#{seconds / 60}M" if seconds < 3600
-        return "#{seconds / 3600}H" if seconds < 2 * 86_400
+        return "#{seconds / 60}m" if seconds < 3600
+        return "#{seconds / 3600}h" if seconds < 2 * 86_400
 
-        "#{seconds / 86_400}D"
+        "#{seconds / 86_400}d"
       end
     end
   end

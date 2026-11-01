@@ -11,13 +11,13 @@ module UI
       # is about. RETURN or its digit takes it (the entry's action).
       class MenuView < Picker
         PER_PAGE = 12
-        HINT = [['CRSR', true], [' MOVE  ', false], ['RETURN', true], [' OPEN  ', false]].freeze
+        HINT = [['CRSR', true], [' Move  ', false], ['RETURN', true], [' Open  ', false]].freeze
 
         # An entry: its +name+, the +count+ at the edge, the lines it is
         # +about+, and its +action+.
         Entry = Data.define(:name, :count, :about, :action)
 
-        def initialize(entries, title:, color:, section:, empty: 'NOTHING HERE YET.')
+        def initialize(entries, title:, color:, section:, empty: 'Nothing here yet.')
           super(entries, per_page: PER_PAGE)
           @title   = title
           @color   = color
@@ -29,7 +29,7 @@ module UI
 
         def take(entry) = entry.action
 
-        def hint = pages > 1 ? HINT + [['+/-', true], [' PAGE', false]] : HINT + [['←', true], [' BACK', false]]
+        def hint = pages > 1 ? HINT + [['+/-', true], [' Page', false]] : HINT + [['←', true], [' Back', false]]
 
         def draw(canvas)
           Layout.band(canvas, @title, [@items.size, page_mark].reject { |s| s.to_s.empty? }.join('  '), @color)

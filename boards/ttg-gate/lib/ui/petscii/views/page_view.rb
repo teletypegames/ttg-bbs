@@ -11,16 +11,16 @@ module UI
       # shows its PETSCII banner (+on_banner+).
       class PageView < View
         WHY = {
-          'dns_fail' => 'NAME DOES NOT RESOLVE', 'timeout' => 'NO ANSWER (FIREWALL?)',
-          'refused' => 'PORT CLOSED', 'closed' => 'HUNG UP AT ONCE'
+          'dns_fail' => 'Name does not resolve', 'timeout' => 'No answer (firewall?)',
+          'refused' => 'Port closed', 'closed' => 'Hung up at once'
         }.freeze
         STRIP = { ::Discovery::BoardPageModel::UP => ['█', Canvas::GREEN],
                   ::Discovery::BoardPageModel::DOWN => ['█', Canvas::RED] }.freeze
         NO_DAY = ['▒', Canvas::DARK_GREY].freeze
-        HINT = [['RETURN', true], [' DIAL  ', false], ['B', true], [' BANNER  ', false], ['←', true],
-                [' BACK', false]].freeze
+        HINT = [['RETURN', true], [' Dial  ', false], ['B', true], [' Banner  ', false], ['←', true],
+                [' Back', false]].freeze
         FIELDS = 5
-        WIKI = 'WIKI.TELETYPEGAMES.ORG'
+        WIKI = 'wiki.teletypegames.org'
 
         attr_reader :page, :section
 
@@ -51,50 +51,57 @@ module UI
         end
 
         def draw(canvas)
-          mark, = ListView.mark(listing.state)
           color = ListView::STATE_COLORS.fetch(listing.state, Canvas::LIGHT_GREY)
-          Layout.band(canvas, Layout.plain(listing.title), "#{mark} #{listing.state.upcase}", color)
-          Layout.runs(canvas, Layout.row(2), 1, [[Layout.plain(listing.host), Canvas::CYAN], [':', Canvas::DARK_GREY],
-                                                 [listing.port.to_s, Canvas::CYAN]])
-          answer(canvas, Layout.row(3))
-          strip(canvas, Layout.row(5))
-          fields(canvas, Layout.row(8))
-          tags(canvas, Layout.row(14))
-          buttons(canvas, Layout.row(16))
-          canvas.text(Layout.row(18), 1, banner_note, Canvas::GREY)
-          canvas.text(Layout.row(19), 1, 'OPT-OUT, PROBE POLICY:', Canvas::DARK_GREY)
-          canvas.text(Layout.row(20), 1, WIKI, Canvas::GREY)
+          Layout.band(canvas, Layout.plain(listing.title), listing.state.capitalize, color)
+          down = Layout.address(canvas, Layout.row(2), 1, listing.host, listing.port) - 1
+          answer(canvas, Layout.row(3 + down))
+          strip(canvas, Layout.row(5 + down))
+          fields(canvas, Layout.row(8 + down))
+          tags(canvas, Layout.row(14 + down))
+          buttons(canvas, Layout.row(16 + down))
+          footer(canvas, 18 + down)
         end
 
         private
 
+        # The banner note, and the opt-out link while there is room: a long
+        # address pushes them down.
+        def footer(canvas, line)
+          last = Layout::ROWS - 1
+          canvas.text(Layout.row(line), 1, banner_note, Canvas::GREY) if line <= last
+          return unless line + 2 <= last
+
+          canvas.text(Layout.row(line + 1), 1, 'Opt-out, probe policy:', Canvas::DARK_GREY)
+          canvas.text(Layout.row(line + 2), 1, WIKI, Canvas::GREY)
+        end
+
         def answer(canvas, row)
           if !listing.first_probe_at
-            canvas.text(row, 1, 'NOT CALLED YET', Canvas::LIGHT_GREY)
+            canvas.text(row, 1, 'Not called yet', Canvas::LIGHT_GREY)
           elsif !@page.last_success_at
-            canvas.text(row, 1, 'NEVER ANSWERED', Canvas::LIGHT_RED)
+            canvas.text(row, 1, 'Never answered', Canvas::LIGHT_RED)
           else
-            latency = @page.latency_ms && listing.state == 'online' ? "  #{@page.latency_ms} MS" : ''
-            Layout.runs(canvas, row, 1, [['LAST OK ', Canvas::GREY], [ago(@page.last_success_at), Canvas::WHITE],
+            latency = @page.latency_ms && listing.state == 'online' ? "  #{@page.latency_ms} ms" : ''
+            Layout.runs(canvas, row, 1, [['Last OK ', Canvas::GREY], [ago(@page.last_success_at), Canvas::WHITE],
                                          [latency, Canvas::LIGHT_GREY]])
           end
           why = WHY[@page.last_result] if %w[down dead flaky].include?(listing.state)
-          Layout.runs(canvas, row + 1, 1, [['FROM US ', Canvas::DARK_GREY], [why, Canvas::LIGHT_RED]]) if why
+          Layout.runs(canvas, row + 1, 1, [['From us ', Canvas::DARK_GREY], [why, Canvas::LIGHT_RED]]) if why
         end
 
         def ago(at)
           seconds = [@now.call - at, 0].max
-          return 'JUST NOW' if seconds < 60
-          return "#{seconds / 60} MIN AGO" if seconds < 3600
-          return "#{seconds / 3600} HOURS AGO" if seconds < 2 * 86_400
+          return 'just now' if seconds < 60
+          return "#{seconds / 60} min ago" if seconds < 3600
+          return "#{seconds / 3600} hours ago" if seconds < 2 * 86_400
 
-          "#{seconds / 86_400} DAYS AGO"
+          "#{seconds / 86_400} days ago"
         end
 
         def strip(canvas, row)
           days = @page.strip(@now.call)
           up = days.count(::Discovery::BoardPageModel::UP)
-          canvas.text(row, 1, '30 DAYS', Canvas::GREY)
+          canvas.text(row, 1, '30 days', Canvas::GREY)
           right = "#{up}/#{days.length}"
           canvas.text(row, Layout::WIDTH - 1 - right.length, right, up.positive? ? Canvas::LIGHT_GREEN : Canvas::LIGHT_RED)
           days.each_char.with_index do |day, i|
@@ -109,8 +116,8 @@ module UI
           shown = @page.fields.reject { |f| %w[Name Encoding Website].include?(f.label) }
           lines = shown.map { |f| [Layout.plain(f.label.sub('FTN address', 'FTN')), [[Layout.plain(f.value), Canvas::WHITE]], short(f)] }
           extra = []
-          extra << ['TERMINAL', terminals, 'CALL'] if terminals.any?
-          extra << ['SOURCES', lists, ''] if lists.any?
+          extra << ['Terminal', terminals, 'CALL'] if terminals.any?
+          extra << ['Sources', lists, ''] if lists.any?
           (lines.first(FIELDS - extra.size) + extra).each do |label, parts, source|
             canvas.text(row, 1, label[0, 8], Canvas::GREY)
             limit = Layout::WIDTH - 1 - (source.empty? ? 0 : source.length + 1)
@@ -158,19 +165,19 @@ module UI
 
         def buttons(canvas, row)
           col = Layout.chip(canvas, row, 1, 'RETURN', Canvas::LIGHT_GREEN)
-          col = Layout.chip(canvas, row, col, 'DIAL', Canvas::GREEN) + 2
-          return canvas.text(row, col, 'NO BANNER', Canvas::DARK_GREY) unless banner?
+          col = Layout.chip(canvas, row, col, 'Dial', Canvas::GREEN) + 2
+          return canvas.text(row, col, 'No banner', Canvas::DARK_GREY) unless banner?
 
           col = Layout.chip(canvas, row, col, 'B', Canvas::YELLOW)
-          Layout.chip(canvas, row, col, 'BANNER', Canvas::ORANGE)
+          Layout.chip(canvas, row, col, 'Banner', Canvas::ORANGE)
         end
 
         def banner_note
-          return 'BANNER HIDDEN BY THE SYSOP' unless listing.preview?
-          return 'BANNER: PETSCII, B SHOWS IT' if banner?
-          return 'NO BANNER STORED YET' unless @page.banner
+          return 'Banner hidden by the sysop' unless listing.preview?
+          return 'Banner: PETSCII, B shows it' if banner?
+          return 'No banner stored yet' unless @page.banner
 
-          "#{@page.encoding.to_s.upcase} BANNER: MODERN FACE"[0, 28]
+          "#{@page.encoding.to_s.upcase} banner: modern face"[0, 28]
         end
       end
     end

@@ -21,7 +21,7 @@ module UI
 
         attr_reader :section
 
-        def hint = @hint || [['←', true], [' BACK  ', false], ['O', true], [' OWN  ', false], ['D', true], [' DISCOVER', false]]
+        def hint = @hint || [['←', true], [' Back  ', false], ['O', true], [' Own  ', false], ['D', true], [' Discover', false]]
 
         def draw(canvas)
           Layout.band(canvas, @title, '', @color)
@@ -39,11 +39,11 @@ module UI
         # The help: the keys of the C64 face.
         def self.help
           lines = [
-            ['THE SIDEBAR', Canvas::WHITE], 'CRSR LEFT: TO THE SIDEBAR', 'CRSR RIGHT: TO THE LIST',
-            'CRSR UP, DOWN: MOVE', 'RETURN: OPEN IT', 'A YELLOW LETTER OPENS ITS', 'PLACE FROM ANYWHERE.', '',
-            ['THE LISTS', Canvas::WHITE], '1-9, 0: THAT ROW  +/-: PAGE', 'F: STATE FILTER  /: SEARCH',
-            '←, RUN/STOP: BACK', '',
-            ['A BOARD', Canvas::WHITE], 'RETURN: DIAL  B: ITS BANNER', 'WHEN IT HANGS UP, YOU ARE', 'BACK WHERE YOU WERE.'
+            ['The sidebar', Canvas::WHITE], 'CRSR left: to the sidebar', 'CRSR right: to the list',
+            'CRSR up, down: move', 'RETURN: open it', 'A yellow letter opens its', 'place from anywhere.', '',
+            ['The lists', Canvas::WHITE], '1-9, 0: that row  +/-: page', 'F: state filter  /: search',
+            '←, RUN/STOP: back', '',
+            ['A board', Canvas::WHITE], 'RETURN: dial  B: its banner', 'When it hangs up, you are', 'back where you were.'
           ]
           new('HELP', lines, color: Canvas::LIGHT_GREY, section: :help)
         end

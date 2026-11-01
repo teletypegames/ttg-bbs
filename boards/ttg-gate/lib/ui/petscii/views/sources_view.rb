@@ -13,20 +13,20 @@ module UI
       class SourcesView < View
         BAR = 14
         # The name of a list on this screen.
-        NAMES = { 'fidonet' => 'FIDONET', 'fsxnet' => 'FSXNET', 'micronet' => 'MICRONET', 'sbl' => 'SBL',
-                  'syncterm' => 'SYNCTERM', 'tbg' => 'TBG', 'cbbs' => 'CBBS' }.freeze
+        NAMES = { 'fidonet' => 'FidoNet', 'fsxnet' => 'fsxNet', 'micronet' => 'MicroNet', 'sbl' => 'SBL',
+                  'syncterm' => 'SyncTERM', 'tbg' => 'TBG', 'cbbs' => 'CBBS' }.freeze
         # The name of a list beside a field of a board's page.
         SHORT = { 'fidonet' => 'FIDO', 'fsxnet' => 'FSX', 'micronet' => 'MICRO', 'sbl' => 'SBL',
                   'syncterm' => 'STERM', 'tbg' => 'TBG', 'cbbs' => 'CBBS' }.freeze
         # Its format and what we may do with it.
-        TERMS = { 'fidonet' => 'DAILY NODELIST/FACTS', 'fsxnet' => 'WEEKLY NODELIST/FACTS',
-                  'micronet' => 'WEEKLY NODELIST/FACTS', 'sbl' => 'HTML EXPORT/CREDIT',
-                  'syncterm' => 'SYNCTERM.LST/CREDIT', 'tbg' => 'MONTHLY ZIP/PERMISSION',
-                  'cbbs' => 'JSON/FACTS ONLY' }.freeze
+        TERMS = { 'fidonet' => 'daily nodelist/facts', 'fsxnet' => 'weekly nodelist/facts',
+                  'micronet' => 'weekly nodelist/facts', 'sbl' => 'HTML export/credit',
+                  'syncterm' => 'syncterm.lst/credit', 'tbg' => 'monthly ZIP/permission',
+                  'cbbs' => 'JSON/facts only' }.freeze
         COLORS = { 'cbbs' => Canvas::LIGHT_RED, 'tbg' => Canvas::YELLOW, 'sbl' => Canvas::LIGHT_GREEN,
                    'syncterm' => Canvas::CYAN, 'fidonet' => Canvas::LIGHT_BLUE, 'fsxnet' => Canvas::ORANGE,
                    'micronet' => Canvas::PURPLE }.freeze
-        HINT = [['←', true], [' BACK  ', false], ['O', true], [' OWN  ', false], ['D', true], [' DISCOVER', false]].freeze
+        HINT = [['←', true], [' Back  ', false], ['O', true], [' Own  ', false], ['D', true], [' Discover', false]].freeze
 
         def self.color(id) = COLORS.fetch(id, Canvas::LIGHT_GREY)
 
@@ -50,8 +50,8 @@ module UI
           Layout.rule(canvas, Layout.row(16))
           totals(canvas, Layout.row(17))
           petscii(canvas, Layout.row(18))
-          Layout.runs(canvas, Layout.row(20), 1, [['COUNTRIES ', Canvas::GREY], ['DB-IP.COM', Canvas::WHITE]])
-          canvas.text(Layout.row(21), 1, 'IP TO COUNTRY LITE, CC BY 4.0', Canvas::GREY)
+          Layout.runs(canvas, Layout.row(20), 1, [['Countries ', Canvas::GREY], ['db-ip.com', Canvas::WHITE]])
+          canvas.text(Layout.row(21), 1, 'IP to Country Lite, CC BY 4.0', Canvas::GREY)
         end
 
         private
@@ -81,7 +81,7 @@ module UI
             return
           end
           unless source['last_parse_at']
-            canvas.text(row, 1, 'NOT READ YET', Canvas::GREY)
+            canvas.text(row, 1, 'Not read yet', Canvas::GREY)
             return
           end
 
@@ -97,8 +97,8 @@ module UI
         end
 
         def totals(canvas, row)
-          Layout.runs(canvas, row, 1, [['BOARDS ', Canvas::GREY], [@stats[:boards].to_s, Canvas::WHITE],
-                                       ['  SHARED ', Canvas::GREY], [@stats[:shared].to_s, Canvas::WHITE]])
+          Layout.runs(canvas, row, 1, [['Boards ', Canvas::GREY], [@stats[:boards].to_s, Canvas::WHITE],
+                                       ['  shared ', Canvas::GREY], [@stats[:shared].to_s, Canvas::WHITE]])
         end
 
         # PETSCII measured (green) against claimed (purple), and the legend.
@@ -113,8 +113,8 @@ module UI
           canvas.text(row, 9 + green, '▒' * purple, Canvas::PURPLE)
           count = "#{measured}/#{claimed}"
           canvas.text(row, Layout::WIDTH - count.length, count, Canvas::WHITE)
-          Layout.runs(canvas, row + 1, 9, [['█', Canvas::GREEN], [' MEASURED  ', Canvas::LIGHT_GREY], ['▒', Canvas::PURPLE],
-                                           [' CLAIMED', Canvas::LIGHT_GREY]])
+          Layout.runs(canvas, row + 1, 9, [['█', Canvas::GREEN], [' measured  ', Canvas::LIGHT_GREY], ['▒', Canvas::PURPLE],
+                                           [' claimed', Canvas::LIGHT_GREY]])
         end
       end
     end
