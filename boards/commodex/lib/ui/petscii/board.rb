@@ -4,8 +4,17 @@ module UI
   module Petscii
     # One call: the main menu, the lists, the game pages, the tips.
     class Board
-      MENU = [%w[s search titles], %w[y browse by year], %w[g browse by genre], %w[c publishers & developers],
-              %w[r random game], %w[t games with tips], %w[i about commodex], %w[q log off]].freeze
+      MENU = [['s', 'search titles', 'a part of a title finds the game'],
+              ['y', 'browse by year', 'the games of one year'],
+              ['g', 'browse by genre', 'shoot-em-ups, platformers, sports'],
+              ['c', 'publishers & developers', 'the games of one company'],
+              ['r', 'random game', 'a game picked at random'],
+              ['t', 'games with tips', 'the games callers left tips for'],
+              ['i', 'about commodex', 'where the games come from'],
+              ['q', 'log off', 'hang up. see you!']].freeze
+      MENU_ITEMS = MENU.map { |key, label, about| BBS::Selector.item(label, key: key, value: key, about: about) }.freeze
+      # The letters of the companies side by side, each with its count.
+      LETTER_COLUMNS = 6
 
       def initialize(bbs, screen, ctx)
         @catalog = bbs.catalog
@@ -21,8 +30,9 @@ module UI
         Petscii.masthead(@catalog.count).each { |l| @screen.puts l }
         loop do
           @screen.puts
-          MENU.each { |key, *words| @screen.puts " #{YE}#{key.upcase}#{LG} #{words.join(' ')}" }
-          case @screen.choose("\r\n #{WH}commodex#{LG}> ", MENU.map(&:first), back: 'q')
+          @choice = @screen.menu(MENU_ITEMS, index: MENU_ITEMS.index { |i| i.value == @choice }, back: 'q',
+                                             hint: 'crsr: choose  return: take')
+          case @choice
           when 's' then search
           when 'y' then groups('YEARS', @catalog.years) { |year| @catalog.in_year(year) }
           when 'g' then groups('GENRES', @catalog.genres) { |genre| @catalog.of_genre(genre) }
@@ -69,9 +79,9 @@ module UI
           @screen.title('PUBLISHERS & DEVELOPERS')
           @screen.say('The first letter of the name:', LG)
           @screen.puts
-          @screen.puts " #{letters.map { |l, _| "#{YE}#{l}#{LG}" }.join(' ')}"
-          k = @screen.choose(" #{WH}letter#{LG} (return: back)> ", [*letters.map(&:first), :enter], back: :enter)
-          return if k == :enter
+          k = @screen.menu(letters.map { |l, count| BBS::Selector.item(count.to_s, key: l, value: l) },
+                           columns: LETTER_COLUMNS, hint: 'crsr or letter, return  stop: back')
+          return unless k
 
           groups("COMPANIES: #{k.upcase}", @catalog.companies(k)) { |name| @catalog.of_company(name) }
         end
@@ -94,8 +104,7 @@ module UI
                    *Words.facts(game).map { |label, text| " #{CY}#{label.downcase}:#{LG} #{text}" },
                    " #{CY}tips:#{LG} #{Words.tips(count)}"]
           @screen.page('GAME', lines, right: game.id, wait: false)
-          @screen.puts " #{YE}W#{LG} wikipedia #{YE}T#{LG} tips #{YE}A#{LG} add a tip #{YE}Q#{LG} back"
-          case @screen.choose(" #{WH}game#{LG}> ", %w[w t a q], back: 'q')
+          case @screen.actions(%w[w wiki], %w[t tips], ['a', 'add a tip'], %w[q back])
           when 'w' then about(game)
           when 't' then tips(game, count)
           when 'a' then add_tip(game)

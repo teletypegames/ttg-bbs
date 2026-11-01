@@ -10,9 +10,10 @@ It has two faces on one port, like every board of the network:
   a dialog, lists of games with the card of the picked one on the right, the
   Wikipedia lead in a scrolling window, the tips of a game, and a form for a
   new tip;
-- a **Commodore 64** one in PETSCII, 40×25: a one-key main menu, numbered
-  lists, a page a game, pages that wait for RETURN, a line for the search and
-  an editor line for a tip.
+- a **Commodore 64** one in PETSCII, 40×25: cursor menus of rubbs
+  (`BBS::Selector`: CRSR and RETURN, or the key or number as before) for the
+  main menu, the lists and a game's actions, a page a game, pages that wait
+  for RETURN, a line for the search and an editor line for a tip.
 
 ## Where the data comes from
 

@@ -6,10 +6,10 @@ require_relative 'logo'
 require_relative 'words'
 
 module UI
-  # The board on a Commodore 64: PETSCII on a 40×25 screen. A one-key main
-  # menu, the games as numbered lists, a game on a page of its own, the
-  # Wikipedia lead and the tips as pages that wait for RETURN, and a line
-  # for a search and for a new tip.
+  # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor main
+  # menu, the games as numbered cursor lists, a game on a page of its own
+  # with its actions on one row, the Wikipedia lead and the tips as pages
+  # that wait for RETURN, and a line for a search and for a new tip.
   module Petscii
     LOGO_COLORS = [LB, LB, CY, CY, WH].freeze
 
