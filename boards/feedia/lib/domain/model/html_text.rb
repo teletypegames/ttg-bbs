@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 require 'cgi'
+require 'bbs/text'
 
 # The model side's text helper, pure functions with no I/O: the HTML of a
 # feed item as Markdown a terminal can render, paragraphs, headings, lists
 # and quotes kept, everything else made plain text. A link keeps its text
 # and gets a number, its address listed under the text, the way lynx does
-# it; an image keeps its alt text. Control characters go, so a feed (or a
-# caller's message) cannot send escape sequences down the line.
+# it; an image keeps its alt text. Control characters go (BBS::Text.clean),
+# so a feed cannot send escape sequences down the line.
 module HtmlText
   ENTITIES = {
     'nbsp' => ' ', 'hellip' => '…', 'ndash' => '–', 'mdash' => '—', 'lsquo' => '‘', 'rsquo' => '’',
@@ -26,50 +27,67 @@ module HtmlText
   ).freeze
 
   BLOCK   = %r{</?(?:p|div|section|article|aside|figure|figcaption|table|tr|ul|ol|dl|dt|dd|header|footer|pre|hr)\b[^>]*>}i
+  HIDDEN  = %r{<(script|style|iframe|noscript|svg)\b.*?</\1>}im
   MARK    = "\u0001"
-  CONTROL = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F\u200E\u200F\u202A-\u202E\u2066-\u2069]/
+  # A paragraph that is only the Markdown sign of an empty heading, quote or item.
+  BARE    = /\A(?:###|>|-)\s*\z/
 
   module_function
 
+  # The HTML of an item as Markdown, its links listed under it.
   def markdown(html)
-    links = []
-    s = clean(html)
-    s.gsub!(%r{<(script|style|iframe|noscript|svg)\b.*?</\1>}im, '')
-    s.gsub!(/<!--.*?-->/m, '')
-    s.gsub!(/<!\[CDATA\[(.*?)\]\]>/m, '\1')
-    s.gsub!(%r{<h[1-6]\b[^>]*>(.*?)</h[1-6]>}im) { "\n\n#{MARK}H#{flat(Regexp.last_match(1))}\n\n" }
-    s.gsub!(%r{<blockquote\b[^>]*>(.*?)</blockquote>}im) do
-      paragraphs(Regexp.last_match(1)).map { |p| "\n\n#{MARK}Q#{flat(p)}" }.join << "\n\n"
-    end
-    s.gsub!(/<li\b[^>]*>/i, "\n\n#{MARK}L")
-    s.gsub!(%r{<a\b([^>]*)>(.*?)</a>}im) do
-      inner = Regexp.last_match(2)
-      href  = decode(Regexp.last_match(1)[/\bhref\s*=\s*["']([^"']+)["']/i, 1].to_s).strip
-      next inner unless href.match?(%r{\Ahttps?://}i) && !flat(inner).empty?
-
-      links << href unless links.include?(href)
-      "#{inner}[#{links.index(href) + 1}]"
-    end
-    s.gsub!(/<img\b[^>]*>/i) { |tag| (alt = tag[/\balt\s*=\s*"([^"]+)"/i, 1]) ? " [#{alt}] " : ' ' }
-    s.gsub!(%r{<br\s*/?>}i, "\n\n")
-    blocks = paragraphs(s).filter_map do |p|
-      text = flat(p)
-      next if text.empty? || text == MARK
-
-      case text
-      when /\A#{MARK}H(.*)/o then "### #{Regexp.last_match(1).strip}"
-      when /\A#{MARK}Q(.*)/o then "> #{escape(Regexp.last_match(1).strip)}"
-      when /\A#{MARK}L(.*)/o then "- #{escape(Regexp.last_match(1).strip)}"
-      else escape(text)
-      end
-    end
-    blocks = blocks.grep_v(/\A(?:###|>|-)\s*\z/)
-    blocks << "### Links\n\n#{links.each_with_index.map { |l, i| "\\[#{i + 1}] #{clean(l)}" }.join("\n\n")}" if links.any?
+    links  = []
+    blocks = paragraphs(tagged(html, links)).filter_map { |p| block(flat(p)) }.grep_v(BARE)
+    blocks << link_list(links) if links.any?
     blocks.join("\n\n")
   end
 
   # Text with no markup at all: titles, names, a feed's description.
   def plain(html) = clean(decode(html.to_s.gsub(/<[^>]*>/, ' '))).gsub(/\s+/, ' ').strip
+
+  # The HTML with headings, quotes and list items as paragraphs tagged with
+  # MARK, its links numbered (their addresses collected in +links+) and its
+  # images as their alt text.
+  def tagged(html, links)
+    s = visible(clean(html))
+    s.gsub!(%r{<h[1-6]\b[^>]*>(.*?)</h[1-6]>}im) { "\n\n#{MARK}H#{flat(Regexp.last_match(1))}\n\n" }
+    s.gsub!(%r{<blockquote\b[^>]*>(.*?)</blockquote>}im) { quote(Regexp.last_match(1)) }
+    s.gsub!(/<li\b[^>]*>/i, "\n\n#{MARK}L")
+    s.gsub!(%r{<a\b([^>]*)>(.*?)</a>}im) { anchor(Regexp.last_match(1), Regexp.last_match(2), links) }
+    s.gsub!(/<img\b[^>]*>/i) { |tag| (alt = tag[/\balt\s*=\s*"([^"]+)"/i, 1]) ? " [#{alt}] " : ' ' }
+    s.gsub(%r{<br\s*/?>}i, "\n\n")
+  end
+
+  # The HTML without what a reader never sees: scripts, styles, comments.
+  def visible(html) = html.gsub(HIDDEN, '').gsub(/<!--.*?-->/m, '').gsub(/<!\[CDATA\[(.*?)\]\]>/m, '\1')
+
+  def quote(html) = "#{paragraphs(html).map { |p| "\n\n#{MARK}Q#{flat(p)}" }.join}\n\n"
+
+  # A link's text with its number, or the bare text for a link that goes
+  # nowhere a reader could follow.
+  def anchor(attributes, inner, links)
+    href = decode(attributes[/\bhref\s*=\s*["']([^"']+)["']/i, 1].to_s).strip
+    return inner unless href.match?(%r{\Ahttps?://}i) && !flat(inner).empty?
+
+    links << href unless links.include?(href)
+    "#{inner}[#{links.index(href) + 1}]"
+  end
+
+  # One paragraph as a Markdown block; nil for an empty one.
+  def block(text)
+    return if text.empty? || text == MARK
+
+    case text
+    when /\A#{MARK}H(.*)/o then "### #{Regexp.last_match(1).strip}"
+    when /\A#{MARK}Q(.*)/o then "> #{escape(Regexp.last_match(1).strip)}"
+    when /\A#{MARK}L(.*)/o then "- #{escape(Regexp.last_match(1).strip)}"
+    else escape(text)
+    end
+  end
+
+  def link_list(links)
+    "### Links\n\n#{links.each_with_index.map { |l, i| "\\[#{i + 1}] #{BBS::Text.clean(l, keep_newlines: false)}" }.join("\n\n")}"
+  end
 
   def paragraphs(html) = html.gsub(BLOCK, "\n\n").split(/\n\s*\n/)
 
@@ -78,17 +96,21 @@ module HtmlText
   def decode(text)
     text.gsub(/&(#x[0-9a-f]+|#\d+|[a-z][a-z0-9]*);/i) do
       ref = Regexp.last_match(1)
-      if ref.start_with?('#')
-        code = ref[1].casecmp?('x') ? ref[2..].to_i(16) : ref[1..].to_i
-        char = code.between?(1, 0x10FFFF) && !code.between?(0xD800, 0xDFFF) ? [code].pack('U') : ''
-        char.match?(CONTROL) ? '' : char
-      else
-        ENTITIES[ref] || CGI.unescapeHTML("&#{ref};")
-      end
+      ref.start_with?('#') ? character(ref) : ENTITIES[ref] || CGI.unescapeHTML("&#{ref};")
     end
   end
 
-  def clean(text) = text.to_s.dup.force_encoding(Encoding::UTF_8).scrub('').tr("\t", ' ').gsub(CONTROL, '')
+  # The character of a numeric reference (+#233+, +#xE9+); '' for one that
+  # is not a character or is a control character.
+  def character(ref)
+    code = ref[1].casecmp?('x') ? ref[2..].to_i(16) : ref[1..].to_i
+    return '' unless code.between?(1, 0x10FFFF) && !code.between?(0xD800, 0xDFFF)
+
+    BBS::Text.clean([code].pack('U'))
+  end
+
+  # Valid UTF-8 without control characters, a tab as a space.
+  def clean(text) = BBS::Text.clean(text).tr("\t", ' ')
 
   def escape(line) = line.match?(/\A(?:#|```|>|[-*+] |\d+[.)] )/) ? "\\#{line}" : line
 end

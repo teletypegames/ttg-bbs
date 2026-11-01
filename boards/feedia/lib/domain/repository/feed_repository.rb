@@ -1,63 +1,54 @@
 # frozen_string_literal: true
 
-require 'net/http'
-require 'uri'
+require 'bbs/http'
+require 'bbs/cache'
 
-# The feeds themselves, over HTTP(S): a feed is fetched (redirects followed,
-# at most MAX_BYTES), read by FeedXml and kept for TTL seconds. Every
-# request names the reader in its User-Agent. A network or parse error is
-# warned and comes back as nil.
+# The feeds themselves, over HTTP(S) (BBS::HTTP: public addresses only, a
+# deadline, at most MAX_BYTES), read by FeedXml and kept for TTL seconds in
+# a BBS::Cache: callers opening the same feed at once share one fetch and
+# one parse, so a crowd cannot build a crowd of XML trees. A network or
+# parse error is warned and comes back as nil; an older copy of the feed,
+# when one is kept, is served instead.
 class FeedRepository
   USER_AGENT = 'FeediaBBS/0.1 (Feedia BBS, Teletype Games telnet RSS reader; https://git.teletypegames.org/bbs/feedia-bbs)'
-  TTL        = 600
-  MAX_BYTES  = 4 * 1024 * 1024
-  REDIRECTS  = 4
   ACCEPT     = 'application/rss+xml, application/atom+xml, application/xml;q=0.9, */*;q=0.5'
+  TTL        = 600
+  MAX_BYTES  = 1024 * 1024
+  REDIRECTS  = 4
+  # The channels kept: every feed of a long list, in a few megabytes.
+  CACHE_ENTRIES = 200
+  CACHE_BYTES   = 16 * 1024 * 1024
 
-  def initialize
-    @cache = {}
-    @mu    = Mutex.new
+  def initialize(http: BBS::HTTP)
+    @http  = http
+    @cache = BBS::Cache.new(ttl: TTL, max_entries: CACHE_ENTRIES, max_bytes: CACHE_BYTES,
+                            size: ->(channel) { FeedRepository.bytes(channel) })
+  end
+
+  # The bytes a ChannelModel holds, roughly: the text of its items.
+  def self.bytes(channel)
+    channel.items.sum { |item| item.title.bytesize + item.markdown.bytesize + item.link.to_s.bytesize }
   end
 
   # The ChannelModel of +feed+ (a FeedModel); nil when it could not be
-  # fetched or read. With +fresh+ the cache is skipped.
+  # fetched or read. With +fresh+ the kept copy is dropped first.
   def read(feed, fresh: false)
-    hit = @mu.synchronize { @cache[feed.url] }
-    return hit[1] if hit && !fresh && Time.now - hit[0] < TTL
-
-    channel = FeedXml.channel(feed, fetch(feed.url))
-    @mu.synchronize { @cache[feed.url] = [Time.now, channel] }
-    channel
+    @cache.delete(feed.url) if fresh
+    @cache.fetch(feed.url) { FeedXml.channel(feed, fetch(feed.url)) }
   rescue StandardError => e
-    warn "Feed error (#{feed.url}): #{e.class}: #{e.message}"
+    warn "feedia-bbs: feed #{feed.name}: #{e.class}: #{e.message}"
     nil
   end
 
   private
 
-  def fetch(url, hops = REDIRECTS)
-    uri  = URI(url)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl      = uri.scheme == 'https'
-    http.open_timeout = 10
-    http.read_timeout = 15
-    request = Net::HTTP::Get.new(uri.request_uri, 'User-Agent' => USER_AGENT, 'Accept' => ACCEPT)
-    http.request(request) do |response|
-      case response
-      when Net::HTTPRedirection
-        raise FeedXml::Unreadable, 'too many redirects' if hops.zero?
+  # The body as it came, bytes: REXML reads the encoding from the XML
+  # declaration.
+  def fetch(url)
+    response = @http.get(url, headers: { 'Accept' => ACCEPT }, max_bytes: MAX_BYTES, redirects: REDIRECTS,
+                              user_agent: USER_AGENT)
+    raise FeedXml::Unreadable, "HTTP #{response.status}" unless response.ok?
 
-        return fetch(URI.join(url, response['location']).to_s, hops - 1)
-      when Net::HTTPSuccess
-        body = +''
-        response.read_body do |chunk|
-          body << chunk
-          raise FeedXml::Unreadable, 'the feed is too big' if body.bytesize > MAX_BYTES
-        end
-        return body
-      else
-        raise FeedXml::Unreadable, "HTTP #{response.code}"
-      end
-    end
+    response.body
   end
 end

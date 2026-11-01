@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'bbs'
+
 require_relative 'domain/model/html_text'
 require_relative 'domain/model/feed_model'
 require_relative 'domain/model/item_model'
