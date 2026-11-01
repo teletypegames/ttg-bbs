@@ -67,7 +67,6 @@ own beyond a sessions file, so its `lib/domain/` is only the composition root: t
 bbs.rb                        Entry point: one ImpostorBBS, BBS::Terminal with the two faces
 impostor.gemspec              The gem another rubbs BBS mounts as a door (lib/impostor*, screens/)
 Gemfile, Gemfile.lock         rubbs from git, rubocop in :development
-entrypoint.sh                 Updates rubbs, then starts bbs.rb
 Dockerfile, .dockerignore, compose.yaml
 .woodpecker.yaml, .rubocop.yml
 env-example                   Every environment variable, with its default

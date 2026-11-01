@@ -3,7 +3,7 @@
 
 # rubbs
 BBS_PORT=2323
-BBS_MAX_SESSIONS=100
+BBS_MAX_SESSIONS=40
 
 # The player sessions: name, code, feedback and email, one CSV row a call
 IMPOSTOR_BBS_SESSIONS=data/sessions.csv
