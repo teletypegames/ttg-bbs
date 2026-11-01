@@ -144,10 +144,10 @@ lib/
     repository/discord_repository.rb    the admins' Discord webhook, rate-limited
     service/feed_service.rb     the feed list, reading a feed
     service/inbox_service.rb    suggestions and feedback: checks, the inbox, Discord
-  ui/logo.rb                    FEEDIA in blocks for both mastheads
+  ui/logo.rb                    FEEDIA in half blocks for the modern masthead
   ui/modern.rb                  the modern face: desktop, feeds, items, forms
   ui/petscii.rb                 the PETSCII face: logo, menu, lists, pages, messages
-  ui/petscii/screen.rb          title bar, pages, the cursor menus on the 40×25 screen
+  ui/petscii/screen.rb          the 40×25 screen: rubbs' BBS::Petscii::Screen
 ```
 
 ## Deploy

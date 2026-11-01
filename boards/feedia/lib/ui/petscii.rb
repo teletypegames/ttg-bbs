@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative 'logo'
 require_relative 'petscii/screen'
 
 module UI
@@ -14,12 +13,7 @@ module UI
     MARKDOWN = { text: LG, text_bright: WH, accent: YE, label: CY, text_dim: GR }.freeze
 
     # FEEDIA in reversed blocks, five rows.
-    def self.logo
-      Logo.rows.each_with_index.map do |bits, row|
-        line = bits.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')
-        "  #{LOGO_COLORS[row]}#{line}#{LG}"
-      end
-    end
+    def self.logo = BBS::BlockFont.petscii('FEEDIA', colors: LOGO_COLORS, indent: 2)
 
     # The logo as a newspaper's masthead: the issue line and the date
     # between rules, the motto under it.
@@ -38,28 +32,13 @@ module UI
           nil
         end
         call do |_ctx, runner|
-          Petscii.goodbye(Screen.new(runner.session))
+          BBS::Goodbye.petscii(Screen.new(runner.session), title: 'feedia', color: YE,
+                                                           note: "The stories are their publishers'.")
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           nil
         end
       end
-    end
-
-    def self.goodbye(screen)
-      screen.cls
-      screen.puts
-      screen.puts " #{YE}#{RV}#{' thanks for calling feedia'.ljust(39)}#{RO}#{LG}"
-      screen.puts
-      screen.say("The stories are their publishers'. More of us: teletypegames.org", GR)
-      screen.puts
-      sleep 1.2
-      screen.puts " #{LG}+++"
-      sleep 0.6
-      screen.puts ' ATH0'
-      sleep 0.4
-      screen.puts " #{RD}NO CARRIER#{LG}"
-      screen.puts
     end
 
     # One call: the menu, the feeds, their items, the messages.

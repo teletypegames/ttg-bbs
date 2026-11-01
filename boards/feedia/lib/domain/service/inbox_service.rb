@@ -64,5 +64,5 @@ class InboxService
   end
 
   # Discord markdown off, links included: a caller's [text](url) stays text.
-  def escape(text) = text.to_s.gsub(/([\\*_~`|>\[\]()<#:@-])/) { "\\#{Regexp.last_match(1)}" }
+  def escape(text) = BBS::DiscordWebhook.escape(text)
 end

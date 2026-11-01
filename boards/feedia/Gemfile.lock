@@ -1,8 +1,8 @@
 GIT
   remote: https://git.teletypegames.org/engines/rubbs.git
-  revision: 263acbdbc594f6d129835f68484ae412ede9075b
+  revision: 693f8b08803c984ce6208168b3b8bbd03df2a1a5
   specs:
-    bbs (0.27.1)
+    bbs (0.29.0)
       artii (~> 2.1)
 
 GEM
@@ -53,7 +53,7 @@ DEPENDENCIES
 CHECKSUMS
   artii (2.1.2) sha256=15410369690634fccf801fd95ae9762c3b2b7254e17a07e77a069e5cd292bc49
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
-  bbs (0.27.1)
+  bbs (0.29.0)
   bundler (4.0.13) sha256=19f08be7f27022cf0b89f27da0b044ae075e8270a9ef44ad248a932614e1ca3b
   json (3.1.0) sha256=3ce7ccf8fde58960177a3a756c31f292a4c1e1dedee884547096a5b0604e3bd8
   language_server-protocol (3.17.0.6) sha256=5ef2c0c138f8267e1bc631d3328347d354f96724b0af22f2c79516120443b7f0

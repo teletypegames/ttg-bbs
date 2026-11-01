@@ -3,6 +3,7 @@
 
 # The admins' look at what callers sent, newest first:
 #   docker exec feedia bin/inbox [count]
+require 'bundler/setup'
 require_relative '../lib/domain'
 
 messages = FeediaBBS.new.inbox.messages((ARGV.first || 20).to_i)
