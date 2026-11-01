@@ -10,7 +10,7 @@ class FeedListRepository
   def initialize(path)
     @all = Array(YAML.safe_load_file(path)).filter_map { |entry| FeedModel.from_entry(entry) }.freeze
   rescue SystemCallError, Psych::Exception => e
-    warn "feedia: no feeds from #{path}: #{e.class}: #{e.message}"
+    warn "feedia-bbs: no feeds from #{path}: #{e.class}: #{e.message}"
     @all = [].freeze
   end
 end

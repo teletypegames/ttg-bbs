@@ -8,7 +8,7 @@ require 'uri'
 # request names the reader in its User-Agent. A network or parse error is
 # warned and comes back as nil.
 class FeedRepository
-  USER_AGENT = 'Feedia/0.1 (Teletype Games telnet RSS reader; https://git.teletypegames.org/bbs/feedia)'
+  USER_AGENT = 'FeediaBBS/0.1 (Feedia BBS, Teletype Games telnet RSS reader; https://git.teletypegames.org/bbs/feedia-bbs)'
   TTL        = 600
   MAX_BYTES  = 4 * 1024 * 1024
   REDIRECTS  = 4
