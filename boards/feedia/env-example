@@ -3,7 +3,7 @@
 
 # rubbs
 BBS_PORT=2323
-BBS_MAX_SESSIONS=100
+BBS_MAX_SESSIONS=50
 
 # The feed list, and the inbox file that keeps suggestions and feedback
 FEEDIA_BBS_FEEDS=config/feeds.yml

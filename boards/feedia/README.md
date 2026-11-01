@@ -154,5 +154,5 @@ lib/
 
 A push to master deploys from Woodpecker: RuboCop, a compose check, then
 `ci-deploy feedia-bbs` on the server (infra/host-config), which runs the stack in
-`/srv/stacks/feedia-bbs`; `data/` and `.env` stay. The entrypoint updates rubbs on
-start.
+`/srv/stacks/feedia-bbs`; `data/` and `.env` stay. The image runs the rubbs revision of
+`Gemfile.lock`, as uid 1000.
