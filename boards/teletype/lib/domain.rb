@@ -2,7 +2,6 @@
 
 require 'bbs'
 require 'sermo'
-require 'impostor'
 require 'time'
 
 require_relative 'domain/repository/online_users_repository'

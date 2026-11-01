@@ -1,11 +1,4 @@
 GIT
-  remote: https://git.teletypegames.org/bbs/impostor-bbs.git
-  revision: 446040917ad76f1e2bb581b3a18d222e35e43685
-  specs:
-    impostor (0.3.0)
-      bbs (>= 0.16.1)
-
-GIT
   remote: https://git.teletypegames.org/bbs/sermo-bbs.git
   revision: 0fb9ae58043c8e6222e136f8145cc91865bf9361
   specs:
@@ -71,7 +64,6 @@ PLATFORMS
 
 DEPENDENCIES
   bbs!
-  impostor!
   net-ftp
   rubocop
   sermo!

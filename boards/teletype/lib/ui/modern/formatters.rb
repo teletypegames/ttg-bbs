@@ -260,7 +260,7 @@ module UI
           body << '  Upcoming events'
           body.concat(events.empty? ? ['  (nothing scheduled)'] : events.map { |e| event_line(e) })
           body << :spacer
-          body << '  From the blog (Doors > TTG Blog)'
+          body << '  From the blog (TTG Blog BBS, port 2328)'
           if posts.empty?
             body << '  (no posts yet — they will show up here and on teletypegames.org/blog)'
           else

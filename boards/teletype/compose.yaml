@@ -21,9 +21,6 @@ services:
       - SERMO_LLM_MODEL=qwen3.5-0.8b
       - SERMO_LLM_API_KEY=${SERMO_LLM_API_KEY:-}
       - TELETYPE_BBS_LLM_API_KEY=${TELETYPE_BBS_LLM_API_KEY:-}
-    extra_hosts:
-      # The Alexandria and Feedia doors are telnet gateways to their ports on the host.
-      - "host.docker.internal:host-gateway"
     networks:
       - default
       - interstack

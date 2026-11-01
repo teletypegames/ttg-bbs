@@ -198,7 +198,7 @@ module UI
         doing('News')
         lines = [" #{WH}latest releases#{LG}"]
         @bbs.games.latest_releases(5).each { |g| lines += [release_line(g), *urls(@bbs.games.catalog_url(g))] }
-        lines += ['', " #{WH}coming up#{LG}", *events(5), '', " #{WH}blog#{LG} #{GR}(r: doors > ttg blog)#{LG}"]
+        lines += ['', " #{WH}coming up#{LG}", *events(5), '', " #{WH}blog#{LG} #{GR}(ttg blog bbs, 2328)#{LG}"]
         posts = @bbs.site.blog_posts(5)
         lines << " #{GR}(no posts yet)#{LG}" if posts.empty?
         posts.each do |p|

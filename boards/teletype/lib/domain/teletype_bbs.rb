@@ -17,18 +17,16 @@ class TeletypeBBS
     ['Teletype BBS',   'teletypegames.org:2323', 'this board: messages, chat, news, catalog'],
     ['Impostor BBS',   'teletypegames.org:2324', 'post-game terminal of Definitely not an Impostor'],
     ['TTG Wiki BBS',   'teletypegames.org:2325', 'the whole wiki in a two-pane browser'],
-    ['Alexandria BBS', 'teletypegames.org:2326', 'Wikipedia on a telnet line; a door here too'],
-    ['Feedia BBS',     'teletypegames.org:2327', 'an RSS reader: the news as text; a door here too'],
-    ['TTG Blog BBS',   'teletypegames.org:2328', 'the Teletype Games blog; a door here too'],
-    ['WarpEngine BBS', 'teletypegames.org:2329', 'the file area: C64 and Plus/4 titles; a door here too'],
-    ['Scriptorium BBS', 'teletypegames.org:2330', 'Project Gutenberg books, a chapter at a time; a door here too'],
-    ['Commodex BBS',   'teletypegames.org:2331', 'the C64 game compendium, with cheats and tips; a door here too'],
-    ['Pixelia BBS',    'teletypegames.org:2332', 'ANSI and PETSCII art and a shared canvas; a door here too'],
+    ['Alexandria BBS', 'teletypegames.org:2326', 'Wikipedia on a telnet line'],
+    ['Feedia BBS',     'teletypegames.org:2327', 'an RSS reader: the news as text'],
+    ['TTG Blog BBS',   'teletypegames.org:2328', 'the Teletype Games blog'],
+    ['WarpEngine BBS', 'teletypegames.org:2329', 'the file area: C64 and Plus/4 titles'],
+    ['Scriptorium BBS', 'teletypegames.org:2330', 'Project Gutenberg books, a chapter at a time'],
+    ['Commodex BBS',   'teletypegames.org:2331', 'the C64 game compendium, with cheats and tips'],
+    ['Pixelia BBS',    'teletypegames.org:2332', 'ANSI and PETSCII art and a shared canvas'],
     ['TTG Gate BBS',   'teletypegames.org:2399', 'one port for all of these: a dialing menu']
   ].freeze
-  DOOR_NAMES    = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Impostor', 'Chat of Ra', 'TTG Trivia', 'Alexandria',
-                   'Feedia', 'TTG Blog', 'WarpEngine', 'Scriptorium', 'Commodex', 'Pixelia'].freeze
-  GATEWAY_HOST  = ENV.fetch('TELETYPE_BBS_GATEWAY_HOST', 'host.docker.internal')
+  DOOR_NAMES    = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Chat of Ra', 'TTG Trivia'].freeze
   WIKI_SECTIONS = {
     platforms: { prefix: '/platforms', title: 'Platform Guides' },
     engines:   { prefix: '/engines',   title: 'Engines' },
@@ -46,7 +44,7 @@ class TeletypeBBS
 
   attr_reader :online, :boards, :wiki, :games, :chat, :irc, :last_callers, :profile, :accounts, :site,
               :discord, :oneliners, :files, :dev_log, :art, :master, :mail, :voting, :file_areas, :trivia,
-              :taglines, :impostor_sessions, :c64_master
+              :taglines, :c64_master
 
   def initialize
     @online       = OnlineService.new(OnlineUsersRepository.new)
@@ -72,7 +70,6 @@ class TeletypeBBS
     @dev_log      = DevLogService.new(GiteaRepository.new)
     @master       = TtgMaster.new(games: @games, site: @site)
     @c64_master   = TtgMaster.new(games: @games, site: @site, **TtgMaster::C64)
-    @impostor_sessions = Impostor.sessions_store(ENV.fetch('TELETYPE_BBS_IMPOSTOR_SESSIONS_PATH', 'data/impostor_sessions.csv'))
     @accounts     = AccountService.new(AccountRepository.new(ENV.fetch('TELETYPE_BBS_ACCOUNTS_PATH', 'data/accounts.csv')),
                                        reserved: SYSOPS)
     @mail         = MailService.new(MailRepository.new(ENV.fetch('TELETYPE_BBS_MAIL_PATH', 'data/mail.csv')),
@@ -111,12 +108,6 @@ class TeletypeBBS
                hint: 'A Commodore Plus/4 with our Plus/4 games on its disk: DIRECTORY lists them',
                about: 'The grey screen of the Plus/4 and its BASIC 3.5 habits: DIRECTORY and DLOAD work, and ' \
                       'the disk holds our Plus/4 games. EXIT returns.'),
-      Door.new(name: :impostor, program: Impostor::Modern.flow(sessions: @impostor_sessions),
-               petscii: Impostor::Petscii.flow(sessions: @impostor_sessions), label: '&Impostor', cols: 80,
-               tag: 'the debrief terminal',
-               hint: 'The debrief terminal of Definitely not an Impostor: leave your code and your feedback',
-               about: 'The terminal at the end of our game Definitely not an Impostor: type the code the game ' \
-                      'gave you, and tell us how it went. The same as Impostor BBS on port 2324.'),
       Door.new(name: :ra, program: Ra.os(games: @games), label: 'Chat of &Ra', cols: 80,
                tag: 'talk to the sun god',
                hint: 'Talk to Ra in the pyramid of Blessing of Ra; solve three riddles for his blessing',
@@ -127,45 +118,7 @@ class TeletypeBBS
                hint: 'Ten questions, 20 seconds each, A to D: quick answers and streaks score more',
                about: 'A door game of the old kind: ten questions about our games, the team and old computers, ' \
                       '20 seconds each. A quick answer is worth more, three in a row earn a bonus, and the best ' \
-                      'ten games are in the Hall of Fame.'),
-      Door.new(name: :alexandria, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2326, name: 'Alexandria BBS'),
-               label: '&Alexandria', cols: 40, tag: 'wikipedia bbs',
-               hint: 'Alexandria BBS: Wikipedia on a telnet line, a gateway to port 2326',
-               about: 'Our Wikipedia board: search, read an article a screenful at a time, follow its links. ' \
-                      'A gateway to Alexandria BBS on port 2326; hang up there to come back.'),
-      Door.new(name: :feedia, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2327, name: 'Feedia BBS'),
-               label: '&Feedia', cols: 40, tag: 'rss reader bbs',
-               hint: 'Feedia BBS: an RSS reader board, the news of the day as text, a gateway to port 2327',
-               about: 'Our RSS reader board: Hacker News, the retro sites, the Hungarian news and our own blog, as ' \
-                      'plain text. A gateway to Feedia on port 2327; hang up there to come back.'),
-      Door.new(name: :ttgblog, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2328, name: 'TTG Blog BBS'),
-               label: 'TTG &Blog', cols: 40, tag: 'our blog',
-               hint: 'TTG Blog BBS: the Teletype Games blog, written on the line, a gateway to port 2328',
-               about: 'The board our blog is written on: the posts of teletypegames.org/blog, read a screenful at ' \
-                      'a time. A gateway to TTG Blog BBS on port 2328; hang up there to come back.'),
-      Door.new(name: :warp, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2329, name: 'WarpEngine BBS'),
-               label: '&WarpEngine', cols: 40, tag: 'c64 + plus/4 files',
-               hint: 'WarpEngine BBS: our C64 and Plus/4 titles by ZMODEM or XMODEM, a gateway to port 2329',
-               about: 'Our file area: the Commodore 64 and Plus/4 shelves of the WarpEngine, a title a page, ' \
-                      'downloaded by ZMODEM or by XMODEM onto a C64 disk. A gateway to WarpEngine BBS on port 2329; ' \
-                      'hang up there to come back.'),
-      Door.new(name: :scriptorium, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2330, name: 'Scriptorium BBS'),
-               label: 'Scriptori&um', cols: 40, tag: 'gutenberg books',
-               hint: 'Scriptorium BBS: Project Gutenberg books a chapter at a time, a gateway to port 2330',
-               about: 'Our library board: thousands of books from Project Gutenberg, searched by title or author ' \
-                      'and read a chapter at a time. A gateway to Scriptorium BBS on port 2330; hang up there to ' \
-                      'come back.'),
-      Door.new(name: :commodex, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2331, name: 'Commodex BBS'),
-               label: 'Co&mmodex', cols: 40, tag: 'c64 games + cheats',
-               hint: 'Commodex BBS: the C64 game compendium with cheats and tips, a gateway to port 2331',
-               about: 'Our Commodore 64 game compendium: search the titles, read about them, and trade cheats and ' \
-                      'tips with other callers. A gateway to Commodex BBS on port 2331; hang up there to come back.'),
-      Door.new(name: :pixelia, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2332, name: 'Pixelia BBS'),
-               label: 'Pi&xelia', cols: 40, tag: 'ansi + petscii art',
-               hint: 'Pixelia BBS: ANSI and PETSCII art and a shared canvas, a gateway to port 2332',
-               about: 'Our art board: ANSI art from the 16colo.rs archive, the Wall of works made on the line, and ' \
-                      'a shared 40x25 canvas everyone paints together. A gateway to Pixelia BBS on port 2332; hang ' \
-                      'up there to come back.')
+                      'ten games are in the Hall of Fame.')
     ]
   end
 
