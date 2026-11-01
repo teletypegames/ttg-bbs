@@ -98,20 +98,20 @@ module UI
       # The chapter wrapped to the pane, the heading bright; with +keep+ the
       # reader stays at the same place in the text.
       def rewrap(keep: true)
-        width = [@view.bounds.width - 1, 10].max
         ratio = keep && !@view.lines.empty? ? @view.scroll.to_f / @view.lines.size : 0
-        th    = @app.theme
-        lines = []
-        @paragraphs.each_with_index do |para, i|
-          lines << '' unless i.zero?
-          para.split("\n").each do |line|
-            wrapped = BBS::FrameBuffer.wrap_ansi(line, width)
-            wrapped = wrapped.map { |l| "#{th[:text_bright]}#{l}#{th[:text]}" } if i.zero?
-            lines.concat(wrapped)
-          end
-        end
+        lines = wrapped_lines([@view.bounds.width - 1, 10].max)
         @view.lines  = lines
         @view.scroll = (ratio * lines.size).floor.clamp(0, [lines.size - @view.bounds.height, 0].max)
+      end
+
+      # The paragraphs wrapped to +width+, an empty line between them.
+      def wrapped_lines(width)
+        th = @app.theme
+        @paragraphs.each_with_index.flat_map do |para, i|
+          lines = para.split("\n").flat_map { |line| BBS::FrameBuffer.wrap_ansi(line, width) }
+          lines = lines.map { |l| "#{th[:text_bright]}#{l}#{th[:text]}" } if i.zero?
+          i.zero? ? lines : ['', *lines]
+        end
       end
 
       def where

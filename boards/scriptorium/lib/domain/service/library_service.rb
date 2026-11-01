@@ -83,18 +83,24 @@ class LibraryService
     return :busy unless @lock.synchronize { !@importing && (@importing = true) }
 
     begin
-      started = Time.now
-      return :failed unless @gutenberg.download_catalog(@catalog_file)
-
-      n = @catalog.import(@catalog_file)
-      FileUtils.rm_f(@catalog_file)
-      return :failed unless n
-
-      warn format('scriptorium: catalog imported, %<n>d books in %<s>.1f s', n: n, s: Time.now - started)
-      GC.start
-      :updated
+      import
     ensure
       @lock.synchronize { @importing = false }
     end
+  end
+
+  private
+
+  def import
+    started = Time.now
+    return :failed unless @gutenberg.download_catalog(@catalog_file)
+
+    n = @catalog.import(@catalog_file)
+    FileUtils.rm_f(@catalog_file)
+    return :failed unless n
+
+    warn format('scriptorium-bbs: catalog imported, %<n>d books in %<s>.1f s', n: n, s: Time.now - started)
+    GC.start
+    :updated
   end
 end

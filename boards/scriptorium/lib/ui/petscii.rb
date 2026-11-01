@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'petscii/screen'
+require_relative 'petscii/reader'
 require_relative 'logo'
 
 module UI
@@ -38,10 +39,6 @@ module UI
 
     # One call: the menu, the shelves, the books, the reader.
     class Board
-      # Rows of text on a page of the reader: the title bar above, the key
-      # line below.
-      READER_ROWS = 21
-
       ABOUT = [
         " #{WH}scriptorium bbs#{LG}", '',
         ' The classic literature vault of Teletype Games: tens of thousands of books from Project Gutenberg, ' \
@@ -160,19 +157,26 @@ module UI
       end
 
       def info(book)
-        reads = @library.reads(book)
-        lines = [*@screen.wrap(@screen.plain(book.short_title)).map { |l| " #{WH}#{l}#{LG}" },
-                 *@screen.wrap(@screen.plain("by #{book.author}")).map { |l| " #{CY}#{l}#{LG}" },
-                 " #{GR}#{facts(book, reads)}#{LG}"]
-        subjects = @screen.plain(book.subject_list.first(3).join('; '))
-        lines.push('', *@screen.wrap(subjects).map { |l| " #{l}" }) unless subjects.empty?
-        lines.push('', *@screen.wrap("ebook ##{book.id} from project gutenberg, #{book.url} - public domain in the usa.")
-                          .map { |l| " #{GR}#{l}#{LG}" })
-        @screen.page("EBOOK ##{book.id}", lines, wait: false)
+        @screen.page("EBOOK ##{book.id}", record(book), wait: false)
         open_book(book) if @screen.actions(%w[r read], %w[q back]) == 'r'
       end
 
-      def facts(book, reads)
+      # A book's record: the title, the author, the facts, the subjects and
+      # the credit.
+      def record(book)
+        subjects = @screen.plain(book.subject_list.first(3).join('; '))
+        credit   = "ebook ##{book.id} from project gutenberg, #{book.url} - public domain in the usa."
+        [*lines(@screen.plain(book.short_title), WH), *lines(@screen.plain("by #{book.author}"), CY),
+         " #{GR}#{facts(book)}#{LG}", *(['', *lines(subjects)] unless subjects.empty?), '', *lines(credit, GR)]
+      end
+
+      # +text+ wrapped, each line indented and in +color+.
+      def lines(text, color = nil)
+        @screen.wrap(text).map { |l| color ? " #{color}#{l}#{LG}" : " #{l}" }
+      end
+
+      def facts(book)
+        reads = @library.reads(book)
         [book.language, book.issued[0, 4], "#{reads} read#{'s' unless reads == 1}"].reject(&:empty?).join(' . ')
       end
 
@@ -188,7 +192,7 @@ module UI
           chapter = @screen.pick(book.short_title.upcase[0, 26], text.chapters, right: "#{text.size} ch", &:title)
           return unless chapter
 
-          read(book, text, chapter.number)
+          Reader.new(@screen, @reading, book, text).read(chapter.number)
         end
       end
 
@@ -198,67 +202,6 @@ module UI
         when :empty then 'There is no text in this ebook, only the licence.'
         else 'Project Gutenberg did not give a plain text of this book. Try again later.'
         end
-      end
-
-      # The reader: a chapter in pages of READER_ROWS lines. RETURN turns
-      # the page (and at the end of a chapter goes on to the next one), B
-      # goes back a page, N and P change the chapter, Q goes back to the
-      # list.
-      def read(book, text, number)
-        page  = 0
-        lines = chapter_lines(text, number)
-        loop do
-          pages = [(lines.size + READER_ROWS - 1) / READER_ROWS, 1].max
-          page  = page.clamp(0, pages - 1)
-          @screen.title(text.chapter(number).title[0, 24], "#{number}/#{text.size} p#{page + 1}/#{pages}")
-          lines[page * READER_ROWS, READER_ROWS].each { |l| @screen.puts l }
-          (READER_ROWS - lines[page * READER_ROWS, READER_ROWS].size).times { @screen.puts }
-          last = page == pages - 1
-          @screen.write " #{DG}ret:#{last ? 'next ch' : 'more'} b:back n/p:chapter q:list#{LG}"
-          step = reader_key(last, number, text.size)
-          case step
-          when :quit then return
-          when :back then page -= 1
-          when :more then page += 1
-          when Integer
-            number += step
-            page  = 0
-            lines = chapter_lines(text, number)
-          end
-        end
-      ensure
-        @screen.puts
-        @screen.title(book.short_title.upcase[0, 26], "#{text.size} ch") if text
-      end
-
-      def reader_key(last, number, total)
-        loop do
-          k = @screen.key
-          k = k.downcase if k.is_a?(String)
-          case k
-          when :enter, ' ' then return last ? next_chapter(number, total) : :more
-          when 'b', :up then return :back
-          when 'n' then return number < total ? 1 : :quit
-          when 'p' then return number > 1 ? -1 : :back
-          when 'q', :escape then return :quit
-          end
-        end
-      end
-
-      def next_chapter(number, total) = number < total ? 1 : :quit
-
-      # Chapter +number+ wrapped to 38 columns in characters the C64 has,
-      # the heading in white, a blank line between paragraphs.
-      def chapter_lines(text, number)
-        body = @reading.chapter(text, number) || '(This chapter could not be read. Try again later.)'
-        lines = []
-        body.split("\n\n").each_with_index do |para, i|
-          lines << '' unless i.zero?
-          para.split("\n").each do |line|
-            @screen.wrap(@screen.plain(line), WIDTH).each { |l| lines << (i.zero? ? " #{WH}#{l}#{LG}" : " #{l}") }
-          end
-        end
-        lines
       end
     end
   end

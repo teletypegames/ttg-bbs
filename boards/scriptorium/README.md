@@ -28,7 +28,8 @@ It has two faces on one port, like every board of the network:
 - **Search** — every word of the title or the author, as a word prefix
   (`dick tale`), accents ignored. `lang:fr` (or the Language field of the
   modern face) keeps to one language.
-- **Most read** — the books opened most often on this board.
+- **Most read** — the books opened most often on this board (the `reads`
+  table of `data/scriptorium.sqlite3`).
 
 ### The catalog
 
@@ -46,9 +47,12 @@ and search is a query.
 ### The texts
 
 A book is fetched when someone first opens it:
-`<mirror>/cache/epub/<N>/pg<N>.txt`, with a User-Agent that names the board.
+`<mirror>/cache/epub/<N>/pg<N>.txt`, through `BBS::HTTP` (a 60-second
+deadline, the size cap below, redirects to public http(s) addresses only)
+with a User-Agent that names the board.
 The board takes off the Project Gutenberg header and footer (`*** START OF …`,
-`*** END OF …`), evens out the line ends, and joins the hard-wrapped lines of a
+`*** END OF …`), evens out the line ends, drops the control characters (a form
+feed would clear a C64's screen), and joins the hard-wrapped lines of a
 paragraph (verse, lists and tables of contents keep their lines). It cuts the
 text into chapters by their headings (CHAPTER, BOOK, PART, ACT, STAVE, LETTER,
 CANTO, PREFACE, a roman numeral on its own line…): a table of contents that
@@ -59,8 +63,10 @@ and a book without headings in sections of about 16 KB ("Part 1/23").
 The cleaned text and its chapter index are cached in `data/texts/` (at most
 `SCRIPTORIUM_BBS_CACHE_MB`, the books read least recently go first). A chapter is
 read from the file when it is shown: no session keeps a whole book. A text
-longer than `SCRIPTORIUM_BBS_BOOK_MAX` is refused, and one book is fetched and cut
-at a time.
+longer than `SCRIPTORIUM_BBS_BOOK_MAX` is refused. Callers opening the same
+book wait for one fetch, and at most two books are fetched and cut at once
+(a caller waits a minute at most for a turn); the text is cleaned in place
+and cutting it keeps only offsets, so a big book is not copied over and over.
 
 The texts are public domain in the USA. Each book's page credits it:
 "eBook #N from Project Gutenberg, gutenberg.org/ebooks/N".
@@ -89,14 +95,29 @@ with its default. The board has no secrets.
 | `SCRIPTORIUM_BBS_CATALOG_URL` | `<mirror>/cache/epub/feeds/pg_catalog.csv.gz` | the catalog file |
 | `SCRIPTORIUM_BBS_CATALOG_TTL` | `7` | days before the catalog is imported again |
 | `SCRIPTORIUM_BBS_CLASSICS` | `config/classics.yml` | the Classics shelf |
-| `SCRIPTORIUM_BBS_DB` | `data/catalog.sqlite3` | the catalog in SQLite |
+| `SCRIPTORIUM_BBS_DB` | `data/scriptorium.sqlite3` | the board's data: the reads |
+| `SCRIPTORIUM_BBS_CATALOG_DB` | `data/catalog.sqlite3` | the catalog in SQLite (a cache) |
 | `SCRIPTORIUM_BBS_CATALOG_FILE` | `data/pg_catalog.csv.gz` | where the download waits for the import |
 | `SCRIPTORIUM_BBS_TEXTS` | `data/texts` | the cleaned texts and chapter indexes |
 | `SCRIPTORIUM_BBS_CACHE_MB` | `300` | the most the text cache takes |
 | `SCRIPTORIUM_BBS_BOOK_MAX` | `8388608` | the longest plain text fetched, in bytes |
-| `SCRIPTORIUM_BBS_READS` | `data/reads.jsonl` | the books opened, one JSON line each |
+`data/` is a volume. A `data/reads.jsonl` left by an older board (one JSON line
+a read) is imported into the `reads` table on the first start, one
+transaction, an unreadable line skipped, and renamed `reads.jsonl.imported`;
+the log says `scriptorium-bbs: imported N reads from reads.jsonl (M skipped)`.
 
-`data/` is a volume.
+## Tests
+
+```bash
+bundle exec bin/test            # all of them (minitest, no network)
+bundle exec bin/test reading    # the files whose name has the word
+bundle exec rubocop
+```
+
+The tests cover the domain: the reads and their legacy import, cleaning and
+cutting a text, the reading service (one fetch per book, a few at once), the
+text cache, the catalog import and search, and the Gutenberg repository
+against a stubbed `BBS::HTTP`. CI runs both before a deploy.
 
 ## Project structure
 
@@ -109,10 +130,11 @@ lib/domain/
   model/shelf_model.rb      a bookshelf, or the Classics shelf
   model/chapter_model.rb    a chapter: its title and byte range in the cached text
   model/text_model.rb       a book ready to read: its chapter index
-  repository/gutenberg_repository.rb    Project Gutenberg over HTTP: the catalog file, a plain text
+  repository/gutenberg_repository.rb    Project Gutenberg over BBS::HTTP: the catalog file, a plain text
   repository/catalog_repository.rb      the catalog in SQLite: import, search, shelves
   repository/classics_repository.rb     config/classics.yml
-  repository/read_repository.rb         data/reads.jsonl and the counts
+  repository/read_repository.rb         the reads table of data/scriptorium.sqlite3 and the counts
+  repository/legacy_reads.rb            the one-time import of an older data/reads.jsonl
   repository/text_cache_repository.rb   data/texts: cleaned texts, chapter indexes, eviction
   service/chapter_service.rb            cleaning a text and cutting it into chapters
   service/library_service.rb            shelves, search, most read, the catalog refresh
@@ -120,10 +142,20 @@ lib/domain/
   scriptorium_bbs.rb        the composition root (ScriptoriumBBS)
 lib/ui/
   logo.rb                   SCRIPTORIUM in blocks (BBS::BlockFont), both faces
-  modern.rb                 UI::Modern: the rubbs Application
+  modern.rb                 UI::Modern: the rubbs Application, put together from:
+  modern/library.rb         the helpers: shelves, search, opening a book
+  modern/desktop.rb         the logo, the tagline, the statusbar
+  modern/book_card.rb       a book's record beside a list of books
+  modern/shelves_window.rb  the bookshelves window
+  modern/books_window.rb    a list of books
+  modern/chapters_window.rb a book's chapters
+  modern/menu.rb            the menubar, the help texts, the function keys
   modern/reader_window.rb   the reader window
-  petscii.rb                UI::Petscii: the C64 board and its reader
+  petscii.rb                UI::Petscii: the C64 board
+  petscii/reader.rb         the C64 reader: 38-column pages
   petscii/screen.rb         the 40×25 screen: rubbs' BBS::Petscii::Screen
+bin/test                    runs the tests
+test/                       the domain tests (minitest)
 ```
 
 ## License
