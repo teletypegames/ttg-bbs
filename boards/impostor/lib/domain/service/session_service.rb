@@ -10,8 +10,11 @@ class SessionService
 
   # Records +fields+ (name => what the caller typed) for the call
   # +session_id+; a field that does not pass SessionModel's rules is not
-  # kept. Returns +self+, as a store does.
+  # kept, and nothing is when the player name is no name (a scanner's line).
+  # Returns +self+, as a store does.
   def upsert(session_id:, **fields)
+    return self unless SessionModel.player?(**fields)
+
     kept = SessionModel.fields(**fields)
     @repository.save(session_id, kept) unless kept.empty?
     self

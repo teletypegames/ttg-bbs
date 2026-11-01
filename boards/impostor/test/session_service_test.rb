@@ -8,18 +8,23 @@ class SessionServiceTest < Minitest::Test
   def service = @service ||= SessionService.new(SessionRepository.new(path('sessions.sqlite3')))
 
   def test_a_call_is_recorded_then_completed
-    service.upsert(session_id: 's1', player_name: 'NORMAN', code: '2J5GFN')
+    service.upsert(session_id: 's1', player_name: 'NOR', code: '2J5GFN')
     service.upsert(session_id: 's1', feedback: 'Great puzzle!', email: 'norman@example.com')
     call = service.find('s1')
-    assert_equal ['NORMAN', '2J5GFN', 'Great puzzle!', 'norman@example.com'],
+    assert_equal ['NOR', '2J5GFN', 'Great puzzle!', 'norman@example.com'],
                  [call.player_name, call.code, call.feedback, call.email]
     refute_nil call.timestamp
   end
 
   def test_an_invalid_email_does_not_touch_the_call
-    service.upsert(session_id: 's1', player_name: 'NORMAN', email: 'norman@example.com')
+    service.upsert(session_id: 's1', player_name: 'NOR', email: 'norman@example.com')
     service.upsert(session_id: 's1', email: 'nope')
     assert_equal 'norman@example.com', service.find('s1').email
+  end
+
+  def test_a_scanners_line_is_not_recorded
+    service.upsert(session_id: 's1', player_name: 'GET / HTTP/1.0', code: '90')
+    assert_nil service.find('s1')
   end
 
   def test_the_database_is_the_configured_sqlite_file

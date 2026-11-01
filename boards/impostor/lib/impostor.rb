@@ -13,7 +13,15 @@ module Impostor
 
   SESSION_HEADERS = %w[session_id timestamp player_name code feedback email].freeze
 
+  # A player name: one to CodeGenerator::NAME_LEN letters A-Z, the letters a
+  # personal code is made of. A line that is anything else (a web scanner's
+  # GET request, a TLS handshake on the wrong port) is no player.
+  NAME = /\A[A-Z]{1,#{CodeGenerator::NAME_LEN}}\z/
+
   def self.sessions_store(path) = BBS::Store.new(path: path, headers: SESSION_HEADERS)
+
+  # Whether +name+ is a player name (NAME).
+  def self.name?(name) = NAME.match?(name.to_s)
 
   # The flow both faces share; +screens_dir+ holds the face's welcome and
   # congrats screens, +sessions+ keeps what the caller types (anything with
@@ -38,7 +46,7 @@ module Impostor
     proc do
       screen :welcome
       banner 'IDENTITY VERIFICATION', style: :info
-      ask :player_name, prompt: 'Player Name', transform: :upcase
+      ask :player_name, prompt: 'Player Name', transform: :upcase, validate: Impostor.method(:name?)
       ask :code,        prompt: 'Code'
       persist :player_name, :code, store: sessions
       pause 'Verifying identity...', seconds: 1.2
