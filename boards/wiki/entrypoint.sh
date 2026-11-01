@@ -10,4 +10,4 @@ until git ls-remote "$RUBBS_GIT" HEAD >/dev/null 2>&1 || [ "$tries" -ge 12 ]; do
   sleep 5
 done
 bundle update bbs || echo "rubbs update failed, starting with the installed version" >&2
-exec bundle exec ruby wiki.rb
+exec bundle exec ruby bbs.rb

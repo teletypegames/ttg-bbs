@@ -9,8 +9,8 @@ class WikiBBS
   attr_reader :wiki, :supervisor, :idle_seconds
 
   def initialize
-    password     = ENV.fetch('SUPERVISOR_PASSWORD', '').to_s
-    repository   = WikiRepository.new(ENV.fetch('WIKI_URL', 'http://localhost:9120'), token: password)
+    password     = ENV.fetch('WIKI_BBS_SUPERVISOR_PASSWORD', '').to_s
+    repository   = WikiRepository.new(ENV.fetch('WIKI_BBS_URL', 'http://localhost:9120'), token: password)
     @wiki        = WikiService.new(repository)
     @supervisor  = SupervisorService.new(password)
     @idle_seconds = ENV.fetch('BBS_IDLE', 900).to_i

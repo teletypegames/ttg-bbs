@@ -6,7 +6,7 @@ require_relative 'lib/domain'
 require_relative 'lib/ui/modern'
 require_relative 'lib/ui/petscii'
 
-# WIKI-BBS — the Teletype Games wiki over telnet. One wiki, two faces: the
+# TTG Wiki BBS — the Teletype Games wiki over telnet. One wiki, two faces: the
 # caller picks a terminal (BBS::Terminal guesses it first), and an ANSI terminal
 # gets the modern full-screen browser (page tree on the left, the page
 # rendered as ANSI markdown on the right), a Commodore 64 a PETSCII tree of
@@ -30,7 +30,7 @@ BBS.configure do |config|
   config.mouse_on_connect = false
   config.idle_seconds     = bbs.idle_seconds
 
-  config.flow = BBS::Terminal.flow(title: 'TTG Wiki', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs))
+  config.flow = BBS::Terminal.flow(title: 'TTG Wiki BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs))
 end
 
 BBS.start

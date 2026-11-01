@@ -22,7 +22,7 @@ module UI
           screen.puts
           Petscii.logo.each { |l| screen.puts l }
           screen.puts
-          screen.puts "  #{WH}the teletype games wiki#{LG}, c64 side"
+          screen.puts "  #{WH}ttg wiki bbs#{LG}, the c64 side"
           screen.puts "  #{GR}#{wiki.pages.size} pages indexed#{LG}"
           screen.puts
           screen.say('CRSR and RETURN, or the number, opens a page; Q goes back. Pages marked * are private.', GR)
@@ -38,7 +38,7 @@ module UI
 
     def self.goodbye(screen, seconds:)
       minutes = (seconds / 60).to_i
-      BBS::Goodbye.petscii(screen, title: 'the ttg wiki') do |s|
+      BBS::Goodbye.petscii(screen, title: 'ttg wiki bbs') do |s|
         s.puts " #{GR}on line #{minutes.positive? ? "#{minutes}m" : "#{seconds.to_i}s"}#{LG}"
         s.puts
         s.puts " #{GR}the wiki on the web:#{LG}"

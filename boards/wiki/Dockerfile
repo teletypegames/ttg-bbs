@@ -9,7 +9,7 @@ ENV BUNDLE_WITHOUT=development
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
-COPY wiki.rb entrypoint.sh ./
+COPY bbs.rb entrypoint.sh ./
 COPY lib/ ./lib/
 
 RUN chmod +x entrypoint.sh

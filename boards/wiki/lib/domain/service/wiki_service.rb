@@ -26,7 +26,7 @@ class WikiService
     case data['error']
     when 'forbidden'
       "# Forbidden\n\nThe wiki refused the supervisor token for `#{route}` — " \
-      'check that SUPERVISOR_PASSWORD matches on both services.'
+      "check that WIKI_BBS_SUPERVISOR_PASSWORD matches the wiki's SUPERVISOR_PASSWORD."
     when nil
       "# #{data['title']}\n\n#{data['markdown']}"
     else

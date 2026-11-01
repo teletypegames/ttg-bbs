@@ -35,7 +35,7 @@ module UI
         loop do
           children = tree[parent&.route] || []
           items    = parent ? [parent, *children] : children
-          heading  = parent ? parent.title.upcase : 'TTG WIKI'
+          heading  = parent ? parent.title.upcase : 'TTG WIKI BBS'
           right    = parent ? '' : "#{'sv ' if unlocked?}#{@wiki.pages.size} pages "
           choice   = @screen.pick(heading, items, commands: parent ? {} : TOP, right: right) do |page|
             label(page, own: page.equal?(parent))
@@ -116,7 +116,7 @@ module UI
 
       # Re-reads the shared index: every session sees the new one.
       def refresh
-        @screen.title('TTG WIKI')
+        @screen.title('TTG WIKI BBS')
         @screen.say('refreshing the index...', GR)
         @wiki.clear_cache
         @wiki.refresh_index!

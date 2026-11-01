@@ -74,7 +74,7 @@ module UI
               title: ' About ',
               width: 56,
               body: [
-                { text: 'WIKI-BBS', style: :accent, align: :center },
+                { text: 'TTG Wiki BBS', style: :accent, align: :center },
                 { text: 'The Teletype Games wiki over telnet', align: :center },
                 :spacer,
                 :rule,

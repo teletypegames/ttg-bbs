@@ -1,4 +1,4 @@
-# WIKI-BBS
+# TTG Wiki BBS
 
 The Teletype Games wiki over telnet — a [rubbs](https://git.teletypegames.org/engines/rubbs.git)-based
 BBS that browses the Grav wiki live through its JSON API.
@@ -37,7 +37,7 @@ window and back.
 
 Pages marked `*` in the list are private (login-protected on the wiki).
 Unlock them with **Wiki > Supervisor login** — the password comes from the
-`SUPERVISOR_PASSWORD` env var. Locking back: same menu item, confirm.
+`WIKI_BBS_SUPERVISOR_PASSWORD` env var. Locking back: same menu item, confirm.
 
 Mouse works too (xterm SGR), including wheel scroll in both panes.
 
@@ -81,7 +81,7 @@ enters the supervisor password.
 The lock is enforced server-side: the Grav entrypoint injects
 `SUPERVISOR_PASSWORD` into `config.site.supervisor_password`, and the JSON
 API refuses private page bodies without a matching `?token=`. The BBS sends
-its own `SUPERVISOR_PASSWORD` as that token, so **the two services must share
+its own `WIKI_BBS_SUPERVISOR_PASSWORD` as that token, so **the two services must share
 the same value** (the compose file wires both from one variable). The older
 `updates.json` / `pages.json` endpoints hide private bodies the same way
 (`body=1` only includes them with a valid token).
@@ -103,7 +103,7 @@ It reaches Grav as `http://grav` on the compose network.
 
 ```bash
 cd bbs
-WIKI_URL=http://localhost:9120 bundle exec ruby wiki.rb
+WIKI_BBS_URL=http://localhost:9120 bundle exec ruby bbs.rb
 telnet localhost 2323
 ```
 
@@ -114,8 +114,8 @@ telnet localhost 2323
 | `BBS_PORT` | `2323` | Telnet listen port |
 | `BBS_MAX_SESSIONS` | `100` | Callers at once (the compose file sets 50) |
 | `BBS_IDLE` | `900` | Idle disconnect (seconds) |
-| `WIKI_URL` | `http://localhost:9120` | Grav wiki base URL |
-| `SUPERVISOR_PASSWORD` | — | Unlocks private pages (Wiki > Supervisor login) and is sent to the wiki as the API token — must match the grav service's value; empty = private pages stay locked |
+| `WIKI_BBS_URL` | `http://localhost:9120` | Grav wiki base URL |
+| `WIKI_BBS_SUPERVISOR_PASSWORD` | — | Unlocks private pages (Wiki > Supervisor login) and is sent to the wiki as the API token — must match the grav service's `SUPERVISOR_PASSWORD`; empty = private pages stay locked |
 
 `env-example` lists them all with their defaults. `WikiBBS`
 (`lib/domain/wiki_bbs.rb`) is the one place that reads them, apart from
@@ -127,9 +127,9 @@ always boots with the latest rubbs revision.
 ## Project structure
 
 ```
-wiki.rb                       Entry point: one WikiBBS, its index loading, BBS::Terminal with the two faces
+bbs.rb                        Entry point: one WikiBBS, its index loading, BBS::Terminal with the two faces
 Gemfile, Gemfile.lock         rubbs from git, rubocop in :development
-entrypoint.sh                 Updates rubbs, then starts wiki.rb
+entrypoint.sh                 Updates rubbs, then starts bbs.rb
 Dockerfile, .dockerignore     The image; the root docker-compose.yml builds it as wiki-bbs
 .rubocop.yml                  The house RuboCop rules; CI lints bbs/ (root .woodpecker.yaml)
 env-example                   Every environment variable, with its default
