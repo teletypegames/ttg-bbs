@@ -2,17 +2,27 @@
 
 # Reading a book: its text fetched from Project Gutenberg once, cleaned and
 # cut into chapters (ChapterService), then kept in the text cache; a
-# chapter is read from there when it is shown. One book is fetched and cut
-# at a time, so a few callers opening big books at once do not run the
-# board out of memory.
+# chapter is read from there when it is shown. Callers opening the same
+# book wait for one fetch (a BBS::Cache single flight), and at most
+# FETCHES books are fetched and cut at once, so a few callers opening big
+# books together do not run the board out of memory; a caller waits for
+# a turn no longer than WAIT seconds.
 class ReadingService
+  FETCHES = 2
+  WAIT    = 60
+  # Seconds an answer of the mirror is kept: a refusal is not asked again
+  # by every caller.
+  REMEMBER = 30
+
   def initialize(gutenberg:, cache:, reads:, chapters:, max_bytes:)
     @gutenberg = gutenberg
     @cache     = cache
     @reads     = reads
     @chapters  = chapters
     @max_bytes = max_bytes
-    @fetching  = Mutex.new
+    @opening   = BBS::Cache.new(ttl: REMEMBER, max_entries: 64)
+    @turns     = SizedQueue.new(FETCHES)
+    FETCHES.times { @turns << :turn }
   end
 
   attr_reader :max_bytes
@@ -20,17 +30,15 @@ class ReadingService
   def cached?(book) = !@cache.index(book.id).nil?
 
   # The TextModel of +book+, or why not: :too_big (longer than the board
-  # takes), :unavailable (no plain text from the mirror), :empty (nothing
-  # left after the licence is taken off). +seen+, a Set the caller keeps for
-  # the call, makes a book count as read once a call.
+  # takes), :unavailable (no plain text from the mirror, or the board is
+  # busy), :empty (nothing left after the licence is taken off). +seen+, a
+  # Set the caller keeps for the call, makes a book count as read once a
+  # call.
   def open(book, seen: nil)
-    text = @cache.index(book.id) || @fetching.synchronize { @cache.index(book.id) || fetch(book.id) }
+    text = @cache.index(book.id) || @opening.fetch(book.id) { @cache.index(book.id) || in_turn { fetch(book.id) } }
     return text if text.is_a?(Symbol)
 
-    if seen && !seen.include?(book.id)
-      seen << book.id
-      @reads.add(book.id)
-    end
+    count_read(book.id, seen)
     text
   end
 
@@ -49,10 +57,27 @@ class ReadingService
 
   private
 
+  def count_read(id, seen)
+    return unless seen && !seen.include?(id)
+
+    seen << id
+    @reads.add(id)
+  end
+
+  # Runs the block in one of the FETCHES turns; :unavailable when none
+  # comes within WAIT seconds.
+  def in_turn
+    turn = @turns.pop(timeout: WAIT) or return :unavailable
+    begin
+      yield
+    ensure
+      @turns << turn
+    end
+  end
+
   def fetch(id)
     raw = @gutenberg.text(id, max_bytes: @max_bytes)
-    return :too_big if raw == :too_big
-    return :unavailable if raw.nil?
+    return raw || :unavailable unless raw.is_a?(String)
 
     clean = @chapters.clean(raw)
     cuts = @chapters.cut(clean)

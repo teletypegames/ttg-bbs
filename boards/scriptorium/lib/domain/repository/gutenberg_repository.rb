@@ -1,20 +1,18 @@
 # frozen_string_literal: true
 
-require 'net/http'
-require 'uri'
 require 'fileutils'
 
-# Project Gutenberg over HTTP: the catalog file and the plain text of a
-# book, from the mirror the board is given. Every request names the board
-# in its User-Agent. A dead mirror gives nil.
+# Project Gutenberg over HTTP (BBS::HTTP: a deadline, a cap on the body,
+# redirects to public http(s) addresses only, the board's User-Agent): the
+# catalog file and the plain text of a book, from the mirror the board is
+# given. A dead mirror gives nil.
 class GutenbergRepository
-  OPEN_TIMEOUT = 10
-  READ_TIMEOUT = 60
-  REDIRECTS    = 3
-
-  # Raised inside a download to stop it: the text is longer than allowed.
-  # Net::HTTP would otherwise read the rest of the body when the block ends.
-  class TooBig < StandardError; end
+  # The catalog file is about 6 MB.
+  CATALOG_MAX = 32 * 1024 * 1024
+  CATALOG_DEADLINE = 300
+  # Seconds a book's text may take, redirects included.
+  TEXT_DEADLINE = 60
+  READ_TIMEOUT  = 30
 
   attr_reader :mirror
 
@@ -27,65 +25,40 @@ class GutenbergRepository
     @user_agent  = user_agent
   end
 
-  def text_url(id) = "#{@mirror}/cache/epub/#{id}/pg#{id}.txt"
+  def text_url(id) = "#{@mirror}/cache/epub/#{Integer(id)}/pg#{Integer(id)}.txt"
 
   # Saves the catalog file at +path+ (through a temporary file next to it).
   # Returns true, or false when the mirror did not give it.
   def download_catalog(path)
-    tmp = "#{path}.part"
+    body = get(@catalog_url, max_bytes: CATALOG_MAX, deadline: CATALOG_DEADLINE)
+    return false unless body.is_a?(String)
+
     FileUtils.mkdir_p(File.dirname(path))
-    ok = File.open(tmp, 'wb') do |file|
-      get(@catalog_url) { |res| res.read_body { |chunk| file.write(chunk) } }
-    end
-    ok ? File.rename(tmp, path) : FileUtils.rm_f(tmp)
-    ok ? true : false
+    File.binwrite("#{path}.part", body)
+    File.rename("#{path}.part", path)
+    true
   rescue SystemCallError => e
     warn "scriptorium-bbs: #{path}: #{e.class}: #{e.message}"
-    FileUtils.rm_f(tmp)
     false
   end
 
   # The bytes of book +id+'s plain text; :too_big when it is longer than
   # +max_bytes+; nil when the mirror does not give it.
-  def text(id, max_bytes:)
-    body = +''
-    ok = get(text_url(id)) do |res|
-      raise TooBig if res['content-length'].to_i > max_bytes
-
-      res.read_body do |chunk|
-        body << chunk
-        raise TooBig if body.bytesize > max_bytes
-      end
-    end
-    ok ? body.b : nil
-  rescue TooBig
-    :too_big
-  end
+  def text(id, max_bytes:) = get(text_url(id), max_bytes: max_bytes, deadline: TEXT_DEADLINE)
 
   private
 
-  # Yields the successful response of a GET of +url+, following redirects;
-  # true when there was one.
-  def get(url, redirects = REDIRECTS, &block)
-    uri = URI(url)
-    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https',
-                                        open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT) do |http|
-      http.request(Net::HTTP::Get.new(uri, 'User-Agent' => @user_agent)) do |res|
-        case res
-        when Net::HTTPSuccess
-          block.call(res)
-          return true
-        when Net::HTTPRedirection
-          return get(URI.join(url, res['location']).to_s, redirects - 1, &block) if redirects.positive?
-        end
-        warn "scriptorium-bbs: #{url} answered #{res.code}"
-        return false
-      end
-    end
-  rescue TooBig
-    raise
-  rescue StandardError => e
-    warn "scriptorium-bbs: #{url}: #{e.class}: #{e.message}"
-    false
+  # The body of a successful GET of +url+; :too_big for a body over
+  # +max_bytes+; nil when the mirror fails.
+  def get(url, max_bytes:, deadline:)
+    response = BBS::HTTP.get(url, max_bytes: max_bytes, deadline: deadline, read_timeout: READ_TIMEOUT,
+                                  user_agent: @user_agent)
+    return response.body if response.ok?
+
+    warn "scriptorium-bbs: #{url} answered #{response.status}"
+    nil
+  rescue BBS::HTTP::Error => e
+    warn "scriptorium-bbs: #{e.message}"
+    e.message.end_with?("over #{max_bytes} bytes") ? :too_big : nil
   end
 end
