@@ -3,7 +3,7 @@
 
 # rubbs
 BBS_PORT=2323
-BBS_MAX_SESSIONS=100
+BBS_MAX_SESSIONS=50
 
 # Project Gutenberg: the mirror the plain texts come from, and the catalog
 SCRIPTORIUM_BBS_MIRROR=https://www.gutenberg.org
