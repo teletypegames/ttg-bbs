@@ -16,46 +16,55 @@ module Impostor
   def self.sessions_store(path) = BBS::Store.new(path: path, headers: SESSION_HEADERS)
 
   # The flow both faces share; +screens_dir+ holds the face's welcome and
-  # congrats screens.
+  # congrats screens, +sessions+ keeps what the caller types (anything with
+  # BBS::Store's +upsert+).
   def self.debrief(sessions:, screens_dir:)
+    identify = identification(sessions)
+    options  = debrief_menu(sessions)
     BBS::Flow.define(screens_dir: screens_dir) do
-      screen :welcome
-
-      banner 'IDENTITY VERIFICATION', style: :info
-
-      ask :player_name, prompt: 'Player Name', transform: :upcase
-      ask :code,        prompt: 'Code'
-      persist :player_name, :code, store: sessions
-
-      pause 'Verifying identity...', seconds: 1.2
-
-      gate denied: 'Access denied. Code mismatch.' do |ctx|
-        CodeGenerator.decrypt(ctx[:code]) == ctx[:player_name][0, CodeGenerator::NAME_LEN]
-      end
-
+      instance_exec(&identify)
       confirm 'Norman, is that you?', denied: 'Very well. Goodbye.' do
         screen :congrats
-
-        menu '>', loop: true do
-          option 'Leave feedback' do
-            ask :feedback, prompt: 'Feedback'
-            persist :feedback, store: sessions
-            say 'Feedback recorded. Thank you.', style: :success
-          end
-
-          option 'Subscribe to updates' do
-            ask :email, prompt: 'Email address', validate: :email
-            persist :email, store: sessions
-            say "Perfect. We'll be in touch.", style: :success
-          end
-
-          option 'Exit' do
-            exit_menu
-          end
-        end
+        instance_exec(&options)
       end
     end
   end
+
+  # Whether +code+ is the personal code of the player +name+.
+  def self.verified?(name, code) = CodeGenerator.decrypt(code) == name.to_s[0, CodeGenerator::NAME_LEN]
+
+  # The steps that ask for the player's name and code and refuse a wrong one.
+  def self.identification(sessions)
+    proc do
+      screen :welcome
+      banner 'IDENTITY VERIFICATION', style: :info
+      ask :player_name, prompt: 'Player Name', transform: :upcase
+      ask :code,        prompt: 'Code'
+      persist :player_name, :code, store: sessions
+      pause 'Verifying identity...', seconds: 1.2
+      gate(denied: 'Access denied. Code mismatch.') { |ctx| Impostor.verified?(ctx[:player_name], ctx[:code]) }
+    end
+  end
+
+  # The menu after the debrief: feedback, the update list, exit.
+  def self.debrief_menu(sessions)
+    proc do
+      menu '>', loop: true do
+        option 'Leave feedback' do
+          ask :feedback, prompt: 'Feedback'
+          persist :feedback, store: sessions
+          say 'Feedback recorded. Thank you.', style: :success
+        end
+        option 'Subscribe to updates' do
+          ask :email, prompt: 'Email address', validate: :email
+          persist :email, store: sessions
+          say "Perfect. We'll be in touch.", style: :success
+        end
+        option('Exit') { exit_menu }
+      end
+    end
+  end
+  private_class_method :identification, :debrief_menu
 end
 
 require_relative 'impostor/modern'

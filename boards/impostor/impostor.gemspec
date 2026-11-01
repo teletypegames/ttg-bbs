@@ -5,7 +5,7 @@
 #   require 'impostor'   # => Impostor::Modern.flow(sessions:), Impostor::Petscii.flow(sessions:)
 Gem::Specification.new do |s|
   s.name     = 'impostor'
-  s.version  = '0.3.0'
+  s.version  = '0.4.0'
   s.summary  = 'The debrief terminal of Definitely not an Impostor as a rubbs flow'
   s.authors  = ['Teletype Games']
   s.files    = Dir['lib/impostor.rb', 'lib/impostor/**/*.rb', 'screens/**/*.erb']
