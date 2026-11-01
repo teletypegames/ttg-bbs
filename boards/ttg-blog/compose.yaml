@@ -17,11 +17,8 @@ services:
     # The read API (Web::Api, port 8080) is not published: teletypegames.org
     # reads it on the interstack network as http://ttgblog:8080.
     networks:
-      default:
-      interstack:
-        # teletypegames.org reads the API as http://ttgblog:8080 until its TTGBLOG_URL moves to
-        # http://ttg-blog-bbs:8080; then this alias goes.
-        aliases: [ttgblog]
+      - default
+      - interstack
     restart: unless-stopped
 
 networks:
