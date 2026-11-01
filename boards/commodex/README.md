@@ -28,14 +28,23 @@ It has two faces on one port, like every board of the network:
   `bin/refresh-catalog`). The running board reads Wikidata again when its
   copy is older than `COMMODEX_BBS_CATALOG_TTL` (a week) and keeps the result in
   `data/catalog.json.gz`; a failed refresh keeps the previous snapshot and
-  tries again an hour later.
+  tries again an hour later, and so does a refresh that raises: the refresh
+  thread logs it and goes on. The queries are POSTs through rubbs'
+  `BBS::HTTP` (a deadline, a body cap, the board's User-Agent).
 - **About** is the lead of the game's English Wikipedia article, fetched on
-  demand through the Action API's extracts and kept in a bounded LRU cache.
+  demand through the Action API's extracts (`BBS::HTTP`, at most 5 requests
+  a second for all callers together, the same `WikipediaClient` as Alexandria
+  BBS) and kept in a `BBS::Cache` of 200 leads and 4 MiB.
   It is shown with "Text from Wikipedia, CC BY-SA 4.0" and the article's
   address.
 - **Cheats and tips** are the callers'. A new tip is pending until an admin
-  approves it; only approved tips are shown. A call may send three tips, one
-  every 30 seconds, and the board takes at most 30 an hour.
+  approves it; only approved tips are shown. A caller may send three tips an
+  hour, one every 30 seconds, and the board takes at most 30 an hour; callers
+  are counted by address (`BBS::RateLimit.caller_key`), so calling again does
+  not reset it.
+
+Everything from Wikidata and Wikipedia, and every tip, is cleaned of control
+characters (`BBS::Text.clean`) before it reaches a screen.
 
 GameBase64 data is not used: its licence does not allow public use without
 the GB64 Team's permission.
@@ -68,7 +77,20 @@ with its default.
 | `COMMODEX_BBS_TIPS_SEED` | `config/tips.yml` | tips shipped with the board, approved from the start |
 | `COMMODEX_BBS_DISCORD_WEBHOOK` | *(empty: off)* | rung for every new tip; a secret, in `.env` on the server |
 
-`data/` is a volume.
+`data/` is a volume. `data/tips.sqlite3` is opened with rubbs' `BBS::SQLite` and its
+schema migrated by version (`PRAGMA user_version`): version 1 is the schema the board
+created before it had versions, so an older file only gets its version and keeps its tips.
+
+## Tests
+
+```bash
+bundle exec rake test
+```
+
+Minitest, no network (`BBS::HTTP` is stubbed): the tips table and its migration from a
+file without a version, the tip rules and limits, the catalog's search, browse and refresh
+round, the game records, the Wikipedia and Wikidata repositories. CI runs them before a
+deploy.
 
 ## Admin
 
@@ -95,9 +117,9 @@ lib/domain/
   model/summary_model.rb    a Wikipedia lead
   repository/catalog_repository.rb    the snapshot files, the games in memory
   repository/wikidata_repository.rb   the SPARQL queries
-  repository/wikipedia_repository.rb  article leads, paced, LRU-cached
-  repository/sqlite_database.rb       the SQLite file behind a mutex
-  repository/tip_repository.rb        the tips table
+  repository/wikipedia_client.rb      the Action API over BBS::HTTP, paced
+  repository/wikipedia_repository.rb  article leads, cached (BBS::Cache)
+  repository/tip_repository.rb        the tips table (BBS::SQLite), its migrations
   repository/tip_seed_repository.rb   config/tips.yml
   service/catalog_service.rb          search, years, genres, companies, the refresh
   service/about_service.rb            a game's Wikipedia lead
@@ -107,10 +129,18 @@ lib/domain/
 lib/ui/
   logo.rb                   COMMODEX in blocks (BBS::BlockFont), both faces
   words.rb                  a game's facts and the messages, both faces
-  modern.rb                 UI::Modern: the rubbs Application
+  modern.rb                 UI::Modern: the rubbs Application and its parts
+  modern/helpers.rb         search, the lists, about, tips, the desktop
+  modern/menu.rb            the menubar, the status bar's hints, the desktop on start
+  modern/pane.rb            the frame of the list windows
+  modern/card.rb            a game's card in the games window
+  modern/games_window.rb, groups_window.rb, letters_window.rb, about_window.rb,
+  modern/tips_window.rb, add_tip_window.rb     one module per window
   petscii.rb                UI::Petscii: the masthead, the flow, goodbye
   petscii/screen.rb         the 40×25 screen: rubbs' BBS::Petscii::Screen
   petscii/board.rb          the C64 board: menu, lists, game page, tips
+test/                       minitest tests of the domain
+Rakefile                    rake test
 ```
 
 ## Licence
