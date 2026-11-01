@@ -4,8 +4,7 @@ module UI
   # The board on a modern terminal (ANSI/xterm): the debrief terminal of the
   # gem's modern face, then the board hangs up.
   module Modern
-    GOODBYE = "\e[0m\r\n  \e[1;37mThanks for calling Impostor BBS.\e[0m\r\n  " \
-              "\e[2;37mMore of us: teletypegames.org\e[0m\r\n\r\n  \e[1;31mNO CARRIER\e[0m\r\n\r\n"
+    GOODBYE = BBS::Goodbye.modern_text(title: 'Impostor BBS', clear: false)
 
     def self.flow(bbs)
       debrief = Impostor::Modern.flow(sessions: bbs.sessions)
