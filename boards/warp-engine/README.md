@@ -51,10 +51,20 @@ with its default. The board has no secrets.
 | `WARP_ENGINE_BBS_SHELVES` | `config/shelves.yml` | the shelves and their folders |
 | `WARP_ENGINE_BBS_INDEX_TTL` | `300` | seconds a shelf's `INDEX.TXT` is kept |
 | `WARP_ENGINE_BBS_DOWNLOAD_MAX` | `1048576` | the largest file sent, in bytes |
-| `WARP_ENGINE_BBS_DOWNLOADS` | `data/downloads.jsonl` | the downloads that went through, one JSON line each |
+| `WARP_ENGINE_BBS_DB` | `data/warp-engine.sqlite3` | the board's SQLite database: the downloads that went through |
 
 The download log feeds the download count shown with each title. `data/` is a
-volume.
+volume. The log was `data/downloads.jsonl` (one JSON line a download) before
+SQLite: on the first start a `downloads.jsonl` next to the database is imported
+into the empty table in one transaction (a line that does not parse is skipped
+and counted), then renamed to `downloads.jsonl.imported`; the log says how many
+rows came over.
+
+The archive is read through rubbs' `BBS::HTTP` (a deadline, a byte cap, the
+board's User-Agent, public addresses only); a shelf's index is kept in a
+`BBS::Cache` for `WARP_ENGINE_BBS_INDEX_TTL` seconds, so callers opening the
+same shelf at once share one request, and a dead archive gives the last index
+it sent. Its lines go through `BBS::Text.clean` before they are shown.
 
 ## Project structure
 
@@ -67,15 +77,31 @@ lib/domain/
   model/title_model.rb      a line of INDEX.TXT
   repository/shelf_repository.rb     config/shelves.yml
   repository/archive_repository.rb   INDEX.TXT (cached) and the files, over HTTP
-  repository/download_repository.rb  data/downloads.jsonl and the counts
+  repository/download_repository.rb  the downloads table and the counts
+  repository/legacy_download_log.rb  the one-time import of data/downloads.jsonl
   service/catalog_service.rb         shelves, titles, a checked fetch, the log
   warp_engine_bbs.rb        the composition root (WarpEngineBBS)
 lib/ui/
   transfer.rb               the protocols and what the caller is told, both faces
   logo.rb                   WARP in blocks (BBS::BlockFont), both faces
   modern.rb                 UI::Modern: the rubbs Application
+  modern/actions.rb         its helpers: open a shelf, a download, the desktop
+  modern/shelves.rb         the shelves window
+  modern/titles.rb          a shelf's titles window and its protocol buttons
+  modern/menu.rb            the menubar, the help texts, the statusbar keys
   petscii.rb                UI::Petscii: the C64 board
   petscii/screen.rb         the 40×25 screen: rubbs' BBS::Petscii::Screen
+```
+
+## Tests
+
+The domain (the download table and its legacy import, the archive with its
+cache, the index lines, the checked fetch) has minitest tests under `test/`;
+they need no network. CI runs them before a deploy.
+
+```bash
+bundle exec bin/test            # all
+bundle exec bin/test archive    # the files whose name has the word
 ```
 
 The downloads are rubbs' `BBS::Zmodem` and `BBS::Xmodem` (rubbs 0.26.0 and
