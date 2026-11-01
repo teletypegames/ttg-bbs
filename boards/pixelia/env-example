@@ -3,7 +3,7 @@
 
 # rubbs
 BBS_PORT=2323
-BBS_MAX_SESSIONS=100
+BBS_MAX_SESSIONS=50
 
 # Where the canvas, the Wall, the canvas archive and the art cache live
 PIXELIA_BBS_DATA=data
