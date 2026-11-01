@@ -8,7 +8,7 @@ module UI
   # after an editor logs in, writing, editing and deleting posts. The body is
   # Markdown, typed in a line editor with slash commands, which a C64 can
   # type as well as a modern terminal. It works on the services of a
-  # TtgblogBBS; a face (UI::Modern::Board, UI::Petscii::Board) gives it its
+  # TTGBlogBBS; a face (UI::Modern::Board, UI::Petscii::Board) gives it its
   # FACE, its screen and its masthead.
   class Board
     LOGIN_TRIES = 3
@@ -71,7 +71,7 @@ module UI
       end
     end
 
-    def goodbye = BBS::Goodbye.petscii(@screen, bar: 'thanks for reading ttgblog', color: YE)
+    def goodbye = BBS::Goodbye.petscii(@screen, bar: 'thanks for reading ttg blog bbs', color: YE)
 
     private
 
@@ -88,7 +88,7 @@ module UI
     # The main menu, under the masthead the first time and under a title
     # bar after: the key of the caller's choice.
     def main_choice
-      @screen.title('TTGBLOG', right) if @home_shown
+      @screen.title('TTG BLOG BBS', right) if @home_shown
       @home_shown = true
       @screen.puts
       menu_line('L', 'latest posts')

@@ -5,7 +5,7 @@ require_relative 'petscii/board'
 
 module UI
   # The blog on a Commodore 64: the line-by-line board in PETSCII on a 40×25
-  # screen. It works on the same TtgblogBBS as the modern face.
+  # screen. It works on the same TTGBlogBBS as the modern face.
   module Petscii
     COLS = 40
     ROWS = 25

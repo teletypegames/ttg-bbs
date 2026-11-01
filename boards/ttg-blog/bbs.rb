@@ -11,7 +11,7 @@ require_relative 'lib/web/api'
 # write line by line, 80 columns of ANSI or 40 of PETSCII. Readers need no
 # account; the editors log in from the menu, and bin/user manages them.
 # Beside the telnet line, Web::Api serves the posts to teletypegames.org.
-bbs = TtgblogBBS.new
+bbs = TTGBlogBBS.new
 
 Web::Api.new(bbs, port: bbs.http_port).start if bbs.http_port.positive?
 
@@ -20,7 +20,7 @@ BBS.configure do |config|
   config.mouse_on_connect = false
   config.idle_seconds     = 900
 
-  config.flow = BBS::Terminal.flow(title: 'TTGBLOG', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs))
+  config.flow = BBS::Terminal.flow(title: 'TTG Blog BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs))
 end
 
 BBS.start

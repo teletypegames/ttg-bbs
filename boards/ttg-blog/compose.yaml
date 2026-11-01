@@ -12,8 +12,8 @@ services:
     environment:
       - TZ=Europe/Budapest
       - BBS_MAX_SESSIONS=50
-      - TTGBLOG_HTTP_PORT=8080
-      - TTGBLOG_DISCORD_WEBHOOK=${TTGBLOG_DISCORD_WEBHOOK:-}
+      - TTG_BLOG_BBS_HTTP_PORT=8080
+      - TTG_BLOG_BBS_DISCORD_WEBHOOK=${TTGBLOG_DISCORD_WEBHOOK:-}
     # The read API (Web::Api, port 8080) is not published: teletypegames.org
     # reads it on the interstack network as http://ttgblog:8080.
     networks:

@@ -1,4 +1,4 @@
-# TTGBLOG
+# TTG Blog BBS
 
 The Teletype Games blog on a telnet line. Readers browse the latest posts or
 the posts of a category and read them paged; the editors log in from the same
@@ -6,7 +6,7 @@ menu and write, edit and delete posts. Built on the
 [rubbs](https://git.teletypegames.org/engines/rubbs) gem, like the
 [Teletype BBS](https://git.teletypegames.org/bbs/bbs-server),
 [Alexandria BBS](https://git.teletypegames.org/bbs/alexandria) and
-[Feedia](https://git.teletypegames.org/bbs/feedia).
+[Feedia BBS](https://git.teletypegames.org/bbs/feedia).
 
 It has two faces on one port, and both are line by line, with no windows: a
 **modern** one for ANSI terminals (up to 80 columns, the caller's window
@@ -56,11 +56,11 @@ and shows its bare id.
 | Variable | Default | Description |
 |---|---|---|
 | `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2328) |
-| `TTGBLOG_DB` | `data/ttgblog.sqlite3` | The SQLite database (compose mounts `./data`) |
-| `TTGBLOG_CATEGORIES` | `config/categories.yml` | The category list |
-| `TTGBLOG_HTTP_PORT` | `8080` | Port of the read API (`0` turns it off); compose does not publish it |
-| `TTGBLOG_DISCORD_WEBHOOK` | — | A post rings this Discord webhook when first published, with its link on the web (`.env` on the server) |
-| `TTGBLOG_SITE_URL` | `https://teletypegames.org` | The site the Discord message links to |
+| `TTG_BLOG_BBS_DB` | `data/ttgblog.sqlite3` | The SQLite database (compose mounts `./data`) |
+| `TTG_BLOG_BBS_CATEGORIES` | `config/categories.yml` | The category list |
+| `TTG_BLOG_BBS_HTTP_PORT` | `8080` | Port of the read API (`0` turns it off); compose does not publish it |
+| `TTG_BLOG_BBS_DISCORD_WEBHOOK` | — | A post rings this Discord webhook when first published, with its link on the web (`.env` on the server) |
+| `TTG_BLOG_BBS_SITE_URL` | `https://teletypegames.org` | The site the Discord message links to |
 
 ## Data
 
@@ -195,7 +195,7 @@ lib/
     service/                   PostService (limits, publishing), EditorService
                                (names, passwords, login), CategoryService,
                                DiscordNotifier (a new post on Discord)
-    ttgblog_bbs.rb             TtgblogBBS, the composition root: reads ENV, wires it all
+    ttg_blog_bbs.rb            TTGBlogBBS, the composition root: reads ENV, wires it all
   web/api.rb                   the read API for teletypegames.org
   ui/
     screen.rb                  the colours and the screen (BBS::Petscii::Screen of

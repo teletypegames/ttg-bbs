@@ -10,7 +10,7 @@ require_relative '../ui/petscii'
 module Web
   # The blog read over HTTP, for teletypegames.org: JSON, read only, on the
   # inner network of the server (interstack), never on a public port. It runs
-  # in the board's process, beside the telnet line, on the same TtgblogBBS. Only
+  # in the board's process, beside the telnet line, on the same TTGBlogBBS. Only
   # the published posts: an unpublished one is the editors' business.
   #
   #   GET /health              {"ok":true}
