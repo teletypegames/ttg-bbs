@@ -62,7 +62,7 @@ module UI
         def load
           id = @boards&.dig(@index)&.id
           @boards = @loader.call(@state)
-          @twins  = @boards.group_by(&:title).select { |_, l| l.size > 1 }.keys.to_set
+          @twins  = @boards.group_by(&:title).select { |_, l| l.size > 1 }.transform_values { |l| l.map(&:port).tally }
           @index = (id && @boards.index { |b| b.id == id }) || @index.clamp(0, [@boards.size - 1, 0].max)
         end
 
@@ -126,7 +126,11 @@ module UI
           name   = [rest * 3 / 5, 12].max
           soft   = [rest - name, 0].max
           bg     = lit ? SELECT : ''
-          title  = @twins.include?(board.title) ? "#{board.title} :#{board.port}" : board.title
+          ports  = @twins[board.title]
+          title  = if ports.nil? then board.title
+                   elsif ports[board.port] > 1 then "#{board.title} · #{board.host}"
+                   else "#{board.title} :#{board.port}"
+                   end
           "#{bg}#{mark(board)}#{bg} #{lit ? GREEN + BOLD : TEXT}#{fit(title, name)}#{RESET}#{bg} " \
             "#{DIM}#{fit(board.software.to_s, soft)} #{TEXT}#{cc}#{RESET}#{bg}  " \
             "#{board.state == 'down' ? RED : DIM}#{fit(status, 22)}#{RESET}"
