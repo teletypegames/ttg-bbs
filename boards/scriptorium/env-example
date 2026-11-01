@@ -14,14 +14,17 @@ SCRIPTORIUM_BBS_CATALOG_TTL=7
 # The board's own Classics shelf
 SCRIPTORIUM_BBS_CLASSICS=config/classics.yml
 
-# The catalog in SQLite, and where its download waits for the import
-SCRIPTORIUM_BBS_DB=data/catalog.sqlite3
+# The board's own data in SQLite: the books opened (the "most read" list).
+# A data/reads.jsonl of an older board is imported on the first start and
+# renamed reads.jsonl.imported.
+SCRIPTORIUM_BBS_DB=data/scriptorium.sqlite3
+
+# The catalog in SQLite (a cache, rebuilt from the download), and where its
+# download waits for the import
+SCRIPTORIUM_BBS_CATALOG_DB=data/catalog.sqlite3
 SCRIPTORIUM_BBS_CATALOG_FILE=data/pg_catalog.csv.gz
 # The cleaned texts and their chapter indexes, and the most this folder takes, in MB
 SCRIPTORIUM_BBS_TEXTS=data/texts
 SCRIPTORIUM_BBS_CACHE_MB=300
 # The longest plain text the board fetches, in bytes
 SCRIPTORIUM_BBS_BOOK_MAX=8388608
-
-# The books opened, one JSON line each (the "most read" list)
-SCRIPTORIUM_BBS_READS=data/reads.jsonl

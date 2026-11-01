@@ -1,46 +1,31 @@
 # frozen_string_literal: true
 
-require 'fileutils'
-require 'json'
 require 'time'
 
-# The books opened on the board (data/reads.jsonl, one JSON line a read)
-# and how many times each was opened, counted from the file at start.
+# The books opened on the board, one row a read (the reads table of
+# data/scriptorium.sqlite3), and how many times each was opened.
 class ReadRepository
-  def initialize(path)
-    @path   = path
-    @lock   = Mutex.new
-    @counts = Hash.new(0)
-    load
+  # The schema steps of the reads table, for BBS::SQLite#migrate.
+  MIGRATIONS = [<<~SQL].freeze
+    CREATE TABLE reads (id INTEGER PRIMARY KEY, book_id INTEGER NOT NULL, at TEXT NOT NULL);
+    CREATE INDEX reads_book ON reads (book_id);
+  SQL
+
+  def initialize(db)
+    @db = db
   end
 
-  def add(book_id)
-    @lock.synchronize do
-      @counts[book_id] += 1
-      FileUtils.mkdir_p(File.dirname(@path))
-      File.open(@path, 'a') { |f| f.puts(JSON.generate('at' => Time.now.utc.iso8601, 'book' => book_id)) }
-    end
-  rescue SystemCallError => e
-    warn "scriptorium-bbs: #{@path}: #{e.class}: #{e.message}"
+  def add(book_id, at: Time.now.utc)
+    @db.insert('INSERT INTO reads (book_id, at) VALUES (?, ?)', Integer(book_id), at.utc.iso8601)
   end
 
-  def count(book_id) = @lock.synchronize { @counts[book_id] }
+  def count(book_id) = @db.get('SELECT COUNT(*) AS n FROM reads WHERE book_id = ?', Integer(book_id))['n']
+
+  def empty? = @db.get('SELECT 1 AS one FROM reads LIMIT 1').nil?
 
   # The +n+ most read books as [id, reads], most read first.
-  def top(n) = @lock.synchronize { @counts.sort_by { |id, c| [-c, id] }.first(n) }
-
-  private
-
-  def load
-    return unless File.exist?(@path)
-
-    File.foreach(@path) do |line|
-      id = JSON.parse(line)['book']
-      @counts[id] += 1 if id.is_a?(Integer)
-    rescue JSON::ParserError
-      next
-    end
-  rescue SystemCallError => e
-    warn "scriptorium-bbs: #{@path}: #{e.class}: #{e.message}"
+  def top(n)
+    @db.query('SELECT book_id, COUNT(*) AS n FROM reads GROUP BY book_id ORDER BY n DESC, book_id LIMIT ?', n)
+       .map { |row| [row['book_id'], row['n']] }
   end
 end
