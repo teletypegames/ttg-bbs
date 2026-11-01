@@ -1,4 +1,4 @@
-# The boards TTG Gate dials, in the order of its menu. The names, descriptions, tags and
+# The boards TTG Gate BBS dials, in the order of its menu. The names, descriptions, tags and
 # accent colours follow the cards of bbsweb (services/bbs-web config/config.json).
 #
 # [id]        the board's technical name, <slug>-bbs, unique
