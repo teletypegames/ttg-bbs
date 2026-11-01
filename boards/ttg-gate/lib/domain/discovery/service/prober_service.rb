@@ -60,7 +60,8 @@ module Discovery
 
     # Records +result+ (a ProbeResultModel) of board +id+, +kind+ scheduled or
     # dial, and updates its state, schedule and tags. A failed dial asks for a
-    # probe at once.
+    # probe at once; a dial carries no banner and no telnet options of ours,
+    # so it leaves those of the last probe as they are.
     def record(id, result, kind: 'scheduled')
       board = @catalog.board(id)
       return unless board
@@ -69,8 +70,8 @@ module Discovery
       analysis = analyse(result)
       @probes.add(id, result, kind: kind, banner_hash: analysis[:banner_hash])
       columns = state_columns(board, before, result, kind)
-      columns.merge!(banner_columns(before, result, analysis)) if result.result == 'ok'
-      columns[:options] = JSON.generate(result.options) if result.latency_ms
+      columns.merge!(banner_columns(before, result, analysis)) if result.result == 'ok' && !result.banner.empty?
+      columns[:options] = JSON.generate(result.options) if result.latency_ms && kind != 'dial'
       @probes.save_state(id, **columns)
       @tags.refresh(id, now: result.at)
       columns
@@ -169,14 +170,16 @@ module Discovery
       { state: state.state, success_rate_7d: state.success_rate_7d, failures: state.failures,
         state_since: before['state'] == state.state ? before['state_since'] || at : at,
         first_probe_at: first, last_probe_at: at, last_result: result.result, last_success_at: success,
-        next_probe_at: next_probe(board, state, result, kind, archived), archived: archived ? 1 : 0,
-        ip: result.ip || before['ip'], country: result.ip ? @geoip.country(result.ip) : before['country'],
+        next_probe_at: next_probe(board, before, state, result, kind, archived), archived: archived ? 1 : 0,
+        ip: result.ip || before['ip'], country: (result.ip && @geoip.country(result.ip)) || before['country'],
         latency_ms: result.latency_ms || before['latency_ms'] }
     end
 
-    def next_probe(board, state, result, kind, archived)
+    # A successful dial keeps the schedule; a failed one asks for a probe now.
+    def next_probe(board, before, state, result, kind, archived)
       return nil if archived
       return result.at if kind == 'dial' && !result.success?
+      return before['next_probe_at'] if kind == 'dial' && before['next_probe_at']
       return result.at + StateRules::DEAD_EVERY if board['alias_of']
 
       StateRules.next_probe_at(state, now: result.at)

@@ -83,6 +83,18 @@ module Discovery
       assert_equal 1_000, state['last_success_at']
     end
 
+    def test_a_dial_keeps_the_banner_options_and_schedule_of_the_probes
+      p = prober
+      p.record(@ids[0], probe('ok', at: 1_000, banner: "\e[0mSynchronet\r\n", options: ['DO TTYPE']))
+      before = @probes.state(@ids[0])
+      p.record(@ids[0], ProbeResultModel.new(result: 'ok', at: 2_000, latency_ms: 30, ip: '192.0.2.10'), kind: 'dial')
+      state = @probes.state(@ids[0])
+      assert_equal [before['banner'], before['encoding'], before['options'], before['next_probe_at']],
+                   [state['banner'], state['encoding'], state['options'], state['next_probe_at']]
+      assert_equal [2_000, 'online'], [state['last_success_at'], state['state']]
+      assert_includes @catalog.tags(@ids[0]), 'ttype'
+    end
+
     def test_run_calls_the_due_boards_once_a_host_and_skips_hidden_ones
       p = prober({ 'a.example.org' => probe('ok', at: Time.now.to_i, banner: 'x') }, concurrency: 8)
       p.run(limit: 3)

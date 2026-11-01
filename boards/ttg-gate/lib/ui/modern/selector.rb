@@ -2,29 +2,15 @@
 
 module UI
   module Modern
-    # The dialing menu on an ANSI terminal, after the list of bbsweb: the
-    # logo, one row a board with its colour bar, and under the list the
-    # chosen board's description. The arrows choose, RETURN or the board's
-    # number dials, Q or Esc hangs up.
+    # The dialing menu of our own boards on an ANSI terminal, after the list
+    # of bbsweb: the logo and the chooser, one row a board with its colour
+    # bar, and under the list the chosen board's description. The arrows
+    # choose, RETURN or the board's number dials, TAB turns to Global
+    # Discovery, Q or Esc hangs up.
     class Selector
-      LOGO = [
-        ' _____ _____ ___    ___   _ _____ ___',
-        '|_   _|_   _/ __|  / __| /_\\_   _| __|',
-        '  | |   | || (_ | | (_ |/ _ \\| | | _|',
-        '  |_|   |_| \\___|  \\___/_/ \\_\\_| |___|'
-      ].freeze
+      include Style
 
-      GREEN  = "\e[38;5;84m"
-      TEXT   = "\e[38;5;250m"
-      DIM    = "\e[38;5;244m"
-      LINE   = "\e[38;5;238m"
-      SELECT = "\e[48;5;235m"
-      BOLD   = "\e[1m"
-      RESET  = "\e[0m"
-
-      MAX_WIDTH = 100
-      MARGIN    = 2
-      NAME      = 18
+      NAME = 18
 
       def initialize(session, boards)
         @session = session
@@ -32,24 +18,22 @@ module UI
         @index   = 0
       end
 
-      # Runs the menu until the caller hangs up with Q or Esc. Raises
-      # IOError when the line drops.
+      # Runs the menu until the caller hangs up (nil) or turns to the other
+      # side of the chooser (:switch). Raises IOError when the line drops.
       def run
         loop do
           draw
-          key = @session.readkey
-          raise IOError, 'the caller hung up' if key.nil?
-
-          case key
+          case (k = key)
           when :up    then @index = (@index - 1) % @boards.size
           when :down  then @index = (@index + 1) % @boards.size
           when :enter then dial(@boards[@index])
+          when :tab, :right, :left, 'g', 'G' then return :switch
           when :escape, 'q', 'Q' then return goodbye
           when /\A[1-9]\z/
-            board = @boards[key.to_i - 1]
+            board = @boards[k.to_i - 1]
             next unless board
 
-            @index = key.to_i - 1
+            @index = k.to_i - 1
             dial(board)
           end
         end
@@ -57,14 +41,10 @@ module UI
 
       private
 
-      def width = @session.term_cols.clamp(40, MAX_WIDTH) - MARGIN
-
-      def pad = ' ' * MARGIN
-
       def dial(board)
-        @session.write("#{RESET}\e[2J\e[H\e[?25h")
+        clear
         UI.dial(@session, board)
-        @session.write("#{RESET}\e[?1000l\e[?1002l\e[?1006l\e[?25h")
+        restore
       end
 
       def goodbye
@@ -73,22 +53,12 @@ module UI
       end
 
       def draw
-        lines = ['', *LOGO.map { |l| "#{GREEN}#{l}#{RESET}" }, header, rule, '']
+        lines = [*masthead(:own), '']
         lines.concat(@boards.each_with_index.map { |b, i| row(b, i) })
-        lines.push('', rule, *detail(@boards[@index]), '', hints)
-        out = "\e[?25l#{RESET}\e[H"
-        lines.first(@session.term_rows - 1).each { |l| out << "#{pad}#{l}#{RESET}\e[K\r\n" }
-        out << "\e[J"
-        @session.write(out)
+        room = rows - 1 - lines.size - 5
+        lines.push('', rule, *detail(@boards[@index], room.clamp(0, 4)), '', hints)
+        paint(lines)
       end
-
-      def header
-        left  = 'CHOOSE A SYSTEM TO DIAL'
-        right = 'teletypegames.org'
-        "#{DIM}#{left}#{' ' * [width - left.length - right.length, 1].max}#{right}#{RESET}"
-      end
-
-      def rule = "#{LINE}#{'─' * width}#{RESET}"
 
       # One board: its colour bar, number, name, tags and address; the
       # chosen one on a lit background with DIAL at its end.
@@ -106,18 +76,13 @@ module UI
         "#{cells.join}#{RESET}"
       end
 
-      def detail(board)
+      def detail(board, lines)
         color = Colors.ansi256(board.rgb)
-        body  = BBS::FrameBuffer.wrap_ansi(board.summary, width).first(4)
+        body  = BBS::FrameBuffer.wrap_ansi(board.summary, width).first(lines)
         ["#{color}#{BOLD}#{board.name}#{RESET}  #{DIM}#{board.address}#{RESET}", *body.map { |l| "#{TEXT}#{l}#{RESET}" }]
       end
 
-      def hints = "#{DIM}↑↓ choose   RETURN or 1-#{@boards.size} dial   Q hang up#{RESET}"
-
-      def fit(text, size)
-        size = [size, 0].max
-        text.length > size ? "#{text[0, [size - 1, 0].max]}…" : text.ljust(size)
-      end
+      def hints = "#{DIM}↑↓ choose   RETURN or 1-#{@boards.size} dial   TAB Global Discovery   Q hang up#{RESET}"
     end
   end
 end

@@ -7,6 +7,11 @@ board's own port with a telnet gateway of
 the caller is back at the menu. The boards run their own code on their own
 ports, the gate only carries the bytes.
 
+Besides our own boards it is a phone book of the world's other telnet BBSes:
+**Global Discovery**, a searchable catalog that always shows which board
+answered our last call and which did not, and dials any of them (see
+[Global Discovery](#global-discovery)).
+
 It has two faces on one port, like every board of the network: a **modern** one
 for ANSI terminals, after the list of [bbsweb](https://bbsweb.teletypegames.org)
 (the logo, a row a board in its own colour, the chosen board's description
@@ -105,9 +110,12 @@ false` keeps a board off the C64 menu, `enabled: false` off both.
 
 ## Interface
 
-**Modern:** the arrows choose a board, RETURN or its number dials it, `Q` or
-Esc hangs up. The rows show the board's colour bar, name, tags and port; the
-description and the full address of the chosen one are under the list.
+**Modern:** under the logo a two-way chooser, **Own Servers** | **Global
+Discovery**; TAB (or the left and right arrows) turns from one to the other, and
+each keeps its place. On Own Servers the arrows choose a board, RETURN or its
+number dials it, `Q` or Esc hangs up. The rows show the board's colour bar,
+name, tags and port; the description and the full address of the chosen one are
+under the list. Global Discovery is described [below](#the-gate-ui).
 
 **Commodore 64:** the logo in reversed blocks, the boards numbered in their own
 colours (the nearest of the C64's) with their tags under them. The number dials,
@@ -119,11 +127,10 @@ which has none, is taken for a C64.
 
 ## Global Discovery
 
-Besides the boards of our own network, the gate is growing a phone book of the
+Besides the boards of our own network, the gate is a phone book of the
 world's other telnet BBSes: a searchable catalog that always shows which board
-answered our last call and which did not. The plan is in the workspace,
-`TTG_DISCOVERY.md`. The catalog and its prober run now; the gate does not show
-them yet (the menu, the search and the dialling come next).
+answered our last call and which did not, and dials any of them. The plan is in
+the workspace, `TTG_DISCOVERY.md`.
 
 Everything in the catalog is generated: a field comes from a source list, from
 our own call to the board, from DNS or from a fixed rule table, never from a
@@ -197,6 +204,73 @@ an IP address under `hide` (never called, never shown) or `no_preview` (listed
 and called, but its banner is never shown). The prober reads the file again
 when it changes.
 
+### The Gate UI
+
+The modern face's Global Discovery side is a tree built from the tags, with no
+hand-made category:
+
+```
+Global Discovery
+├── Every board        all but the dead, online first, then by name
+├── Search…            / anywhere: words and tags
+├── Browse             by Terminal · Software · Country · Network, with counts
+├── New this week      first seen by a list in the last 7 days
+├── Random board       an online one
+├── Recently died      dead in the last 30 days
+├── Graveyard          every dead board, never deleted
+└── Sources            the lists, their credits, DB-IP, opting out
+```
+
+A **list** shows a board a row: its state mark (`●` online, `◐` flaky, `✗`
+down, `†` dead, `?` not called yet), name, software, country, and how long it
+has not answered ("down for 3 days"). The arrows choose, left and right (PgUp,
+PgDn) turn the pages, RETURN opens the board's page, `F` steps through the
+states (online, flaky, down, unknown, all), `/` searches, `Q` goes back.
+
+**Search** reads its words as tags where it can: `petscii hu online` is the
+three tags together (the encoding, `cc:hu`, the state), and `synchronet`,
+`fidonet`, `sbl` find `sw:`, `net:` and `src:` tags; the other words go to the
+full-text index of names, sysops, places, software and hosts, each word the
+start of a word there (`loun` finds a Lounge). The dead boards are left out
+unless the search says `all` (or `dead`). FTN mailers (`sw:ftn-mailer`: mail
+programs answering a nodelist's telnet flag, not BBSes) are left out of every
+list unless the search names that tag.
+
+A **board page** has the address, the state, the last answer and, for a failing
+board, why our server did not reach it (a name that does not resolve is not a
+firewall); a strip of the last 30 days (`█` it answered that day, `·` it did
+not, blank: not called); every field with the list it came from (or "our call"
+for what its banner said, DB-IP for the country); the FTN address, the lists
+that name it and its tags. `B` plays the first screen of its stored banner (only
+its text, colours and cursor moves; never for a board whose sysop asked for no
+preview, and a PETSCII banner only on the C64 face). RETURN or `D` dials it.
+
+### Dialling
+
+Only a board of the catalog can be dialled, by its page: there is no free
+`host:port`, so the gate is no open telnet relay. The rules
+(`Discovery::DialService`):
+
+- **10 dials in 10 minutes a caller.** A caller is its IP address; a line from
+  a private address (bbsweb carries all its callers from the same host) counts
+  by its connection.
+- **3 lines to one host at once** from the gate.
+- On the modern face a board made for a C64 only (PETSCII and no other
+  encoding seen) asks first: it would be noise there. A dead board asks first
+  too, on either face.
+- After the board hangs up (and a key), the caller is back on the board's page,
+  and `Q` returns to the same place of the same list or search.
+- The dial is recorded as a probe of kind `dial`: `ok` when the board sent
+  something, `silent`, `closed`, `refused`, `timeout` or `dns_fail` as for the
+  prober. It counts towards the state like a probe (a failed dial after a failed
+  probe turns a board down) and a failed one asks the prober to call the board
+  at once; a dial leaves the stored banner and telnet options as they are.
+
+The gate opens the catalog read only but for these dial records. The dials in
+progress go to `data/gate-dials.json`; the prober puts them into
+`data/discovery-metrics.prom` as `ttg_gate_bbs_discovery_dials_live`, with the
+dials of the last hour a result (`ttg_gate_bbs_discovery_dials_last_hour`).
+
 ### Running it
 
 ```bash
@@ -210,7 +284,8 @@ On the server the prober runs as the `ttg-gate-bbs-prober` service of
 `compose.yaml` (128 MB, half a CPU, no port); the import runs daily in its
 container from cron (`docker exec ttg-gate-bbs-prober bin/discovery-import`).
 Both write `data/discovery-metrics.prom` in the Prometheus text format: the
-boards a state, the probes of the last hour a result, the records a source.
+boards a state, the probes of the last hour a result, the records a source, the
+gate's dials.
 
 ## Project structure
 
@@ -229,20 +304,23 @@ lib/
   domain/repository/board_repository.rb  config/boards.yml, read once
   domain/service/directory_service.rb  the boards a caller can dial
   domain/ttg_gate_bbs.rb               the composition root (TTGGateBBS)
-  ui/modern.rb                         the modern face
-  ui/modern/selector.rb                the dialing menu on an ANSI terminal
+  ui/modern.rb                         the modern face: Own Servers | Global Discovery
+  ui/modern/style.rb                   its palette, the logo and the chooser
+  ui/modern/selector.rb                the dialing menu of our own boards on an ANSI terminal
+  ui/modern/discovery/                 Global Discovery: home, menus, lists, the board page, search, sources
   ui/petscii.rb                        the PETSCII face: keys, dialling, goodbye
   ui/petscii/switchboard.rb            the C64 menu: logo, stars, candy buttons, pages
   ui/petscii/canvas.rb                 UI::Petscii::Canvas = rubbs' BBS::Petscii::Canvas (40×25, raw PETSCII)
   ui/petscii/screen.rb                 the C64 line of one call: raw out, keys in
   ui/colors.rb                         a board's accent on either face
-  ui/dial.rb                           hands the line to a board (BBS::Gateway)
+  ui/dial.rb                           hands the line to a board (BBS::Gateway), by the dial rules for the catalog
   domain/discovery.rb                  requires Global Discovery
   domain/discovery/root.rb             its composition root (Discovery::Root)
-  domain/discovery/model/              a source record, a probe result, a board state, a source
+  domain/discovery/model/              a source record, a probe result, a board state, a source; a listing, a board page, a search
   domain/discovery/parser/             one parser a list format
-  domain/discovery/repository/         the SQLite catalog, the config, the opt-outs, HTTP, zip, DB-IP
-  domain/discovery/service/            import, prober, telnet probe, state rules, banner rules, tags, report
+  domain/discovery/repository/         the SQLite catalog, the config, the opt-outs, HTTP, zip, DB-IP; the gate's reads
+  domain/discovery/service/            import, prober, telnet probe, state rules, banner rules, tags, report;
+                                       the gate's browse, banner preview and dial rules
 ```
 
 ## Deploy

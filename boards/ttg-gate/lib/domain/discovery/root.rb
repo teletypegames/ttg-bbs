@@ -2,7 +2,8 @@
 
 module Discovery
   # The composition root of Global Discovery: reads the environment and builds
-  # the repositories and services once, for the bin/discovery-* commands.
+  # the repositories and services once, for the bin/discovery-* commands and
+  # the Gate.
   #
   # [TTG_GATE_BBS_DATA]              the data folder (data/)
   # [TTG_GATE_BBS_DISCOVERY_DB]      the catalog (data/discovery.sqlite3)
@@ -38,7 +39,23 @@ module Discovery
                         optout: @optout, geoip: @geoip, config: @config, metrics: metrics, concurrency: concurrency)
     end
 
-    def metrics = MetricsService.new(File.join(@data, 'discovery-metrics.prom'), catalog: @catalog, probes: @probes)
+    def metrics
+      MetricsService.new(File.join(@data, 'discovery-metrics.prom'), catalog: @catalog, probes: @probes,
+                                                                     dials_path: dials_path)
+    end
+
+    # The Gate's side: the lists and pages it shows.
+    def browse = BrowseService.new(DirectoryRepository.new(@db), @config)
+
+    # The Gate's side: the dial rules, recording each dial as a probe.
+    def dials(log: ->(line) { warn line })
+      recorder = ProberService.new(catalog: @catalog, probes: @probes, probe: nil, tags: @tags, aliases: @aliases,
+                                   optout: @optout, geoip: @geoip, config: @config, log: log)
+      DialService.new(recorder: recorder, live_path: dials_path, log: log)
+    end
+
+    # The Gate's dials in progress (JSON), for the metrics of the prober.
+    def dials_path = File.join(@data, 'gate-dials.json')
 
     def report = ReportService.new(@db)
 

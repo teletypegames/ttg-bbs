@@ -81,10 +81,11 @@ module Discovery
       rows.to_h { |r| [r['state'], r['n']] }
     end
 
-    # The probes since +from+ a result: { 'ok' => n, … }.
-    def result_counts(from)
-      @db.query('SELECT result, COUNT(*) AS n FROM probes WHERE at >= ? GROUP BY result', from)
-         .to_h { |r| [r['result'], r['n']] }
+    # The probes (of +kind+, or of any) since +from+ a result: { 'ok' => n, … }.
+    def result_counts(from, kind: nil)
+      sql = 'SELECT result, COUNT(*) AS n FROM probes WHERE at >= ?'
+      sql += ' AND kind = ?' if kind
+      @db.query("#{sql} GROUP BY result", from, *kind).to_h { |r| [r['result'], r['n']] }
     end
 
     def last_probe_at = @db.value('SELECT MAX(at) FROM probes')

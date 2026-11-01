@@ -9,6 +9,7 @@ require_relative 'lib/ui/petscii'
 # terminal (BBS::Terminal guesses it first), then a board from the menu, and
 # the gate hands the line on to that board's port with a telnet gateway of
 # rubbs; when the board hangs up the caller is back at the menu.
+$stdout.sync = true
 bbs = TTGGateBBS.new
 
 BBS.configure do |config|
