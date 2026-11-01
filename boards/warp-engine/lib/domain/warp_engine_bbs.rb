@@ -9,12 +9,12 @@ class WarpEngineBBS
   attr_reader :catalog
 
   def initialize
-    shelves   = ShelfRepository.new(ENV.fetch('WARP_SHELVES', File.join(ROOT, 'config/shelves.yml')))
-    archive   = ArchiveRepository.new(ENV.fetch('WARP_ARCHIVE_URL', 'http://archive.teletypegames.org'),
-                                      ttl: Integer(ENV.fetch('WARP_INDEX_TTL', '300')))
-    downloads = DownloadRepository.new(ENV.fetch('WARP_DOWNLOADS', File.join(ROOT, 'data/downloads.jsonl')))
+    shelves   = ShelfRepository.new(ENV.fetch('WARP_ENGINE_BBS_SHELVES', File.join(ROOT, 'config/shelves.yml')))
+    archive   = ArchiveRepository.new(ENV.fetch('WARP_ENGINE_BBS_ARCHIVE_URL', 'http://archive.teletypegames.org'),
+                                      ttl: Integer(ENV.fetch('WARP_ENGINE_BBS_INDEX_TTL', '300')))
+    downloads = DownloadRepository.new(ENV.fetch('WARP_ENGINE_BBS_DOWNLOADS', File.join(ROOT, 'data/downloads.jsonl')))
     @catalog  = CatalogService.new(shelves: shelves, archive: archive, downloads: downloads,
-                                   max_bytes: Integer(ENV.fetch('WARP_DOWNLOAD_MAX', (1024 * 1024).to_s)))
+                                   max_bytes: Integer(ENV.fetch('WARP_ENGINE_BBS_DOWNLOAD_MAX', (1024 * 1024).to_s)))
   end
 
   # The services by name.

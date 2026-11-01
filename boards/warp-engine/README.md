@@ -47,11 +47,11 @@ with its default. The board has no secrets.
 
 | Variable | Default | |
 |---|---|---|
-| `WARP_ARCHIVE_URL` | `http://archive.teletypegames.org` | the archive's plain HTTP |
-| `WARP_SHELVES` | `config/shelves.yml` | the shelves and their folders |
-| `WARP_INDEX_TTL` | `300` | seconds a shelf's `INDEX.TXT` is kept |
-| `WARP_DOWNLOAD_MAX` | `1048576` | the largest file sent, in bytes |
-| `WARP_DOWNLOADS` | `data/downloads.jsonl` | the downloads that went through, one JSON line each |
+| `WARP_ENGINE_BBS_ARCHIVE_URL` | `http://archive.teletypegames.org` | the archive's plain HTTP |
+| `WARP_ENGINE_BBS_SHELVES` | `config/shelves.yml` | the shelves and their folders |
+| `WARP_ENGINE_BBS_INDEX_TTL` | `300` | seconds a shelf's `INDEX.TXT` is kept |
+| `WARP_ENGINE_BBS_DOWNLOAD_MAX` | `1048576` | the largest file sent, in bytes |
+| `WARP_ENGINE_BBS_DOWNLOADS` | `data/downloads.jsonl` | the downloads that went through, one JSON line each |
 
 The download log feeds the download count shown with each title. `data/` is a
 volume.

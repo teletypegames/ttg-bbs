@@ -6,12 +6,12 @@ BBS_PORT=2323
 BBS_MAX_SESSIONS=100
 
 # The archive's plain HTTP and the shelves read from it
-WARP_ARCHIVE_URL=http://archive.teletypegames.org
-WARP_SHELVES=config/shelves.yml
+WARP_ENGINE_BBS_ARCHIVE_URL=http://archive.teletypegames.org
+WARP_ENGINE_BBS_SHELVES=config/shelves.yml
 # Seconds a shelf's INDEX.TXT is kept before it is read again
-WARP_INDEX_TTL=300
+WARP_ENGINE_BBS_INDEX_TTL=300
 # The largest file the board sends, in bytes
-WARP_DOWNLOAD_MAX=1048576
+WARP_ENGINE_BBS_DOWNLOAD_MAX=1048576
 
 # The downloads that went through, one JSON line each
-WARP_DOWNLOADS=data/downloads.jsonl
+WARP_ENGINE_BBS_DOWNLOADS=data/downloads.jsonl
