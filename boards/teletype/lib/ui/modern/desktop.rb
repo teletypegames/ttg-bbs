@@ -206,7 +206,7 @@ module UI
         lines = shown.map do |n|
           on  = Formatters.duration(Time.now - n.since)
           dot = n.number == @data.node ? "#{Y}●" : "#{G}●"
-          "#{dot} #{W}#{n.name.to_s[0, 10].ljust(11)}#{D}#{n.activity.to_s[0, @inner - 19].ljust(@inner - 18)}#{T}#{on}"
+          "#{dot} #{W}#{n.name.to_s[0, 9].ljust(10)}#{D}#{n.activity.to_s[0, @inner - 18].ljust(@inner - 17)}#{T}#{on}"
         end
         lines << "#{D}  and #{nodes.size - shown.size} more inside" if shown.size < nodes.size
         guests = scene.guestbook.map { |c| "#{c.username} #{c.timestamp.to_s[11, 5]}" }
@@ -219,8 +219,8 @@ module UI
         lines = scene.events.map do |e|
           days = [((e.date - Time.now) / 86_400).ceil, 0].max
           left = days.zero? ? 'today' : "#{days} day#{'s' unless days == 1}"
-          bar  = ((30 - days.clamp(0, 30)) * 6 / 30.0).round
-          "#{W}#{e.name[0, @inner - 16].ljust(@inner - 15)}#{Y}#{'▓' * bar}#{D}#{'░' * (6 - bar)} #{T}#{left.rjust(8)}"
+          bar  = ((30 - days.clamp(0, 30)) * 4 / 30.0).round
+          "#{W}#{e.name[0, @inner - 13].ljust(@inner - 12)}#{Y}#{'▓' * bar}#{D}#{'░' * (4 - bar)} #{T}#{left.rjust(7)}"
         end
         lines = ["#{D}(nothing scheduled yet)"] if lines.empty?
         notes = scene.notes
