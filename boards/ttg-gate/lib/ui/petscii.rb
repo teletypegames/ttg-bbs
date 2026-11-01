@@ -6,7 +6,7 @@ require_relative 'petscii/screen'
 require_relative 'petscii/switchboard'
 
 module UI
-  # TTG Gate on a Commodore 64: the Switchboard, raw PETSCII in the
+  # TTG Gate BBS on a Commodore 64: the Switchboard, raw PETSCII in the
   # graphics set. CRSR up and down move between the nodes, left and right or
   # + and - turn the pages, RETURN or a digit dials, Q or RUN/STOP hangs up.
   # While the caller thinks, the code rain falls.
@@ -77,7 +77,7 @@ module UI
       canvas = Canvas.new
       canvas.text(9, 10, '> LINK SEVERED', Canvas::GREEN)
       canvas.text(10, 10, '> TRACE WIPED', Canvas::GREEN)
-      canvas.text(11, 10, '> TTG GATE OFFLINE', Canvas::GREEN)
+      canvas.text(11, 10, '> TTG GATE BBS OFFLINE', Canvas::GREEN)
       canvas.text(13, 10, 'SEE YOU ON THE WIRE', Canvas::DARK_GREY)
       canvas.text(16, 15, 'NO CARRIER', Canvas::LIGHT_GREEN)
       screen.raw(canvas.frame + [Canvas::LOWERCASE].pack('C*'))

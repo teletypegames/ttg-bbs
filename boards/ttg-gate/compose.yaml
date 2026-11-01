@@ -10,8 +10,8 @@ services:
     environment:
       - TZ=Europe/Budapest
       - BBS_MAX_SESSIONS=50
-      - TTGGATE_GATEWAY_HOST=host.docker.internal
-      - TTGGATE_PUBLIC_HOST=teletypegames.org
+      - TTG_GATE_BBS_GATEWAY_HOST=host.docker.internal
+      - TTG_GATE_BBS_PUBLIC_HOST=teletypegames.org
     extra_hosts:
       # The boards are dialled on their ports on the host.
       - "host.docker.internal:host-gateway"

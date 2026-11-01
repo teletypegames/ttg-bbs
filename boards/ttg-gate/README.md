@@ -1,6 +1,6 @@
-# TTG Gate
+# TTG Gate BBS
 
-One port for the whole Teletype BBS network. TTG Gate is a dialing menu and
+One port for the whole Teletype BBS network. TTG Gate BBS is a dialing menu and
 nothing more: the caller picks a board, and the gate hands the line on to that
 board's own port with a telnet gateway of
 [rubbs](https://git.teletypegames.org/engines/rubbs); when the board hangs up,
@@ -56,7 +56,7 @@ docker compose up --build
 
 ```bash
 bundle install
-TTGGATE_GATEWAY_HOST=teletypegames.org ruby bbs.rb
+TTG_GATE_BBS_GATEWAY_HOST=teletypegames.org ruby bbs.rb
 ```
 
 Connect:
@@ -70,9 +70,9 @@ telnet localhost 2323      # directly (BBS_PORT)
 
 | Variable | Default | |
 |---|---|---|
-| `TTGGATE_GATEWAY_HOST` | `host.docker.internal` | where the boards are dialled; compose maps it to the host |
-| `TTGGATE_PUBLIC_HOST` | `teletypegames.org` | the address shown with every board |
-| `TTGGATE_BOARDS` | `config/boards.yml` | the boards list |
+| `TTG_GATE_BBS_GATEWAY_HOST` | `host.docker.internal` | where the boards are dialled; compose maps it to the host |
+| `TTG_GATE_BBS_PUBLIC_HOST` | `teletypegames.org` | the address shown with every board |
+| `TTG_GATE_BBS_BOARDS` | `config/boards.yml` | the boards list |
 | `BBS_PORT` | `2323` | the port inside the container (rubbs) |
 | `BBS_MAX_SESSIONS` | `50` | callers at once (rubbs) |
 

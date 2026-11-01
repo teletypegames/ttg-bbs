@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# One board TTG Gate dials: a record of config/boards.yml.
+# One board TTG Gate BBS dials: a record of config/boards.yml.
 class BoardModel
   attr_reader :id, :name, :summary, :tags, :host, :port, :public_host, :accent
 

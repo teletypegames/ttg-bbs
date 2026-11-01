@@ -5,7 +5,7 @@ require_relative 'dial'
 require_relative 'modern/selector'
 
 module UI
-  # TTG Gate on a modern terminal: the dialing menu of UI::Modern::Selector.
+  # TTG Gate BBS on a modern terminal: the dialing menu of UI::Modern::Selector.
   module Modern
     def self.flow(bbs)
       BBS::Flow.define do

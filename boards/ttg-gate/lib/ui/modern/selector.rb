@@ -68,7 +68,7 @@ module UI
       end
 
       def goodbye
-        @session.write("#{RESET}\e[2J\e[H\r\n#{pad}#{GREEN}TTG GATE#{RESET}#{DIM}: line closed. See you.#{RESET}\r\n\r\n")
+        @session.write("#{RESET}\e[2J\e[H\r\n#{pad}#{GREEN}TTG GATE BBS#{RESET}#{DIM}: line closed. See you.#{RESET}\r\n\r\n")
         nil
       end
 
