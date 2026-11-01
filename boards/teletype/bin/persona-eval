@@ -9,7 +9,7 @@
 # lost fact). Tune a persona by these numbers over many runs, not by single
 # replies.
 #
-#   BBS_LLM_URL=http://localhost:8080 bin/persona-eval ra 3
+#   TELETYPE_BBS_LLM_URL=http://localhost:8080 bin/persona-eval ra 3
 #   docker exec teletype-bbs bin/persona-eval master 3
 
 require 'bundler/setup'

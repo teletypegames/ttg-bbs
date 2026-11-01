@@ -8,9 +8,9 @@ class FileLibraryService
   ROOT         = '/'
   TEXT_FILES   = /\.(md|txt|ini|lst|bat|cfg|nfo|diz|asc|json|html?)\z/i
   PREVIEW_MAX  = 64 * 1024
-  DOWNLOAD_MAX = Integer(ENV.fetch('BBS_FTP_DOWNLOAD_MAX', 16 * 1024 * 1024))
+  DOWNLOAD_MAX = Integer(ENV.fetch('TELETYPE_BBS_FTP_DOWNLOAD_MAX', 16 * 1024 * 1024))
   WARP_HTTP    = 'https://teletypegames.org/file'
-  ARCHIVE_HTTP = ENV.fetch('BBS_ARCHIVE_URL', 'http://archive.teletypegames.org')
+  ARCHIVE_HTTP = ENV.fetch('TELETYPE_BBS_ARCHIVE_URL', 'http://archive.teletypegames.org')
 
   def initialize(repo)
     @repo = repo

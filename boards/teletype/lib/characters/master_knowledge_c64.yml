@@ -54,7 +54,7 @@
 - keys: [dos, dosinst, gmenu, bmagic, ttgwiki, install, mtcp]
   fact: 'W on the main menu has the DOS Corner, about our DOS programs. DOSINST installs, updates and removes them over the network from the APPS folder of ftp.teletypegames.org; the others are GMENU, BMAGIC and TTGWIKI.'
 - keys: [wiki, guide, guides, engine, engines, documentation, docs, howto]
-  fact: 'W on the main menu reads the wiki: Platform Guides, Engines, the DOS Corner and the Tech How-tos. The whole wiki is at wiki.teletypegames.org, and on the WIKI-BBS at teletypegames.org:2325.'
+  fact: 'W on the main menu reads the wiki: Platform Guides, Engines, the DOS Corner and the Tech How-tos. The whole wiki is at wiki.teletypegames.org, and on the TTG Wiki BBS at teletypegames.org:2325.'
 - keys: [ansi, ascii, art, gallery, desktop, background, picture, graphics]
   fact: 'The ANSI art gallery is on the modern face of the board only: call with an ANSI terminal and choose 1 at the start.'
 - keys: [door, doors, program]
@@ -68,7 +68,7 @@
 - keys: [impostor, code, debrief, norman]
   fact: 'Impostor is the debrief terminal of our game Definitely not an Impostor, a door on both faces of the board: R on the main menu on a C64. It also runs on its own at teletypegames.org:2324, on a C64 too.'
 - keys: [network, bbs, other, telnet, bbsweb, port]
-  fact: 'Y on the main menu lists our boards: the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324, the WIKI-BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia (RSS news) at 2327, TTGBLOG (our blog) at 2328, WarpEngine BBS (C64 and Plus/4 downloads) at 2329, Scriptorium BBS (Project Gutenberg books) at 2330, Commodex BBS (C64 games, cheats and tips) at 2331 and Pixelia BBS (ANSI and PETSCII art) at 2332, and TTG Gate at 2399 reaches all of them from one port. All of them work in a browser too, at bbsweb.teletypegames.org.'
+  fact: 'Y on the main menu lists our boards: the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324, the TTG Wiki BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia (RSS news) at 2327, TTGBLOG (our blog) at 2328, WarpEngine BBS (C64 and Plus/4 downloads) at 2329, Scriptorium BBS (Project Gutenberg books) at 2330, Commodex BBS (C64 games, cheats and tips) at 2331 and Pixelia BBS (ANSI and PETSCII art) at 2332, and TTG Gate at 2399 reaches all of them from one port. All of them work in a browser too, at bbsweb.teletypegames.org.'
 - keys: [alexandria, wikipedia, feedia, rss, news, feed, feeds, gateway]
   fact: 'Alexandria and Feedia, doors under R, take your line over to those boards, in PETSCII: Alexandria BBS reads Wikipedia, Feedia reads RSS news feeds. Q on their menu brings you back here.'
 - keys: [ttgblog, blog, posts, post, editor, editors]

@@ -8,7 +8,7 @@ require_relative 'chat_service'
 # never speaks there. A background thread keeps the connection (TLS, PING
 # when the server is silent, reconnect with a growing pause) and puts every
 # channel message into a ChatService hub, so a session subscribes and drains
-# it like the Live Chat. With BBS_IRC_PASSWORD the nick logs in with SASL.
+# it like the Live Chat. With TELETYPE_BBS_IRC_PASSWORD the nick logs in with SASL.
 class IrcRelay
   RETRY   = [5, 15, 30, 60, 120, 300].freeze
   IDLE    = 180

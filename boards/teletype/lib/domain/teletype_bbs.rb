@@ -8,15 +8,15 @@
 # nodes, boards, mail and chat.
 class TeletypeBBS
   STARTED_AT    = Time.now
-  SYSOPS        = ENV.fetch('BBS_SYSOPS', '').split(',').map { |name| name.strip.downcase }.reject(&:empty?)
+  SYSOPS        = ENV.fetch('TELETYPE_BBS_SYSOPS', '').split(',').map { |name| name.strip.downcase }.reject(&:empty?)
   CONTENT_DIR   = File.expand_path('../content', __dir__)
   BULLETINS_DIR = File.join(CONTENT_DIR, 'bulletins')
-  LOGON_ART     = ENV.fetch('BBS_LOGON_ART', File.join(CONTENT_DIR, 'logon.ans'))
-  DESKTOP_ART   = ENV.fetch('BBS_DESKTOP_ART', 'data/art/teletype.ansi')
+  LOGON_ART     = ENV.fetch('TELETYPE_BBS_LOGON_ART', File.join(CONTENT_DIR, 'logon.ans'))
+  DESKTOP_ART   = ENV.fetch('TELETYPE_BBS_DESKTOP_ART', 'data/art/teletype.ansi')
   NETWORK       = [
     ['Teletype BBS',   'teletypegames.org:2323', 'this board: messages, chat, news, catalog'],
     ['Impostor BBS',   'teletypegames.org:2324', 'post-game terminal of Definitely not an Impostor'],
-    ['WIKI-BBS',       'teletypegames.org:2325', 'the whole wiki in a two-pane browser'],
+    ['TTG Wiki BBS',   'teletypegames.org:2325', 'the whole wiki in a two-pane browser'],
     ['Alexandria BBS', 'teletypegames.org:2326', 'Wikipedia on a telnet line; a door here too'],
     ['Feedia BBS',     'teletypegames.org:2327', 'an RSS reader: the news as text; a door here too'],
     ['TTGBLOG',        'teletypegames.org:2328', 'the Teletype Games blog; a door here too'],
@@ -28,7 +28,7 @@ class TeletypeBBS
   ].freeze
   DOOR_NAMES    = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Impostor', 'Chat of Ra', 'TTG Trivia', 'Alexandria',
                    'Feedia', 'TTGBLOG', 'WarpEngine', 'Scriptorium', 'Commodex', 'Pixelia'].freeze
-  GATEWAY_HOST  = ENV.fetch('BBS_GATEWAY_HOST', 'host.docker.internal')
+  GATEWAY_HOST  = ENV.fetch('TELETYPE_BBS_GATEWAY_HOST', 'host.docker.internal')
   WIKI_SECTIONS = {
     platforms: { prefix: '/platforms', title: 'Platform Guides' },
     engines:   { prefix: '/engines',   title: 'Engines' },
@@ -51,36 +51,36 @@ class TeletypeBBS
   def initialize
     @online       = OnlineService.new(OnlineUsersRepository.new)
     @boards       = BoardService.new(BoardRepository.new(
-                      ENV.fetch('BOARDS_PATH', 'data/boards'),
-                      legacy_path: ENV.fetch('MESSAGES_PATH', 'data/messages.dat')),
-                      last_read: LastReadRepository.new(ENV.fetch('LAST_READ_PATH', 'data/last_read.csv')))
+                      ENV.fetch('TELETYPE_BBS_BOARDS_PATH', 'data/boards'),
+                      legacy_path: ENV.fetch('TELETYPE_BBS_MESSAGES_PATH', 'data/messages.dat')),
+                      last_read: LastReadRepository.new(ENV.fetch('TELETYPE_BBS_LAST_READ_PATH', 'data/last_read.csv')))
     @wiki         = WikiService.new(WikiRepository.new)
     @games        = GamesService.new(CatalogRepository.new)
     @chat         = ChatService.new
-    @irc          = IrcRelay.new(server:   ENV.fetch('BBS_IRC_SERVER', 'irc.libera.chat'),
-                                 port:     ENV.fetch('BBS_IRC_PORT', '6697'),
-                                 channel:  ENV.fetch('BBS_IRC_CHANNEL', '#teletypegames'),
-                                 nick:     ENV.fetch('BBS_IRC_NICK', 'ttgbbs'),
-                                 password: ENV.fetch('BBS_IRC_PASSWORD', '')).start
+    @irc          = IrcRelay.new(server:   ENV.fetch('TELETYPE_BBS_IRC_SERVER', 'irc.libera.chat'),
+                                 port:     ENV.fetch('TELETYPE_BBS_IRC_PORT', '6697'),
+                                 channel:  ENV.fetch('TELETYPE_BBS_IRC_CHANNEL', '#teletypegames'),
+                                 nick:     ENV.fetch('TELETYPE_BBS_IRC_NICK', 'ttgbbs'),
+                                 password: ENV.fetch('TELETYPE_BBS_IRC_PASSWORD', '')).start
     @last_callers = LastCallersService.new(LastCallersRepository.new(
-                      ENV.fetch('LAST_CALLERS_PATH', 'data/last_callers.csv')))
-    @profile      = ProfileService.new(ProfileRepository.new(ENV.fetch('PROFILE_PATH', 'data/profiles.csv')))
+                      ENV.fetch('TELETYPE_BBS_LAST_CALLERS_PATH', 'data/last_callers.csv')))
+    @profile      = ProfileService.new(ProfileRepository.new(ENV.fetch('TELETYPE_BBS_PROFILE_PATH', 'data/profiles.csv')))
     @site         = SiteService.new(SiteRepository.new)
-    @discord      = DiscordNotifier.new(ENV['BBS_DISCORD_WEBHOOK'])
-    @oneliners    = OnelinerService.new(OnelinerRepository.new(ENV.fetch('ONELINERS_PATH', 'data/oneliners.csv')))
-    @files        = FileLibraryService.new(FtpRepository.new(ENV.fetch('BBS_FTP_HOST', 'ftp.teletypegames.org')))
+    @discord      = DiscordNotifier.new(ENV['TELETYPE_BBS_DISCORD_WEBHOOK'])
+    @oneliners    = OnelinerService.new(OnelinerRepository.new(ENV.fetch('TELETYPE_BBS_ONELINERS_PATH', 'data/oneliners.csv')))
+    @files        = FileLibraryService.new(FtpRepository.new(ENV.fetch('TELETYPE_BBS_FTP_HOST', 'ftp.teletypegames.org')))
     @dev_log      = DevLogService.new(GiteaRepository.new)
     @master       = TtgMaster.new(games: @games, site: @site)
     @c64_master   = TtgMaster.new(games: @games, site: @site, **TtgMaster::C64)
-    @impostor_sessions = Impostor.sessions_store(ENV.fetch('IMPOSTOR_SESSIONS_PATH', 'data/impostor_sessions.csv'))
-    @accounts     = AccountService.new(AccountRepository.new(ENV.fetch('ACCOUNTS_PATH', 'data/accounts.csv')),
+    @impostor_sessions = Impostor.sessions_store(ENV.fetch('TELETYPE_BBS_IMPOSTOR_SESSIONS_PATH', 'data/impostor_sessions.csv'))
+    @accounts     = AccountService.new(AccountRepository.new(ENV.fetch('TELETYPE_BBS_ACCOUNTS_PATH', 'data/accounts.csv')),
                                        reserved: SYSOPS)
-    @mail         = MailService.new(MailRepository.new(ENV.fetch('MAIL_PATH', 'data/mail.csv')),
+    @mail         = MailService.new(MailRepository.new(ENV.fetch('TELETYPE_BBS_MAIL_PATH', 'data/mail.csv')),
                                     accounts: @accounts, sysops: SYSOPS)
-    @voting       = VotingService.new(VoteRepository.new(ENV.fetch('VOTES_PATH', 'data/votes.csv')),
+    @voting       = VotingService.new(VoteRepository.new(ENV.fetch('TELETYPE_BBS_VOTES_PATH', 'data/votes.csv')),
                                       path: File.join(CONTENT_DIR, 'polls.yml'), games: @games, doors: DOOR_NAMES)
     @file_areas   = FileAreaService.new(games: @games, files: @files)
-    @trivia       = Trivia::Scores.new(ENV.fetch('TRIVIA_SCORES_PATH', 'data/trivia_scores.csv'))
+    @trivia       = Trivia::Scores.new(ENV.fetch('TELETYPE_BBS_TRIVIA_SCORES_PATH', 'data/trivia_scores.csv'))
     @art          = ArtService.new(DESKTOP_ART, profile: @profile)
     @taglines     = TaglineService.new(@site)
   end

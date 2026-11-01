@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 # Create an account or reset its password from the server shell. This is the
-# only way to create a sysop account (names in BBS_SYSOPS cannot be
+# only way to create a sysop account (names in TELETYPE_BBS_SYSOPS cannot be
 # registered over telnet):
 #
 #   docker exec -it teletype-bbs bin/account Tasi
@@ -24,7 +24,7 @@ end
 password = ask('Password: ')
 abort 'the two passwords differ' unless password == ask('Again: ')
 
-service = AccountService.new(AccountRepository.new(ENV.fetch('ACCOUNTS_PATH', 'data/accounts.csv')))
+service = AccountService.new(AccountRepository.new(ENV.fetch('TELETYPE_BBS_ACCOUNTS_PATH', 'data/accounts.csv')))
 case service.set_password(name, password)
 when :ok        then puts "#{name}: password set"
 when :too_short then abort "at least #{AccountService::MIN_PASSWORD} characters"
