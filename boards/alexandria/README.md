@@ -4,7 +4,7 @@ Wikipedia on a telnet line. Type the title of an article, and Alexandria looks
 it up on wikipedia.org and shows it in a form a terminal can read: the article
 as plain text, cut into its sections, wrapped to the screen. Built on the
 [rubbs](https://git.teletypegames.org/engines/rubbs) gem, like the
-[Teletype BBS](https://git.teletypegames.org/bbs/bbs-server).
+[Teletype BBS](https://git.teletypegames.org/bbs/teletype-bbs).
 
 It has two faces on one port: the **modern** one for ANSI terminals (windows,
 menus, mouse) and a **Commodore 64** one in PETSCII, 40×25, with single-key

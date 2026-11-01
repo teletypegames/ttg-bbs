@@ -9,7 +9,7 @@ require 'uri'
 # request names the board in its User-Agent (Wikipedia may answer 403
 # without it). A network or parse error is warned and comes back as nil.
 class WikipediaRepository
-  USER_AGENT = 'AlexandriaBBS/0.1 (Teletype Games telnet BBS; https://git.teletypegames.org/bbs/alexandria)'
+  USER_AGENT = 'AlexandriaBBS/0.1 (Alexandria BBS, Teletype Games telnet BBS; https://git.teletypegames.org/bbs/alexandria-bbs)'
   TTL = 600
   CACHE_SIZE = 200
   SEARCH_LIMIT = 30
