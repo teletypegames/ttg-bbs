@@ -19,7 +19,7 @@ class TipSeedRepository
       { game_id: t['game'].to_s, seed: t['key'].to_s, handle: t['handle'].to_s, text: t['text'].to_s.strip }
     end
   rescue StandardError => e
-    warn "commodex: reading #{@path}: #{e.class}: #{e.message}"
+    warn "commodex-bbs: reading #{@path}: #{e.class}: #{e.message}"
     []
   end
 end

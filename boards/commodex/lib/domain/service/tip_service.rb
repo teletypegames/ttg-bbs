@@ -42,7 +42,7 @@ class TipService
     @notifier&.call(@repository.find(id), game)
     :ok
   rescue StandardError => e
-    warn "commodex: saving a tip: #{e.class}: #{e.message}"
+    warn "commodex-bbs: saving a tip: #{e.class}: #{e.message}"
     :failed
   end
 

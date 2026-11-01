@@ -12,8 +12,8 @@ require 'uri'
 # half catalog.
 class WikidataRepository
   ENDPOINT     = 'https://query.wikidata.org/sparql'
-  USER_AGENT   = 'CommodexBBS/0.1 (Teletype Games telnet BBS; https://teletypegames.org; ' \
-                 'https://git.teletypegames.org/bbs/commodex)'
+  USER_AGENT   = 'CommodexBBS/0.1 (Commodex BBS, Teletype Games telnet BBS; https://teletypegames.org; ' \
+                 'https://git.teletypegames.org/bbs/commodex-bbs)'
   OPEN_TIMEOUT = 10
   READ_TIMEOUT = 90
   LANGUAGES    = 'en,mul,de,fr,it,es,nl,sv,pl,hu,ja'
@@ -121,10 +121,10 @@ class WikidataRepository
     end
     return JSON.parse(res.body).dig('results', 'bindings') if res.is_a?(Net::HTTPSuccess)
 
-    warn "commodex: Wikidata answered #{res.code}"
+    warn "commodex-bbs: Wikidata answered #{res.code}"
     nil
   rescue StandardError => e
-    warn "commodex: Wikidata: #{e.class}: #{e.message}"
+    warn "commodex-bbs: Wikidata: #{e.class}: #{e.message}"
     nil
   end
 end

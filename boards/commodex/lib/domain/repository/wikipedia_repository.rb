@@ -12,8 +12,8 @@ require 'uri'
 # itself in the User-Agent.
 class WikipediaRepository
   API          = 'https://en.wikipedia.org/w/api.php'
-  USER_AGENT   = 'CommodexBBS/0.1 (Teletype Games telnet BBS; https://teletypegames.org; ' \
-                 'https://git.teletypegames.org/bbs/commodex)'
+  USER_AGENT   = 'CommodexBBS/0.1 (Commodex BBS, Teletype Games telnet BBS; https://teletypegames.org; ' \
+                 'https://git.teletypegames.org/bbs/commodex-bbs)'
   OPEN_TIMEOUT = 10
   READ_TIMEOUT = 15
   RATE         = 5
@@ -73,10 +73,10 @@ class WikipediaRepository
     end
     return JSON.parse(res.body) if res.is_a?(Net::HTTPSuccess)
 
-    warn "commodex: Wikipedia answered #{res.code}"
+    warn "commodex-bbs: Wikipedia answered #{res.code}"
     nil
   rescue StandardError => e
-    warn "commodex: Wikipedia: #{e.class}: #{e.message}"
+    warn "commodex-bbs: Wikipedia: #{e.class}: #{e.message}"
     nil
   end
 

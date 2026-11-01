@@ -34,7 +34,7 @@ class CatalogRepository
     @lock.synchronize { @snapshot = fresh }
     true
   rescue SystemCallError, IOError => e
-    warn "commodex: writing #{@path}: #{e.class}: #{e.message}"
+    warn "commodex-bbs: writing #{@path}: #{e.class}: #{e.message}"
     false
   end
 
@@ -57,7 +57,7 @@ class CatalogRepository
     data = JSON.parse(Zlib::GzipReader.open(path, &:read))
     Snapshot.new(games: games_of(data['games']), generated_at: Time.iso8601(data['generated']))
   rescue StandardError => e
-    warn "commodex: reading #{path}: #{e.class}: #{e.message}"
+    warn "commodex-bbs: reading #{path}: #{e.class}: #{e.message}"
     nil
   end
 
