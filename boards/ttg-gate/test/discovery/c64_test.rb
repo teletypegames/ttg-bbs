@@ -50,6 +50,8 @@ module Discovery
 
       def tagged(_tag, state: nil, **) = search('', state: state)
 
+      def all(state: nil, **) = search('', state: state)
+
       def axes(**) = BrowseService::AXES.except(:terminal)
 
       def facets(_axis, **) = [BrowseService::Facet.new(tag: 'sw:synchronet', label: 'Synchronet', count: 2)]
@@ -165,7 +167,7 @@ module Discovery
       assert_instance_of UI::Petscii::Views::ListView, g.view
       screen = shown
       assert_equal '/Find Browse New Random Died Graves Srcs', text_at(screen, 2, 0, 40)
-      assert_equal [Canvas::YELLOW, false], [screen.cell(2, 6).color, screen.cell(2, 6).rvs]
+      assert_equal [Canvas::LIGHT_GREEN, true], [screen.cell(2, 6).color, screen.cell(2, 6).rvs]
       assert_equal [Canvas::LIGHT_GREEN, true], [screen.cell(1, 15).color, screen.cell(1, 15).rvs]
       g.press(:down)
       g.press(:up)
@@ -173,11 +175,10 @@ module Discovery
       g.press(:up)
       assert_equal :menu, g.focus
       screen = shown
-      assert_equal [Canvas::CYAN, true], [screen.cell(2, 1).color, screen.cell(2, 1).rvs]
+      assert_equal [Canvas::CYAN, true], [screen.cell(2, 6).color, screen.cell(2, 6).rvs]
       g.press(:down)
       assert_equal :main, g.focus
       g.press(:up)
-      g.press(:right)
       screen = shown
       assert screen.cell(2, 6).rvs
       refute screen.cell(2, 1).rvs
@@ -214,7 +215,7 @@ module Discovery
       first = @line.sent.last
       assert_operator first.bytesize, :<=, 1300
       screen = shown
-      assert_equal 'PETSCII BOARDS', text_at(screen, 3, 1, 14)
+      assert_equal 'ALL PETSCII', text_at(screen, 3, 1, 11)
       assert_equal '20  1/2', text_at(screen, 3, 32, 7)
       marks = (7..9).map { |r| screen.cell(r, 3) }
       assert_equal [0xa1] * 3, marks.map(&:code)
@@ -224,7 +225,7 @@ module Discovery
       assert_equal 'Nr S Name', text_at(screen, 5, 0, 9)
       assert_equal 'US Synchronet', text_at(screen, 7, 26, 13)
       assert_equal 'Board 09', text_at(screen, 15, 5, 8)
-      assert_equal 'Alive', text_at(screen, 4, 19, 5)
+      assert_equal 'All', text_at(screen, 4, 19, 3)
       g.press(:down)
       step = @line.sent.last
       assert_operator step.bytesize, :<=, 360

@@ -32,7 +32,7 @@ module UI
         items << Item.new(key, label, hotkey, col)
       end.freeze
       # The sections that light a place of the sub-menu other than their own.
-      UNDER = { software: :browse, country: :browse, network: :browse }.freeze
+      UNDER = { all: :browse, software: :browse, country: :browse, network: :browse }.freeze
       # The keys that open a place from anywhere: the tabs, the sub-menu's
       # yellow signs, the axes of Browse (soft_w_are, _c_ountry, networ_k_),
       # U for the Sources as before, Help and Quit.

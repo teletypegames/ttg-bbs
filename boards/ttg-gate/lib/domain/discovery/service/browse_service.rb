@@ -39,6 +39,12 @@ module Discovery
       sorted(@directory.listings(ListingFilter.search(query, petscii: petscii, state: state)))
     end
 
+    # Every board of the catalog, the dead and every encoding too (no
+    # mailers), or with +petscii+ every PETSCII one; +state+ is the F filter.
+    def all(petscii: false, state: nil)
+      sorted(@directory.listings(ListingFilter.new(dead: true, state: state, petscii: petscii)))
+    end
+
     # The boards of one tag (a Facet of Browse).
     def tagged(tag, petscii: false, state: nil)
       sorted(@directory.listings(ListingFilter.new(tags: [tag], petscii: petscii, state: state)))

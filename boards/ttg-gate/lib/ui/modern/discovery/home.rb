@@ -88,6 +88,8 @@ module UI
               facets(axis, spec[:label])
             end
           end
+          items.unshift(item('All', 'every board, every state') { list('ALL BOARDS') { |s| browse.all(state: s) } },
+                        item('All PETSCII', 'PETSCII only') { list('ALL PETSCII') { |s| browse.all(petscii: true, state: s) } })
           MenuView.new(@session, 'BROWSE', items).run
         end
 

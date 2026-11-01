@@ -49,7 +49,7 @@ module UI
         died: ['RECENTLY DIED', '30 days', Canvas::LIGHT_RED, 'None died in 30 days.', :recently_died],
         graves: ['GRAVEYARD', 'dead', Canvas::GREY, 'No graves yet.', :graveyard]
       }.freeze
-      BANDS = { discover: Canvas::LIGHT_GREEN, search: Canvas::WHITE, browse: Canvas::ORANGE, new: Canvas::PURPLE,
+      BANDS = { discover: Canvas::LIGHT_GREEN, all: Canvas::LIGHT_GREEN, search: Canvas::WHITE, browse: Canvas::ORANGE, new: Canvas::PURPLE,
                 died: Canvas::LIGHT_RED, graves: Canvas::GREY }.freeze
 
       attr_reader :focus, :stack, :tab
@@ -277,9 +277,18 @@ module UI
       def own = @own ||= Views::OwnView.new(@boards, on_dial: method(:dial_own))
 
       def discover
-        @discover ||= list('PETSCII BOARDS', :discover) { |state| @browse.search('', petscii: true, state: state) }
+        @discover ||= all(petscii: true)
         @discover.reload
         @discover
+      end
+
+      # Every board in every state, F starting from all; with +petscii+ the
+      # PETSCII ones, else every encoding, the boards without PETSCII dimmed.
+      def all(petscii: false)
+        Views::ListView.new(title: petscii ? 'ALL PETSCII' : 'ALL BOARDS', color: BANDS[:all], section: :all,
+                            all_states: true, any_terminal: !petscii,
+                            loader: ->(state) { @browse.all(petscii: petscii, state: state) },
+                            on_open: method(:open_page), details: method(:latency))
       end
 
       def list(title, section, &loader)
@@ -301,7 +310,12 @@ module UI
       end
 
       def browse_menu
-        entries = @browse.axes(petscii: true).map do |axis, spec|
+        entries = [Views::MenuView::Entry.new(name: 'All', count: @browse.all.size, action: -> { push(all) },
+                                              about: ['ALL BOARDS', 'Every state, every terminal', 'Dimmed: no PETSCII']),
+                   Views::MenuView::Entry.new(name: 'All PETSCII', count: @browse.all(petscii: true).size,
+                                              action: -> { push(all(petscii: true)) },
+                                              about: ['ALL PETSCII', 'Every PETSCII board, every state'])]
+        entries += @browse.axes(petscii: true).map do |axis, spec|
           facets = @browse.facets(axis, petscii: true)
           about = ["BY #{spec[:label].upcase}", *facets.first(3).map { |f| "#{f.label} #{f.count}" }]
           Views::MenuView::Entry.new(name: "BY #{spec[:label]}", count: facets.size, about: about,

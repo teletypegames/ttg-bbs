@@ -150,7 +150,7 @@ name, tags and port; the description and the full address of the chosen one are
 under the list. Global Discovery is described [below](#the-gate-ui).
 
 **Commodore 64:** the frame and the tabs ([above](#the-c64-face)); `D`
-turns to Global Discovery, `O` back to our own boards, the number dials, `Q`
+turns to Global Discovery (the All PETSCII list of Browse), `O` back to our own boards, the number dials, `Q`
 hangs up.
 
 Either way the board asks its own terminal question first: the gate reports the
@@ -329,20 +329,25 @@ preview, and a PETSCII banner only on the C64 face). RETURN or `D` dials it.
 ### On a Commodore 64
 
 `D` (or the `GLOBAL DISCOVERY` tab) opens Global Discovery in the frame of the
-C64 face: the PETSCII boards, ten a page. The row under the title shows the
-filter as chips (`PETSCII`, and the state: `Alive`, or what `F` chose), a dark
+C64 face on `ALL PETSCII` (the first lists of Browse): every PETSCII board in
+every state, online and flaky first, then down, not called and dead, then by
+name, ten a page. The row under the title shows the
+filter as chips (`PETSCII`, and the state: `All`, or what `F` chose), a dark
 grey header (`Nr S Name CC Software`), then a board a row: its number, its state
 mark (a half block: light green online, yellow flaky, red down, grey dead, dark
 grey not called yet), its name, its country and its software; the
 lit one a light blue bar. Under a rule the lit board's name, host and port,
 state with the latency of the last answer and the country, software and
-terminals, and the legend of the marks. Only PETSCII boards are on it
+terminals, and the legend of the marks. `All` (Browse) lists every board of
+the catalog, every encoding (chip `Any`): a board without PETSCII has a dark
+grey name, its encoding (`ANSI`, `ASCII`) in the software column, and its page
+says the C64 cannot dial it. On the other lists only PETSCII boards are shown
 (measured: the `petscii` tag of a call's banner, see above), and not the dead
-ones but in Recently died, the Graveyard or a search with `all` (the gate
+ones but in All, All PETSCII, Recently died, the Graveyard or a search with `all` (the gate
 carries the bytes as they are, and an ANSI board on a C64 is noise).
 
 Find (`/`) reads its words on the hint row (`all` takes the dead in);
-Browse lists Software, Country and Network with their counts (by Terminal
+Browse lists All, All PETSCII, Software, Country and Network with their counts (by Terminal
 would be PETSCII only), each a list of tags and each tag a list of boards;
 New, Random, Died and Graves are the lists of the modern face. RETURN opens a
 **board's page**: the address, the last answer and its latency, why our server

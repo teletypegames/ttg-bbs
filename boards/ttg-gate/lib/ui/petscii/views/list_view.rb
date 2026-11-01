@@ -21,6 +21,8 @@ module UI
         }.freeze
         # The F filter steps through these; nil is every board the list has.
         FILTERS = [nil, 'online', 'flaky', 'down', 'unknown'].freeze
+        # The steps of F on the list of every board.
+        ALL_FILTERS = [nil, 'online', 'flaky', 'down', 'unknown', 'dead'].freeze
         STATE_COLORS = { 'online' => Canvas::LIGHT_GREEN, 'flaky' => Canvas::YELLOW, 'down' => Canvas::LIGHT_RED,
                          'dead' => Canvas::GREY, 'unknown' => Canvas::LIGHT_GREY }.freeze
         # The software of a sw: tag in at most ten letters.
@@ -44,8 +46,13 @@ module UI
         #           [text, colour] each
         # [details] a board's latency in ms, given its id (or nil)
         # [section] the place of the sub-menu it lights
+        # [all_states]   F starts from all and steps to dead too
+        # [any_terminal] every encoding: no PETSCII chip, a board without
+        #                PETSCII dimmed
         def initialize(title:, color:, loader:, on_open:, filter: true, chips: [], details: nil, section: :discover,
-                       empty: 'Nothing here.', now: -> { Time.now.to_i })
+                       empty: 'Nothing here.', all_states: false, any_terminal: false, now: -> { Time.now.to_i })
+          @all_states   = all_states
+          @any_terminal = any_terminal
           @title   = title
           @color   = color
           @loader  = loader
@@ -66,7 +73,8 @@ module UI
         def handle(key)
           return super unless @filter && %w[f F].include?(key)
 
-          @state = FILTERS[(FILTERS.index(@state).to_i + 1) % FILTERS.size]
+          filters = @all_states ? ALL_FILTERS : FILTERS
+          @state = filters[(filters.index(@state).to_i + 1) % filters.size]
           @items = @loader.call(@state)
           @twins = twins
           @page = @index = 0
@@ -108,11 +116,12 @@ module UI
 
         def chips(canvas, row)
           col = Layout.runs(canvas, row, 1, [['Filter', Canvas::GREY]]) + 1
-          col = Layout.chip(canvas, row, col, 'PETSCII', Canvas::PURPLE) + 1
+          col = Layout.chip(canvas, row, col, @any_terminal ? 'Any' : 'PETSCII', Canvas::PURPLE) + 1
           @chips.each { |text, color| col = Layout.chip(canvas, row, col, text, color) + 1 }
           return unless @filter
 
-          Layout.chip(canvas, row, col, @state ? @state.capitalize : 'Alive', @state ? STATE_COLORS[@state] : Canvas::GREEN)
+          default = @all_states ? 'All' : 'Alive'
+          Layout.chip(canvas, row, col, @state ? @state.capitalize : default, @state ? STATE_COLORS[@state] : Canvas::GREEN)
         end
 
         def name(listing)
@@ -123,6 +132,8 @@ module UI
         end
 
         def software(listing)
+          return (TERMINALS.keys.find { |e| listing.tags.include?(e) } || '?').upcase unless listing.petscii?
+
           tag = listing.tags.find { |t| t.start_with?('sw:') }&.delete_prefix('sw:')
           return SOFTWARE.fetch(tag) { Layout.plain(tag)[0, SOFT] } if tag
 
@@ -138,7 +149,7 @@ module UI
                                 .ljust(Layout::WIDTH), Canvas::LIGHT_BLUE, rvs: true)
           else
             Layout.runs(canvas, row, 0, [[number, Canvas::YELLOW], [' ', nil], [mark, color], [' ', nil],
-                                         [name(listing), Canvas::WHITE]])
+                                         [name(listing), listing.petscii? ? Canvas::WHITE : Canvas::DARK_GREY]])
             Layout.runs(canvas, row, 6 + NAME, [[cc, Canvas::CYAN], [' ', nil], [software(listing), Canvas::LIGHT_BLUE]])
           end
         end
