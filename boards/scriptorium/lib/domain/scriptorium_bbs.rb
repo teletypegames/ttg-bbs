@@ -15,22 +15,22 @@ class ScriptoriumBBS
 
   def initialize
     data      = ->(name) { File.join(ROOT, 'data', name) }
-    mirror    = ENV.fetch('SCRIPTORIUM_MIRROR', 'https://www.gutenberg.org')
+    mirror    = ENV.fetch('SCRIPTORIUM_BBS_MIRROR', 'https://www.gutenberg.org')
     gutenberg = GutenbergRepository.new(
       mirror: mirror, user_agent: USER_AGENT,
-      catalog_url: ENV.fetch('SCRIPTORIUM_CATALOG_URL', "#{mirror.delete_suffix('/')}/cache/epub/feeds/pg_catalog.csv.gz")
+      catalog_url: ENV.fetch('SCRIPTORIUM_BBS_CATALOG_URL', "#{mirror.delete_suffix('/')}/cache/epub/feeds/pg_catalog.csv.gz")
     )
-    catalog  = CatalogRepository.new(ENV.fetch('SCRIPTORIUM_DB', data.call('catalog.sqlite3')))
-    classics = ClassicsRepository.new(ENV.fetch('SCRIPTORIUM_CLASSICS', File.join(ROOT, 'config/classics.yml')))
-    reads    = ReadRepository.new(ENV.fetch('SCRIPTORIUM_READS', data.call('reads.jsonl')))
-    cache    = TextCacheRepository.new(ENV.fetch('SCRIPTORIUM_TEXTS', data.call('texts')),
-                                       max_bytes: Integer(ENV.fetch('SCRIPTORIUM_CACHE_MB', '300')) * 1024 * 1024)
+    catalog  = CatalogRepository.new(ENV.fetch('SCRIPTORIUM_BBS_DB', data.call('catalog.sqlite3')))
+    classics = ClassicsRepository.new(ENV.fetch('SCRIPTORIUM_BBS_CLASSICS', File.join(ROOT, 'config/classics.yml')))
+    reads    = ReadRepository.new(ENV.fetch('SCRIPTORIUM_BBS_READS', data.call('reads.jsonl')))
+    cache    = TextCacheRepository.new(ENV.fetch('SCRIPTORIUM_BBS_TEXTS', data.call('texts')),
+                                       max_bytes: Integer(ENV.fetch('SCRIPTORIUM_BBS_CACHE_MB', '300')) * 1024 * 1024)
 
     @library = LibraryService.new(catalog: catalog, classics: classics, reads: reads, gutenberg: gutenberg,
-                                  catalog_file: ENV.fetch('SCRIPTORIUM_CATALOG_FILE', data.call('pg_catalog.csv.gz')),
-                                  ttl: Float(ENV.fetch('SCRIPTORIUM_CATALOG_TTL', '7')) * 86_400)
+                                  catalog_file: ENV.fetch('SCRIPTORIUM_BBS_CATALOG_FILE', data.call('pg_catalog.csv.gz')),
+                                  ttl: Float(ENV.fetch('SCRIPTORIUM_BBS_CATALOG_TTL', '7')) * 86_400)
     @reading = ReadingService.new(gutenberg: gutenberg, cache: cache, reads: reads, chapters: ChapterService.new,
-                                  max_bytes: Integer(ENV.fetch('SCRIPTORIUM_BOOK_MAX', (8 * 1024 * 1024).to_s)))
+                                  max_bytes: Integer(ENV.fetch('SCRIPTORIUM_BBS_BOOK_MAX', (8 * 1024 * 1024).to_s)))
   end
 
   # The services by name.

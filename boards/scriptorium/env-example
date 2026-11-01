@@ -6,22 +6,22 @@ BBS_PORT=2323
 BBS_MAX_SESSIONS=100
 
 # Project Gutenberg: the mirror the plain texts come from, and the catalog
-SCRIPTORIUM_MIRROR=https://www.gutenberg.org
-SCRIPTORIUM_CATALOG_URL=https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv.gz
+SCRIPTORIUM_BBS_MIRROR=https://www.gutenberg.org
+SCRIPTORIUM_BBS_CATALOG_URL=https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv.gz
 # Days the imported catalog is kept before it is downloaded and imported again
-SCRIPTORIUM_CATALOG_TTL=7
+SCRIPTORIUM_BBS_CATALOG_TTL=7
 
 # The board's own Classics shelf
-SCRIPTORIUM_CLASSICS=config/classics.yml
+SCRIPTORIUM_BBS_CLASSICS=config/classics.yml
 
 # The catalog in SQLite, and where its download waits for the import
-SCRIPTORIUM_DB=data/catalog.sqlite3
-SCRIPTORIUM_CATALOG_FILE=data/pg_catalog.csv.gz
+SCRIPTORIUM_BBS_DB=data/catalog.sqlite3
+SCRIPTORIUM_BBS_CATALOG_FILE=data/pg_catalog.csv.gz
 # The cleaned texts and their chapter indexes, and the most this folder takes, in MB
-SCRIPTORIUM_TEXTS=data/texts
-SCRIPTORIUM_CACHE_MB=300
+SCRIPTORIUM_BBS_TEXTS=data/texts
+SCRIPTORIUM_BBS_CACHE_MB=300
 # The longest plain text the board fetches, in bytes
-SCRIPTORIUM_BOOK_MAX=8388608
+SCRIPTORIUM_BBS_BOOK_MAX=8388608
 
 # The books opened, one JSON line each (the "most read" list)
-SCRIPTORIUM_READS=data/reads.jsonl
+SCRIPTORIUM_BBS_READS=data/reads.jsonl

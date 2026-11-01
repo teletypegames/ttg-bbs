@@ -37,7 +37,7 @@ downloaded into `data/` and its `Text` rows imported into SQLite
 (`data/catalog.sqlite3`, about 33 MB) with an FTS5 index of titles and authors
 (an indexed `LIKE` where the SQLite has no FTS5). The import runs in a
 background thread at start when there is no catalog or it is older than
-`SCRIPTORIUM_CATALOG_TTL` days, and the thread looks again every hour. It builds
+`SCRIPTORIUM_BBS_CATALOG_TTL` days, and the thread looks again every hour. It builds
 a new database next to the old one and swaps it in, so callers keep reading
 meanwhile. Until the first import is done the Classics shelf is open and the
 rest says the catalog is being prepared. No list is held in Ruby: every shelf
@@ -57,9 +57,9 @@ lists the same headings is skipped, and a heading right above another
 and a book without headings in sections of about 16 KB ("Part 1/23").
 
 The cleaned text and its chapter index are cached in `data/texts/` (at most
-`SCRIPTORIUM_CACHE_MB`, the books read least recently go first). A chapter is
+`SCRIPTORIUM_BBS_CACHE_MB`, the books read least recently go first). A chapter is
 read from the file when it is shown: no session keeps a whole book. A text
-longer than `SCRIPTORIUM_BOOK_MAX` is refused, and one book is fetched and cut
+longer than `SCRIPTORIUM_BBS_BOOK_MAX` is refused, and one book is fetched and cut
 at a time.
 
 The texts are public domain in the USA. Each book's page credits it:
@@ -85,16 +85,16 @@ with its default. The board has no secrets.
 
 | Variable | Default | |
 |---|---|---|
-| `SCRIPTORIUM_MIRROR` | `https://www.gutenberg.org` | where the plain texts come from |
-| `SCRIPTORIUM_CATALOG_URL` | `<mirror>/cache/epub/feeds/pg_catalog.csv.gz` | the catalog file |
-| `SCRIPTORIUM_CATALOG_TTL` | `7` | days before the catalog is imported again |
-| `SCRIPTORIUM_CLASSICS` | `config/classics.yml` | the Classics shelf |
-| `SCRIPTORIUM_DB` | `data/catalog.sqlite3` | the catalog in SQLite |
-| `SCRIPTORIUM_CATALOG_FILE` | `data/pg_catalog.csv.gz` | where the download waits for the import |
-| `SCRIPTORIUM_TEXTS` | `data/texts` | the cleaned texts and chapter indexes |
-| `SCRIPTORIUM_CACHE_MB` | `300` | the most the text cache takes |
-| `SCRIPTORIUM_BOOK_MAX` | `8388608` | the longest plain text fetched, in bytes |
-| `SCRIPTORIUM_READS` | `data/reads.jsonl` | the books opened, one JSON line each |
+| `SCRIPTORIUM_BBS_MIRROR` | `https://www.gutenberg.org` | where the plain texts come from |
+| `SCRIPTORIUM_BBS_CATALOG_URL` | `<mirror>/cache/epub/feeds/pg_catalog.csv.gz` | the catalog file |
+| `SCRIPTORIUM_BBS_CATALOG_TTL` | `7` | days before the catalog is imported again |
+| `SCRIPTORIUM_BBS_CLASSICS` | `config/classics.yml` | the Classics shelf |
+| `SCRIPTORIUM_BBS_DB` | `data/catalog.sqlite3` | the catalog in SQLite |
+| `SCRIPTORIUM_BBS_CATALOG_FILE` | `data/pg_catalog.csv.gz` | where the download waits for the import |
+| `SCRIPTORIUM_BBS_TEXTS` | `data/texts` | the cleaned texts and chapter indexes |
+| `SCRIPTORIUM_BBS_CACHE_MB` | `300` | the most the text cache takes |
+| `SCRIPTORIUM_BBS_BOOK_MAX` | `8388608` | the longest plain text fetched, in bytes |
+| `SCRIPTORIUM_BBS_READS` | `data/reads.jsonl` | the books opened, one JSON line each |
 
 `data/` is a volume.
 
