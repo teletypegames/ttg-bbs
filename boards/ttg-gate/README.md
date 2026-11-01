@@ -462,7 +462,7 @@ lib/
   domain/ttg_gate_bbs.rb               the composition root (TTGGateBBS)
   ui/modern.rb                         the modern face: Own Servers | Global Discovery
   ui/modern/style.rb                   its palette, the logo and the chooser
-  ui/modern/selector.rb                the dialing menu of our own boards on an ANSI terminal
+  ui/modern/own_servers.rb             the dialing menu of our own boards on an ANSI terminal
   ui/modern/discovery/                 Global Discovery: home, menus, lists, the board page, search, sources
   ui/petscii.rb                        the PETSCII face: the call, its node number, goodbye
   ui/petscii/gate.rb                   one C64 call: the frame, the tabs, the sub-menu focus, the keys, dialling, find

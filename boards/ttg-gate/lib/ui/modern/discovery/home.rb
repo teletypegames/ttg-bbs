@@ -33,7 +33,7 @@ module UI
             when :enter then items[@index].action.call
             when '/' then search
             when :tab, :right, :left, 'g', 'G' then return :switch
-            when :escape, 'q', 'Q' then return goodbye
+            when :escape, 'q', 'Q' then return
             end
           end
         end
@@ -138,14 +138,9 @@ module UI
           loop do
             case key
             when :tab, :right, :left, 'g', 'G' then return :switch
-            when :escape, 'q', 'Q' then return goodbye
+            when :escape, 'q', 'Q' then return
             end
           end
-        end
-
-        def goodbye
-          @session.write("#{RESET}\e[2J\e[H\r\n#{pad}#{GREEN}TTG GATE BBS#{RESET}#{DIM}: line closed. See you.#{RESET}\r\n\r\n")
-          nil
         end
       end
     end

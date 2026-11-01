@@ -7,7 +7,7 @@ module UI
     # bar, and under the list the chosen board's description. The arrows
     # choose, RETURN or the board's number dials, TAB turns to Global
     # Discovery, Q or Esc hangs up.
-    class Selector
+    class OwnServers
       include Style
 
       NAME = 18
@@ -28,7 +28,7 @@ module UI
           when :down  then @index = (@index + 1) % @boards.size
           when :enter then dial(@boards[@index])
           when :tab, :right, :left, 'g', 'G' then return :switch
-          when :escape, 'q', 'Q' then return goodbye
+          when :escape, 'q', 'Q' then return
           when /\A[1-9]\z/
             board = @boards[k.to_i - 1]
             next unless board
@@ -45,11 +45,6 @@ module UI
         clear
         UI.dial(@session, board)
         restore
-      end
-
-      def goodbye
-        @session.write("#{RESET}\e[2J\e[H\r\n#{pad}#{GREEN}TTG GATE BBS#{RESET}#{DIM}: line closed. See you.#{RESET}\r\n\r\n")
-        nil
       end
 
       def draw
