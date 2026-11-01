@@ -5,7 +5,7 @@ require_relative 'transfer'
 require_relative 'logo'
 
 module UI
-  # The board on a Commodore 64: PETSCII on a 40×25 screen. A one-key menu
+  # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor menu
   # of the shelves, their titles as numbered lists, a title on a page of its
   # own, and its download by XMODEM-1K or XMODEM, the protocols a C64
   # terminal knows.
@@ -82,22 +82,28 @@ module UI
         @screen.puts
         Petscii.masthead.each { |l| @screen.puts l }
         loop do
-          shelves = @catalog.shelves
           @screen.puts
-          shelves.each_with_index { |s, i| @screen.puts " #{YE}#{i + 1}#{LG} #{s.name.downcase}" }
-          @screen.puts " #{YE}H#{LG} how to download"
-          @screen.puts " #{YE}Q#{LG} log off"
-          keys = [*shelves.each_index.map { |i| (i + 1).to_s }, 'h', 'q']
-          case (k = @screen.choose("\r\n #{WH}warp#{LG}> ", keys, back: 'q'))
+          items = menu_items
+          @choice = @screen.menu(items, index: items.index { |i| i.value == @choice }, back: 'q',
+                                        hint: 'crsr: choose  return: take')
+          case @choice
           when 'h' then help
           when 'q' then return
-          else shelf(shelves[k.to_i - 1])
+          else shelf(@choice)
           end
           @screen.title('WARPENGINE BBS')
         end
       end
 
       private
+
+      def menu_items
+        [*@catalog.shelves.each_with_index.map do |s, i|
+          BBS::Selector.item(s.name.downcase, key: (i + 1).to_s, value: s, about: "#{s.name.downcase} titles to download")
+        end,
+         BBS::Selector.item('how to download', key: 'h', value: 'h', about: 'protocols, terminals, file names'),
+         BBS::Selector.item('log off', key: 'q', value: 'q', about: 'hang up. see you!')]
+      end
 
       def shelf(shelf)
         @screen.puts " #{GR}reading the shelf…#{LG}"
@@ -128,8 +134,7 @@ module UI
                  *@screen.wrap(title.about).map { |l| " #{l}" }, '',
                  " #{GR}load\"#{title.disk_name.downcase}\",8,1 and run#{LG}"]
         @screen.page(shelf.name.upcase, lines, wait: false)
-        @screen.puts " #{YE}1#{LG} xmodem-1k  #{YE}X#{LG} xmodem  #{YE}Q#{LG} back"
-        k = @screen.choose(" #{WH}download#{LG}> ", [*PROTOCOL_KEYS.keys, 'q'], back: 'q')
+        k = @screen.actions(%w[1 xmodem-1k], %w[x xmodem], %w[q back])
         download(title, PROTOCOL_KEYS[k]) if PROTOCOL_KEYS.key?(k)
       end
 
