@@ -64,67 +64,67 @@ module UI
         def self.screen(runner, name:, node:, caller_number:, stats:, registered:, mail:, new_scan:,
                         polls_open:, quote:)
           out = ->(text) { runner.write(text) }
+          head(out, node)
+          caller(out, name, caller_number, stats, registered)
+          scans(out, mail, new_scan, polls_open)
+          out.call "\r\n  #{C}Quote of the day#{O}\r\n"
+          Formatters.wrap(Taglines.line(quote), 72).each { |l| out.call "  #{W}#{l}#{O}\r\n" }
+          out.call "\r\n  #{K}[#{O}#{Y}ENTER#{O}#{K}]#{O} #{D}to enter the board#{O} "
+        end
+
+        def self.head(out, node)
           out.call "\e[0m\e[2J\e[H\r\n"
           Logo.half_blocks.each { |l| out.call "  #{l}\r\n" }
           out.call "  #{C}═══#{O} #{W}Teletype BBS#{O} #{C}#{'═' * 47}#{O} #{W}Node #{node}#{O} #{C}═══#{O}\r\n" if node
           out.call "\r\n"
+        end
+
+        def self.caller(out, name, caller_number, stats, registered)
           greeting = stats ? "Welcome back, #{Y}#{name}#{O}!" : "Welcome, #{Y}#{name}#{O}! Your first call here."
           out.call "  #{W}#{greeting}#{O}   You are caller #{Y}##{Formatters.number(caller_number)}#{O}.\r\n"
-          if stats
-            last  = stats.last_call.localtime.strftime('%Y-%m-%d %H:%M')
-            first = stats.first_call.localtime.strftime('%Y-%m-%d')
-            out.call "  #{D}Calls: #{stats.calls} · last on #{last} · first on #{first} · " \
-                     "online #{Formatters.duration(stats.seconds)}#{O}\r\n"
-          end
+          out.call calls(stats) if stats
           unless registered
             note = name == 'Anonymous' ? 'Call with a name to keep one.' : 'A guest: You > Register keeps your name.'
             out.call "  #{D}#{note}#{O}\r\n"
           end
           out.call "\r\n"
-          scan(out, 'Checking your mailbox') do
-            if mail.nil? then "#{K}register to get mail#{O}"
-            elsif mail.zero? then "#{D}no new letters#{O}"
-            else "#{Y}#{mail} new letter#{'s' if mail != 1}#{O} #{D}(Messages > Mail)#{O}"
-            end
-          end
-          scan(out, 'Scanning the message bases') do
-            if new_scan.nil? then "#{K}register to keep track#{O}"
-            elsif new_scan.empty? then "#{D}nothing new#{O}"
-            else new_scan.map { |b, n| "#{Y}#{b.title}#{O} #{n} new" }.join(' · ')
-            end
-          end
+        end
+
+        def self.calls(stats)
+          last  = stats.last_call.localtime.strftime('%Y-%m-%d %H:%M')
+          first = stats.first_call.localtime.strftime('%Y-%m-%d')
+          "  #{D}Calls: #{stats.calls} · last on #{last} · first on #{first} · " \
+            "online #{Formatters.duration(stats.seconds)}#{O}\r\n"
+        end
+
+        def self.scans(out, mail, new_scan, polls_open)
+          scan(out, 'Checking your mailbox') { mail_scan(mail) }
+          scan(out, 'Scanning the message bases') { board_scan(new_scan) }
           scan(out, 'Visiting the voting booth') do
             if polls_open.zero? then "#{D}you voted on every poll#{O}"
             else "#{Y}#{polls_open} poll#{'s' if polls_open != 1}#{O} #{D}wait for your vote#{O}"
             end
           end
-          out.call "\r\n  #{C}Quote of the day#{O}\r\n"
-          Formatters.wrap(Taglines.line(quote), 72).each { |l| out.call "  #{W}#{l}#{O}\r\n" }
-          out.call "\r\n  #{K}[#{O}#{Y}ENTER#{O}#{K}]#{O} #{D}to enter the board#{O} "
+        end
+
+        def self.mail_scan(mail)
+          if mail.nil? then "#{K}register to get mail#{O}"
+          elsif mail.zero? then "#{D}no new letters#{O}"
+          else "#{Y}#{mail} new letter#{'s' if mail != 1}#{O} #{D}(Messages > Mail)#{O}"
+          end
+        end
+
+        def self.board_scan(new_scan)
+          if new_scan.nil? then "#{K}register to keep track#{O}"
+          elsif new_scan.empty? then "#{D}nothing new#{O}"
+          else new_scan.map { |b, n| "#{Y}#{b.title}#{O} #{n} new" }.join(' · ')
+          end
         end
 
         def self.scan(out, label)
           out.call dots(label)
           sleep 0.25
           out.call "#{yield}\r\n"
-        end
-
-        def self.goodbye(runner, name:, seconds:, caller_number:, quote:)
-          out = ->(text) { runner.write(text) }
-          out.call "\e[0m\e[2J\e[H\r\n"
-          out.call "  #{C}╔══════════════════════════════════════════════════════════════╗#{O}\r\n"
-          out.call "  #{C}║#{O}  #{W}Thanks for calling the Teletype BBS, #{Y}#{name[0, 20].ljust(20)}#{O}   #{C}║#{O}\r\n"
-          out.call "  #{C}╚══════════════════════════════════════════════════════════════╝#{O}\r\n\r\n"
-          out.call "  #{D}Caller ##{Formatters.number(caller_number)} · on line for #{Formatters.duration(seconds)}#{O}\r\n\r\n"
-          Formatters.wrap(Taglines.line(quote), 70).each { |l| out.call "  #{K}...#{O}#{W}#{l}#{O}\r\n" }
-          out.call "\r\n  #{D}Our games:#{O}              #{C}https://teletypegames.org#{O}\r\n"
-          out.call "  #{D}The board in a browser:#{O} #{C}https://bbsweb.teletypegames.org#{O}\r\n\r\n"
-          sleep 1.2
-          out.call "  #{D}+++#{O}\r\n"
-          sleep 0.6
-          out.call "  #{D}ATH0#{O}\r\n"
-          sleep 0.4
-          out.call "  #{R}NO CARRIER#{O}\r\n\r\n"
         end
       end
 
@@ -212,21 +212,24 @@ module UI
         end
 
         def self.detail(poll, results, total, ballot, width)
-          max   = results.map(&:last).max || 0
-          bar_w = width < 60 ? 10 : 20
-          opt_w = (width - 16 - bar_w).clamp(12, 28)
           lines = Formatters.wrap(poll.question, width - 4).map { |l| "  #{W}#{l}#{O}" }
           lines << "  #{D}#{total} vote#{'s' if total != 1}#{ballot ? " · yours: #{ballot}" : ' · you have not voted yet'}#{O}"
           lines << ''
-          results.each_with_index do |(option, votes), i|
-            pct  = total.positive? ? (votes * 100.0 / total).round : 0
-            mine = option == ballot ? "#{G}◄#{O}" : ' '
-            lines << "  #{Y}#{(i + 1).to_s.rjust(2)}.#{O} #{option.to_s[0, opt_w].ljust(opt_w)} " \
-                     "#{Formatters.bar(votes, max, bar_w)} #{W}#{pct.to_s.rjust(3)}%#{O} #{mine}"
-          end
+          lines.concat(rows(results, total, ballot, width))
           lines << ''
           lines << "  #{D}Enter or Vote, then the number of your choice.#{O}"
-          lines
+        end
+
+        def self.rows(results, total, ballot, width)
+          max   = results.map(&:last).max || 0
+          bar_w = width < 60 ? 10 : 20
+          opt_w = (width - 16 - bar_w).clamp(12, 28)
+          results.each_with_index.map do |(option, votes), i|
+            pct  = total.positive? ? (votes * 100.0 / total).round : 0
+            mine = option == ballot ? "#{G}◄#{O}" : ' '
+            "  #{Y}#{(i + 1).to_s.rjust(2)}.#{O} #{option.to_s[0, opt_w].ljust(opt_w)} " \
+              "#{Formatters.bar(votes, max, bar_w)} #{W}#{pct.to_s.rjust(3)}%#{O} #{mine}"
+          end
         end
       end
 

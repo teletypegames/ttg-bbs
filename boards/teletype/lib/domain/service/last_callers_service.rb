@@ -8,8 +8,6 @@
 class LastCallersService
   MIN_SECONDS = 10
 
-  UserStats = Struct.new(:calls, :first_call, :last_call, :seconds, keyword_init: true)
-
   def initialize(repo)
     @repo    = repo
     @pending = {}
@@ -37,26 +35,15 @@ class LastCallersService
 
   def total_calls = @repo.count
 
-  def calls_today
-    today = Time.now.strftime('%Y-%m-%d')
-    @repo.all.count { |c| c.timestamp.start_with?(today) }
-  end
+  def calls_today = @repo.count_since(Time.now.strftime('%Y-%m-%d'))
 
-  # The logged calls of a name (case-insensitive); nil before its first one.
-  def user_stats(username)
-    calls = @repo.all.select { |c| c.username.casecmp?(username.to_s) }
-    return nil if calls.empty?
+  # The logged calls of a name (calls, first_call, last_call, seconds);
+  # nil before its first one.
+  def user_stats(username) = @repo.stats(username)
 
-    UserStats.new(calls: calls.size, first_call: calls.first.time, last_call: calls.last.time,
-                  seconds: calls.sum { |c| c.seconds.to_i })
-  end
+  # {name key => stats} of every name that called.
+  def all_stats = @repo.all_stats
 
   # [[name, calls], ...] most calls first, Anonymous left out.
-  def top_callers(n = 10)
-    @repo.all.reject { |c| c.username.casecmp?(AccountService::ANONYMOUS) }
-         .group_by { |c| c.username.downcase }
-         .map { |_, calls| [calls.last.username, calls.size] }
-         .sort_by { |name, count| [-count, name.downcase] }
-         .first(n)
-  end
+  def top_callers(n = 10) = @repo.top(n, except: AccountService::ANONYMOUS)
 end

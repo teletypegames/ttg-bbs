@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-require 'socket'
-require 'openssl'
 require_relative 'chat_service'
+require_relative 'tls_connect'
 
 # Listens on one IRC channel for the board under a fixed nick, read only: it
 # never speaks there. A background thread keeps the connection (TLS, PING
@@ -12,6 +11,7 @@ require_relative 'chat_service'
 class IrcRelay
   RETRY   = [5, 15, 30, 60, 120, 300].freeze
   IDLE    = 180
+  CONNECT_TIMEOUT = 20
   STABLE  = 300
   SYSTEM  = '*'
 
@@ -47,8 +47,8 @@ class IrcRelay
   # mIRC formatting (bold, colours, italics…) and every control character
   # out: nothing from the channel reaches a terminal as an escape sequence.
   def self.clean(text)
-    text.to_s.gsub(/\x03(\d{1,2}(,\d{1,2})?)?/, '').gsub(/\x04(\h{6}(,\h{6})?)?/, '')
-        .gsub(/[\u0000-\u001f\u007f-\u009f]/, '').strip
+    plain = text.to_s.gsub(/\x03(\d{1,2}(,\d{1,2})?)?/, '').gsub(/\x04(\h{6}(,\h{6})?)?/, '')
+    BBS::Text.clean(plain, keep_newlines: false).tr("\t", ' ').strip
   end
 
   private
@@ -69,15 +69,7 @@ class IrcRelay
   end
 
   def connection
-    tcp = Socket.tcp(@server, @port, connect_timeout: 20)
-    ctx = OpenSSL::SSL::SSLContext.new
-    ctx.set_params(verify_mode: OpenSSL::SSL::VERIFY_PEER)
-    @sock = OpenSSL::SSL::SSLSocket.new(tcp, ctx).tap do |s|
-      s.hostname = @server
-      s.sync_close = true
-      s.connect
-      s.post_connection_check(@server)
-    end
+    @sock = TlsConnect.open(@server, @port, timeout: CONNECT_TIMEOUT)
     @current = @nick
     @pinged  = false
     send_line('CAP REQ :sasl') if @password
@@ -117,27 +109,47 @@ class IrcRelay
   end
 
   def handle(from, command, params)
+    login_reply(command, params) || channel_event(from, command, params)
+  end
+
+  # The replies of the login (SASL, the nick, the welcome); nil for the rest.
+  def login_reply(command, params)
     case command
     when 'PING'         then send_line("PONG :#{params.last}")
     when 'CAP'          then cap(params)
     when 'AUTHENTICATE' then send_line("AUTHENTICATE #{["#{@nick}\0#{@nick}\0#{@password}"].pack('m0')}")
     when '903'          then send_line('CAP END')
-    when '902', '904', '905', '906', '908'
-      warn "IRC: SASL login failed (#{command})"
-      send_line('CAP END')
+    when '902', '904', '905', '906', '908' then sasl_failed(command)
     when '001'          then send_line("JOIN #{@channel}")
     when '433'          then retry_nick
-    when '332'          then @topic = self.class.clean(params.last)
-    when '353'          then names(params.last)
-    when 'JOIN'         then joined(from)
-    when 'PART'         then left(from) if here?(params.first)
-    when 'QUIT'         then left(from)
-    when 'KICK'         then kicked(params[1]) if here?(params.first)
-    when 'NICK'         then renamed(from, params.last)
-    when 'TOPIC'        then new_topic(from, params.last) if here?(params.first)
-    when 'PRIVMSG', 'NOTICE' then said(from, params.last) if here?(params.first)
-    when 'ERROR' then raise IOError, params.last.to_s
+    when 'ERROR'        then raise IOError, params.last.to_s
     end
+  end
+
+  # What happens on the channel.
+  def channel_event(from, command, params)
+    return names(params.last) if command == '353'
+    return @topic = self.class.clean(params.last) if command == '332'
+    return joined(from) if command == 'JOIN'
+    return left(from) if command == 'QUIT'
+    return renamed(from, params.last) if command == 'NICK'
+    return unless here?(params.first)
+
+    channel_message(from, command, params)
+  end
+
+  def channel_message(from, command, params)
+    case command
+    when 'PART'              then left(from)
+    when 'KICK'              then kicked(params[1])
+    when 'TOPIC'             then new_topic(from, params.last)
+    when 'PRIVMSG', 'NOTICE' then said(from, params.last)
+    end
+  end
+
+  def sasl_failed(command)
+    warn "IRC: SASL login failed (#{command})"
+    send_line('CAP END')
   end
 
   def cap(params)

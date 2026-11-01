@@ -41,7 +41,7 @@ module UI
         when :logon   then logon_bulletin
         when :events  then events(10)
         when :network then network_lines
-        else markdown(File.read(File.join(TeletypeBBS::BULLETINS_DIR, kind)))
+        else markdown(@bbs.bulletins.read(kind).to_s)
         end
       end
 
@@ -91,19 +91,24 @@ module UI
       end
 
       def dev_log_lines(activity)
-        what = case activity.kind
-               when :push    then "#{activity.user} pushed #{activity.commits.size} to #{activity.ref}"
-               when :tag     then "#{activity.user} tagged #{activity.ref}"
-               when :release then "#{activity.user} released #{activity.title.empty? ? activity.ref : activity.title}"
-               else "#{activity.user}: new or moved repository"
-               end
-        lines = [" #{WH}#{activity.repo}#{LG}", " #{CY}#{what}#{LG}",
+        lines = [" #{WH}#{activity.repo}#{LG}", " #{CY}#{what_happened(activity)}#{LG}",
                  " #{GR}#{activity.created_at.localtime.strftime('%Y-%m-%d %H:%M')}#{LG}", '']
-        activity.commits.each do |sha, message|
-          body = message.lines.grep_v(/\A[\w-]+-By: /).join.strip
-          lines += [" #{YE}#{sha[0, 7]}#{LG}", *body.split("\n").map { |l| "  #{l}" }, '']
+        lines + activity.commits.flat_map { |sha, message| commit_lines(sha, message) } +
+          urls(@bbs.dev_log.repo_url(activity))
+      end
+
+      def what_happened(activity)
+        case activity.kind
+        when :push    then "#{activity.user} pushed #{activity.commits.size} to #{activity.ref}"
+        when :tag     then "#{activity.user} tagged #{activity.ref}"
+        when :release then "#{activity.user} released #{activity.title.empty? ? activity.ref : activity.title}"
+        else "#{activity.user}: new or moved repository"
         end
-        lines + urls(@bbs.dev_log.repo_url(activity))
+      end
+
+      def commit_lines(sha, message)
+        body = message.lines.grep_v(/\A[\w-]+-By: /).join.strip
+        [" #{YE}#{sha[0, 7]}#{LG}", *body.split("\n").map { |l| "  #{l}" }, '']
       end
     end
   end

@@ -98,6 +98,14 @@ module UI
       end
 
       def poll_screen(poll)
+        @screen.page(poll.title.upcase[0, 30], poll_lines(poll), wait: anonymous?)
+        return if anonymous?
+
+        answer = @screen.ask("#{WH}your vote#{LG} (1-#{poll.options.size}, return: none): ", max: 3)
+        vote(poll, answer) unless answer.empty?
+      end
+
+      def poll_lines(poll)
         results = @bbs.voting.results(poll)
         total   = @bbs.voting.total(poll)
         ballot  = @bbs.voting.ballot(poll, name)
@@ -105,19 +113,18 @@ module UI
         lines = @screen.wrap(poll.question).map { |l| " #{WH}#{l}#{LG}" }
         lines << " #{GR}#{total} vote#{'s' if total != 1}#{ballot ? ", yours: #{ballot}" : ', you have not voted yet'}#{LG}"
         lines << ''
-        results.each_with_index do |(option, votes), i|
-          pct  = total.positive? ? (votes * 100.0 / total).round : 0
-          bar  = '█' * (max.positive? ? (votes.to_f / max * 6).round : 0)
-          mine = option == ballot ? "#{GN}<#{LG}" : ' '
-          lines << " #{YE}#{(i + 1).to_s.rjust(2)}#{LG} #{option.to_s[0, 21].ljust(22)}#{CY}#{bar.ljust(6)}#{LG}" \
-                   "#{pct.to_s.rjust(3)}%#{mine}"
-        end
-        @screen.page(poll.title.upcase[0, 30], lines, wait: anonymous?)
-        return if anonymous?
+        lines + results.each_with_index.map { |(option, votes), i| result_line(i, option, votes, total, max, ballot) }
+      end
 
-        answer = @screen.ask("#{WH}your vote#{LG} (1-#{poll.options.size}, return: none): ", max: 3)
-        return if answer.empty?
+      def result_line(index, option, votes, total, max, ballot)
+        pct  = total.positive? ? (votes * 100.0 / total).round : 0
+        bar  = '█' * (max.positive? ? (votes.to_f / max * 6).round : 0)
+        mine = option == ballot ? "#{GN}<#{LG}" : ' '
+        " #{YE}#{(index + 1).to_s.rjust(2)}#{LG} #{option.to_s[0, 21].ljust(22)}#{CY}#{bar.ljust(6)}#{LG}" \
+          "#{pct.to_s.rjust(3)}%#{mine}"
+      end
 
+      def vote(poll, answer)
         option = poll.options[answer.to_i - 1] if answer.to_i.positive?
         if option && @bbs.voting.vote(poll, name, option) == :ok
           @screen.say("Your vote: #{option}.", GN)
@@ -145,19 +152,27 @@ module UI
       def my_stats
         s = @bbs.my_stats(name, registered: registered?, session_id: session_id, caller_number: @ctx[:caller_number],
                                 sysop: sysop?)
-        stats = s[:stats]
-        rows = [
-          ['name', registered? ? "#{name} (registered)" : "#{name} (guest)"],
-          ['this call', "caller ##{s[:caller_number]}#{", node #{s[:node].number}" if s[:node]}"],
-          ['calls', stats ? stats.calls.to_s : 'this is your first'],
-          ['first call', date(stats&.first_call)], ['last call', date(stats&.last_call)],
-          ['posts', s[:posts].to_s], ['votes', s[:ballots].to_s],
-          ['mail', s[:letters].nil? ? 'register to get mail' : "#{s[:letters]} letter#{'s' if s[:letters] != 1}"]
-        ]
-        rows << ['member since', s[:member_since].to_s[0, 10]] if s[:member_since]
-        profile = registered? ? @bbs.profile.find(name) : nil
-        rows += %w[location homepage signature].map { |f| [f, profile[f].to_s] }.reject { |_, v| v.empty? } if profile
+        rows = stat_rows(s) + profile_rows
         rows.flat_map { |k, v| @screen.wrap("#{GR}#{k.ljust(13)}#{LG}#{v}", 38).map { |l| " #{l}" } }
+      end
+
+      def stat_rows(s)
+        stats = s[:stats]
+        [['name', registered? ? "#{name} (registered)" : "#{name} (guest)"],
+         ['this call', "caller ##{s[:caller_number]}#{", node #{s[:node].number}" if s[:node]}"],
+         ['calls', stats ? stats.calls.to_s : 'this is your first'],
+         ['first call', date(stats&.first_call)], ['last call', date(stats&.last_call)],
+         ['posts', s[:posts].to_s], ['votes', s[:ballots].to_s], ['mail', letters(s[:letters])],
+         *([['member since', s[:member_since].to_s[0, 10]]] if s[:member_since])]
+      end
+
+      def letters(count) = count.nil? ? 'register to get mail' : "#{count} letter#{'s' if count != 1}"
+
+      def profile_rows
+        profile = registered? ? @bbs.profile.find(name) : nil
+        return [] unless profile
+
+        %w[location homepage signature].map { |f| [f, profile[f].to_s] }.reject { |_, v| v.empty? }
       end
 
       def profile
@@ -169,14 +184,16 @@ module UI
         @screen.title("PROFILE - #{name.upcase}")
         @screen.say('Return keeps a field as it is.', GR)
         existing = @bbs.profile.find(name) || {}
-        values = %w[signature location homepage notes].to_h do |field|
-          @screen.puts " #{GR}#{field}: #{existing[field]}#{LG}" unless existing[field].to_s.empty?
-          typed = @screen.ask(" #{WH}#{field}#{LG}> ", max: 60)
-          [field.to_sym, typed.empty? ? existing[field].to_s : typed]
-        end
+        values = %w[signature location homepage notes].to_h { |field| [field.to_sym, ask_field(field, existing[field])] }
         @bbs.profile.update(name, **values)
         @screen.say('Profile saved.', GN)
         @screen.pause('return')
+      end
+
+      def ask_field(field, old)
+        @screen.puts " #{GR}#{field}: #{old}#{LG}" unless old.to_s.empty?
+        typed = @screen.ask(" #{WH}#{field}#{LG}> ", max: 60)
+        typed.empty? ? old.to_s : typed
       end
 
       def register
@@ -201,6 +218,7 @@ module UI
           "#{GN}#{name} is yours now.#{LG}"
         when :reserved  then "#{RD}This name is reserved for the sysop.#{LG}"
         when :taken     then "#{RD}This name is already registered.#{LG}"
+        when :look_alike then "#{RD}This name looks too much like a registered one.#{LG}"
         when :too_short then "#{RD}At least #{AccountService::MIN_PASSWORD} characters.#{LG}"
         when :mismatch  then "#{RD}The two passwords differ.#{LG}"
         else "#{RD}Log in with a name first, not as Anonymous.#{LG}"

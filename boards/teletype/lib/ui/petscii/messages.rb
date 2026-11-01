@@ -3,6 +3,13 @@
 module UI
   module Petscii
     class Board
+      LETTER_ERRORS = {
+        unknown:     'No registered name like that. Write to Sysop, or see C, U.',
+        guest:       'A guest writes only to the Sysop. Register to write to others.',
+        too_fast:    "One letter every #{MailService::COOLDOWN} seconds, please.",
+        daily_limit: 'That is all the feedback a guest can leave today. Register, or call again tomorrow.'
+      }.freeze
+
       private
 
       # ── message boards ─────────────────────────────────────────────────
@@ -23,13 +30,7 @@ module UI
       def read_board(board)
         loop do
           @bbs.boards.mark_read(name, board.id) if registered?
-          messages = @bbs.boards.messages(board.id, 30).reverse
-          lines = messages.flat_map do |m|
-            ["#{GR}#{m.timestamp.to_s[5, 11]}#{LG} #{YE}#{m.username}#{LG}",
-             *m.text.to_s.split("\n").flat_map { |t| t.strip.empty? ? [''] : @screen.wrap(t).map { |w| " #{w}" } }, '']
-          end
-          lines = [" #{GR}(no messages on #{board.title} yet)#{LG}"] if messages.empty?
-          @screen.page(board.title.upcase, lines, wait: false)
+          @screen.page(board.title.upcase, board_lines(board), wait: false)
           k = @screen.actions(['n', 'new post'], %w[r reread], %w[q back])
           return if k == 'q'
 
@@ -37,13 +38,27 @@ module UI
         end
       end
 
+      def board_lines(board)
+        messages = @bbs.boards.messages(board.id, 30).reverse
+        return [" #{GR}(no messages on #{board.title} yet)#{LG}"] if messages.empty?
+
+        messages.flat_map do |m|
+          ["#{GR}#{m.timestamp.to_s[5, 11]}#{LG} #{YE}#{m.username}#{LG}", *paragraphs(m.text), '']
+        end
+      end
+
+      # +text+ wrapped to the screen, a space in front of each line.
+      def paragraphs(text)
+        text.to_s.split("\n").flat_map { |t| t.strip.empty? ? [''] : @screen.wrap(t).map { |w| " #{w}" } }
+      end
+
       def post(board)
         @screen.title("POST TO #{board.title.upcase}")
         @screen.puts " #{GR}from:#{LG} #{name}"
-        text = @screen.editor(1000, "POST TO #{board.title.upcase}")
+        text = @screen.editor(BoardService::MAX_LENGTH, "POST TO #{board.title.upcase}")
         return if text.strip.empty?
 
-        case @bbs.post_message(board, name, text, session_id: session_id)
+        case @bbs.post_message(board, name, text, caller_key: caller_key)
         when :ok       then @screen.say('Posted.', GN)
         when :too_fast then @screen.say("One post every #{BoardService::COOLDOWN} seconds, please.", RD)
         else @screen.say('Message cannot be empty.', RD)
@@ -55,25 +70,10 @@ module UI
 
       def mail
         doing('Mail')
-        unless registered?
-          @screen.title('E-MAIL')
-          @screen.say('Mail belongs to registered names (S, then R registers yours). Anyone with a name can ' \
-                      'leave feedback for the sysop.')
-          k = @screen.actions(['f', 'feedback to the sysop'], %w[q back])
-          write_letter(to: MailService::SYSOP) if k == 'f'
-          return
-        end
+        return guest_mail unless registered?
 
         loop do
-          inbox  = @bbs.mail.inbox(name, sysop: sysop?)
-          letter = @screen.pick("E-MAIL - #{name.upcase}", [:write, :feedback, *inbox], right: "#{inbox.size} ") do |l|
-            case l
-            when :write    then "#{WH}write a letter#{LG}"
-            when :feedback then "#{WH}feedback to the sysop#{LG}"
-            else "#{l.read? ? ' ' : "#{YE}*#{LG}"}#{l.time.localtime.strftime('%m-%d')} #{l.from[0, 10].ljust(10)} #{l.subject}"
-            end
-          end
-          case letter
+          case (letter = pick_letter)
           when nil       then return
           when :write    then write_letter
           when :feedback then write_letter(to: MailService::SYSOP)
@@ -82,13 +82,28 @@ module UI
         end
       end
 
+      def guest_mail
+        @screen.title('E-MAIL')
+        @screen.say('Mail belongs to registered names (S, then R registers yours). Anyone with a name can ' \
+                    'leave feedback for the sysop.')
+        k = @screen.actions(['f', 'feedback to the sysop'], %w[q back])
+        write_letter(to: MailService::SYSOP) if k == 'f'
+      end
+
+      def pick_letter
+        inbox = @bbs.mail.inbox(name, sysop: sysop?)
+        @screen.pick("E-MAIL - #{name.upcase}", [:write, :feedback, *inbox], right: "#{inbox.size} ") do |l|
+          case l
+          when :write    then "#{WH}write a letter#{LG}"
+          when :feedback then "#{WH}feedback to the sysop#{LG}"
+          else "#{l.read? ? ' ' : "#{YE}*#{LG}"}#{l.time.localtime.strftime('%m-%d')} #{l.from[0, 10].ljust(10)} #{l.subject}"
+          end
+        end
+      end
+
       def read_letter(letter)
         @bbs.mail.mark_read(letter)
-        lines = [" #{GR}from#{LG}    #{YE}#{letter.from}#{LG}", " #{GR}to#{LG}      #{letter.to}",
-                 " #{GR}date#{LG}    #{letter.time.localtime.strftime('%Y-%m-%d %H:%M')}",
-                 " #{GR}subject#{LG} #{WH}#{letter.subject}#{LG}", "#{DG}#{'─' * 39}#{LG}",
-                 *letter.body.to_s.split("\n").flat_map { |l| l.strip.empty? ? [''] : @screen.wrap(l).map { |w| " #{w}" } }]
-        @screen.page('LETTER', lines, wait: false)
+        @screen.page('LETTER', letter_lines(letter), wait: false)
         k = @screen.actions(%w[r reply], %w[d delete], %w[q back])
         if k == 'r'
           subject = letter.subject.start_with?('Re: ') ? letter.subject : "Re: #{letter.subject}"
@@ -98,6 +113,12 @@ module UI
         end
       end
 
+      def letter_lines(letter)
+        [" #{GR}from#{LG}    #{YE}#{letter.from}#{LG}", " #{GR}to#{LG}      #{letter.to}",
+         " #{GR}date#{LG}    #{letter.time.localtime.strftime('%Y-%m-%d %H:%M')}",
+         " #{GR}subject#{LG} #{WH}#{letter.subject}#{LG}", "#{DG}#{'─' * 39}#{LG}", *paragraphs(letter.body)]
+      end
+
       def write_letter(to: nil, subject: nil)
         if anonymous?
           @screen.say('Call again with a name to write letters.', RD)
@@ -105,27 +126,39 @@ module UI
         end
 
         @screen.title('WRITE A LETTER')
+        to = ask_recipient(to)
+        return if to.empty?
+
+        subject = ask_subject(subject)
+        body = @screen.editor(MailService::BODY_MAX, 'WRITE A LETTER')
+        send_letter(to, subject, body) unless body.strip.empty?
+      end
+
+      def ask_recipient(to)
         if to
           @screen.puts " #{GR}to:#{LG} #{to}"
-        else
-          @screen.say('To a registered name, or Sysop.', GR)
-          to = @screen.ask(" #{GR}to:#{LG} ", max: 20)
-          return if to.empty?
+          return to
         end
+
+        @screen.say('To a registered name, or Sysop.', GR)
+        @screen.ask(" #{GR}to:#{LG} ", max: 20)
+      end
+
+      def ask_subject(subject)
         if subject
           @screen.puts " #{GR}subject:#{LG} #{subject}"
-        else
-          subject = @screen.ask(" #{GR}subject:#{LG} ", max: MailService::SUBJECT_MAX)
+          return subject
         end
-        body = @screen.editor(MailService::BODY_MAX, 'WRITE A LETTER')
-        return if body.strip.empty?
 
-        case @bbs.send_letter(name, to, subject, body, registered: registered?, session_id: session_id)
-        when :ok       then @screen.say("Your letter is on its way to #{@bbs.mail.recipient(to)}.", GN)
-        when :unknown  then @screen.say('No registered name like that. Write to Sysop, or see C, U.', RD)
-        when :guest    then @screen.say('A guest writes only to the Sysop. Register to write to others.', RD)
-        when :too_fast then @screen.say("One letter every #{MailService::COOLDOWN} seconds, please.", RD)
-        else @screen.say('The letter is empty.', RD)
+        @screen.ask(" #{GR}subject:#{LG} ", max: MailService::SUBJECT_MAX)
+      end
+
+      def send_letter(to, subject, body)
+        result = @bbs.send_letter(name, to, subject, body, registered: registered?, caller_key: caller_key)
+        if result == :ok
+          @screen.say("Your letter is on its way to #{@bbs.mail.recipient(to)}.", GN)
+        else
+          @screen.say(LETTER_ERRORS.fetch(result, 'The letter is empty.'), RD)
         end
         @screen.pause('return')
       end
@@ -144,14 +177,11 @@ module UI
           text = @screen.ask(" #{GR}#{OnelinerService::MAX_LENGTH} characters at most#{LG}\r\n> ")
           next if text.empty?
 
-          case @bbs.oneliners.add(name, text)
-          when :anonymous
-            @screen.say('Call again with a name to write on the wall.', RD)
-            @screen.pause('return')
-          when :too_long
-            @screen.say("At most #{OnelinerService::MAX_LENGTH} characters.", RD)
-            @screen.pause('return')
-          end
+          refused = Wording::ONELINER[@bbs.oneliners.add(name, text, caller_key: caller_key)]
+          next unless refused
+
+          @screen.say(refused, RD)
+          @screen.pause('return')
         end
       end
 
@@ -163,34 +193,33 @@ module UI
         doing('Live Chat')
         @bbs.chat.drain(session_id)
         @screen.title('LIVE CHAT')
-        @bbs.chat.history(12).each { |l| @screen.fit([chat_line(l)]).each { |w| @screen.puts w } }
+        show_lines(@bbs.chat.history(12).map { |l| chat_line(l) })
         @screen.puts " #{DG}empty line or <-: back#{LG}"
         @screen.chat("#{CY}>#{LG} ",
                      poll:    -> { @bbs.chat.drain(session_id).map { |l| chat_line(l) } },
-                     on_line: lambda { |text|
-                       @bbs.chat.broadcast(name, text) if @bbs.chat.may_speak?(session_id)
-                     })
+                     on_line: ->(text) { @bbs.chat.say(name, text, caller_key: caller_key) })
       end
+
+      def show_lines(lines) = lines.each { |line| @screen.fit([line]).each { |w| @screen.puts w } }
 
       def irc
         doing('IRC')
         irc = @bbs.irc
         irc.subscribe(session_id)
+        irc_intro(irc)
+        show_lines(irc.history(12).map { |l| irc_line(l) })
+        irc.drain(session_id)
+        @screen.puts " #{DG}any key: back#{LG}"
+        show_lines(irc.drain(session_id).map { |l| irc_line(l) }) while @screen.key(timeout: 1) == :idle
+      end
+
+      def irc_intro(irc)
         @screen.title("IRC #{irc.channel}")
         @screen.say("Read only: the board listens on #{irc.channel} at Libera.Chat as #{irc.nick}. To talk, " \
                     'join from an IRC client: irc.libera.chat 6697.', GR)
         status = irc.joined? ? "#{irc.member_count} on the channel" : 'not connected, reconnecting'
         @screen.say(status, irc.joined? ? GR : RD)
         @screen.puts
-        irc.history(12).each { |l| @screen.fit([irc_line(l)]).each { |w| @screen.puts w } }
-        irc.drain(session_id)
-        @screen.puts " #{DG}any key: back#{LG}"
-        loop do
-          k = @screen.key(timeout: 1)
-          return unless k == :idle
-
-          irc.drain(session_id).each { |l| @screen.fit([irc_line(l)]).each { |w| @screen.puts w } }
-        end
       end
 
       def irc_line(line)

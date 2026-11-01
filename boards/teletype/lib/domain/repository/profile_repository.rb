@@ -1,57 +1,25 @@
 # frozen_string_literal: true
 
-require 'bbs'
-require 'csv'
+require 'time'
 
-# Persistent user profile, keyed by lower-cased username. Backed by a
-# BBS::Store CSV at +path+.
+# The profile of a registered name: signature, location, homepage, notes.
 class ProfileRepository
-  HEADERS = %w[session_id timestamp username signature location homepage notes art].freeze
+  FIELDS = %w[signature location homepage notes art].freeze
 
-  def initialize(path)
-    upgrade_header(path)
-    @store = BBS::Store.new(path: path, headers: HEADERS)
-    @by_name = {}
-    @mu = Mutex.new
-    rebuild
-  end
+  def initialize(db) = @db = db
 
   def upsert(username:, **fields)
-    return if username.to_s.strip.empty?
-    key = username.downcase
-    @mu.synchronize do
-      session_id = (@by_name[key] && @by_name[key]['session_id']) || "user-#{key}"
-      @store.upsert(session_id: session_id, username: username, **fields)
-      rebuild_locked
+    values = FIELDS.to_h { |name| [name, fields[name.to_sym]] }.compact
+    @db.transaction do
+      @db.query('INSERT INTO profiles (user_key, username, updated_at) VALUES (?, ?, ?) ON CONFLICT (user_key) ' \
+                'DO UPDATE SET username = excluded.username, updated_at = excluded.updated_at',
+                Names.key(username), username, Time.now.utc.iso8601)
+      values.each do |name, value|
+        @db.query("UPDATE profiles SET #{name} = ? WHERE user_key = ?", value, Names.key(username))
+      end
     end
   end
 
-  def find(username)
-    @mu.synchronize { @by_name[username.to_s.downcase] }
-  end
-
-  private
-
-  # A file written before a column was added keeps its old header, and the
-  # new column of later rows would be read without a name.
-  def upgrade_header(path)
-    return unless File.exist?(path)
-
-    lines = File.readlines(path)
-    return if lines.empty? || CSV.parse_line(lines.first) == HEADERS
-
-    lines[0] = HEADERS.to_csv
-    File.write(path, lines.join)
-  end
-
-  def rebuild
-    @mu.synchronize { rebuild_locked }
-  end
-
-  def rebuild_locked
-    @by_name = @store.all.each_with_object({}) do |row, h|
-      name = row['username'].to_s
-      h[name.downcase] = row unless name.empty?
-    end
-  end
+  # {"username" => ..., "signature" => ..., ...} or nil.
+  def find(username) = @db.get('SELECT * FROM profiles WHERE user_key = ?', Names.key(username))
 end

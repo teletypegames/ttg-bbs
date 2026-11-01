@@ -1,17 +1,11 @@
 # frozen_string_literal: true
 
-require 'csv'
-require 'time'
-require 'fileutils'
 require_relative '../model/message_model'
 
-# Multi-board store. Each board ("general", "tech", "offtopic"…) maps to one
-# CSV file inside +base_dir+. Lazy-loaded the first time a board is touched;
-# memory keeps the latest KEEP messages of a board and the count of all.
+# The message boards ("general", "tech"…), their posts in one table. A
+# post's stamp is month, day and time, the way the boards always showed it.
 class BoardRepository
   BoardMeta = Struct.new(:id, :title, :description)
-
-  KEEP = 500
 
   DEFAULT_BOARDS = [
     BoardMeta.new('general',  'General',  'Open chat, anything goes'),
@@ -22,103 +16,49 @@ class BoardRepository
 
   attr_reader :boards
 
-  def initialize(base_dir, boards: DEFAULT_BOARDS, legacy_path: nil)
-    @base_dir = base_dir
-    @boards   = boards
-    @cache    = {}
-    @counts   = {}
-    @posters  = {}
-    @mu       = Mutex.new
-    FileUtils.mkdir_p(@base_dir)
-    migrate_legacy!(legacy_path) if legacy_path
+  def initialize(db, boards: DEFAULT_BOARDS)
+    @db     = db
+    @boards = boards
   end
 
   def append(board_id, username, text)
     msg = MessageModel.new(Time.now.strftime('%m-%d %H:%M'), username, text)
-    @mu.synchronize do
-      list = load_board(board_id)
-      list << msg
-      list.shift while list.size > KEEP
-      @counts[board_id] += 1
-      @posters[board_id][username.downcase] = [username, (@posters[board_id].dig(username.downcase, 1) || 0) + 1]
-      CSV.open(path_for(board_id), 'a') { |csv| csv << [msg.timestamp, msg.username, msg.text] }
-    end
+    @db.insert('INSERT INTO posts (board, timestamp, username, user_key, text) VALUES (?, ?, ?, ?, ?)',
+               board_id, msg.timestamp, username, Names.key(username), text)
     msg
   end
 
+  # The newest +n+ posts of a board, oldest first.
   def last(board_id, n = 30)
-    @mu.synchronize { load_board(board_id).last(n) }
+    @db.query('SELECT * FROM posts WHERE board = ? ORDER BY id DESC LIMIT ?', board_id, n).reverse.map { |r| message(r) }
   end
 
-  def count(board_id)
-    @mu.synchronize do
-      load_board(board_id)
-      @counts[board_id]
-    end
+  # The newest +n+ posts over every board, newest first: [[board id, message], ...].
+  def latest(n)
+    @db.query("SELECT * FROM posts WHERE board IN (#{marks}) ORDER BY id DESC LIMIT ?", *ids, n)
+       .map { |row| [row['board'], message(row)] }
   end
 
-  def total_count
-    @mu.synchronize do
-      @boards.sum do |b|
-        load_board(b.id)
-        @counts[b.id]
-      end
-    end
-  end
+  def count(board_id) = @db.get('SELECT COUNT(*) AS n FROM posts WHERE board = ?', board_id)['n']
 
-  # {name_key => [display name, posts]} over every board.
-  def posters
-    @mu.synchronize do
-      @boards.each_with_object({}) do |b, all|
-        load_board(b.id)
-        @posters[b.id].each do |key, (name, n)|
-          all[key] = [name, (all.dig(key, 1) || 0) + n]
-        end
-      end
-    end
+  def total_count = @db.get("SELECT COUNT(*) AS n FROM posts WHERE board IN (#{marks})", *ids)['n']
+
+  def posts_by(name) = @db.get('SELECT COUNT(*) AS n FROM posts WHERE user_key = ?', Names.key(name))['n']
+
+  # [[name, posts], ...] most posts first, +except+ left out; a name is
+  # shown the way it last posted.
+  def top_posters(n, except:)
+    @db.query(<<~SQL, Names.key(except), n).map { |row| [row['username'], row['posts']] }
+      SELECT username, MAX(id), COUNT(*) AS posts FROM posts WHERE user_key != ?
+      GROUP BY user_key ORDER BY posts DESC, user_key LIMIT ?
+    SQL
   end
 
   private
 
-  def migrate_legacy!(legacy_path)
-    return unless File.exist?(legacy_path)
-    target = path_for('general')
-    return if File.exist?(target) # already migrated or general has its own data
-    rows = []
-    CSV.foreach(legacy_path) { |row| rows << row }
-    return if rows.empty?
-    CSV.open(target, 'w') { |csv| rows.each { |r| csv << r } }
-    warn "BoardRepository: migrated #{rows.size} legacy messages " \
-         "from #{legacy_path} to #{target}"
-  rescue StandardError => e
-    warn "BoardRepository: legacy migration failed: #{e}"
-  end
+  def ids = @boards.map(&:id)
 
-  def path_for(id)
-    File.join(@base_dir, "#{id}.csv")
-  end
+  def marks = (['?'] * @boards.size).join(', ')
 
-  def load_board(id)
-    return @cache[id] if @cache.key?(id)
-    list    = []
-    count   = 0
-    posters = {}
-    if File.exist?(path_for(id))
-      CSV.foreach(path_for(id)) do |row|
-        list << MessageModel.new(*row)
-        list.shift if list.size > KEEP
-        count += 1
-        key = row[1].to_s.downcase
-        posters[key] = [row[1].to_s, (posters.dig(key, 1) || 0) + 1]
-      end
-    end
-    @counts[id]  = count
-    @posters[id] = posters
-    @cache[id]   = list
-  rescue StandardError => e
-    warn "BoardRepository load error (#{id}): #{e}"
-    @counts[id]  = 0
-    @posters[id] = {}
-    @cache[id]   = []
-  end
+  def message(row) = MessageModel.new(row['timestamp'], row['username'], row['text'])
 end

@@ -1,98 +1,53 @@
 # frozen_string_literal: true
 
-require 'csv'
 require 'time'
-require 'openssl'
-require 'securerandom'
-require 'fileutils'
 
-# Registered callers: one CSV row per name with a salted PBKDF2-SHA256 hash.
-# Names are matched case-insensitively; the display spelling is kept.
+# Registered callers, one row a name with its salted PBKDF2 digest
+# (Password). Names are matched by their key, any case; the spelling the
+# name registered with is kept for display.
 class AccountRepository
-  Account = Struct.new(:key, :name, :salt, :digest, :created_at)
+  Account = Struct.new(:name_key, :name, :skeleton, :salt, :digest, :created_at, keyword_init: true)
 
-  ITERATIONS = 100_000
-  HEADER     = %w[key name salt digest created_at].freeze
-  KDF_GATE   = Mutex.new
+  def initialize(db) = @db = db
 
-  def initialize(path)
-    @path = path
-    @mu   = Mutex.new
-    fresh!
+  def exists?(name) = !find(name).nil?
+
+  def find(name)
+    row = @db.get('SELECT * FROM accounts WHERE name_key = ?', Names.key(name))
+    row && Account.new(**row.transform_keys(&:to_sym))
   end
 
-  def exists?(name)
-    @mu.synchronize { fresh!.key?(key_for(name)) }
+  # The spellings of every registered name, in sign-up order.
+  def names = @db.query('SELECT name FROM accounts ORDER BY rowid').map { |row| row['name'] }
+
+  def created_at(name) = find(name)&.created_at
+
+  # The registered name +name+ is a look-alike of (another key, the same
+  # Names.skeleton), or nil.
+  def look_alike(name)
+    @db.get('SELECT name FROM accounts WHERE skeleton = ? AND name_key != ? ORDER BY rowid',
+            Names.skeleton(name), Names.key(name))&.fetch('name')
   end
 
-  # The display spellings of every registered name, in sign-up order.
-  def names
-    @mu.synchronize { fresh!.values.map(&:name) }
-  end
+  # Adds the account unless its name or a look-alike of it is taken by
+  # then: :ok, :taken or :look_alike, decided in one transaction.
+  def create(name, salt, digest)
+    @db.transaction do
+      next :taken if exists?(name)
+      next :look_alike if look_alike(name)
 
-  def created_at(name)
-    @mu.synchronize { fresh![key_for(name)]&.created_at }
-  end
-
-  def verify(name, password)
-    account = @mu.synchronize { fresh![key_for(name)] }
-    return false unless account
-
-    digest = hash(password, [account.salt].pack('H*'))
-    OpenSSL.fixed_length_secure_compare(digest, account.digest)
-  end
-
-  def save(name, password)
-    salt    = SecureRandom.random_bytes(16)
-    account = Account.new(key_for(name), name, salt.unpack1('H*'), hash(password, salt), Time.now.iso8601)
-    @mu.synchronize do
-      fresh![account.key] = account
-      write_all
-      @mtime = mtime
-    end
-    account
-  end
-
-  private
-
-  def key_for(name) = name.to_s.strip.downcase
-
-  # bin/account writes the file from another process: the accounts are read
-  # again whenever the file changed, so a write here never drops its rows.
-  def fresh!
-    current = mtime
-    if @by_key.nil? || current != @mtime
-      @by_key = load
-      @mtime  = current
-    end
-    @by_key
-  end
-
-  def mtime = File.exist?(@path) ? File.mtime(@path) : nil
-
-  # PBKDF2 holds the interpreter lock: one at a time, so a flood of password
-  # guesses cannot stall every other caller's screen.
-  def hash(password, salt)
-    KDF_GATE.synchronize do
-      OpenSSL::KDF.pbkdf2_hmac(password.to_s, salt: salt, iterations: ITERATIONS,
-                                               length: 32, hash: 'sha256').unpack1('H*')
+      @db.insert('INSERT INTO accounts (name_key, name, skeleton, salt, digest, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                 Names.key(name), name, Names.skeleton(name), salt, digest, Time.now.iso8601)
+      :ok
     end
   end
 
-  def load
-    return {} unless File.exist?(@path)
-
-    CSV.read(@path, headers: true).to_h { |row| [row['key'], Account.new(*HEADER.map { |h| row[h] })] }
-  end
-
-  def write_all
-    FileUtils.mkdir_p(File.dirname(@path))
-    tmp = "#{@path}.tmp"
-    CSV.open(tmp, 'w') do |csv|
-      csv << HEADER
-      @by_key.each_value { |a| csv << a.to_a }
-    end
-    File.chmod(0o600, tmp)
-    File.rename(tmp, @path)
+  # Sets the password of +name+, creating the account when there is none
+  # (bin/account, sysops included).
+  def save(name, salt, digest)
+    @db.query(<<~SQL, Names.key(name), name, Names.skeleton(name), salt, digest, Time.now.iso8601)
+      INSERT INTO accounts (name_key, name, skeleton, salt, digest, created_at) VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT (name_key) DO UPDATE SET salt = excluded.salt, digest = excluded.digest
+    SQL
   end
 end

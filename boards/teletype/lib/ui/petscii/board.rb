@@ -77,24 +77,28 @@ module UI
           doing('At the main menu')
           k = text_menu? ? main_menu : clubhouse_menu
           next @ctx[:plain] = !text_menu? if k == '*'
-          leaving = %w[q x].include?(k) && logoff?
-          next unless leaving || ACTIONS[k]
+          return if %w[q x].include?(k) && logoff?
 
-          return if leaving
-          next send(GRAPHICS[k]) if !text_menu? && GRAPHICS[k]
-
-          unless text_menu?
-            Clubhouse::Cards.show(@screen.session, Clubhouse::Cards::KEYS[k], @ctx[:cards] ||= Set.new)
-            Clubhouse.text_mode(@screen.session)
-          end
-
-          send(ACTIONS[k])
+          enter_room(k) if ACTIONS[k]
         end
       end
 
       private
 
+      # The room of key +k+: a picture of the clubhouse, or its card and
+      # then its text screen.
+      def enter_room(k)
+        return send(GRAPHICS[k]) if !text_menu? && GRAPHICS[k]
+
+        unless text_menu?
+          Clubhouse::Cards.show(@screen.session, Clubhouse::Cards::KEYS[k], @ctx[:cards] ||= Set.new)
+          Clubhouse.text_mode(@screen.session)
+        end
+        send(ACTIONS[k])
+      end
+
       def name = @ctx[:username] || AccountService::ANONYMOUS
+      def caller_key = @ctx[:caller_key]
       def registered? = @ctx[:authenticated] == true
       def anonymous? = name == AccountService::ANONYMOUS
       def sysop?     = @bbs.sysop?(name, @ctx[:authenticated])
@@ -144,16 +148,16 @@ module UI
       # section's band, its items, then the next section's band level with
       # the one beside it.
       def menu_items
-        left, right = MENU.transpose.map do |sections|
-          sections.map do |title, color, items|
-            items += [SYSOP] if title == 'people' && sysop?
-            [band(title, color), *items.map { |k, label, about| item(k, label, about, color) }]
-          end
-        end
+        left, right = MENU.transpose.map { |sections| sections.map { |section| section_cells(*section) } }
         rows = left.zip(right).map { |l, r| [l.size, r.size].max }
         [left, right].flat_map do |column|
           column.each_with_index.flat_map { |cells, i| cells + Array.new(rows[i] - cells.size) { BBS::Selector.heading } }
         end
+      end
+
+      def section_cells(title, color, items)
+        items += [SYSOP] if title == 'people' && sysop?
+        [band(title, color), *items.map { |k, label, about| item(k, label, about, color) }]
       end
 
       # A section's name on a band of its colour.
@@ -173,22 +177,30 @@ module UI
       # the nodes, the next event and the newest post, one line each. New
       # mail since the last look rings once, as on the old boards.
       def live_strip
-        online = @bbs.online.count
-        seen   = @ctx[:mail_seen] || @unread
+        @screen.puts " #{WH}hi #{name}!#{LG} #{GR}·#{LG} #{YE}#{@bbs.online.count}#{LG} on line#{new_mail}"
+        next_event
+        newest_post
+      end
+
+      def new_mail
+        seen = @ctx[:mail_seen] || @unread
         @ctx[:mail_seen] = @unread
-        mail = if @unread.to_i.positive?
-                 @screen.bell if seen && @unread > seen
-                 " #{GR}·#{LG} #{GN}#{@unread} new mail#{LG}"
-               else
-                 ''
-               end
-        @screen.puts " #{WH}hi #{name}!#{LG} #{GR}·#{LG} #{YE}#{online}#{LG} on line#{mail}"
+        return '' unless @unread.to_i.positive?
+
+        @screen.bell if seen && @unread > seen
+        " #{GR}·#{LG} #{GN}#{@unread} new mail#{LG}"
+      end
+
+      def next_event
         event = @bbs.site.upcoming_events(1).first
-        if event
-          days = ((event.date - Time.now) / 86_400).ceil
-          when_ = days <= 0 ? 'today' : "in #{days} day#{'s' unless days == 1}"
-          @screen.puts " #{GR}next:#{LG} #{event.name[0, 38 - 7 - when_.length - 1]} #{CY}#{when_}#{LG}"
-        end
+        return unless event
+
+        days = ((event.date - Time.now) / 86_400).ceil
+        when_ = days <= 0 ? 'today' : "in #{days} day#{'s' unless days == 1}"
+        @screen.puts " #{GR}next:#{LG} #{event.name[0, 38 - 7 - when_.length - 1]} #{CY}#{when_}#{LG}"
+      end
+
+      def newest_post
         _board, post = @bbs.boards.latest(1).first
         return unless post
 
@@ -200,105 +212,6 @@ module UI
         return Clubhouse.leave?(@screen) unless text_menu?
 
         @screen.choose("#{WH}log off now? (y/n)#{LG} ", %w[y n], back: 'n') == 'y'
-      end
-
-      # ── more ───────────────────────────────────────────────────────────
-
-      def trophies
-        doing('Hall of Fame')
-        Clubhouse::Trophies.show(@screen.session, @bbs.hall_of_fame)
-      end
-
-      def town_map
-        doing('BBS Network')
-        Clubhouse::TownMap.new(@screen.session, @bbs.network).run
-      end
-
-      # The games room; a C64 door chosen there opens on the text screen.
-      def games_room
-        doing('Games Room')
-        scene = @bbs.scene.scene(name, registered: registered?, sysop: sysop?)
-        door = Clubhouse::GamesRoom.new(@screen.session, @bbs.doors, scene).run
-        return unless door
-
-        Clubhouse.text_mode(@screen.session)
-        doing("Door: #{door.title}")
-        BBS::Door.new(door.name, door.petscii || door.program, label: door.label).run(@screen.session, @ctx)
-      end
-
-      # Only the doors that fit 40 columns, or have a C64 version; the others
-      # wait on the modern face.
-      def doors
-        doors, wide = @bbs.doors.partition(&:c64?)
-        door = @screen.pick('DOORS', doors) { |d| "#{d.title} #{GR}#{d.tag}#{LG}" }
-        unless door
-          return if wide.empty?
-
-          @screen.title('DOORS')
-          @screen.say("#{wide.map(&:title).join(', ')} need 80 columns: call with a PC " \
-                      'terminal and choose 1 to open them.', GR)
-          return @screen.pause
-        end
-
-        doing("Door: #{door.title}")
-        BBS::Door.new(door.name, door.petscii || door.program, label: door.label).run(@screen.session, @ctx)
-      end
-
-      def master
-        doing('Asking the TTG Master')
-        @screen.title('ASK THE TTG MASTER')
-        @screen.say('Hey, caller! I am the sysop of this board. Ask me where things are, what is new, what is ' \
-                    'coming up. An empty line takes you back.', YE)
-        loop do
-          question = @screen.ask("\r\n#{CY}you:#{LG} ")
-          return if question.empty?
-
-          @screen.write "#{DG}thinking...#{LG}"
-          reply = @bbs.c64_master.answer(question, @ctx)
-          @screen.write "\r#{' ' * 11}\r"
-          @screen.say("ttg master: #{reply}", YE)
-        end
-      end
-
-      def system_info
-        doing('System Info')
-        rows = [
-          ['nodes in use', @bbs.online.count.to_s],
-          ['calls', "#{@bbs.last_callers.total_calls} (#{@bbs.last_callers.calls_today} today)"],
-          ['messages', @bbs.boards.total_count.to_s],
-          ['boards', @bbs.boards.boards.size.to_s],
-          ['uptime', uptime],
-          ['ruby', RUBY_VERSION]
-        ]
-        lines = rows.map { |k, v| " #{GR}#{k.ljust(13)}#{LG}#{v}" }
-        lines += ['', " #{GR}our other boards: n on the main menu#{LG}"]
-        @screen.page('SYSTEM INFO', lines)
-      end
-
-      def uptime
-        seconds = (Time.now - TeletypeBBS::STARTED_AT).to_i
-        "#{seconds / 3600}h #{(seconds % 3600) / 60}m"
-      end
-
-      def help
-        doing('Help')
-        @screen.page('HELP', HELP.flat_map { |l| l.empty? ? [''] : @screen.wrap(l).map { |w| " #{w}" } })
-      end
-
-      def sysop_console
-        return unless sysop?
-
-        doing('Sysop Console')
-        @screen.title('SYSOP CONSOLE')
-        @screen.puts " #{GR}nodes#{LG}      #{@bbs.online.count}"
-        @screen.puts " #{GR}messages#{LG}   #{@bbs.boards.total_count}"
-        @screen.puts " #{GR}in chat#{LG}    #{@bbs.chat.subscriber_count}"
-        @screen.puts
-        @bbs.online.nodes.each { |n|
-          @screen.puts " #{YE}#{n.number.to_s.rjust(2)}#{LG} #{n.name[0, 16].ljust(17)}#{GR}#{n.activity.to_s[0, 18]}#{LG}"
-        }
-        text = @screen.ask("\r\n#{WH}broadcast#{LG} (empty: back)\r\n> ")
-        @bbs.sysop_broadcast(name, text) unless text.empty?
       end
     end
   end

@@ -3,54 +3,51 @@
 # Tiny in-memory chat hub. Each session subscribes to receive broadcast
 # messages from other sessions. Backed by a per-session list so the
 # Application's idle tick can drain pending messages; a session that does
-# not read its chat keeps only the latest PENDING_LIMIT lines.
+# not read its chat keeps only the latest PENDING_LIMIT lines. A caller
+# speaks through #say: a line of MAX_LENGTH at most, BURST of them in
+# BURST_SECONDS a name and a line.
 class ChatService
   ChatLine = Struct.new(:timestamp, :username, :text)
 
   PENDING_LIMIT = 200
-  MIN_INTERVAL  = 0.5
+  HISTORY_LIMIT = 200
+  MAX_LENGTH    = 240
+  BURST         = 4
+  BURST_SECONDS = 4
 
   def initialize
-    @subs = {}
-    @last = {}
-    @mu   = Mutex.new
-    @history = []
-    @history_limit = 200
-    @said_at = nil
+    @subs     = {}
+    @mu       = Mutex.new
+    @history  = []
+    @said_at  = nil
+    @throttle = Throttle.new(limit: BURST, per: BURST_SECONDS)
   end
 
   def subscribe(session_id)
     @mu.synchronize { @subs[session_id] = [] }
   end
 
-  # False when the session spoke less than MIN_INTERVAL seconds ago.
-  def may_speak?(session_id)
-    now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    @mu.synchronize do
-      return false if @last[session_id] && now - @last[session_id] < MIN_INTERVAL
-
-      @last[session_id] = now
-      true
-    end
-  end
-
   def unsubscribe(session_id)
-    @mu.synchronize do
-      @subs.delete(session_id)
-      @last.delete(session_id)
-    end
+    @mu.synchronize { @subs.delete(session_id) }
   end
 
+  # A caller's line: :ok, :empty or :too_fast.
+  def say(username, text, caller_key:)
+    line = BBS::Text.clean(text, keep_newlines: false).strip[0, MAX_LENGTH]
+    return :empty if line.empty?
+    return :too_fast unless @throttle.allow?(username, caller_key)
+
+    broadcast(username, line)
+    :ok
+  end
+
+  # A line from the board itself (a page, a sysop broadcast, IRC).
   def broadcast(username, text)
     line = ChatLine.new(Time.now.strftime('%H:%M:%S'), username, text)
     @mu.synchronize do
       @said_at = Time.now
-      @history << line
-      @history.shift while @history.size > @history_limit
-      @subs.each_value do |pending|
-        pending << line
-        pending.shift while pending.size > PENDING_LIMIT
-      end
+      push(@history, line, HISTORY_LIMIT)
+      @subs.each_value { |pending| push(pending, line, PENDING_LIMIT) }
     end
     line
   end
@@ -72,5 +69,12 @@ class ChatService
 
   def subscriber_count
     @mu.synchronize { @subs.size }
+  end
+
+  private
+
+  def push(list, line, limit)
+    list << line
+    list.shift while list.size > limit
   end
 end

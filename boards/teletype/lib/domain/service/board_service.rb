@@ -1,25 +1,28 @@
 # frozen_string_literal: true
 
+# The message boards: reading them, what a registered name has not read
+# yet, and posting, one post in COOLDOWN seconds a name and a line.
 class BoardService
-  COOLDOWN = 30
+  COOLDOWN   = 30
+  MAX_LENGTH = 1000
 
-  def initialize(repo, last_read: nil)
+  def initialize(repo, last_read:)
     @repo      = repo
     @last_read = last_read
-    @last = {}
-    @mu   = Mutex.new
+    @throttle  = Throttle.new(limit: 1, per: COOLDOWN)
   end
 
   def boards               = @repo.boards
-  def board(id)            = @repo.boards.find { |b| b.id == id }
+  def board(id)            = boards.find { |b| b.id == id }
   def messages(id, n = 30) = @repo.last(id, n)
   def count(id)            = @repo.count(id)
   def total_count          = @repo.total_count
+  def posts_by(name)       = @repo.posts_by(name)
 
   # Unread messages of a registered name on a board. A name that never
   # opened the board has read nothing of it.
   def unread(username, board_id)
-    return 0 unless @last_read && username
+    return 0 unless username
 
     [count(board_id) - (@last_read.get(username, board_id) || 0), 0].max
   end
@@ -30,43 +33,23 @@ class BoardService
   end
 
   def mark_read(username, board_id)
-    @last_read&.set(username, board_id, count(board_id)) if username
+    @last_read.set(username, board_id, count(board_id)) if username
   end
 
   # The newest posts over every board, newest first: [[board, message], ...].
-  # A post's stamp is month, day and time, so it sorts within a year.
-  def latest(n = 5)
-    boards.flat_map { |b| messages(b.id, n).map { |m| [b, m] } }
-          .sort_by { |_, m| m.timestamp.to_s }.reverse.first(n)
-  end
+  def latest(n = 5) = @repo.latest(n).map { |id, message| [board(id), message] }
 
   # [[name, posts], ...] most posts first.
-  def top_posters(n = 10)
-    @repo.posters.values.reject { |name, _| name.casecmp?(AccountService::ANONYMOUS) }
-         .sort_by { |name, posts| [-posts, name.downcase] }.first(n)
-  end
+  def top_posters(n = 10) = @repo.top_posters(n, except: AccountService::ANONYMOUS)
 
-  # :too_fast when the same session posted less than COOLDOWN seconds ago.
-  def post(board_id, username, text, session_id: nil)
-    return :empty if text.to_s.strip.empty?
-    return :too_fast unless may_post?(session_id)
+  # :ok, :empty, :unknown (no such board) or :too_fast.
+  def post(board_id, username, text, caller_key:)
+    body = BBS::Text.clean(text).strip
+    return :empty if body.empty?
+    return :unknown unless board(board_id)
+    return :too_fast unless @throttle.allow?(username, caller_key)
 
-    @repo.append(board_id, username, text.strip[0...1000])
+    @repo.append(board_id, username, body[0, MAX_LENGTH])
     :ok
-  end
-
-  private
-
-  def may_post?(session_id)
-    return true if session_id.nil?
-
-    now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    @mu.synchronize do
-      @last.delete_if { |_, at| now - at > COOLDOWN }
-      return false if @last.key?(session_id)
-
-      @last[session_id] = now
-      true
-    end
   end
 end

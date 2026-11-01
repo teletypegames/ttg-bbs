@@ -8,7 +8,13 @@
 #   docker exec -it teletype-bbs bin/account Tasi
 
 require 'io/console'
+require 'bundler/setup'
+require 'bbs'
+require_relative '../lib/domain/model/names'
+require_relative '../lib/domain/model/password'
+require_relative '../lib/domain/repository/database'
 require_relative '../lib/domain/repository/account_repository'
+require_relative '../lib/domain/service/login_guard'
 require_relative '../lib/domain/service/account_service'
 
 name = ARGV.first.to_s.strip
@@ -24,8 +30,8 @@ end
 password = ask('Password: ')
 abort 'the two passwords differ' unless password == ask('Again: ')
 
-service = AccountService.new(AccountRepository.new(ENV.fetch('TELETYPE_BBS_ACCOUNTS_PATH', 'data/accounts.csv')))
-case service.set_password(name, password)
+db = Database.open(ENV.fetch('TELETYPE_BBS_DB', 'data/teletype.sqlite3'))
+case AccountService.new(AccountRepository.new(db)).set_password(name, password)
 when :ok        then puts "#{name}: password set"
 when :too_short then abort "at least #{AccountService::MIN_PASSWORD} characters"
 end

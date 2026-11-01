@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
-require 'csv'
 require 'yaml'
-require 'time'
-require 'fileutils'
 
 # TTG Trivia: a door game of the old kind, ten questions against the clock
 # and a hall of fame. Half the questions come from the board's own
@@ -17,36 +14,6 @@ module Trivia
                 'Modem Wars', 'Lord of the Prompt', 'Sprite Sorcerer', 'Cassette Quest'].freeze
 
   Question = Struct.new(:text, :answers, :right)
-  Score    = Struct.new(:timestamp, :username, :points, :correct)
-
-  # The hall of fame: every finished game, the best KEEP shown.
-  class Scores
-    def initialize(path)
-      @path = path
-      @mu   = Mutex.new
-    end
-
-    def add(username, points, correct)
-      @mu.synchronize do
-        FileUtils.mkdir_p(File.dirname(@path))
-        CSV.open(@path, 'a') { |csv| csv << [Time.now.iso8601, username, points, correct] }
-      end
-    end
-
-    def best(n = KEEP)
-      all.sort_by { |s| [-s.points.to_i, s.timestamp] }.first(n)
-    end
-
-    def all
-      @mu.synchronize do
-        return [] unless File.exist?(@path)
-
-        CSV.read(@path).map { |row| Score.new(*row) }
-      end
-    rescue StandardError
-      []
-    end
-  end
 
   def self.door(games:, site:, scores:)
     ->(session, ctx) { Game.new(session, ctx, games: games, site: site, scores: scores).run }
@@ -54,30 +21,41 @@ module Trivia
 
   # One question about each of a few games and members, the rest fixed.
   def self.questions(games, site)
-    pool = YAML.safe_load_file(FIXED).map do |q|
+    released = games.all.select { |g| g.released? && !g.dev_build? }
+    pool = fixed + platform_questions(released) + [title_question(released), motto_question(site)].compact
+    pool.sample(ROUNDS).map { |q| Question.new(q.text, q.answers.shuffle, q.right) }
+  end
+
+  def self.fixed
+    YAML.safe_load_file(FIXED).map do |q|
       Question.new(q['question'], q['answers'].map(&:to_s), q['answers'].first.to_s)
     end
-    released  = games.all.select { |g| g.released? && !g.dev_build? }
-    platforms = released.map { |g| GamesService.platform_name(g.platform) }.uniq
-    released.sample(3).each do |g|
-      right = GamesService.platform_name(g.platform)
-      next if platforms.size < 4
+  end
 
-      pool << Question.new("Which platform is #{g.title} made for?",
-                           [right, *(platforms - [right]).sample(3)], right)
+  def self.platform_questions(released)
+    platforms = released.map { |g| GamesService.platform_name(g.platform) }.uniq
+    return [] if platforms.size < 4
+
+    released.sample(3).map do |g|
+      right = GamesService.platform_name(g.platform)
+      Question.new("Which platform is #{g.title} made for?", [right, *(platforms - [right]).sample(3)], right)
     end
+  end
+
+  def self.title_question(released)
     titles = released.map(&:title).uniq
-    if titles.any?
-      right = titles.sample
-      pool << Question.new('Which of these is a Teletype Games title?', [right, *FAKE_GAMES.sample(3)], right)
-    end
+    return if titles.empty?
+
+    right = titles.sample
+    Question.new('Which of these is a Teletype Games title?', [right, *FAKE_GAMES.sample(3)], right)
+  end
+
+  def self.motto_question(site)
     with_motto = site.members.reject { |m| m.motto.to_s.strip.empty? }
-    if with_motto.size >= 4
-      m = with_motto.sample
-      pool << Question.new("Whose motto is it? \"#{m.motto}\"",
-                           [m.nick, *(with_motto - [m]).map(&:nick).sample(3)], m.nick)
-    end
-    pool.sample(ROUNDS).map { |q| Question.new(q.text, q.answers.shuffle, q.right) }
+    return if with_motto.size < 4
+
+    m = with_motto.sample
+    Question.new("Whose motto is it? \"#{m.motto}\"", [m.nick, *(with_motto - [m]).map(&:nick).sample(3)], m.nick)
   end
 
   class Game
@@ -107,26 +85,15 @@ module Trivia
       return unless wait_key
 
       questions = Trivia.questions(@games, @site)
-      points    = 0
-      correct   = 0
-      streak    = 0
+      @points = @correct = @streak = 0
       questions.each_with_index do |q, i|
-        result = ask(q, i + 1, questions.size, points)
+        result = ask(q, i + 1, questions.size, @points)
         return nil if result.nil?
 
-        if result.positive?
-          streak  += 1
-          bonus    = streak >= 3 ? 50 : 0
-          points  += result + bonus
-          correct += 1
-          out "\r\n  #{G}RIGHT!#{O} #{W}+#{result}#{O}#{"  #{M}streak bonus +#{bonus}#{O}" if bonus.positive?}\r\n"
-        else
-          streak = 0
-          out "\r\n  #{R}#{result.zero? ? 'TIME!' : 'WRONG.'}#{O} The answer: #{Y}#{q.right}#{O}\r\n"
-        end
+        score(q, result)
         sleep 1.2
       end
-      finish(points, correct, questions.size)
+      finish(@points, @correct, questions.size)
     rescue IOError, Errno::EPIPE, Errno::ECONNRESET
       nil
     rescue StandardError => e
@@ -136,6 +103,23 @@ module Trivia
     private
 
     def out(text) = @session.write(text)
+
+    # Counts the answer worth +result+ (0 or less: time out or wrong) and
+    # tells the caller.
+    def score(question, result)
+      return missed(question, result) unless result.positive?
+
+      @streak += 1
+      bonus    = @streak >= 3 ? 50 : 0
+      @points += result + bonus
+      @correct += 1
+      out "\r\n  #{G}RIGHT!#{O} #{W}+#{result}#{O}#{"  #{M}streak bonus +#{bonus}#{O}" if bonus.positive?}\r\n"
+    end
+
+    def missed(question, result)
+      @streak = 0
+      out "\r\n  #{R}#{result.zero? ? 'TIME!' : 'WRONG.'}#{O} The answer: #{Y}#{question.right}#{O}\r\n"
+    end
 
     def title
       out "\e[0m\e[2J\e[H"
@@ -150,7 +134,7 @@ module Trivia
     end
 
     def hall
-      best = @scores.best
+      best = @scores.best(KEEP)
       out "  #{C}─── Hall of Fame ──────────────────────────────────#{O}\r\n"
       if best.empty?
         out "  #{D}(empty: the first name here is yours to take)#{O}\r\n"
@@ -172,6 +156,19 @@ module Trivia
 
     # Points for the answer: 0 on time out, -1 wrong, nil when the caller quits.
     def ask(q, n, total, points)
+      show_question(q, n, total, points)
+      started = Time.now
+      loop do
+        left = SECONDS - (Time.now - started).to_i
+        clock(left)
+        return 0 if left <= 0
+
+        answer = answer(q, left)
+        return answer unless answer == :none
+      end
+    end
+
+    def show_question(q, n, total, points)
       out "\e[0m\e[2J\e[H"
       out "  #{C}TTG TRIVIA#{O}   #{D}question #{n}/#{total}#{O}   #{W}#{points} pts#{O}   #{D}caller: #{@name}#{O}\r\n"
       out "  #{C}#{'─' * 66}#{O}\r\n\r\n"
@@ -179,23 +176,24 @@ module Trivia
       out "\r\n"
       q.answers.each_with_index { |a, i| out "    #{Y}#{(65 + i).chr})#{O} #{a}\r\n" }
       out "\r\n"
-      started = Time.now
-      loop do
-        left = SECONDS - (Time.now - started).to_i
-        bar  = ('█' * left) + ('░' * (SECONDS - left))
-        out "\r  #{left > 5 ? G : R}#{bar}#{O} #{format('%2d', left)}s  "
-        return 0 if left <= 0
+    end
 
-        key = @session.readkey(timeout: 0.5)
-        return nil if key.nil?
-        next unless key.is_a?(String)
-        return nil if key.casecmp?('q')
+    def clock(left)
+      bar = ('█' * left) + ('░' * (SECONDS - left))
+      out "\r  #{left > 5 ? G : R}#{bar}#{O} #{format('%2d', left)}s  "
+    end
 
-        index = key.upcase.ord - 65
-        next unless index.between?(0, q.answers.size - 1)
+    # The points of the key pressed within half a second, nil to quit,
+    # :none for no answer yet.
+    def answer(q, left)
+      key = @session.readkey(timeout: 0.5)
+      return nil if key.nil? || (key.is_a?(String) && key.casecmp?('q'))
+      return :none unless key.is_a?(String)
 
-        return q.answers[index] == q.right ? 50 + (left * 10) : -1
-      end
+      index = key.upcase.ord - 65
+      return :none unless index.between?(0, q.answers.size - 1)
+
+      q.answers[index] == q.right ? 50 + (left * 10) : -1
     end
 
     def finish(points, correct, total)

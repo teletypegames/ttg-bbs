@@ -1,79 +1,39 @@
 # frozen_string_literal: true
 
-require 'csv'
 require 'time'
-require 'fileutils'
 require 'securerandom'
 
 # Private mail between registered names, and the callers' feedback to the
-# sysop (addressed to "Sysop"). One CSV, rewritten whole when a letter is
-# read or deleted: a board's mailbag stays small.
+# sysop (addressed to "Sysop").
 class MailRepository
   Letter = Struct.new(:id, :timestamp, :from, :to, :subject, :body, :read) do
-    def read? = read == '1'
+    def read? = read == 1
     def time  = Time.parse(timestamp)
   end
 
-  HEADER = Letter.members.map(&:to_s).freeze
-
-  def initialize(path)
-    @path    = path
-    @mu      = Mutex.new
-    @letters = load
-  end
+  def initialize(db) = @db = db
 
   def append(from, to, subject, body)
-    letter = Letter.new(SecureRandom.hex(6), Time.now.iso8601, from, to, subject, body, '0')
-    @mu.synchronize do
-      @letters << letter
-      write_all
-    end
+    letter = Letter.new(SecureRandom.hex(6), Time.now.iso8601, from, to, subject, body, 0)
+    @db.insert('INSERT INTO mail (id, timestamp, sender, recipient, recipient_key, subject, body, read) ' \
+               'VALUES (?, ?, ?, ?, ?, ?, ?, ?)', *letter.to_a[0, 4], Names.key(to), *letter.to_a[4, 3])
     letter
   end
 
   # Letters to any of the names, newest first.
   def to(names)
-    keys = names.map(&:downcase)
-    @mu.synchronize { @letters.select { |l| keys.include?(l.to.downcase) }.reverse.map(&:dup) }
+    keys = names.map { |name| Names.key(name) }
+    @db.query("SELECT * FROM mail WHERE recipient_key IN (#{(['?'] * keys.size).join(', ')}) ORDER BY rowid DESC", *keys)
+       .map { |row| letter(row) }
   end
 
-  def mark_read(id)
-    @mu.synchronize do
-      letter = @letters.find { |l| l.id == id }
-      next unless letter && !letter.read?
+  def mark_read(id) = @db.change('UPDATE mail SET read = 1 WHERE id = ?', id)
 
-      letter.read = '1'
-      write_all
-    end
-  end
-
-  def delete(id)
-    @mu.synchronize do
-      next unless @letters.reject! { |l| l.id == id }
-
-      write_all
-    end
-  end
+  def delete(id) = @db.change('DELETE FROM mail WHERE id = ?', id)
 
   private
 
-  def load
-    return [] unless File.exist?(@path)
-    raw = File.binread(@path).force_encoding(Encoding::UTF_8).scrub
-    CSV.parse(raw, headers: true).map { |row| Letter.new(*HEADER.map { |h| row[h] }) }
-  rescue StandardError => e
-    warn "MailRepository load error: #{e}"
-    []
-  end
-
-  def write_all
-    FileUtils.mkdir_p(File.dirname(@path))
-    tmp = "#{@path}.tmp"
-    CSV.open(tmp, 'w') do |csv|
-      csv << HEADER
-      @letters.each { |l| csv << l.to_a }
-    end
-    File.chmod(0o600, tmp)
-    File.rename(tmp, @path)
+  def letter(row)
+    Letter.new(row['id'], row['timestamp'], row['sender'], row['recipient'], row['subject'], row['body'], row['read'])
   end
 end
