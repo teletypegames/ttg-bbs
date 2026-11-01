@@ -16,6 +16,7 @@ class ChatService
     @mu   = Mutex.new
     @history = []
     @history_limit = 200
+    @said_at = nil
   end
 
   def subscribe(session_id)
@@ -43,6 +44,7 @@ class ChatService
   def broadcast(username, text)
     line = ChatLine.new(Time.now.strftime('%H:%M:%S'), username, text)
     @mu.synchronize do
+      @said_at = Time.now
       @history << line
       @history.shift while @history.size > @history_limit
       @subs.each_value do |pending|
@@ -60,6 +62,12 @@ class ChatService
 
   def history(n = 50)
     @mu.synchronize { @history.last(n).dup }
+  end
+
+  # When the last line was said, or nil before the first: the smoke from
+  # the clubhouse chimney.
+  def said_at
+    @mu.synchronize { @said_at }
   end
 
   def subscriber_count

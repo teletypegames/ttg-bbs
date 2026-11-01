@@ -2,6 +2,7 @@
 
 require_relative 'lib/domain'
 require_relative 'lib/ui/logo'
+require_relative 'lib/ui/arts'
 require_relative 'lib/ui/modern'
 require_relative 'lib/ui/petscii'
 

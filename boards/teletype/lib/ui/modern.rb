@@ -191,13 +191,11 @@ module UI
             end
 
             def refresh_dashboard
+              name = context[:username] || AccountService::ANONYMOUS
               @dashboard.data = Dashboard::Data.new(
-                name: context[:username] || AccountService::ANONYMOUS, registered: registered?,
-                caller_number: context[:caller_number], node: services[:online].node(session_id)&.number,
-                nodes: services[:online].nodes, callers: services[:last_callers].recent(5),
-                posts: services[:boards].latest(5), events: services[:site].upcoming_events(3),
-                mail: registered? ? services[:mail].unread_count(context[:username], sysop: sysop?) : nil,
-                oneliners: services[:oneliners].recent(8), messages: services[:boards].total_count
+                name: name, registered: registered?, caller_number: context[:caller_number],
+                node: services[:online].node(session_id)&.number,
+                scene: services[:scene].scene(name, registered: registered?, sysop: sysop?)
               )
             rescue StandardError => e
               warn "Dashboard: #{e.class}: #{e.message}"
@@ -208,7 +206,7 @@ module UI
 
           window :system_info, type: :info do |window_spec|
             window_spec.accent Accent::STYLES[:board]
-            window_spec.title  ' System Info '
+            window_spec.title  Icon.title(:board, 'System Info')
             window_spec.width  60
             window_spec.height 15
             window_spec.body do |ctx|
@@ -231,7 +229,7 @@ module UI
           window :messages, type: :master_detail do |window_spec|
             window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
-            window_spec.title         ' Message Boards '
+            window_spec.title         Icon.title(:messages, 'Message Boards')
             window_spec.list_width    20
             window_spec.empty_message '  (no boards configured)'
             window_spec.items         { |ctx| ctx[:boards].boards }
@@ -258,7 +256,7 @@ module UI
           window :compose_message, type: :form do |window_spec|
             window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
-            window_spec.title        { |ctx| ctx[:board] ? " Post to #{ctx[:board].title} " : ' Compose ' }
+            window_spec.title        { |ctx| Icon.title(:messages, ctx[:board] ? "Post to #{ctx[:board].title}" : 'Compose') }
             window_spec.width        { |ctx| [ctx[:app].cols - 8, 70].min }
             window_spec.height       14
             window_spec.hint         { |ctx| "From: #{ctx[:username] || 'Anonymous'} — Ctrl-Enter sends" }
@@ -289,7 +287,7 @@ module UI
           window :team, type: :info do |window_spec|
             window_spec.accent Accent::STYLES[:people]
             window_spec.maximizable true
-            window_spec.title  ' The Team '
+            window_spec.title  Icon.title(:people, 'The Team')
             window_spec.width  64
             window_spec.height { |ctx| [ctx[:app].rows - 4, 22].min }
             window_spec.scroll true
@@ -298,7 +296,7 @@ module UI
 
           window :network, type: :info do |window_spec|
             window_spec.accent Accent::STYLES[:board]
-            window_spec.title  ' BBS Network '
+            window_spec.title  Icon.title(:board, 'BBS Network')
             window_spec.width  { |ctx| [ctx[:app].cols - 4, 76].min }
             window_spec.height { |ctx| [Formatters::Network.body.size + 6, ctx[:app].rows - 3].min }
             window_spec.scroll true
@@ -307,7 +305,7 @@ module UI
 
           window :register, type: :form do |window_spec|
             window_spec.accent Accent::STYLES[:you]
-            window_spec.title        { |ctx| " Register — #{ctx[:username]} " }
+            window_spec.title        { |ctx| Icon.title(:you, "Register — #{ctx[:username]}") }
             window_spec.width        60
             window_spec.height       11
             window_spec.hint         'Next time the BBS asks for this password.'
@@ -332,7 +330,7 @@ module UI
 
           window :online_users, type: :info do |window_spec|
             window_spec.accent Accent::STYLES[:people]
-            window_spec.title  ' Who is Online '
+            window_spec.title  Icon.title(:people, 'Who is Online')
             window_spec.width  74
             window_spec.scroll true
             window_spec.height { |ctx| [ctx[:online].count + 8, 10].max }
@@ -341,7 +339,7 @@ module UI
 
           window :last_callers, type: :info do |window_spec|
             window_spec.accent Accent::STYLES[:people]
-            window_spec.title  ' Last Callers '
+            window_spec.title  Icon.title(:people, 'Last Callers')
             window_spec.width  64
             window_spec.scroll true
             window_spec.height { |ctx| [ctx[:last_callers].recent(15).size + 6, 10].max }
@@ -351,7 +349,7 @@ module UI
           window :chat, type: :stream do |window_spec|
             window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
-            window_spec.title       ' Live Chat '
+            window_spec.title       Icon.title(:messages, 'Live Chat')
             window_spec.placeholder 'Type a message and press Enter…'
             window_spec.initial_lines do |ctx|
               ctx[:chat].drain(ctx[:session_id])
@@ -387,7 +385,7 @@ module UI
 
           window :profile, type: :form do |window_spec|
             window_spec.accent Accent::STYLES[:you]
-            window_spec.title  { |ctx| " Profile — #{ctx[:username] || 'Anonymous'} " }
+            window_spec.title  { |ctx| Icon.title(:you, "Profile — #{ctx[:username] || 'Anonymous'}") }
             window_spec.width  64
             window_spec.height 14
             window_spec.prefill do |ctx|
@@ -413,7 +411,7 @@ module UI
           window :oneliners, type: :info do |window_spec|
             window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
-            window_spec.title  ' Oneliners '
+            window_spec.title  Icon.title(:messages, 'Oneliners')
             window_spec.width  { |ctx| [ctx[:app].cols - 6, 78].min }
             window_spec.height { |ctx| [ctx[:oneliners].recent(30).size + 6, 10].max }
             window_spec.scroll true
@@ -443,7 +441,7 @@ module UI
           window :dev_log, type: :master_detail do |window_spec|
             window_spec.accent Accent::STYLES[:board]
             window_spec.maximizable true
-            window_spec.title         ' Dev Log — git.teletypegames.org '
+            window_spec.title         Icon.title(:board, 'Dev Log — git.teletypegames.org')
             window_spec.list_width    36
             window_spec.empty_message '  (no activity, or Gitea did not answer)'
             window_spec.items         { |ctx| ctx[:dev_log].recent(60) }
@@ -460,7 +458,7 @@ module UI
           window :master, type: :stream do |window_spec|
             window_spec.accent Accent::STYLES[:help]
             window_spec.maximizable true
-            window_spec.title       ' Ask the TTG Master '
+            window_spec.title       Icon.title(:help, 'Ask the TTG Master')
             window_spec.placeholder 'Ask about the board and press Enter…'
             window_spec.initial_lines do |ctx|
               ctx[:master_queue] = Queue.new
@@ -480,7 +478,7 @@ module UI
 
           window :sysop_console, type: :info do |window_spec|
             window_spec.accent Accent::STYLES[:you]
-            window_spec.title  ' Sysop Console '
+            window_spec.title  Icon.title(:you, 'Sysop Console')
             window_spec.width  70
             window_spec.height 18
             window_spec.scroll true
@@ -509,7 +507,7 @@ module UI
           window :user_list, type: :info do |window_spec|
             window_spec.accent Accent::STYLES[:people]
             window_spec.maximizable true
-            window_spec.title  ' User Listing '
+            window_spec.title  Icon.title(:people, 'User Listing')
             window_spec.width  74
             window_spec.scroll true
             window_spec.height { |ctx| (ctx[:accounts].names.size + 9).clamp(10, [ctx[:app].rows - 4, 10].max) }
@@ -520,7 +518,7 @@ module UI
 
           window :my_stats, type: :info do |window_spec|
             window_spec.accent Accent::STYLES[:you]
-            window_spec.title  { |ctx| " Your Stats — #{ctx[:username]} " }
+            window_spec.title  { |ctx| Icon.title(:you, "Your Stats — #{ctx[:username]}") }
             window_spec.width  60
             window_spec.height 16
             window_spec.body do |ctx|
@@ -535,7 +533,7 @@ module UI
           window :hall_of_fame, type: :info do |window_spec|
             window_spec.accent Accent::STYLES[:people]
             window_spec.maximizable true
-            window_spec.title  ' Hall of Fame '
+            window_spec.title  Icon.title(:people, 'Hall of Fame')
             window_spec.width  { |ctx| [ctx[:app].cols - 6, 76].min }
             window_spec.height { |ctx| [ctx[:app].rows - 4, 24].min }
             window_spec.scroll true
@@ -547,7 +545,7 @@ module UI
           window :mail, type: :master_detail do |window_spec|
             window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
-            window_spec.title         { |ctx| " Mail — #{ctx[:username]} " }
+            window_spec.title         { |ctx| Icon.title(:messages, "Mail — #{ctx[:username]}") }
             window_spec.list_width    36
             window_spec.empty_message { |ctx| Formatters::Mail.empty(ctx[:authenticated]) }
             window_spec.items         { |ctx| ctx[:mail].inbox(ctx[:username], sysop: ctx[:app].sysop?) }
@@ -588,7 +586,7 @@ module UI
           window :compose_mail, type: :form do |window_spec|
             window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
-            window_spec.title        ' Write a Letter '
+            window_spec.title        Icon.title(:messages, 'Write a Letter')
             window_spec.width        { |ctx| [ctx[:app].cols - 8, 70].min }
             window_spec.height       18
             window_spec.hint         { |ctx| "From: #{ctx[:username]} — to a registered name, or Sysop. Ctrl-Enter sends" }
@@ -619,7 +617,7 @@ module UI
           window :voting, type: :master_detail do |window_spec|
             window_spec.accent Accent::STYLES[:messages]
             window_spec.maximizable true
-            window_spec.title         ' Voting Booth '
+            window_spec.title         Icon.title(:messages, 'Voting Booth')
             window_spec.list_width    26
             window_spec.empty_message '  (no polls)'
             window_spec.items         { |ctx| ctx[:voting].polls }
@@ -639,7 +637,7 @@ module UI
           window :bulletins, type: :master_detail do |window_spec|
             window_spec.accent Accent::STYLES[:board]
             window_spec.maximizable true
-            window_spec.title         ' Bulletins '
+            window_spec.title         Icon.title(:board, 'Bulletins')
             window_spec.list_width    30
             window_spec.items         { |_ctx| Formatters::Bulletins::LIST }
             window_spec.item_label    { |b, _ctx| b[:label] }
@@ -669,7 +667,7 @@ module UI
           window :doors, type: :master_detail do |window_spec|
             window_spec.accent Accent::STYLES[:doors]
             window_spec.maximizable true
-            window_spec.title         ' Door Lobby '
+            window_spec.title         Icon.title(:doors, 'Door Lobby')
             window_spec.list_width    22
             window_spec.items         { |ctx| ctx[:bbs].doors }
             window_spec.item_label    { |door, _ctx| door.title }
@@ -689,7 +687,7 @@ module UI
 
           menubar do
             menu '&Board' do
-              item '&Dashboard', hint: 'The live desktop: who is on, the last callers, what is new and coming up' do
+              item '&Dashboard', hint: 'The clubhouse from the street: who is inside, the notice board, the graffiti wall' do
                 show_dashboard
               end
               item '&Bulletins…', hint: 'Numbered bulletins: about us, what is coming up, the rules, New to BBSes?' do
@@ -823,7 +821,7 @@ module UI
           status_hint('Alt-X', 'Bye')  { :halt }
 
           on_tick do
-            top = top_window&.title.to_s.strip
+            top = Icon.strip(top_window&.title)
             services[:online].activity(session_id, top.empty? ? 'At the main menu' : top)
             statusbar.right_text = status_text
             context[:ticks] = (context[:ticks] || 0) + 1

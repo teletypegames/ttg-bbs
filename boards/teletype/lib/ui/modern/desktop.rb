@@ -20,25 +20,44 @@ module UI
       STYLES = COLORS.keys.to_h { |section| [section, styles(section)] }.freeze
     end
 
-    # The desktop: the board as it is now. The logo and the greeting, the
-    # TTG Gate BBS banner, then four panels (the nodes, the newest posts and
-    # your mail, the last callers, what is coming up) and the oneliners wall running along
-    # the bottom. The application gives it its Data on start and every few
-    # seconds after, and steps the ticker once a second.
+    # The window titles wear the icon of their part of the board, a CP437
+    # sign each: the board ☼, messages ✉, people ☺, doors ♫, you ♥, help ¿.
+    module Icon
+      SIGNS = { board: '☼', messages: '✉', people: '☺', doors: '♫', you: '♥', help: '¿' }.freeze
+
+      def self.title(section, text) = " #{SIGNS.fetch(section)} #{text} "
+
+      # A window title without its icon: what the node list tells others.
+      def self.strip(title) = title.to_s.strip.sub(/\A[#{SIGNS.values.join}] /o, '')
+    end
+
+    # The desktop: the clubhouse from the street (UI::Arts.house), lit
+    # from the board's SceneModel: a window for each node taken, the door
+    # and the lamp when anyone is in, smoke from the chimney while the live
+    # chat talks, the mailbox flag and count for the caller's letters. Under
+    # it two boards, who is inside (with the guestbook) and the notice board
+    # (what is coming up, the new notes, the mail), and the graffiti wall
+    # running along the bottom. A terminal smaller than 80×23 leaves the
+    # house out. The application gives it its Data on start and every few
+    # seconds after, and steps the smoke and the wall once a second.
     class Dashboard < BBS::Widget
-      Data = Struct.new(:name, :registered, :caller_number, :node, :nodes, :callers, :posts, :mail, :events,
-                        :oneliners, :messages, keyword_init: true)
+      Data = Struct.new(:name, :registered, :caller_number, :node, :scene, keyword_init: true)
 
       W = "\e[0;38;5;231;48;5;16m"
       T = "\e[0;38;5;116;48;5;16m"
       D = "\e[0;38;5;66;48;5;16m"
       Y = "\e[0;38;5;220;48;5;16m"
+      G = "\e[0;38;5;78;48;5;16m"
 
       TICKER_STEP = 2
-
-      GATE      = 'TTG GATE BBS  ·  telnet teletypegames.org 2399'
-      GATE_NOTE = 'the whole Teletype Games BBS Network, every board from one place'
-      GATE_SGR  = "\e[0;1;38;5;220;48;5;52m"
+      # The width the house and the boards are drawn in.
+      WIDTH = 80
+      # The rows of the house.
+      HOUSE = 12
+      # The windows of the house, one a node.
+      WINDOWS = 7
+      # The smoke from the chimney, a frame a second.
+      SMOKE = [' ░▒░  ', ' ▒░ ░ ', '░ ▒░  ', ' ░ ▒░ '].freeze
 
       attr_writer :data
 
@@ -46,6 +65,7 @@ module UI
         super
         @data  = nil
         @ticks = 0
+        @house = nil
       end
 
       def tick! = @ticks += 1
@@ -54,137 +74,169 @@ module UI
         @bounds = parent.bounds.dup if parent&.bounds
         return if @data.nil? || bounds.width < 40 || bounds.height < 12
 
-        x = bounds.x + 2
-        y = bounds.y + 1
-        width = bounds.width - 4
-        header(frame, x, y, width)
-        y += 4
-        gate(frame, x, y, width)
-        y += 5
-        columns = width >= 70 ? 2 : 1
-        panel_w = columns == 2 ? (width - 2) / 2 : width
-        @inner  = panel_w - 4
-        room    = bounds.y + bounds.height - 4 - y
-        panel_h = columns == 2 ? (room / 2).clamp(4, 7) : (room / 4).clamp(3, 6)
-        panels.each_with_index do |(section, title, lines), i|
-          px = x + (columns == 2 ? (i % 2) * (panel_w + 2) : 0)
-          py = y + ((i / columns) * panel_h)
-          break if py + panel_h > bounds.y + bounds.height - 3
-
-          panel(frame, px, py, panel_w, panel_h, section, title, lines)
+        width = [bounds.width - 4, WIDTH].min
+        x = bounds.x + ((bounds.width - width) / 2)
+        y = bounds.y
+        if bounds.width >= WIDTH && bounds.height >= 23
+          house(frame, bounds.x + ((bounds.width - WIDTH) / 2), y)
+          y += HOUSE
+        else
+          header(frame, x, y + 1, width)
+          y += 4
         end
-        ticker(frame, x, bounds.y + bounds.height - 3, width)
+        y += boards(frame, x, y, width)
+        ticker(frame, x, [y + 1, bounds.y + bounds.height - 3].min, width)
       end
 
       private
 
+      def scene = @data.scene
+
+      # ── the house ────────────────────────────────────────────────────────
+
+      def house(frame, x, y)
+        art = Arts.house(:modern, scene.season)
+        @house = house_scene(art) unless @house&.art.equal?(art)
+        @house.layout(x, y, WIDTH, HOUSE)
+        @house.render(frame)
+      end
+
+      def house_scene(art)
+        s = BBS::Widgets::Scene.new(art: art)
+        (1..WINDOWS).each { |n| s.fill(:"node_#{n}") { |spot| window(art, spot, n) } }
+        s.fill(:door)   { |spot| fill(art, spot, 220, '▒▒') if scene.inside.positive? }
+        s.fill(:lamp)   { |spot| fill(art, spot, 226, '☼') if scene.inside.positive? }
+        s.fill(:inside) { |spot| fill(art, spot, 230, "#{scene.inside}☺") if scene.inside.positive? }
+        s.fill(:smoke)  { |spot| fill(art, spot, 250, SMOKE[@ticks % SMOKE.size]) if scene.smoking }
+        s.fill(:flag)   { |spot| flag(art, spot) if scene.mail.positive? }
+        s.fill(:mail)   { |spot| fill(art, spot, 231, "✉ #{scene.mail}".center(spot.width)) if scene.mail.positive? }
+        s.fill(:status) { |spot| status(art, spot) }
+        s
+      end
+
+      # A lit window: a node taken. The caller's own burns brighter.
+      def window(art, spot, number)
+        return nil unless scene.lit?(number)
+
+        color = number == @data.node ? 226 : 220
+        rows = Array.new(spot.height) { |i| "\e[0;38;5;#{color}#{Arts.bg(art, spot.col, spot.row + i)}m#{'▓' * spot.width}" }
+        rows.join("\n")
+      end
+
+      def fill(art, spot, color, text)
+        "\e[0;38;5;#{color}#{Arts.bg(art, spot.col, spot.row)}m#{text}"
+      end
+
+      def flag(art, spot)
+        "\e[0;38;5;160#{Arts.bg(art, spot.col, spot.row)}m▄\n\e[0;38;5;160#{Arts.bg(art, spot.col, spot.row + 1)}m▌"
+      end
+
+      def status(art, spot)
+        node  = @data.node ? "node #{@data.node} · " : ''
+        lines = ["#{node}caller ##{@data.caller_number}", "Welcome, #{@data.name}!"]
+        lines.each_with_index.map do |line, i|
+          "\e[0;1;38;5;231#{Arts.bg(art, spot.col, spot.row + i)}m#{line[0, spot.width].rjust(spot.width)}"
+        end.join("\n")
+      end
+
+      # The small terminal's top: the logo and the greeting.
       def header(frame, x, y, width)
-        logo = Logo.half_blocks
-        logo.each_with_index do |line, i|
+        Logo.half_blocks.each_with_index do |line, i|
           frame.move(x, y + i)
           frame.write_ansi(line, base_sgr: W)
         end
-        tx = x + Logo.width + 4
-        return if tx + 20 > x + width
+        tx = x + Logo.width + 3
+        return if tx + 16 > x + width
 
-        name  = "#{Y}#{@data.name}#{T}"
-        node  = @data.node ? " · node #{@data.node}" : ''
-        guest = if @data.registered then 'registered · You > Profile… edits your page'
-                elsif @data.name == AccountService::ANONYMOUS then 'anonymous · call with a name to keep one'
-                else 'a guest · You > Register… keeps your name'
-                end
-        lines = ["#{T}Welcome, #{name} · caller ##{@data.caller_number}#{node}",
-                 "#{D}#{guest}",
-                 "#{D}F10 menus · F1 the TTG Master · Alt-X bye"]
-        lines.each_with_index do |line, i|
+        node = @data.node ? " · node #{@data.node}" : ''
+        ["#{T}Welcome, #{Y}#{@data.name}#{T}#{node}", "#{D}the Teletype BBS clubhouse"].each_with_index do |line, i|
           frame.move(tx, y + i)
           frame.write_ansi(BBS::FrameBuffer.clip_ansi(line, x + width - tx), base_sgr: T)
         end
       end
 
-      # The one port to every board of ours, big, under the greeting.
-      def gate(frame, x, y, width)
-        frame.box(x: x, y: y, width: width, height: 4, sgr: GATE_SGR, fill_sgr: GATE_SGR, style: :double)
-        [GATE, GATE_NOTE].each_with_index do |text, i|
-          text = text[0, width - 4]
-          frame.move(x + ((width - text.length) / 2), y + 1 + i)
-          frame.write(text, sgr: i.zero? ? "\e[0;1;38;5;231;48;5;52m" : GATE_SGR)
-        end
-      end
+      # ── the two boards ───────────────────────────────────────────────────
 
-      def panels
-        [[:people, 'On line now', nodes_lines], [:messages, "What's new", post_lines],
-         [:people, 'Last callers', caller_lines], [:board, 'Coming up', event_lines]]
+      # The two boards; returns the rows they take.
+      def boards(frame, x, y, width)
+        room    = bounds.y + bounds.height - 4 - y
+        two     = width >= 70
+        panel_w = two ? (width - 2) / 2 : width
+        @inner  = panel_w - 4
+        if two
+          height = room.clamp(4, 9)
+          panel(frame, x, y, panel_w, height, :people, 'INSIDE NOW', inside_lines(height - 2))
+          panel(frame, x + panel_w + 2, y, panel_w, height, :board, 'ON THE NOTICE BOARD', notice_lines)
+          height
+        else
+          height = (room / 2).clamp(3, 6)
+          panel(frame, x, y, width, height, :people, 'INSIDE NOW', inside_lines(height - 2))
+          panel(frame, x, y + height, width, height, :board, 'ON THE NOTICE BOARD', notice_lines)
+          height * 2
+        end
       end
 
       def panel(frame, x, y, width, height, section, title, lines)
         frame.box(x: x, y: y, width: width, height: height, sgr: Accent.fg(section), style: :single,
                   title: " #{title} ", title_sgr: Accent.styles(section)[:window_title_focused])
-        inner = width - 4
         lines.first(height - 2).each_with_index do |line, i|
           frame.move(x + 2, y + 1 + i)
-          frame.write_ansi(BBS::FrameBuffer.clip_ansi(line, inner), base_sgr: T)
+          frame.write_ansi(BBS::FrameBuffer.clip_ansi(line, width - 4), base_sgr: T)
         end
       end
 
-      def nodes_lines
-        return ["#{D}(nobody else on the lines)"] if @data.nodes.empty?
-
-        @data.nodes.map do |n|
-          "#{Y}#{n.number.to_s.rjust(2)}#{T} #{W}#{n.name.to_s[0, 14].ljust(15)}#{D}#{n.activity}"
+      # The nodes, then the guestbook: the last names that signed it.
+      def inside_lines(rows)
+        nodes = scene.nodes
+        shown = nodes.size > rows - 1 ? nodes.first(rows - 2) : nodes
+        lines = shown.map do |n|
+          on  = Formatters.duration(Time.now - n.since)
+          dot = n.number == @data.node ? "#{Y}●" : "#{G}●"
+          "#{dot} #{W}#{n.name.to_s[0, 10].ljust(11)}#{D}#{n.activity.to_s[0, @inner - 19].ljust(@inner - 18)}#{T}#{on}"
         end
+        lines << "#{D}  and #{nodes.size - shown.size} more inside" if shown.size < nodes.size
+        guests = scene.guestbook.map { |c| "#{c.username} #{c.timestamp.to_s[11, 5]}" }
+        lines << "#{D}guestbook: #{T}#{guests.empty? ? '(empty)' : guests.join(' · ')}"
       end
 
-      def caller_lines
-        return ["#{D}(no calls yet)"] if @data.callers.empty?
-
-        @data.callers.map do |c|
-          "#{W}#{c.username.to_s[0, 16].ljust(17)}#{D}#{c.timestamp.to_s[5, 11].sub('T', ' ')}"
+      # What is coming up, with a bar that fills as the day nears, then the
+      # new notes on the cork board and the caller's letters.
+      def notice_lines
+        lines = scene.events.map do |e|
+          days = [((e.date - Time.now) / 86_400).ceil, 0].max
+          left = days.zero? ? 'today' : "#{days} day#{'s' unless days == 1}"
+          bar  = ((30 - days.clamp(0, 30)) * 6 / 30.0).round
+          "#{W}#{e.name[0, @inner - 16].ljust(@inner - 15)}#{Y}#{'▓' * bar}#{D}#{'░' * (6 - bar)} #{T}#{left.rjust(8)}"
         end
-      end
-
-      # The newest posts, and the caller's unread letters when there are any.
-      def post_lines
-        lines = @data.posts.map do |b, m|
-          "#{Y}#{m.username.to_s[0, 12]}#{D} #{b.title}: #{T}#{m.text.to_s.gsub(/\s+/, ' ')}"
-        end
-        lines = ["#{D}(nothing posted yet: F2 opens the boards)"] if lines.empty?
-        if @data.mail.to_i.positive?
-          lines.unshift("#{Y}#{@data.mail} unread letter#{'s' if @data.mail != 1}#{D} · F7 opens your mail")
+        lines = ["#{D}(nothing scheduled yet)"] if lines.empty?
+        notes = scene.notes
+        lines << if notes.zero? then "#{D}no new notes on the cork board"
+                 else "#{G}#{notes} new note#{'s' unless notes == 1} #{D}on the cork board (F2)"
+                 end
+        if scene.mail.positive?
+          lines << "#{Y}✉ #{scene.mail} unread letter#{'s' unless scene.mail == 1}#{D} · F7 opens the mailbox"
         end
         lines
       end
 
-      # Each event on two lines at most: when, then its name, wrapped under it.
-      def event_lines
-        lines = @data.events.first(2).flat_map do |e|
-          days  = ((e.date - Time.now) / 86_400).ceil
-          when_ = days <= 0 ? 'today' : "in #{days} day#{'s' unless days == 1}"
-          name  = BBS::FrameBuffer.wrap_ansi(e.name, [@inner - 12, 10].max).first(2)
-          name.each_with_index.map { |part, i| "#{Y}#{(i.zero? ? when_ : '').ljust(12)}#{W}#{part}" }
-        end
-        lines = ["#{D}(nothing scheduled)"] if lines.empty?
-        lines + ["#{D}#{@data.messages} messages on the boards"]
-      end
-
-      # The oneliners wall as one line running from right to left.
+      # The graffiti wall (the oneliners) as one line running from right to left.
       def ticker(frame, x, y, width)
         return if width < 20
 
-        label = "#{Accent.fg(:messages)}oneliners ▸ "
+        label = "#{Accent.fg(:messages)}✎ graffiti ▸ "
         frame.move(x, y)
         frame.write_ansi(label, base_sgr: T)
-        room = width - 12
-        text = @data.oneliners.map { |o| "#{o.username}: #{o.text}" }.join('   ·   ')
-        text = '(the wall is empty: Messages > Oneliners)' if text.empty?
+        room = width - 13
+        text = scene.oneliners.map { |o| "#{o.username}: #{o.text}" }.join('  ···  ')
+        text = '(the wall is bare: Messages > Oneliners)' if text.empty?
         line = if text.length <= room
                  text
                else
-                 loop_text = "#{text}   ·   "
+                 loop_text = "#{text}  ···  "
                  start = (@ticks * TICKER_STEP) % loop_text.length
                  (loop_text * 2)[start, room]
                end
-        frame.move(x + 12, y)
+        frame.move(x + 13, y)
         frame.write(line.ljust(room), sgr: T)
       end
     end

@@ -40,7 +40,7 @@ class TeletypeBBS
 
   attr_reader :online, :boards, :games, :chat, :irc, :last_callers, :profile, :accounts, :site,
               :discord, :oneliners, :warp_sizes, :dev_log, :master, :mail, :voting, :trivia,
-              :taglines, :c64_master
+              :taglines, :c64_master, :scene
 
   def initialize
     @online       = OnlineService.new(OnlineUsersRepository.new)
@@ -73,6 +73,9 @@ class TeletypeBBS
                                       path: File.join(CONTENT_DIR, 'polls.yml'), games: @games, doors: DOOR_NAMES)
     @trivia       = Trivia::Scores.new(ENV.fetch('TELETYPE_BBS_TRIVIA_SCORES_PATH', 'data/trivia_scores.csv'))
     @taglines     = TaglineService.new(@site)
+    @scene        = SceneService.new(online: @online, chat: @chat, boards: @boards, mail: @mail,
+                                     last_callers: @last_callers, site: @site, oneliners: @oneliners,
+                                     door_titles: DOOR_NAMES)
   end
 
   # The services by name, the way an Application's windows reach them.
@@ -80,7 +83,7 @@ class TeletypeBBS
     { online: @online, boards: @boards, games: @games, chat: @chat, irc: @irc,
       last_callers: @last_callers, profile: @profile, accounts: @accounts, site: @site, discord: @discord,
       oneliners: @oneliners, dev_log: @dev_log, master: @master, mail: @mail, voting: @voting, trivia: @trivia,
-      bbs: self, uptime: STARTED_AT }
+      scene: @scene, bbs: self, uptime: STARTED_AT }
   end
 
   # The doors, in the order of the Doors menu; each label marks its hotkey with &.

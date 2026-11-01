@@ -82,7 +82,7 @@ background: |2
   jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjwwwwwwwwwwwwwwwddddwwwwwwwwwwwwwwwjjjjjjjj
   ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
 hotspots:
-  smoke: [45, 0, 7, 1]
+  smoke: [45, 0, 6, 1]
   node_1: [42, 9, 2, 2]
   node_2: [47, 9, 2, 2]
   node_3: [61, 9, 2, 2]

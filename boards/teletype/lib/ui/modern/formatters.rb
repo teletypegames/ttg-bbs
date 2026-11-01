@@ -227,7 +227,7 @@ module UI
         WEBCHAT     = 'https://web.libera.chat/'
         PLACEHOLDER = 'Read only here. To talk, join the channel from an IRC client (see the top).'
 
-        def self.title(irc) = " IRC — #{irc.channel} on #{NETWORK} "
+        def self.title(irc) = Icon.title(:messages, "IRC — #{irc.channel} on #{NETWORK}")
 
         def self.intro(irc)
           [
