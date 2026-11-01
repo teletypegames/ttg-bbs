@@ -62,7 +62,7 @@
 - keys: [ansi, ascii, art, gallery, desktop, background, picture, graphics]
   fact: 'Files > ANSI Gallery shows the ANSI art of the board. Enter or View shows a piece on the full screen, Desktop puts it on the desktop for this call, Favourite keeps it for every call of a registered name.'
 - keys: [door, doors, program, lobby]
-  fact: 'Doors > Door Lobby… lists every door with what it is and who is inside; Enter steps in. The doors take over the screen and give it back when you leave them: SERMO, Commodore 64, Commodore Plus/4, Impostor, Chat of Ra, the TTG Trivia game, and Alexandria, Feedia, TTGBLOG and WarpEngine, which take you over to those boards.'
+  fact: 'Doors > Door Lobby… lists every door with what it is and who is inside; Enter steps in. The doors take over the screen and give it back when you leave them: SERMO, Commodore 64, Commodore Plus/4, Impostor, Chat of Ra, the TTG Trivia game, and Alexandria, Feedia, TTGBLOG, WarpEngine, Scriptorium, Commodex and Pixelia, which take you over to those boards.'
 - keys: [sermo, neumatronic, margittai, acp]
   fact: 'Doors > SERMO is a dual machine of the Neumatronic universe: type a command, or just talk to it. EXIT returns to the board.'
 - keys: [commodore, c64, plus4, basic, load, run, emulator, retro]
@@ -72,13 +72,19 @@
 - keys: [impostor, code, debrief, norman]
   fact: 'Doors > Impostor is the debrief terminal of our game Definitely not an Impostor; it asks for the personal code the game gave you. It also runs on its own at teletypegames.org:2324.'
 - keys: [network, bbs, other, telnet, bbsweb, port]
-  fact: 'Board > BBS Network lists our boards: the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324, the WIKI-BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia (RSS news) at 2327, TTGBLOG (our blog) at 2328 and WarpEngine BBS (C64 and Plus/4 downloads) at 2329, and TTG Gate at 2399 reaches all of them from one port. All of them work in a browser too, at bbsweb.teletypegames.org.'
+  fact: 'Board > BBS Network lists our boards: the Teletype BBS at teletypegames.org:2323, the Impostor BBS at 2324, the WIKI-BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia (RSS news) at 2327, TTGBLOG (our blog) at 2328, WarpEngine BBS (C64 and Plus/4 downloads) at 2329, Scriptorium BBS (Project Gutenberg books) at 2330, Commodex BBS (C64 games, cheats and tips) at 2331 and Pixelia BBS (ANSI and PETSCII art) at 2332, and TTG Gate at 2399 reaches all of them from one port. All of them work in a browser too, at bbsweb.teletypegames.org.'
 - keys: [alexandria, wikipedia, feedia, rss, news, feed, feeds, gateway]
   fact: 'Doors > Alexandria and Doors > Feedia take your line over to those boards: Alexandria BBS reads Wikipedia, Feedia reads RSS news feeds. Leave them the way they say (Alt-X, or Q on a C64), and you come back here.'
 - keys: [ttgblog, blog, posts, post, editor, editors]
   fact: 'TTGBLOG at teletypegames.org:2328 is our blog on a telnet line: the latest posts and the categories, read a screenful at a time; our editors log in there and write. It is a door here too (Doors > TTGBLOG), or call it directly, or on bbsweb.teletypegames.org.'
 - keys: [warpengine, warp-engine, xmodem, shelf, shelves, prg]
   fact: 'WarpEngine BBS at teletypegames.org:2329 is our file area: the Commodore 64 and Plus/4 shelves of the WarpEngine, a title a page, downloaded by ZMODEM or by XMODEM, which a C64 terminal like CCGMS takes onto its disk. It is a door here too (Doors > WarpEngine), or call it directly, through TTG Gate, or on bbsweb.teletypegames.org.'
+- keys: [scriptorium, gutenberg, book, books, literature, novel, novels, chapter]
+  fact: 'Scriptorium BBS at teletypegames.org:2330 is our library: thousands of public-domain books from Project Gutenberg, searched by title or author and read a chapter at a time. It is a door here too (Doors > Scriptorium), or call it directly, through TTG Gate, or on bbsweb.teletypegames.org.'
+- keys: [commodex, compendium, cheat, cheats, tip, tips, poke, pokes, wikidata]
+  fact: 'Commodex BBS at teletypegames.org:2331 is a Commodore 64 game compendium: search the titles, see the year, publisher and developer, read about a game from Wikipedia, and read or add cheats and tips, which an operator checks before they show. It is a door here too (Doors > Commodex), or call it directly, through TTG Gate, or on bbsweb.teletypegames.org.'
+- keys: [pixelia, petscii, canvas, draw, paint, painting, 16colors, 16colo.rs, wall]
+  fact: 'Pixelia BBS at teletypegames.org:2332 is our art board: ANSI art from the 16colo.rs archive, a 40x25 canvas every caller paints on together, and the Wall of works saved from it. It is a door here too (Doors > Pixelia), or call it directly, through TTG Gate, or on bbsweb.teletypegames.org.'
 - keys: [gate, ttggate, dial, dialing, '2399', one port, all boards]
   fact: 'TTG Gate at teletypegames.org:2399 is one port for our whole network: a dialing menu that puts your call through to any of our boards, this one too, and takes it back when that board hangs up. On a C64 it lists the boards that have a C64 face.'
 - keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag, switch, window, windows, front]

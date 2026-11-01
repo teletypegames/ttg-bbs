@@ -21,10 +21,13 @@ class TeletypeBBS
     ['Feedia BBS',     'teletypegames.org:2327', 'an RSS reader: the news as text; a door here too'],
     ['TTGBLOG',        'teletypegames.org:2328', 'the Teletype Games blog; a door here too'],
     ['WarpEngine BBS', 'teletypegames.org:2329', 'the file area: C64 and Plus/4 titles; a door here too'],
+    ['Scriptorium BBS', 'teletypegames.org:2330', 'Project Gutenberg books, a chapter at a time; a door here too'],
+    ['Commodex BBS',   'teletypegames.org:2331', 'the C64 game compendium, with cheats and tips; a door here too'],
+    ['Pixelia BBS',    'teletypegames.org:2332', 'ANSI and PETSCII art and a shared canvas; a door here too'],
     ['TTG Gate',       'teletypegames.org:2399', 'one port for all of these: a dialing menu']
   ].freeze
   DOOR_NAMES    = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Impostor', 'Chat of Ra', 'TTG Trivia', 'Alexandria',
-                   'Feedia', 'TTGBLOG', 'WarpEngine'].freeze
+                   'Feedia', 'TTGBLOG', 'WarpEngine', 'Scriptorium', 'Commodex', 'Pixelia'].freeze
   GATEWAY_HOST  = ENV.fetch('BBS_GATEWAY_HOST', 'host.docker.internal')
   WIKI_SECTIONS = {
     platforms: { prefix: '/platforms', title: 'Platform Guides' },
@@ -145,7 +148,24 @@ class TeletypeBBS
                hint: 'WarpEngine BBS: our C64 and Plus/4 titles by ZMODEM or XMODEM, a gateway to port 2329',
                about: 'Our file area: the Commodore 64 and Plus/4 shelves of the WarpEngine, a title a page, ' \
                       'downloaded by ZMODEM or by XMODEM onto a C64 disk. A gateway to WarpEngine BBS on port 2329; ' \
-                      'hang up there to come back.')
+                      'hang up there to come back.'),
+      Door.new(name: :scriptorium, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2330, name: 'Scriptorium BBS'),
+               label: 'Scriptori&um', cols: 40, tag: 'gutenberg books',
+               hint: 'Scriptorium BBS: Project Gutenberg books a chapter at a time, a gateway to port 2330',
+               about: 'Our library board: thousands of books from Project Gutenberg, searched by title or author ' \
+                      'and read a chapter at a time. A gateway to Scriptorium BBS on port 2330; hang up there to ' \
+                      'come back.'),
+      Door.new(name: :commodex, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2331, name: 'Commodex BBS'),
+               label: 'Co&mmodex', cols: 40, tag: 'c64 games + cheats',
+               hint: 'Commodex BBS: the C64 game compendium with cheats and tips, a gateway to port 2331',
+               about: 'Our Commodore 64 game compendium: search the titles, read about them, and trade cheats and ' \
+                      'tips with other callers. A gateway to Commodex BBS on port 2331; hang up there to come back.'),
+      Door.new(name: :pixelia, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2332, name: 'Pixelia BBS'),
+               label: 'Pi&xelia', cols: 40, tag: 'ansi + petscii art',
+               hint: 'Pixelia BBS: ANSI and PETSCII art and a shared canvas, a gateway to port 2332',
+               about: 'Our art board: ANSI art from the 16colo.rs archive, the Wall of works made on the line, and ' \
+                      'a shared 40x25 canvas everyone paints together. A gateway to Pixelia BBS on port 2332; hang ' \
+                      'up there to come back.')
     ]
   end
 
