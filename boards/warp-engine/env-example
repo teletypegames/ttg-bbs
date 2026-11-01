@@ -13,5 +13,6 @@ WARP_ENGINE_BBS_INDEX_TTL=300
 # The largest file the board sends, in bytes
 WARP_ENGINE_BBS_DOWNLOAD_MAX=1048576
 
-# The downloads that went through, one JSON line each
-WARP_ENGINE_BBS_DOWNLOADS=data/downloads.jsonl
+# The board's database: the downloads that went through. A data/downloads.jsonl
+# next to it (the log before SQLite) is imported on the first start.
+WARP_ENGINE_BBS_DB=data/warp-engine.sqlite3

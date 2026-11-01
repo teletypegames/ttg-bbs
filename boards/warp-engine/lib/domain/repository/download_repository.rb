@@ -1,44 +1,34 @@
 # frozen_string_literal: true
 
-require 'fileutils'
-require 'json'
 require 'time'
 
-# The downloads that went through, one JSON line each in data/downloads.jsonl,
-# and their count by title.
+# The downloads that went through, a row each in the downloads table, and
+# their count by title.
 class DownloadRepository
-  def initialize(path)
-    @path   = path
-    @counts = Hash.new(0)
-    @lock   = Mutex.new
-    load
+  SCHEMA = <<~SQL
+    CREATE TABLE downloads (
+      id       INTEGER PRIMARY KEY,
+      at       TEXT NOT NULL,
+      title    TEXT NOT NULL,
+      version  TEXT NOT NULL DEFAULT '',
+      protocol TEXT NOT NULL
+    );
+    CREATE INDEX downloads_title ON downloads (title);
+  SQL
+
+  def initialize(db)
+    @db = db
+    @db.migrate(SCHEMA)
   end
 
-  def count(key) = @lock.synchronize { @counts[key] }
+  def count(key) = @db.get('SELECT count(*) AS n FROM downloads WHERE title = ?', key)['n']
 
-  def add(key, version:, protocol:)
-    line = JSON.generate(at: Time.now.iso8601, title: key, version: version, protocol: protocol)
-    @lock.synchronize do
-      FileUtils.mkdir_p(File.dirname(@path))
-      File.open(@path, 'a') { |f| f.puts(line) }
-      @counts[key] += 1
-    end
-  rescue SystemCallError => e
-    warn "warp-engine-bbs: #{@path}: #{e.class}: #{e.message}"
+  def empty? = @db.get('SELECT 1 AS one FROM downloads LIMIT 1').nil?
+
+  def add(key, version:, protocol:, at: Time.now.iso8601)
+    @db.insert('INSERT INTO downloads (at, title, version, protocol) VALUES (?, ?, ?, ?)',
+               at, key, version.to_s, protocol.to_s)
   end
 
-  private
-
-  def load
-    return unless File.exist?(@path)
-
-    File.foreach(@path) do |line|
-      key = JSON.parse(line)['title']
-      @counts[key] += 1 if key
-    rescue JSON::ParserError
-      next
-    end
-  rescue SystemCallError => e
-    warn "warp-engine-bbs: #{@path}: #{e.class}: #{e.message}"
-  end
+  def transaction(&) = @db.transaction(&)
 end
