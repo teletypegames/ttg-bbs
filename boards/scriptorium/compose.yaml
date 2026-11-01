@@ -1,10 +1,10 @@
 services:
-  scriptorium:
+  scriptorium-bbs:
     mem_limit: 160m
     cpus: 1.0
     pids_limit: 256
     build: .
-    container_name: scriptorium
+    container_name: scriptorium-bbs
     ports:
       - "2330:2323"
     volumes:
