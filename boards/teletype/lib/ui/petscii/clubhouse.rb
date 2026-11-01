@@ -383,6 +383,159 @@ module UI
           line(21, door.c64? ? 'RETURN: STEP IN' : 'ON THE MODERN FACE ONLY', door.c64? ? :yellow : :dark_grey)
         end
       end
+
+      # The entrance on the C64: the sign, the door under its lamp, the bell
+      # and the guestbook, with the last guests, the number of this entry
+      # and the coats of the callers inside; the name and the password are
+      # written into the guestbook.
+      class Entrance
+        def initialize(screen, bbs)
+          @screen = screen
+          @bbs    = bbs
+          @art    = Arts.load(:c64, 'entrance')
+        end
+
+        def show
+          @canvas = @art.draw_canvas(C.new)
+          put(:entry, @bbs.last_callers.caller_number.to_s, :white)
+          @bbs.last_callers.recent(3).each_with_index do |c, i|
+            put(:"guest_#{i + 1}", "#{BBS::Petscii.plain(c.username).upcase[0, 15].ljust(16)}#{c.timestamp.to_s[11, 5]}",
+                :light_grey)
+          end
+          count = @bbs.online.count
+          put(:coats, count.zero? ? 'NONE YET' : '♠' * count.clamp(0, 15), :orange)
+          @screen.session.write_raw(@canvas.frame)
+        end
+
+        def ask_name = ask(:name)
+
+        def ask_password = ask(:password, mask: '*')
+
+        # +text+ on the line under the guestbook.
+        def wrong(text)
+          row = C.new.text(24, 1, text, :light_red)
+          @screen.session.write_raw(row.span(24, 0, C::COLS - 1))
+        end
+
+        private
+
+        def ask(name, mask: nil)
+          spot = @art.hotspot(name)
+          @screen.session.write_raw(@canvas.cursor(spot.row, spot.col) + [C::YELLOW].pack('C'))
+          width = [spot.width - 1, 20].min
+          BBS::Field.new(@screen.session, width: width, max: width, mask: mask).run.to_s.strip
+        end
+
+        def put(name, text, color)
+          spot = @art.hotspot(name)
+          @canvas.text(spot.row, spot.col, text[0, spot.width], color)
+        end
+      end
+
+      # The trophy case on the C64 (H): a cup for the top caller, the top
+      # poster and the best TTG Trivia player, their names under the cups,
+      # and the places after them in three columns.
+      module Trophies
+        TITLES = { callers: 'CALLERS', posters: 'POSTERS', trivia: 'TRIVIA' }.freeze
+
+        def self.show(session, fame)
+          art = Arts.load(:c64, 'trophies')
+          canvas = C.new
+          canvas.text(0, 1, 'TROPHIES', :purple)
+          canvas.text(0, 10, '- THE HALL OF FAME', :dark_grey)
+          art.draw_canvas(canvas, row: 2)
+          TITLES.each_with_index do |(list, title), i|
+            rows = fame.fetch(list)
+            spot = art.hotspot(:"title_#{list}")
+            canvas.text(2 + spot.row, spot.col, title.center(spot.width), :white)
+            plate = art.hotspot(:"plate_#{list}")
+            first = rows.first ? BBS::Petscii.plain(rows.first.first).upcase[0, plate.width] : '-'
+            canvas.text(2 + plate.row, plate.col, first.center(plate.width), :yellow)
+            rows.drop(1).first(6).each_with_index do |(name, n), j|
+              line = "#{j + 2} #{BBS::Petscii.plain(name).upcase[0, 6].ljust(6)}#{n.to_s.rjust(3)}"
+              canvas.text(12 + j, 1 + (i * 13), line[0, 12], j.zero? ? :light_grey : :grey)
+            end
+          end
+          canvas.text(23, 1, 'RETURN OR <-: BACK', :dark_grey)
+          session.write_raw(canvas.frame + canvas.cursor(C::ROWS - 1, 0))
+          session.readkey
+        end
+      end
+
+      # The card of a room, once a call before the room opens: its picture,
+      # its name and what it is; any key goes on.
+      module Cards
+        ABOUT = {
+          cork:      'THE MESSAGE BOARDS: GENERAL, TECH, OFF-TOPIC, SYSOP',
+          mailbox:   'YOUR LETTERS, AND A BOX FOR THE SYSOP',
+          sofa:      'SIT DOWN AND TALK WITH WHOEVER IS IN',
+          notice:    'THE RULES, WHAT IS COMING UP, THE NETWORK',
+          workshop:  'WHAT THE TEAM MAKES DOWN THERE',
+          guestbook: 'WHO IS INSIDE, WHO CALLED, WHO YOU ARE'
+        }.freeze
+        # The card of each key of the main menu that opens a reading room.
+        KEYS = { 'm' => :cork, 'e' => :mailbox, 'l' => :sofa, 'u' => :notice, 'd' => :workshop,
+                 'c' => :guestbook, 's' => :guestbook }.freeze
+        TOP = 8
+
+        # Shows the card of +room+ unless +seen+ (a Set) has it, and adds it.
+        def self.show(session, room, seen)
+          return if room.nil? || seen.include?(room)
+
+          seen << room
+          art = Arts.load(:c64, "card_#{room}")
+          canvas = art.draw_canvas(C.new, row: TOP)
+          about = art.hotspot(:about)
+          BBS::FrameBuffer.wrap_ansi(ABOUT.fetch(room), about.width).first(about.height).each_with_index do |l, i|
+            canvas.text(TOP + about.row + i, about.col, l, :light_grey)
+          end
+          hint = art.hotspot(:hint)
+          canvas.text(TOP + hint.row, hint.col, 'RETURN: GO IN', :dark_grey)
+          session.write_raw(canvas.frame + canvas.cursor(C::ROWS - 1, 0))
+          session.readkey
+        end
+      end
+
+      # Leaving on the C64: the room from the inside, the coat ticket, the
+      # thanks and a quote; then the four lamps go out one by one (a patch
+      # each), and the line hangs up.
+      module Leaving
+        TOP  = 2
+        STEP = 0.6
+
+        def self.play(session, name:, seconds:, caller_number:, quote:)
+          canvas = C.new
+          canvas.text(0, 1, 'LEAVING THE CLUBHOUSE', :light_green)
+          room(canvas, [], caller_number, seconds)
+          canvas.text(TOP + 14, 1, "THANKS FOR CALLING, #{BBS::Petscii.plain(name).upcase[0, 16]}!", :white)
+          text, who = quote
+          words = BBS::FrameBuffer.wrap_ansi(BBS::Petscii.plain("\"#{text}\"#{" - #{who}" if who}").upcase, 38)
+          words.first(3).each_with_index { |l, i| canvas.text(TOP + 16 + i, 1, l, :grey) }
+          session.write_raw(canvas.frame + canvas.cursor(C::ROWS - 1, 0))
+          steps = (1..4).map do |n|
+            sleep STEP
+            before = canvas.dup
+            room(canvas, (1..n).map { |i| "leaving_out_#{i}" }, caller_number, seconds)
+            bytes = canvas.update(before)
+            session.write_raw(bytes)
+            bytes.bytesize
+          end
+          sleep STEP
+          canvas.text(22, 1, '+++  ATH0', :grey)
+          canvas.text(22, 12, 'NO CARRIER', :light_red)
+          session.write_raw(canvas.span(22, 0, 22) + canvas.cursor(C::ROWS - 1, 0))
+          steps
+        end
+
+        def self.room(canvas, layers, caller_number, seconds)
+          art = Arts.load(:c64, 'leaving', layers)
+          art.draw_canvas(canvas, row: TOP)
+          spot = art.hotspot(:ticket)
+          minutes = (seconds / 60).to_i
+          on = minutes.positive? ? "#{minutes}M" : "#{seconds.to_i}S"
+          canvas.text(TOP + spot.row, spot.col, "COAT CHECK NO. #{caller_number}  -  ON LINE #{on}", :yellow)
+        end
+      end
     end
   end
 end

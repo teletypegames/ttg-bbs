@@ -64,7 +64,7 @@ module UI
 
       # The rooms the clubhouse shows as pictures (Clubhouse) instead of
       # the text screens of ACTIONS.
-      GRAPHICS = { 'n' => :town_map, 'r' => :games_room }.freeze
+      GRAPHICS = { 'n' => :town_map, 'r' => :games_room, 'h' => :trophies }.freeze
 
       def initialize(bbs, screen, ctx)
         @bbs    = bbs
@@ -80,10 +80,13 @@ module UI
           leaving = %w[q x].include?(k) && logoff?
           next unless leaving || ACTIONS[k]
 
-          next send(GRAPHICS[k]) if !text_menu? && !leaving && GRAPHICS[k]
-
-          Clubhouse.text_mode(@screen.session) unless text_menu?
           return if leaving
+          next send(GRAPHICS[k]) if !text_menu? && GRAPHICS[k]
+
+          unless text_menu?
+            Clubhouse::Cards.show(@screen.session, Clubhouse::Cards::KEYS[k], @ctx[:cards] ||= Set.new)
+            Clubhouse.text_mode(@screen.session)
+          end
 
           send(ACTIONS[k])
         end
@@ -200,6 +203,11 @@ module UI
       end
 
       # ── more ───────────────────────────────────────────────────────────
+
+      def trophies
+        doing('Hall of Fame')
+        Clubhouse::Trophies.show(@screen.session, @bbs.hall_of_fame)
+      end
 
       def town_map
         doing('BBS Network')

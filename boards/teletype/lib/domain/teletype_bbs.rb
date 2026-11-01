@@ -11,7 +11,6 @@ class TeletypeBBS
   SYSOPS        = ENV.fetch('TELETYPE_BBS_SYSOPS', '').split(',').map { |name| name.strip.downcase }.reject(&:empty?)
   CONTENT_DIR   = File.expand_path('../content', __dir__)
   BULLETINS_DIR = File.join(CONTENT_DIR, 'bulletins')
-  LOGON_ART     = ENV.fetch('TELETYPE_BBS_LOGON_ART', File.join(CONTENT_DIR, 'logon.ans'))
   DOOR_NAMES = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Chat of Ra', 'TTG Trivia'].freeze
 
   # +cols+: the narrowest screen the program draws for; +petscii+: the same door

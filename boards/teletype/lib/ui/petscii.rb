@@ -12,51 +12,32 @@ module UI
   # menus and numbered lists, the way the C64 boards of the eighties were.
   # It works on the same TeletypeBBS as the modern face.
   module Petscii
-    # The board's logo (UI::Logo) in yellow, orange and red, as on the
-    # modern face: the C64 has these three colours too.
-    LOGO_COLORS = [YE, YE, "\e[0;33m", "\e[0;33m", "\e[0;31m"].freeze
-
-    def self.logo = BBS::BlockFont.petscii(Logo::TEXT, colors: LOGO_COLORS, indent: 6)
-
-    # The one port to every board of ours, big, on the board's face.
-    def self.gate(screen)
-      ['', 'The whole Teletype Games BBS', 'Network in one place: TTG GATE BBS', '',
-       'telnet teletypegames.org 2399', ''].each_with_index do |line, i|
-        screen.puts " #{i == 4 ? WH : YE}#{RV}#{line.center(WIDTH)}#{RO}#{LG}"
-      end
-    end
-
     def self.flow(bbs)
       BBS::Flow.define do
-        # The board's face, the name and the password.
+        # The entrance of the clubhouse: the name and the password go into
+        # the guestbook.
         call do |ctx, runner|
           screen = Screen.new(runner.session)
           ctx[:call_started] = Time.now
           ctx[:authenticated] = false
-          screen.cls
-          screen.puts
-          Petscii.logo.each { |l| screen.puts l }
-          screen.puts
-          screen.puts "  #{WH}teletype bbs#{LG}, the c64 side"
-          screen.puts "  #{GR}caller ##{bbs.last_callers.caller_number}, #{bbs.online.count} on line#{LG}"
-          screen.puts
-          Petscii.gate(screen)
-          screen.puts
-          typed = screen.ask("  #{WH}name#{LG} (return: anonymous)\r\n  > ", max: 20)
+          entrance = Clubhouse::Entrance.new(screen, bbs)
+          entrance.show
+          typed = entrance.ask_name
           ctx[:plain] = Petscii.capitals?(typed)
           name = AccountService.normalize_name(typed)
           ctx[:username] = name
           if bbs.accounts.registered?(name)
             3.times do
-              password = screen.ask("  #{WH}password#{LG}: ", mask: '*')
-              if bbs.accounts.authenticate(name, password)
+              if bbs.accounts.authenticate(name, entrance.ask_password)
                 ctx[:authenticated] = true
                 break
               end
               sleep 2
-              screen.puts "  #{RD}wrong password.#{LG}"
+              entrance.wrong('WRONG PASSWORD.')
             end
             unless ctx[:authenticated]
+              Clubhouse.text_mode(runner.session)
+              screen.cls
               screen.say("#{name} is a registered name. Call again, or use another name.", RD)
               next :halt
             end
@@ -66,6 +47,7 @@ module UI
         end
         # The logon sequence: who is calling, then the scans of the old boards.
         call do |ctx, runner|
+          Clubhouse.text_mode(runner.session)
           screen = Screen.new(runner.session)
           s = bbs.logon_summary(ctx[:username], registered: ctx[:authenticated], session_id: ctx[:session_id])
           ctx[:caller_number] = s[:caller_number]
@@ -102,9 +84,11 @@ s[:polls_open].zero? ? 'all voted' : "#{s[:polls_open]} poll#{'s' if s[:polls_op
           nil
         end
         call do |ctx, runner|
-          Petscii.goodbye(Screen.new(runner.session), name: ctx[:username] || AccountService::ANONYMOUS,
-                                                  seconds: Time.now - (ctx[:call_started] || Time.now),
-                                                  caller_number: ctx[:caller_number], quote: bbs.taglines.pick)
+          goodbye = ctx[:plain] ? Petscii.method(:goodbye) : Clubhouse::Leaving.method(:play)
+          goodbye.call(ctx[:plain] ? Screen.new(runner.session) : runner.session,
+                       name: ctx[:username] || AccountService::ANONYMOUS,
+                       seconds: Time.now - (ctx[:call_started] || Time.now),
+                       caller_number: ctx[:caller_number], quote: bbs.taglines.pick)
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           nil

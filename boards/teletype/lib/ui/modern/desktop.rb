@@ -60,10 +60,14 @@ module UI
       SMOKE = [' ░▒░  ', ' ▒░ ░ ', '░ ▒░  ', ' ░ ▒░ '].freeze
 
       attr_writer :data
+      # The room whose window is open (Clubhouse::Cards), its card over the
+      # top of the house; nil for none.
+      attr_writer :room
 
       def initialize(**kw)
         super
         @data  = nil
+        @room  = nil
         @ticks = 0
         @house = nil
       end
@@ -99,6 +103,16 @@ module UI
         @house = house_scene(art) unless @house&.art.equal?(art)
         @house.layout(x, y, WIDTH, HOUSE)
         @house.render(frame)
+        card(frame, x, y) if @room
+      end
+
+      # The card of the open room over the top of the house.
+      def card(frame, x, y)
+        art = Arts.load(:modern, "card_#{@room}")
+        art.draw(frame, x: x, y: y)
+        spot = art.hotspot(:about)
+        frame.move(x + spot.col, y + spot.row)
+        frame.write(Clubhouse::Cards::ABOUT.fetch(@room)[0, spot.width], sgr: "\e[0;38;5;252;48;5;234m")
       end
 
       def house_scene(art)

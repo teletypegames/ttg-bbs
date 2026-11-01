@@ -1,0 +1,32 @@
+# The card of the workshop downstairs (modern face): a vignette at the top of the desktop while one of
+# its windows is open; its name, and what it is in the club (about).
+size: [80, 5]
+charset: cp437
+palette:
+  a: 116
+  b: 94
+  c: 179
+  y: 228
+  k: 238
+  g: 245
+  K: 234
+chars: |2
+     ▄▄▄▄▄▄▄   ▄▄                                                                 
+     █░░░░░█  ▐██▌ ♪      THE WORKSHOP DOWNSTAIRS                                 
+     █░░░░░█   ▀▀  ┬      ───────────────────────                                 
+    ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█▄                                                             
+  ▄▄█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+colors: |2
+  ...kkkkkkk...gg.................................................................
+  ...kccccck..gggg.y......aaaaaaaaaaaaaaaaaaaaaaa.................................
+  ...kccccck...gg..b......aaaaaaaaaaaaaaaaaaaaaaa.................................
+  ..bbbbbbbbbbbbbbbbb.............................................................
+  aabaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+background: |2
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+hotspots:
+  about: [24, 3, 54, 1]

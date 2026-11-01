@@ -1,0 +1,30 @@
+# The card of the notice board (modern face): a vignette at the top of the desktop while one of
+# its windows is open; its name, and what it is in the club (about).
+size: [80, 5]
+charset: cp437
+palette:
+  a: 116
+  c: 179
+  w: 231
+  g: 245
+  K: 234
+chars: |2
+    ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                                                            
+    █ RULES ▒ EVENTS █    THE NOTICE BOARD                                        
+    █ ───── ▒ ────── █    ────────────────                                        
+    █ ───── ▒ ──     █                                                            
+  ▄▄▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+colors: |2
+  ..cccccccccccccccccc............................................................
+  ..c.wwwww.c.wwwwww.c....aaaaaaaaaaaaaaaa........................................
+  ..c.ggggg.c.gggggg.g....aaaaaaaaaaaaaaaa........................................
+  ..c.ggggg.c.gg..................................................................
+  aaccccccccccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+background: |2
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+hotspots:
+  about: [24, 3, 54, 1]

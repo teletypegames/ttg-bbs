@@ -1,0 +1,30 @@
+# The card of the mailboxes (modern face): a vignette at the top of the desktop while one of
+# its windows is open; its name, and what it is in the club (about).
+size: [80, 5]
+charset: cp437
+palette:
+  a: 78
+  b: 94
+  w: 231
+  k: 238
+  K: 234
+chars: |2
+    ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                                                            
+    █▄▄▄█▄▄▄█▄▄▄█▄▄▄█     THE MAILBOXES                                           
+    █▓▓▓█▒▒▒█▓▓▓█▒▒▒█     ─────────────                                           
+    █▄▄▄█▄▄▄█▄▄▄█▄▄▄█                                                             
+  ▄▄▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+colors: |2
+  ..bbbbbbbbbbbbbbbbbb............................................................
+  ..bkkkbkkkbkkkbkkkb.....aaaaaaaaaaaaa...........................................
+  ..bkwkbkkkbkwkbkkkb.....aaaaaaaaaaaaa...........................................
+  ..bkkkbkkkbkkkbkkkb.............................................................
+  aabbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+background: |2
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+hotspots:
+  about: [24, 3, 54, 1]

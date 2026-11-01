@@ -56,15 +56,6 @@ module UI
           end
         end
 
-        # The art of the logon matrix, cut to leave room for the prompt.
-        def self.matrix(runner, art_lines, caller_number:, nodes:)
-          rows = runner.session.term_rows || 24
-          runner.write "\e[0m\e[2J\e[H"
-          art_lines.first([rows - 4, 1].max).each { |l| runner.write "#{l}\e[0m\r\n" }
-          runner.write "  #{C}Teletype BBS#{O} #{K}·#{O} #{D}telnet teletypegames.org:2323#{O} #{K}·#{O} " \
-                       "#{D}caller ##{Formatters.number(caller_number)}#{O} #{K}·#{O} #{D}#{nodes} online#{O}\r\n"
-        end
-
         DOTS = 34
 
         def self.dots(label, width = DOTS) = "  #{D}#{label} #{K}#{'.' * [width - label.length, 2].max}#{O} "

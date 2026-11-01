@@ -1,0 +1,66 @@
+# Leaving the clubhouse (the logoff of the modern face): the room from the inside, four
+# lamps over the sofa, the tables and the door. The layers leaving_out_1..4 put them out one
+# by one; the coat ticket (ticket) gets the length of the call.
+size: [80, 14]
+charset: cp437
+palette:
+  W: 237
+  w: 239
+  f: 94
+  F: 52
+  y: 220
+  Y: 226
+  l: 229
+  g: 240
+  S: 124
+  d: 52
+  D: 95
+  n: 17
+chars: |2
+            │                 │                 │                 │               
+           ▄█▄               ▄█▄               ▄█▄               ▄█▄              
+         ░▒▓▓▓▒░           ░▒▓▓▓▒░           ░▒▓▓▓▒░           ░▒▓▓▓▒░            
+                                                                                  
+                                                                 ▒▒▒▒▒▒   ╤═╤═╤   
+                                                                 ▒▒▒▒▒▒           
+                                                                 ▒▒▒▒▒▒           
+     ▄▄▄▄▄▄▄▄▄▄                                                                   
+     ██▀▀▀▀▀▀██            ▄▄▄▄▄▄▄           ▄▄▄▄▄▄▄                  •           
+     ██████████           ▐▀▀▀█▀▀▀▌         ▐▀▀▀█▀▀▀▌                             
+     ▀        ▀               █                 █                                 
+  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄        ▄▄▄▄▄▄▄▄▄▄
+                                                                                  
+                                                                                  
+colors: |2
+  ..........g.................g.................g.................g...............
+  .........YYY...............YYY...............YYY...............YYY..............
+  .......lllllll...........lllllll...........lllllll...........lllllll............
+  ................................................................................
+  ...............................................................nnnnnn...fffff...
+  ...............................................................nnnnnn...........
+  ...............................................................nnnnnn...........
+  ...SSSSSSSSSS...................................................................
+  ...SSSSSSSSSS............fffffff...........fffffff..................y...........
+  ...SSSSSSSSSS...........fffffffff.........fffffffff.............................
+  ...S........S...............f.................f.................................
+  FFFFFFFFFFFFFFFFFFFFFFFFFFfffffFFFFFFFFFFFFFfffffFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+  FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+  FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+background: |2
+  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+  WWWWWWWWwwwwwWWWWWWWWWWWWWwwwwwWWWWWWWWWWWWWwwwwwWWWWWWWWWWWWWddddddddWWWWWWWWWW
+  WWWWWWWwwwwwwwWWWWWWWWWWWwwwwwwwWWWWWWWWWWWwwwwwwwWWWWWWWWWWWwdDDDDDDdWWWWWWWWWW
+  WWWWWWwwwwwwwwwWWWWWWWWWwwwwwwwwwWWWWWWWWWwwwwwwwwwWWWWWWWWWwwdDDDDDDdWWWWWWWWWW
+  WWWWWwwwwwwwwwwwWWWWWWWwwwwwwwwwwwWWWWWWWwwwwwwwwwwwWWWWWWWwwwdDDDDDDdWWWWWWWWWW
+  WWWWwwwwwwwwwwwwwWWWWWwwwwwwwwwwwwwWWWWWwwwwwwwwwwwwwWWWWWwwwwddddddddwWWWWWWWWW
+  WWWWwwwwwwwwwwwwwWWWWWwwwwwwwwwwwwwWWWWWwwwwwwwwwwwwwWWWWWwwwwddddddddwWWWWWWWWW
+  WWWWwwwwwwwwwwwwwWWWWWwwwwwwwwwwwwwWWWWWwwwwwwwwwwwwwWWWWWwwwwddddddddwWWWWWWWWW
+  WWWWwwwwwwwwwwwwwWWWWWwwwwwwwwwwwwwWWWWWwwwwwwwwwwwwwWWWWWwwwwddddddddwWWWWWWWWW
+  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWddddddddWWWWWWWWWW
+  FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+  FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+hotspots:
+  ticket: [70, 6, 10, 3]
+layers: [leaving_out_1, leaving_out_2, leaving_out_3, leaving_out_4]

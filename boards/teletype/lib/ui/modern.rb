@@ -4,6 +4,7 @@ require_relative 'modern/formatters'
 require_relative 'modern/classic_formatters'
 require_relative 'modern/desktop'
 require_relative 'modern/rooms'
+require_relative 'modern/clubhouse'
 
 module UI
   # The board on a modern terminal (ANSI colours, UTF-8, a mouse): the modem
@@ -11,35 +12,33 @@ module UI
   module Modern
     def self.flow(bbs)
       BBS::Flow.define do
-        # The old way in: the modem, the board's art, then the name.
+        # The way in: the modem, then the entrance of the clubhouse, where
+        # the name and the password go into the guestbook.
         call do |ctx, runner|
           Formatters::Logon.connect(runner)
-          logon = TeletypeBBS::LOGON_ART
-          art   = File.exist?(logon) ? BBS::Widgets::AnsiArt.load_file(logon) : BBS::Widgets::AnsiArt.default_lines
-          Formatters::Logon.matrix(runner, art, caller_number: bbs.last_callers.caller_number,
-                                                    nodes: bbs.online.count)
           ctx[:call_started] = Time.now
-          nil
-        end
-        ask :username, prompt: 'Name (blank for Anonymous)',
-            transform: ->(value) { AccountService.normalize_name(value) }
-        call do |ctx, runner|
-          name = ctx[:username]
+          entrance = Clubhouse::Entrance.new(runner.session, bbs)
+          entrance.show
+          typed = entrance.ask_name
+          next :halt if typed.nil?
+
+          name = AccountService.normalize_name(typed)
+          ctx[:username] = name
           ctx[:authenticated] = false
           if bbs.accounts.registered?(name)
             3.times do
-              runner.write "  \e[1;37mPassword\e[0m: "
-              password = runner.readline(mask: '*')
+              password = entrance.ask_password
               break if password.nil?
               if bbs.accounts.authenticate(name, password)
                 ctx[:authenticated] = true
                 break
               end
               sleep 2
-              runner.write "  \e[1;31mWrong password.\e[0m\r\n"
+              entrance.wrong('Wrong password.')
             end
             unless ctx[:authenticated]
-              runner.write "\r\n  \e[1;31m#{name} is a registered name. Call again, or use another name.\e[0m\r\n\r\n"
+              runner.write "\e[0m\e[2J\e[H\r\n  \e[1;31m#{name} is a registered name. " \
+                           "Call again, or use another name.\e[0m\r\n\r\n"
               next :halt
             end
           end
@@ -47,6 +46,8 @@ module UI
           # it may look around, but it is not listed anywhere.
           bbs.start_call(ctx[:session_id], name, listed: runner.session.naws_reported?)
           nil
+        rescue IOError, Errno::EPIPE, Errno::ECONNRESET
+          :halt
         rescue StandardError => e
           warn "Login error: #{e.class}: #{e.message}"
           :halt
@@ -192,6 +193,15 @@ module UI
 
               PictureWindow.open(self, TownMap.new(network: services[:network]),
                                  title: Icon.title(:board, 'Town Map — the BBS Network'), accent: Accent::STYLES[:board])
+            end
+
+            # The trophy case; the Hall of Fame as lists under 80 columns.
+            def open_trophies
+              return open_window(:hall_of_fame) if cols < 80
+
+              PictureWindow.open(self, Clubhouse::Trophies.new(fame: services[:bbs].hall_of_fame),
+                                 title: Icon.title(:people, 'Trophy Case — the Hall of Fame'),
+                                 accent: Accent::STYLES[:people])
             end
 
             # The games room (the doors as stations); the Door Lobby under 80 columns.
@@ -750,8 +760,8 @@ module UI
               item '&User Listing', hint: 'The registered names with their calls and where they are from' do
                 open_window(:user_list)
               end
-              item '&Hall of Fame', hint: 'Top callers, top posters and the TTG Trivia high scores' do
-                open_window(:hall_of_fame)
+              item '&Hall of Fame', hint: 'The trophy case: top callers, top posters and the TTG Trivia records' do
+                open_trophies
               end
               separator
               item '&Team', hint: 'The members of Teletype Games with their mottos' do open_window(:team) end
@@ -837,6 +847,7 @@ module UI
           on_tick do
             top = Icon.strip(top_window&.title)
             services[:online].activity(session_id, top.empty? ? 'At the main menu' : top)
+            @dashboard.room = Clubhouse::Cards.room(top)
             statusbar.right_text = status_text
             context[:ticks] = (context[:ticks] || 0) + 1
             @dashboard.tick!
@@ -865,7 +876,7 @@ module UI
           nil
         end
         call do |ctx, runner|
-          Formatters::Logon.goodbye(runner, name: ctx[:username] || 'Anonymous',
+          Clubhouse::Leaving.play(runner, name: ctx[:username] || 'Anonymous',
                                                 seconds: Time.now - (ctx[:call_started] || Time.now),
                                                 caller_number: ctx[:caller_number] || bbs.last_callers.caller_number,
                                                 quote: bbs.taglines.pick)
