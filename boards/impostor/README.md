@@ -93,7 +93,7 @@ data/
 
 ## As a door
 
-The same terminal is a door of the [Teletype BBS](https://git.teletypegames.org/bbs/bbs-server)
+The same terminal is a door of the [Teletype BBS](https://git.teletypegames.org/bbs/teletype-bbs)
 (Doors > Impostor). It pulls this repository as the `impostor` gem; the flow
 carries its own screens (rubbs 0.7.0's `Flow.define(screens_dir:)`), and the
 host BBS gives it a sessions store of its own:
