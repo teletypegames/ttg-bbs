@@ -233,7 +233,7 @@ lib/
   ui/modern/selector.rb                the dialing menu on an ANSI terminal
   ui/petscii.rb                        the PETSCII face: keys, dialling, goodbye
   ui/petscii/switchboard.rb            the C64 menu: logo, stars, candy buttons, pages
-  ui/petscii/canvas.rb                 40×25 cells in the graphics set → raw PETSCII
+  ui/petscii/canvas.rb                 UI::Petscii::Canvas = rubbs' BBS::Petscii::Canvas (40×25, raw PETSCII)
   ui/petscii/screen.rb                 the C64 line of one call: raw out, keys in
   ui/colors.rb                         a board's accent on either face
   ui/dial.rb                           hands the line to a board (BBS::Gateway)
