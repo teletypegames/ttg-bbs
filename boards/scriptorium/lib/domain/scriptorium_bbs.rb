@@ -44,7 +44,7 @@ class ScriptoriumBBS
         @library.refresh
         sleep CHECK_EVERY
       rescue StandardError => e
-        warn "scriptorium: catalog refresh: #{e.class}: #{e.message}"
+        warn "scriptorium-bbs: catalog refresh: #{e.class}: #{e.message}"
         sleep CHECK_EVERY
       end
     end

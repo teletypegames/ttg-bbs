@@ -21,7 +21,7 @@ class ReadRepository
       File.open(@path, 'a') { |f| f.puts(JSON.generate('at' => Time.now.utc.iso8601, 'book' => book_id)) }
     end
   rescue SystemCallError => e
-    warn "scriptorium: #{@path}: #{e.class}: #{e.message}"
+    warn "scriptorium-bbs: #{@path}: #{e.class}: #{e.message}"
   end
 
   def count(book_id) = @lock.synchronize { @counts[book_id] }
@@ -41,6 +41,6 @@ class ReadRepository
       next
     end
   rescue SystemCallError => e
-    warn "scriptorium: #{@path}: #{e.class}: #{e.message}"
+    warn "scriptorium-bbs: #{@path}: #{e.class}: #{e.message}"
   end
 end

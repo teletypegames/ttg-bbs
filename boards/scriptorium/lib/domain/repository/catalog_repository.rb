@@ -100,7 +100,7 @@ class CatalogRepository
     end
     n
   rescue StandardError => e
-    warn "scriptorium: catalog import: #{e.class}: #{e.message}"
+    warn "scriptorium-bbs: catalog import: #{e.class}: #{e.message}"
     db&.close unless db&.closed?
     FileUtils.rm_f(tmp)
     nil
@@ -117,7 +117,7 @@ class CatalogRepository
     @count = db.execute('SELECT COUNT(*) AS n FROM books').first['n']
     @db    = db
   rescue SQLite3::Exception => e
-    warn "scriptorium: #{@path}: #{e.class}: #{e.message}"
+    warn "scriptorium-bbs: #{@path}: #{e.class}: #{e.message}"
     @db = nil
   end
 
@@ -128,7 +128,7 @@ class CatalogRepository
       @db.execute(sql, params)
     end
   rescue SQLite3::Exception => e
-    warn "scriptorium: catalog: #{e.class}: #{e.message}"
+    warn "scriptorium-bbs: catalog: #{e.class}: #{e.message}"
     []
   end
 

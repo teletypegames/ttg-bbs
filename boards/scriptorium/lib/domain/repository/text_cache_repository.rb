@@ -24,7 +24,7 @@ class TextCacheRepository
     touch(path) if text
     text
   rescue JSON::ParserError, SystemCallError => e
-    warn "scriptorium: #{path}: #{e.class}: #{e.message}"
+    warn "scriptorium-bbs: #{path}: #{e.class}: #{e.message}"
     nil
   end
 
@@ -41,7 +41,7 @@ class TextCacheRepository
     evict
     model
   rescue SystemCallError => e
-    warn "scriptorium: #{@dir}: #{e.class}: #{e.message}"
+    warn "scriptorium-bbs: #{@dir}: #{e.class}: #{e.message}"
     nil
   end
 
@@ -52,7 +52,7 @@ class TextCacheRepository
       f.read(chapter.length).to_s.force_encoding(Encoding::UTF_8).scrub
     end
   rescue SystemCallError => e
-    warn "scriptorium: #{text_path(id)}: #{e.class}: #{e.message}"
+    warn "scriptorium-bbs: #{text_path(id)}: #{e.class}: #{e.message}"
     nil
   end
 
@@ -92,6 +92,6 @@ class TextCacheRepository
       end
     end
   rescue SystemCallError => e
-    warn "scriptorium: #{@dir}: #{e.class}: #{e.message}"
+    warn "scriptorium-bbs: #{@dir}: #{e.class}: #{e.message}"
   end
 end

@@ -40,7 +40,7 @@ class GutenbergRepository
     ok ? File.rename(tmp, path) : FileUtils.rm_f(tmp)
     ok ? true : false
   rescue SystemCallError => e
-    warn "scriptorium: #{path}: #{e.class}: #{e.message}"
+    warn "scriptorium-bbs: #{path}: #{e.class}: #{e.message}"
     FileUtils.rm_f(tmp)
     false
   end
@@ -78,14 +78,14 @@ class GutenbergRepository
         when Net::HTTPRedirection
           return get(URI.join(url, res['location']).to_s, redirects - 1, &block) if redirects.positive?
         end
-        warn "scriptorium: #{url} answered #{res.code}"
+        warn "scriptorium-bbs: #{url} answered #{res.code}"
         return false
       end
     end
   rescue TooBig
     raise
   rescue StandardError => e
-    warn "scriptorium: #{url}: #{e.class}: #{e.message}"
+    warn "scriptorium-bbs: #{url}: #{e.class}: #{e.message}"
     false
   end
 end
