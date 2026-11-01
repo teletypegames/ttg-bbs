@@ -1,0 +1,65 @@
+# frozen_string_literal: true
+
+module UI
+  module Modern
+    # A piece on the whole screen, the way the art viewers of the old boards
+    # showed it: centred when it fits, the arrows, PgUp/PgDn and Home/End
+    # scroll it, ← and → pan it when the window is narrower than the piece,
+    # and a status line at the bottom. Q, Esc or Enter go back. Runs inside
+    # Application#with_line.
+    module Viewer
+      STATUS = "\e[0;30;47m"
+      PAN    = 8
+
+      # Shows +height+ rows of +width+ columns; +line+ gives the ANSI line of
+      # row y from column x, w cells wide. Returns nil when the caller hung up.
+      def self.run(session, width:, height:, title:, &line)
+        top  = 0
+        left = 0
+        loop do
+          cols   = session.term_cols || 80
+          rows   = session.term_rows || 24
+          view_h = [rows - 1, 1].max
+          view_w = [cols, width].min
+          top    = top.clamp(0, [height - view_h, 0].max)
+          left   = left.clamp(0, [width - cols, 0].max)
+          session.write(frame(cols, rows, view_h, view_w, width, height, top, left, title, &line))
+          key = session.readkey
+          return nil if key.nil?
+
+          case key
+          when :up        then top -= 1
+          when :down      then top += 1
+          when :page_up   then top -= view_h - 1
+          when :page_down, ' ' then top += view_h - 1
+          when :home      then top = 0
+          when :end       then top = height
+          when :left      then left -= PAN
+          when :right     then left += PAN
+          when 'q', 'Q', :escape, :enter then return true
+          end
+        end
+      end
+
+      def self.frame(cols, rows, view_h, view_w, width, height, top, left, title)
+        margin = [(cols - width) / 2, 0].max
+        out = +"\e[?25l"
+        view_h.times do |i|
+          y = top + i
+          out << "\e[#{i + 1};1H\e[0m\e[2K"
+          out << "\e[#{i + 1};#{margin + 1}H" << yield(y, left, view_w) if y < height
+        end
+        out << "\e[#{rows};1H#{STATUS}" << status(cols, view_h, width, height, top, left, title) << "\e[0m"
+      end
+
+      def self.status(cols, view_h, width, height, top, left, title)
+        parts = [" #{title}"]
+        parts << "#{top + 1}-#{[top + view_h, height].min}/#{height}" if height > view_h
+        parts << "cols #{left + 1}-#{[left + cols, width].min}/#{width} ←→" if width > cols
+        parts << '↑↓ PgUp PgDn' if height > view_h
+        parts << 'q back '
+        BBS::FrameBuffer.clip_ansi(parts.join(' · '), cols).ljust(cols)
+      end
+    end
+  end
+end
