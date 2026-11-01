@@ -121,23 +121,29 @@ module UI
         @screen.title("DOWNLOAD #{title.disk_name}")
         @screen.puts " #{GR}fetching #{title.file.downcase}…#{LG}"
         data = @catalog.fetch(title)
-        if data.is_a?(Symbol)
-          @screen.puts
-          @screen.say(Transfer.refusal(data, title), RD)
-          @screen.pause
-          return
-        end
+        return notice(Transfer.refusal(data, title), RD) if data.is_a?(Symbol)
 
+        result = transfer(title, protocol, data)
+        @catalog.downloaded(title, protocol) if result == :ok
+        @screen.title("DOWNLOAD #{title.disk_name}")
+        notice(Transfer.result(result, protocol, title), result == :ok ? GN : RD)
+      end
+
+      # Tells the caller to start the download, then sends; raises IOError
+      # when the line drops.
+      def transfer(title, protocol, data)
         @screen.puts
         @screen.say(Transfer.start(protocol, title), WH)
         @screen.puts
         result = Transfer.send_file(@screen.session, protocol, title, data)
         raise IOError, 'the caller hung up' if result == :hangup
 
-        @catalog.downloaded(title, protocol) if result == :ok
-        @screen.title("DOWNLOAD #{title.disk_name}")
+        result
+      end
+
+      def notice(text, color)
         @screen.puts
-        @screen.say(Transfer.result(result, protocol, title), result == :ok ? GN : RD)
+        @screen.say(text, color)
         @screen.pause
       end
 
