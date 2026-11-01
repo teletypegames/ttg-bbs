@@ -9,8 +9,10 @@ It has two faces on one port, like every board of the network:
 
 - a **modern** one for ANSI terminals: a desktop with windows, the mouse, the
   gallery in 80 columns and 16 colours, the canvas in a window with a palette;
-- a **Commodore 64** one in PETSCII, 40×25: numbered lists, single-key menus,
-  the gallery 40 columns at a time and the canvas on the C64's own screen.
+- a **Commodore 64** one in PETSCII, 40×25: cursor menus of rubbs
+  (`BBS::Selector`: CRSR and RETURN, or the key or number as before) for the
+  menu and the lists, the gallery 40 columns at a time and the canvas on the
+  C64's own screen.
 
 ## The gallery
 
@@ -161,7 +163,7 @@ lib/ui/
   modern/art_lines.rb       rows of cells as ANSI lines
   modern/logo_widget.rb     the logo on the desktop
   petscii.rb                UI::Petscii: the C64 board and its menu
-  petscii/screen.rb         the 40×25 screen: title bar, pages, numbered lists
+  petscii/screen.rb         the 40×25 screen: title bar, pages, cursor menus
   petscii/pen.rb            cells in C64 colours and reverse; ANSI cells to C64 ones
   petscii/canvas_view.rb    the canvas on a C64 screen, sending only what changed
   petscii/canvas.rb         painting on a C64

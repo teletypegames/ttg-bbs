@@ -4,7 +4,7 @@ require_relative 'canvas_view'
 
 module UI
   module Petscii
-    # The Wall on a C64: the works newest first as a numbered list, and a
+    # The Wall on a C64: the works newest first as a numbered cursor list, and a
     # work on the whole screen, as it was painted (CRSR down shows its last
     # row).
     class Wall

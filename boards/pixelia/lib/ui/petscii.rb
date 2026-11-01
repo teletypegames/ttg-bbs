@@ -7,8 +7,8 @@ require_relative 'petscii/wall'
 require_relative 'logo'
 
 module UI
-  # The board on a Commodore 64: PETSCII on a 40×25 screen. A one-key menu,
-  # the 16colo.rs gallery in numbered lists and pages of 40 columns, the
+  # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor menu,
+  # the 16colo.rs gallery in numbered cursor lists and pages of 40 columns, the
   # shared canvas, which is the C64's own screen size, and the Wall.
   module Petscii
     # PIXELIA in reversed blocks, five rows, a colour a letter.
@@ -83,11 +83,10 @@ module UI
           @screen.puts
           Petscii.masthead.each { |l| @screen.puts l }
           @screen.puts
-          @screen.puts " #{YE}1#{LG} the ansi gallery #{GR}16colo.rs#{LG}"
-          @screen.puts " #{YE}2#{LG} the canvas #{GR}#{@bbs.canvas.painters} painting now#{LG}"
-          @screen.puts " #{YE}3#{LG} the wall #{GR}#{@bbs.wall.all.size} works#{LG}"
-          @screen.puts " #{YE}H#{LG} help  #{YE}Q#{LG} log off"
-          case @screen.choose(" #{WH}pixelia#{LG}> ", %w[1 2 3 h q], back: 'q')
+          items   = menu_items
+          @choice = @screen.menu(items, index: items.index { |i| i.value == @choice }, back: 'q',
+                                        hint: 'crsr: choose  return: take')
+          case @choice
           when '1' then Gallery.new(@bbs.gallery, @screen).run
           when '2' then Canvas.new(@bbs, @screen, @session_id).run
           when '3' then Wall.new(@bbs.wall, @screen).run
@@ -96,6 +95,18 @@ module UI
           end
         end
       end
+
+      private
+
+      def menu_items
+        [item("the ansi gallery #{GR}16colo.rs#{LG}", '1', 'the 16colo.rs archive, year by year'),
+         item("the canvas #{GR}#{@bbs.canvas.painters} painting now#{LG}", '2', 'one picture, every caller paints on it'),
+         item("the wall #{GR}#{@bbs.wall.all.size} works#{LG}", '3', 'the pictures saved from the canvas'),
+         item('help', 'h', 'how the board works'),
+         item('log off', 'q', 'hang up. see you!')]
+      end
+
+      def item(label, key, about) = BBS::Selector.item(label, key: key, value: key, about: about)
     end
   end
 end

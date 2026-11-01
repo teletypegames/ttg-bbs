@@ -5,7 +5,7 @@ require_relative 'pen'
 module UI
   module Petscii
     # The 16colo.rs gallery on a C64: the years, a year's packs and a pack's
-    # files as numbered lists, the credits of a piece, then the piece itself
+    # files as numbered cursor lists, the credits of a piece, then the piece itself
     # in pages of 22 rows, 40 columns at a time (the left half of an 80
     # column piece first; R or CRSR right shows the next 40, CRSR left the
     # ones before).
@@ -79,7 +79,7 @@ module UI
                  (" #{GR}by#{LG}    #{file.artists.join(', ')}" unless file.artists.empty?), '',
                  " #{GR}#{@gallery.file_url(file)}#{LG}"].compact
         @screen.page(file.name, lines, wait: false)
-        return if @screen.choose(" #{YE}ret#{LG} view  #{YE}Q#{LG} back ", [:enter, 'q'], back: 'q') == 'q'
+        return if @screen.actions([nil, 'view'], %w[q back]) == 'q'
 
         @screen.puts " #{GR}fetching…#{LG}"
         art = @gallery.piece(file)
