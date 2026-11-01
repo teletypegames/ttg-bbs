@@ -1,10 +1,10 @@
 services:
-  pixelia:
+  pixelia-bbs:
     mem_limit: 160m
     cpus: 1.0
     pids_limit: 256
     build: .
-    container_name: pixelia
+    container_name: pixelia-bbs
     ports:
       - "2332:2323"
     volumes:

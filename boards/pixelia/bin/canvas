@@ -2,8 +2,8 @@
 # frozen_string_literal: true
 
 # The shared canvas, from the server's shell:
-#   docker exec pixelia bin/canvas show    (its characters)
-#   docker exec pixelia bin/canvas clear   (archives it into data/archive/, then blanks it)
+#   docker exec pixelia-bbs bin/canvas show    (its characters)
+#   docker exec pixelia-bbs bin/canvas clear   (archives it into data/archive/, then blanks it)
 # The running board holds the canvas in memory, so a clear is a request: the
 # script leaves a flag file the board answers within a few seconds. When no
 # board answers, the script clears the file itself.

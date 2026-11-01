@@ -119,11 +119,11 @@ with its default. The board has no secrets.
 ## Administration
 
 ```bash
-docker exec pixelia bin/works list          # id, date, handle, title, newest first
-docker exec pixelia bin/works show ID       # a work's characters
-docker exec pixelia bin/works remove ID     # moderation
-docker exec pixelia bin/canvas show         # the canvas' characters
-docker exec pixelia bin/canvas clear        # archive into data/archive/, then blank it
+docker exec pixelia-bbs bin/works list          # id, date, handle, title, newest first
+docker exec pixelia-bbs bin/works show ID       # a work's characters
+docker exec pixelia-bbs bin/works remove ID     # moderation
+docker exec pixelia-bbs bin/canvas show         # the canvas' characters
+docker exec pixelia-bbs bin/canvas clear        # archive into data/archive/, then blank it
 ```
 
 The running board holds the canvas in memory, so `bin/canvas clear` leaves a
