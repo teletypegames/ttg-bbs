@@ -19,15 +19,15 @@ class TeletypeBBS
     ['TTG Wiki BBS',   'teletypegames.org:2325', 'the whole wiki in a two-pane browser'],
     ['Alexandria BBS', 'teletypegames.org:2326', 'Wikipedia on a telnet line; a door here too'],
     ['Feedia BBS',     'teletypegames.org:2327', 'an RSS reader: the news as text; a door here too'],
-    ['TTGBLOG',        'teletypegames.org:2328', 'the Teletype Games blog; a door here too'],
+    ['TTG Blog BBS',   'teletypegames.org:2328', 'the Teletype Games blog; a door here too'],
     ['WarpEngine BBS', 'teletypegames.org:2329', 'the file area: C64 and Plus/4 titles; a door here too'],
     ['Scriptorium BBS', 'teletypegames.org:2330', 'Project Gutenberg books, a chapter at a time; a door here too'],
     ['Commodex BBS',   'teletypegames.org:2331', 'the C64 game compendium, with cheats and tips; a door here too'],
     ['Pixelia BBS',    'teletypegames.org:2332', 'ANSI and PETSCII art and a shared canvas; a door here too'],
-    ['TTG Gate',       'teletypegames.org:2399', 'one port for all of these: a dialing menu']
+    ['TTG Gate BBS',   'teletypegames.org:2399', 'one port for all of these: a dialing menu']
   ].freeze
   DOOR_NAMES    = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Impostor', 'Chat of Ra', 'TTG Trivia', 'Alexandria',
-                   'Feedia', 'TTGBLOG', 'WarpEngine', 'Scriptorium', 'Commodex', 'Pixelia'].freeze
+                   'Feedia', 'TTG Blog', 'WarpEngine', 'Scriptorium', 'Commodex', 'Pixelia'].freeze
   GATEWAY_HOST  = ENV.fetch('TELETYPE_BBS_GATEWAY_HOST', 'host.docker.internal')
   WIKI_SECTIONS = {
     platforms: { prefix: '/platforms', title: 'Platform Guides' },
@@ -133,16 +133,16 @@ class TeletypeBBS
                hint: 'Alexandria BBS: Wikipedia on a telnet line, a gateway to port 2326',
                about: 'Our Wikipedia board: search, read an article a screenful at a time, follow its links. ' \
                       'A gateway to Alexandria BBS on port 2326; hang up there to come back.'),
-      Door.new(name: :feedia, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2327, name: 'Feedia'),
+      Door.new(name: :feedia, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2327, name: 'Feedia BBS'),
                label: '&Feedia', cols: 40, tag: 'rss reader bbs',
-               hint: 'Feedia: an RSS reader board, the news of the day as text, a gateway to port 2327',
+               hint: 'Feedia BBS: an RSS reader board, the news of the day as text, a gateway to port 2327',
                about: 'Our RSS reader board: Hacker News, the retro sites, the Hungarian news and our own blog, as ' \
                       'plain text. A gateway to Feedia on port 2327; hang up there to come back.'),
-      Door.new(name: :ttgblog, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2328, name: 'TTGBLOG'),
-               label: 'TTG&BLOG', cols: 40, tag: 'our blog',
-               hint: 'TTGBLOG: the Teletype Games blog, written on the line, a gateway to port 2328',
+      Door.new(name: :ttgblog, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2328, name: 'TTG Blog BBS'),
+               label: 'TTG &Blog', cols: 40, tag: 'our blog',
+               hint: 'TTG Blog BBS: the Teletype Games blog, written on the line, a gateway to port 2328',
                about: 'The board our blog is written on: the posts of teletypegames.org/blog, read a screenful at ' \
-                      'a time. A gateway to TTGBLOG on port 2328; hang up there to come back.'),
+                      'a time. A gateway to TTG Blog BBS on port 2328; hang up there to come back.'),
       Door.new(name: :warp, program: BBS::Gateway.new(host: GATEWAY_HOST, port: 2329, name: 'WarpEngine BBS'),
                label: '&WarpEngine', cols: 40, tag: 'c64 + plus/4 files',
                hint: 'WarpEngine BBS: our C64 and Plus/4 titles by ZMODEM or XMODEM, a gateway to port 2329',

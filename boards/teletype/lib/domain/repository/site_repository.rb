@@ -6,7 +6,7 @@ require_relative 'http_json'
 
 # The public teletypegames.org endpoints that are not the catalog:
 # upcoming events, the team roster, the how-tos and the blog (written on
-# TTGBLOG, served by the site's API).
+# TTG Blog BBS, served by the site's API).
 class SiteRepository
   include HttpJson
 

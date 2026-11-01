@@ -21,7 +21,7 @@ module UI
     end
 
     # The desktop while no art is chosen: the board as it is now. The logo
-    # and the greeting, the TTG Gate banner, then four panels (the nodes, the last callers, the
+    # and the greeting, the TTG Gate BBS banner, then four panels (the nodes, the last callers, the
     # new releases, what is coming up) and the oneliners wall running along
     # the bottom. The application gives it its Data on start and every few
     # seconds after, and steps the ticker once a second.
@@ -36,7 +36,7 @@ module UI
 
       TICKER_STEP = 2
 
-      GATE      = 'TTG GATE  ·  telnet teletypegames.org 2399'
+      GATE      = 'TTG GATE BBS  ·  telnet teletypegames.org 2399'
       GATE_NOTE = 'the whole Teletype Games BBS Network, every board from one place'
       GATE_SGR  = "\e[0;1;38;5;220;48;5;52m"
 

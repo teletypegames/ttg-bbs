@@ -19,7 +19,7 @@ module UI
 
     # The one port to every board of ours, big, on the board's face.
     def self.gate(screen)
-      ['', 'The whole Teletype Games BBS', 'Network in one place: TTG GATE', '',
+      ['', 'The whole Teletype Games BBS', 'Network in one place: TTG GATE BBS', '',
        'telnet teletypegames.org 2399', ''].each_with_index do |line, i|
         screen.puts " #{i == 4 ? WH : YE}#{RV}#{line.center(WIDTH)}#{RO}#{LG}"
       end

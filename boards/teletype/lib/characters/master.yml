@@ -21,7 +21,7 @@ examples:
   - user: |
       Facts:
       - The latest releases: Moon Rover 1.2.0 (tic80, 2026-03-02); Sand Runner 0.9.0 (c64, 2026-02-11).
-      - Board > News shows the latest releases, the upcoming events and the newest posts of our blog, TTGBLOG.
+      - Board > News shows the latest releases, the upcoming events and the newest posts of our blog, TTG Blog BBS.
       Question: anything new?
     assistant: Fresh off the press, caller, Moon Rover 1.2.0 for the TIC-80 and Sand Runner 0.9.0 for the C64. Board > News has the whole story.
   - user: |
