@@ -1,0 +1,145 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Measures what the clubhouse screens of the C64 face cost on the line, in
+# bytes: the whole first screen (aim: 1.2 KB at most), a step of an
+# animation (200 bytes at most), a room card (about 300), a frame of the
+# lamps going out (under 100). The scene is the worst case: seven windows
+# lit, mail waiting, an event coming; the main menu is measured at every
+# time of day with every season's layers. With a folder the raw PETSCII of
+# the screens is written there too (menu.seq, town.seq …), for a C64
+# terminal or VICE.
+#
+#   docker exec teletype-bbs bin/c64-bytes
+#   bundle exec bin/c64-bytes tmp/seq
+
+require 'bundler/setup'
+require 'fileutils'
+require_relative '../lib/domain'
+require_relative '../lib/ui/logo'
+require_relative '../lib/ui/arts'
+require_relative '../lib/ui/petscii'
+
+# The stand-ins of the measurement: a line and the board.
+module Stub
+  # A line that takes the bytes and gives the keys of a script.
+  class Line
+    attr_reader :out
+
+    def initialize(keys = [])
+      @keys = keys
+      @out  = []
+    end
+
+    def write_raw(bytes) = @out << bytes.b
+    def write(text) = @out << text.to_s.b
+    def petscii? = true
+
+    def readkey(**) = @keys.shift || raise(IOError, 'the script ended')
+
+    def sizes = @out.map(&:bytesize)
+  end
+
+  # The board as the screens see it: one scene, node 3.
+  class Board
+    Scenes = Struct.new(:model) do
+      def scene(*, **) = model
+    end
+    Online = Struct.new(:number) do
+      def node(_) = self
+    end
+
+    def initialize(scene) = @scene = scene
+    def scene = Scenes.new(@scene)
+    def online = Online.new(3)
+    def sysop?(*) = false
+  end
+end
+
+Node  = Struct.new(:number, :session_id, :name, :since, :activity)
+Event = Struct.new(:name, :date)
+Door  = Struct.new(:name, :title, :about, :c64) do
+  def c64? = c64
+end
+
+def scene(at)
+  SceneModel.new(nodes: (1..7).map { |n| Node.new(n, n, "caller#{n}", at, 'At the main menu') }, smoking: true,
+                 mail: 12, notes: 3, doors: {}, sofa: 1, guestbook: [],
+                 events: [Event.new('Underwater Sun Rising - Implementation day', at + (30 * 86_400))],
+                 oneliners: [], season: BBS::Season.now(at: at, jam: Date.new(2027, 1, 8)..Date.new(2027, 1, 10)))
+end
+
+def keep(name, bytes)
+  File.binwrite(File.join(ARGV[0], "#{name}.seq"), bytes) if ARGV[0]
+end
+
+Clubhouse = UI::Petscii::Clubhouse
+FileUtils.mkdir_p(ARGV[0]) if ARGV[0]
+ctx = { username: 'tasi', authenticated: true, session_id: 1 }
+
+puts 'Main menu, the whole screen (7 windows lit, mail, an event):'
+HOURS = { dawn: [6, 30], day: [12, 0], dusk: [16, 30], night: [22, 0] }.freeze
+DAYS  = { 'no layer' => [2026, 11, 1], 'snow' => [2026, 12, 24], 'pumpkins' => [2026, 10, 30],
+          'snow, fireworks' => [2026, 12, 31], 'snow, bunting' => [2027, 1, 9] }.freeze
+worst = DAYS.map do |label, day|
+  sizes = HOURS.map do |_, (hour, min)|
+    at = Time.new(*day, hour, min)
+    line = Stub::Line.new(['q'])
+    Clubhouse::MainMenu.new(Stub::Board.new(scene(at)), line, ctx).run(unread: 12)
+    keep('menu', line.out.first) if label == 'no layer' && hour == 12
+    "#{BBS::Season.now(at: at).time_of_day} #{line.sizes.first}"
+  end
+  puts "  #{label.ljust(16)} #{sizes.join('  ')}"
+  sizes.map { |s| s.split.last.to_i }.max
+end.max
+puts "  the most: #{worst} bytes"
+
+at   = Time.new(2026, 11, 1, 12)
+line = Stub::Line.new([:down, :down, :right, :up, :left, 'q'])
+Clubhouse::MainMenu.new(Stub::Board.new(scene(at)), line, ctx).run(unread: 0)
+puts "  a move of the bar: #{line.sizes.drop(1).join(', ')}"
+canvas = BBS::Petscii::Canvas.new
+art = Clubhouse.house(canvas, scene(at), node: 1, status: '')
+puffs = (1..4).map do |i|
+  before = canvas.dup
+  Clubhouse.smoke(canvas, art, i)
+  (canvas.update(before) + canvas.cursor(24, 0)).bytesize
+end
+puts "  a puff of smoke: #{puffs.join(', ')}"
+
+line = Stub::Line.new(%i[right right right down left left down right right up up enter])
+Clubhouse::TownMap.new(line, NetworkService.new(NetworkRepository.new(File.join(TeletypeBBS::CONTENT_DIR,
+                                                                                'network.yml')))).run
+keep('town', line.out.join)
+puts "Town map: #{line.sizes.first}, a step #{line.sizes.drop(1).join(', ')}"
+
+doors = [Door.new(:sermo, 'SERMO', 'The Margittai machine of the Neumatronic universe, running SERMO.', false),
+         Door.new(:c64, 'Commodore 64', 'A Commodore 64 at its READY. prompt, with a small BASIC V2.', true),
+         Door.new(:plus4, 'Commodore Plus/4', 'The grey screen of the Plus/4 and its BASIC 3.5 habits.', true),
+         Door.new(:ra, 'Chat of Ra', 'You are the worker sealed in the pyramid of Blessing of Ra.', false),
+         Door.new(:trivia, 'TTG Trivia', 'A door game of the old kind: ten questions about our games.', false)]
+line = Stub::Line.new(%i[right right right right left escape])
+Clubhouse::GamesRoom.new(line, doors, scene(at)).run
+keep('games', line.out.join)
+puts "Games room: #{line.sizes.first}, a step #{line.sizes.drop(1).join(', ')}"
+
+fame = { callers: [['tasi', 40], ['kali', 22], ['zsolt', 9], ['a', 3], ['b', 2], ['c', 1], ['d', 1]],
+         posters: [['tasi', 12], ['kali', 5], ['zsolt', 2]], trivia: [['kali', 900], ['tasi', 700]] }
+line = Stub::Line.new([:enter])
+Clubhouse::Trophies.show(line, fame)
+keep('trophies', line.out.join)
+puts "Trophies: #{line.sizes.first}"
+
+cards = Clubhouse::Cards::ABOUT.keys.map do |room|
+  line = Stub::Line.new([:enter])
+  Clubhouse::Cards.show(line, room, Set.new)
+  "#{room} #{line.sizes.first}"
+end
+puts "Room cards: #{cards.join(', ')}"
+
+line = Stub::Line.new
+Clubhouse::Leaving.send(:remove_const, :STEP)
+Clubhouse::Leaving.const_set(:STEP, 0)
+steps = Clubhouse::Leaving.play(line, name: 'tasi', seconds: 754, caller_number: 205, quote: ['A push to master.', nil])
+keep('leaving', line.out.join)
+puts "Leaving: #{line.sizes.first}, the lamps out #{steps.join(', ')}, NO CARRIER #{line.sizes.last}"
