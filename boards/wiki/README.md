@@ -88,16 +88,17 @@ the same value** (the compose file wires both from one variable). The older
 
 ## Running
 
-### With the wiki's compose (recommended)
+### On the server
 
-The service is part of the repo root `docker-compose.yml`:
+Its own stack, `/srv/stacks/wiki-bbs` (`ci-deploy wiki-bbs`, a push to master deploys it). It
+reaches the wiki's Grav as `http://wiki-grav` on the `interstack` network, an alias the
+`services/wiki-pages` compose gives Grav. Until 2026-11-01 it lived in that repo as `bbs/`; this
+repository keeps that folder's history.
 
 ```bash
-docker compose up --build    # from the wiki-pages root
+docker compose up --build    # needs the interstack network and the wiki-pages stack
 telnet localhost 2325
 ```
-
-It reaches Grav as `http://grav` on the compose network.
 
 ### Standalone, local dev
 
@@ -130,8 +131,10 @@ always boots with the latest rubbs revision.
 bbs.rb                        Entry point: one WikiBBS, its index loading, BBS::Terminal with the two faces
 Gemfile, Gemfile.lock         rubbs from git, rubocop in :development
 entrypoint.sh                 Updates rubbs, then starts bbs.rb
-Dockerfile, .dockerignore     The image; the root docker-compose.yml builds it as wiki-bbs
-.rubocop.yml                  The house RuboCop rules; CI lints bbs/ (root .woodpecker.yaml)
+Dockerfile, .dockerignore     The image
+compose.yaml                  The wiki-bbs service on 2325, on the interstack network
+.rubocop.yml                  The house RuboCop rules
+.woodpecker.yaml              RuboCop, compose check, ci-deploy wiki-bbs
 env-example                   Every environment variable, with its default
 lib/
   domain.rb                   Requires the domain in dependency order
@@ -150,5 +153,4 @@ lib/
 
 ## Licence
 
-MIT, see `LICENSE`. It covers this folder only: the rest of the wiki-pages
-repository has no licence of its own (Grav's in `core/` is Grav's).
+MIT, see `LICENSE`.

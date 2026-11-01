@@ -1,0 +1,28 @@
+services:
+  wiki-bbs:
+    mem_limit: 128m
+    cpus: 1.0
+    pids_limit: 256
+    build: .
+    container_name: wiki-bbs
+    ports:
+      - "2325:2323"
+    environment:
+      - TZ=Europe/Budapest
+      - BBS_IDLE=600
+      # Callers at once: each costs up to ~1.7 MB on top of ~25 MB, sized to mem_limit.
+      - BBS_MAX_SESSIONS=50
+      # The wiki's Grav, reached on the interstack network (wiki-pages gives it this alias).
+      - WIKI_BBS_URL=http://wiki-grav
+      # Unlocks the private wiki pages (Wiki > Supervisor login); the same value as the wiki's
+      # SUPERVISOR_PASSWORD, kept in .env on the server.
+      - WIKI_BBS_SUPERVISOR_PASSWORD=${WIKI_BBS_SUPERVISOR_PASSWORD:-}
+    networks:
+      - default
+      - interstack
+    restart: unless-stopped
+
+networks:
+  interstack:
+    name: interstack
+    external: true

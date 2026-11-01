@@ -7,14 +7,14 @@ BBS_MAX_SESSIONS=100
 # Idle disconnect, seconds
 BBS_IDLE=900
 
-# Where the Grav wiki lives. Inside the wiki-pages compose network this is
-# http://grav; for local dev against `docker compose up` it's
+# Where the Grav wiki lives. On the server it is http://wiki-grav on the interstack
+# network (compose.yaml); for local dev against the wiki-pages stack it's
 # http://localhost:9120.
 WIKI_BBS_URL=http://localhost:9120
 # Password that unlocks the private wiki pages in the BBS
 # (Wiki menu > Supervisor login). Also sent to the wiki API as ?token= —
-# must match the grav service's SUPERVISOR_PASSWORD (the root compose wires
-# both from this one variable). Empty/unset (the default) = private pages
+# must match the wiki's SUPERVISOR_PASSWORD (services/wiki-pages .env); on the
+# server it is in this stack's .env. Empty/unset (the default) = private pages
 # stay locked. Avoid double quotes in the value (it is templated into a yaml
 # string).
 WIKI_BBS_SUPERVISOR_PASSWORD=
