@@ -1,4 +1,4 @@
-# Teletype BBS Server
+# Teletype BBS
 
 Telnet-accessible Synchronet-style community BBS server built on the
 [rubbs](https://git.teletypegames.org/engines/rubbs) gem. It keeps the habits of the
@@ -192,7 +192,7 @@ statusbar while it is highlighted.
 - **Wiki sections** — Platform Guides (`/platforms`), Engines (`/engines`) and the DOS Corner (`/dos`, with an FTP/DOSINST intro), read from the Grav JSON API; private pages are left out. You > Language switches them to Hungarian.
 - **Team** — the members of teletypegames.org with their mottos.
 - **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `BBS::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
-- **Telnet gateways** — Doors > Alexandria, Doors > Feedia, Doors > TTG Blog and Doors > WarpEngine hand the caller's line on to [Alexandria BBS](https://git.teletypegames.org/bbs/alexandria) (:2326), [Feedia BBS](https://git.teletypegames.org/bbs/feedia) (:2327), [TTG Blog BBS](https://git.teletypegames.org/bbs/ttgblog) (:2328) and [WarpEngine BBS](https://git.teletypegames.org/bbs/warp-engine-bbs) (:2329) as it is, with rubbs' `BBS::Gateway`: those boards run their own code on their own ports, and the caller comes back when they hang up (Alt-X, or Q on a C64). The gateway reports the caller's window size; a C64 caller reports none, so the other board answers in PETSCII.
+- **Telnet gateways** — Doors > Alexandria, Doors > Feedia, Doors > TTG Blog and Doors > WarpEngine hand the caller's line on to [Alexandria BBS](https://git.teletypegames.org/bbs/alexandria-bbs) (:2326), [Feedia BBS](https://git.teletypegames.org/bbs/feedia-bbs) (:2327), [TTG Blog BBS](https://git.teletypegames.org/bbs/ttg-blog-bbs) (:2328) and [WarpEngine BBS](https://git.teletypegames.org/bbs/warp-engine-bbs) (:2329) as it is, with rubbs' `BBS::Gateway`: those boards run their own code on their own ports, and the caller comes back when they hang up (Alt-X, or Q on a C64). The gateway reports the caller's window size; a C64 caller reports none, so the other board answers in PETSCII.
 - **Registered names** — a caller can register the name they logged in with (You > Register…); from then on that name asks for its password, with a 2-second wait after each wrong one. Profiles belong to registered names only. `accounts.csv` is read again whenever it changes, so `bin/account` works on a running server.
 - **Sysop console** — stats + broadcast, for names in `TELETYPE_BBS_SYSOPS` that logged in with their password.
 - **Discord feed** — new board posts and sysop broadcasts go to `TELETYPE_BBS_DISCORD_WEBHOOK`, mentions disabled.
