@@ -13,13 +13,20 @@ class TipSeedRepository
   def all
     return [] unless File.exist?(@path)
 
-    Array(YAML.safe_load_file(@path)).filter_map do |t|
-      next unless t.is_a?(Hash) && t['game'].to_s.match?(/\AQ\d+\z/) && !t['key'].to_s.empty? && !t['text'].to_s.strip.empty?
-
-      { game_id: t['game'].to_s, seed: t['key'].to_s, handle: t['handle'].to_s, text: t['text'].to_s.strip }
-    end
+    Array(YAML.safe_load_file(@path)).filter_map { |entry| seed(entry) if valid?(entry) }
   rescue StandardError => e
     warn "commodex-bbs: reading #{@path}: #{e.class}: #{e.message}"
     []
+  end
+
+  private
+
+  def valid?(entry)
+    entry.is_a?(Hash) && entry['game'].to_s.match?(/\AQ\d+\z/) && !entry['key'].to_s.empty? &&
+      !entry['text'].to_s.strip.empty?
+  end
+
+  def seed(entry)
+    { game_id: entry['game'].to_s, seed: entry['key'].to_s, handle: entry['handle'].to_s, text: entry['text'].to_s.strip }
   end
 end

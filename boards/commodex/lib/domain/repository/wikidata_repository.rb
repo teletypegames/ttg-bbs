@@ -1,21 +1,23 @@
 # frozen_string_literal: true
 
 require 'json'
-require 'net/http'
 require 'uri'
 
 # The Commodore 64 games of Wikidata (CC0), read from its SPARQL endpoint:
 # every item on the platform Commodore 64 (P400 = Q99775) that is a video
 # game (P31/P279* Q7889). One query for the items, their labels and English
 # Wikipedia articles, then one per property, merged here into the records of
-# the catalog file. Any failed query gives nil, so a refresh never leaves a
-# half catalog.
+# the catalog file, over BBS::HTTP (a deadline, a body cap). Any failed
+# query gives nil, so a refresh never leaves a half catalog. The names are
+# cleaned of control characters.
 class WikidataRepository
   ENDPOINT     = 'https://query.wikidata.org/sparql'
   USER_AGENT   = 'CommodexBBS/0.1 (Commodex BBS, Teletype Games telnet BBS; https://teletypegames.org; ' \
                  'https://git.teletypegames.org/bbs/commodex-bbs)'
   OPEN_TIMEOUT = 10
   READ_TIMEOUT = 90
+  DEADLINE     = 180
+  MAX_BYTES    = 32 * 1024 * 1024
   LANGUAGES    = 'en,mul,de,fr,it,es,nl,sv,pl,hu,ja'
   GAMES        = '?item wdt:P400 wd:Q99775 . ?item wdt:P31/wdt:P279* wd:Q7889 .'
   LABELS       = "SERVICE wikibase:label { bd:serviceParam wikibase:language \"#{LANGUAGES}\". }".freeze
@@ -43,7 +45,7 @@ class WikidataRepository
   C64 = 'Q99775'
 
   def initialize(endpoint: ENDPOINT, pause: 1)
-    @endpoint = URI(endpoint)
+    @endpoint = endpoint
     @pause    = pause
   end
 
@@ -61,7 +63,7 @@ class WikidataRepository
     rows = select(ITEMS) or return nil
     rows.each_with_object({}) do |row, games|
       id    = qid(row['item'])
-      title = row.dig('itemLabel', 'value').to_s.strip
+      title = text(row.dig('itemLabel', 'value'))
       next if id.nil? || title.empty? || title.match?(/\AQ\d+\z/)
 
       game = games[id] ||= { 'id' => id, 't' => title }
@@ -74,8 +76,13 @@ class WikidataRepository
   # the earliest at all.
   def years(games)
     rows = select(DATES) or return nil
-    dates = Hash.new { |h, k| h[k] = { c64: [], any: [] } }
-    rows.each do |row|
+    dates(rows, games).each { |id, d| games[id]['y'] = (d[:c64].empty? ? d[:any] : d[:c64]).min }
+    true
+  end
+
+  # The years given for each game: { id => { c64: [...], any: [...] } }.
+  def dates(rows, games)
+    rows.each_with_object(Hash.new { |h, k| h[k] = { c64: [], any: [] } }) do |row, dates|
       id   = qid(row['item'])
       year = row.dig('date', 'value').to_s[/\A-?\d{4}/]&.to_i
       next unless games.key?(id) && year&.positive?
@@ -83,8 +90,6 @@ class WikidataRepository
       dates[id][:any] << year
       dates[id][:c64] << year if qid(row['platform']) == C64
     end
-    dates.each { |id, d| games[id]['y'] = (d[:c64].empty? ? d[:any] : d[:c64]).min }
-    true
   end
 
   def values(games, key, property)
@@ -103,25 +108,24 @@ class WikidataRepository
 
   # A game mode reads "single-player", not "single-player video game".
   def clean(key, name)
-    name = name.to_s.strip
+    name = text(name)
     key == 'mod' ? name.sub(/ video game\z/, '') : name
   end
+
+  def text(value) = BBS::Text.clean(value.to_s, keep_newlines: false).strip
 
   def qid(binding) = binding&.dig('value').to_s[%r{/entity/(Q\d+)\z}, 1]
 
   def select(query)
     sleep @pause
-    req = Net::HTTP::Post.new(@endpoint)
-    req['User-Agent'] = USER_AGENT
-    req['Accept']     = 'application/sparql-results+json'
-    req.set_form_data('query' => query)
-    res = Net::HTTP.start(@endpoint.host, @endpoint.port, use_ssl: @endpoint.scheme == 'https',
-                                                          open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT) do |http|
-      http.request(req)
-    end
-    return JSON.parse(res.body).dig('results', 'bindings') if res.is_a?(Net::HTTPSuccess)
+    response = BBS::HTTP.post(@endpoint, body: URI.encode_www_form(query: query), user_agent: USER_AGENT,
+                                         headers: { 'Accept' => 'application/sparql-results+json',
+                                                    'Content-Type' => 'application/x-www-form-urlencoded' },
+                                         open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT,
+                                         deadline: DEADLINE, max_bytes: MAX_BYTES)
+    return JSON.parse(BBS::Text.utf8(response.body)).dig('results', 'bindings') if response.ok?
 
-    warn "commodex-bbs: Wikidata answered #{res.code}"
+    warn "commodex-bbs: Wikidata answered #{response.status}"
     nil
   rescue StandardError => e
     warn "commodex-bbs: Wikidata: #{e.class}: #{e.message}"

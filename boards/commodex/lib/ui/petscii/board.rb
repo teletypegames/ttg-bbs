@@ -16,12 +16,13 @@ module UI
       # The letters of the companies side by side, each with its count.
       LETTER_COLUMNS = 6
 
-      def initialize(bbs, screen, ctx)
+      # +caller_key+ is who a tip is counted for (BBS::RateLimit.caller_key).
+      def initialize(bbs, screen, caller_key:)
         @catalog = bbs.catalog
         @about   = bbs.about
         @tips    = bbs.tips
         @screen  = screen
-        @session = ctx[:session_id]
+        @caller  = caller_key
       end
 
       def run
@@ -32,21 +33,27 @@ module UI
           @screen.puts
           @choice = @screen.menu(MENU_ITEMS, index: MENU_ITEMS.index { |i| i.value == @choice }, back: 'q',
                                              hint: 'crsr: choose  return: take')
-          case @choice
-          when 's' then search
-          when 'y' then groups('YEARS', @catalog.years) { |year| @catalog.in_year(year) }
-          when 'g' then groups('GENRES', @catalog.genres) { |genre| @catalog.of_genre(genre) }
-          when 'c' then companies
-          when 'r' then game(@catalog.random)
-          when 't' then games('GAMES WITH TIPS', @tips.games_with_tips, empty: 'no game has a tip yet. be the first!')
-          when 'i' then @screen.page('ABOUT COMMODEX BBS', [Words::ABOUT, '', Words::SOURCES])
-          when 'q' then return
-          end
+          return if @choice == 'q'
+
+          take(@choice)
           @screen.title('COMMODEX BBS', "#{@catalog.count} games")
         end
       end
 
       private
+
+      # Does what the main menu's +choice+ says.
+      def take(choice)
+        case choice
+        when 's' then search
+        when 'y' then groups('YEARS', @catalog.years) { |year| @catalog.in_year(year) }
+        when 'g' then groups('GENRES', @catalog.genres) { |genre| @catalog.of_genre(genre) }
+        when 'c' then companies
+        when 'r' then game(@catalog.random)
+        when 't' then games('GAMES WITH TIPS', @tips.games_with_tips, empty: 'no game has a tip yet. be the first!')
+        when 'i' then @screen.page('ABOUT COMMODEX BBS', [Words::ABOUT, '', Words::SOURCES])
+        end
+      end
 
       def search
         @screen.title('SEARCH')
@@ -145,7 +152,7 @@ module UI
           return @screen.pause
         end
 
-        result = @tips.submit(game, text: text, handle: handle, session: @session)
+        result = @tips.submit(game, text: text, handle: handle, caller: @caller)
         @screen.puts
         @screen.say(Words.tip(result), result == :ok ? GN : RD)
         @screen.pause

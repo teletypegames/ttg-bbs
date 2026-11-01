@@ -67,19 +67,23 @@ class CatalogService
   def random = games.sample
 
   # Starts the thread that keeps the catalog fresh; nil when +ttl+ is 0.
+  # An error in a round is logged and the thread goes on after
+  # +retry_after+ seconds: a refresh must not stop for good.
   def start_refresh
     return nil unless @ttl.positive?
 
-    Thread.new do
-      loop do
-        age = Time.now - updated_at
-        if age < @ttl
-          sleep(@ttl - age)
-        elsif refresh! != :ok
-          sleep @retry_after
-        end
-      end
-    end
+    Thread.new { loop { refresh_round } }
+  end
+
+  # Waits until the catalog is +ttl+ old, or refreshes it now; after a
+  # failed refresh, waits +retry_after+ seconds.
+  def refresh_round
+    age = Time.now - updated_at
+    return sleep(@ttl - age) if age < @ttl
+    sleep @retry_after unless refresh! == :ok
+  rescue StandardError => e
+    warn "commodex-bbs: catalog refresh: #{e.class}: #{e.message}"
+    sleep @retry_after
   end
 
   # Reads the catalog from Wikidata now: :ok, or :failed (the old snapshot
@@ -107,18 +111,18 @@ class CatalogService
   end
 
   def build(snapshot)
-    games     = snapshot.games
-    years     = Hash.new { |h, k| h[k] = [] }
-    genres    = Hash.new { |h, k| h[k] = [] }
-    companies = Hash.new { |h, k| h[k] = [] }
-    games.each do |g|
-      years[g.year] << g if g.year
-      g.genres.each { |name| genres[name] << g }
-      g.companies.each { |name| companies[name] << g }
-    end
+    games = snapshot.games
     Index.new(snapshot: snapshot, by_id: games.to_h { |g| [g.id, g] }, folded: games.map { |g| GameModel.fold(g.title) },
-              years: sorted(years) { |y, _| y }, genres: sorted(genres) { |n, _| n.downcase },
-              companies: sorted(companies) { |n, _| GameModel.fold(n) })
+              years: sorted(group(games) { |g| [g.year].compact }) { |y, _| y },
+              genres: sorted(group(games, &:genres)) { |n, _| n.downcase },
+              companies: sorted(group(games, &:companies)) { |n, _| GameModel.fold(n) })
+  end
+
+  # The games under each of the keys the block gives for a game.
+  def group(games)
+    games.each_with_object(Hash.new { |h, k| h[k] = [] }) do |game, groups|
+      yield(game).each { |key| groups[key] << game }
+    end
   end
 
   def sorted(hash, &) = hash.sort_by(&).to_h { |k, list| [k, list.freeze] }.freeze

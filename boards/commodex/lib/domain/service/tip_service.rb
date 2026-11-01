@@ -1,24 +1,24 @@
 # frozen_string_literal: true
 
 # The cheats and tips of the games. A caller's tip waits as pending until an
-# admin approves it (bin/tips); only approved tips are shown. A call may
-# send PER_SESSION tips, one every GAP seconds, and the whole board at most
-# GLOBAL_MAX in GLOBAL_WINDOW seconds, so a crowd cannot flood the queue.
+# admin approves it (bin/tips); only approved tips are shown. A caller (by
+# address: BBS::RateLimit.caller_key, so hanging up and calling again does
+# not help) may send PER_CALLER tips an hour, one every GAP seconds, and the
+# whole board at most BOARD_MAX an hour, so a crowd cannot flood the queue.
 class TipService
-  MAX_TEXT      = 500
-  MAX_HANDLE    = 20
-  PER_SESSION   = 3
-  GAP           = 30
-  GLOBAL_MAX    = 30
-  GLOBAL_WINDOW = 3600
+  MAX_TEXT   = 500
+  MAX_HANDLE = 20
+  PER_CALLER = 3
+  GAP        = 30
+  BOARD_MAX  = 30
+  WINDOW     = 3600
 
   def initialize(repository, catalog:, notifier: nil, seeds: [])
     @repository = repository
     @catalog    = catalog
     @notifier   = notifier
-    @lock       = Mutex.new
-    @sessions   = {}
-    @recent     = []
+    @limits     = [BBS::RateLimit.new(limit: 1, per: GAP), BBS::RateLimit.new(limit: PER_CALLER, per: WINDOW)]
+    @board      = BBS::RateLimit.new(limit: BOARD_MAX, per: WINDOW)
     seeds.each { |s| @repository.insert(**s, status: 'approved') }
   end
 
@@ -29,25 +29,16 @@ class TipService
   # The games that have an approved tip, by title.
   def games_with_tips = @repository.approved_counts.keys.filter_map { |id| @catalog.find(id) }.sort_by { |g| g.title.downcase }
 
-  # Sends a tip for +game+ from the call +session+: :ok, or why not:
-  # :empty, :too_long, :rate_limited, :failed.
-  def submit(game, text:, session:, handle: '')
+  # Sends a tip for +game+ from +caller+ (BBS::RateLimit.caller_key): :ok,
+  # or why not: :empty, :too_long, :rate_limited, :failed.
+  def submit(game, text:, caller:, handle: '')
     text = clean(text)
     return :empty if text.empty?
     return :too_long if text.size > MAX_TEXT
-    return :rate_limited unless slot?(session)
+    return :rate_limited unless allowed?(caller)
 
-    handle = clean(handle)[0, MAX_HANDLE]
-    id = @repository.insert(game_id: game.id, handle: handle, text: text)
-    @notifier&.call(@repository.find(id), game)
-    :ok
-  rescue StandardError => e
-    warn "commodex-bbs: saving a tip: #{e.class}: #{e.message}"
-    :failed
+    save(game, text, clean(handle)[0, MAX_HANDLE])
   end
-
-  # How many more tips the call +session+ may send.
-  def left(session) = PER_SESSION - @lock.synchronize { @sessions.fetch(session, []).size }
 
   def pending(limit = 100) = @repository.with_status('pending', limit: limit)
 
@@ -64,22 +55,21 @@ class TipService
 
   private
 
-  def status(id, value) = @repository.set_status(id.to_i, value).positive? ? :ok : :no_tip
+  def status(id, value) = @repository.change_status(id.to_i, value).positive? ? :ok : :no_tip
 
-  def clean(text) = text.to_s.gsub(/[[:cntrl:]]/, ' ').gsub(/\s+/, ' ').strip
+  # One line of text: no control or bidirectional character, one space
+  # between words.
+  def clean(text) = BBS::Text.clean(text.to_s).gsub(/[[:space:]]+/, ' ').strip
 
-  # True when the call and the board may send one more, and counts it.
-  def slot?(session)
-    @lock.synchronize do
-      now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      @recent.shift while @recent.any? && now - @recent.first > GLOBAL_WINDOW
-      @sessions.delete_if { |_, times| now - times.last > GLOBAL_WINDOW }
-      mine = @sessions.fetch(session, [])
-      next false if mine.size >= PER_SESSION || (mine.any? && now - mine.last < GAP) || @recent.size >= GLOBAL_MAX
+  # Whether +caller+ and the board may send one more; counts it when they may.
+  def allowed?(caller) = @limits.all? { |limit| limit.allow?(caller) } && @board.allow?(:board)
 
-      @sessions[session] = [*mine, now]
-      @recent << now
-      true
-    end
+  def save(game, text, handle)
+    id = @repository.insert(game_id: game.id, handle: handle, text: text)
+    @notifier&.call(@repository.find(id), game)
+    :ok
+  rescue StandardError => e
+    warn "commodex-bbs: saving a tip: #{e.class}: #{e.message}"
+    :failed
   end
 end

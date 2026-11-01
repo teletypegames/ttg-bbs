@@ -24,8 +24,8 @@ module UI
 
     def self.flow(bbs)
       BBS::Flow.define do
-        call do |ctx, runner|
-          Board.new(bbs, Screen.new(runner.session), ctx).run
+        call do |_ctx, runner|
+          Board.new(bbs, Screen.new(runner.session), caller_key: BBS::RateLimit.caller_key(runner.session)).run
           nil
         end
         call do |_ctx, runner|

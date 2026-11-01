@@ -8,26 +8,25 @@
 GameModel = Data.define(:id, :title, :year, :article, :publishers, :developers, :designers, :composers,
                         :genres, :modes, :series) do
   # The game of a catalog record; nil without an id or a title. +names+ is
-  # a Hash that interns the strings shared between games.
+  # a Hash that interns the strings shared between games. Every text is
+  # cleaned of control characters: the catalog is Wikidata's, edited by
+  # anyone.
   def self.from_record(record, names = {})
     id    = record['id'].to_s
-    title = record['t'].to_s.strip
+    title = clean(record['t'])
     return nil unless id.match?(/\AQ\d+\z/) && !title.empty?
 
-    lists = GameModel::LISTS.to_h do |key|
-      [key, Array(record[GameModel::KEYS[key]]).map { |n| names[n.to_s] ||= n.to_s.dup.freeze }.uniq.freeze]
-    end
-    new(id: -id, title: -title, year: record['y']&.to_i, article: record['w']&.then { |w| -w.to_s },
-        **lists)
+    new(id: -id, title: -title, year: record['y']&.to_i, article: record['w']&.then { |w| -clean(w) },
+        **lists(record, names))
   end
 
-  # The game as a record of the catalog file, empty fields left out.
-  def to_record
-    GameModel::KEYS.each_with_object({}) do |(key, short), out|
-      value = public_send(key)
-      out[short] = value unless value.nil? || (value.respond_to?(:empty?) && value.empty?)
+  def self.lists(record, names)
+    GameModel::LISTS.to_h do |key|
+      [key, Array(record[GameModel::KEYS[key]]).map { |n| names[n.to_s] ||= clean(n).freeze }.reject(&:empty?).uniq.freeze]
     end
   end
+
+  def self.clean(text) = BBS::Text.clean(text.to_s, keep_newlines: false).strip
 
   # The title folded for a search: lowercase, no accents, letters and
   # digits only.

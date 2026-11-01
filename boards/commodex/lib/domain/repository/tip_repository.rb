@@ -4,8 +4,13 @@ require 'time'
 
 # The tips table: what callers sent, pending, approved or rejected. A seed
 # tip (config/tips.yml) carries its seed key, so it goes in once.
+#
+# The schema is migrated with BBS::SQLite#migrate. Step 1 is the schema the
+# board created before it had versions, written IF NOT EXISTS: a file of
+# that time (user_version 0, the table already there) only gets its
+# version, and keeps its rows.
 class TipRepository
-  SCHEMA = <<~SQL
+  MIGRATIONS = [<<~SQL].freeze
     CREATE TABLE IF NOT EXISTS tips (
       id         INTEGER PRIMARY KEY,
       game_id    TEXT NOT NULL,
@@ -18,20 +23,19 @@ class TipRepository
     CREATE INDEX IF NOT EXISTS tips_game_status ON tips (game_id, status);
   SQL
 
+  # +db+ is a BBS::SQLite.
   def initialize(db)
     @db = db
-    @db.transaction { |conn| conn.execute_batch(SCHEMA) }
+    @db.migrate(*MIGRATIONS)
   end
 
+  # The id of the new tip; a seed already in goes in no second time.
   def insert(game_id:, handle:, text:, status: 'pending', seed: nil)
-    @db.transaction do |conn|
-      conn.execute('INSERT OR IGNORE INTO tips (game_id, handle, text, status, created_at, seed) VALUES (?, ?, ?, ?, ?, ?)',
-                   [game_id, handle, text, status, Time.now.utc.iso8601, seed])
-      conn.last_insert_row_id
-    end
+    @db.insert('INSERT OR IGNORE INTO tips (game_id, handle, text, status, created_at, seed) VALUES (?, ?, ?, ?, ?, ?)',
+               game_id, handle, text, status, Time.now.utc.iso8601, seed)
   end
 
-  def find(id) = @db.query('SELECT * FROM tips WHERE id = ?', id).first&.then { |r| TipModel.from_row(r) }
+  def find(id) = @db.get('SELECT * FROM tips WHERE id = ?', id)&.then { |r| TipModel.from_row(r) }
 
   def approved(game_id)
     @db.query("SELECT * FROM tips WHERE game_id = ? AND status = 'approved' ORDER BY id", game_id).map do |r|
@@ -44,7 +48,7 @@ class TipRepository
   end
 
   def count_approved(game_id)
-    @db.query("SELECT COUNT(*) AS n FROM tips WHERE game_id = ? AND status = 'approved'", game_id).first['n']
+    @db.get("SELECT COUNT(*) AS n FROM tips WHERE game_id = ? AND status = 'approved'", game_id)['n']
   end
 
   # The number of approved tips of every game that has one.
@@ -54,5 +58,5 @@ class TipRepository
   end
 
   # The number of tips changed: 0 when there was no such tip.
-  def set_status(id, status) = @db.change('UPDATE tips SET status = ? WHERE id = ?', status, id)
+  def change_status(id, status) = @db.change('UPDATE tips SET status = ? WHERE id = ?', status, id)
 end

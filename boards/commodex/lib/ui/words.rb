@@ -50,7 +50,7 @@ module UI
       when :ok           then 'Thanks! Your tip waits for an admin, and shows once approved.'
       when :empty        then 'Write the tip first.'
       when :too_long     then "A tip is at most #{TipService::MAX_TEXT} characters."
-      when :rate_limited then "That is enough tips for now: #{TipService::PER_SESSION} a call, one every " \
+      when :rate_limited then "That is enough tips for now: #{TipService::PER_CALLER} an hour, one every " \
                               "#{TipService::GAP} seconds."
       else 'The tip could not be saved. Try again later.'
       end
