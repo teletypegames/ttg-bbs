@@ -2,17 +2,21 @@
 
 # One page of the wiki's index (an entry of /custom/sitemap.json): its route,
 # title, depth in the tree, the day it was last updated, its tags, and
-# whether it is private, by its own flag or by a private ancestor's.
+# whether it is private, by its own flag or by a private ancestor's. The
+# texts of the wiki are cleaned of control characters.
 class PageModel
   attr_reader :route, :title, :depth, :updated_at, :tags
 
   def self.from_json(entry)
-    new(route:      entry['route'].to_s,
-        title:      entry['title'].to_s,
-        updated_at: entry['updatedAt'].to_s[0, 10],
-        tags:       entry['tags'] || [],
+    new(route:      clean(entry['route']),
+        title:      clean(entry['title']),
+        updated_at: clean(entry['updatedAt'])[0, 10],
+        tags:       Array(entry['tags']).map { |tag| clean(tag) },
         private:    entry['private'] == true)
   end
+
+  def self.clean(text) = BBS::Text.clean(text.to_s, keep_newlines: false)
+  private_class_method :clean
 
   def initialize(route:, title:, updated_at:, tags:, private:)
     @route      = route
