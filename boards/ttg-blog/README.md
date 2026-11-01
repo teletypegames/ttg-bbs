@@ -100,12 +100,14 @@ wrong logins end the tries of a call; each costs a second.
 ## Interface
 
 A call starts with rubbs' `BBS::Terminal` question: which terminal is calling.
-Then the masthead and the menu. On a C64 the front page is the logo over one
-cursor menu: the newest posts (`1`…`5` open them), then the items below, the
-lit one's line about it under the menu. CRSR moves the bar and RETURN takes
-it; the keys of the table work as well. The lists, the draft screen and the
-row under a post are cursor menus too, numbered or lettered as on the
-modern face.
+Then the masthead and the menu. On a C64 every screen is the whole 40×25,
+with a reversed footer bar on its last but one row that tells its keys. The
+front page is the logo over one cursor menu: the newest posts, as many as the
+screen holds (`1`… open them), then the items below, the lit one's line about
+it over the footer. CRSR moves the bar and RETURN takes it; the keys of the
+table work as well. The lists and the draft screen (with the first lines of the
+body under it) are full-screen cursor menus too, numbered or lettered as on
+the modern face.
 
 | Key | Action |
 |---|---|
@@ -125,7 +127,12 @@ post, CRSR moves the bar, RETURN opens the lit one, and the pages turn with
 CRSR left and right (or as the bar runs past the end). A post shows its title, category,
 date, author, the date of its last change, the summary, then the body,
 paged a screenful at a time. An editor gets `E` edit, `P` publish or
-unpublish and `D` delete under it. A reader sees the published posts only; an
+unpublish and `D` delete under it. On a C64 the post keeps its footer on
+every page: RETURN, `+` or CRSR down turns to the next page, `-` or CRSR up
+back, `Q` or `←` leaves; an editor's `E`/`P`/`D` stand on the row over it on
+every page, the questions (publish? delete?) and their answers come in the
+footer over the post, and after an edit or a publish the post is shown again.
+A reader sees the published posts only; an
 editor sees all of them, the unpublished ones marked so.
 
 ### Writing
@@ -206,6 +213,8 @@ lib/
     modern/screen.rb              its lists, numbered, picked by typing the number
     petscii.rb, petscii/board.rb  UI::Petscii: 40×25 PETSCII, the front page of cursor
                                   menus, a post's C64 screen for the web
+    petscii/screen.rb             full-screen menus and lists, the footer bar, a post
+                                  read under its footer, questions in the footer
 ```
 
 ## Deploy

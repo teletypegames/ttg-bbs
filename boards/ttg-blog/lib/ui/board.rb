@@ -202,25 +202,19 @@ module UI
 
     # Publishes the post, or takes it back to the editors. True when changed.
     def publish?(post, published)
-      @screen.puts
       question = published ? "Publish \"#{post.title}\" on the web and to the readers?" : "Take \"#{post.title}\" back?"
-      @screen.say(question, published ? GN : RD)
-      return false unless @screen.choose(" #{WH}y/n#{LG}> ", %w[y n], back: 'n') == 'y'
+      return false unless @screen.confirm?(question, published ? GN : RD)
 
       @posts.set_published(post.id, published)
-      @screen.say(published ? 'Published.' : 'Unpublished: only the editors see it now.', GN)
-      @screen.pause
+      @screen.notice(published ? 'Published.' : 'Unpublished: only the editors see it now.', GN, gap: false)
       true
     end
 
     def delete?(post)
-      @screen.puts
-      @screen.say("Delete \"#{post.title}\" for good?", RD)
-      return false unless @screen.choose(" #{WH}y/n#{LG}> ", %w[y n], back: 'n') == 'y'
+      return false unless @screen.confirm?("Delete \"#{post.title}\" for good?", RD)
 
       @posts.delete(post.id)
-      @screen.say('Deleted.', GN)
-      @screen.pause
+      @screen.notice('Deleted.', GN, gap: false)
       true
     end
 
@@ -358,27 +352,19 @@ module UI
                else
                  @posts.create(author: user, face: face, **draft)
                end
-      @screen.puts
       if result.is_a?(Symbol)
-        @screen.say(ERRORS.fetch(result, 'The post could not be saved.'), RD)
-        @screen.pause
+        @screen.notice(ERRORS.fetch(result, 'The post could not be saved.'), RD)
         return false
       end
-      if post
-        @screen.say('Saved.', GN)
-      else
-        @screen.say("Saved as number #{result.id}, unpublished: only the editors see it. " \
-                    'Open it and press P to publish it.', GN)
-      end
-      @screen.pause
+      @screen.notice(post ? 'Saved.' : saved_new(result), GN)
       true
     end
 
-    def drop?
-      @screen.puts
-      @screen.say('Drop the changes?', RD)
-      @screen.choose(" #{WH}y/n#{LG}> ", %w[y n], back: 'n') == 'y'
+    def saved_new(post)
+      "Saved as number #{post.id}, unpublished: only the editors see it. Open it and press P to publish it."
     end
+
+    def drop? = @screen.confirm?('Drop the changes?', RD)
 
     # The body in the editor, in Markdown; nil when the caller quit.
     def edit_body(body)

@@ -2,21 +2,22 @@
 
 module UI
   module Petscii
-    # The Board on a Commodore 64: PETSCII on a 40×25 screen. The front page
-    # is the masthead in reversed spaces over a menu of rubbs: the newest
-    # posts to open at once, then the board's own items, each with a line
-    # about it under the menu. CRSR moves the bar, RETURN opens, and the
-    # digits of the posts and the letters of the items work as before.
+    # The Board on a Commodore 64: PETSCII on a 40×25 screen, every view
+    # the whole screen with a footer bar of its keys. The front page is the
+    # masthead over a menu of rubbs: the newest posts to open at once, as
+    # many as the screen holds, then the board's own items, each with a line
+    # about it over the footer. CRSR moves the bar, RETURN opens, and the
+    # digits of the posts and the letters of the items work as before. A
+    # post is read under a footer that stays on every page, with the
+    # editor's keys over it.
     class Board < UI::Board
       FACE = 'petscii'
 
       LOGO_COLORS = [YE, YE, "\e[0;33m", "\e[0;33m", "\e[0;31m"].freeze
 
-      # The rows the front page keeps for itself: the masthead (a blank
-      # row, the logo, the motto, a blank row), two headings, the about and
-      # the hint, and the last row of the screen.
-      FRONT_ROWS = 1 + 5 + 1 + 1 + 2 + 2 + 1
-      MOST_HEADLINES = 5
+      # The rows over the front page's menu: a blank row, the logo and the
+      # motto.
+      MASTHEAD_ROWS = 1 + 5 + 1
 
       S = BBS::Selector
 
@@ -31,17 +32,17 @@ module UI
 
       def main_choice
         menu  = menu_items
-        posts = @posts.all(published: shown, limit: [ROWS - FRONT_ROWS - menu.size, MOST_HEADLINES].min)
-        items = [S.heading(rule_label('latest')), *posts.each_with_index.map { |p, i| headline(p, i) },
-                 S.heading(rule_label('menu')), *menu]
-        items.delete_at(0) if posts.empty?
+        room  = @screen.footer_row - MASTHEAD_ROWS - 2 - 2 - menu.size
+        posts = @posts.all(published: shown, limit: room)
+        latest = posts.empty? ? [S.heading("#{GR}no posts yet")] : posts.each_with_index.map { |p, i| headline(p, i) }
+        items = [S.heading(rule_label('latest')), *latest, S.heading(rule_label('menu')), *menu]
         @screen.cls
         @screen.puts
         Board.logo.each { |l| @screen.puts l }
         motto
-        @screen.puts
         index = items.index { |i| i.selectable? && same?(i.value, @front) }
-        @front = @screen.menu(items, index: index, back: 'q', hint: 'crsr: choose  return: open')
+        @front = @screen.full_menu(items, top: MASTHEAD_ROWS + 1, index: index, back: 'q',
+                                          hint: 'crsr: move  return: open  q: log off')
       end
 
       def same?(value, other) = value.is_a?(PostModel) ? other.is_a?(PostModel) && other.id == value.id : value == other
@@ -77,30 +78,69 @@ module UI
         items << S.item('log off', key: 'q', value: 'q', about: 'hang up. see you!')
       end
 
-      # The editor's choice under a post, on a row the cursor moves along.
-      def post_choice(post)
-        @screen.puts
-        @screen.menu([S.item('edit', key: 'e', value: 'e'),
-                      S.item(post.published ? 'unpublish' : 'publish', key: 'p', value: 'p'),
-                      S.item('delete', key: 'd', value: 'd'), S.item('back', key: 'q', value: 'q')],
-                     across: true, index: 3, back: 'q')
+      # A post read under its footer; after an edit or a change of its
+      # state it is shown again, until the caller goes back or deletes it.
+      # True when it was changed or deleted.
+      def show(id)
+        changed = false
+        loop do
+          post = @posts.find(id)
+          return changed unless readable?(post)
+
+          case read(post)
+          when 'e' then changed = compose(post) || changed
+          when 'p' then changed = publish?(post, !post.published) || changed
+          when 'd' then return true if delete?(post)
+          else return changed
+          end
+        end
       end
+
+      def read(post)
+        actions = if user
+                    [%w[e edit], ['p', post.published ? 'unpublish' : 'publish'], %w[d delete]]
+                  else
+                    []
+                  end
+        @screen.view(@categories.find(post.category).name.upcase, post_lines(post), right: right, actions: actions)
+      end
+
+      def saved_new(post) = "Saved as number #{post.id}, unpublished. Open it and press P to publish it."
 
       def draft_choice(draft, post)
         @screen.title(post ? "EDIT POST #{post.id}" : 'NEW POST', right)
         @screen.puts
-        items = [S.item("#{GR}title#{LG}    #{draft[:title]}", key: 't', value: 't'),
-                 S.item("#{GR}category#{LG} #{@categories.find(draft[:category]).name}", key: 'c', value: 'c'),
-                 S.item("#{GR}summary#{LG}  #{draft[:summary].empty? ? '-' : draft[:summary]}", key: 's', value: 's'),
-                 S.item("#{GR}body#{LG}     #{draft[:body].lines.size} lines", key: 'b', value: 'b'),
+        summary = draft[:summary].empty? ? '-' : draft[:summary]
+        items = [field('t', 'title   ', draft[:title], 'the title of the post'),
+                 field('c', 'category', @categories.find(draft[:category]).name, 'pick another category'),
+                 field('s', 'summary ', summary, 'one paragraph over the body'),
+                 field('b', 'body    ', "#{draft[:body].lines.size} lines", 'the text, in markdown'),
                  S.heading('─' * (COLS - 4)),
-                 S.item('view, as a reader will', key: 'v', value: 'v'),
-                 S.item("save#{GR}, unpublished#{LG}", key: 'w', value: 'w'),
-                 S.item('quit', key: 'q', value: 'q')]
-        items[6] = S.item('save', key: 'w', value: 'w') if post
-        choice = @screen.menu(items, index: @draft_index, back: 'q', hint: 'crsr: choose  return: take')
+                 S.item('view, as a reader will', key: 'v', value: 'v', about: 'the post as it will show'),
+                 S.item(post ? 'save' : "save#{GR}, unpublished#{LG}", key: 'w', value: 'w', about: save_about(post)),
+                 S.item('quit', key: 'q', value: 'q', about: 'back, without saving')]
+        items.concat(body_preview(draft[:body], room: draft_rows - items.size))
+        choice = @screen.full_menu(items, top: 3, index: @draft_index, back: 'q',
+                                          hint: 'crsr: choose  return: take  q: quit')
         @draft_index = items.index { |i| i.value == choice }
         choice
+      end
+
+      def save_about(post) = post ? 'keep the changes' : 'publish it with P later'
+
+      def field(key, name, value, about) = S.item("#{GR}#{name}#{LG} #{value}", key: key, value: key, about: about)
+
+      # The rows of the draft's menu: from the third row to the footer, less
+      # the about row and the footer.
+      def draft_rows = @screen.footer_row - 3 + 1 - 2
+
+      # The first lines of the body under a rule, as many as +room+ holds.
+      def body_preview(body, room:)
+        return [] if room < 3
+
+        lines = body.lines.map { |l| @screen.plain(l.chomp) }.reject(&:empty?).first(room - 1)
+        lines = ['(no text yet)'] if lines.empty?
+        [S.heading(rule_label('body')), *lines.map { |l| S.heading("#{GR}#{l}") }]
       end
     end
   end

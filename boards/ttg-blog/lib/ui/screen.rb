@@ -13,6 +13,20 @@ module UI
   # faces, only its size differs: 40×25 on a C64, the caller's window up to
   # 80 columns on a modern terminal.
   class Screen < BBS::Petscii::Screen
+    # +question+ under the text, answered with y or n; true for y.
+    def confirm?(question, color)
+      puts
+      say(question, color)
+      choose(" #{WH}y/n#{LG}> ", %w[y n], back: 'n') == 'y'
+    end
+
+    # +text+ under the text, after a blank line with +gap+, until a key.
+    def notice(text, color, gap: true)
+      puts if gap
+      say(text, color)
+      pause
+    end
+
     # Digits up to RETURN: the number, 0 for RETURN alone; nil for q or ←
     # before any digit.
     def number
