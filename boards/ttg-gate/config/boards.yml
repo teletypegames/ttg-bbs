@@ -73,3 +73,30 @@ boards:
     accent: "#ff87d7"
     petscii: true
     enabled: true
+
+  - id: scriptorium
+    name: "Scriptorium BBS"
+    summary: "The classic literature vault: thousands of books from Project Gutenberg, cut into pageable chapters for your terminal or Commodore 64."
+    tags: ["books", "literature", "C64"]
+    port: 2330
+    accent: "#d7af87"
+    petscii: true
+    enabled: true
+
+  - id: commodex
+    name: "Commodex BBS"
+    summary: "The Commodore 64 game compendium: search thousands of titles, read about them, and trade cheats and tips with other callers. On a modern terminal or, in PETSCII, on a Commodore 64."
+    tags: ["games", "cheats", "C64"]
+    port: 2331
+    accent: "#8787ff"
+    petscii: true
+    enabled: true
+
+  - id: pixelia
+    name: "Pixelia BBS"
+    summary: "The PETSCII & ANSI art gallery: classic 8-bit masterpieces and a collaborative text-art canvas for your terminal or Commodore 64."
+    tags: ["art", "ANSI", "PETSCII"]
+    port: 2332
+    accent: "#af5fff"
+    petscii: true
+    enabled: true
