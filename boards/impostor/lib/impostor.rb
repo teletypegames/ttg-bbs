@@ -21,35 +21,35 @@ module Impostor
     BBS::Flow.define(screens_dir: screens_dir) do
       screen :welcome
 
-      banner "IDENTITY VERIFICATION", style: :info
+      banner 'IDENTITY VERIFICATION', style: :info
 
-      ask :player_name, prompt: "Player Name", transform: :upcase
-      ask :code,        prompt: "Code"
+      ask :player_name, prompt: 'Player Name', transform: :upcase
+      ask :code,        prompt: 'Code'
       persist :player_name, :code, store: sessions
 
-      pause "Verifying identity...", seconds: 1.2
+      pause 'Verifying identity...', seconds: 1.2
 
-      gate denied: "Access denied. Code mismatch." do |ctx|
+      gate denied: 'Access denied. Code mismatch.' do |ctx|
         CodeGenerator.decrypt(ctx[:code]) == ctx[:player_name][0, CodeGenerator::NAME_LEN]
       end
 
-      confirm "Norman, is that you?", denied: "Very well. Goodbye." do
+      confirm 'Norman, is that you?', denied: 'Very well. Goodbye.' do
         screen :congrats
 
-        menu ">", loop: true do
-          option "Leave feedback" do
-            ask :feedback, prompt: "Feedback"
+        menu '>', loop: true do
+          option 'Leave feedback' do
+            ask :feedback, prompt: 'Feedback'
             persist :feedback, store: sessions
-            say "Feedback recorded. Thank you.", style: :success
+            say 'Feedback recorded. Thank you.', style: :success
           end
 
-          option "Subscribe to updates" do
-            ask :email, prompt: "Email address", validate: :email
+          option 'Subscribe to updates' do
+            ask :email, prompt: 'Email address', validate: :email
             persist :email, store: sessions
             say "Perfect. We'll be in touch.", style: :success
           end
 
-          option "Exit" do
+          option 'Exit' do
             exit_menu
           end
         end

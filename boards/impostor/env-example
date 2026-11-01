@@ -1,0 +1,9 @@
+# Every environment variable of Impostor BBS, with its default. The board
+# has no secrets.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=100
+
+# The player sessions: name, code, feedback and email, one CSV row a call
+IMPOSTOR_SESSIONS=data/sessions.csv

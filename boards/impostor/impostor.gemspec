@@ -8,8 +8,9 @@ Gem::Specification.new do |s|
   s.version  = '0.3.0'
   s.summary  = 'The debrief terminal of Definitely not an Impostor as a rubbs flow'
   s.authors  = ['Teletype Games']
-  s.files    = Dir['lib/**/*.rb'] + Dir['screens/**/*.erb']
+  s.files    = Dir['lib/impostor.rb', 'lib/impostor/**/*.rb', 'screens/**/*.erb']
   s.require_paths = ['lib']
   s.required_ruby_version = '>= 3.1'
   s.add_dependency 'bbs', '>= 0.16.1'
+  s.metadata['rubygems_mfa_required'] = 'true'
 end

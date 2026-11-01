@@ -1,4 +1,4 @@
-# Every push is checked: the Ruby files parse and compose.yaml is valid. A push to master that changes
+# Every push is linted with RuboCop and compose.yaml is checked. A push to master that changes
 # the server deploys it: the stack runs in /srv/stacks/impostor-bbs on the server.
 #
 # The deploy step only asks the server to deploy. Its key (secret deploy_ssh_key) is bound on the server
@@ -12,10 +12,12 @@ when:
   - event: pull_request
 
 steps:
-  - name: syntax
+  - name: rubocop
     image: ruby:3.3-alpine
     commands:
-      - for f in bbs.rb bin/generate_code $(find lib -name '*.rb'); do ruby -c "$f" >/dev/null || exit 1; done
+      - apk add --no-cache git build-base
+      - bundle install --jobs 4 --quiet
+      - bundle exec rubocop
 
   - name: check
     image: docker:cli
@@ -24,7 +26,7 @@ steps:
 
   - name: deploy
     image: git.teletypegames.org/build/deploy-ssh@sha256:e1753f7dd575caf5e835ff19cc152faa56478cad76c142ca0f47ad3a3f4a2605
-    depends_on: [syntax, check]
+    depends_on: [rubocop, check]
     environment:
       DEPLOY_SSH_KEY:
         from_secret: deploy_ssh_key
@@ -37,4 +39,4 @@ steps:
       - event: [push, manual]
         branch: master
         path:
-          include: [compose.yaml, Dockerfile, Gemfile, Gemfile.lock, bbs.rb, entrypoint.sh, "lib/**", "bin/**", "screens/**"]
+          include: [compose.yaml, Dockerfile, .dockerignore, Gemfile, Gemfile.lock, bbs.rb, entrypoint.sh, "lib/**", "bin/**", "screens/**"]

@@ -15,7 +15,10 @@ A call starts with one question: which terminal is calling (rubbs'
 picks a modern terminal (ANSI/xterm), `2` a Commodore 64 (PETSCII): the C64
 gets the same terminal on 40 columns, with its own screens. The two faces are
 two modules, `Impostor::Modern` and `Impostor::Petscii`, each with its screens in
-`screens/modern/` and `screens/petscii/`.
+`screens/modern/` and `screens/petscii/`. The board wraps them in `UI::Modern` and
+`UI::Petscii`: when the debrief ends (or the code is refused), it thanks the caller
+and hangs up with NO CARRIER. A door gets only the gem's flows, so the host BBS keeps
+the caller.
 
 ## Running
 
@@ -39,7 +42,8 @@ telnet localhost 2323
 ```
 
 Docker Compose publishes it on port 2324 (`telnet localhost 2324`), the public port on the server. Run directly,
-the port can be changed via the `BBS_PORT` environment variable (see `.env.example`).
+the port can be changed via the `BBS_PORT` environment variable. `env-example` lists every
+variable with its default: `BBS_PORT`, `BBS_MAX_SESSIONS` and `IMPOSTOR_SESSIONS`, the sessions file.
 
 ## Generating a code
 
@@ -54,15 +58,29 @@ The name is trimmed and uppercased (matching how the BBS handles input), and onl
 
 ## Project structure
 
+The repository is two things: the `impostor` gem (`lib/impostor*`, `screens/`), the debrief
+terminal with its rules, and the standalone board around it. The board has no domain of its
+own beyond a sessions file, so its `lib/domain/` is only the composition root: there is no
+`model/`, `repository/` or `service/` layer to split out.
+
 ```
-bbs.rb                        Entry point — the standalone server: the flow + a sessions store
-impostor.gemspec              The gem another rubbs BBS mounts as a door
+bbs.rb                        Entry point: one ImpostorBBS, BBS::Terminal with the two faces
+impostor.gemspec              The gem another rubbs BBS mounts as a door (lib/impostor*, screens/)
+Gemfile, Gemfile.lock         rubbs from git, rubocop in :development
+entrypoint.sh                 Updates rubbs, then starts bbs.rb
+Dockerfile, .dockerignore, compose.yaml
+.woodpecker.yaml, .rubocop.yml
+env-example                   Every environment variable, with its default
 bin/
-  generate_code               CLI tool — generates a player's code from PLAYER_NAME
+  generate_code               CLI tool: generates a player's code from PLAYER_NAME
 lib/
-  impostor.rb                 Impostor.debrief — the whole terminal as a BBS::Flow, shared by the faces
-  impostor/modern.rb          Impostor::Modern.flow(sessions:) — the face for an ANSI terminal
-  impostor/petscii.rb         Impostor::Petscii.flow(sessions:) — the face for a C64, in PETSCII
+  domain.rb                   Requires the gem, then the composition root
+  domain/impostor_bbs.rb      ImpostorBBS: reads ENV, builds the sessions store
+  ui/modern.rb                UI::Modern: the gem's modern face, then goodbye and NO CARRIER
+  ui/petscii.rb               UI::Petscii: the gem's PETSCII face, then goodbye and NO CARRIER
+  impostor.rb                 The gem: Impostor.debrief, the whole terminal as a BBS::Flow
+  impostor/modern.rb          Impostor::Modern.flow(sessions:): the face for an ANSI terminal
+  impostor/petscii.rb         Impostor::Petscii.flow(sessions:): the face for a C64, in PETSCII
   impostor/code_generator.rb  Decrypt/encrypt logic (Ruby port of the Lua original)
 screens/
   modern/welcome.erb          Welcome screen
@@ -70,7 +88,7 @@ screens/
   petscii/welcome.erb         The same two on 40 columns, for a C64
   petscii/congrats.erb
 data/
-  sessions.csv                Player session records (auto-created)
+  sessions.csv                Player session records (auto-created, git-ignored)
 ```
 
 ## As a door
@@ -104,8 +122,8 @@ a3f1b2c4...,2026-04-28T10:00:00Z,NORMAN,2J5GFN,Great puzzle!,norman@example.com
 
 Each row is created when the player submits their name and code, then updated in place as feedback and email are collected. Multiple sessions with the same player name are kept separate by their session ID.
 
-When running via Docker Compose the `data/` directory is mounted as a volume so records survive container restarts.
+`IMPOSTOR_SESSIONS` moves the file. When running via Docker Compose the `data/` directory is mounted as a volume so records survive container restarts.
 
 ## BBS engine
 
-The server is built on the [rubbs](https://git.teletype.hu/tools/rubbs) gem, which provides the telnet server, conversation flow DSL, screen renderer, and CSV store.
+The server is built on the [rubbs](https://git.teletypegames.org/engines/rubbs) gem, which provides the telnet server, conversation flow DSL, screen renderer, and CSV store.
