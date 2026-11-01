@@ -3,7 +3,7 @@
 
 # rubbs
 BBS_PORT=2323
-BBS_MAX_SESSIONS=100
+BBS_MAX_SESSIONS=50
 
 # The SQLite database and the category list
 TTG_BLOG_BBS_DB=data/ttgblog.sqlite3
