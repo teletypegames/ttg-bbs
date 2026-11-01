@@ -1,5 +1,5 @@
 services:
-  bbs:
+  impostor-bbs:
     mem_limit: 128m
     cpus: 1.0
     pids_limit: 256
