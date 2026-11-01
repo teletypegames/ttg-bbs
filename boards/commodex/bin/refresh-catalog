@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require 'bundler/setup'
+
 # Reads the Commodore 64 games from Wikidata now and writes them as a catalog
 # file, by default the seed that ships with the board:
 #   bin/refresh-catalog [path]          (default config/catalog.json.gz)

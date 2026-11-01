@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require 'bundler/setup'
+
 # The admins' look at the tips callers sent:
 #   docker exec commodex bin/tips list              (the pending ones, oldest last)
 #   docker exec commodex bin/tips approved          (the approved ones)
