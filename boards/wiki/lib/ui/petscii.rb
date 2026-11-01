@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative 'logo'
 require_relative 'petscii/screen'
 require_relative 'petscii/browser'
 
@@ -11,12 +10,7 @@ module UI
     LOGO_COLORS = [CY, CY, LB, LB, "\e[0;34m"].freeze
 
     # TTG WIKI in reversed blocks, five rows.
-    def self.logo
-      Logo.rows.each_with_index.map do |bits, row|
-        line = bits.gsub(/#+/) { |run| "#{RV}#{' ' * run.size}#{RO}" }.tr('.', ' ')
-        "  #{LOGO_COLORS[row]}#{line}#{LG}"
-      end
-    end
+    def self.logo = BBS::BlockFont.petscii('TTG WIKI', colors: LOGO_COLORS, glyphs: BBS::BlockFont::WIDE_W, indent: 2)
 
     def self.flow(bbs)
       wiki = bbs.wiki
@@ -43,23 +37,13 @@ module UI
     end
 
     def self.goodbye(screen, seconds:)
-      screen.cls
-      screen.puts
-      screen.puts " #{CY}#{RV}#{' thanks for calling the ttg wiki'.ljust(39)}#{RO}#{LG}"
-      screen.puts
       minutes = (seconds / 60).to_i
-      screen.puts " #{GR}on line #{minutes.positive? ? "#{minutes}m" : "#{seconds.to_i}s"}#{LG}"
-      screen.puts
-      screen.puts " #{GR}the wiki on the web:#{LG}"
-      screen.puts " #{CY}#{Browser::PUBLIC_HOST}#{LG}"
-      screen.puts
-      sleep 1.2
-      screen.puts " #{LG}+++"
-      sleep 0.6
-      screen.puts ' ATH0'
-      sleep 0.4
-      screen.puts " #{RD}NO CARRIER#{LG}"
-      screen.puts
+      BBS::Goodbye.petscii(screen, title: 'the ttg wiki') do |s|
+        s.puts " #{GR}on line #{minutes.positive? ? "#{minutes}m" : "#{seconds.to_i}s"}#{LG}"
+        s.puts
+        s.puts " #{GR}the wiki on the web:#{LG}"
+        s.puts " #{CY}#{Browser::PUBLIC_HOST}#{LG}"
+      end
     end
   end
 end

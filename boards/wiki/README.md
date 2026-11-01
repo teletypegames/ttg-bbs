@@ -142,10 +142,9 @@ lib/
     service/supervisor_service.rb   SupervisorService: the supervisor password
     wiki_bbs.rb               WikiBBS: the composition root, reads ENV
   ui/
-    logo.rb                   UI::Logo: TTG WIKI in a block font
     modern.rb                 UI::Modern: the two-pane browser on an ANSI terminal
     petscii.rb                UI::Petscii: the C64 face, its masthead and goodbye
-    petscii/screen.rb         UI::Petscii::Screen: the 40×25 screen of one call
+    petscii/screen.rb         UI::Petscii::Screen: rubbs' BBS::Petscii::Screen, back key n
     petscii/browser.rb        UI::Petscii::Browser: the page tree as cursor menus
 ```
 

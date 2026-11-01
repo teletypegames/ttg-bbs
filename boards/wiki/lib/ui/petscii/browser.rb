@@ -92,7 +92,7 @@ module UI
         md    = @wiki.page_markdown(page.route)
         lines = BBS::Markdown.to_lines(md, width: WIDTH, theme: MARKDOWN).map { |l| " #{l}" }
         @screen.page(heading, lines + ['', " #{GR}updated #{page.updated_at}#{LG}",
-                                       " #{CY}#{PUBLIC_HOST}#{page.route}#{LG}"])
+                                       " #{CY}#{PUBLIC_HOST}#{page.route}#{LG}"], numbers: true)
       end
 
       def supervisor_login
