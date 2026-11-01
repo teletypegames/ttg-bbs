@@ -54,14 +54,9 @@ module UI
         @pen.rvs_off!
         @shown = Array.new(VIEW_ROWS * COLS)
         VIEW_ROWS.times do |sr|
-          cells = COLS.times.map { |x| Pen.canvas(*canvas.at(x, @offset + sr)) }
-          cells.each_with_index { |c, x| @shown[(sr * COLS) + x] = c }
-          last = cells.rindex { |ch, _, rvs| ch != ' ' || rvs }
-          cells[0..last].each { |c| out << @pen.cell(*c) } if last
-          next if last == COLS - 1
-
-          out << "\r\n"
-          @pen.rvs_off!
+          cells = screen_row(canvas, sr)
+          @shown[sr * COLS, COLS] = cells
+          out << @pen.row(cells, COLS)
         end
         @row    = STATUS_ROW
         @col    = 0
@@ -73,13 +68,7 @@ module UI
       def sync(canvas)
         return redraw(canvas) unless @shown
 
-        changed = []
-        VIEW_ROWS.times do |sr|
-          COLS.times do |x|
-            cell = Pen.canvas(*canvas.at(x, @offset + sr))
-            changed << [sr, x, cell] unless @shown[(sr * COLS) + x] == cell
-          end
-        end
+        changed = changes(canvas)
         return if changed.empty?
         return redraw(canvas) if changed.size > REDRAW_AT
 
@@ -115,6 +104,18 @@ module UI
       def forget! = (@shown = nil)
 
       private
+
+      # Screen row +sr+ of +canvas+ as C64 cells.
+      def screen_row(canvas, sr) = COLS.times.map { |x| Pen.canvas(*canvas.at(x, @offset + sr)) }
+
+      # The cells that differ from the screen: [[screen row, x, cell], …].
+      def changes(canvas)
+        VIEW_ROWS.times.flat_map do |sr|
+          screen_row(canvas, sr).each_with_index.filter_map do |cell, x|
+            [sr, x, cell] unless @shown[(sr * COLS) + x] == cell
+          end
+        end
+      end
 
       def goto(row, col)
         return '' if row == @row && col == @col

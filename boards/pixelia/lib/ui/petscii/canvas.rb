@@ -35,6 +35,7 @@ module UI
         @wall    = bbs.wall
         @screen  = screen
         @who     = session_id
+        @caller  = BBS::RateLimit.caller_key(screen.session)
         @view    = CanvasView.new(screen.session)
         @x       = 0
         @y       = 0
@@ -50,17 +51,8 @@ module UI
         loop do
           k = @screen.key(timeout: POLL)
           @message = nil unless k == :idle
-          case k
-          when :idle then nil
-          when :up, :down, :left, :right, :home then move(k)
-          when :backspace then rub_out
-          when :f3 then @ink = (@ink + 1) % ColorModel.count
-          when :f4 then @ink = (@ink - 1) % ColorModel.count
-          when :f5 then @rvs = !@rvs
-          when :f6 then @glyphs = !@glyphs
-          when :enter, :escape then return if command == :quit
-          when String then paint(k)
-          end
+          return if key(k) == :quit
+
           refresh
         end
       ensure
@@ -68,6 +60,20 @@ module UI
       end
 
       private
+
+      # Does what the key +k+ asks; :quit leaves the canvas.
+      def key(k)
+        case k
+        when :up, :down, :left, :right, :home then move(k)
+        when :backspace then rub_out
+        when :f3 then @ink = (@ink + 1) % ColorModel.count
+        when :f4 then @ink = (@ink - 1) % ColorModel.count
+        when :f5 then @rvs = !@rvs
+        when :f6 then @glyphs = !@glyphs
+        when :enter, :escape then command
+        when String then paint(k)
+        end
+      end
 
       def refresh(full: false)
         @canvas.touch(@who)
@@ -146,26 +152,29 @@ module UI
 
       def save
         @screen.title('SAVE TO THE WALL')
-        wait = @wall.wait(@who)
+        @screen.puts
+        wait = @wall.wait(@caller)
         if wait.positive?
-          @screen.puts
           @screen.say(WallText.wait(wait), RD)
           @screen.pause
-          return @view.forget!
+        else
+          ask_and_save
         end
-        @screen.puts
+        @view.forget!
+      end
+
+      def ask_and_save
         @screen.say('The canvas as it is now goes on the wall under a title and your handle.', GR)
         @screen.puts
         title  = BBS::Field.ask(@screen.session, " #{WH}title#{LG}  ", max: WallService::MAX_TITLE)
         handle = title && BBS::Field.ask(@screen.session, " #{WH}handle#{LG} ", text: @handle.to_s,
                                                                                 max: WallService::MAX_HANDLE)
-        if title && handle
-          @handle = handle
-          @screen.puts
-          @screen.say(WallText.result(@wall.save(@who, title: title, handle: handle)), WH)
-          @screen.pause
-        end
-        @view.forget!
+        return unless title && handle
+
+        @handle = handle
+        @screen.puts
+        @screen.say(WallText.result(@wall.save(@caller, title: title, handle: handle)), WH)
+        @screen.pause
       end
     end
   end

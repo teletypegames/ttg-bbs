@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../glyph_keys'
+require_relative 'canvas_panel'
 
 module UI
   module Modern
@@ -17,11 +18,12 @@ module UI
     # right click paints the brush, a click in the panel picks an ink or a
     # brush.
     class CanvasWidget < BBS::Widget
-      COLS  = CanvasModel::COLS
+      include CanvasPanel
+
       ROWS  = CanvasModel::ROWS
       PANEL = 24
       WIDTH = COLS + 1 + PANEL
-      GLYPHS_PER_ROW = 12
+      MOVES = %i[up down left right home end page_up page_down].freeze
 
       attr_reader :ink, :reverse, :brush
 
@@ -64,28 +66,40 @@ module UI
         return mouse(event.mouse) if event.mouse?
         return nil unless event.key?
 
-        key = event.key
         @message = nil
-        case key
-        when :up, :down, :left, :right, :home, :end, :page_up, :page_down then move(key)
-        when :backspace then rub_out(-1)
-        when :delete then rub_out(0)
-        when :enter then paint(@brush)
-        when :f7 then @ink = (@ink - 1) % ColorModel.count
-        when :f8 then @ink = (@ink + 1) % ColorModel.count
-        when :f9, :ctrl_r then @reverse = !@reverse
-        when :insert, :ctrl_g then @glyphs = !@glyphs
-        when :ctrl_s then @on_save.call
-        when :ctrl_z, :ctrl_u then flash(@canvas.undo(@who) == :ok ? 'Undone.' : 'Nothing to undo.')
-        when String then paint(@glyphs ? GlyphKeys.glyph(key) : key)
-        else return nil
-        end
-        :handled
+        key(event.key)
       end
 
       private
 
       # ── keys and mouse ────────────────────────────────────────────────
+
+      # Does what the key +k+ asks: :handled, or nil when it is not one of
+      # the canvas.
+      def key(k)
+        if MOVES.include?(k) then move(k)
+        elsif k.is_a?(String) then paint(@glyphs ? GlyphKeys.glyph(k) : k)
+        else return command(k)
+        end
+        :handled
+      end
+
+      def command(k)
+        case k
+        when :backspace then rub_out(-1)
+        when :delete then rub_out(0)
+        when :enter then paint(@brush)
+        when :f7, :f8 then @ink = (@ink + (k == :f8 ? 1 : -1)) % ColorModel.count
+        when :f9, :ctrl_r then @reverse = !@reverse
+        when :insert, :ctrl_g then @glyphs = !@glyphs
+        when :ctrl_s then @on_save.call
+        when :ctrl_z, :ctrl_u then undo
+        else return nil
+        end
+        :handled
+      end
+
+      def undo = flash(@canvas.undo(@who) == :ok ? 'Undone.' : 'Nothing to undo.')
 
       def move(key)
         case key
@@ -116,21 +130,23 @@ module UI
       end
 
       def mouse(m)
-        if m.kind == :wheel
-          @top = (@top + (m.button == :up ? -3 : 3)).clamp(0, ROWS - view_rows)
-          return :handled
+        if m.kind == :wheel then @top = (@top + (m.button == :up ? -3 : 3)).clamp(0, ROWS - view_rows)
+        elsif (cell = canvas_cell(m.x, m.y)) then point(m, cell)
+        elsif m.kind == :press && m.button == :left then click_panel(m)
         end
-        cell = canvas_cell(m.x, m.y)
-        if cell
-          @x, @y = cell
-          paint(@brush, advance: false) if (m.kind == :move && m.button == :left) || (m.kind == :press && m.button == :right)
-          return :handled
-        end
-        return :handled unless m.kind == :press && m.button == :left
+        :handled
+      end
 
+      # The pointer on the canvas: the cursor goes there, and a drag with the
+      # left button or a right click paints the brush.
+      def point(m, cell)
+        @x, @y = cell
+        paint(@brush, advance: false) if (m.kind == :move && m.button == :left) || (m.kind == :press && m.button == :right)
+      end
+
+      def click_panel(m)
         hit = @hits.find { |x, y, w, _| m.y == y && m.x >= x && m.x < x + w }
         hit&.last&.call
-        :handled
       end
 
       def canvas_cell(mx, my)
@@ -143,114 +159,6 @@ module UI
         @top = @y if @y < @top
         @top = @y - view_rows + 1 if @y >= @top + view_rows
         @top = @top.clamp(0, ROWS - view_rows)
-      end
-
-      # ── drawing ───────────────────────────────────────────────────────
-
-      def draw_canvas(frame, snapshot)
-        view_rows.times do |row|
-          y = @top + row
-          COLS.times do |x|
-            char, fg, bg = snapshot.at(x, y)
-            sgr = ArtLines.canvas_sgr(fg, bg)
-            sgr = "#{sgr}\e[7m" if x == @x && y == @y
-            frame.move(bounds.x + x, bounds.y + row)
-            frame.write(char, sgr: sgr)
-          end
-        end
-      end
-
-      def draw_panel(frame)
-        @row = 0
-        @px  = bounds.x + COLS + 1
-        @pw  = bounds.width - COLS - 1
-        ink = ColorModel[@ink]
-        text_line(frame, [['Ink ', :text], ['██', ArtLines.canvas_sgr(@ink, 0)], [" #{ink.name}", :text_bright]])
-        text_line(frame, [['Rvs ', :text], [@reverse ? 'on ' : 'off', :text_bright], [' F9  ', :text_dim],
-                          [@glyphs ? 'Glyphs' : 'Text', :text_bright]])
-        heading(frame, 'inks F7 F8')
-        2.times { |r| swatches(frame, r * 8) }
-        heading(frame, 'brush (Enter)')
-        GlyphModel::PALETTE.each_slice(GLYPHS_PER_ROW) { |slice| glyph_row(frame, slice) }
-        heading(frame, 'painting')
-        text_line(frame, [[format('x %<x>02d  y %<y>02d  ', x: @x, y: @y), :text], ["#{@canvas.painters} here", :accent]])
-        text_line(frame, [[@message.to_s, :accent]])
-        buttons(frame)
-        help(frame)
-      end
-
-      def put(frame, x, text, sgr)
-        frame.move(x, bounds.y + @row)
-        frame.write(text, sgr: sgr)
-      end
-
-      def resolve(sgr) = sgr.is_a?(Symbol) ? style(sgr) : sgr
-
-      def room? = @row < bounds.height
-
-      def text_line(frame, runs)
-        return unless room?
-
-        x = @px
-        runs.each do |text, sgr|
-          text = text[0, [@pw - (x - @px), 0].max]
-          put(frame, x, text, resolve(sgr))
-          x += text.length
-        end
-        @row += 1
-      end
-
-      def heading(frame, text)
-        return unless room?
-
-        put(frame, @px, "─ #{text} ".ljust(@pw, '─')[0, @pw], style(:text_dim))
-        @row += 1
-      end
-
-      def swatches(frame, from)
-        return unless room?
-
-        8.times do |i|
-          index = from + i
-          x     = @px + (i * 3)
-          label = index == @ink ? '▐▌' : '  '
-          put(frame, x, label, "\e[0;38;5;#{index == 1 ? 16 : 231};48;5;#{ColorModel[index].xterm}m")
-          @hits << [x, bounds.y + @row, 2, -> { @ink = index }]
-        end
-        @row += 1
-      end
-
-      def glyph_row(frame, glyphs)
-        return unless room?
-
-        glyphs.each_with_index do |g, i|
-          x = @px + (i * 2)
-          put(frame, x, g, g == @brush ? "#{ArtLines.canvas_sgr(@ink, 0)}\e[7m" : ArtLines.canvas_sgr(@ink, 0))
-          @hits << [x, bounds.y + @row, 1, -> { @brush = g }]
-        end
-        @row += 1
-      end
-
-      def buttons(frame)
-        return unless room?
-
-        x = @px
-        [['[Save]', @on_save], ['[Undo]', -> { flash(@canvas.undo(@who) == :ok ? 'Undone.' : 'Nothing to undo.') }],
-         ['[Rvs]', -> { @reverse = !@reverse }], ['[Gly]', -> { @glyphs = !@glyphs }]].each do |label, action|
-          put(frame, x, label, style(:accent))
-          @hits << [x, bounds.y + @row, label.length, action]
-          x += label.length
-        end
-        @row += 1
-      end
-
-      def help(frame)
-        lines = if @glyphs
-                  GlyphKeys.legend(6)
-                else
-                  ['^S save  ^Z undo  Esc', 'Ins glyphs  ^R reverse', 'Type to paint']
-                end
-        lines.each { |l| text_line(frame, [[l, :text_dim]]) }
       end
     end
 

@@ -13,16 +13,23 @@ module UI
 
       def render(frame)
         left = bounds.x + [(bounds.width - Logo.width) / 2, 0].max
-        Logo.half_blocks.each_with_index do |runs, row|
-          x = left
-          runs.each do |text, color|
-            frame.move(x, bounds.y + row)
-            frame.write(text, sgr: "\e[0;38;5;#{ColorModel[color || 0].xterm};40m")
-            x += text.length
-          end
-        end
+        Logo.half_blocks.each_with_index { |runs, row| letters(frame, runs, left, bounds.y + row) }
+        tagline(frame)
+      end
+
+      private
+
+      def tagline(frame)
         frame.move(bounds.x + [(bounds.width - TAGLINE.length) / 2, 0].max, bounds.y + 4)
         frame.write(TAGLINE, sgr: style(:text_bright))
+      end
+
+      def letters(frame, runs, x, y)
+        runs.each do |text, color|
+          frame.move(x, y)
+          frame.write(text, sgr: "\e[0;38;5;#{ColorModel[color || 0].xterm};40m")
+          x += text.length
+        end
       end
     end
   end

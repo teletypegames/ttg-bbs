@@ -72,22 +72,25 @@ module UI
       end
 
       def piece(pack, file)
-        lines = [" #{WH}#{file.title.empty? ? file.name : file.title}#{LG}",
-                 " #{CY}#{file.credits}#{LG}", '',
-                 " #{GR}file#{LG}  #{file.name}", " #{GR}pack#{LG}  #{pack.name} (#{pack.year})",
-                 (" #{GR}date#{LG}  #{file.date}" unless file.date.empty?),
-                 (" #{GR}by#{LG}    #{file.artists.join(', ')}" unless file.artists.empty?), '',
-                 " #{GR}#{@gallery.file_url(file)}#{LG}"].compact
-        @screen.page(file.name, lines, wait: false)
+        @screen.page(file.name, credits(pack, file), wait: false)
         return if @screen.actions([nil, 'view'], %w[q back]) == 'q'
 
         @screen.puts " #{GR}fetching…#{LG}"
         art = @gallery.piece(file)
         case art
-        when :too_big then return say('This piece is too large for the board.')
-        when :unavailable then return say('16colo.rs did not answer. Try again later.')
+        when :too_big then say('This piece is too large for the board.')
+        when :unavailable then unavailable
+        else show(file, art)
         end
-        show(file, art)
+      end
+
+      def credits(pack, file)
+        [" #{WH}#{file.title.empty? ? file.name : file.title}#{LG}",
+         " #{CY}#{file.credits}#{LG}", '',
+         " #{GR}file#{LG}  #{file.name}", " #{GR}pack#{LG}  #{pack.name} (#{pack.year})",
+         (" #{GR}date#{LG}  #{file.date}" unless file.date.empty?),
+         (" #{GR}by#{LG}    #{file.artists.join(', ')}" unless file.artists.empty?), '',
+         " #{GR}#{@gallery.file_url(file)}#{LG}"].compact
       end
 
       def show(file, art)
@@ -113,20 +116,16 @@ module UI
         half = " col #{left + 1}" if art.width > HALF
         @screen.title("#{file.name}#{half}", "#{(top / PAGE_ROWS) + 1}/#{pages}")
         pen = Pen.new
-        out = +''
-        PAGE_ROWS.times do |i|
-          cells = art.cells(top + i, left, HALF).map { |c| Pen.art(*c) }
-          cells[QUOTE_FROM..].each { |c| c[0] = "'" if c[0] == '"' }
-          last = cells.rindex { |ch, _, rvs| ch != ' ' || rvs }
-          cells[0..last].each { |c| out << pen.cell(*c) } if last
-          next if last == HALF - 1
-
-          out << "\r\n"
-          pen.rvs_off!
-        end
-        @screen.write(out)
+        @screen.write(PAGE_ROWS.times.map { |i| pen.row(page_row(art, top + i, left), HALF) }.join)
         right = art.width > HALF ? "  #{YE}R#{LG} right" : ''
         @screen.write("#{BBS::Ansi::RESET}#{RO} #{YE}ret#{LG} next #{YE}P#{LG} back#{right}  #{YE}Q#{LG} quit")
+      end
+
+      # Row +y+ of +art+ from column +left+, 40 C64 cells.
+      def page_row(art, y, left)
+        cells = art.cells(y, left, HALF).map { |c| Pen.art(*c) }
+        cells[QUOTE_FROM..].each { |c| c[0] = "'" if c[0] == '"' }
+        cells
       end
 
       def say(text)

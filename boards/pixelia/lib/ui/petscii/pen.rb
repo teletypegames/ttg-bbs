@@ -63,6 +63,19 @@ module UI
         out << char
       end
 
+      # The bytes for one screen row of +cells+ ([char, colour, rvs], +width+
+      # of them): the cells up to the last that shows, then a RETURN unless
+      # the row is full (the cursor wraps by itself then).
+      def row(cells, width)
+        last = cells.rindex { |ch, _, rvs| ch != ' ' || rvs }
+        out = +''
+        cells[0..last].each { |c| out << cell(*c) } if last
+        return out if last == width - 1
+
+        rvs_off!
+        out << "\r\n"
+      end
+
       # +text+ in the C64 colour +color+, not reversed.
       def text(text, color) = cell('', color, false) + text
 
@@ -98,15 +111,17 @@ module UI
         return [' ', nil, false] if bg.zero? && (char == ' ' || fg.zero?)
         return [' ', FROM_CGA[bg], true] if char == ' ' || fg == bg
         return [' ', FROM_CGA[fg], true] if char == '█'
-
-        if bg.zero?
-          return shade(char, fg) if SHADES.include?(char)
-
-          return canvas(HALVES.include?(char) ? char : BBS::Petscii.cell(char), FROM_CGA[fg], 0)
-        end
+        return on_black(char, fg) if bg.zero?
         return two_tone(char, fg, bg) if HALVES.include?(char) || SHADES.include?(char)
 
         [BBS::Petscii.cell(char), FROM_CGA[bg], true]
+      end
+
+      # A character on a black background: in its colour, a shade as ▒.
+      def self.on_black(char, fg)
+        return shade(char, fg) if SHADES.include?(char)
+
+        canvas(HALVES.include?(char) ? char : BBS::Petscii.cell(char), FROM_CGA[fg], 0)
       end
 
       def self.shade(char, fg) = char == '▓' ? [' ', FROM_CGA[fg], true] : ['▒', FROM_CGA[fg], false]
