@@ -40,18 +40,25 @@ module UI
       def width = bounds.width >= FULL_WIDTH ? FULL_WIDTH : NAME.first.length
 
       def render(frame)
-        tower = width > NAME.first.length
         x = bounds.x + ([bounds.width - width, 0].max / 2)
-        name_x = tower ? x + TOWER_WIDTH + 2 : x
-        if tower
-          TOWER.each_with_index { |t, i| draw(frame, x, bounds.y + i, i == 1 ? lamp : "#{STONE}#{t.center(TOWER_WIDTH)}") }
-          draw(frame, x, bounds.y + 6, sea)
-        end
-        NAME.each_with_index { |l, i| draw(frame, name_x, bounds.y + 2 + i, l, style(:accent)) }
-        draw(frame, name_x + ((NAME.first.length - TAGLINE.length) / 2), bounds.y + 5, TAGLINE, style(:text_bright))
+        return render_name(frame, x) unless tower?
+        render_tower(frame, x)
+        render_name(frame, x + TOWER_WIDTH + 2)
       end
 
       private
+
+      def tower? = width > NAME.first.length
+
+      def render_tower(frame, x)
+        TOWER.each_with_index { |t, i| draw(frame, x, bounds.y + i, i == 1 ? lamp : "#{STONE}#{t.center(TOWER_WIDTH)}") }
+        draw(frame, x, bounds.y + 6, sea)
+      end
+
+      def render_name(frame, x)
+        NAME.each_with_index { |l, i| draw(frame, x, bounds.y + 2 + i, l, style(:accent)) }
+        draw(frame, x + ((NAME.first.length - TAGLINE.length) / 2), bounds.y + 5, TAGLINE, style(:text_bright))
+      end
 
       def draw(frame, x, y, text, sgr = nil)
         frame.move(x, y)

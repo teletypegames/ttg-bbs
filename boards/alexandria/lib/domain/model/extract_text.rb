@@ -29,23 +29,22 @@ module ExtractText
   # markdown] pairs; the deeper headings stay in their section as Markdown
   # headings. The lead is named after the article.
   def sections(title, extract)
-    parts = [[title, []]]
-    formulas(extract.to_s).each_line(chomp: true) do |line|
-      if (m = line.match(/\A(={2,6})\s*(.*?)\s*=+\s*\z/))
-        if m[1].size == 2
-          parts << [m[2], []]
-        else
-          parts.last[1] << "#{'#' * (m[1].size - 1)} #{m[2]}"
-        end
-      else
-        parts.last[1] << line
-      end
-    end
-    parts.filter_map do |name, lines|
+    parts(title, extract).filter_map do |name, lines|
       next if SKIP.include?(name.downcase)
 
       text = markdown(lines)
       [name, text] unless text.empty?
+    end
+  end
+
+  # The extract's lines by level-2 section, as [heading, lines] pairs.
+  def parts(title, extract)
+    formulas(extract.to_s).each_line(chomp: true).with_object([[title, []]]) do |line, parts|
+      m = line.match(/\A(={2,6})\s*(.*?)\s*=+\s*\z/)
+      if m.nil? then parts.last[1] << line
+      elsif m[1].size == 2 then parts << [m[2], []]
+      else parts.last[1] << "#{'#' * (m[1].size - 1)} #{m[2]}"
+      end
     end
   end
 

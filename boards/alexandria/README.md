@@ -60,7 +60,8 @@ its sections: the lead under the article's title, then the `==` sections, the
 deeper headings inside them. The sections nobody reads on a terminal (See also,
 References, External links, and their Hungarian and German names) are left
 out. A formula is shown as its TeX made readable (`e^(iπ)+1=0`). Search
-results and articles are cached for 10 minutes.
+results and articles are cached for 10 minutes, at most 200 answers and 16 MiB
+(rubbs' `BBS::Cache`).
 
 ### The modern face
 
@@ -107,26 +108,46 @@ lib/
     model/section_model.rb    one section: heading and Markdown
     model/search_result_model.rb  one search hit: title, snippet, word count
     model/extract_text.rb     the plain extract → sections in Markdown, TeX made readable
-    repository/wikipedia_repository.rb  the Action API: search, article, random; pace, cache
+    repository/wikipedia_client.rb      the Action API over BBS::HTTP: User-Agent, pace
+    repository/wikipedia_repository.rb  search, article, random; the cache
     service/article_service.rb  look up, search, read, random, the languages
-  ui/modern.rb                the modern face: desktop, search, results, article
+  ui/modern.rb                the modern face: the Application and its parts
+  ui/modern/helpers.rb        search, look up, read, random, language, the desktop
+  ui/modern/menu.rb           the menubar, the status bar's hints, the desktop on start
+  ui/modern/results_window.rb the search results
+  ui/modern/article_window.rb an article: sections and text
   ui/modern/pharos.rb         the desktop's title: the lighthouse and the name
   ui/petscii.rb               the PETSCII face: logo, prompt, menu, lists, pages
   ui/petscii/screen.rb        the 40×25 screen: rubbs' BBS::Petscii::Screen
+test/                         minitest: the client, the repository, the service, the extract
+Rakefile                      rake test
 ```
+
+## Tests
+
+```bash
+bundle exec rake test
+```
+
+No network: `BBS::HTTP` is stubbed. CI runs them before a deploy.
 
 ## Wikipedia
 
 The proxy reads the [MediaWiki Action API](https://www.mediawiki.org/wiki/API:Main_page)
 of `en.wikipedia.org` / `hu.wikipedia.org` anonymously: `list=search` for the results,
 `prop=extracts` (TextExtracts, `explaintext`) for the article,
-`list=random` for a random one. Every request names the proxy in its
-User-Agent, as Wikipedia asks. The text is Wikipedia's, under
+`list=random` for a random one. Every request goes through rubbs' `BBS::HTTP`
+(timeouts, a deadline, a body cap) and names the proxy in its User-Agent, as
+Wikipedia asks. All callers share one pace: at most 5 requests a second
+(`BBS::RateLimit`), and a request that would wait more than 3 seconds for its
+turn is not sent, so a crowd on the board cannot get our address throttled.
+Titles, snippets and article text are cleaned of control characters
+(`BBS::Text.clean`) before they reach a screen. The text is Wikipedia's, under
 [CC BY-SA](https://creativecommons.org/licenses/by-sa/4.0/); every article
 shows its address.
 
 ## Deploy
 
-A push to master deploys from Woodpecker: RuboCop, a compose check, then
+A push to master deploys from Woodpecker: RuboCop, the tests, a compose check, then
 `ci-deploy alexandria-bbs` on the server (infra/host-config), which runs the stack in
 `/srv/stacks/alexandria-bbs`. The image runs the rubbs revision of `Gemfile.lock`, as uid 1000.
