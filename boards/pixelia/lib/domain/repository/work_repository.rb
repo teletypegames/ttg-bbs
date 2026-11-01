@@ -5,42 +5,34 @@ require 'json'
 require 'securerandom'
 
 # The works on the Wall, one JSON file each in data/works/ (ID.json, the id
-# sorting by time). The list is read again only when the folder changed, so
-# a work removed by the admin script leaves the list at the next look.
+# sorting by time). The works read are kept in memory by id; a look at the
+# Wall lists the folder only when it changed and reads only the files it
+# does not know yet, so a save costs one file, and a work removed by the
+# admin script leaves the list at the next look.
 class WorkRepository
   ID = /\A\d{8}-\d{6}-[0-9a-f]{4}\z/
 
   def initialize(dir)
-    @dir   = dir
-    @lock  = Mutex.new
-    @works = []
-    @stamp = nil
+    @dir    = dir
+    @lock   = Mutex.new
+    @works  = {}
+    @broken = Set.new
+    @list   = []
+    @stamp  = nil
   end
 
   # Every work, newest first.
-  def all
-    @lock.synchronize do
-      stamp = folder_stamp
-      if stamp != @stamp
-        @works = read_all
-        @stamp = stamp
-      end
-      @works
-    end
-  end
+  def all = @lock.synchronize { refresh }
 
-  def find(id) = all.find { |w| w.id == id }
+  def find(id) = @lock.synchronize { refresh && @works[id] }
 
   # Saves a new work and returns it, or nil when it could not be written.
   def add(title:, handle:, canvas:, at: Time.now)
     work = WorkModel.new(id: "#{at.strftime('%Y%m%d-%H%M%S')}-#{SecureRandom.hex(2)}", title: title, handle: handle,
                          created_at: at, canvas: canvas)
     @lock.synchronize do
-      FileUtils.mkdir_p(@dir)
-      path = File.join(@dir, "#{work.id}.json")
-      File.write("#{path}.tmp", JSON.generate(work.to_h))
-      File.rename("#{path}.tmp", path)
-      @stamp = nil
+      write(work)
+      remember(work)
     end
     work
   rescue SystemCallError => e
@@ -52,12 +44,12 @@ class WorkRepository
   def remove(id)
     return false unless id.to_s.match?(ID)
 
-    path = File.join(@dir, "#{id}.json")
+    path = path(id)
     @lock.synchronize do
       return false unless File.exist?(path)
 
       File.delete(path)
-      @stamp = nil
+      forget(id)
       true
     end
   rescue SystemCallError => e
@@ -67,19 +59,66 @@ class WorkRepository
 
   private
 
+  def path(id) = File.join(@dir, "#{id}.json")
+
+  def write(work)
+    FileUtils.mkdir_p(@dir)
+    tmp = "#{path(work.id)}.#{SecureRandom.hex(4)}.tmp"
+    File.write(tmp, JSON.generate(work.to_h))
+    File.rename(tmp, path(work.id))
+  end
+
+  # The list, brought in line with the folder when the folder changed.
+  def refresh
+    stamp = folder_stamp
+    return @list if stamp == @stamp
+
+    ids = folder_ids
+    (@works.keys - ids).each { |id| forget(id) }
+    @broken &= ids
+    (ids - @works.keys).each { |id| read(id) }
+    @stamp = stamp
+    sort
+  end
+
+  def folder_ids
+    Dir.children(@dir).filter_map { |name| name.delete_suffix('.json') if name.end_with?('.json') }
+  rescue SystemCallError
+    []
+  end
+
+  # Reads the work +id+ once; a file that is not a work is skipped, with one
+  # warning, while it is there.
+  def read(id)
+    return if @broken.include?(id)
+
+    work = WorkModel.from_h(JSON.parse(File.read(path(id))))
+    work ? @works[id] = work : broken(id, 'not a work')
+  rescue SystemCallError, JSON::ParserError => e
+    broken(id, "#{e.class}: #{e.message}")
+  end
+
+  def broken(id, reason)
+    @broken << id
+    warn "pixelia-bbs: #{path(id)}: #{reason}"
+  end
+
+  def remember(work)
+    @works[work.id] = work
+    sort
+  end
+
+  def forget(id)
+    @works.delete(id)
+    sort
+  end
+
+  def sort = (@list = @works.values.sort_by(&:id).reverse.freeze)
+
   def folder_stamp
     stat = File.stat(@dir)
     [stat.mtime.to_f, Dir.children(@dir).size]
   rescue SystemCallError
     nil
-  end
-
-  def read_all
-    Dir.glob(File.join(@dir, '*.json')).filter_map do |path|
-      WorkModel.from_h(JSON.parse(File.read(path)))
-    rescue SystemCallError, JSON::ParserError => e
-      warn "pixelia-bbs: #{path}: #{e.class}: #{e.message}"
-      nil
-    end.sort_by(&:id).reverse
   end
 end

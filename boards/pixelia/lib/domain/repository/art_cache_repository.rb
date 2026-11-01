@@ -2,6 +2,7 @@
 
 require 'digest'
 require 'fileutils'
+require 'securerandom'
 
 # The art files fetched from 16colo.rs, kept on disk in data/cache/ under a
 # digest of their pack and name, at most +max_bytes+ of them: when a new file
@@ -42,7 +43,7 @@ class ArtCacheRepository
     @lock.synchronize do
       evict(data.bytesize)
       FileUtils.mkdir_p(@dir)
-      tmp = "#{path}.#{Process.pid}.tmp"
+      tmp = "#{path}.#{SecureRandom.hex(4)}.tmp"
       File.binwrite(tmp, data)
       File.rename(tmp, path)
       @entries[path] = { size: data.bytesize, used: Time.now }
@@ -50,8 +51,6 @@ class ArtCacheRepository
   rescue SystemCallError => e
     warn "pixelia-bbs: #{path}: #{e.class}: #{e.message}"
   end
-
-  def size = @lock.synchronize { @entries.values.sum { |e| e[:size] } }
 
   private
 

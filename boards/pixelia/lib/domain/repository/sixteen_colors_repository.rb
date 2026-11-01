@@ -2,21 +2,26 @@
 
 require 'erb'
 require 'json'
-require 'net/http'
-require 'uri'
 
 # The public API of 16colo.rs (api.16colo.rs/v1) and the raw files of its
-# packs (16colo.rs/pack/NAME/raw/FILE), read on demand. The listings are kept
-# in memory for +ttl+ seconds (at most MAX_LISTINGS of them); a dead API
-# gives the last listing it sent, or nil. Nothing is fetched ahead: a year's
-# pack list when it is opened, a pack's file list when it is opened, a file
-# when it is shown.
+# packs (16colo.rs/pack/NAME/raw/FILE), read on demand through BBS::HTTP.
+# The listings are kept in a BBS::Cache for +ttl+ seconds; a dead API gives
+# the last listing it sent, or nil. The raw files pass a small cache too, so
+# callers opening one piece at once fetch it once. Nothing is fetched ahead:
+# a year's pack list when it is opened, a pack's file list when it is
+# opened, a file when it is shown.
 class SixteenColorsRepository
-  OPEN_TIMEOUT = 5
-  READ_TIMEOUT = 20
-  PAGE_SIZE    = 200
-  MAX_PAGES    = 10
-  MAX_LISTINGS = 64
+  # A listing or a file the archive did not give.
+  class Unavailable < StandardError; end
+
+  PAGE_SIZE      = 200
+  MAX_PAGES      = 10
+  MAX_LISTINGS   = 64
+  MAX_JSON_BYTES = 4 * 1024 * 1024
+  RAW_TTL        = 600
+  MAX_RAWS       = 16
+  # BBS::HTTP says this when a body is over its cap.
+  TOO_BIG        = /is over \d+ bytes/
 
   attr_reader :site_url
 
@@ -24,10 +29,9 @@ class SixteenColorsRepository
     @api_url    = api_url.delete_suffix('/')
     @site_url   = site_url.delete_suffix('/')
     @user_agent = user_agent
-    @ttl        = ttl
     @max_bytes  = max_bytes
-    @listings   = {}
-    @lock       = Mutex.new
+    @listings   = BBS::Cache.new(ttl: ttl, max_entries: MAX_LISTINGS)
+    @raws       = BBS::Cache.new(ttl: RAW_TTL, max_entries: MAX_RAWS, max_bytes: MAX_RAWS * max_bytes)
   end
 
   # The years of the archive that have packs, newest first; nil when the API
@@ -35,7 +39,7 @@ class SixteenColorsRepository
   def years
     listing(:years) do
       json = get_json("#{@api_url}/v1/year")
-      next nil unless json.is_a?(Hash)
+      raise Unavailable, 'no year list' unless json.is_a?(Hash)
 
       json.filter_map { |year, counts| YearModel.new(year.to_i, counts['packs'].to_i) if counts.is_a?(Hash) }
           .select { |y| y.packs.positive? }.sort_by { |y| -y.year }
@@ -44,19 +48,15 @@ class SixteenColorsRepository
 
   # The packs of +year+, by name; nil when the API never answered.
   def packs(year)
+    year = Integer(year)
     listing([:packs, year]) do
-      packs = []
-      page  = 1
-      pages = 1
-      while page <= pages && page <= MAX_PAGES
-        json = get_json("#{@api_url}/v1/year/#{Integer(year)}?pagesize=#{PAGE_SIZE}&page=#{page}")
-        break unless json.is_a?(Hash) && json['results'].is_a?(Array)
+      packs, pages = packs_page(year, 1)
+      (2..[pages, MAX_PAGES].min).each { |page| packs.concat(packs_page(year, page).first) }
+      packs
+    rescue Unavailable, BBS::HTTP::Error, JSON::ParserError
+      raise if packs.nil? || packs.empty?
 
-        pages = json.dig('page', 'pages').to_i
-        packs.concat(json['results'].filter_map { |h| PackModel.from_api(h) })
-        page += 1
-      end
-      packs.empty? ? nil : packs
+      packs
     end
   end
 
@@ -66,7 +66,7 @@ class SixteenColorsRepository
     listing([:files, name]) do
       json = get_json("#{@api_url}/v1/pack/#{escape(name)}?sauce=true")
       result = json.is_a?(Hash) && json['results'].is_a?(Array) ? json['results'].first : nil
-      next nil unless result.is_a?(Hash) && result['files'].is_a?(Hash)
+      raise Unavailable, 'no file list' unless result.is_a?(Hash) && result['files'].is_a?(Hash)
 
       result['files'].filter_map { |file, h| ArtFileModel.from_api(file, h, name) }
     end
@@ -74,7 +74,13 @@ class SixteenColorsRepository
 
   # The bytes of +file+ in the pack +pack+: nil when the site does not give
   # them, :too_big when it is larger than +max_bytes+.
-  def raw(pack, file) = get("#{@site_url}/pack/#{escape(pack)}/raw/#{escape(file)}", limit: @max_bytes)
+  def raw(pack, file)
+    url = "#{pack_url(pack)}/raw/#{escape(file)}"
+    @raws.fetch([pack, file]) { download(url) }
+  rescue Unavailable, BBS::HTTP::Error => e
+    warn "pixelia-bbs: #{e.message}"
+    nil
+  end
 
   def pack_url(pack) = "#{@site_url}/pack/#{escape(pack)}"
 
@@ -84,52 +90,40 @@ class SixteenColorsRepository
 
   def escape(part) = ERB::Util.url_encode(part.to_s)
 
-  def listing(key)
-    cached = @lock.synchronize { @listings[key] }
-    return cached[:value] if cached && now - cached[:at] < @ttl
-
-    value = yield
-    return cached&.dig(:value) if value.nil?
-
-    @lock.synchronize do
-      @listings.delete(@listings.min_by { |_, v| v[:at] }.first) if @listings.size >= MAX_LISTINGS && !@listings.key?(key)
-      @listings[key] = { value: value.freeze, at: now }
-    end
-    value
-  end
-
-  def get_json(url)
-    body = get(url, limit: 8 * 1024 * 1024)
-    body.is_a?(String) ? JSON.parse(body) : nil
-  rescue JSON::ParserError => e
-    warn "pixelia-bbs: #{url}: #{e.class}: #{e.message}"
+  # The value of +key+ from the cache, or the block's; nil when the block
+  # fails and nothing older is kept.
+  def listing(key, &)
+    @listings.fetch(key, &)
+  rescue Unavailable, BBS::HTTP::Error, JSON::ParserError => e
+    warn "pixelia-bbs: #{key.inspect}: #{e.class}: #{e.message}"
     nil
   end
 
-  def get(url, limit:)
-    uri = URI(url)
-    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https',
-                                        open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT) do |http|
-      request = Net::HTTP::Get.new(uri.request_uri, 'User-Agent' => @user_agent, 'Accept-Encoding' => 'identity')
-      http.request(request) do |res|
-        unless res.is_a?(Net::HTTPSuccess)
-          warn "pixelia-bbs: #{url} answered #{res.code}"
-          return nil
-        end
-        return :too_big if res['Content-Length'].to_i > limit
+  # The packs of one page of +year+'s list, and the number of pages.
+  def packs_page(year, page)
+    json = get_json("#{@api_url}/v1/year/#{year}?pagesize=#{PAGE_SIZE}&page=#{page}")
+    raise Unavailable, "no page #{page} of #{year}" unless json.is_a?(Hash) && json['results'].is_a?(Array)
 
-        body = +''.b
-        res.read_body do |chunk|
-          body << chunk
-          return :too_big if body.bytesize > limit
-        end
-        return body
-      end
-    end
-  rescue StandardError => e
-    warn "pixelia-bbs: #{url}: #{e.class}: #{e.message}"
-    nil
+    [json['results'].filter_map { |h| PackModel.from_api(h) }, json.dig('page', 'pages').to_i]
   end
 
-  def now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  def get_json(url) = JSON.parse(utf8(get(url, MAX_JSON_BYTES)))
+
+  def download(url)
+    get(url, @max_bytes).freeze
+  rescue BBS::HTTP::Error => e
+    raise unless e.message.match?(TOO_BIG)
+
+    :too_big
+  end
+
+  def get(url, max_bytes)
+    response = BBS::HTTP.get(url, headers: { 'Accept-Encoding' => 'identity' }, user_agent: @user_agent,
+                                  max_bytes: max_bytes)
+    raise Unavailable, "#{url.split('?').first} answered #{response.status}" unless response.ok?
+
+    response.body
+  end
+
+  def utf8(bytes) = bytes.force_encoding(Encoding::UTF_8)
 end

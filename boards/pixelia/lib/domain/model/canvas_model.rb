@@ -38,8 +38,6 @@ class CanvasModel
 
   def visible?(index) = @bg[index].positive? || (@chars[index] != BLANK && @fg[index].positive?)
 
-  def painted_cells = SIZE.times.count { |i| visible?(i) }
-
   def to_h
     { 'cols' => COLS, 'rows' => ROWS,
       'chars' => ROWS.times.map { |y| @chars[y * COLS, COLS].join },

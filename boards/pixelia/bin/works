@@ -6,6 +6,7 @@
 #   docker exec pixelia-bbs bin/works show ID      (the picture's characters)
 #   docker exec pixelia-bbs bin/works remove ID
 # The board sees a removal at the next look at the Wall.
+require 'bundler/setup'
 require_relative '../lib/domain'
 
 wall = PixeliaBBS.new(start: false).wall

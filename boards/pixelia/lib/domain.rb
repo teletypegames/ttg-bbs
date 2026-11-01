@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'bbs'
 require_relative 'domain/model/color_model'
 require_relative 'domain/model/glyph_model'
 require_relative 'domain/model/canvas_model'

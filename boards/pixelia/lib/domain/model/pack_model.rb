@@ -14,10 +14,16 @@ class PackModel
 
   def credits = @groups.join(', ')
 
-  # One entry of a year's pack list in the API; nil when it is not one.
+  # One entry of a year's pack list in the API (its texts cleaned); nil when
+  # it is not one.
   def self.from_api(hash)
-    return nil unless hash.is_a?(Hash) && hash['name'].is_a?(String) && !hash['name'].empty?
+    return nil unless hash.is_a?(Hash) && hash['name'].is_a?(String)
 
-    new(name: hash['name'], year: hash['year'].to_i, groups: Array(hash['groups']).map(&:to_s))
+    name = clean(hash['name'])
+    return nil if name.empty?
+
+    new(name: name, year: hash['year'].to_i, groups: Array(hash['groups']).map { |g| clean(g) })
   end
+
+  def self.clean(text) = BBS::Text.clean(text, keep_newlines: false).strip
 end

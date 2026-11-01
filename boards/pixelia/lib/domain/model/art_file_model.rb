@@ -48,18 +48,26 @@ class ArtFileModel
     names.join(' / ')
   end
 
-  # One file of a pack's listing in the API; nil when it is not one.
+  # One file of a pack's listing in the API; nil when it is not one. The
+  # names and the SAUCE texts come from afar, so they are cleaned.
   def self.from_api(name, hash, pack)
     return nil unless name.is_a?(String) && hash.is_a?(Hash)
 
     sauce = hash['sauce'].is_a?(Hash) ? hash['sauce'] : {}
-    flags = sauce['ansiflags'].is_a?(Hash) ? sauce['ansiflags'] : {}
-    new(name: name, pack: pack, artists: Array(hash['artists']).map(&:to_s),
-        title: sauce['Title'].to_s.strip, author: sauce['Author'].to_s.strip, group: sauce['Group'].to_s.strip,
-        datatype: sauce['Datatype']&.to_i, filetype: sauce['Filetype']&.to_i,
-        width: sauce['Tinfo1'].to_i.positive? ? sauce['Tinfo1'].to_i : nil,
-        ice: flags['ice'].to_i == 1, date: date(sauce['Date']))
+    new(name: clean(name), pack: pack, artists: Array(hash['artists']).map { |a| clean(a) },
+        title: clean(sauce['Title']), author: clean(sauce['Author']), group: clean(sauce['Group']),
+        **sauce_facts(sauce))
   end
+
+  # The numbers of a SAUCE record in the API: types, width, iCE, date.
+  def self.sauce_facts(sauce)
+    flags = sauce['ansiflags'].is_a?(Hash) ? sauce['ansiflags'] : {}
+    { datatype: sauce['Datatype']&.to_i, filetype: sauce['Filetype']&.to_i,
+      width: sauce['Tinfo1'].to_i.positive? ? sauce['Tinfo1'].to_i : nil,
+      ice: flags['ice'].to_i == 1, date: date(sauce['Date']) }
+  end
+
+  def self.clean(text) = BBS::Text.clean(text, keep_newlines: false).strip
 
   def self.date(value)
     s = value.to_s

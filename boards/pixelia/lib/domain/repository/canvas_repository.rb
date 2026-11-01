@@ -2,6 +2,7 @@
 
 require 'fileutils'
 require 'json'
+require 'securerandom'
 require 'time'
 
 # The shared canvas: the cells in memory behind a Mutex, a version that
@@ -59,10 +60,7 @@ class CanvasRepository
       archived = archive
       return nil unless archived
 
-      blank = CanvasModel.blank
-      @chars = blank.chars.dup
-      @fg    = blank.fg.dup
-      @bg    = blank.bg.dup
+      assign(CanvasModel.blank)
       changed!
       write
       archived
@@ -103,23 +101,20 @@ class CanvasRepository
   def load
     canvas = File.exist?(@path) ? CanvasModel.from_h(JSON.parse(File.read(@path))) : nil
     warn "pixelia-bbs: #{@path} is not a canvas, starting blank" if canvas.nil? && File.exist?(@path)
-    canvas ||= CanvasModel.blank
+    assign(canvas || CanvasModel.blank)
+  rescue SystemCallError, JSON::ParserError => e
+    warn "pixelia-bbs: #{@path}: #{e.class}: #{e.message}"
+    assign(CanvasModel.blank)
+  end
+
+  def assign(canvas)
     @chars = canvas.chars.dup
     @fg    = canvas.fg.dup
     @bg    = canvas.bg.dup
-  rescue SystemCallError, JSON::ParserError => e
-    warn "pixelia-bbs: #{@path}: #{e.class}: #{e.message}"
-    blank = CanvasModel.blank
-    @chars = blank.chars.dup
-    @fg    = blank.fg.dup
-    @bg    = blank.bg.dup
   end
 
   def write
-    FileUtils.mkdir_p(File.dirname(@path))
-    tmp = "#{@path}.tmp"
-    File.write(tmp, JSON.generate(CanvasModel.new(@chars, @fg, @bg).to_h))
-    File.rename(tmp, @path)
+    save(@path)
     @dirty = false
   rescue SystemCallError => e
     warn "pixelia-bbs: #{@path}: #{e.class}: #{e.message}"
@@ -127,11 +122,22 @@ class CanvasRepository
 
   def archive
     FileUtils.mkdir_p(@archive_dir)
-    target = File.join(@archive_dir, "canvas-#{Time.now.strftime('%Y%m%d-%H%M%S')}.json")
-    File.write(target, JSON.generate(CanvasModel.new(@chars, @fg, @bg).to_h))
-    target
+    save(File.join(@archive_dir, "canvas-#{Time.now.strftime('%Y%m%d-%H%M%S')}-#{SecureRandom.hex(2)}.json"))
   rescue SystemCallError => e
     warn "pixelia-bbs: #{@archive_dir}: #{e.class}: #{e.message}"
     nil
+  end
+
+  # Writes the canvas to +target+ whole or not at all: a temporary file of
+  # its own (the board and the admin script may both write), then a rename.
+  # Returns +target+.
+  def save(target)
+    FileUtils.mkdir_p(File.dirname(target))
+    tmp = "#{target}.#{SecureRandom.hex(4)}.tmp"
+    File.write(tmp, JSON.generate(CanvasModel.new(@chars, @fg, @bg).to_h))
+    File.rename(tmp, target)
+    target
+  ensure
+    FileUtils.rm_f(tmp) if tmp
   end
 end

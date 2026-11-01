@@ -31,7 +31,8 @@ class SauceModel
   # iCE colours: blink means a bright background.
   def ice? = @tflags.allbits?(1)
 
-  # The record of +bytes+, an art file; nil when it has none.
+  # The record of +bytes+, an art file, its texts cleaned of control
+  # characters; nil when it has none.
   def self.parse(bytes)
     bytes = bytes.to_s.b
     return nil if bytes.bytesize < SIZE
@@ -47,7 +48,8 @@ class SauceModel
 
   def self.text(record, from, length)
     record.byteslice(from, length).force_encoding('IBM437')
-          .encode('UTF-8', invalid: :replace, undef: :replace, replace: ' ').delete("\u0000").strip
+          .encode('UTF-8', invalid: :replace, undef: :replace, replace: ' ')
+          .then { |t| BBS::Text.clean(t, keep_newlines: false) }.strip
   end
 
   def self.date(raw)

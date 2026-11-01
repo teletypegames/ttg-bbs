@@ -72,18 +72,11 @@ class AnsiRenderService
 
     def run(data, sauce, truncated)
       i = 0
-      size = data.bytesize
-      while i < size && @y < @max_rows
+      while i < data.bytesize && @y < @max_rows
         b = data.getbyte(i)
         i += 1
-        case b
-        when ESC then i = escape(data, i)
-        when CR  then @x = 0
-        when LF  then newline
-        when HT  then @x = [((@x / TAB) + 1) * TAB, @width - 1].min
-        when BS  then @x = [@x - 1, 0].max
-        when NUL, BEL then nil
-        else put(CP437[b])
+        if b == ESC then i = escape(data, i)
+        else byte(b)
         end
       end
       @cut = true if @y >= @max_rows
@@ -91,6 +84,18 @@ class AnsiRenderService
     end
 
     private
+
+    # One byte that is not ESC: a control, or a character to put.
+    def byte(b)
+      case b
+      when CR  then @x = 0
+      when LF  then newline
+      when HT  then @x = [((@x / TAB) + 1) * TAB, @width - 1].min
+      when BS  then @x = [@x - 1, 0].max
+      when NUL, BEL then nil
+      else put(CP437[b])
+      end
+    end
 
     def reset_colors
       @fg      = DEFAULT_FG
@@ -136,45 +141,69 @@ class AnsiRenderService
       return if params.start_with?('?', '=', '>', '!')
 
       nums = params.split(';').map { |p| p.to_i.clamp(0, 9999) }
-      n = [nums.first.to_i, 1].max
       case final
       when 'm' then sgr(nums.empty? ? [0] : nums)
+      when 's' then @saved = [@x, @y]
+      when 'u' then @x, @y = @saved
+      when 'J' then erase_display(nums.first.to_i)
+      when 'K' then erase_line(nums.first.to_i)
+      else move(final, nums)
+      end
+    end
+
+    # The cursor moves: CUU CUD CUF CUB CHA CUP, clamped to the grid.
+    def move(final, nums)
+      n = [nums.first.to_i, 1].max
+      case final
       when 'A' then @y = [@y - n, 0].max
       when 'B' then @y = [@y + n, @max_rows].min
       when 'C' then @x = [@x + n, @width - 1].min
       when 'D' then @x = [@x - n, 0].max
       when 'G' then @x = (n - 1).clamp(0, @width - 1)
-      when 'H', 'f'
-        @y = ([nums[0].to_i, 1].max - 1).clamp(0, @max_rows)
-        @x = ([nums[1].to_i, 1].max - 1).clamp(0, @width - 1)
-      when 's' then @saved = [@x, @y]
-      when 'u' then @x, @y = @saved
-      when 'J' then erase_display(nums.first.to_i)
-      when 'K' then erase_line(nums.first.to_i)
+      when 'H', 'f' then place(nums[0].to_i, nums[1].to_i)
       end
+    end
+
+    def place(row, col)
+      @y = ([row, 1].max - 1).clamp(0, @max_rows)
+      @x = ([col, 1].max - 1).clamp(0, @width - 1)
     end
 
     def sgr(codes)
       i = 0
-      while i < codes.size
-        c = codes[i]
-        case c
-        when 0 then reset_colors
-        when 1 then @bold = true
-        when 5, 6 then @blink = true
-        when 7 then @reverse = true
-        when 21, 22 then @bold = false
-        when 25 then @blink = false
-        when 27 then @reverse = false
-        when 30..37 then @fg = c - 30
-        when 39 then @fg = DEFAULT_FG
-        when 40..47 then @bg = c - 40
-        when 49 then @bg = DEFAULT_BG
-        when 90..97 then @fg = c - 90; @bold = true
-        when 100..107 then @bg = c - 100; @blink = @ice = true
-        when 38, 48 then i += extended(c, codes[i + 1], codes[i + 2])
-        end
-        i += 1
+      i += sgr_code(codes[i], codes[i + 1], codes[i + 2]) while i < codes.size
+    end
+
+    # Applies the SGR code +c+ (and its arguments, for 38 and 48); returns
+    # how many codes it took.
+    def sgr_code(c, kind, index)
+      return 1 + extended(c, kind, index) if [38, 48].include?(c)
+
+      attribute(c)
+      color(c)
+      1
+    end
+
+    def attribute(c)
+      case c
+      when 0 then reset_colors
+      when 1 then @bold = true
+      when 5, 6 then @blink = true
+      when 7 then @reverse = true
+      when 21, 22 then @bold = false
+      when 25 then @blink = false
+      when 27 then @reverse = false
+      end
+    end
+
+    def color(c)
+      case c
+      when 30..37 then @fg = c - 30
+      when 39 then @fg = DEFAULT_FG
+      when 40..47 then @bg = c - 40
+      when 49 then @bg = DEFAULT_BG
+      when 90..97 then @fg = c - 90; @bold = true
+      when 100..107 then @bg = c - 100; @blink = @ice = true
       end
     end
 

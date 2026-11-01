@@ -8,6 +8,7 @@
 # script leaves a flag file the board answers within a few seconds. When no
 # board answers, the script clears the file itself.
 require 'fileutils'
+require 'bundler/setup'
 require_relative '../lib/domain'
 
 WAIT = 8

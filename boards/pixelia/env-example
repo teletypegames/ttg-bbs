@@ -25,3 +25,5 @@ PIXELIA_BBS_MAX_ROWS=1000
 PIXELIA_BBS_PAINT_RATE=20
 # The Wall: seconds between two saves of one caller
 PIXELIA_BBS_WALL_COOLDOWN=300
+# The Wall: works the whole board takes an hour
+PIXELIA_BBS_WALL_PER_HOUR=30
