@@ -23,10 +23,11 @@ module Discovery
       last = @db.value('SELECT banner_hash FROM board_state WHERE board_id = ?', board_id)
       banner = probe.banner.empty? || banner_hash == last ? nil : SQLite3::Blob.new(probe.banner)
       args = [board_id, probe.at, kind, probe.result, probe.latency_ms, probe.ip, banner, banner_hash,
-              JSON.generate(probe.options)]
+              JSON.generate(probe.options), probe.duration_ms, probe.banner.bytesize]
       @db.insert(<<~SQL, *args)
-        INSERT INTO probes (board_id, at, kind, result, latency_ms, ip, banner, banner_hash, options)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO probes (board_id, at, kind, result, latency_ms, ip, banner, banner_hash, options, duration_ms,
+                            banner_bytes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       SQL
     end
 
@@ -89,5 +90,55 @@ module Discovery
     end
 
     def last_probe_at = @db.value('SELECT MAX(at) FROM probes')
+
+    # The boards the prober may call (not hidden, not archived): how many are
+    # due at +now+, and the earliest next probe time (nil without one).
+    def schedule(now)
+      @db.first(<<~SQL, now)
+        SELECT COUNT(*) FILTER (WHERE s.next_probe_at IS NULL OR s.next_probe_at <= ?) AS due,
+               MIN(COALESCE(s.next_probe_at, 0)) AS next_at
+        FROM boards b LEFT JOIN board_state s ON s.board_id = b.id
+        WHERE (b.optout IS NULL OR b.optout != 'hide') AND COALESCE(s.archived, 0) = 0
+      SQL
+    end
+
+    # Every stored probe a result and kind: { [result, kind] => n }.
+    def totals
+      @db.query('SELECT result, kind, COUNT(*) AS n FROM probes GROUP BY result, kind')
+         .to_h { |r| [[r['result'], r['kind']], r['n']] }
+    end
+
+    # The scheduled probes since +from+ a result: their average whole-call
+    # time in ms ({ 'ok' => avg, … }), and the longest.
+    def durations(from)
+      rows = @db.query(<<~SQL, from)
+        SELECT result, AVG(duration_ms) AS avg, MAX(duration_ms) AS max FROM probes
+        WHERE at >= ? AND kind = 'scheduled' AND duration_ms IS NOT NULL GROUP BY result
+      SQL
+      [rows.to_h { |r| [r['result'], r['avg']] }, rows.map { |r| r['max'] }.max]
+    end
+
+    # The average banner of the scheduled probes since +from+ that read one,
+    # in bytes (nil without one).
+    def banner_bytes(from)
+      @db.value("SELECT AVG(banner_bytes) FROM probes WHERE at >= ? AND kind = 'scheduled' AND banner_bytes > 0",
+                from)
+    end
+
+    # The tags of the answering boards (online and flaky; aliases and hidden
+    # ones apart) that start with +prefix+, or are in +tags+: { tag => n },
+    # and the number of those boards.
+    def answering_tags
+      boards = @db.value(<<~SQL)
+        SELECT COUNT(*) FROM boards b JOIN board_state s ON s.board_id = b.id
+        WHERE b.alias_of IS NULL AND (b.optout IS NULL OR b.optout != 'hide') AND s.state IN ('online', 'flaky')
+      SQL
+      tags = @db.query(<<~SQL).to_h { |r| [r['tag'], r['n']] }
+        SELECT t.tag, COUNT(*) AS n FROM tags t JOIN boards b ON b.id = t.board_id JOIN board_state s ON s.board_id = b.id
+        WHERE b.alias_of IS NULL AND (b.optout IS NULL OR b.optout != 'hide') AND s.state IN ('online', 'flaky')
+        GROUP BY t.tag
+      SQL
+      [tags, boards.to_i]
+    end
   end
 end

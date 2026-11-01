@@ -23,6 +23,12 @@ module Discovery
       LEVELS.find { |l| @list[l].intersect?(keys) }
     end
 
+    # The entries of each level: { 'hide' => n, 'no_preview' => n }.
+    def counts
+      refresh
+      LEVELS.to_h { |l| [l, @list[l].size] }
+    end
+
     # Whether the file changed since the last read (and reads it).
     def refresh
       mtime = File.mtime(@path)

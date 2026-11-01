@@ -41,7 +41,8 @@ module Discovery
 
     def metrics
       MetricsService.new(File.join(@data, 'discovery-metrics.prom'), catalog: @catalog, probes: @probes,
-                                                                     dials_path: dials_path)
+                                                                     dials_path: dials_path, db_path: @db.path,
+                                                                     geoip_path: @geoip.path, optout: @optout)
     end
 
     # The Gate's side: the lists and pages it shows.

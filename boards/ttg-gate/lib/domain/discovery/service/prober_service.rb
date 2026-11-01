@@ -55,7 +55,7 @@ module Discovery
     ensure
       queue&.close
       workers&.each(&:join)
-      @metrics&.write
+      @metrics&.write(in_flight: 0)
     end
 
     # Records +result+ (a ProbeResultModel) of board +id+, +kind+ scheduled or
@@ -79,7 +79,7 @@ module Discovery
 
     def housekeeping(force: false, now: Time.now.to_i)
       if force || now - @metrics_at.to_i >= METRICS_EVERY
-        @metrics&.write
+        @metrics&.write(in_flight: @mutex.synchronize { @busy.size })
         @metrics_at = now
       end
       return unless force || now - @housekeeping_at.to_i >= HOUSEKEEPING_EVERY || @optout.refresh

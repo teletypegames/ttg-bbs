@@ -28,16 +28,18 @@ module Discovery
 
     def call(host, port)
       at = Time.now.to_i
+      begun = @clock.call
       ip = @resolver.call(host).first
-      return ProbeResultModel.new(result: 'dns_fail', at: at) unless ip
+      return ProbeResultModel.new(result: 'dns_fail', at: at, duration_ms: since(begun)) unless ip
 
       started = @clock.call
       socket = connect(ip, port)
-      return ProbeResultModel.new(result: socket, at: at, ip: ip) if socket.is_a?(String)
+      return ProbeResultModel.new(result: socket, at: at, ip: ip, duration_ms: since(begun)) if socket.is_a?(String)
 
-      latency = ((@clock.call - started) * 1000).round
+      latency = since(started)
       result, banner, options = converse(socket)
-      ProbeResultModel.new(result: result, at: at, latency_ms: latency, ip: ip, banner: banner, options: options)
+      ProbeResultModel.new(result: result, at: at, latency_ms: latency, ip: ip, banner: banner, options: options,
+                           duration_ms: since(begun))
     ensure
       socket.close if socket.is_a?(Socket) && !socket.closed?
     end
@@ -56,6 +58,8 @@ module Discovery
     end
 
     private
+
+    def since(start) = ((@clock.call - start) * 1000).round
 
     # A connected Socket, or the result: refused or timeout.
     def connect(ip, port)

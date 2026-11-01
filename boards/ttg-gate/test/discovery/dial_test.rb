@@ -112,6 +112,34 @@ module Discovery
       assert_includes text, %(ttg_gate_bbs_discovery_dials_last_hour{result="refused"} 1\n)
     end
 
+    def test_the_metrics_of_the_prober
+      catalog = CatalogRepository.new(@db)
+      probes = ProbeRepository.new(@db)
+      ids = %w[a b c].map { |h| catalog.board_id("#{h}.example.org", 23, 1) }
+      result = ProbeResultModel.new(result: 'ok', at: 5_000, latency_ms: 10, ip: '192.0.2.1', banner: 'x' * 40,
+                                    duration_ms: 1500)
+      probes.add(ids[0], result, kind: 'scheduled', banner_hash: 'h')
+      probes.save_state(ids[0], state: 'online', next_probe_at: 9_000)
+      probes.save_state(ids[1], state: 'online', next_probe_at: 4_000)
+      catalog.replace_tags(ids[0], %w[ansi cc:hu sw:synchronet net:fidonet])
+      catalog.replace_tags(ids[1], %w[sw:ftn-mailer cc:us])
+      optout = File.join(@tmp, 'optout.yml')
+      File.write(optout, "hide: [x.example.org, 192.0.2.9]\nno_preview: []\n")
+      text = MetricsService.new(File.join(@tmp, 'm.prom'), catalog: catalog, probes: probes, db_path: @db.path,
+                                                            optout: OptoutRepository.new(optout))
+                           .text(5_100, in_flight: 3)
+      ['probes_in_flight 3', 'probes_due 2', 'next_probe_due_seconds 0',
+       'probes_total{result="ok",kind="scheduled"} 1', 'probe_duration_seconds_avg_last_hour{result="ok"} 1.5',
+       'probe_duration_seconds_max_last_hour 1.5', 'banner_bytes_avg_last_hour 40.0',
+       'boards_by_encoding{encoding="ansi"} 1', 'boards_by_encoding{encoding="unknown"} 1',
+       'boards_by_network{network="fidonet"} 1', 'boards_by_country{country="hu"} 1',
+       'boards_by_software{software="synchronet"} 1', 'boards_by_software{software="ftn-mailer"} 1',
+       'boards_by_software{software="other"} 0', 'optout_hosts{level="hide"} 2'].each do |line|
+        assert_includes text, "ttg_gate_bbs_discovery_#{line}\n"
+      end
+      assert_match(/ttg_gate_bbs_discovery_db_bytes [1-9]/, text)
+    end
+
     def test_banner_preview_keeps_what_draws
       text = BannerPreview.ansi("\e]0;title\a\e[2J\e[1;31mHi\xB0\r\n\e[?25l\e[6nThere\e[2Jsecond".b)
       assert_equal "\e[2J\e[1;31mHi░\r\nThere", text

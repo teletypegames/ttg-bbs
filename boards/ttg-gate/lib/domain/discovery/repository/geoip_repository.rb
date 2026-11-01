@@ -28,6 +28,9 @@ module Discovery
       @tried   = nil
     end
 
+    # The lookup file in use.
+    def path = File.join(@dir, FILE)
+
     # The ISO country code of +ip+ (lowercase), or nil.
     def country(ip)
       return unless ip

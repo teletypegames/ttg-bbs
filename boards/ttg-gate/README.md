@@ -300,9 +300,17 @@ bin/discovery-test              # the tests (minitest)
 On the server the prober runs as the `ttg-gate-bbs-prober` service of
 `compose.yaml` (128 MB, half a CPU, no port); the import runs daily in its
 container from cron (`docker exec ttg-gate-bbs-prober bin/discovery-import`).
-Both write `data/discovery-metrics.prom` in the Prometheus text format: the
-boards a state, the probes of the last hour a result, the records a source, the
-gate's dials.
+Both write `data/discovery-metrics.prom` in the Prometheus text format (every
+name starts `ttg_gate_bbs_discovery_`): the boards a state (`boards`), the
+prober's work (`probes_in_flight`, `probes_due`, `next_probe_due_seconds`,
+`probes_total{result,kind}` counted in the catalog, `probes_last_hour`,
+`probe_duration_seconds_avg_last_hour`, `probe_duration_seconds_max_last_hour`,
+`banner_bytes_avg_last_hour`, `last_probe_timestamp_seconds`), the answering
+boards by `boards_by_encoding`, `boards_by_network`, `boards_by_country` and
+`boards_by_software` (the top 15 and `other`), the sources (`source_records`,
+`source_last_import_timestamp_seconds`, `source_failing`), the gate's dials
+(`dials_live`, `dials_last_hour`), and `geoip_age_seconds`, `db_bytes`,
+`optout_hosts{level}`.
 
 ## Project structure
 

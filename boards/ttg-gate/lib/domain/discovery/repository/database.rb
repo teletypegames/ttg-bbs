@@ -117,6 +117,7 @@ module Discovery
       @db.execute('PRAGMA journal_mode = WAL')
       @db.execute('PRAGMA foreign_keys = ON')
       @db.execute_batch(SCHEMA)
+      migrate
       @mutex = Monitor.new
     end
 
@@ -155,5 +156,16 @@ module Discovery
     end
 
     def close = @mutex.synchronize { @db.close }
+
+    private
+
+    # The columns added after the first release: the whole call's time and
+    # the banner's size of a probe (the banner itself is not kept for long).
+    def migrate
+      columns = @db.execute('PRAGMA table_info(probes)').map { |c| c['name'] }
+      { 'duration_ms' => 'INTEGER', 'banner_bytes' => 'INTEGER' }.each do |name, type|
+        @db.execute("ALTER TABLE probes ADD COLUMN #{name} #{type}") unless columns.include?(name)
+      end
+    end
   end
 end

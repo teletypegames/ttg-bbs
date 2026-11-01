@@ -12,11 +12,13 @@ module Discovery
   #              removed; binary
   # [options]    the telnet options the board asked for or offered, as
   #              "DO TTYPE", "WILL ECHO", …
-  class ProbeResultModel < Data.define(:result, :at, :latency_ms, :ip, :banner, :options)
+  # [duration_ms] the whole call, DNS to hang-up; nil when not measured (a
+  #              dial)
+  class ProbeResultModel < Data.define(:result, :at, :latency_ms, :ip, :banner, :options, :duration_ms)
     RESULTS   = %w[ok silent closed refused timeout dns_fail].freeze
     SUCCESSES = %w[ok silent].freeze
 
-    def initialize(result:, at:, latency_ms: nil, ip: nil, banner: ''.b, options: [])
+    def initialize(result:, at:, latency_ms: nil, ip: nil, banner: ''.b, options: [], duration_ms: nil)
       raise ArgumentError, "unknown probe result #{result}" unless RESULTS.include?(result)
 
       super
