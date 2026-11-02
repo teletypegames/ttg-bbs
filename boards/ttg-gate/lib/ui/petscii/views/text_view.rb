@@ -20,6 +20,9 @@ module UI
         end
 
         attr_reader :section
+        # The keys on the hint bar; Gate#show sets "Press a key" for a view
+        # shown over the current one.
+        attr_writer :hint
 
         def hint = @hint || [['←', true], [' Back  ', false], ['O', true], [' Own  ', false], ['D', true], [' Discover', false]]
 

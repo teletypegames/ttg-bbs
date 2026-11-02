@@ -4,9 +4,11 @@ module UI
   # Hands the caller's line to +board+ through a telnet gateway of rubbs. The
   # board runs its own code on its own port; the call comes back here when it
   # hangs up and the caller pressed a key. Raises IOError when the caller
-  # hangs up meanwhile.
+  # hangs up meanwhile. Our own boards are on the host (host.docker.internal,
+  # a private address), so this gateway may call a non-public address; a
+  # board of the catalog never goes through it (dial_catalog).
   def self.dial(session, board)
-    BBS::Gateway.new(host: board.host, port: board.port, name: board.name).call(session)
+    BBS::Gateway.new(host: board.host, port: board.port, name: board.name, public_only: false).call(session)
   end
 
   # Dials +board+ of Global Discovery (a Discovery::ListingModel) by the rules

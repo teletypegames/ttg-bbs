@@ -38,6 +38,8 @@ module Discovery
     C64_GAP            = 30
     C64_CONCURRENCY    = 2
     C64_BACKLOG        = 4
+    # Where a call's line goes by default: the prober's log.
+    LOG = ->(line) { BBS.log('probe', line) }
 
     # [catalog] CatalogRepository  [probes] ProbeRepository
     # [probe]   TelnetProbe (anything with #call(host, port, c64:))
@@ -45,7 +47,7 @@ module Discovery
     # [optout]  OptoutRepository   [geoip]   GeoipRepository
     # [config]  ConfigRepository   [metrics] MetricsService, or nil
     def initialize(catalog:, probes:, probe:, tags:, aliases:, optout:, geoip:, config:, metrics: nil,
-                   concurrency: CONCURRENCY, c64_gap: C64_GAP, log: ->(line) { $stdout.puts(line) })
+                   concurrency: CONCURRENCY, c64_gap: C64_GAP, log: LOG)
       @recorder    = ProbeRecorder.new(catalog: catalog, probes: probes, tags: tags, geoip: geoip, config: config)
       @catalog     = catalog
       @probes      = probes
@@ -92,7 +94,7 @@ module Discovery
       @housekeeping_at = now
       tidy(now)
     rescue StandardError => e
-      @log.call("ttg-gate-bbs-prober: housekeeping: #{e.class}: #{e.message}")
+      @log.call("housekeeping: #{e.class}: #{e.message}")
     end
 
     private
@@ -216,11 +218,11 @@ module Discovery
     end
 
     def log_error(row, error)
-      @log.call("ttg-gate-bbs-prober: #{row['host']}:#{row['port']}: #{error.class}: #{error.message}")
+      @log.call("#{row['host']}:#{row['port']}: #{error.class}: #{error.message}")
     end
 
     def line(row, result, columns, kind: nil)
-      parts = ["ttg-gate-bbs-prober: #{row['host']}:#{row['port']}#{" #{kind}" if kind}", result.result]
+      parts = ["#{row['host']}:#{row['port']}#{" #{kind}" if kind}", result.result]
       parts << "#{result.latency_ms}ms" if result.latency_ms
       parts << columns[:encoding] if columns&.dig(:encoding)
       parts << "sw:#{columns[:software_id]}" if columns&.dig(:software_id)

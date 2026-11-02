@@ -121,6 +121,14 @@ telnet localhost 2323      # directly (BBS_PORT)
 
 `env-example` lists them all.
 
+Every log line starts with the process's tag (rubbs' `BBS.log`, `log_tag`):
+`ttg-gate-bbs:` for the gate, `ttg-gate-bbs-prober:` for the prober and the
+import, which run in the prober's container; then what it is about (`dial`,
+`probe`, `import`, `geoip`, `metrics` …). Our own boards are on the host
+(`host.docker.internal`, a private address), so the gateway to them is the one
+that may call a non-public address (`public_only: false`); a board of the
+catalog is dialled by its vetted public address only.
+
 ### The boards list
 
 `config/boards.yml` holds the boards in the order of the menu, with the names,
@@ -207,8 +215,10 @@ PETSCII), and the SSH, web-only and dial-up entries are left out. The country of
 Geolocation by DB-IP"), our own copy downloaded monthly into `data/geoip/`.
 
 Every list is downloaded over https through `BBS::HTTP` (at most 32 MB, five
-redirects, each to an http or https host on the public internet only), a zip
-member is inflated 64 KB at a time and stops at 16 MB, and every text field is
+redirects, each to an http or https host on the public internet only) into a
+temporary file, not the memory (`to:`); from a zip only its directory and the
+member are read, and the member is inflated 64 KB at a time and stops at 16 MB;
+the DB-IP file is inflated line by line from its file, and every text field is
 cleaned of control and bidi characters (`BBS::Text.clean`) before it is stored,
 so a list cannot point the importer at the Docker network, fill the prober's
 memory, or draw on a caller's screen.
@@ -430,7 +440,7 @@ list of lists: no caller is named). The prober reads it and the tables into
 |---|---|
 | `dials_live` | dials in progress |
 | `dials_last_hour{result}`, `dials_total{result}` | dials of the last hour, and every dial (its probes of kind `dial`) |
-| `dial_limit{kind}` | the limits: `window_seconds`, `per_caller`, `per_host` |
+| `dial_limit{kind}` | the limits: `window_seconds`, `per_caller`, `per_host`, `idle_seconds` (a silent line ends) |
 | `dial_caller_max_in_window` | the most dials one caller has in the current window (0 … per_caller) |
 | `dial_callers_at_limit` | callers at the per-caller limit now |
 | `dial_host_lines_max` | the most lines in use to one host now (0 … per_host) |

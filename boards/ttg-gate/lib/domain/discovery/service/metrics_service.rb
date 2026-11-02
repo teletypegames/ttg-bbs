@@ -18,7 +18,7 @@ module Discovery
     ENCODINGS = %w[ansi petscii atascii ascii].freeze
     MAILER = 'ftn-mailer'
     # The Gate's dial limits, as the live file names them.
-    LIMITS = %w[window_seconds per_caller per_host].freeze
+    LIMITS = %w[window_seconds per_caller per_host idle_seconds].freeze
 
     # [dials_path] the Gate's live dials (JSON)   [db_path] the catalog file
     # [geoip_path] the DB-IP lookup file          [optout]  OptoutRepository
@@ -41,7 +41,7 @@ module Discovery
       File.write(tmp, text(now, in_flight: in_flight))
       File.rename(tmp, @path)
     rescue SystemCallError => e
-      warn "ttg-gate-bbs-discovery: metrics: #{e.message}"
+      BBS.log('metrics', e.message)
     end
 
     def text(now, in_flight: 0)
@@ -170,7 +170,7 @@ module Discovery
     def dial_limits(lines, now)
       state  = live
       limits = LIMITS.to_h { |k| [k, state.dig('limits', k).to_i] }
-      gauge(lines, 'dial_limit', "The Gate's dial limits (window_seconds, per_caller, per_host).",
+      gauge(lines, 'dial_limit', "The Gate's dial limits (window_seconds, per_caller, per_host, idle_seconds).",
             limits.transform_keys { |k| { kind: k } })
       callers(lines, state, limits, now)
       gauge(lines, 'dial_host_lines_max', 'The most lines in use to one host now.',

@@ -57,9 +57,10 @@ module UI
           end
         end
 
-        # Shows +target+ over the current view until a key; the key.
+        # Shows +target+ (a Views::TextView) over the current view until a
+        # key; the key.
         def show(target, hint: [['Press a key', false]])
-          target.instance_variable_set(:@hint, hint)
+          target.hint = hint
           @stack.push(target)
           paint
           key = wait

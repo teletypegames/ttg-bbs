@@ -9,13 +9,13 @@ require_relative 'lib/ui/petscii'
 # terminal (BBS::Terminal guesses it first), then a board from the menu, and
 # the gate hands the line on to that board's port with a telnet gateway of
 # rubbs; when the board hangs up the caller is back at the menu.
-$stdout.sync = true
-bbs = TTGGateBBS.new
-
 BBS.configure do |config|
+  config.log_tag          = 'ttg-gate-bbs'
   config.mouse            = false
   config.mouse_on_connect = false
   config.idle_seconds     = 600
+
+  bbs = TTGGateBBS.new
 
   config.flow = BBS::Terminal.flow(title: 'TTG Gate BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs))
 end

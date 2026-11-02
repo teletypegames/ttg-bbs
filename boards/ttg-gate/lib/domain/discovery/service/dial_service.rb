@@ -38,6 +38,8 @@ module Discovery
     PER_HOST   = 3
     IDLE       = 600
     LIMITS     = { window: WINDOW, per_caller: PER_CALLER, per_host: PER_HOST, idle: IDLE }.freeze
+    # Where a dial's line goes by default: the board's log.
+    LOG = ->(line) { BBS.log('dial', line) }
     # Seconds to wait for a board to accept the call: as long as a probe.
     CONNECT_TIMEOUT = TelnetProbe::CONNECT_TIMEOUT
 
@@ -80,7 +82,7 @@ module Discovery
     # [live_path] the JSON file of the live dials, or nil
     # [resolver]  host → its IP addresses (TelnetProbe#resolve)
     # [limits]    window:, per_caller:, per_host:, idle: (LIMITS by default)
-    def initialize(recorder:, history: nil, live_path: nil, clock: -> { Time.now.to_f }, log: ->(line) { warn line },
+    def initialize(recorder:, history: nil, live_path: nil, clock: -> { Time.now.to_f }, log: LOG,
                    resolver: TelnetProbe.new.method(:resolve), callable: Address.method(:callable?), **limits)
       @recorder  = recorder
       @history   = history
@@ -222,7 +224,7 @@ module Discovery
       @history.refused(at: now, reason: refusal.reason, board_id: board&.id, face: DialService.face(face))
       refusal
     rescue StandardError => e
-      @log.call("ttg-gate-bbs: recording a refused dial: #{e.class}: #{e.message}")
+      @log.call("recording a refused dial: #{e.class}: #{e.message}")
       refusal
     end
 
@@ -232,9 +234,9 @@ module Discovery
       result = probe_result(call)
       @recorder.record(call.board.id, result, kind: 'dial')
       remember(call, result.result)
-      @log.call("ttg-gate-bbs: dial #{call.board.address} #{result.result}")
+      @log.call("#{call.board.address} #{result.result}")
     rescue StandardError => e
-      @log.call("ttg-gate-bbs: recording the dial of #{call.board.address}: #{e.class}: #{e.message}")
+      @log.call("recording the dial of #{call.board.address}: #{e.class}: #{e.message}")
     end
 
     # The time and traffic of +call+ into the history.
@@ -263,7 +265,7 @@ module Discovery
       end
     end
 
-    def limits = { 'window_seconds' => @window, 'per_caller' => @per_caller, 'per_host' => @per_host }
+    def limits = { 'window_seconds' => @window, 'per_caller' => @per_caller, 'per_host' => @per_host, 'idle_seconds' => @idle }
 
     def write_live
       return unless @live_path
@@ -275,7 +277,7 @@ module Discovery
         File.rename(tmp, @live_path)
       end
     rescue SystemCallError => e
-      @log.call("ttg-gate-bbs: #{@live_path}: #{e.message}")
+      @log.call("#{@live_path}: #{e.message}")
     end
   end
 end

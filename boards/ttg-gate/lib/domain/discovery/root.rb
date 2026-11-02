@@ -52,7 +52,7 @@ module Discovery
     def browse = BrowseService.new(DirectoryRepository.new(@db), @config)
 
     # The Gate's side: the dial rules, recording each dial as a probe.
-    def dials(log: ->(line) { warn line })
+    def dials(log: DialService::LOG)
       recorder = ProbeRecorder.new(catalog: @catalog, probes: @probes, tags: @tags, geoip: @geoip, config: @config)
       DialService.new(recorder: recorder, history: history, live_path: dials_path, log: log, **@dial_limits)
     end
@@ -65,13 +65,13 @@ module Discovery
 
     def report = ReportService.new(@db)
 
-    # Warns +message+ and posts it to the Discord webhook, when there is one.
+    # Logs +message+ and posts it to the Discord webhook, when there is one.
     def alert(message)
-      warn message
+      BBS.log('import', message)
       return if @webhook.empty?
 
       require 'bbs/discord_webhook'
-      hook = BBS::DiscordWebhook.new(@webhook, relay_max: nil, embeds: false, label: 'ttg-gate-bbs-discovery: Discord')
+      hook = BBS::DiscordWebhook.new(@webhook, relay_max: nil, embeds: false)
       hook.post(BBS::DiscordWebhook.escape(message))&.join
     end
 
@@ -95,10 +95,10 @@ module Discovery
       number = Integer(value, 10)
       return number if number.positive?
 
-      warn "ttg-gate-bbs: #{key}=#{value} is not positive, #{default} it is"
+      BBS.log('config', "#{key}=#{value} is not positive, #{default} it is")
       default
     rescue ArgumentError
-      warn "ttg-gate-bbs: #{key}=#{value} is not a number, #{default} it is"
+      BBS.log('config', "#{key}=#{value} is not a number, #{default} it is")
       default
     end
   end

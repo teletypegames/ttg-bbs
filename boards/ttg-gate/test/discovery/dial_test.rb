@@ -218,7 +218,7 @@ module Discovery
       assert_equal({ window: 300, per_caller: 4, per_host: 2, idle: 120 }, root.dial_limits)
       dials = root.dials(log: ->(_) {})
       assert_equal [300, 4, 2, 120], [dials.window, dials.per_caller, dials.per_host, dials.idle]
-      assert_equal({ 'window_seconds' => 300, 'per_caller' => 4, 'per_host' => 2 },
+      assert_equal({ 'window_seconds' => 300, 'per_caller' => 4, 'per_host' => 2, 'idle_seconds' => 120 },
                    JSON.parse(File.read(root.dials_path))['limits'])
       root.db.close
       _, err = capture_io do
@@ -304,6 +304,7 @@ module Discovery
         end
       end
       ['dial_limit{kind="window_seconds"} 600', 'dial_limit{kind="per_caller"} 10', 'dial_limit{kind="per_host"} 3',
+       'dial_limit{kind="idle_seconds"} 600',
        'dial_caller_max_in_window 10', 'dial_callers_at_limit 1', 'dial_host_lines_max 2',
        'dial_refusals_total{reason="rate",face="modern"} 1', 'dial_refusals_total{reason="busy",face="c64"} 0',
        'dial_refusals_last_hour{reason="rate"} 1', 'dial_refusals_last_hour{reason="unknown"} 0',

@@ -73,13 +73,13 @@ module Discovery
       message = "#{source.name}: the parse gave #{count} records against #{previous} last time " \
                 '(more than half lost); not applied, the old records stay'
       @catalog.save_source(source, last_error: message, last_error_at: now, refused_at: now)
-      @alert.call("ttg-gate-bbs discovery import: #{message}")
+      @alert.call(message)
       Outcome.new(source: source.id, status: :refused, records: count, message: message)
     end
 
     def fail_source(source, message, now)
       @catalog.save_source(source, last_error: message, last_error_at: now)
-      @alert.call("ttg-gate-bbs discovery import: #{source.name}: #{message}")
+      @alert.call("#{source.name}: #{message}")
       Outcome.new(source: source.id, status: :failed, records: 0, message: message)
     end
 

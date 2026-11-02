@@ -34,9 +34,9 @@ class TTGGateBBS
   def open_discovery(env)
     root = Discovery::Root.new(env)
     @browse = root.browse
-    @dials  = root.dials(log: ->(line) { $stdout.puts(line) })
+    @dials  = root.dials
   rescue StandardError => e
-    warn "ttg-gate-bbs: Global Discovery is off: #{e.class}: #{e.message}"
+    BBS.log('discovery', "off: #{e.class}: #{e.message}")
     @browse = @dials = nil
   end
 end

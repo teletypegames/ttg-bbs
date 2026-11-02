@@ -26,11 +26,11 @@ class BoardRepository
     records.filter_map do |record|
       BoardModel.new(record, host: @host, public_host: @public_host)
     rescue KeyError, ArgumentError, TypeError => e
-      warn "ttg-gate-bbs: skipping a board in #{@path}: #{e.message}"
+      BBS.log('boards', "skipping a board in #{@path}: #{e.message}")
       nil
     end.freeze
   rescue SystemCallError, Psych::Exception, KeyError, NoMethodError => e
-    warn "ttg-gate-bbs: cannot read #{@path}: #{e.class}: #{e.message}"
+    BBS.log('boards', "cannot read #{@path}: #{e.class}: #{e.message}")
     [].freeze
   end
 end

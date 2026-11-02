@@ -15,6 +15,8 @@ require 'bundler/setup'
 require 'optparse'
 require_relative '../lib/domain/discovery'
 
+BBS.configure { |config| config.log_tag = 'ttg-gate-bbs-prober' }
+
 only  = nil
 files = {}
 OptionParser.new do |o|

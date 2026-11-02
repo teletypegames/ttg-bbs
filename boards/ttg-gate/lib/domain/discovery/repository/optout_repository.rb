@@ -39,7 +39,7 @@ module Discovery
       @mtime = mtime
       true
     rescue SystemCallError, Psych::Exception => e
-      warn "ttg-gate-bbs-discovery: cannot read #{@path}: #{e.message}"
+      BBS.log('optout', "cannot read #{@path}: #{e.message}")
       false
     end
   end

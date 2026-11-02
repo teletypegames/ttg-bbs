@@ -3,6 +3,9 @@
 source 'https://rubygems.org'
 
 gem 'bbs', git: 'https://git.teletypegames.org/engines/rubbs.git'
+# rubbs 1.0 loads csv at boot (BBS::Store's CSV import); a gem of its own
+# from Ruby 3.4, and a warning in the log without this line.
+gem 'csv', '~> 3.3'
 gem 'sqlite3', '~> 2.1'
 
 group :development do
