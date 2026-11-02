@@ -98,7 +98,7 @@ module UI
       def not_ready
         @screen.puts
         @screen.say('The catalog is being prepared: it is downloaded from Project Gutenberg and indexed. ' \
-                    'Try again in a minute. The classics shelf is open meanwhile.', YE)
+                    'Try again in a minute. The classics shelf is open meanwhile.', color: YE)
         @screen.pause
       end
 
@@ -120,7 +120,7 @@ module UI
         return not_ready unless @library.ready?
 
         @screen.title('SEARCH')
-        @screen.say('Words of the title or the author. Add lang:fr (de, es, ...) for one language.', GR)
+        @screen.say('Words of the title or the author. Add lang:fr (de, es, ...) for one language.', color: GR)
         @screen.puts
         query = BBS::Field.ask(@screen.session, ' search> ', max: 60)
         return if query.nil? || query.strip.empty?
@@ -142,7 +142,7 @@ module UI
 
       def message(text)
         @screen.puts
-        @screen.say(text, YE)
+        @screen.say(text, color: YE)
         @screen.pause
       end
 
