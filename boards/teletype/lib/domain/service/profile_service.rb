@@ -13,6 +13,6 @@ class ProfileService
     return if username.to_s.strip.empty?
 
     @repo.upsert(username: username,
-                 **fields.transform_values { |v| BBS::Text.clean(v, keep_newlines: false).strip[0, MAX_LENGTH] })
+                 **fields.transform_values { |v| BBS::Text.line(v)[0, MAX_LENGTH] })
   end
 end

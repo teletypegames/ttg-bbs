@@ -12,7 +12,7 @@ class DiscordNotifier
   LIMIT = 300
 
   def initialize(webhook)
-    @hook = BBS::DiscordWebhook.new(webhook, label: 'DiscordNotifier')
+    @hook = BBS::DiscordWebhook.new(webhook, label: 'Discord')
   end
 
   def enabled? = @hook.enabled?

@@ -23,12 +23,9 @@ class GiteaRepository
     @cache = HttpJson::Cache.new(ttl: TTL)
   end
 
-  def activities
-    @cache.fetch(:activities) { organisations.map { |org| Thread.new { feed(org) } }.flat_map(&:value) }
-  rescue StandardError => e
-    warn "GiteaRepository error: #{e}"
-    []
-  end
+  # The activities of every organisation, each feed read in a thread of
+  # its own. Raises BBS::HTTP::Error when the server fails.
+  def activities = @cache.fetch(:activities) { organisations.map { |org| Thread.new { feed(org) } }.flat_map(&:value) }
 
   def repo_url(repo) = "#{BASE_URL}/#{repo}"
 
@@ -37,10 +34,8 @@ class GiteaRepository
   def organisations = HttpJson.get("#{API_URL}/orgs", limit: 50).map { |o| o['username'] }
 
   def feed(org)
+    Thread.current.report_on_exception = false
     HttpJson.get("#{API_URL}/orgs/#{org}/activities/feeds", limit: 30).filter_map { |a| model(a) }
-  rescue StandardError => e
-    warn "GiteaRepository feed error (#{org}): #{e}"
-    []
   end
 
   def model(a)

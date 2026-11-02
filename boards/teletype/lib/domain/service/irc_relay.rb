@@ -4,16 +4,19 @@ require_relative 'chat_service'
 require_relative 'tls_connect'
 
 # Listens on one IRC channel for the board under a fixed nick, read only: it
-# never speaks there. A background thread keeps the connection (TLS, PING
+# never speaks there. A BBS.background thread keeps the connection (TLS, PING
 # when the server is silent, reconnect with a growing pause) and puts every
 # channel message into a ChatService hub, so a session subscribes and drains
 # it like the Live Chat. With TELETYPE_BBS_IRC_PASSWORD the nick logs in with SASL.
 class IrcRelay
-  RETRY   = [5, 15, 30, 60, 120, 300].freeze
-  IDLE    = 180
+  # The pause before reconnecting, in seconds: after a drop, and the first
+  # one after an error, doubled up to MAX_RETRY while the errors go on.
+  RETRY     = 5
+  MAX_RETRY = 300
+  IDLE      = 180
   CONNECT_TIMEOUT = 20
-  STABLE  = 300
-  SYSTEM  = '*'
+  STABLE    = 300
+  SYSTEM    = '*'
 
   attr_reader :server, :port, :channel, :nick, :topic
 
@@ -32,7 +35,7 @@ class IrcRelay
   def enabled? = !@server.empty?
 
   def start
-    @thread ||= Thread.new { run } if enabled?
+    @thread ||= BBS.background('irc', every: RETRY, retry_after: RETRY, max_retry: MAX_RETRY) { session } if enabled?
     self
   end
 
@@ -48,24 +51,23 @@ class IrcRelay
   # out: nothing from the channel reaches a terminal as an escape sequence.
   def self.clean(text)
     plain = text.to_s.gsub(/\x03(\d{1,2}(,\d{1,2})?)?/, '').gsub(/\x04(\h{6}(,\h{6})?)?/, '')
-    BBS::Text.clean(plain, keep_newlines: false).tr("\t", ' ').strip
+    BBS::Text.line(plain)
   end
 
   private
 
-  def run
-    failures = 0
-    loop do
-      started = monotonic
-      begin
-        connection
-      rescue StandardError => e
-        warn "IRC: #{e.class}: #{e.message}"
-      end
-      lost
-      failures = monotonic - started > STABLE ? 0 : failures + 1
-      sleep RETRY[(failures - 1).clamp(0, RETRY.size - 1)]
-    end
+  # One connection, until it drops. An error after STABLE seconds on line
+  # is logged here and taken as a drop, so the next pause is short again;
+  # an earlier one goes to BBS.background, whose pause grows.
+  def session
+    started = monotonic
+    connection
+  rescue StandardError => e
+    raise if monotonic - started < STABLE
+
+    BBS.log('irc', e)
+  ensure
+    lost
   end
 
   def connection
@@ -148,7 +150,7 @@ class IrcRelay
   end
 
   def sasl_failed(command)
-    warn "IRC: SASL login failed (#{command})"
+    BBS.log('irc', "SASL login failed (#{command})")
     send_line('CAP END')
   end
 

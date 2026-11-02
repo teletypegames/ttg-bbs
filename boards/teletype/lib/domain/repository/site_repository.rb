@@ -16,20 +16,14 @@ class SiteRepository
     @cache = HttpJson::Cache.new(ttl: TTL)
   end
 
-  def events
-    @cache.fetch(:events) { HttpJson.get("#{API_URL}/events").filter_map { |e| event(e) } }
-  rescue StandardError => e
-    warn "SiteRepository events error: #{e}"
-    []
-  end
+  # The events of the site. Raises BBS::HTTP::Error when the site fails.
+  def events = @cache.fetch(:events) { HttpJson.get("#{API_URL}/events").filter_map { |e| event(e) } }
 
+  # The team. Raises BBS::HTTP::Error when the site fails.
   def members
     @cache.fetch(:members) do
       HttpJson.get("#{API_URL}/members").map { |m| Member.new(m['nick'].to_s, m['realNick'].to_s, m['motto'].to_s) }
     end
-  rescue StandardError => e
-    warn "SiteRepository members error: #{e}"
-    []
   end
 
   private

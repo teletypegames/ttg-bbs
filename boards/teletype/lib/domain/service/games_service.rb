@@ -16,7 +16,8 @@ class GamesService
 
   def initialize(repo) = @repo = repo
 
-  def all = @repo.fetch
+  # The catalog; empty while the site fails.
+  def all = Remote.read('catalog', []) { @repo.fetch }
 
   def platforms = all.map(&:platform).reject(&:empty?).uniq.sort
 

@@ -19,7 +19,7 @@ class VotingService
       Poll.new(p['id'], p['title'] || p['question'], p['question'], options_for(p['options']))
     end
   rescue StandardError => e
-    warn "VotingService: #{e.class}: #{e.message}"
+    BBS.log('polls', e)
     []
   end
 

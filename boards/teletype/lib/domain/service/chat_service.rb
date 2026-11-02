@@ -33,7 +33,7 @@ class ChatService
 
   # A caller's line: :ok, :empty or :too_fast.
   def say(username, text, caller_key:)
-    line = BBS::Text.clean(text, keep_newlines: false).strip[0, MAX_LENGTH]
+    line = BBS::Text.line(text)[0, MAX_LENGTH]
     return :empty if line.empty?
     return :too_fast unless @throttle.allow?(username, caller_key)
 

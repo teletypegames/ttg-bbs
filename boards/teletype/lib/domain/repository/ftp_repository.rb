@@ -14,7 +14,8 @@ class FtpRepository
     @cache = HttpJson::Cache.new(ttl: LISTING_TTL, max_entries: 64)
   end
 
-  # {name => bytes} of the files of +path+; nil when the server did not answer.
+  # {name => bytes} of the files of +path+. Raises Net::FTPError or
+  # SystemCallError when the server did not answer.
   def sizes(path)
     @cache.fetch([:sizes, path]) do
       Net::FTP.open(@host, passive: true, open_timeout: 10, read_timeout: 15) do |ftp|
@@ -22,8 +23,5 @@ class FtpRepository
         ftp.mlsd(path).select { |e| e.facts['type'] == 'file' }.to_h { |e| [BBS::Text.clean(e.pathname), e.facts['size'].to_i] }
       end
     end
-  rescue StandardError => e
-    warn "FtpRepository sizes error (#{path}): #{e}"
-    nil
   end
 end

@@ -22,7 +22,7 @@ module UI
       rescue *DROPPED
         :halt
       rescue StandardError => e
-        warn "teletype-bbs: login error: #{e.class}: #{e.message}"
+        BBS.log('login', e)
         :halt
       end
 
@@ -56,7 +56,7 @@ module UI
       rescue *DROPPED
         :halt
       rescue StandardError => e
-        warn "teletype-bbs: logon screen error: #{e.class}: #{e.message}"
+        BBS.log('logon screen', e)
         nil
       end
 

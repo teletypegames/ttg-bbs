@@ -15,12 +15,9 @@ class CatalogRepository
     @cache = HttpJson::Cache.new(ttl: TTL)
   end
 
-  def fetch
-    @cache.fetch(:all) { pages }
-  rescue StandardError => e
-    warn "CatalogRepository fetch error: #{e}"
-    []
-  end
+  # Every game of the catalog. Raises BBS::HTTP::Error (or the error of a
+  # broken answer) when the site fails.
+  def fetch = @cache.fetch(:all) { pages }
 
   def catalog_url(game) = "#{SITE_URL}/catalog/#{game.name}"
 

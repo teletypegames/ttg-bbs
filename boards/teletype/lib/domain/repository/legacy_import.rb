@@ -30,7 +30,7 @@ class LegacyImport
   ISO_TIME  = /\A\d{4}-\d\d-\d\dT\d\d:\d\d/
   POST_TIME = /\A\d\d-\d\d \d\d:\d\d\z/
 
-  def initialize(db, dir, log: ->(line) { warn line })
+  def initialize(db, dir, log: ->(line) { BBS.log('import', line) })
     @db  = db
     @dir = dir
     @log = log
@@ -41,7 +41,7 @@ class LegacyImport
     counts = SOURCES.to_h { |source| [source.table, import(source)] }
     counts['profiles'] ||= import_profile_store
     counts.compact!
-    @log.call("teletype-bbs: imported into #{@db.path}: #{summary(counts)}") unless counts.empty?
+    @log.call("imported into #{@db.path}: #{summary(counts)}") unless counts.empty?
     counts
   end
 
@@ -121,7 +121,7 @@ class LegacyImport
   def empty?(table) = @db.get("SELECT 1 FROM #{table} LIMIT 1").nil?
 
   def warn_kept(paths, table)
-    @log.call("teletype-bbs: #{paths.join(', ')} not imported: the #{table} table has rows already")
+    @log.call("#{paths.join(', ')} not imported: the #{table} table has rows already")
     nil
   end
 

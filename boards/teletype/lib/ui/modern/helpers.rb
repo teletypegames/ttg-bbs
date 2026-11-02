@@ -133,7 +133,7 @@ module UI
         Thread.new do
           master_says(queue, ctx[:master].answer(question, ctx), width)
         rescue StandardError => e
-          warn "teletype-bbs: TTG Master: #{e.class}: #{e.message}"
+          BBS.log('TTG Master', e)
         ensure
           ctx[:master_busy] = false
         end
@@ -184,7 +184,7 @@ module UI
           node: services[:online].node(session_id)&.number, scene: @scene
         )
       rescue StandardError => e
-        warn "teletype-bbs: dashboard: #{e.class}: #{e.message}"
+        BBS.log('dashboard', e)
       end
 
       # Once a second: what the caller is doing, the room card, the clock;

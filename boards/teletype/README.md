@@ -81,7 +81,19 @@ Copy `env-example` to `.env`:
 | `SERMO_LLM_URL` | set by compose | SERMO's model, `http://llm:8080`; empty = canned replies only |
 | `SERMO_LLM_MODEL` | set by compose | the model's name in infra/llm, `qwen3.5-0.8b` |
 | `SERMO_LLM_API_KEY` | empty | SERMO's key to infra/llm, one of its `LLM_API_KEYS`; without it SERMO gets a 401 and answers with canned replies |
-| `TELETYPE_BBS_LLM_URL`, `TELETYPE_BBS_LLM_MODEL`, `TELETYPE_BBS_LLM_API_KEY` | SERMO's | The model of the BBS's own characters (Ra, the TTG Master); each one unset or empty falls back to its `SERMO_LLM_*` |
+| `TELETYPE_BBS_LLM_URL`, `TELETYPE_BBS_LLM_MODEL`, `TELETYPE_BBS_LLM_API_KEY` | SERMO's | The model of the BBS's own characters (Ra, the TTG Master); each one unset or empty falls back to its `SERMO_LLM_*` (read by `TeletypeBBS.llm`, the composition root) |
+
+## Log
+
+Every line on stderr (`docker logs teletype-bbs`) starts with the log tag
+`teletype-bbs:` (rubbs' `BBS.log`) and what it is about: `irc` (the
+connection to the channel, which runs as a `BBS.background` thread:
+reconnecting after a drop in 5 seconds, after errors with a pause doubled up
+to five minutes), `catalog`, `site events`, `site members`, `dev log`, `ftp`
+(a remote source failed: the repository raised, the service logged it and
+shows nothing), `polls`, `import` (the legacy files), `login`, `logon screen`,
+`dashboard`, `TTG Master`, `trivia`, and rubbs' own lines (sessions, doors,
+`Discord`).
 
 ## Interface
 
@@ -177,7 +189,7 @@ statusbar while it is highlighted.
 
 #### Features
 
-- **Multi-board messaging** — separate sub-boards (General / Tech / Off-Topic / Sysop), their posts in one table of the database. One post every 30 seconds a name and a line (the caller's IP address), so redialling does not reset it; the same for letters and oneliners, a burst of four lines in four seconds in the live chat (a line at most 240 characters).
+- **Multi-board messaging** — separate sub-boards (General / Tech / Off-Topic / Sysop), their posts in one table of the database. One post every 30 seconds a name and a line (the caller's IP address), so redialling does not reset it, nor does a restart (the counts are in the database); the same for letters and oneliners, a burst of four lines in four seconds in the live chat (a line at most 240 characters).
 - **Multi-line composer** — `TextArea` widget, up to 1000 chars per post, one post per 30 seconds from a call.
 - **Oneliners** — a wall of one-line messages (64 characters, a name needed, not Anonymous); the newest run along the bottom of the dashboard.
 - **Live chat** — broadcast hub, 1 Hz polling, history replay on join; at most two lines a second from one caller, and a caller who does not read keeps the last 200 lines.
@@ -196,7 +208,7 @@ statusbar while it is highlighted.
 - **Team** — the members of teletypegames.org with their mottos.
 - **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `BBS::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
 - **BBS Network** (Board > BBS Network, Help > Where are the games, files, wiki?, N on the C64) — the town map on the clubhouse wall: every board of the network a building in its bbsweb colour around the clubhouse (the town gate of TTG Gate BBS, the archive of the wiki, the great library of Alexandria, the news kiosk of Feedia, the printing press of the blog, the warehouse of WarpEngine, the scriptorium, the game shop of Commodex, the gallery of Pixelia, the dark alley of the Impostor). The arrows walk from building to building; under the map what the chosen one carries and how to walk over. The list of the boards, with bbsweb and archive.teletypegames.org, is a bulletin. This board has no gateway doors: a caller goes to another board by calling it, or through TTG Gate BBS.
-- **Registered names** — a caller can register the name they logged in with (You > Register…); from then on that name asks for its password, three tries a call with a growing wait after each wrong one (2, 4, 6 seconds). Wrong passwords are counted by the name and by the line: past 10 for a name or 6 from a line in 15 minutes, it waits out the quarter hour before the board even checks a password again. One login (`AccountService#log_on`) serves both faces, and one PBKDF2 runs at a time. A name that looks like a registered or a sysop one (a Cyrillic а for an a, an l or a 1 for an i: `Names.skeleton`) can neither register nor call as a guest. Profiles belong to registered names only. `bin/account` writes the same database, so it works on a running server.
+- **Registered names** — a caller can register the name they logged in with (You > Register…); from then on that name asks for its password, three tries a call with a growing wait after each wrong one (2, 4, 6 seconds). Wrong passwords are counted by the name and by the line: past 10 for a name or 6 from a line in 15 minutes, it waits out the quarter hour before the board even checks a password again; the count is kept in the database (rubbs' `rate_limit_events` table), so a restart does not lift it. One login (`AccountService#log_on`) serves both faces, and one PBKDF2 runs at a time. A name that looks like a registered or a sysop one (a Cyrillic а for an a, an l or a 1 for an i: `Names.skeleton`) can neither register nor call as a guest. Profiles belong to registered names only. `bin/account` writes the same database, so it works on a running server.
 - **Sysop console** — stats + broadcast, for names in `TELETYPE_BBS_SYSOPS` that logged in with their password (the domain checks it again for the broadcast).
 - **Feedback for the sysop** — a guest (a name without a password) may leave three letters a day, from a name and from a line, and all the guests together thirty.
 - **Discord feed** — new board posts and sysop broadcasts go to `TELETYPE_BBS_DISCORD_WEBHOOK`, mentions disabled.
@@ -401,8 +413,10 @@ lib/
     oneliner_service.rb, warp_sizes.rb, dev_log_service.rb,
     discord_notifier.rb, mail_service.rb, voting_service.rb,
     tagline_service.rb, network_service.rb
-    throttle.rb                        a limit by name and by line (BBS::RateLimit)
+    throttle.rb                        a limit by name and by line (BBS::RateLimit,
+                                       kept in the database)
     login_guard.rb                     wrong passwords by name and by line
+    remote.rb                          a failed remote source: logged, an empty answer
     tls_connect.rb                     TLS with a deadline (the IRC relay)
     scene_service.rb                   what the clubhouse pictures show, for both
                                        faces (SceneModel)

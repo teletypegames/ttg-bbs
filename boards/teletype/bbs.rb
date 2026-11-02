@@ -10,6 +10,8 @@ require_relative 'lib/ui/petscii'
 # first), and an ANSI terminal gets the modern desktop, a Commodore 64 the
 # PETSCII board. Both work on the same TeletypeBBS. Mouse reporting waits for
 # the choice: its escape sequence would be garbage on a C64.
+BBS.configure { |config| config.log_tag = 'teletype-bbs' }
+
 bbs = TeletypeBBS.new
 
 BBS.configure do |config|

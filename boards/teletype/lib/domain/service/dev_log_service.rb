@@ -4,7 +4,8 @@
 class DevLogService
   def initialize(repo) = @repo = repo
 
-  def recent(n = 60) = @repo.activities.sort_by { |a| -a.created_at.to_i }.first(n)
+  # The newest +n+ activities; none while Gitea fails.
+  def recent(n = 60) = Remote.read('dev log', []) { @repo.activities }.sort_by { |a| -a.created_at.to_i }.first(n)
 
   def repo_url(activity) = @repo.repo_url(activity.repo)
 

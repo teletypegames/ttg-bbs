@@ -97,7 +97,7 @@ module Trivia
     rescue IOError, Errno::EPIPE, Errno::ECONNRESET
       nil
     rescue StandardError => e
-      warn "Trivia: #{e.class}: #{e.message}"
+      BBS.log('trivia', e)
     end
 
     private

@@ -8,6 +8,7 @@ class WarpSizes
 
   def initialize(repo) = @repo = repo
 
-  # The size in bytes of a file at the top of WARP, nil when it is not there.
-  def of(name) = @repo.sizes(FOLDER)&.[](name)
+  # The size in bytes of a file at the top of WARP, nil when it is not
+  # there or the FTP server did not answer.
+  def of(name) = Remote.read('ftp', nil) { @repo.sizes(FOLDER) }&.[](name)
 end
