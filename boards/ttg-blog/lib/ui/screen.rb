@@ -37,15 +37,19 @@ module UI
     end
 
     # Digits up to RETURN: the number, 0 for RETURN alone; nil for q or ←
-    # before any digit.
-    def number
+    # before any digit; one of +letters+ typed before any digit, as it is.
+    def number(letters: [])
       digits = +''
       loop do
         k = key
         case k
         when :enter then return entered(digits)
         when :escape, 'q', 'Q' then return quit_number if digits.empty?
-        else type_digit(digits, k)
+        else
+          letter = digits.empty? && k.is_a?(String) && letters.find { |l| l.casecmp?(k) }
+          return typed_letter(letter) if letter
+
+          type_digit(digits, k)
         end
       end
     end
@@ -55,6 +59,11 @@ module UI
     def entered(digits)
       puts
       digits.to_i
+    end
+
+    def typed_letter(letter)
+      puts letter
+      letter
     end
 
     def quit_number

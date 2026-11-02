@@ -38,11 +38,12 @@ class SchemaTest < Minitest::Test
     SQLite3::Database.new(db_path) { |raw| raw.execute_batch(sql) }
   end
 
-  def test_a_new_file_gets_every_table_at_version_one
+  def test_a_new_file_gets_every_table_at_version_two
     db = BBS::SQLite.new(db_path)
-    assert_equal 1, BlogSchema.migrate(db)
+    assert_equal 2, BlogSchema.migrate(db)
     columns = db.query('PRAGMA table_info(posts)').map { |c| c['name'] }
-    assert_includes columns, 'published_at'
+    assert_equal [], %w[published_at status original_id base_updated_at] - columns
+    refute_includes columns, 'published'
     assert_equal 0, db.get('SELECT COUNT(*) AS n FROM posts')['n']
   end
 
@@ -50,24 +51,38 @@ class SchemaTest < Minitest::Test
     legacy(LAST_SHAPE)
     first  = blog.posts.find(1)
     second = blog.posts.find(2)
-    assert_equal ['kept-slug', true, 'modern', 'tasi'], [first.slug, first.published, first.face, first.author]
-    assert_equal ['draft-slug', false, 'petscii'], [second.slug, second.published, second.face]
+    assert_equal ['kept-slug', true, 'modern', 'tasi'], [first.slug, first.published?, first.face, first.author]
+    assert_equal ['draft-slug', false, 'petscii'], [second.slug, second.published?, second.face]
     assert_equal Time.utc(2026, 10, 29, 9), first.published_at
-    assert_equal 1, BBS::SQLite.new(db_path).version
+    assert_equal 2, BBS::SQLite.new(db_path).version
+  end
+
+  # Version 1, as the board left it before the drafts: the flag becomes
+  # the status, and the flag goes.
+  def test_version_one_turns_the_flag_into_the_status
+    legacy(LAST_SHAPE)
+    db = BBS::SQLite.new(db_path)
+    db.migrate(BlogSchema::BEFORE_VERSIONS)
+    assert_equal 1, db.version
+    assert_equal 2, BlogSchema.migrate(db)
+    rows = db.query('SELECT id, slug, status, original_id FROM posts ORDER BY id').map(&:values)
+    assert_equal [[1, 'kept-slug', 'published', nil], [2, 'draft-slug', 'unpublished', nil]], rows
+    refute_includes db.query('PRAGMA table_info(posts)').map { |c| c['name'] }, 'published'
   end
 
   def test_the_first_shape_gets_the_new_columns_and_slugs
     legacy(FIRST_SHAPE)
     posts = blog.posts.all.sort_by(&:id)
     assert_equal %w[2026-10-28-hello-world 2026-10-28-hello-world-2], posts.map(&:slug)
-    assert(posts.all?(&:published))
+    assert(posts.all?(&:published?))
     assert_equal Time.utc(2026, 10, 28, 10), posts.first.published_at
   end
 
   def test_a_second_start_changes_nothing
     legacy(LAST_SHAPE)
+    BlogSchema.migrate(BBS::SQLite.new(db_path))
     before = SQLite3::Database.new(db_path).execute('SELECT * FROM posts ORDER BY id')
-    2.times { BlogSchema.migrate(BBS::SQLite.new(db_path)) }
+    BlogSchema.migrate(BBS::SQLite.new(db_path))
     assert_equal before, SQLite3::Database.new(db_path).execute('SELECT * FROM posts ORDER BY id')
   end
 
@@ -75,6 +90,6 @@ class SchemaTest < Minitest::Test
     legacy(FIRST_SHAPE)
     post = blog.posts.create(author: UserModel.new(id: 1, name: 'tasi'), **draft)
     assert_match(/\A\d{4}-\d\d-\d\d-hello-world\z/, post.slug)
-    refute post.published
+    refute post.published?
   end
 end

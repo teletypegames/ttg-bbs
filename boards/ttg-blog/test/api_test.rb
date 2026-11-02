@@ -35,6 +35,13 @@ class ApiTest < Minitest::Test
     assert_equal({ 'id' => category, 'name' => 'News' }, post['category'])
   end
 
+  def test_drafts_never_reach_the_web
+    publish(1)
+    blog.posts.autosave(nil, author: editor('other', 'other-pass'), face: 'modern', **draft(title: 'Draft'))
+    assert_equal 1, get('/posts').last['posts'].size
+    assert_equal(1, get('/categories').last['categories'].sum { |c| c['count'] })
+  end
+
   def test_posts_are_capped_by_default_and_at_most
     publish(Web::Api::MAX_LIMIT + 1)
     assert_equal Web::Api::DEFAULT_LIMIT, get('/posts').last['posts'].size

@@ -31,15 +31,19 @@ module UI
         choice
       end
 
-      # A numbered list filling the screen under its title bar.
-      def pick(heading, items, empty: EMPTY, right: '', &label)
+      # A numbered list filling the screen under its title bar; the keys of
+      # +item_commands+ return <tt>[key, item]</tt> for the lit item.
+      def pick(heading, items, empty: EMPTY, right: '', item_commands: {}, &label)
         return nothing(heading, empty, right: right) if items.empty?
 
         label ||= :to_s.to_proc
         title(heading, right)
+        hint   = ['crsr/number  return: open', *item_commands.map { |k, v| "#{k}: #{v}" }, 'q: back'].join('  ')
         choice = BBS::Selector.list(session, items, width: cols - 1, height: footer_row - 2, fill: true,
-                                                    hint: 'crsr/number  return: open  q: back', colors: FULL,
-                                                    exits: { 'q' => nil }) { |item| plain(label.call(item)) }
+                                                    hint: hint, colors: FULL, exits: { 'q' => nil },
+                                                    item_exits: item_commands.keys.to_h { |k| [k, k] }) do |item|
+          plain(label.call(item))
+        end
         @at = [rows, 1]
         choice
       end
@@ -78,11 +82,18 @@ module UI
       def confirm?(question, color)
         return super unless @at
 
+        footer_choice(question, color, [%w[y yes], %w[n no]], back: 'n', index: 1) == 'y'
+      end
+
+      # +question+ in the footer, a row of +choices+ (<tt>[key, label]</tt>
+      # pairs) the cursor moves along under it: the key taken, +back+ for
+      # RUN/STOP or ←.
+      def footer_choice(question, color, choices, back:, index: 0)
         footer_text(question, color)
-        items = [BBS::Selector.item('yes', key: 'y', value: 'y'), BBS::Selector.item('no', key: 'n', value: 'n')]
-        choice = BBS::Selector.new(session, items, width: cols - 1, across: true, index: 1, back: 'n').run
+        items  = choices.map { |k, label| BBS::Selector.item(label, key: k, value: k) }
+        choice = BBS::Selector.new(session, items, width: cols - 1, across: true, index: index, back: back).run
         @at = [rows, 1]
-        choice == 'y'
+        choice
       end
 
       # +text+ in the footer when the view has one, until a key.

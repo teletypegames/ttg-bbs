@@ -2,8 +2,9 @@
 
 # The rules of the posts: what a post may hold, who sees it, and what
 # happens when it is first published. Readers see the published posts; the
-# editors see all of them. What an editor typed is cleaned of control
-# characters (BBS::Text.clean) before it is checked and kept.
+# editors see all of them; the drafts only the composer does. What an
+# editor typed is cleaned of control characters (BBS::Text.clean) before it
+# is checked and kept; a draft is kept unchecked.
 class PostService
   MAX_TITLE   = 80
   MAX_SUMMARY = 280
@@ -65,6 +66,49 @@ class PostService
   end
 
   def delete(id) = @repo.delete(id)
+
+  # The drafts of +post+ (a PostModel), or of new posts for nil, the last
+  # written first, with their bodies.
+  def drafts(post = nil) = @repo.drafts(post&.id)
+
+  def find_draft(id) = @repo.find_draft(id)
+
+  # Keeps what an editor is writing, unchecked, so a hang-up or a closed
+  # window loses nothing: into draft +id+, or a new one for nil (and when
+  # it was discarded meanwhile). +original+ is the PostModel being edited,
+  # nil for a new post. The id of the draft; nil, logged, when it could not
+  # be kept: the editing goes on.
+  def autosave(id, author:, face:, original: nil, **fields)
+    kept = @repo.save_draft(id, clean(**fields), original_id: original&.id, author_id: author.id,
+                                          face: PostModel::FACES.include?(face) ? face : 'modern',
+                                          base_updated_at: original && original.updated_at.utc.iso8601)
+    BBS.log('autosave', "post #{original.id} is gone") unless kept
+    kept
+  rescue SQLite3::Exception => e
+    BBS.log('autosave', e)
+    nil
+  end
+
+  # Saves draft +id+ (see PostRepository#commit_draft): its post as it is
+  # now, or a Symbol naming what is wrong (the draft stays then):
+  # :conflict when the original was saved since the edit began and
+  # +force+ is false, :gone when the draft or its original is gone, or
+  # what #check finds.
+  def commit(id, force: false)
+    draft = @repo.find_draft(id)
+    return :gone unless draft
+
+    problem = check(**draft.to_h.slice(*PostRepository::FIELDS))
+    return problem if problem
+
+    saved do
+      result = @repo.commit_draft(id, force: force)
+      result.is_a?(Symbol) ? result : find(result)
+    end
+  end
+
+  # Throws draft +id+ away; the number of drafts thrown away (0 or 1).
+  def discard(id) = @repo.discard(id)
 
   private
 

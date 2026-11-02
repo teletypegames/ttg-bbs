@@ -61,7 +61,7 @@ module UI
       def rule_label(text) = "#{text} #{'─' * (COLS - 4 - text.length)}"
 
       def headline(post, index)
-        draft = post.published ? '' : "#{RD}u#{LG} "
+        draft = post.published? ? '' : "#{RD}u#{LG} "
         about = post.summary.empty? ? @categories.find(post.category).name : post.summary
         S.item("#{GR}#{post.created_at.localtime.strftime('%m-%d')}#{LG} #{draft}#{post.title}",
                key: (index + 1).to_s, value: post, about: about)
@@ -74,7 +74,8 @@ module UI
         items += if user
                    [S.item("unpublished #{GR}(#{@posts.total(published: false)})#{LG}", key: 'u', value: 'u',
                                                                                      about: 'waiting to be published'),
-                    S.item('write a post', key: 'w', value: 'w', about: 'it waits unpublished until you publish it'),
+                    S.item("write a post#{drafts_note}", key: 'w', value: 'w',
+                                                         about: 'it waits unpublished until you publish it'),
                     S.item('change your password', key: 'p', value: 'p', about: "#{user.name}'s password"),
                     S.item('log out', key: 'o', value: 'o', about: "back to a reader, #{user.name}")]
                  else
@@ -94,7 +95,7 @@ module UI
 
           case read(post)
           when 'e' then changed = compose(post) || changed
-          when 'p' then changed = publish?(post, !post.published) || changed
+          when 'p' then changed = publish?(post, !post.published?) || changed
           when 'd' then return true if delete?(post)
           else return changed
           end
@@ -103,7 +104,7 @@ module UI
 
       def read(post)
         actions = if user
-                    [%w[e edit], ['p', post.published ? 'unpublish' : 'publish'], %w[d delete]]
+                    [%w[e edit], ['p', post.published? ? 'unpublish' : 'publish'], %w[d delete]]
                   else
                     []
                   end
@@ -128,7 +129,7 @@ module UI
          S.heading('─' * (COLS - 4)),
          S.item('view, as a reader will', key: 'v', value: 'v', about: 'the post as it will show'),
          S.item(post ? 'save' : "save#{GR}, unpublished#{LG}", key: 'w', value: 'w', about: save_about(post)),
-         S.item('quit', key: 'q', value: 'q', about: 'back, without saving')]
+         S.item('quit', key: 'q', value: 'q', about: 'keep the draft for later, or discard it')]
       end
 
       def draft_fields(draft)
@@ -140,6 +141,10 @@ module UI
       end
 
       def save_about(post) = post ? 'keep the changes' : 'publish it with P later'
+
+      def leave_choice
+        @screen.footer_choice('Keep the draft for later?', YE, [%w[k keep], %w[d discard], %w[b back]], back: 'b')
+      end
 
       def field(key, name, value, about) = S.item("#{GR}#{name}#{LG} #{value}", key: key, value: key, about: about)
 

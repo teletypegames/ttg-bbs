@@ -12,6 +12,9 @@ TTG_BLOG_BBS_CATEGORIES=config/categories.yml
 # The read API for teletypegames.org; 0 turns it off
 TTG_BLOG_BBS_HTTP_PORT=8080
 
+# Seconds between the autosaves of a draft while an editor writes
+TTG_BLOG_BBS_AUTOSAVE_SECONDS=15
+
 # A post rings this Discord webhook when first published; empty: off
 TTG_BLOG_BBS_DISCORD_WEBHOOK=
 TTG_BLOG_BBS_SITE_URL=https://teletypegames.org

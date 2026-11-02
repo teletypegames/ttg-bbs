@@ -59,6 +59,7 @@ and shows its bare id.
 | `TTG_BLOG_BBS_DB` | `data/ttgblog.sqlite3` | The SQLite database (compose mounts `./data`) |
 | `TTG_BLOG_BBS_CATEGORIES` | `config/categories.yml` | The category list |
 | `TTG_BLOG_BBS_HTTP_PORT` | `8080` | Port of the read API (`0` turns it off); compose does not publish it |
+| `TTG_BLOG_BBS_AUTOSAVE_SECONDS` | `15` | Seconds between the autosaves of a draft while an editor writes |
 | `TTG_BLOG_BBS_DISCORD_WEBHOOK` | — | A post rings this Discord webhook when first published, with its link on the web (`.env` on the server) |
 | `TTG_BLOG_BBS_SITE_URL` | `https://teletypegames.org` | The site the Discord message links to |
 
@@ -79,14 +80,30 @@ tables, its schema in `BlogSchema` as `migrate` steps (`PRAGMA user_version`):
   PBKDF2-SHA256 password digest.
 - `posts` — `slug`, `title`, `summary`, `body` (Markdown), `category` (an id
   from the config), `face` (`modern` or `petscii`: the terminal it was written
-  on), `published` (0 or 1), `published_at` (the first time it was
-  published), `author_id`, `created_at`, `updated_at` (UTC, ISO 8601).
+  on), `status` (`draft`, `unpublished` or `published`), `published_at`
+  (the first time it was published), `author_id`, `created_at`,
+  `updated_at` (UTC, ISO 8601), and for a draft `original_id` and
+  `base_updated_at`.
 
 A new post is saved **unpublished**: only the editors see it, on the board,
 and the web does not. Publishing is a step of its own: `P` under a post
 publishes it or takes it back. Taking a post back keeps its
 `published_at`, and only the first publishing rings Discord. The posts from
 before the flag stay published.
+
+What an editor writes is a **draft** until it is saved: a row of its own with
+the status `draft`, which nothing but the composer sees (not the lists, the
+counts, `G` or the web). A draft with an `original_id` is an edit of that
+post; one without is a new post. It is kept unchecked, after every field,
+every `TTG_BLOG_BBS_AUTOSAVE_SECONDS` in the editor while the text changes,
+and when the caller hangs up; it is made at the first change, so opening a
+post and leaving makes none. Saving a draft writes its fields into its post
+and deletes it; a new post's draft becomes the post itself (unpublished, with
+a slug, dated then, keeping its id). Deleting a post deletes its drafts.
+
+`base_updated_at` is the original's `updated_at` when the edit began: when
+the original was saved since (by another editor), saving asks before it
+overwrites.
 
 The slug is the post's address on the web: its date and its title in plain
 ASCII (`2026-10-28-hello-world`, `-2` when taken). It is made once, when the
@@ -95,7 +112,8 @@ post is saved, and stays when the title changes, so links keep working.
 Step 1 of the schema is the board before versions: on a database the board
 wrote before (version 0) it adds only what that file lacks (the slug, face
 and publishing columns, the slugs, the indexes) and keeps every row, so the
-production file comes out at version 1 as it was. What an editor types is
+production file comes out at version 1 as it was. Step 2 turns the
+`published` flag into the `status` and adds the draft columns. What an editor types is
 cleaned of control characters (`BBS::Text.clean`) before it is kept.
 
 Readers need no account. The editors are managed from the server's shell:
@@ -158,8 +176,16 @@ editor sees all of them, the unpublished ones marked so.
 
 A new post asks for its title, category, summary and body in turn, then shows
 the draft: `T` title, `C` category, `S` summary, `B` body, `V` view (as a
-reader will see it), `W` save, `Q` quit (asks before dropping changes). Editing
-a post opens the same draft screen.
+reader will see it), `W` save, `Q` quit. Editing a post opens the same draft
+screen. Every change is autosaved into a draft (see Data), so a dropped line
+loses nothing.
+
+`Q` after a change asks: `K` keeps the draft for later, `D` discards it,
+RETURN (on a C64 `back`) goes back to the draft. `E` on a post with drafts,
+and `W` while there are drafts of new posts, start from a list: the post as it
+is now (or a new post), then the drafts with their time and editor, the last
+first; `D` discards one (on a modern terminal `D` then its number). Every
+editor sees every draft. The menu tells the drafts of new posts beside `W`.
 
 The name, the passwords and the title are typed in a field of rubbs
 (`BBS::Field`), the summary and the body in its full-screen editor

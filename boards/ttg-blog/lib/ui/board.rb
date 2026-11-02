@@ -32,6 +32,7 @@ module UI
       @categories = bbs.categories
       @screen     = screen
       @ctx        = ctx
+      @autosave   = bbs.autosave_seconds
     end
 
     def run
@@ -69,7 +70,7 @@ module UI
       menu_line('G', 'go to post #')
       if user
         menu_line('U', "unpublished posts #{GR}(#{@posts.total(published: false)})#{LG}")
-        menu_line('W', 'write a post')
+        menu_line('W', "write a post#{drafts_note}")
         menu_line('P', 'change your password')
         menu_line('O', "log out #{GR}(#{user.name})#{LG}")
       else
@@ -81,7 +82,7 @@ module UI
 
     # What an editor does with a post after its last page: e, p, d or q.
     def post_choice(post)
-      flip = post.published ? 'unpublish' : 'publish'
+      flip = post.published? ? 'unpublish' : 'publish'
       @screen.choose("\r\n #{YE}E#{LG} edit  #{YE}P#{LG} #{flip}  #{YE}D#{LG} delete  #{DG}return: back#{LG} ",
                      ['e', 'p', 'd', 'q', :enter])
     end
@@ -106,7 +107,7 @@ module UI
     # posts for a reader (nil and true, as PostService#all takes them).
     def shown = user ? nil : true
 
-    def readable?(post) = post && (user || post.published)
+    def readable?(post) = post && (user || post.published?)
 
     def draft_tag = wide? ? 'unpublished' : 'u'
 
@@ -115,6 +116,12 @@ module UI
     def right = user ? "#{user.name} " : "#{@posts.total(published: true)} posts "
 
     def menu_line(key, text) = @screen.puts(" #{YE}#{key}#{LG} #{text}")
+
+    # The drafts of new posts waiting, as " (2 drafts)"; empty for none.
+    def drafts_note
+      n = @posts.drafts.size
+      n.zero? ? '' : " #{GR}(#{n} draft#{'s' unless n == 1})#{LG}"
+    end
 
     # A post by its number, the one the web shows beside it.
     def go_to
@@ -147,7 +154,7 @@ module UI
       loop do
         post = @screen.pick(heading, list, empty: 'no posts here yet.', right: right) do |p|
           tag   = wide? ? " #{CY}#{@categories.find(p.category).name}#{LG}" : ''
-          draft = p.published ? '' : "#{RD}#{draft_tag}#{LG} "
+          draft = p.published? ? '' : "#{RD}#{draft_tag}#{LG} "
           "#{GR}#{p.created_at.localtime.strftime(wide? ? '%Y-%m-%d' : '%m-%d')}#{LG} #{draft}#{p.title}#{tag}"
         end
         break unless post
@@ -171,7 +178,7 @@ module UI
       @screen.page(heading, post_lines(post), right: right, wait: false, room: 2)
       case post_choice(post)
       when 'e' then compose(post)
-      when 'p' then publish?(post, !post.published)
+      when 'p' then publish?(post, !post.published?)
       when 'd' then delete?(post)
       else false
       end

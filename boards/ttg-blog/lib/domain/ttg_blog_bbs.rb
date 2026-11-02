@@ -8,7 +8,10 @@
 class TTGBlogBBS
   ROOT = File.expand_path('../..', __dir__)
 
-  attr_reader :posts, :editors, :categories, :http_port
+  # Seconds between the autosaves of what an editor writes.
+  AUTOSAVE_SECONDS = 15
+
+  attr_reader :posts, :editors, :categories, :http_port, :autosave_seconds
 
   def initialize(env: ENV)
     db = BBS::SQLite.new(env.fetch('TTG_BLOG_BBS_DB', File.join(ROOT, 'data/ttgblog.sqlite3')))
@@ -18,10 +21,13 @@ class TTGBlogBBS
     @editors    = EditorService.new(UserRepository.new(db), guard: LoginGuard.new(store: db))
     @posts      = PostService.new(PostRepository.new(db), categories: @categories)
     @http_port  = env.fetch('TTG_BLOG_BBS_HTTP_PORT', '8080').to_i
+    @autosave_seconds = positive(env['TTG_BLOG_BBS_AUTOSAVE_SECONDS'], AUTOSAVE_SECONDS)
     announce(env)
   end
 
   private
+
+  def positive(value, default) = value.to_i.positive? ? value.to_i : default
 
   def announce(env)
     webhook = env['TTG_BLOG_BBS_DISCORD_WEBHOOK'].to_s

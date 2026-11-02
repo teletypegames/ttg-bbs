@@ -15,7 +15,7 @@ module UI
       lines = wrap(post.title, width).map { |l| " #{WH}#{l}#{LG}" }
       lines << " #{GR}#{meta}#{LG}"
       lines << " #{GR}updated #{date.call(post.updated_at)}#{LG}" if post.updated?
-      lines << " #{RD}unpublished: only the editors see it#{LG}" unless post.published
+      lines << " #{RD}unpublished: only the editors see it#{LG}" unless post.published?
       [*lines, '', *summary(post, width)]
     end
 

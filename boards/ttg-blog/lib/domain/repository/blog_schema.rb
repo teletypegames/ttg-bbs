@@ -53,8 +53,23 @@ module BlogSchema
     BlogSchema.give_slugs(db)
   end
 
+  # Step 2: a status in place of the publishing flag, and the drafts. A
+  # draft is a row of its own: with an original_id it is an edit of that
+  # post, without one a new post; base_updated_at is the original's
+  # updated_at when the edit began, to tell an edit saved meanwhile.
+  STATUS = <<~SQL
+    ALTER TABLE posts ADD COLUMN status TEXT NOT NULL DEFAULT 'unpublished'
+      CHECK (status IN ('draft', 'unpublished', 'published'));
+    ALTER TABLE posts ADD COLUMN original_id INTEGER REFERENCES posts(id) ON DELETE CASCADE;
+    ALTER TABLE posts ADD COLUMN base_updated_at TEXT;
+    UPDATE posts SET status = CASE published WHEN 1 THEN 'published' ELSE 'unpublished' END;
+    ALTER TABLE posts DROP COLUMN published;
+    CREATE INDEX posts_by_status ON posts (status, created_at);
+    CREATE INDEX posts_drafts ON posts (original_id) WHERE status = 'draft';
+  SQL
+
   # Brings the file of +db+ (a BBS::SQLite) up to date; the version reached.
-  def self.migrate(db) = db.migrate(BEFORE_VERSIONS)
+  def self.migrate(db) = db.migrate(BEFORE_VERSIONS, STATUS)
 
   # A slug for each post without one, from its title and date.
   def self.give_slugs(db)

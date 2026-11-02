@@ -56,7 +56,7 @@ module Web
       when '/posts'      then [200, { posts: @posts.all(limit: limit(req), published: true).map { |p| summary(p) } }]
       when %r{\A/posts/([a-z0-9-]+)\z}
         post = @posts.find_by_slug(Regexp.last_match(1))
-        post&.published ? [200, full(post)] : [404, { error: 'no such post' }]
+        post&.published? ? [200, full(post)] : [404, { error: 'no such post' }]
       else [404, { error: 'not found' }]
       end
     end
