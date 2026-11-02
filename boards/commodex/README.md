@@ -27,21 +27,24 @@ It has two faces on one port, like every board of the network:
   A snapshot ships with the board (`config/catalog.json.gz`, written by
   `bin/refresh-catalog`). The running board reads Wikidata again when its
   copy is older than `COMMODEX_BBS_CATALOG_TTL` (a week) and keeps the result in
-  `data/catalog.json.gz`; a failed refresh keeps the previous snapshot and
-  tries again an hour later, and so does a refresh that raises: the refresh
-  thread logs it and goes on. The queries are POSTs through rubbs'
+  `data/catalog.json.gz`. The refresh runs in rubbs' `BBS.background` (the
+  thread `catalog refresh`), which looks at the snapshot's age every hour; a
+  failed refresh (Wikidata down, no games, the file not written) is logged,
+  keeps the previous snapshot and is tried again an hour later. The queries
+  are POSTs through rubbs'
   `BBS::HTTP` (a deadline, a body cap, the board's User-Agent).
 - **About** is the lead of the game's English Wikipedia article, fetched on
-  demand through the Action API's extracts (`BBS::HTTP`, at most 5 requests
-  a second for all callers together, the same `WikipediaClient` as Alexandria
-  BBS) and kept in a `BBS::Cache` of 200 leads and 4 MiB.
+  demand through the Action API's extracts (rubbs' `BBS::Wikipedia`, at most
+  5 requests a second for all callers together, as on Alexandria BBS) and
+  kept in a `BBS::Cache` of 200 leads and 4 MiB.
   It is shown with "Text from Wikipedia, CC BY-SA 4.0" and the article's
   address.
 - **Cheats and tips** are the callers'. A new tip is pending until an admin
   approves it; only approved tips are shown. A caller may send three tips an
   hour, one every 30 seconds, and the board takes at most 30 an hour; callers
   are counted by address (`BBS::RateLimit.caller_key`), so calling again does
-  not reset it.
+  not reset it. The three limits are checked at once
+  (`BBS::RateLimit.allow_all?`): a refused tip counts in none of them.
 
 Everything from Wikidata and Wikipedia, and every tip, is cleaned of control
 characters (`BBS::Text.clean`) before it reaches a screen.
@@ -88,9 +91,16 @@ bundle exec rake test
 ```
 
 Minitest, no network (`BBS::HTTP` is stubbed): the tips table and its migration from a
-file without a version, the tip rules and limits, the catalog's search, browse and refresh
-round, the game records, the Wikipedia and Wikidata repositories. CI runs them before a
+file without a version, the tip rules and limits, the catalog's search, browse and background
+refresh, the game records, the Wikipedia and Wikidata repositories. CI runs them before a
 deploy.
+
+## Logs
+
+Every line on stderr starts with the log tag `commodex-bbs:` (rubbs' `BBS.log`):
+`commodex-bbs: catalog refresh: …`, `commodex-bbs: wikipedia: …`,
+`commodex-bbs: Discord: …`. The repositories let a failure go up; the services (and
+the refresh thread) log it once.
 
 ## Admin
 
@@ -117,8 +127,7 @@ lib/domain/
   model/summary_model.rb    a Wikipedia lead
   repository/catalog_repository.rb    the snapshot files, the games in memory
   repository/wikidata_repository.rb   the SPARQL queries
-  repository/wikipedia_client.rb      the Action API over BBS::HTTP, paced
-  repository/wikipedia_repository.rb  article leads, cached (BBS::Cache)
+  repository/wikipedia_repository.rb  article leads over BBS::Wikipedia, cached (BBS::Cache)
   repository/tip_repository.rb        the tips table (BBS::SQLite), its migrations
   repository/tip_seed_repository.rb   config/tips.yml
   service/catalog_service.rb          search, years, genres, companies, the refresh

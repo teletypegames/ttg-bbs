@@ -15,7 +15,7 @@ class TipSeedRepository
 
     Array(YAML.safe_load_file(@path)).filter_map { |entry| seed(entry) if valid?(entry) }
   rescue StandardError => e
-    warn "commodex-bbs: reading #{@path}: #{e.class}: #{e.message}"
+    BBS.log('tips', "reading #{@path}: #{e.class}: #{e.message}")
     []
   end
 

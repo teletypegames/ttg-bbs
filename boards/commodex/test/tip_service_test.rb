@@ -47,6 +47,14 @@ class TipServiceTest < Minitest::Test
     assert_equal :ok, tips.submit(zork, text: 'two', caller: '5.6.7.8')
   end
 
+  def test_a_refused_tip_is_counted_nowhere
+    tips = service
+    TipService::BOARD_MAX.times { |n| tips.submit(zork, text: "tip #{n}", caller: "10.0.#{n}.1") }
+    assert_equal :rate_limited, tips.submit(zork, text: 'late', caller: '9.9.9.9')
+    gap = tips.instance_variable_get(:@gap)
+    assert gap.room?('9.9.9.9'), 'the board said no, so the caller has used none of their tips'
+  end
+
   def test_the_whole_board_takes_board_max_an_hour
     tips = service
     results = (TipService::BOARD_MAX + 1).times.map { |n| tips.submit(zork, text: "tip #{n}", caller: "10.0.#{n}.1") }

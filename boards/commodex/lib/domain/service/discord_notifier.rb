@@ -8,7 +8,7 @@ require 'bbs/discord_webhook'
 # minutes.
 class DiscordNotifier
   def initialize(webhook:)
-    @hook = BBS::DiscordWebhook.new(webhook, embeds: false, label: 'commodex: Discord')
+    @hook = BBS::DiscordWebhook.new(webhook, embeds: false, label: 'Discord')
   end
 
   def call(tip, game)

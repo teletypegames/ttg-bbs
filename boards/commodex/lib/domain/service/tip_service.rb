@@ -17,7 +17,8 @@ class TipService
     @repository = repository
     @catalog    = catalog
     @notifier   = notifier
-    @limits     = [BBS::RateLimit.new(limit: 1, per: GAP), BBS::RateLimit.new(limit: PER_CALLER, per: WINDOW)]
+    @gap        = BBS::RateLimit.new(limit: 1, per: GAP)
+    @per_caller = BBS::RateLimit.new(limit: PER_CALLER, per: WINDOW)
     @board      = BBS::RateLimit.new(limit: BOARD_MAX, per: WINDOW)
     seeds.each { |s| @repository.insert(**s, status: 'approved') }
   end
@@ -61,15 +62,16 @@ class TipService
   # between words.
   def clean(text) = BBS::Text.clean(text.to_s).gsub(/[[:space:]]+/, ' ').strip
 
-  # Whether +caller+ and the board may send one more; counts it when they may.
-  def allowed?(caller) = @limits.all? { |limit| limit.allow?(caller) } && @board.allow?(:board)
+  # Whether +caller+ and the board may send one more; counts it in every
+  # limit when they may, in none when they may not.
+  def allowed?(caller) = BBS::RateLimit.allow_all?([[@gap, caller], [@per_caller, caller], [@board, :board]])
 
   def save(game, text, handle)
     id = @repository.insert(game_id: game.id, handle: handle, text: text)
     @notifier&.call(@repository.find(id), game)
     :ok
   rescue StandardError => e
-    warn "commodex-bbs: saving a tip: #{e.class}: #{e.message}"
+    BBS.log('tips', "saving a tip: #{e.class}: #{e.message}")
     :failed
   end
 end
