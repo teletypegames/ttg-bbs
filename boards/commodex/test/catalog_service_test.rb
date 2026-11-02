@@ -15,6 +15,13 @@ class CatalogServiceTest < Minitest::Test
     def replace(records) = @replaced << records
   end
 
+  # Wikidata that answers +records+, or raises +error+.
+  def wikidata(records: [], error: nil)
+    Object.new.tap do |w|
+      w.define_singleton_method(:records) { error ? raise(error) : records }
+    end
+  end
+
   GAMES = [game('Q1', 'Zork', 'y' => 1982, 'gen' => ['adventure'], 'pub' => ['Infocom']),
            game('Q2', 'Élite', 'y' => 1985, 'gen' => ['space'], 'dev' => ['Acornsoft']),
            game('Q3', 'Zork II', 'y' => 1982, 'gen' => ['adventure'])].freeze
@@ -37,17 +44,39 @@ class CatalogServiceTest < Minitest::Test
     assert_equal %w[Q1], s.of_company('Infocom').map(&:id)
   end
 
-  def test_a_round_that_raises_is_logged_and_the_thread_goes_on
-    wikidata = Object.new
-    def wikidata.records = raise(IOError, 'socket closed')
-    s = service(wikidata: wikidata, at: Time.now - 3600)
-    _, err = capture_io { s.refresh_round }
-    assert_match(/commodex-bbs: catalog refresh: IOError/, err)
+  def test_a_fresh_catalog_is_not_read_again
+    s = service(wikidata: wikidata(error: IOError.new('not asked')))
+    assert_equal :fresh, s.refresh_if_stale
   end
 
-  def test_a_failed_refresh_keeps_the_old_snapshot
-    wikidata = Object.new
-    def wikidata.records = nil
-    assert_equal :failed, service(wikidata: wikidata).refresh!
+  def test_a_stale_catalog_is_replaced
+    records = [{ 'id' => 'Q9', 't' => 'Uridium' }]
+    s = service(wikidata: wikidata(records: records), at: Time.now - 3600)
+    assert_equal :ok, s.refresh_if_stale
+    assert_equal [records], s.instance_variable_get(:@repository).replaced
+  end
+
+  def test_a_failed_refresh_raises_and_keeps_the_old_snapshot
+    stale = Time.now - 3600
+    assert_raises(BBS::HTTP::Error) { service(wikidata: wikidata(error: BBS::HTTP::Error.new('timeout')), at: stale).refresh_if_stale }
+    s = service(wikidata: wikidata(records: []), at: stale)
+    assert_raises(CatalogService::EmptyCatalog) { s.refresh_if_stale }
+    assert_empty s.instance_variable_get(:@repository).replaced
+  end
+
+  def test_the_refresh_runs_in_the_background_and_retries
+    calls = Queue.new
+    flaky = Object.new
+    flaky.define_singleton_method(:records) do
+      calls << :asked
+      calls.size == 1 ? raise(IOError, 'socket closed') : []
+    end
+    s = CatalogService.new(Repository.new(GAMES, at: Time.now - 3600), wikidata: flaky, ttl: 60, retry_after: 0.01)
+    _, err = capture_io do
+      thread = s.start_refresh
+      sleep 0.01 until calls.size >= 2
+      thread.kill
+    end
+    assert_match(/: catalog refresh: IOError: socket closed/, err)
   end
 end

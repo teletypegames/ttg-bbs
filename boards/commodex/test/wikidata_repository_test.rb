@@ -31,9 +31,11 @@ class WikidataRepositoryTest < Minitest::Test
     assert_equal WikidataRepository::USER_AGENT, @posts.first[:user_agent]
   end
 
-  def test_a_failed_query_gives_no_catalog
+  def test_a_failed_query_raises
     failing = ->(*, **) { raise BBS::HTTP::Error, 'timeout' }
-    _, err = capture_io { assert_nil(BBS::HTTP.stub(:post, failing) { WikidataRepository.new(pause: 0).records }) }
-    assert_match(/commodex-bbs: Wikidata/, err)
+    assert_raises(BBS::HTTP::Error) { BBS::HTTP.stub(:post, failing) { WikidataRepository.new(pause: 0).records } }
+    status = ->(*, **) { BBS::HTTP::Response.new(status: 502, body: '', headers: {}) }
+    error = assert_raises(WikidataRepository::Error) { BBS::HTTP.stub(:post, status) { WikidataRepository.new(pause: 0).records } }
+    assert_equal 'Wikidata answered 502', error.message
   end
 end

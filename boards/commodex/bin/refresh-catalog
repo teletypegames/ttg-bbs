@@ -10,8 +10,12 @@ require 'bundler/setup'
 require_relative '../lib/domain'
 
 path    = ARGV.first || File.expand_path('../config/catalog.json.gz', __dir__)
-records = WikidataRepository.new.records
-abort 'Wikidata did not answer; nothing written' if records.nil? || records.empty?
+records = begin
+  WikidataRepository.new.records
+rescue BBS::HTTP::Error => e
+  abort "Wikidata did not answer (#{e.message}); nothing written"
+end
+abort 'Wikidata answered no games; nothing written' if records.empty?
 
 CatalogRepository.write(path, records, Time.now.utc)
 puts "#{records.size} games written to #{path}"

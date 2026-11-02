@@ -26,16 +26,13 @@ class CatalogRepository
 
   def snapshot = @lock.synchronize { @snapshot }
 
-  # Writes +records+ as the new snapshot in data/ and swaps it in. False
-  # when the file could not be written; the old snapshot stays.
+  # Writes +records+ as the new snapshot in data/ and swaps it in. Raises
+  # (SystemCallError, IOError) when the file could not be written; the old
+  # snapshot stays.
   def replace(records, at: Time.now.utc)
     self.class.write(@path, records, at)
     fresh = Snapshot.new(games: games_of(records), generated_at: at)
     @lock.synchronize { @snapshot = fresh }
-    true
-  rescue SystemCallError, IOError => e
-    warn "commodex-bbs: writing #{@path}: #{e.class}: #{e.message}"
-    false
   end
 
   # Writes a catalog file atomically (bin/refresh-catalog writes the seed).
@@ -57,7 +54,7 @@ class CatalogRepository
     data = JSON.parse(Zlib::GzipReader.open(path, &:read))
     Snapshot.new(games: games_of(data['games']), generated_at: Time.iso8601(data['generated']))
   rescue StandardError => e
-    warn "commodex-bbs: reading #{path}: #{e.class}: #{e.message}"
+    BBS.log('catalog', "reading #{path}: #{e.class}: #{e.message}")
     nil
   end
 

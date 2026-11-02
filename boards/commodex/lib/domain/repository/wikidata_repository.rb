@@ -8,9 +8,13 @@ require 'uri'
 # game (P31/P279* Q7889). One query for the items, their labels and English
 # Wikipedia articles, then one per property, merged here into the records of
 # the catalog file, over BBS::HTTP (a deadline, a body cap). Any failed
-# query gives nil, so a refresh never leaves a half catalog. The names are
-# cleaned of control characters.
+# query raises (BBS::HTTP::Error, or Error for an answer that is no JSON),
+# so a refresh never leaves a half catalog. The names are cleaned of control
+# characters.
 class WikidataRepository
+  # Wikidata answered an error status or no JSON.
+  class Error < BBS::HTTP::Error; end
+
   ENDPOINT     = 'https://query.wikidata.org/sparql'
   USER_AGENT   = 'CommodexBBS/0.1 (Commodex BBS, Teletype Games telnet BBS; https://teletypegames.org; ' \
                  'https://git.teletypegames.org/bbs/commodex-bbs)'
@@ -49,19 +53,18 @@ class WikidataRepository
     @pause    = pause
   end
 
-  # The records of every game, sorted by title; nil when a query failed.
+  # The records of every game, sorted by title.
   def records
-    games = items or return nil
-    years(games) or return nil
-    PROPERTIES.each { |key, property| values(games, key, property) or return nil }
+    games = items
+    years(games)
+    PROPERTIES.each { |key, property| values(games, key, property) }
     games.values.sort_by { |g| [g['t'].downcase, g['id'][1..].to_i] }
   end
 
   private
 
   def items
-    rows = select(ITEMS) or return nil
-    rows.each_with_object({}) do |row, games|
+    select(ITEMS).each_with_object({}) do |row, games|
       id    = qid(row['item'])
       title = text(row.dig('itemLabel', 'value'))
       next if id.nil? || title.empty? || title.match?(/\AQ\d+\z/)
@@ -75,9 +78,7 @@ class WikidataRepository
   # The first year of each game: the earliest date given for the C64, else
   # the earliest at all.
   def years(games)
-    rows = select(DATES) or return nil
-    dates(rows, games).each { |id, d| games[id]['y'] = (d[:c64].empty? ? d[:any] : d[:c64]).min }
-    true
+    dates(select(DATES), games).each { |id, d| games[id]['y'] = (d[:c64].empty? ? d[:any] : d[:c64]).min }
   end
 
   # The years given for each game: { id => { c64: [...], any: [...] } }.
@@ -93,8 +94,7 @@ class WikidataRepository
   end
 
   def values(games, key, property)
-    rows = select("SELECT ?item ?v ?vLabel WHERE { #{GAMES} ?item wdt:#{property} ?v . #{LABELS} }") or return nil
-    rows.each do |row|
+    select("SELECT ?item ?v ?vLabel WHERE { #{GAMES} ?item wdt:#{property} ?v . #{LABELS} }").each do |row|
       game = games[qid(row['item'])]
       name = clean(key, row.dig('vLabel', 'value'))
       next if game.nil? || name.empty? || name.match?(/\AQ\d+\z/)
@@ -103,7 +103,6 @@ class WikidataRepository
       list << name unless list.include?(name)
     end
     games.each_value { |g| g[key]&.sort_by!(&:downcase) }
-    true
   end
 
   # A game mode reads "single-player", not "single-player video game".
@@ -112,7 +111,7 @@ class WikidataRepository
     key == 'mod' ? name.sub(/ video game\z/, '') : name
   end
 
-  def text(value) = BBS::Text.clean(value.to_s, keep_newlines: false).strip
+  def text(value) = BBS::Text.line(value)
 
   def qid(binding) = binding&.dig('value').to_s[%r{/entity/(Q\d+)\z}, 1]
 
@@ -123,12 +122,10 @@ class WikidataRepository
                                                     'Content-Type' => 'application/x-www-form-urlencoded' },
                                          open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT,
                                          deadline: DEADLINE, max_bytes: MAX_BYTES)
-    return JSON.parse(BBS::Text.utf8(response.body)).dig('results', 'bindings') if response.ok?
+    raise Error, "Wikidata answered #{response.status}" unless response.ok?
 
-    warn "commodex-bbs: Wikidata answered #{response.status}"
-    nil
-  rescue StandardError => e
-    warn "commodex-bbs: Wikidata: #{e.class}: #{e.message}"
-    nil
+    JSON.parse(BBS::Text.utf8(response.body)).dig('results', 'bindings') || []
+  rescue JSON::ParserError => e
+    raise Error, "Wikidata answered no JSON: #{e.message[0, 80]}"
   end
 end

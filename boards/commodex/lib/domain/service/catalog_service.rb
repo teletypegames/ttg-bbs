@@ -2,12 +2,16 @@
 
 # The game compendium: search by title, browse by year, genre and company,
 # a random game. It reads the snapshot of the catalog repository and builds
-# its indexes once per snapshot. A background thread refreshes the snapshot
-# from Wikidata when it is older than +ttl+ seconds; a failed refresh keeps
-# the old one and tries again after +retry_after+ seconds.
+# its indexes once per snapshot. A BBS.background thread refreshes the
+# snapshot from Wikidata when it is older than +ttl+ seconds; a failed
+# refresh is logged, keeps the old one and tries again after +retry_after+
+# seconds.
 class CatalogService
   MIN_QUERY   = 2
   MAX_RESULTS = 300
+
+  # Wikidata answered, but with no games: the old snapshot stays.
+  class EmptyCatalog < StandardError; end
 
   Index = Data.define(:snapshot, :by_id, :folded, :years, :genres, :companies)
 
@@ -66,33 +70,27 @@ class CatalogService
 
   def random = games.sample
 
-  # Starts the thread that keeps the catalog fresh; nil when +ttl+ is 0.
-  # An error in a round is logged and the thread goes on after
-  # +retry_after+ seconds: a refresh must not stop for good.
+  # Starts the BBS.background thread that keeps the catalog fresh: it looks
+  # at the snapshot's age every +ttl+ seconds (at least hourly). nil when
+  # +ttl+ is 0.
   def start_refresh
     return nil unless @ttl.positive?
 
-    Thread.new { loop { refresh_round } }
+    BBS.background('catalog refresh', every: [@ttl, @retry_after].min, retry_after: @retry_after,
+                                      max_retry: @retry_after) { refresh_if_stale }
   end
 
-  # Waits until the catalog is +ttl+ old, or refreshes it now; after a
-  # failed refresh, waits +retry_after+ seconds.
-  def refresh_round
-    age = Time.now - updated_at
-    return sleep(@ttl - age) if age < @ttl
-    sleep @retry_after unless refresh! == :ok
-  rescue StandardError => e
-    warn "commodex-bbs: catalog refresh: #{e.class}: #{e.message}"
-    sleep @retry_after
-  end
+  # Reads the catalog from Wikidata when it is +ttl+ old: :ok, or :fresh.
+  # Raises when Wikidata does not answer or has no games, or the snapshot
+  # cannot be written; the old snapshot stays then.
+  def refresh_if_stale
+    return :fresh if Time.now - updated_at < @ttl
 
-  # Reads the catalog from Wikidata now: :ok, or :failed (the old snapshot
-  # stays).
-  def refresh!
     records = @wikidata.records
-    return :failed if records.nil? || records.empty?
+    raise EmptyCatalog, 'Wikidata answered no games' if records.empty?
 
-    @repository.replace(records) ? :ok : :failed
+    @repository.replace(records)
+    :ok
   end
 
   def letter(name)
