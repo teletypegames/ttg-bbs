@@ -73,7 +73,7 @@ module UI
           end
         rescue LookupFailed => e
           @screen.puts
-          @screen.say(e.message, RD)
+          @screen.say(e.message, color: RD)
           @screen.pause
           @screen.title('ALEXANDRIA BBS', right)
         end
