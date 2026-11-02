@@ -127,9 +127,9 @@ module UI
       def vote(poll, answer)
         option = poll.options[answer.to_i - 1] if answer.to_i.positive?
         if option && @bbs.voting.vote(poll, name, option) == :ok
-          @screen.say("Your vote: #{option}.", GN)
+          @screen.say("Your vote: #{option}.", color: GN)
         else
-          @screen.say("Type a number from 1 to #{poll.options.size}.", RD)
+          @screen.say("Type a number from 1 to #{poll.options.size}.", color: RD)
         end
         @screen.pause('return')
       end
@@ -177,16 +177,16 @@ module UI
 
       def profile
         unless registered?
-          @screen.say('Register your name first (R): a profile belongs to a registered name.', RD)
+          @screen.say('Register your name first (R): a profile belongs to a registered name.', color: RD)
           return @screen.pause('return')
         end
 
         @screen.title("PROFILE - #{name.upcase}")
-        @screen.say('Return keeps a field as it is.', GR)
+        @screen.say('Return keeps a field as it is.', color: GR)
         existing = @bbs.profile.find(name) || {}
         values = %w[signature location homepage notes].to_h { |field| [field.to_sym, ask_field(field, existing[field])] }
         @bbs.profile.update(name, **values)
-        @screen.say('Profile saved.', GN)
+        @screen.say('Profile saved.', color: GN)
         @screen.pause('return')
       end
 
@@ -201,9 +201,9 @@ module UI
         if registered?
           @screen.say("#{name} is already registered and logged in.")
         elsif anonymous?
-          @screen.say('Call again with a name to register it.', RD)
+          @screen.say('Call again with a name to register it.', color: RD)
         else
-          @screen.say('Next time the board asks for this password.', GR)
+          @screen.say('Next time the board asks for this password.', color: GR)
           password = @screen.ask(" #{WH}password#{LG}: ", mask: '*')
           confirm  = @screen.ask(" #{WH}again#{LG}:    ", mask: '*')
           @screen.say(register_result(@bbs.accounts.register(name, password, confirm)))

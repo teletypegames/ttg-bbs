@@ -10,6 +10,14 @@ module UI
     # The 40×25 screen of one call (BBS::Petscii::Screen), with the board's
     # own chat line.
     class Screen < BBS::Petscii::Screen
+      # The text written in the full-screen editor under +heading+, at most
+      # +max+ long; empty when the caller quit. The title bar stays.
+      def write_text(heading, max)
+        text = edit(title: heading, max: max).to_s
+        title(heading)
+        text
+      end
+
       # A chat line: what +poll+ brings shows up above the line being typed.
       # +on_line+ gets every line sent; an empty line or ← leaves.
       def chat(prompt, poll:, on_line: nil)

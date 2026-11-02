@@ -39,7 +39,7 @@ module UI
 
           @screen.title('DOORS')
           @screen.say("#{wide.map(&:title).join(', ')} need 80 columns: call with a PC " \
-                      'terminal and choose 1 to open them.', GR)
+                      'terminal and choose 1 to open them.', color: GR)
           return @screen.pause
         end
 
@@ -51,7 +51,7 @@ module UI
         doing('Asking the TTG Master')
         @screen.title('ASK THE TTG MASTER')
         @screen.say('Hey, caller! I am the sysop of this board. Ask me where things are, what is new, what is ' \
-                    'coming up. An empty line takes you back.', YE)
+                    'coming up. An empty line takes you back.', color: YE)
         loop do
           question = @screen.ask("\r\n#{CY}you:#{LG} ")
           return if question.empty?
@@ -59,7 +59,7 @@ module UI
           @screen.write "#{DG}thinking...#{LG}"
           reply = @bbs.c64_master.answer(question, @ctx)
           @screen.write "\r#{' ' * 11}\r"
-          @screen.say("ttg master: #{reply}", YE)
+          @screen.say("ttg master: #{reply}", color: YE)
         end
       end
 

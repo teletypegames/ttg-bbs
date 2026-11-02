@@ -56,7 +56,7 @@ module UI
     def self.turned_away(screen, name, result)
       Clubhouse.text_mode(screen.session)
       screen.cls
-      screen.say(Wording.turned_away(name, result), RD)
+      screen.say(Wording.turned_away(name, result), color: RD)
       :halt
     end
 
@@ -76,7 +76,7 @@ module UI
     def self.welcome(screen, s)
       screen.title('TELETYPE BBS', s[:node] ? "node #{s[:node]}" : '')
       screen.puts
-      screen.say(s[:stats] ? "Welcome back, #{s[:name]}!" : "Welcome, #{s[:name]}! Your first call here.", WH)
+      screen.say(s[:stats] ? "Welcome back, #{s[:name]}!" : "Welcome, #{s[:name]}! Your first call here.", color: WH)
       screen.puts " #{GR}you are caller ##{s[:caller_number]}#{LG}"
       if s[:stats]
         screen.puts " #{GR}calls: #{s[:stats].calls}, last on #{s[:stats].last_call.localtime.strftime('%Y-%m-%d')}#{LG}"
@@ -84,7 +84,7 @@ module UI
       return if s[:registered]
 
       screen.say(s[:name] == AccountService::ANONYMOUS ? 'Call with a name to keep one.' : 'A guest: S, then R keeps your name.',
-                 GR)
+                 color: GR)
     end
 
     def self.scans(screen, s)
@@ -106,7 +106,7 @@ module UI
       screen.puts
       screen.puts " #{CY}quote of the day#{LG}"
       text, who = quote
-      screen.say("\"#{text}\"#{" - #{who}" if who}", WH)
+      screen.say("\"#{text}\"#{" - #{who}" if who}", color: WH)
     end
 
     def self.leaving(bbs, ctx, runner)
@@ -139,7 +139,7 @@ module UI
         s.puts " #{GR}caller ##{caller_number}, on line #{minutes.positive? ? "#{minutes}m" : "#{seconds.to_i}s"}#{LG}"
         s.puts
         text, who = quote
-        s.say("...\"#{text}\"#{" - #{who}" if who}", WH)
+        s.say("...\"#{text}\"#{" - #{who}" if who}", color: WH)
         s.puts
         s.puts " #{GR}our games:#{LG}"
         s.puts " #{CY}teletypegames.org#{LG}"

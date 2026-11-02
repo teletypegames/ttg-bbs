@@ -55,13 +55,13 @@ module UI
       def post(board)
         @screen.title("POST TO #{board.title.upcase}")
         @screen.puts " #{GR}from:#{LG} #{name}"
-        text = @screen.editor(BoardService::MAX_LENGTH, "POST TO #{board.title.upcase}")
+        text = @screen.write_text("POST TO #{board.title.upcase}", BoardService::MAX_LENGTH)
         return if text.strip.empty?
 
         case @bbs.post_message(board, name, text, caller_key: caller_key)
-        when :ok       then @screen.say('Posted.', GN)
-        when :too_fast then @screen.say("One post every #{BoardService::COOLDOWN} seconds, please.", RD)
-        else @screen.say('Message cannot be empty.', RD)
+        when :ok       then @screen.say('Posted.', color: GN)
+        when :too_fast then @screen.say("One post every #{BoardService::COOLDOWN} seconds, please.", color: RD)
+        else @screen.say('Message cannot be empty.', color: RD)
         end
         @screen.pause('return')
       end
@@ -121,7 +121,7 @@ module UI
 
       def write_letter(to: nil, subject: nil)
         if anonymous?
-          @screen.say('Call again with a name to write letters.', RD)
+          @screen.say('Call again with a name to write letters.', color: RD)
           return @screen.pause('return')
         end
 
@@ -130,7 +130,7 @@ module UI
         return if to.empty?
 
         subject = ask_subject(subject)
-        body = @screen.editor(MailService::BODY_MAX, 'WRITE A LETTER')
+        body = @screen.write_text('WRITE A LETTER', MailService::BODY_MAX)
         send_letter(to, subject, body) unless body.strip.empty?
       end
 
@@ -140,7 +140,7 @@ module UI
           return to
         end
 
-        @screen.say('To a registered name, or Sysop.', GR)
+        @screen.say('To a registered name, or Sysop.', color: GR)
         @screen.ask(" #{GR}to:#{LG} ", max: 20)
       end
 
@@ -156,9 +156,9 @@ module UI
       def send_letter(to, subject, body)
         result = @bbs.send_letter(name, to, subject, body, registered: registered?, caller_key: caller_key)
         if result == :ok
-          @screen.say("Your letter is on its way to #{@bbs.mail.recipient(to)}.", GN)
+          @screen.say("Your letter is on its way to #{@bbs.mail.recipient(to)}.", color: GN)
         else
-          @screen.say(LETTER_ERRORS.fetch(result, 'The letter is empty.'), RD)
+          @screen.say(LETTER_ERRORS.fetch(result, 'The letter is empty.'), color: RD)
         end
         @screen.pause('return')
       end
@@ -180,7 +180,7 @@ module UI
           refused = Wording::ONELINER[@bbs.oneliners.add(name, text, caller_key: caller_key)]
           next unless refused
 
-          @screen.say(refused, RD)
+          @screen.say(refused, color: RD)
           @screen.pause('return')
         end
       end
@@ -216,9 +216,9 @@ module UI
       def irc_intro(irc)
         @screen.title("IRC #{irc.channel}")
         @screen.say("Read only: the board listens on #{irc.channel} at Libera.Chat as #{irc.nick}. To talk, " \
-                    'join from an IRC client: irc.libera.chat 6697.', GR)
+                    'join from an IRC client: irc.libera.chat 6697.', color: GR)
         status = irc.joined? ? "#{irc.member_count} on the channel" : 'not connected, reconnecting'
-        @screen.say(status, irc.joined? ? GR : RD)
+        @screen.say(status, color: irc.joined? ? GR : RD)
         @screen.puts
       end
 
@@ -241,7 +241,7 @@ module UI
         @ctx[:paged] = true
         @screen.bell
         if @bbs.page_sysop(name)
-          @screen.say('The sysop is on line and heard the bell: look for an answer in the live chat (L).', GN)
+          @screen.say('The sysop is on line and heard the bell: look for an answer in the live chat (L).', color: GN)
           @screen.pause
         else
           @screen.say('The sysop is not at the keyboard. The page went to the team, but the surest way is a ' \
