@@ -18,7 +18,14 @@ class WikipediaRepositoryTest < Minitest::Test
   def test_a_missing_article_and_no_answer
     missing = FakeWikipedia.new { { 'query' => { 'pages' => [{ 'missing' => true }] } } }
     assert_equal(:missing, missing.serve { repository.summary('Nope') })
-    _, err = capture_io { assert_nil(FakeWikipedia.new(status: 503) { {} }.serve { repository.summary('Elite') }) }
-    assert_match(/commodex-bbs: Wikipedia/, err)
+    assert_raises(BBS::HTTP::Error) { FakeWikipedia.new(status: 503) { {} }.serve { repository.summary('Elite') } }
+  end
+
+  def test_the_about_service_says_why_not
+    about = AboutService.new(repository)
+    elite = game('Q2', 'Elite', 'w' => 'Elite')
+    assert_equal :no_article, about.summary(game('Q1', 'Zork'))
+    _, err = capture_io { assert_equal(:unavailable, FakeWikipedia.new(status: 503) { {} }.serve { about.summary(elite) }) }
+    assert_match(/: wikipedia: Elite: Wikipedia answered 503/, err)
   end
 end

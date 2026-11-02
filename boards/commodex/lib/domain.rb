@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
+require 'bbs'
+
 require_relative 'domain/model/game_model'
 require_relative 'domain/model/tip_model'
 require_relative 'domain/model/summary_model'
 require_relative 'domain/repository/catalog_repository'
 require_relative 'domain/repository/wikidata_repository'
-require_relative 'domain/repository/wikipedia_client'
 require_relative 'domain/repository/wikipedia_repository'
 require_relative 'domain/repository/tip_repository'
 require_relative 'domain/repository/tip_seed_repository'

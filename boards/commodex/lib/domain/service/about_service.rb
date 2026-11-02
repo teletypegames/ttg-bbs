@@ -12,10 +12,10 @@ class AboutService
   def summary(game)
     return :no_article unless game.article
 
-    case (found = @wikipedia.summary(game.article))
-    when nil      then :unavailable
-    when :missing then :no_article
-    else found
-    end
+    found = @wikipedia.summary(game.article)
+    found == :missing ? :no_article : found
+  rescue BBS::HTTP::Error => e
+    BBS.log('wikipedia', "#{game.article}: #{e.message}")
+    :unavailable
   end
 end

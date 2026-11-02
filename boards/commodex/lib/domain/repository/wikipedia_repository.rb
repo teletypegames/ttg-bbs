@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
+require 'json'
+
 # The lead of an English Wikipedia article as plain text, through the Action
-# API's extracts (WikipediaClient, the way Alexandria BBS reads Wikipedia).
-# The answers are kept for TTL seconds in a BBS::Cache bounded in entries
-# and in bytes; the text is cleaned of control characters.
+# API's extracts (rubbs' BBS::Wikipedia, five requests a second). The
+# answers are kept for TTL seconds in a BBS::Cache bounded in entries and in
+# bytes (of their JSON); the text is cleaned of control characters. A
+# failure goes up as BBS::HTTP::Error.
 class WikipediaRepository
   USER_AGENT  = 'CommodexBBS/0.1 (Commodex BBS, Teletype Games telnet BBS; https://teletypegames.org; ' \
                 'https://git.teletypegames.org/bbs/commodex-bbs)'
@@ -11,20 +14,17 @@ class WikipediaRepository
   CACHE_BYTES = 4 * 1024 * 1024
   # A lead longer than this many characters is cut at a paragraph.
   MAX_TEXT    = 6000
+  RATE        = 5
 
-  def initialize(cache_size: 200, client: WikipediaClient.new(user_agent: USER_AGENT))
+  def initialize(cache_size: 200, client: BBS::Wikipedia.new(user_agent: USER_AGENT, rate: RATE))
     @client  = client
-    @answers = BBS::Cache.new(ttl: TTL, max_entries: cache_size, max_bytes: CACHE_BYTES)
+    @answers = BBS::Cache.new(ttl: TTL, max_entries: cache_size, max_bytes: CACHE_BYTES,
+                              size: ->(data) { JSON.generate(data).bytesize })
   end
 
   # The SummaryModel of the article +title+ (redirects followed); :missing
-  # when there is no such article, nil when Wikipedia did not answer.
-  def summary(title)
-    summary_of(JSON.parse(@answers.fetch(title) { lead(title) }))
-  rescue StandardError => e
-    warn "commodex-bbs: Wikipedia: #{e.class}: #{e.message}"
-    nil
-  end
+  # when there is no such article.
+  def summary(title) = summary_of(@answers.fetch(title) { lead(title) })
 
   private
 
@@ -51,5 +51,5 @@ class WikipediaRepository
     out
   end
 
-  def line(text) = BBS::Text.clean(text.to_s, keep_newlines: false)
+  def line(text) = BBS::Text.line(text)
 end
