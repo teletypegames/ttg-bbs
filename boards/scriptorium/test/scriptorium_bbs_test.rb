@@ -15,7 +15,7 @@ class ScriptoriumBBSTest < Minitest::Test
     bbs = nil
     _, err = capture_io { bbs = ScriptoriumBBS.new(env) }
 
-    assert_match 'scriptorium-bbs: imported 1 reads from reads.jsonl (1 skipped)', err
+    assert_match ': reads: imported 1 reads from reads.jsonl (1 skipped)', err
     assert_equal 1, bbs.library.reads(BookModel.stub(id: 11, title: 'Alice'))
     assert_path_exists path('reads.jsonl.imported')
     capture_io { ScriptoriumBBS.new(env) }

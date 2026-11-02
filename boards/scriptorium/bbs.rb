@@ -10,9 +10,10 @@ require_relative 'lib/ui/petscii'
 # and an ANSI terminal gets the modern desktop with a reader window, a
 # Commodore 64 the PETSCII screens with 38-column pages. Mouse reporting
 # waits for the choice: its escape sequence would be garbage on a C64.
-bbs = ScriptoriumBBS.new.start
+bbs = ScriptoriumBBS.new
 
 BBS.configure do |config|
+  config.log_tag          = 'scriptorium-bbs'
   config.mouse            = true
   config.mouse_on_connect = false
   config.idle_seconds     = 900
@@ -20,4 +21,5 @@ BBS.configure do |config|
   config.flow = BBS::Terminal.flow(title: 'Scriptorium BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs))
 end
 
+bbs.start
 BBS.start

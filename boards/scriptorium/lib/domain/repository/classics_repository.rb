@@ -12,7 +12,7 @@ class ClassicsRepository
                      language: e.fetch('language', 'en').to_s)
     end.freeze
   rescue SystemCallError, Psych::Exception, KeyError, ArgumentError, NoMethodError => e
-    warn "scriptorium-bbs: #{path}: #{e.class}: #{e.message}"
+    BBS.log('classics', "#{path}: #{e.class}: #{e.message}")
     @books = [].freeze
   end
 

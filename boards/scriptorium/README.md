@@ -34,11 +34,14 @@ It has two faces on one port, like every board of the network:
 ### The catalog
 
 Project Gutenberg's own catalog, `pg_catalog.csv.gz` (about 5.6 MB), is
-downloaded into `data/` and its `Text` rows imported into SQLite
+streamed into `data/` (`BBS::HTTP.get(url, to: file)`: the download never sits
+in memory) and its `Text` rows imported into SQLite
 (`data/catalog.sqlite3`, about 33 MB) with an FTS5 index of titles and authors
 (an indexed `LIKE` where the SQLite has no FTS5). The import runs in a
-background thread at start when there is no catalog or it is older than
-`SCRIPTORIUM_BBS_CATALOG_TTL` days, and the thread looks again every hour. It builds
+background thread (rubbs' `BBS.background`) at start when there is no catalog or it is older than
+`SCRIPTORIUM_BBS_CATALOG_TTL` days, and the thread looks again every hour; a
+failed import is logged and tried again after five minutes, then less and less
+often, at most hourly. It builds
 a new database next to the old one and swaps it in, so callers keep reading
 meanwhile. Until the first import is done the Classics shelf is open and the
 rest says the catalog is being prepared. No list is held in Ruby: every shelf
@@ -63,7 +66,8 @@ and a book without headings in sections of about 16 KB ("Part 1/23").
 The cleaned text and its chapter index are cached in `data/texts/` (at most
 `SCRIPTORIUM_BBS_CACHE_MB`, the books read least recently go first). A chapter is
 read from the file when it is shown: no session keeps a whole book. A text
-longer than `SCRIPTORIUM_BBS_BOOK_MAX` is refused. Callers opening the same
+longer than `SCRIPTORIUM_BBS_BOOK_MAX` is refused (`BBS::HTTP::TooLarge`, as soon
+as the mirror's Content-Length says so). Callers opening the same
 book wait for one fetch, and at most two books are fetched and cut at once
 (a caller waits a minute at most for a turn); the text is cleaned in place
 and cutting it keeps only offsets, so a big book is not copied over and over.
@@ -104,7 +108,12 @@ with its default. The board has no secrets.
 `data/` is a volume. A `data/reads.jsonl` left by an older board (one JSON line
 a read) is imported into the `reads` table on the first start, one
 transaction, an unreadable line skipped, and renamed `reads.jsonl.imported`;
-the log says `scriptorium-bbs: imported N reads from reads.jsonl (M skipped)`.
+the log says `scriptorium-bbs: reads: imported N reads from reads.jsonl (M skipped)`.
+
+Every log line starts with the log tag `scriptorium-bbs:` (rubbs' `BBS.log`):
+`catalog refresh`, `catalog`, `gutenberg`, `text cache`, `reads`. The Gutenberg
+repository lets a failure go up; the services (and the refresh thread) log it
+once.
 
 ## Tests
 

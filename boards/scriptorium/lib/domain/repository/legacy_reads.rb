@@ -21,7 +21,7 @@ module LegacyReads
     File.rename(path, "#{path}.imported")
     imported = counts.fetch(true, 0)
     skipped  = counts.fetch(false, 0)
-    warn "scriptorium-bbs: imported #{imported} reads from #{File.basename(path)} (#{skipped} skipped)"
+    BBS.log('reads', "imported #{imported} reads from #{File.basename(path)} (#{skipped} skipped)")
     [imported, skipped]
   end
 

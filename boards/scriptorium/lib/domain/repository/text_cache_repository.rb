@@ -24,7 +24,7 @@ class TextCacheRepository
     touch(path) if text
     text
   rescue JSON::ParserError, SystemCallError => e
-    warn "scriptorium-bbs: #{path}: #{e.class}: #{e.message}"
+    BBS.log('text cache', "#{path}: #{e.class}: #{e.message}")
     nil
   end
 
@@ -41,7 +41,7 @@ class TextCacheRepository
     evict
     model
   rescue SystemCallError => e
-    warn "scriptorium-bbs: #{@dir}: #{e.class}: #{e.message}"
+    BBS.log('text cache', "#{@dir}: #{e.class}: #{e.message}")
     nil
   end
 
@@ -53,7 +53,7 @@ class TextCacheRepository
       BBS::Text.clean(f.read(chapter.length))
     end
   rescue SystemCallError => e
-    warn "scriptorium-bbs: #{text_path(id)}: #{e.class}: #{e.message}"
+    BBS.log('text cache', "#{text_path(id)}: #{e.class}: #{e.message}")
     nil
   end
 
@@ -86,7 +86,7 @@ class TextCacheRepository
       end
     end
   rescue SystemCallError => e
-    warn "scriptorium-bbs: #{@dir}: #{e.class}: #{e.message}"
+    BBS.log('text cache', "#{@dir}: #{e.class}: #{e.message}")
   end
 
   # Every cached book as [last read, index file, text file, bytes].
