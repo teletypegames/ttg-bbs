@@ -74,6 +74,7 @@ module Discovery
 
       latency = since(started)
       result, banner, options = converse(socket, c64)
+      latency = nil if result == 'refused'
       ProbeResultModel.new(result: result, at: at, latency_ms: latency, ip: ip, banner: banner, options: options,
                            duration_ms: since(begun))
     ensure
@@ -152,9 +153,14 @@ module Discovery
         nil
       rescue EOFError, Errno::ECONNRESET, Errno::EPIPE
         @eof = true
+      rescue Errno::ECONNREFUSED
+        @refused = @eof = true
       end
 
+      # A refusal shows here when the system reports a connection as made
+      # and its refusal at the first read (macOS does, on a local port).
       def result
+        return 'refused' if @refused
         return 'ok' unless @banner.empty?
 
         @eof ? 'closed' : 'silent'
