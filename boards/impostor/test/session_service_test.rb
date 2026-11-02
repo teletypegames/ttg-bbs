@@ -38,7 +38,8 @@ class SessionServiceTest < Minitest::Test
       8effc48c813f29a9,2026-04-27T22:57:01Z,ATM,265LFI,That was cool!,
       bd2138d83c29df79,2026-04-28T19:03:50Z,ATM,265LFI,Hello,player@example.com
     CSV
-    call = service.find('bd2138d83c29df79')
+    call = nil
+    capture_subprocess_io { call = service.find('bd2138d83c29df79') }
     assert_equal ['2026-04-28T19:03:50Z', 'player@example.com'], [call.timestamp, call.email]
     assert File.exist?(path('sessions.csv.imported'))
     refute File.exist?(path('sessions.csv'))
@@ -52,10 +53,19 @@ class SessionServiceTest < Minitest::Test
       a3,2026-04-29T19:03:50Z,NOR,2J5GFN,fine,n@example.com
     CSV
     _, err = capture_subprocess_io { service.upsert(session_id: 'new', player_name: 'X') }
-    assert_match(/1 malformed lines/, err)
+    assert_match(/2 rows .* imported .*, 1 set aside/, err)
     assert_equal %w[ok fine], [service.find('a1').feedback, service.find('a3').feedback]
     assert_nil service.find('a2')
     assert_includes File.read(path('sessions.csv.rejected')), 'a2,'
+  end
+
+  def test_opening_at_boot_imports_the_legacy_csv
+    File.write(path('sessions.csv'), <<~CSV)
+      session_id,timestamp,player_name,code,feedback,email
+      a1,2026-04-27T22:57:01Z,ATM,265LFI,ok,
+    CSV
+    capture_subprocess_io { SessionRepository.new(path('sessions.sqlite3')).open! }
+    assert File.exist?(path('sessions.csv.imported'))
   end
 
   def test_the_gem_flow_takes_the_service_as_its_store

@@ -45,6 +45,7 @@ telnet localhost 2323
 Docker Compose publishes it on port 2324 (`telnet localhost 2324`), the public port on the server. Run directly,
 the port can be changed via the `BBS_PORT` environment variable. `env-example` lists every
 variable with its default: `BBS_PORT`, `BBS_MAX_SESSIONS` and `IMPOSTOR_BBS_SESSIONS`, the sessions database.
+Every log line (the board's and rubbs') starts with `impostor-bbs:` (rubbs' `BBS.log`, `log_tag`).
 
 ## Tests
 
@@ -140,7 +141,7 @@ a3f1b2c4...       2026-04-28T10:00:00Z  NORMAN       2J5GFN  Great puzzle!  norm
 
 Each row is created when the player submits their name and code, then updated in place as feedback and email are collected. Multiple sessions with the same player name are kept separate by their session ID. The email is the game's contact list and is kept as typed, but only when it is a valid address (printable, one `@`, a dotted domain, at most 254 characters); the other fields are cleaned of control characters and cut to a limit.
 
-Earlier versions kept the sessions in `data/sessions.csv`. On the first start that file is imported into the database in one transaction and renamed to `data/sessions.csv.imported`.
+Earlier versions kept the sessions in `data/sessions.csv`. On the first start (the board opens the database at boot) that file is imported into the database in one transaction and renamed to `data/sessions.csv.imported`; lines that are no CSV row are set aside in `data/sessions.csv.rejected` and the good ones kept (rubbs' `BBS::Store`).
 
 `IMPOSTOR_BBS_SESSIONS` moves the database. When running via Docker Compose the `data/` directory is mounted as a volume so records survive container restarts.
 

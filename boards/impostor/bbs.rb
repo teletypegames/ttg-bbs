@@ -10,10 +10,11 @@ require_relative 'lib/ui/petscii'
 # BBS::Terminal asks which terminal is calling, and a Commodore 64 gets the
 # same terminal drawn for 40 columns in PETSCII. When the debrief ends, the
 # board says goodbye and hangs up.
-bbs = ImpostorBBS.new
-
 BBS.configure do |config|
+  config.log_tag      = 'impostor-bbs'
   config.idle_seconds = 600
+
+  bbs = ImpostorBBS.new
 
   config.flow = BBS::Terminal.flow(title: 'Impostor BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs))
 end

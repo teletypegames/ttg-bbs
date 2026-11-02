@@ -12,8 +12,7 @@ class ImpostorBBS
 
   def initialize(env = ENV)
     path      = File.expand_path(env.fetch('IMPOSTOR_BBS_SESSIONS', 'data/sessions.sqlite3'), ROOT)
-    sessions  = SessionRepository.new(path)
-    warn "impostor-bbs: #{sessions.count} sessions in #{path}"
-    @sessions = SessionService.new(sessions)
+    @sessions = SessionService.new(SessionRepository.new(path).open!)
+    BBS.log('sessions', "kept in #{path}")
   end
 end

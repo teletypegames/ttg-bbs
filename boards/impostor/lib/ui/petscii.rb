@@ -32,7 +32,7 @@ module UI
       BBS::Goodbye.petscii(screen, bar: 'Thanks for calling Impostor BBS', color: GN) do |s|
         logo.each { |line| s.puts line }
         s.puts
-        s.say("More of us: #{BBS::Goodbye::URL}", GR)
+        s.say("More of us: #{BBS::Goodbye::URL}", color: GR)
       end
     end
   end
