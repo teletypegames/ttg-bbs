@@ -30,17 +30,12 @@ class InboxRepository
     import(legacy) if legacy && File.exist?(legacy)
   end
 
-  # Keeps +message+; true when it is kept, false (and a warning) when it
-  # could not be.
+  # Keeps +message+. Raises SQLite3::Exception when it could not.
   def append(message)
     @db.transaction do
       insert(message)
       prune
     end
-    true
-  rescue SQLite3::Exception => e
-    warn "feedia-bbs: inbox: #{e.class}: #{e.message}"
-    false
   end
 
   # The last +limit+ messages, the newest first.
@@ -78,6 +73,6 @@ class InboxRepository
       prune
     end
     File.rename(path, "#{path}.imported")
-    warn "feedia-bbs: imported #{messages.size} messages from #{File.basename(path)} (#{lines.size - messages.size} skipped)"
+    BBS.log('inbox', "imported #{messages.size} messages from #{File.basename(path)} (#{lines.size - messages.size} skipped)")
   end
 end

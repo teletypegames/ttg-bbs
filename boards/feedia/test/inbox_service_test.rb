@@ -57,6 +57,24 @@ class InboxServiceTest < Minitest::Test
     refute inbox.open?('new')
   end
 
+  def test_a_message_the_board_refuses_costs_the_caller_nothing
+    per_caller = BBS::RateLimit.new(limit: 1, per: 3600)
+    inbox = InboxService.new(@inbox, discord: @discord, per_caller: per_caller, global: BBS::RateLimit.new(limit: 1, per: 3600))
+    assert_equal :ok, inbox.feedback(caller: 'a', text: 'hi')
+    assert_equal :limited, inbox.feedback(caller: 'b', text: 'hi')
+    assert per_caller.room?('b')
+  end
+
+  def test_a_message_that_cannot_be_kept_fails
+    broken = Object.new
+    def broken.append(_) = raise(SQLite3::Exception, 'disk I/O error')
+    _, err = capture_io do
+      assert_equal :failed, InboxService.new(broken, discord: @discord).feedback(caller: 'a', text: 'hi')
+    end
+    assert_match(%r{: inbox: SQLite3::Exception: disk I/O error}, err)
+    assert_empty @discord.posts
+  end
+
   def test_an_invalid_message_costs_nothing
     inbox = service(per_caller: 1)
     inbox.suggest(caller: 'a', url: 'nope')

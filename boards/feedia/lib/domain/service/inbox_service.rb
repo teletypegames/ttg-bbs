@@ -8,8 +8,9 @@ require 'bbs/text'
 # is kept in the inbox and rings the admins' Discord channel. The board
 # never fetches a suggested address: that is the admins' call, from their
 # own machine. A caller (BBS::RateLimit.caller_key) may send PER_CALLER
-# messages an hour, all callers together GLOBAL. Results are symbols for
-# the faces to word.
+# messages an hour, all callers together GLOBAL; a message counts in both
+# or, when one says no, in neither. Results are symbols for the faces to
+# word.
 class InboxService
   MAX_TEXT   = 1000
   MAX_FIELD  = 200
@@ -30,7 +31,7 @@ class InboxService
 
   # Whether +caller+ may send a message now, for a face to ask before it
   # opens a form.
-  def open?(caller) = @per_caller.wait(caller).zero? && @global.wait(:all).zero?
+  def open?(caller) = @per_caller.room?(caller) && @global.room?(:all)
 
   # :ok, or why not: :no_url, :bad_url, :limited, :failed.
   def suggest(caller:, url:, name: '', note: '', from: '')
@@ -56,14 +57,17 @@ class InboxService
   private
 
   def deliver(caller, message)
-    return :limited unless open?(caller) && @per_caller.allow?(caller) && @global.allow?(:all)
-    return :failed unless @inbox.append(message)
+    return :limited unless BBS::RateLimit.allow_all?([[@per_caller, caller], [@global, :all]])
 
+    @inbox.append(message)
     @discord.post(discord_text(message))
     :ok
+  rescue SQLite3::Exception => e
+    BBS.log('inbox', "#{e.class}: #{e.message}")
+    :failed
   end
 
-  def field(value) = BBS::Text.clean(value, keep_newlines: false).gsub(/\s+/, ' ').strip[0, MAX_FIELD]
+  def field(value) = BBS::Text.line(value)[0, MAX_FIELD]
 
   def text(value) = BBS::Text.clean(value).gsub(/[ \t]+/, ' ').gsub(/\n{3,}/, "\n\n").strip[0, MAX_TEXT]
 
