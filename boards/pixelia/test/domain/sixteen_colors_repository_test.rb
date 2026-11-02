@@ -31,15 +31,14 @@ class SixteenColorsRepositoryTest < Minitest::Test
     end
   end
 
-  def test_a_dead_api_gives_nil_then_the_last_listing
+  def test_a_dead_api_raises_then_gives_the_last_listing
     r = repo(ttl: 0)
     answering(->(*) { raise BBS::HTTP::Error, 'GET https://api.test/v1/year: refused' }) do
-      capture_io { assert_nil r.years }
+      assert_raises(BBS::HTTP::Error) { r.years }
     end
     answering(body('{"1996":{"packs":3}}')) { assert_equal [1996], r.years.map(&:year) }
-    answering(body('not json')) do
-      capture_io { assert_equal [1996], r.years.map(&:year) }
-    end
+    answering(body('not json')) { assert_equal [1996], r.years.map(&:year) }
+    assert_raises(SixteenColorsRepository::Unavailable) { answering(body('not json')) { repo.years } }
   end
 
   def test_packs_read_every_page_and_clean_names
@@ -79,16 +78,44 @@ class SixteenColorsRepositoryTest < Minitest::Test
     end
   end
 
-  def test_a_file_over_the_cap_is_too_big_and_a_missing_one_nil
+  def test_a_file_over_the_cap_or_a_missing_one_raises
     r = repo
     answer = lambda do |url, opts|
-      raise BBS::HTTP::Error, "GET #{url}: the body is over #{opts[:max_bytes]} bytes" if url.end_with?('big.ans')
+      raise BBS::HTTP::TooLarge, "GET #{url}: the body is over #{opts[:max_bytes]} bytes" if url.end_with?('big.ans')
 
       BBS::HTTP::Response.new(status: 404, body: ''.b, headers: {})
     end
     answering(answer) do
-      assert_equal :too_big, r.raw('pack', 'big.ans')
-      capture_io { assert_nil r.raw('pack', 'gone.ans') }
+      assert_raises(BBS::HTTP::TooLarge) { r.raw('pack', 'big.ans') }
+      assert_raises(SixteenColorsRepository::Unavailable) { r.raw('pack', 'gone.ans') }
     end
+  end
+
+  # An archive whose API is down, with big.ans too big and the rest missing.
+  def broken_archive(url, opts)
+    raise BBS::HTTP::TooLarge, "GET #{url}: the body is over #{opts[:max_bytes]} bytes" if url.end_with?('big.ans')
+    raise BBS::HTTP::Error, 'GET https://api.test/v1/year: refused' if url.include?('/v1/')
+
+    BBS::HTTP::Response.new(status: 404, body: ''.b, headers: {})
+  end
+
+  def gallery
+    GalleryService.new(remote: repo, cache: ArtCacheRepository.new(File.join(Dir.mktmpdir, 'c'), max_bytes: 1 << 20),
+                       renderer: AnsiRenderService.new(max_rows: 10))
+  end
+
+  ArtFile = Struct.new(:pack, :name)
+
+  def test_the_gallery_says_why_a_piece_does_not_show
+    g = gallery
+    _, err = capture_io do
+      answering(method(:broken_archive)) do
+        assert_equal :too_big, g.piece(ArtFile.new('pack', 'big.ans'))
+        assert_equal :unavailable, g.piece(ArtFile.new('pack', 'gone.ans'))
+        assert_nil g.years
+      end
+    end
+    assert_equal 2, err.lines.size
+    assert_match(%r{: 16colors: pack/gone.ans: }, err)
   end
 end

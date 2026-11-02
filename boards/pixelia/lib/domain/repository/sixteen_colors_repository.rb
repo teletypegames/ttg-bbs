@@ -6,13 +6,15 @@ require 'json'
 # The public API of 16colo.rs (api.16colo.rs/v1) and the raw files of its
 # packs (16colo.rs/pack/NAME/raw/FILE), read on demand through BBS::HTTP.
 # The listings are kept in a BBS::Cache for +ttl+ seconds; a dead API gives
-# the last listing it sent, or nil. The raw files pass a small cache too, so
-# callers opening one piece at once fetch it once. Nothing is fetched ahead:
-# a year's pack list when it is opened, a pack's file list when it is
-# opened, a file when it is shown.
+# the last listing it sent, or raises BBS::HTTP::Error (Unavailable for an
+# error status or an answer that is no listing). The raw files pass a small
+# cache too, so callers opening one piece at once fetch it once; a file
+# over +max_bytes+ raises BBS::HTTP::TooLarge. Nothing is fetched ahead: a
+# year's pack list when it is opened, a pack's file list when it is opened,
+# a file when it is shown.
 class SixteenColorsRepository
   # A listing or a file the archive did not give.
-  class Unavailable < StandardError; end
+  class Unavailable < BBS::HTTP::Error; end
 
   PAGE_SIZE      = 200
   MAX_PAGES      = 10
@@ -20,8 +22,6 @@ class SixteenColorsRepository
   MAX_JSON_BYTES = 4 * 1024 * 1024
   RAW_TTL        = 600
   MAX_RAWS       = 16
-  # BBS::HTTP says this when a body is over its cap.
-  TOO_BIG        = /is over \d+ bytes/
 
   attr_reader :site_url
 
@@ -34,10 +34,9 @@ class SixteenColorsRepository
     @raws       = BBS::Cache.new(ttl: RAW_TTL, max_entries: MAX_RAWS, max_bytes: MAX_RAWS * max_bytes)
   end
 
-  # The years of the archive that have packs, newest first; nil when the API
-  # never answered.
+  # The years of the archive that have packs, newest first.
   def years
-    listing(:years) do
+    @listings.fetch(:years) do
       json = get_json("#{@api_url}/v1/year")
       raise Unavailable, 'no year list' unless json.is_a?(Hash)
 
@@ -46,24 +45,24 @@ class SixteenColorsRepository
     end
   end
 
-  # The packs of +year+, by name; nil when the API never answered.
+  # The packs of +year+, by name; the pages read so far when a later page
+  # fails.
   def packs(year)
     year = Integer(year)
-    listing([:packs, year]) do
+    @listings.fetch([:packs, year]) do
       packs, pages = packs_page(year, 1)
       (2..[pages, MAX_PAGES].min).each { |page| packs.concat(packs_page(year, page).first) }
       packs
-    rescue Unavailable, BBS::HTTP::Error, JSON::ParserError
+    rescue BBS::HTTP::Error
       raise if packs.nil? || packs.empty?
 
       packs
     end
   end
 
-  # The files of the pack +name+, as the archive lists them; nil when the API
-  # never answered.
+  # The files of the pack +name+, as the archive lists them.
   def files(name)
-    listing([:files, name]) do
+    @listings.fetch([:files, name]) do
       json = get_json("#{@api_url}/v1/pack/#{escape(name)}?sauce=true")
       result = json.is_a?(Hash) && json['results'].is_a?(Array) ? json['results'].first : nil
       raise Unavailable, 'no file list' unless result.is_a?(Hash) && result['files'].is_a?(Hash)
@@ -72,15 +71,9 @@ class SixteenColorsRepository
     end
   end
 
-  # The bytes of +file+ in the pack +pack+: nil when the site does not give
-  # them, :too_big when it is larger than +max_bytes+.
-  def raw(pack, file)
-    url = "#{pack_url(pack)}/raw/#{escape(file)}"
-    @raws.fetch([pack, file]) { download(url) }
-  rescue Unavailable, BBS::HTTP::Error => e
-    warn "pixelia-bbs: #{e.message}"
-    nil
-  end
+  # The bytes of +file+ in the pack +pack+. Raises BBS::HTTP::TooLarge when
+  # it is larger than +max_bytes+.
+  def raw(pack, file) = @raws.fetch([pack, file]) { get("#{pack_url(pack)}/raw/#{escape(file)}", @max_bytes).freeze }
 
   def pack_url(pack) = "#{@site_url}/pack/#{escape(pack)}"
 
@@ -90,15 +83,6 @@ class SixteenColorsRepository
 
   def escape(part) = ERB::Util.url_encode(part.to_s)
 
-  # The value of +key+ from the cache, or the block's; nil when the block
-  # fails and nothing older is kept.
-  def listing(key, &)
-    @listings.fetch(key, &)
-  rescue Unavailable, BBS::HTTP::Error, JSON::ParserError => e
-    warn "pixelia-bbs: #{key.inspect}: #{e.class}: #{e.message}"
-    nil
-  end
-
   # The packs of one page of +year+'s list, and the number of pages.
   def packs_page(year, page)
     json = get_json("#{@api_url}/v1/year/#{year}?pagesize=#{PAGE_SIZE}&page=#{page}")
@@ -107,14 +91,10 @@ class SixteenColorsRepository
     [json['results'].filter_map { |h| PackModel.from_api(h) }, json.dig('page', 'pages').to_i]
   end
 
-  def get_json(url) = JSON.parse(utf8(get(url, MAX_JSON_BYTES)))
-
-  def download(url)
-    get(url, @max_bytes).freeze
-  rescue BBS::HTTP::Error => e
-    raise unless e.message.match?(TOO_BIG)
-
-    :too_big
+  def get_json(url)
+    JSON.parse(utf8(get(url, MAX_JSON_BYTES)))
+  rescue JSON::ParserError => e
+    raise Unavailable, "#{url.split('?').first} answered no JSON: #{e.message[0, 80]}"
   end
 
   def get(url, max_bytes)
