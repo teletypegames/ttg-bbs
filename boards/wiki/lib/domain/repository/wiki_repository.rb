@@ -7,8 +7,9 @@ require 'uri'
 # BBS::HTTP on the Docker network, with the page bodies in a bounded
 # BBS::Cache, so browsing the list does not fetch a page again on every
 # selection change. Every text that comes from the wiki is cleaned of
-# control characters here. A network or HTTP error is raised: the index
-# loader retries, and the wiki service words it for the caller.
+# control characters here. A network or HTTP error, or an answer that is not
+# JSON, is raised as WikiRepository::Error: the index loader retries, and the
+# wiki service words it for the caller.
 class WikiRepository
   PAGE_TTL   = 300 # seconds
   PAGE_LIMIT = 200
@@ -71,8 +72,11 @@ class WikiRepository
   def parse_json(body)
     JSON.parse(body)
   rescue JSON::ParserError
-    start = body.index('{')
-    raise unless start
-    JSON.parse(body[start..])
+    start = body.index('{') or raise Error, 'the answer is not JSON'
+    begin
+      JSON.parse(body[start..])
+    rescue JSON::ParserError
+      raise Error, 'the answer is not JSON'
+    end
   end
 end

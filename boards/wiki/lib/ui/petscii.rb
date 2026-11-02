@@ -36,7 +36,7 @@ module UI
       screen.puts "  #{WH}ttg wiki bbs#{LG}, the c64 side"
       screen.puts "  #{GR}#{wiki.pages.size} pages indexed#{LG}"
       screen.puts
-      screen.say('CRSR and RETURN, or the number, opens a page; Q goes back. Pages marked * are private.', GR)
+      screen.say('CRSR and RETURN, or the number, opens a page; Q goes back. Pages marked * are private.', color: GR)
       screen.pause('return: enter the wiki')
     end
 

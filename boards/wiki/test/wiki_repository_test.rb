@@ -47,4 +47,10 @@ class WikiRepositoryTest < Minitest::Test
     wiki = FakeWiki.new('/custom/page.json' => [200, "Deprecated: x\n#{JSON.generate(PAGE)}"])
     assert_equal 'Hi[2J', wiki.serve { repository.page('/a') }['title']
   end
+
+  def test_an_answer_that_is_no_json_is_an_error
+    wiki = FakeWiki.new('/custom/page.json' => [200, '<html>Bad gateway</html>'])
+    error = assert_raises(WikiRepository::Error) { wiki.serve { repository.page('/a') } }
+    assert_equal 'the answer is not JSON', error.message
+  end
 end

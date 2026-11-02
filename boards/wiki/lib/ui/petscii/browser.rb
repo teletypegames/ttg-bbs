@@ -88,13 +88,13 @@ module UI
         if locked?(page)
           @screen.title(heading)
           @screen.puts
-          @screen.say('Supervisor only.', RD)
-          @screen.say('This page is private. S on the top level unlocks it.', GR)
+          @screen.say('Supervisor only.', color: RD)
+          @screen.say('This page is private. S on the top level unlocks it.', color: GR)
           @screen.pause
           return
         end
         @screen.title(heading)
-        @screen.say('loading...', GR)
+        @screen.say('loading...', color: GR)
         md    = @wiki.page_markdown(page)
         lines = BBS::Markdown.to_lines(md, width: WIDTH, theme: MARKDOWN).map { |l| " #{l}" }
         @screen.page(heading, lines + ['', " #{GR}updated #{page.updated_at}#{LG}",
@@ -111,7 +111,7 @@ module UI
         if @supervisor.configured?
           unlock(@screen.ask(" #{WH}password#{LG}: ", mask: '*'))
         else
-          @screen.say('No supervisor password configured.', RD)
+          @screen.say('No supervisor password configured.', color: RD)
         end
         @screen.pause
       end
@@ -119,20 +119,20 @@ module UI
       def unlock(password)
         case @supervisor.unlock(password)
         when :granted then @ctx[:unlocked] = true
-                           @screen.say('Supervisor access granted.', GN)
-        when :locked  then @screen.say('Too many wrong passwords. Try later.', RD)
-        else               @screen.say('Wrong password.', RD)
+                           @screen.say('Supervisor access granted.', color: GN)
+        when :locked  then @screen.say('Too many wrong passwords. Try later.', color: RD)
+        else               @screen.say('Wrong password.', color: RD)
         end
       end
 
       # Re-reads the shared index: every session sees the new one.
       def refresh
         @screen.title('TTG WIKI BBS')
-        @screen.say('refreshing the index...', GR)
+        @screen.say('refreshing the index...', color: GR)
         case @wiki.refresh(@caller_key)
         when :refreshed then return
-        when :limited   then @screen.say('The index was just refreshed. Try again in a minute.', RD)
-        else                 @screen.say('Could not reach the wiki.', RD)
+        when :limited   then @screen.say('The index was just refreshed. Try again in a minute.', color: RD)
+        else                 @screen.say('Could not reach the wiki.', color: RD)
         end
         @screen.pause
       end

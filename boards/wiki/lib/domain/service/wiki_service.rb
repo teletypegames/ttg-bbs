@@ -33,12 +33,12 @@ class WikiService
   # the caller or the board has refreshed too often this minute, or :failed
   # when the wiki does not answer.
   def refresh(caller_key)
-    return :limited unless @caller_refreshes.allow?(caller_key) && @board_refreshes.allow?(:board)
+    return :limited unless BBS::RateLimit.allow_all?([[@caller_refreshes, caller_key], [@board_refreshes, :board]])
     @repository.clear_cache
     refresh_index!
     :refreshed
-  rescue StandardError => e
-    warn "wiki-bbs: refresh: #{e.class}: #{e.message}"
+  rescue WikiRepository::Error => e
+    BBS.log('refresh', e)
     :failed
   end
 
@@ -51,8 +51,8 @@ class WikiService
     when nil         then "# #{data['title']}\n\n#{data['markdown']}"
     else                  "# Not found\n\nNo wiki page at `#{page.route}`."
     end
-  rescue StandardError => e
-    warn "wiki-bbs: #{page.route}: #{e.class}: #{e.message}"
+  rescue WikiRepository::Error => e
+    BBS.log(page.route, e)
     "# Error\n\nThe wiki did not answer for `#{page.route}`. Try again in a minute."
   end
 

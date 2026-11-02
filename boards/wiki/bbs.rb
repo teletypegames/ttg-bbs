@@ -17,15 +17,15 @@ require_relative 'lib/ui/petscii'
 # Supervisor login, S on the C64). The wiki holds the same secret and only
 # serves private page bodies to requests carrying it (the X-Wiki-Token header), which the
 # board sends for private pages only (WikiRepository#page).
-$stdout.sync = true
-
 # The page index loads at boot, in the background, and sessions share it.
-bbs = WikiBBS.new
-bbs.index_in_background
-
 # Mouse reporting waits for the choice: its escape sequence would be garbage
 # on a C64.
 BBS.configure do |config|
+  config.log_tag = 'wiki-bbs'
+
+  bbs = WikiBBS.new
+  bbs.index_in_background
+
   config.mouse            = true
   config.mouse_on_connect = false
   config.idle_seconds     = bbs.idle_seconds

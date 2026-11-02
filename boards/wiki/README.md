@@ -69,10 +69,13 @@ Two endpoints on the Grav wiki (templates in
 The page index (`sitemap.json`) is loaded once at server boot and shared by
 every session; **F8 / Wiki > Refresh index** (`R` on the C64) re-reads it for everyone. If the
 wiki is down at boot (a stack deploy recreates grav at the same time), the BBS
-still starts and retries the index every 10 seconds until it answers. A caller
-may refresh twice a minute, the whole board ten times a minute (rubbs'
-`BBS::RateLimit`, counted by the caller's address), so nobody can hammer Grav
-with it. Page bodies are rendered with `BBS::Markdown` and cached for 5 minutes
+still starts and retries the index in the background (rubbs' `BBS.background`)
+until it answers: after 10 seconds, then twice as long each time, at most every
+5 minutes. A caller may refresh twice a minute, the whole board ten times a
+minute (rubbs' `BBS::RateLimit.allow_all?`, counted by the caller's address; a
+refresh one limit refuses counts in neither), so nobody can hammer Grav with it.
+The repository raises `WikiRepository::Error` (a network or HTTP error, an
+answer that is no JSON); the wiki service logs it and words it for the caller. Page bodies are rendered with `BBS::Markdown` and cached for 5 minutes
 (`WikiRepository::PAGE_TTL`) in a `BBS::Cache` of at most 200 pages and 8 MiB.
 
 Requests go through rubbs' `BBS::HTTP` (timeouts, a deadline, a body cap; the wiki is
@@ -83,7 +86,10 @@ text from the wiki (titles, routes, tags, markdown) is cleaned of control charac
 Resizing the terminal mid-session re-lays-out the whole UI (rubbs re-runs
 each open window's `relayout` on NAWS updates — rubbs rev `db8a97b`+). Pages flagged `private` (or
 sitting under a private ancestor) are locked in the BBS until the caller
-enters the supervisor password.
+enters the supervisor password. Ten wrong passwords within ten minutes, from
+any caller, lock the supervisor login for everyone until the window has passed;
+the board has no database, so that count lives in memory and a restart
+forgets it.
 
 The lock is enforced server-side: the Grav entrypoint injects
 `SUPERVISOR_PASSWORD` into `config.site.supervisor_password`, and the JSON
@@ -129,6 +135,9 @@ telnet localhost 2323
 `env-example` lists them all with their defaults. `WikiBBS`
 (`lib/domain/wiki_bbs.rb`) is the one place that reads them, apart from
 `BBS_PORT` and `BBS_MAX_SESSIONS`, which rubbs reads itself.
+
+Every log line (the board's and rubbs') starts with `wiki-bbs:` (rubbs'
+`BBS.log`, `log_tag`).
 
 The image runs the rubbs revision of `Gemfile.lock`, as uid 1000; a new rubbs
 reaches the board with a lock bump (devarea `scripts/bbs-lock-bump.sh`).
