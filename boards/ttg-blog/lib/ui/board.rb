@@ -119,13 +119,13 @@ module UI
     # A post by its number, the one the web shows beside it.
     def go_to
       @screen.title('GO TO POST', right)
-      @screen.say('The number of a post, as the web shows it. Return alone: back.', GR)
+      @screen.say('The number of a post, as the web shows it. Return alone: back.', color: GR)
       @screen.write "\r\n #{WH}post ##{LG} "
       id = @screen.number
       return if id.nil? || id.zero?
       return show(id) if readable?(@posts.find(id))
 
-      @screen.say("No post number #{id}.", RD)
+      @screen.say("No post number #{id}.", color: RD)
       @screen.pause
     end
 

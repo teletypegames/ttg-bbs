@@ -85,7 +85,7 @@ module UI
       # caller quit or left it empty.
       def ask_title(current)
         @screen.title('TITLE', right)
-        @screen.say("Up to #{PostService::MAX_TITLE} characters. Return alone or Stop: back.", GR)
+        @screen.say("Up to #{PostService::MAX_TITLE} characters. Return alone or Stop: back.", color: GR)
         @screen.puts
         title = @screen.ask(" #{WH}title#{LG}> ", text: current, max: PostService::MAX_TITLE)
         title.empty? ? nil : title

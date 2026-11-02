@@ -9,7 +9,7 @@ module UI
     # post. The last row stays empty, so nothing scrolls the screen.
     class Screen < UI::Screen
       # The menus with their hint row as a footer bar, like the title bar.
-      FULL = MENU.merge(hint: "#{CY}#{RV}").freeze
+      FULL = BBS::Selector::COLORS.merge(hint: "#{CY}#{RV}").freeze
 
       # The row of the footer bar.
       def footer_row = rows - 1
@@ -80,8 +80,7 @@ module UI
 
         footer_text(question, color)
         items = [BBS::Selector.item('yes', key: 'y', value: 'y'), BBS::Selector.item('no', key: 'n', value: 'n')]
-        choice = BBS::Selector.new(session, items, width: cols - 1, across: true, index: 1, back: 'n',
-                                                   colors: MENU).run
+        choice = BBS::Selector.new(session, items, width: cols - 1, across: true, index: 1, back: 'n').run
         @at = [rows, 1]
         choice == 'y'
       end

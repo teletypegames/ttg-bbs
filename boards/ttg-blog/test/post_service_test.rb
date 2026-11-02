@@ -9,7 +9,7 @@ class PostServiceTest < Minitest::Test
   def test_control_characters_never_reach_the_database
     post = blog.posts.create(author: editor, **draft(title: "Hi\e[2J‮there\n", summary: "a\rb\u0085",
                                                      body: "one\n\e]0;x\atwo"))
-    assert_equal ['Hi[2Jthere', 'ab', "one\n]0;xtwo"], [post.title, post.summary, post.body]
+    assert_equal ['Hi[2Jthere', 'a b', "one\n]0;xtwo"], [post.title, post.summary, post.body]
   end
 
   def test_a_post_is_checked_before_it_is_kept
@@ -18,6 +18,13 @@ class PostServiceTest < Minitest::Test
     assert_equal :long_title, blog.posts.create(author: author, **draft(title: 'x' * 81))
     assert_equal :bad_category, blog.posts.create(author: author, **draft(category: 'nope'))
     assert_equal 0, blog.posts.total
+  end
+
+  def test_a_missing_category_list_leaves_none_to_write_in
+    blog = nil
+    _, err = capture_io { blog = TTGBlogBBS.new(env: { 'TTG_BLOG_BBS_DB' => db_path, 'TTG_BLOG_BBS_CATEGORIES' => '/nope.yml' }) }
+    assert_empty blog.categories.all
+    assert_match(/categories: Errno::ENOENT/, err)
   end
 
   def test_readers_see_only_published_posts

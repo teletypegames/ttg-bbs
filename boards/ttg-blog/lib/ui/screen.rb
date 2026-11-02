@@ -16,14 +16,14 @@ module UI
     # +question+ under the text, answered with y or n; true for y.
     def confirm?(question, color)
       puts
-      say(question, color)
+      say(question, color: color)
       choose(" #{WH}y/n#{LG}> ", %w[y n], back: 'n') == 'y'
     end
 
     # +text+ under the text, after a blank line with +gap+, until a key.
     def notice(text, color, gap: true)
       puts if gap
-      say(text, color)
+      say(text, color: color)
       pause
     end
 
@@ -31,7 +31,7 @@ module UI
     # nothing a list without items picks.
     def nothing(heading, empty, right: '')
       title(heading, right)
-      say(empty, GR)
+      say(empty, color: GR)
       pause
       nil
     end

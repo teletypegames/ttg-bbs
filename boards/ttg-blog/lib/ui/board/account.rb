@@ -21,7 +21,7 @@ module UI
 
       def login
         @screen.title('EDITOR LOGIN', right)
-        @screen.say('For the editors of the blog. Return alone: back.', GR)
+        @screen.say('For the editors of the blog. Return alone: back.', color: GR)
         @screen.puts
         name = @screen.ask(" #{WH}name#{LG}> ", max: EditorService::MAX_NAME)
         return if name.empty?
@@ -40,10 +40,10 @@ module UI
 
       # What a login came to: the editor in, or why not.
       def logged_in(name, result)
-        return @screen.say(refusal(name, result), RD) if result.is_a?(Symbol)
+        return @screen.say(refusal(name, result), color: RD) if result.is_a?(Symbol)
 
         @ctx[:user] = result
-        @screen.say("Welcome, #{result.name}. Open a post to edit it, or write a new one.", GN)
+        @screen.say("Welcome, #{result.name}. Open a post to edit it, or write a new one.", color: GN)
       end
 
       def refusal(name, result)
@@ -55,7 +55,7 @@ module UI
 
       def password
         @screen.title('CHANGE PASSWORD', right)
-        @screen.say("At least #{EditorService::MIN_PASS} characters. Return alone: back.", GR)
+        @screen.say("At least #{EditorService::MIN_PASS} characters. Return alone: back.", color: GR)
         @screen.puts
         old = @screen.ask(" #{WH}current#{LG}> ", mask: '*', max: 200)
         return if old.empty?
@@ -69,9 +69,9 @@ module UI
 
       def changed(result)
         case result
-        when :ok then @screen.say('Password changed.', GN)
-        when :differ then @screen.say('The two new ones differ.', RD)
-        else @screen.say(PASSWORD_ERRORS.fetch(result, 'The password could not be changed.'), RD)
+        when :ok then @screen.say('Password changed.', color: GN)
+        when :differ then @screen.say('The two new ones differ.', color: RD)
+        else @screen.say(PASSWORD_ERRORS.fetch(result, 'The password could not be changed.'), color: RD)
         end
       end
 
