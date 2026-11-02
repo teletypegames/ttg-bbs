@@ -6,9 +6,10 @@ require 'bbs/cache'
 # The feeds themselves, over HTTP(S) (BBS::HTTP: public addresses only, a
 # deadline, at most MAX_BYTES), read by FeedXml and kept for TTL seconds in
 # a BBS::Cache: callers opening the same feed at once share one fetch and
-# one parse, so a crowd cannot build a crowd of XML trees. A network or
-# parse error is warned and comes back as nil; an older copy of the feed,
-# when one is kept, is served instead.
+# one parse, so a crowd cannot build a crowd of XML trees. A network error
+# (BBS::HTTP::Error, BBS::HTTP::TooLarge for a body over MAX_BYTES) or a
+# body that is no feed (FeedXml::Unreadable) goes up, unless an older copy
+# of the feed is kept: that one is served instead.
 class FeedRepository
   USER_AGENT = 'FeediaBBS/0.1 (Feedia BBS, Teletype Games telnet RSS reader; https://git.teletypegames.org/bbs/feedia-bbs)'
   ACCEPT     = 'application/rss+xml, application/atom+xml, application/xml;q=0.9, */*;q=0.5'
@@ -30,14 +31,11 @@ class FeedRepository
     channel.items.sum { |item| item.title.bytesize + item.markdown.bytesize + item.link.to_s.bytesize }
   end
 
-  # The ChannelModel of +feed+ (a FeedModel); nil when it could not be
-  # fetched or read. With +fresh+ the kept copy is dropped first.
+  # The ChannelModel of +feed+ (a FeedModel). With +fresh+ the kept copy is
+  # dropped first.
   def read(feed, fresh: false)
     @cache.delete(feed.url) if fresh
     @cache.fetch(feed.url) { FeedXml.channel(feed, fetch(feed.url)) }
-  rescue StandardError => e
-    warn "feedia-bbs: feed #{feed.name}: #{e.class}: #{e.message}"
-    nil
   end
 
   private
@@ -47,7 +45,7 @@ class FeedRepository
   def fetch(url)
     response = @http.get(url, headers: { 'Accept' => ACCEPT }, max_bytes: MAX_BYTES, redirects: REDIRECTS,
                               user_agent: USER_AGENT)
-    raise FeedXml::Unreadable, "HTTP #{response.status}" unless response.ok?
+    raise BBS::HTTP::Error, "HTTP #{response.status}" unless response.ok?
 
     response.body
   end

@@ -12,6 +12,7 @@ require_relative 'lib/ui/petscii'
 bbs = FeediaBBS.new
 
 BBS.configure do |config|
+  config.log_tag          = 'feedia-bbs'
   config.mouse            = true
   config.mouse_on_connect = false
   config.idle_seconds     = 600

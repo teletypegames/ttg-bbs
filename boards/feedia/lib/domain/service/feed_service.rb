@@ -11,7 +11,12 @@ class FeedService
   # The FeedModels, in the order of the list.
   def list = @list.all
 
-  # The ChannelModel of +feed+; nil when it could not be fetched or read.
-  # With +fresh+ the cache is skipped.
-  def read(feed, fresh: false) = @feeds.read(feed, fresh: fresh)
+  # The ChannelModel of +feed+; nil (logged) when it could not be fetched
+  # or read. With +fresh+ the cache is skipped.
+  def read(feed, fresh: false)
+    @feeds.read(feed, fresh: fresh)
+  rescue BBS::HTTP::Error, FeedXml::Unreadable => e
+    BBS.log('feed', "#{feed.name}: #{e.class}: #{e.message}")
+    nil
+  end
 end

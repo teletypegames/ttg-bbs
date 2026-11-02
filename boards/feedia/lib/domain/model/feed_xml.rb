@@ -6,7 +6,8 @@ require 'bbs/text'
 
 # The model side's feed parser, pure functions with no I/O: the body of a
 # feed, RSS 0.9x/2.0, RSS 1.0 (RDF) or Atom, as a ChannelModel of at most
-# MAX_ITEMS items. Raises Unreadable when it is not a feed.
+# MAX_ITEMS items. Raises Unreadable when it is not a feed, or not XML
+# REXML can read.
 module FeedXml
   MAX_ITEMS = 60
 
@@ -19,6 +20,13 @@ module FeedXml
   # The ChannelModel of +feed+ (a FeedModel) from its XML +body+.
   def channel(feed, body)
     root = REXML::Document.new(body).root or raise Unreadable, 'not XML'
+    parse(feed, root)
+  rescue REXML::ParseException, RuntimeError => e
+    raise Unreadable, "not XML: #{e.message.lines.first.to_s.strip[0, 80]}"
+  end
+
+  # The ChannelModel of the feed whose XML root element is +root+.
+  def parse(feed, root)
     case root.name
     when 'rss' then rss(feed, child(root, 'channel') || raise(Unreadable, 'no channel'), nil)
     when 'RDF' then rss(feed, child(root, 'channel') || root, root)

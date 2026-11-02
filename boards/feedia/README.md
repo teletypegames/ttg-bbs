@@ -116,7 +116,9 @@ A suggestion (the feed's address, its name, why, who) or a feedback (the text,
 who) is a row of the `messages` table in `data/feedia.sqlite3`, and a message
 on the Discord webhook when there is one (mentions off, links not unfurled).
 The newest 1000 are kept. A caller (by IP address) can send five messages an
-hour, all callers together thirty. The `data/inbox.jsonl` of earlier versions
+hour, all callers together thirty; both limits are checked at once
+(`BBS::RateLimit.allow_all?`), so a message the board refuses costs the caller
+nothing. The `data/inbox.jsonl` of earlier versions
 is taken in on the first start and renamed `inbox.jsonl.imported`. Feedia
 never fetches a suggested address itself: an admin looks at
 it and, if it stays, adds it to `config/feeds.yml`. To read the inbox on the
@@ -158,6 +160,13 @@ lib/
   ui/petscii/screen.rb          the 40×25 screen: rubbs' BBS::Petscii::Screen
 test/                           the domain's tests
 ```
+
+## Logs
+
+Every line on stderr starts with the log tag `feedia-bbs:` (rubbs' `BBS.log`):
+`feedia-bbs: feed: <name>: …` for a feed that did not answer or sent no feed,
+`feedia-bbs: inbox: …`, `feedia-bbs: Inbox: Discord: …`. The repositories let a
+failure go up; the services log it once and the faces say "did not answer".
 
 ## Tests
 
