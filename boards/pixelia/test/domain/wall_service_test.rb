@@ -49,6 +49,13 @@ class WallServiceTest < Minitest::Test
     assert_equal 2, w.all.size
   end
 
+  def test_a_save_the_board_refuses_costs_the_caller_nothing
+    w = wall(per_hour: 1)
+    w.save('a', title: 'a', handle: 'b')
+    w.save('k', title: 'a', handle: 'b')
+    assert w.instance_variable_get(:@callers).room?('k')
+  end
+
   def test_a_failed_write_costs_no_turn
     w = wall
     File.write(File.join(@dir, 'works'), 'a file where the folder should be')

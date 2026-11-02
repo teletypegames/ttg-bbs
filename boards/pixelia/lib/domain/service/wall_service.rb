@@ -4,7 +4,9 @@
 # newest first, and their removal (the admin script's moderation). A caller
 # (BBS::RateLimit.caller_key: an address, not a session, so calling again
 # does not help) saves at most once in +cooldown+ seconds, and the whole
-# board at most +per_hour+ times an hour.
+# board at most +per_hour+ times an hour. Both limits are checked together
+# and a save counts in both only once it is on the wall, so a failed write
+# costs no turn.
 class WallService
   MAX_TITLE  = 32
   MAX_HANDLE = 16
@@ -43,20 +45,18 @@ class WallService
 
   # +text+ on one line without control or invisible format characters, its
   # spaces squeezed, at most +max+ characters long.
-  def clean(text, max)
-    BBS::Text.clean(text, keep_newlines: false).gsub(/\p{Cf}/, '').tr("\t", ' ').squeeze(' ').strip[0, max].strip
-  end
+  def clean(text, max) = BBS::Text.line(text).gsub(/\p{Cf}/, '').squeeze(' ').strip[0, max].strip
 
   private
 
+  # Under the lock, so that no other save comes between the check and the
+  # count.
   def add(key, title, handle, canvas)
-    return :too_soon if wait(key).positive?
+    limits = [[@callers, key], [@board, BOARD]]
+    return :too_soon unless limits.all? { |limit, k| limit.room?(k) }
 
-    work = @works.add(title: title, handle: handle, canvas: canvas)
-    return :failed unless work
-
-    @callers.allow?(key)
-    @board.allow?(BOARD)
+    work = @works.add(title: title, handle: handle, canvas: canvas) or return :failed
+    limits.each { |limit, k| limit.record(k) }
     work
   end
 end
