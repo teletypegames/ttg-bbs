@@ -44,6 +44,12 @@ class EditorServiceTest < Minitest::Test
     assert_equal 0.0, service.locked_for('other', '9.9.9.9')
   end
 
+  def test_a_lockout_outlasts_a_restart
+    stored = -> { LoginGuard.new(store: BBS::SQLite.new(db_path), per_name: 3, per_caller: 2) }
+    quietly { 2.times { |i| editors(stored.call).login("guess#{i}", 'x', caller: '1.2.3.4') } }
+    assert_equal :locked, editors(stored.call).login('tasi', 'secret-pass', caller: '1.2.3.4')
+  end
+
   def test_the_derivations_wait_for_a_free_slot
     guard = LoginGuard.new(slots: 1, slot_wait: 0.05)
     hold  = Queue.new

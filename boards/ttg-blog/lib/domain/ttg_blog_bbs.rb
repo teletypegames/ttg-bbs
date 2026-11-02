@@ -15,7 +15,7 @@ class TTGBlogBBS
     BlogSchema.migrate(db)
     @categories = CategoryService.new(CategoryRepository.new(env.fetch('TTG_BLOG_BBS_CATEGORIES',
                                                                        File.join(ROOT, 'config/categories.yml'))))
-    @editors    = EditorService.new(UserRepository.new(db))
+    @editors    = EditorService.new(UserRepository.new(db), guard: LoginGuard.new(store: db))
     @posts      = PostService.new(PostRepository.new(db), categories: @categories)
     @http_port  = env.fetch('TTG_BLOG_BBS_HTTP_PORT', '8080').to_i
     announce(env)
