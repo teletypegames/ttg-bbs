@@ -97,7 +97,7 @@ module UI
         channel = @feeds.read(feed)
         if channel.nil?
           @screen.puts
-          @screen.say("#{feed.name} did not answer, or what it sent is not a feed. Try again later.", RD)
+          @screen.say("#{feed.name} did not answer, or what it sent is not a feed. Try again later.", color: RD)
           @screen.pause
           return
         end
@@ -145,7 +145,7 @@ module UI
         return unless can_send?
 
         @screen.title('SUGGEST A FEED', right)
-        @screen.say('The admins look at every address before it goes on the list. Return alone: back.', GR)
+        @screen.say('The admins look at every address before it goes on the list. Return alone: back.', color: GR)
         @screen.puts
         url = @screen.ask(" #{WH}address#{LG}> ", max: InboxService::MAX_FIELD)
         return if url.empty?
@@ -162,10 +162,11 @@ module UI
 
         @screen.title('WRITE TO THE ADMINS', right)
         @screen.say('A bug, an idea, a word of thanks. Your name, then the message in the editor: ' \
-                    'stop or ← and S sends it, Q goes back.', GR)
+                    'stop or ← and S sends it, Q goes back.', color: GR)
         @screen.puts
         from = @screen.ask(" #{WH}your name#{LG}> ", max: InboxService::MAX_FIELD)
-        text = @screen.editor(InboxService::MAX_TEXT, 'WRITE TO THE ADMINS')
+        text = @screen.edit(title: 'WRITE TO THE ADMINS', max: InboxService::MAX_TEXT).to_s
+        @screen.title('WRITE TO THE ADMINS')
         return if text.strip.empty?
 
         answer(@inbox.feedback(caller: @caller, text: text, from: from))
@@ -174,10 +175,10 @@ module UI
       def answer(result)
         @screen.puts
         case result
-        when :ok      then @screen.say('Sent to the admins. Thank you!', GN)
-        when :limited then @screen.say('That is all the messages the admins can take for now. Thank you!', GR)
-        when :bad_url then @screen.say('That is not an http:// or https:// address.', RD)
-        else @screen.say('The message could not be saved. Try again later.', RD)
+        when :ok      then @screen.say('Sent to the admins. Thank you!', color: GN)
+        when :limited then @screen.say('That is all the messages the admins can take for now. Thank you!', color: GR)
+        when :bad_url then @screen.say('That is not an http:// or https:// address.', color: RD)
+        else @screen.say('The message could not be saved. Try again later.', color: RD)
         end
         @screen.pause
       end
