@@ -21,5 +21,5 @@ ArticleModel = Data.define(:title, :url, :lang, :sections, :redirected_from) do
     ExtractText.sections(title, extract).map { |name, text| SectionModel.new(name, text) }
   end
 
-  def self.line(text) = BBS::Text.clean(text.to_s, keep_newlines: false)
+  def self.line(text) = BBS::Text.line(text)
 end

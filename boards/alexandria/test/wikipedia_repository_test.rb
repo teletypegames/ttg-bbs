@@ -42,11 +42,15 @@ class WikipediaRepositoryTest < Minitest::Test
     assert_equal('R[2J', wiki.serve { repository.random_title(lang: 'hu') })
   end
 
-  def test_an_unknown_language_or_no_answer_is_nil
-    _, err = capture_io do
-      assert_nil(wiki.serve { repository.article('Ada', lang: 'xx') })
-      assert_nil(FakeWikipedia.new(status: 500) { {} }.serve { repository.search('ada', lang: 'en') })
-    end
-    assert_match(/alexandria-bbs: Wikipedia article/, err)
+  def test_an_unknown_language_or_no_answer_raises
+    assert_raises(ArgumentError) { wiki.serve { repository.article('Ada', lang: 'xx') } }
+    assert_raises(BBS::HTTP::Error) { FakeWikipedia.new(status: 500) { {} }.serve { repository.search('ada', lang: 'en') } }
+  end
+
+  def test_a_request_names_the_board_and_asks_for_json
+    wiki.serve { repository.random_title(lang: 'hu') }
+    uri, options = wiki.requests.first
+    assert_equal ['hu.wikipedia.org', WikipediaRepository::USER_AGENT], [uri.host, options[:user_agent]]
+    assert_includes uri.query, 'formatversion=2'
   end
 end

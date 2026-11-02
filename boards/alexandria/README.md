@@ -108,8 +108,7 @@ lib/
     model/section_model.rb    one section: heading and Markdown
     model/search_result_model.rb  one search hit: title, snippet, word count
     model/extract_text.rb     the plain extract → sections in Markdown, TeX made readable
-    repository/wikipedia_client.rb      the Action API over BBS::HTTP: User-Agent, pace
-    repository/wikipedia_repository.rb  search, article, random; the cache
+    repository/wikipedia_repository.rb  search, article, random over BBS::Wikipedia; the cache
     service/article_service.rb  look up, search, read, random, the languages
   ui/modern.rb                the modern face: the Application and its parts
   ui/modern/helpers.rb        search, look up, read, random, language, the desktop
@@ -119,7 +118,7 @@ lib/
   ui/modern/pharos.rb         the desktop's title: the lighthouse and the name
   ui/petscii.rb               the PETSCII face: logo, prompt, menu, lists, pages
   ui/petscii/screen.rb        the 40×25 screen: rubbs' BBS::Petscii::Screen
-test/                         minitest: the client, the repository, the service, the extract
+test/                         minitest: the repository, the service, the extract
 Rakefile                      rake test
 ```
 
@@ -136,15 +135,22 @@ No network: `BBS::HTTP` is stubbed. CI runs them before a deploy.
 The proxy reads the [MediaWiki Action API](https://www.mediawiki.org/wiki/API:Main_page)
 of `en.wikipedia.org` / `hu.wikipedia.org` anonymously: `list=search` for the results,
 `prop=extracts` (TextExtracts, `explaintext`) for the article,
-`list=random` for a random one. Every request goes through rubbs' `BBS::HTTP`
-(timeouts, a deadline, a body cap) and names the proxy in its User-Agent, as
-Wikipedia asks. All callers share one pace: at most 5 requests a second
-(`BBS::RateLimit`), and a request that would wait more than 3 seconds for its
-turn is not sent, so a crowd on the board cannot get our address throttled.
+`list=random` for a random one. Every request goes through rubbs'
+`BBS::Wikipedia` (over `BBS::HTTP`: timeouts, a deadline, a body cap) and names
+the proxy in its User-Agent, as Wikipedia asks. All callers share one pace: at
+most 5 requests a second, and a request that would wait more than 3 seconds for
+its turn is not sent, so a crowd on the board cannot get our address throttled.
+The repository lets a failure go up; the service logs it once and the caller
+sees "did not answer".
 Titles, snippets and article text are cleaned of control characters
 (`BBS::Text.clean`) before they reach a screen. The text is Wikipedia's, under
 [CC BY-SA](https://creativecommons.org/licenses/by-sa/4.0/); every article
 shows its address.
+
+## Logs
+
+Every line on stderr starts with the log tag `alexandria-bbs:` (rubbs'
+`BBS.log`), e.g. `alexandria-bbs: wikipedia: search: BBS::HTTP::Error: …`.
 
 ## Deploy
 

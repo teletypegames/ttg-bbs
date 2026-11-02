@@ -26,4 +26,21 @@ class ArticleServiceTest < Minitest::Test
   def test_the_languages_go_round
     assert_equal(%w[hu de en], %w[en hu de].map { |lang| service.next_language(lang) })
   end
+
+  # Wikipedia that never answers.
+  class Silent
+    def article(*, **) = raise(BBS::HTTP::Error, 'Wikipedia answered 503')
+    alias search article
+    alias random_title article
+  end
+
+  def test_no_answer_is_nil_and_logged_once
+    silent = ArticleService.new(Silent.new, languages: %w[en])
+    _, err = capture_io do
+      assert_nil silent.random(lang: 'en')
+      assert_equal [nil, nil], silent.look_up('Ada', lang: 'en')
+    end
+    assert_equal 3, err.lines.size
+    assert_match(/: wikipedia: random: BBS::HTTP::Error: Wikipedia answered 503/, err)
+  end
 end
