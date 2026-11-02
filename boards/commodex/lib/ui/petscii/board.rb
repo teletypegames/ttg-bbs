@@ -57,7 +57,7 @@ module UI
 
       def search
         @screen.title('SEARCH')
-        @screen.say('Type a part of a game title, return alone goes back.', GR)
+        @screen.say('Type a part of a game title, return alone goes back.', color: GR)
         @screen.puts
         query = @screen.ask(" #{WH}title?#{LG} ", max: 30)
         return if query.empty?
@@ -66,7 +66,7 @@ module UI
         return games("SEARCH: #{query.upcase}", found) if found.is_a?(Array) && found.any?
 
         @screen.puts
-        @screen.say(Words.search(found, query), RD)
+        @screen.say(Words.search(found, query), color: RD)
         @screen.pause
       end
 
@@ -84,7 +84,7 @@ module UI
         letters = @catalog.letters
         loop do
           @screen.title('PUBLISHERS & DEVELOPERS')
-          @screen.say('The first letter of the name:', LG)
+          @screen.say('The first letter of the name:', color: LG)
           @screen.puts
           k = @screen.menu(letters.map { |l, count| BBS::Selector.item(count.to_s, key: l, value: l) },
                            columns: LETTER_COLUMNS, hint: 'crsr or letter, return  stop: back')
@@ -124,7 +124,7 @@ module UI
         @screen.puts " #{GR}asking wikipedia…#{LG}"
         found = @about.summary(game)
         if found.is_a?(Symbol)
-          @screen.say(Words.about(found), RD)
+          @screen.say(Words.about(found), color: RD)
           return @screen.pause
         end
 
@@ -140,21 +140,21 @@ module UI
 
       def add_tip(game)
         @screen.title("A TIP: #{game.title.upcase}")
-        @screen.say(Words::TIP_RULES, GR)
-        @screen.say('An empty tip goes back.', GR)
+        @screen.say(Words::TIP_RULES, color: GR)
+        @screen.say('An empty tip goes back.', color: GR)
         @screen.puts
         handle = @screen.ask(" #{WH}handle#{LG} (optional)? ", max: TipService::MAX_HANDLE)
         text = @screen.edit('', title: "YOUR TIP FOR #{game.title.upcase}", single_line: true,
                                        max: TipService::MAX_TEXT)
         @screen.title("A TIP: #{game.title.upcase}")
         if text.to_s.strip.empty?
-          @screen.say('Nothing sent.', GR)
+          @screen.say('Nothing sent.', color: GR)
           return @screen.pause
         end
 
         result = @tips.submit(game, text: text, handle: handle, caller: @caller)
         @screen.puts
-        @screen.say(Words.tip(result), result == :ok ? GN : RD)
+        @screen.say(Words.tip(result), color: result == :ok ? GN : RD)
         @screen.pause
       end
     end
