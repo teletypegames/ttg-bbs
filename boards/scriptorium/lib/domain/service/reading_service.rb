@@ -76,13 +76,15 @@ class ReadingService
   end
 
   def fetch(id)
-    raw = @gutenberg.text(id, max_bytes: @max_bytes)
-    return raw || :unavailable unless raw.is_a?(String)
-
-    clean = @chapters.clean(raw)
+    clean = @chapters.clean(@gutenberg.text(id, max_bytes: @max_bytes))
     cuts = @chapters.cut(clean)
     return :empty if cuts.empty?
 
     @cache.store(id, clean, cuts) || :unavailable
+  rescue BBS::HTTP::TooLarge
+    :too_big
+  rescue BBS::HTTP::Error => e
+    BBS.log('gutenberg', "book #{id}: #{e.message}")
+    :unavailable
   end
 end

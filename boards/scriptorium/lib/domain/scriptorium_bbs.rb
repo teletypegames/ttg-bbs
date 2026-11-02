@@ -5,12 +5,15 @@
 # cut into chapters and cached), wired to Project Gutenberg. Both faces
 # (lib/ui/modern, lib/ui/petscii) work on one instance of it. The only
 # place that reads the environment. #start keeps the catalog fresh in a
-# background thread.
+# BBS.background thread.
 class ScriptoriumBBS
   ROOT = File.expand_path('../..', __dir__)
   USER_AGENT = 'ScriptoriumBBS/1.0 (telnet board of Teletype Games; +https://teletypegames.org)'
-  # How often the refresher looks at the age of the catalog.
+  # How often the refresher looks at the age of the catalog, in seconds.
   CHECK_EVERY = 3600
+  # Seconds before a failed refresh is tried again (doubled up to
+  # CHECK_EVERY).
+  RETRY_AFTER = 300
 
   attr_reader :library, :reading
 
@@ -27,16 +30,11 @@ class ScriptoriumBBS
   def services = { library: @library, reading: @reading }
 
   # Starts the thread that imports the catalog now when there is none (or
-  # it is stale) and looks again every CHECK_EVERY seconds.
+  # it is stale) and looks again every CHECK_EVERY seconds; a failure is
+  # logged and tried again after RETRY_AFTER seconds.
   def start
-    Thread.new do
-      loop do
-        @library.refresh
-        sleep CHECK_EVERY
-      rescue StandardError => e
-        warn "scriptorium-bbs: catalog refresh: #{e.class}: #{e.message}"
-        sleep CHECK_EVERY
-      end
+    BBS.background('catalog refresh', every: CHECK_EVERY, retry_after: RETRY_AFTER, max_retry: CHECK_EVERY) do
+      @library.refresh
     end
     self
   end

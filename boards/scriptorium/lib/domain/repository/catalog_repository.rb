@@ -77,16 +77,15 @@ class CatalogRepository
   end
 
   # Builds the catalog from +csv_gz+ (pg_catalog.csv.gz) and swaps it in.
-  # Returns the number of books, or nil when the file could not be read.
+  # Returns the number of books. Raises what reading the file raises; the
+  # old catalog stays then.
   def import(csv_gz)
     tmp = "#{@path}.new"
     n = build(tmp, csv_gz)
     swap(tmp)
     n
-  rescue StandardError => e
-    warn "scriptorium-bbs: catalog import: #{e.class}: #{e.message}"
+  ensure
     FileUtils.rm_f(tmp)
-    nil
   end
 
   private
@@ -134,7 +133,7 @@ class CatalogRepository
     @count = db.execute('SELECT COUNT(*) AS n FROM books').first['n']
     @db    = db
   rescue SQLite3::Exception => e
-    warn "scriptorium-bbs: #{@path}: #{e.class}: #{e.message}"
+    BBS.log('catalog', "#{@path}: #{e.class}: #{e.message}")
     @db = nil
   end
 
@@ -145,7 +144,7 @@ class CatalogRepository
       @db.execute(sql, params)
     end
   rescue SQLite3::Exception => e
-    warn "scriptorium-bbs: catalog: #{e.class}: #{e.message}"
+    BBS.log('catalog', "#{e.class}: #{e.message}")
     []
   end
 

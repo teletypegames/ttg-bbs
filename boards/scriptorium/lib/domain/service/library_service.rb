@@ -77,7 +77,9 @@ class LibraryService
   end
 
   # Downloads and imports the catalog when it is stale (or when +force+).
-  # Returns :fresh, :busy (an import is running), :updated or :failed.
+  # Returns :fresh, :busy (an import is running) or :updated. Raises when
+  # the mirror or the import fails (BBS::HTTP::Error, SystemCallError,
+  # CSV or SQLite errors); the old catalog stays then.
   def refresh(force: false)
     return :fresh unless force || stale?
     return :busy unless @lock.synchronize { !@importing && (@importing = true) }
@@ -93,14 +95,12 @@ class LibraryService
 
   def import
     started = Time.now
-    return :failed unless @gutenberg.download_catalog(@catalog_file)
-
+    @gutenberg.download_catalog(@catalog_file)
     n = @catalog.import(@catalog_file)
-    FileUtils.rm_f(@catalog_file)
-    return :failed unless n
-
-    warn format('scriptorium-bbs: catalog imported, %<n>d books in %<s>.1f s', n: n, s: Time.now - started)
+    BBS.log('catalog', format('imported, %<n>d books in %<s>.1f s', n: n, s: Time.now - started))
     GC.start
     :updated
+  ensure
+    FileUtils.rm_f(@catalog_file)
   end
 end

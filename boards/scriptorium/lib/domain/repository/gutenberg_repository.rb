@@ -5,7 +5,8 @@ require 'fileutils'
 # Project Gutenberg over HTTP (BBS::HTTP: a deadline, a cap on the body,
 # redirects to public http(s) addresses only, the board's User-Agent): the
 # catalog file and the plain text of a book, from the mirror the board is
-# given. A dead mirror gives nil.
+# given. A dead mirror raises BBS::HTTP::Error, a body over the cap its
+# subclass BBS::HTTP::TooLarge.
 class GutenbergRepository
   # The catalog file is about 6 MB.
   CATALOG_MAX = 32 * 1024 * 1024
@@ -27,38 +28,31 @@ class GutenbergRepository
 
   def text_url(id) = "#{@mirror}/cache/epub/#{Integer(id)}/pg#{Integer(id)}.txt"
 
-  # Saves the catalog file at +path+ (through a temporary file next to it).
-  # Returns true, or false when the mirror did not give it.
+  # Saves the catalog file at +path+, streamed into a temporary file next
+  # to it, so the download never sits in memory. Raises BBS::HTTP::Error or
+  # SystemCallError; +path+ is then left as it was.
   def download_catalog(path)
-    body = get(@catalog_url, max_bytes: CATALOG_MAX, deadline: CATALOG_DEADLINE)
-    return false unless body.is_a?(String)
-
     FileUtils.mkdir_p(File.dirname(path))
-    File.binwrite("#{path}.part", body)
+    File.open("#{path}.part", 'wb') do |file|
+      get(@catalog_url, to: file, max_bytes: CATALOG_MAX, deadline: CATALOG_DEADLINE)
+    end
     File.rename("#{path}.part", path)
-    true
-  rescue SystemCallError => e
-    warn "scriptorium-bbs: #{path}: #{e.class}: #{e.message}"
-    false
+  ensure
+    FileUtils.rm_f("#{path}.part")
   end
 
-  # The bytes of book +id+'s plain text; :too_big when it is longer than
-  # +max_bytes+; nil when the mirror does not give it.
-  def text(id, max_bytes:) = get(text_url(id), max_bytes: max_bytes, deadline: TEXT_DEADLINE)
+  # The bytes of book +id+'s plain text. Raises BBS::HTTP::TooLarge when it
+  # is longer than +max_bytes+.
+  def text(id, max_bytes:) = get(text_url(id), max_bytes: max_bytes, deadline: TEXT_DEADLINE).body
 
   private
 
-  # The body of a successful GET of +url+; :too_big for a body over
-  # +max_bytes+; nil when the mirror fails.
-  def get(url, max_bytes:, deadline:)
-    response = BBS::HTTP.get(url, max_bytes: max_bytes, deadline: deadline, read_timeout: READ_TIMEOUT,
-                                  user_agent: @user_agent)
-    return response.body if response.ok?
+  # The Response of a successful GET of +url+; an error status raises
+  # BBS::HTTP::Error.
+  def get(url, **)
+    response = BBS::HTTP.get(url, read_timeout: READ_TIMEOUT, user_agent: @user_agent, **)
+    raise BBS::HTTP::Error, "GET #{url}: answered #{response.status}" unless response.ok?
 
-    warn "scriptorium-bbs: #{url} answered #{response.status}"
-    nil
-  rescue BBS::HTTP::Error => e
-    warn "scriptorium-bbs: #{e.message}"
-    e.message.end_with?("over #{max_bytes} bytes") ? :too_big : nil
+    response
   end
 end
