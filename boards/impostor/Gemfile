@@ -3,8 +3,6 @@
 source 'https://rubygems.org'
 
 gem 'bbs', git: 'https://git.teletypegames.org/engines/rubbs.git'
-# The import of the sessions.csv of earlier versions.
-gem 'csv', '~> 3.3'
 
 group :development do
   gem 'minitest', '~> 5.25'
