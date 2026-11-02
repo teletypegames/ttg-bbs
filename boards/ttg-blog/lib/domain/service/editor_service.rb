@@ -102,7 +102,7 @@ class EditorService
 
   def refuse(name, caller)
     @guard.failed(name, caller)
-    warn "ttg-blog-bbs: failed login for #{name.inspect} from #{caller}"
+    BBS.log('login', "failed for #{name.inspect} from #{caller}")
     sleep @fail_delay
     :wrong
   end

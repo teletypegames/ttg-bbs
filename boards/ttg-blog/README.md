@@ -62,6 +62,14 @@ and shows its bare id.
 | `TTG_BLOG_BBS_DISCORD_WEBHOOK` | — | A post rings this Discord webhook when first published, with its link on the web (`.env` on the server) |
 | `TTG_BLOG_BBS_SITE_URL` | `https://teletypegames.org` | The site the Discord message links to |
 
+## Log
+
+Every line on stderr (`docker logs ttg-blog-bbs`) starts with the log tag
+`ttg-blog-bbs:` (rubbs' `BBS.log`) and what it is about: `login` (a failed
+login, with the name and the caller), `saving a post`, `on_publish`, `categories`
+(the list could not be read: no post can be written then), `web` (an error of
+the read API, whose server runs as the `BBS.background` thread `web`).
+
 ## Data
 
 One SQLite file (`data/ttgblog.sqlite3`, through rubbs' `BBS::SQLite`), two
@@ -103,6 +111,8 @@ A logged-in editor can change their own password from the menu too. Wrong
 logins are counted by the name (10 in 15 minutes) and by the caller's address
 (5 in 15 minutes; `BBS::RateLimit.caller_key`), so a new call does not start
 over: past either limit the login is locked until the window lets it go.
+The counts are kept in the database (rubbs' `rate_limit_events` table), so a
+restart does not start them over either.
 Each wrong one costs a second, and the password derivations (PBKDF2) run at
 most two at a time, so a flood of tries cannot take the CPU.
 

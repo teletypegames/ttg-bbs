@@ -37,8 +37,7 @@ class PostService
     problem = check(**draft)
     return problem if problem
 
-    id = @repo.insert(**draft, face: PostModel::FACES.include?(face) ? face : 'modern', author_id: author.id)
-    id ? find(id) : :not_saved
+    saved { find(@repo.insert(**draft, face: PostModel::FACES.include?(face) ? face : 'modern', author_id: author.id)) }
   end
 
   # The PostModel as saved, or a Symbol naming what is wrong with it.
@@ -46,9 +45,11 @@ class PostService
     draft   = clean(**draft)
     problem = check(**draft)
     return problem if problem
-    return :not_saved unless @repo.update(id, **draft)
 
-    find(id)
+    saved do
+      @repo.update(id, **draft)
+      find(id)
+    end
   end
 
   # The post published or taken back, as it is now; nil when there is no
@@ -70,8 +71,7 @@ class PostService
   # The draft as it is kept: no control characters, the title and the
   # summary on one line and trimmed.
   def clean(title:, summary:, body:, category:)
-    { title: BBS::Text.clean(title, keep_newlines: false).strip,
-      summary: BBS::Text.clean(summary, keep_newlines: false).strip,
+    { title: BBS::Text.line(title), summary: BBS::Text.line(summary),
       body: BBS::Text.clean(body), category: category.to_s }
   end
 
@@ -85,12 +85,20 @@ class PostService
     nil
   end
 
+  # The block's value; :not_saved, logged, when SQLite failed.
+  def saved
+    yield
+  rescue SQLite3::Exception => e
+    BBS.log('saving a post', e)
+    :not_saved
+  end
+
   # A listener that fails does not fail the post: it is saved already.
   def announce(post)
     @listeners.each do |listener|
       listener.call(post)
     rescue StandardError => e
-      warn "ttg-blog-bbs: on_publish failed: #{e.class}: #{e.message}"
+      BBS.log('on_publish', e)
     end
   end
 end

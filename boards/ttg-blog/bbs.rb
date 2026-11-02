@@ -11,6 +11,8 @@ require_relative 'lib/web/api'
 # write line by line, 80 columns of ANSI or 40 of PETSCII. Readers need no
 # account; the editors log in from the menu, and bin/user manages them.
 # Beside the telnet line, Web::Api serves the posts to teletypegames.org.
+BBS.configure { |config| config.log_tag = 'ttg-blog-bbs' }
+
 bbs = TTGBlogBBS.new
 
 Web::Api.new(bbs, port: bbs.http_port).start if bbs.http_port.positive?

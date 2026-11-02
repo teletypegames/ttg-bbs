@@ -37,27 +37,21 @@ class PostRepository
 
   def find_by_slug(slug) = post(@db.get("#{POST_SQL} WHERE posts.slug = ?", slug.to_s))
 
-  # The id of the new, unpublished post, with a free slug; nil when SQLite
-  # failed.
+  # The id of the new, unpublished post, with a free slug. Raises
+  # SQLite3::Exception when SQLite fails.
   def insert(title:, summary:, body:, category:, face:, author_id:)
     now = stamp
     @db.transaction do
       slug = BlogSchema.free_slug(@db, PostModel.slug_base(title, Time.iso8601(now)))
       @db.insert(INSERT_SQL, slug, title, summary, body, category, face, author_id, now, now)
     end
-  rescue SQLite3::Exception => e
-    warn "ttg-blog-bbs: saving a post failed: #{e.message}"
-    nil
   end
 
-  # True when saved, false when SQLite failed.
+  # The number of posts changed. Raises SQLite3::Exception when SQLite
+  # fails.
   def update(id, title:, summary:, body:, category:)
     @db.change('UPDATE posts SET title = ?, summary = ?, body = ?, category = ?, updated_at = ? WHERE id = ?',
                title, summary, body, category, stamp, id.to_i)
-    true
-  rescue SQLite3::Exception => e
-    warn "ttg-blog-bbs: saving post #{id} failed: #{e.message}"
-    false
   end
 
   # Publishes the post or takes it back. The first publishing stamps
