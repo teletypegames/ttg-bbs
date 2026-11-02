@@ -4,7 +4,6 @@ require 'date'
 require 'fileutils'
 require 'ipaddr'
 require 'sqlite3'
-require 'stringio'
 require 'zlib'
 
 module Discovery
@@ -70,20 +69,20 @@ module Discovery
       [wanted, (now.to_date << 1).strftime('%Y-%m')].each do |m|
         next if m == current
 
-        return install(m, @fetcher.get(URI(format(URL, month: m))))
+        return @fetcher.download(URI(format(URL, month: m))) { |file| install(m, file) }
       rescue SourceFetcher::FetchError => e
-        warn "ttg-gate-bbs-discovery: DB-IP #{m}: #{e.message}"
+        BBS.log('geoip', "DB-IP #{m}: #{e.message}")
       end
       current
     end
 
-    # Builds the lookup file from the gzipped CSV +bytes+ of +month+ and swaps
-    # it in. Returns the month.
-    def install(month, bytes)
+    # Builds the lookup file from +gzip+, an IO of the gzipped CSV of
+    # +month+, and swaps it in. Returns the month.
+    def install(month, gzip)
       FileUtils.mkdir_p(@dir)
       tmp = File.join(@dir, "#{FILE}.new")
       FileUtils.rm_f(tmp)
-      build(tmp, month, bytes)
+      build(tmp, month, gzip)
       @mutex.synchronize do
         @db&.close
         @db = nil
@@ -101,7 +100,7 @@ module Discovery
       @db = SQLite3::Database.new(path, readonly: true) if File.exist?(path)
     end
 
-    def build(path, month, bytes)
+    def build(path, month, gzip)
       db = SQLite3::Database.new(path)
       db.execute_batch(<<~SQL)
         CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
@@ -109,17 +108,18 @@ module Discovery
         CREATE TABLE v6 (start BLOB PRIMARY KEY, stop BLOB NOT NULL, cc TEXT NOT NULL) WITHOUT ROWID;
       SQL
       db.transaction do
-        insert_ranges(db, bytes)
+        insert_ranges(db, gzip)
         db.execute('INSERT INTO meta VALUES (?, ?)', ['month', month])
       end
       db.close
     end
 
-    # The ranges of the gzipped CSV +bytes+ into the v4 and v6 tables.
-    def insert_ranges(db, bytes)
+    # The ranges of the gzipped CSV +gzip+ (an IO, read as it is inflated)
+    # into the v4 and v6 tables.
+    def insert_ranges(db, gzip)
       tables = { v4: db.prepare('INSERT OR REPLACE INTO v4 VALUES (?, ?, ?)'),
                  v6: db.prepare('INSERT OR REPLACE INTO v6 VALUES (?, ?, ?)') }
-      Zlib::GzipReader.new(StringIO.new(bytes)).each_line { |line| insert_range(tables, line) }
+      Zlib::GzipReader.new(gzip).each_line { |line| insert_range(tables, line) }
     ensure
       tables&.each_value(&:close)
     end

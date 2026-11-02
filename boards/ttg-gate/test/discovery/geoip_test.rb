@@ -22,11 +22,11 @@ module Discovery
         @urls = []
       end
 
-      def get(uri)
+      def download(uri)
         @urls << uri.to_s
         raise SourceFetcher::FetchError, 'not out yet' if uri.to_s.include?('2026-12')
 
-        @body
+        yield StringIO.new(@body)
       end
     end
 
@@ -42,7 +42,7 @@ module Discovery
 
     def test_lookup
       assert_nil @geoip.country('192.0.2.1')
-      @geoip.install('2026-11', @fetcher.get(URI('https://x/2026-11')))
+      @fetcher.download(URI('https://x/2026-11')) { |gzip| @geoip.install('2026-11', gzip) }
       assert_equal 'hu', @geoip.country('192.0.2.1')
       assert_equal 'us', @geoip.country('198.51.100.5')
       assert_nil @geoip.country('198.51.100.200')
@@ -53,7 +53,8 @@ module Discovery
     end
 
     def test_monthly_refresh_falls_back_to_the_last_month
-      assert_equal '2026-11', @geoip.refresh(Time.utc(2026, 12, 1))
+      _, err = capture_io { assert_equal '2026-11', @geoip.refresh(Time.utc(2026, 12, 1)) }
+      assert_match(/geoip: DB-IP 2026-12: not out yet/, err)
       assert_equal 2, @fetcher.urls.size
       assert_match(/dbip-country-lite-2026-11\.csv\.gz/, @fetcher.urls.last)
       assert_equal '2026-11', @geoip.refresh(Time.utc(2026, 12, 1, 1))

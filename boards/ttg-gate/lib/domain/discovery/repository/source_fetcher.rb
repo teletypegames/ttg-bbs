@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'cgi'
+require 'tempfile'
 require 'uri'
 
 module Discovery
@@ -20,23 +21,33 @@ module Discovery
     REDIRECTS  = 5
     USER_AGENT = 'TTG-Gate-BBS-Discovery/1.0 (+https://wiki.teletypegames.org/services/ttg-gate-bbs)'
 
-    # The bytes of +source+ (a SourceModel).
+    # The bytes of +source+ (a SourceModel). From a .zip only its member is
+    # read into the memory, not the archive.
     def fetch(source)
-      bytes = get(source.link ? linked(source) : URI(source.url))
-      return bytes unless source.member
+      download(source.link ? linked(source) : URI(source.url)) do |file|
+        next file.read unless source.member
 
-      ZipReader.read(bytes, source.member) or raise FetchError, "#{source.id}: no member like #{source.member.source}"
+        ZipReader.read(file, source.member) or raise FetchError, "#{source.id}: no member like #{source.member.source}"
+      end
     rescue ArgumentError => e
       raise FetchError, "#{source.id}: #{e.message}"
     end
 
     # The body of +uri+ (binary).
-    def get(uri)
-      response = BBS::HTTP.get(uri.to_s, open_timeout: TIMEOUT, read_timeout: TIMEOUT, deadline: DEADLINE,
-                                         max_bytes: MAX_BYTES, redirects: REDIRECTS, user_agent: USER_AGENT)
-      raise FetchError, "#{uri}: HTTP #{response.status}" unless response.ok?
+    def get(uri) = download(uri, &:read)
 
-      response.body
+    # Downloads +uri+ into a temporary file, yields it (binary, at its start)
+    # and returns what the block returns; the file is gone afterwards. So a
+    # list of up to MAX_BYTES never sits in the memory whole as it comes in.
+    def download(uri)
+      Tempfile.create('ttg-gate-bbs-source', binmode: true) do |file|
+        response = BBS::HTTP.get(uri.to_s, open_timeout: TIMEOUT, read_timeout: TIMEOUT, deadline: DEADLINE, to: file,
+                                           max_bytes: MAX_BYTES, redirects: REDIRECTS, user_agent: USER_AGENT)
+        raise FetchError, "#{uri}: HTTP #{response.status}" unless response.ok?
+
+        file.rewind
+        yield file
+      end
     rescue BBS::HTTP::Error => e
       raise FetchError, e.message
     end

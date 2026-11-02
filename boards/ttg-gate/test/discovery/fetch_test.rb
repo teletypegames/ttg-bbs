@@ -45,6 +45,26 @@ module Discovery
       assert_raises(ArgumentError) { ZipReader.read(bytes[0, 10] + bytes[-22..], /x/) }
     end
 
+    def test_a_zip_source_goes_to_a_file_and_only_its_member_is_read
+      archive = zip('FSXNET.303', 'nodes')
+      source = Struct.new(:id, :url, :link, :member).new('fsxnet', 'https://fsxnet.nz/fsxnet.zip', nil, /\AFSXNET/)
+      files = []
+      get = lambda do |url, to:, **|
+        files << [url, to.class]
+        to.write(archive)
+        BBS::HTTP::Response.new(status: 200, body: nil, headers: {})
+      end
+      assert_equal 'nodes', BBS::HTTP.stub(:get, get) { SourceFetcher.new.fetch(source) }
+      assert_equal [['https://fsxnet.nz/fsxnet.zip', File]], files
+      assert_equal 'nodes', ZipReader.read(StringIO.new(archive), /\AFSXNET/)
+    end
+
+    def test_an_answer_over_the_cap_is_a_fetch_error
+      get = ->(url, **) { raise BBS::HTTP::TooLarge, "GET #{url}: the body is over 33554432 bytes" }
+      error = assert_raises(SourceFetcher::FetchError) { BBS::HTTP.stub(:get, get) { SourceFetcher.new.get(URI('https://x.example/l')) } }
+      assert_match(/over 33554432 bytes/, error.message)
+    end
+
     def test_no_list_is_fetched_from_inside_the_network
       fetcher = SourceFetcher.new
       %w[http://127.0.0.1:9/list http://10.0.0.1/list http://169.254.169.254/latest ftp://example.org/list].each do |url|
