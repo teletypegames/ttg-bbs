@@ -14,13 +14,15 @@ class MailService
   GUESTS_DAILY = 30
   DAY          = 86_400
 
-  def initialize(repo, accounts:, sysops:)
+  # +store+ is the BBS::SQLite the limits are kept in; nil keeps them in
+  # memory.
+  def initialize(repo, accounts:, sysops:, store: nil)
     @repo     = repo
     @accounts = accounts
     @sysops   = sysops
-    @throttle = Throttle.new(limit: 1, per: COOLDOWN)
-    @guest    = Throttle.new(limit: GUEST_DAILY, per: DAY)
-    @guests   = BBS::RateLimit.new(limit: GUESTS_DAILY, per: DAY)
+    @throttle = Throttle.new(limit: 1, per: COOLDOWN, store: store, name: 'letter')
+    @guest    = Throttle.new(limit: GUEST_DAILY, per: DAY, store: store, name: 'guest letter')
+    @guests   = BBS::RateLimit.new(limit: GUESTS_DAILY, per: DAY, store: store, name: store && 'guest letters')
   end
 
   def boxes(username, sysop: false) = sysop ? [username, SYSOP] : [username]
@@ -64,14 +66,10 @@ class MailService
     :empty if text.empty?
   end
 
-  def guest_may_write?(from, caller_key)
-    return false unless @guests.wait(:guests).zero?
-
-    @guest.allow?(from, caller_key) && @guests.allow?(:guests)
-  end
+  def guest_may_write?(from, caller_key) = BBS::RateLimit.allow_all?([*@guest.checks(from, caller_key), [@guests, :guests]])
 
   def title(subject)
-    text = BBS::Text.clean(subject, keep_newlines: false).strip
+    text = BBS::Text.line(subject)
     text.empty? ? '(no subject)' : text[0, SUBJECT_MAX]
   end
 end

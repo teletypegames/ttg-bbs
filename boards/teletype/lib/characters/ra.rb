@@ -11,7 +11,8 @@ module Ra
   RIDDLES = YAML.safe_load_file(File.join(__dir__, 'ra_riddles.yml')).freeze
   BLESSINGS = 3
 
-  CHAT = BBS::AI::Chat.new(persona: PERSONA, client: Characters.client, key: :ra_history, history: 2)
+  # Ra's voice: the model of +client+ (Characters.client) in Ra's persona.
+  def self.chat(client) = BBS::AI::Chat.new(persona: PERSONA, client: client, key: :ra_history, history: 2)
 
   GAME_WORDS = /\b(game|play|download|commodore|c64|plus.?4|version|catalog)\b/i
 
@@ -28,11 +29,12 @@ module Ra
       "Seek it at #{games.catalog_url(tales.first).sub(%r{\Ahttps?://}, '')}, and play the worker yourself."
   end
 
-  # Ra's answer to free words, typed out by +on_text+ as it streams.
-  def self.reply(input, ctx, games, &on_text)
+  # Ra's answer to free words in +chat+ (Ra.chat), typed out by +on_text+
+  # as it streams.
+  def self.reply(input, ctx, games, chat, &on_text)
     return game_line(games).tap { |line| on_text&.call(line) } if input.match?(GAME_WORDS)
 
-    CHAT.reply(input, ctx, &on_text)
+    chat.reply(input, ctx, &on_text)
   end
 
   # One short answer: a line naming every answer at once is no answer.

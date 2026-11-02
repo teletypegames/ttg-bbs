@@ -14,7 +14,7 @@
 #   docker exec teletype-bbs bin/persona-eval master_c64 3
 
 require 'bundler/setup'
-require_relative '../lib/characters/llm'
+require_relative '../lib/domain'
 
 SLIPS = {
   character: /\b(AI|artificial|language model|assistant|chatbot|program(med)?|computer|internet|online|python|code)\b/i,
@@ -29,20 +29,16 @@ questions = YAML.safe_load_file(File.expand_path("../lib/characters/eval/#{name}
   entry.is_a?(Hash) ? [entry['q'], Array(entry['expect'])] : [entry, []]
 end
 
-require_relative '../lib/domain/repository/catalog_repository'
-require_relative '../lib/domain/repository/site_repository'
-require_relative '../lib/domain/service/games_service'
-require_relative '../lib/domain/service/site_service'
 games = GamesService.new(CatalogRepository.new)
+llm   = TeletypeBBS.llm(ENV)
 
 ask = case name
       when 'ra'
-        require_relative '../lib/characters/ra'
-        ->(q) { Ra.reply(q, {}, games) }
+        chat = Ra.chat(llm)
+        ->(q) { Ra.reply(q, {}, games, chat) }
       when 'master', 'master_c64'
-        require_relative '../lib/characters/master'
         face   = name == 'master_c64' ? TtgMaster::C64 : {}
-        master = TtgMaster.new(games: games, site: SiteService.new(SiteRepository.new), **face)
+        master = TtgMaster.new(games: games, site: SiteService.new(SiteRepository.new), client: llm, **face)
         ->(q) { master.answer(q, {}) }
       else abort "unknown character: #{name}"
       end

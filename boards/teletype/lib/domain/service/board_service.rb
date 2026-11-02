@@ -6,10 +6,12 @@ class BoardService
   COOLDOWN   = 30
   MAX_LENGTH = 1000
 
-  def initialize(repo, last_read:)
+  # +store+ is the BBS::SQLite the cooldown is kept in; nil keeps it in
+  # memory.
+  def initialize(repo, last_read:, store: nil)
     @repo      = repo
     @last_read = last_read
-    @throttle  = Throttle.new(limit: 1, per: COOLDOWN)
+    @throttle  = Throttle.new(limit: 1, per: COOLDOWN, store: store, name: 'post')
   end
 
   def boards               = @repo.boards

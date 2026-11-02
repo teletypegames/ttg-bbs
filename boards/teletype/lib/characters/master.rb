@@ -31,15 +31,17 @@ class TtgMaster
   EVENT_WORDS  = %w[event party jam meeting deadline upcoming next when coming].freeze
   LIST_WORDS   = %w[which list all what].freeze
 
-  # +catalog+ is where the games are, for the catalog fact: another board of
-  # the network, as this one keeps no catalog of its own.
-  def initialize(games:, site:, persona: PERSONA, knowledge: KNOWLEDGE, catalog: 'The WarpEngine BBS at teletypegames.org:2329')
+  # +client+ is the model (Characters.client). +catalog+ is where the games
+  # are, for the catalog fact: another board of the network, as this one
+  # keeps no catalog of its own.
+  def initialize(games:, site:, client:, persona: PERSONA, knowledge: KNOWLEDGE,
+                 catalog: 'The WarpEngine BBS at teletypegames.org:2329')
     @games     = games
     @site      = site
     @persona   = persona
     @knowledge = knowledge
     @catalog   = catalog
-    @chat      = BBS::AI::Chat.new(persona: persona, client: Characters.client, key: :master_history, history: 0)
+    @chat      = BBS::AI::Chat.new(persona: persona, client: client, key: :master_history, history: 0)
   end
 
   MENU_PATH = %r{\b[A-Z][\w/-]*(?: [A-Z][\w/-]*)* > [A-Z0-9][\w/…-]*(?: [A-Z0-9][\w/…-]*)*}

@@ -3,15 +3,10 @@
 require 'bbs'
 
 # The model the BBS's own characters (Ra, the TTG Master) talk through: the
-# shared model service (infra/llm). TELETYPE_BBS_LLM_* names it; where one is unset or
-# empty, the characters use SERMO's setting, the same service and key.
+# shared model service (infra/llm). The composition root (TeletypeBBS.llm)
+# names it.
 module Characters
-  def self.env(name)
-    own = ENV["TELETYPE_BBS_LLM_#{name}"].to_s
-    own.empty? ? ENV.fetch("SERMO_LLM_#{name}", nil) : own
-  end
-
-  def self.client
-    BBS::AI::Client.new(url: env('URL').to_s, model: env('MODEL'), api_key: env('API_KEY'))
-  end
+  # A client of the model at +url+; an empty +url+ leaves the characters to
+  # their canned replies.
+  def self.client(url:, model:, api_key:) = BBS::AI::Client.new(url: url.to_s, model: model, api_key: api_key)
 end

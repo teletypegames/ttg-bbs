@@ -24,7 +24,7 @@ module Ra
   HELP = ['Speak, and Ra answers. RIDDLE: a riddle of the pyramid (HINT helps, SKIP gives it up).',
           'GAME: the game of this story. EXIT: back to the BBS.'].freeze
 
-  def self.os(games:)
+  def self.os(games:, chat:)
     BBS::FakeOS.define do
       name   'CHAT OF RA'
       prompt '☼ '
@@ -33,7 +33,7 @@ module Ra
 
       boot { Ra.boot(self) }
       Ra.riddle_commands(self)
-      Ra.chat_commands(self, games)
+      Ra.chat_commands(self, games, chat)
     end
   end
 
@@ -72,17 +72,17 @@ module Ra
 
   # GAME, HELP, EXIT, and what is not a command: a guess at the riddle, or
   # words for Ra.
-  def self.chat_commands(os, games)
+  def self.chat_commands(os, games, chat)
     os.command('game') { |_args, io| io.newline; Ra.speak(io, Ra.game_line(games)) }
     os.command('help') { |_args, io| HELP.each { |line| io.puts line, style: :dim } }
     os.command('exit', 'quit', 'bye') { |_args, io| Ra.speak(io, 'Go with the light.'); io.halt }
-    os.on_unknown { |input, io| io.ctx[:ra_riddle] ? Ra.guess(io, input, games) : Ra.talk(io, input, games) }
+    os.on_unknown { |input, io| io.ctx[:ra_riddle] ? Ra.guess(io, input, games) : Ra.talk(io, input, games, chat) }
   end
 
-  def self.talk(io, input, games)
+  def self.talk(io, input, games, chat)
     io.newline
     out = BBS::AI::Typewriter.new(io, prefix: 'RA: ', style: :bright)
-    Ra.reply(input, io.ctx, games) { |piece| out.write(piece) }
+    Ra.reply(input, io.ctx, games, chat) { |piece| out.write(piece) }
     out.finish
   end
 

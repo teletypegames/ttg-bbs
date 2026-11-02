@@ -5,8 +5,9 @@
 module TeletypeDoors
   NAMES = ['SERMO', 'Commodore 64', 'Commodore Plus/4', 'Chat of Ra', 'TTG Trivia'].freeze
 
-  def self.build(games:, sizes:, site:, scores:)
-    [sermo, c64(games, sizes), plus4(games, sizes), ra(games), trivia(games, site, scores)]
+  # +llm+ is the model the characters talk through (Characters.client).
+  def self.build(games:, sizes:, site:, scores:, llm:)
+    [sermo, c64(games, sizes), plus4(games, sizes), ra(games, llm), trivia(games, site, scores)]
   end
 
   def self.sermo
@@ -32,8 +33,9 @@ module TeletypeDoors
                          'the disk holds our Plus/4 games. EXIT returns.')
   end
 
-  def self.ra(games)
-    DoorModel.new(name: :ra, program: Ra.os(games: games), label: 'Chat of &Ra', cols: 80, tag: 'talk to the sun god',
+  def self.ra(games, llm)
+    DoorModel.new(name: :ra, program: Ra.os(games: games, chat: Ra.chat(llm)), label: 'Chat of &Ra', cols: 80,
+                  tag: 'talk to the sun god',
                   hint: 'Talk to Ra in the pyramid of Blessing of Ra; solve three riddles for his blessing',
                   about: 'You are the worker sealed in the pyramid of Blessing of Ra, and the sun god answers from ' \
                          'above. RIDDLE asks one of the pyramid\'s riddles; three solved earn his blessing.')

@@ -35,7 +35,18 @@ class TeletypeBBS
   end
 
   def doors
-    @doors ||= TeletypeDoors.build(games: @games, sizes: @warp_sizes, site: @site, scores: @trivia)
+    @doors ||= TeletypeDoors.build(games: @games, sizes: @warp_sizes, site: @site, scores: @trivia, llm: @llm)
+  end
+
+  # The model of the BBS's own characters (Characters.client):
+  # TELETYPE_BBS_LLM_URL, _MODEL and _API_KEY, each one unset or empty
+  # falling back to SERMO's (SERMO_LLM_*), the same service and key.
+  def self.llm(env)
+    setting = lambda do |name|
+      own = env["TELETYPE_BBS_LLM_#{name}"].to_s
+      own.empty? ? env.fetch("SERMO_LLM_#{name}", nil) : own
+    end
+    Characters.client(url: setting.call('URL'), model: setting.call('MODEL'), api_key: setting.call('API_KEY'))
   end
 
   def sysop?(name, authenticated) = authenticated == true && @sysops.include?(name.to_s.downcase)
@@ -120,7 +131,7 @@ class TeletypeBBS
   def sysop_broadcast(name, text, registered:)
     return :forbidden unless sysop?(name, registered)
 
-    line = BBS::Text.clean(text, keep_newlines: false).strip
+    line = BBS::Text.line(text)
     return :empty if line.empty?
 
     @chat.broadcast("[SYSOP] #{name}", line)
@@ -175,13 +186,13 @@ class TeletypeBBS
   # What the callers make: boards, mail, the wall, the chat, the people.
   def open_community
     @online       = OnlineService.new(OnlineUsersRepository.new)
-    @boards       = BoardService.new(BoardRepository.new(@db), last_read: LastReadRepository.new(@db))
+    @boards       = BoardService.new(BoardRepository.new(@db), last_read: LastReadRepository.new(@db), store: @db)
     @chat         = ChatService.new
     @last_callers = LastCallersService.new(LastCallersRepository.new(@db))
     @profile      = ProfileService.new(ProfileRepository.new(@db))
-    @oneliners    = OnelinerService.new(OnelinerRepository.new(@db))
-    @accounts     = AccountService.new(AccountRepository.new(@db), reserved: @sysops)
-    @mail         = MailService.new(MailRepository.new(@db), accounts: @accounts, sysops: @sysops)
+    @oneliners    = OnelinerService.new(OnelinerRepository.new(@db), store: @db)
+    @accounts     = AccountService.new(AccountRepository.new(@db), reserved: @sysops, guard: LoginGuard.new(store: @db))
+    @mail         = MailService.new(MailRepository.new(@db), accounts: @accounts, sysops: @sysops, store: @db)
     @trivia       = TriviaScoreRepository.new(@db)
     @bulletins    = BulletinRepository.new(BULLETINS_DIR)
   end
@@ -207,8 +218,9 @@ class TeletypeBBS
   end
 
   def open_characters
-    @master     = TtgMaster.new(games: @games, site: @site)
-    @c64_master = TtgMaster.new(games: @games, site: @site, **TtgMaster::C64)
+    @llm        = TeletypeBBS.llm(@env)
+    @master     = TtgMaster.new(games: @games, site: @site, client: @llm)
+    @c64_master = TtgMaster.new(games: @games, site: @site, client: @llm, **TtgMaster::C64)
     @taglines   = TaglineService.new(@site)
     @scene      = SceneService.new(online: @online, chat: @chat, boards: @boards, mail: @mail,
                                    last_callers: @last_callers, site: @site, oneliners: @oneliners,

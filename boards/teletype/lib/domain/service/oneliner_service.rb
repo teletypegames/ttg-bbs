@@ -6,9 +6,11 @@ class OnelinerService
   MAX_LENGTH = 64
   COOLDOWN   = 30
 
-  def initialize(repo)
+  # +store+ is the BBS::SQLite the cooldown is kept in; nil keeps it in
+  # memory.
+  def initialize(repo, store: nil)
     @repo     = repo
-    @throttle = Throttle.new(limit: 1, per: COOLDOWN)
+    @throttle = Throttle.new(limit: 1, per: COOLDOWN, store: store, name: 'oneliner')
   end
 
   def recent(n = 5) = @repo.recent(n)
@@ -17,7 +19,7 @@ class OnelinerService
   def add(username, text, caller_key:)
     return :anonymous if username.to_s.casecmp?(AccountService::ANONYMOUS)
 
-    line = BBS::Text.clean(text, keep_newlines: false).strip
+    line = BBS::Text.line(text)
     return :empty if line.empty?
     return :too_long if line.length > MAX_LENGTH
     return :too_fast unless @throttle.allow?(username, caller_key)
