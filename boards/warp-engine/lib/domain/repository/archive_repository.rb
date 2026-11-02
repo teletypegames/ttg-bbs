@@ -2,7 +2,8 @@
 
 # The archive's plain HTTP (archive.teletypegames.org): the INDEX.TXT of a
 # shelf, kept for +ttl+ seconds, and the bytes of a file. A dead archive
-# gives the last index it sent, or nil.
+# gives the last index it sent; when there is none, or a file does not
+# come, it raises BBS::HTTP::Error.
 class ArchiveRepository
   INDEX = 'INDEX.TXT'
   # An INDEX.TXT is a line a title; a shelf of thousands fits in this.
@@ -20,30 +21,19 @@ class ArchiveRepository
   def url(path) = "#{@base_url}#{path}"
 
   # The titles of +shelf+ in the order of its index, read again when
-  # +fresh+; nil when the archive has never answered for it.
+  # +fresh+.
   def titles(shelf, fresh: false)
     fresh ? reread(shelf) : @titles.fetch(shelf.id) { index(shelf) }
-  rescue BBS::HTTP::Error => e
-    warn "warp-engine-bbs: #{e.message}"
-    nil
   end
 
-  # The bytes of +path+, at most +max_bytes+; nil when the archive does
-  # not give them.
-  def file(path, max_bytes:)
-    get(path, max_bytes)
-  rescue BBS::HTTP::Error => e
-    warn "warp-engine-bbs: #{e.message}"
-    nil
-  end
+  # The bytes of +path+, at most +max_bytes+.
+  def file(path, max_bytes:) = get(path, max_bytes)
 
   private
 
   # The index read now; when that fails, the one kept (an expired one too).
   def reread(shelf)
-    titles = index(shelf)
-    @titles.delete(shelf.id)
-    @titles.fetch(shelf.id) { titles }
+    @titles.refresh(shelf.id) { index(shelf) }
   rescue BBS::HTTP::Error => e
     @titles.fetch(shelf.id) { raise e }
   end

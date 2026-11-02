@@ -22,7 +22,7 @@ class LegacyDownloadLogTest < Minitest::Test
 
   def test_imports_the_good_lines_and_renames_the_log
     counts = nil
-    assert_output(nil, /imported 3 downloads from downloads.jsonl \(2 skipped\)/) do
+    assert_output(nil, /downloads: imported 3 from downloads.jsonl \(2 skipped\)/) do
       counts = LegacyDownloadLog.new(@path, @downloads).import
     end
 

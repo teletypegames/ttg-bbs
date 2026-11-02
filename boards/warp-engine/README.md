@@ -64,7 +64,13 @@ The archive is read through rubbs' `BBS::HTTP` (a deadline, a byte cap, the
 board's User-Agent, public addresses only); a shelf's index is kept in a
 `BBS::Cache` for `WARP_ENGINE_BBS_INDEX_TTL` seconds, so callers opening the
 same shelf at once share one request, and a dead archive gives the last index
-it sent. Its lines go through `BBS::Text.clean` before they are shown.
+it sent (Reload reads it anew with `BBS::Cache#refresh`, which keeps the old one
+when the archive fails). Its lines go through `BBS::Text.clean` before they are
+shown. The repository raises `BBS::HTTP::Error`; the catalog service logs it
+and tells the face there is nothing (the rubbs error rule).
+
+Every log line (the board's and rubbs') starts with `warp-engine-bbs:`
+(rubbs' `BBS.log`, `log_tag`).
 
 ## Project structure
 

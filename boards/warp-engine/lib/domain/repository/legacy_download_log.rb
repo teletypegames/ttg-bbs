@@ -19,7 +19,7 @@ class LegacyDownloadLog
 
     counts = @downloads.transaction { File.foreach(@path).partition { |line| add(line) }.map(&:size) }
     File.rename(@path, "#{@path}.imported")
-    warn "warp-engine-bbs: imported #{counts[0]} downloads from #{File.basename(@path)} (#{counts[1]} skipped)"
+    BBS.log('downloads', "imported #{counts[0]} from #{File.basename(@path)} (#{counts[1]} skipped)")
     counts
   end
 

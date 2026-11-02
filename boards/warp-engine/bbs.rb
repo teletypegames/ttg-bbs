@@ -10,12 +10,13 @@ require_relative 'lib/ui/petscii'
 # gets the modern desktop with ZMODEM and XMODEM, a Commodore 64 the PETSCII
 # screens with XMODEM. Mouse reporting waits for the choice: its escape
 # sequence would be garbage on a C64.
-bbs = WarpEngineBBS.new
-
 BBS.configure do |config|
+  config.log_tag          = 'warp-engine-bbs'
   config.mouse            = true
   config.mouse_on_connect = false
   config.idle_seconds     = 600
+
+  bbs = WarpEngineBBS.new
 
   config.flow = BBS::Terminal.flow(title: 'WarpEngine BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs))
 end

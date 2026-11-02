@@ -90,7 +90,7 @@ module UI
           titles = @catalog.titles(shelf)
           unless titles
             @screen.puts
-            @screen.say('The archive did not answer. Try again later.', RD)
+            @screen.say('The archive did not answer. Try again later.', color: RD)
             @screen.pause
             return
           end
@@ -133,7 +133,7 @@ module UI
       # when the line drops.
       def transfer(title, protocol, data)
         @screen.puts
-        @screen.say(Transfer.start(protocol, title), WH)
+        @screen.say(Transfer.start(protocol, title), color: WH)
         @screen.puts
         result = Transfer.send_file(@screen.session, protocol, title, data)
         raise IOError, 'the caller hung up' if result == :hangup
@@ -143,7 +143,7 @@ module UI
 
       def notice(text, color)
         @screen.puts
-        @screen.say(text, color)
+        @screen.say(text, color: color)
         @screen.pause
       end
 

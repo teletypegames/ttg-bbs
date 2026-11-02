@@ -15,7 +15,12 @@ class CatalogService
   def shelves = @shelves.all
 
   # The titles of +shelf+; nil when the archive does not answer.
-  def titles(shelf, fresh: false) = @archive.titles(shelf, fresh: fresh)
+  def titles(shelf, fresh: false)
+    @archive.titles(shelf, fresh: fresh)
+  rescue BBS::HTTP::Error => e
+    BBS.log('archive', e.message)
+    nil
+  end
 
   # The archive's address of a shelf or a title.
   def url(item) = @archive.url(item.path)
@@ -28,7 +33,7 @@ class CatalogService
   def fetch(title)
     return :too_big if title.size > @max_bytes
 
-    data = @archive.file(title.path, max_bytes: @max_bytes)
+    data = file(title)
     return :unavailable unless data
     return :changed unless data.bytesize == title.size && Zlib.crc32(data) == title.crc32
 
@@ -40,6 +45,16 @@ class CatalogService
   def downloaded(title, protocol)
     @downloads.add(title.key, version: title.version, protocol: protocol)
   rescue SQLite3::Exception => e
-    warn "warp-engine-bbs: the download of #{title.key} is not counted: #{e.class}: #{e.message}"
+    BBS.log('downloads', "the download of #{title.key} is not counted: #{e.class}: #{e.message}")
+  end
+
+  private
+
+  # The bytes of +title+ from the archive; nil when they do not come.
+  def file(title)
+    @archive.file(title.path, max_bytes: @max_bytes)
+  rescue BBS::HTTP::Error => e
+    BBS.log('archive', e.message)
+    nil
   end
 end

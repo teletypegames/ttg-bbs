@@ -41,10 +41,23 @@ class ArchiveRepositoryTest < Minitest::Test
     assert_equal 2, @calls.size
   end
 
-  def test_nil_when_the_archive_never_answered
-    titles = quietly { BBS::HTTP.stub(:get, ->(*, **) { response('gone', status: 404) }) { @archive.titles(SHELF) } }
+  def test_fresh_replaces_the_kept_index
+    newer = BoardTest.line(title: 'Newer')
+    titles = BBS::HTTP.stub(:get, answer(BoardTest.line, newer)) do
+      @archive.titles(SHELF)
+      @archive.titles(SHELF, fresh: true)
+      @archive.titles(SHELF)
+    end
 
-    assert_nil titles
+    assert_equal ['Newer'], titles.map(&:title)
+    assert_equal 2, @calls.size
+  end
+
+  def test_raises_when_the_archive_never_answered
+    BBS::HTTP.stub(:get, ->(*, **) { response('gone', status: 404) }) do
+      assert_raises(BBS::HTTP::Error) { @archive.titles(SHELF) }
+      assert_raises(BBS::HTTP::Error) { @archive.titles(SHELF, fresh: true) }
+    end
   end
 
   def test_file_is_capped
