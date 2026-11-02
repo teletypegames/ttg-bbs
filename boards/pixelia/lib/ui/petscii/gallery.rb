@@ -130,7 +130,7 @@ module UI
 
       def say(text)
         @screen.puts
-        @screen.say(text, RD)
+        @screen.say(text, color: RD)
         @screen.pause
       end
 

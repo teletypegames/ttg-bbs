@@ -155,7 +155,7 @@ module UI
         @screen.puts
         wait = @wall.wait(@caller)
         if wait.positive?
-          @screen.say(WallText.wait(wait), RD)
+          @screen.say(WallText.wait(wait), color: RD)
           @screen.pause
         else
           ask_and_save
@@ -164,7 +164,7 @@ module UI
       end
 
       def ask_and_save
-        @screen.say('The canvas as it is now goes on the wall under a title and your handle.', GR)
+        @screen.say('The canvas as it is now goes on the wall under a title and your handle.', color: GR)
         @screen.puts
         title  = BBS::Field.ask(@screen.session, " #{WH}title#{LG}  ", max: WallService::MAX_TITLE)
         handle = title && BBS::Field.ask(@screen.session, " #{WH}handle#{LG} ", text: @handle.to_s,
@@ -173,7 +173,7 @@ module UI
 
         @handle = handle
         @screen.puts
-        @screen.say(WallText.result(@wall.save(@caller, title: title, handle: handle)), WH)
+        @screen.say(WallText.result(@wall.save(@caller, title: title, handle: handle)), color: WH)
         @screen.pause
       end
     end
