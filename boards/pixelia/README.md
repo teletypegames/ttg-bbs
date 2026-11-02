@@ -67,7 +67,8 @@ Everybody sees everybody's paint: the modern face draws the canvas on every
 tick, the C64 face sends only the cells that changed, after every key and
 every 3 seconds. A caller paints at most `PIXELIA_BBS_PAINT_RATE` cells a second.
 The canvas is written to `data/canvas.json` at most every 2 seconds, through a
-temporary file of its own and a rename.
+temporary file of its own and a rename, by a writer thread (rubbs'
+`BBS.background`, `canvas writer`) that also answers the admin's clear.
 
 - **Modern:** arrows move, typing paints, Enter paints the brush, Backspace and
   Delete rub out, F7/F8 ink, F9 or Ctrl-R reverse, Insert or Ctrl-G glyph mode,
@@ -92,7 +93,8 @@ script removes is gone at the next look. A broken file is skipped with one
 warning. A caller (counted by address, `BBS::RateLimit.caller_key`, so calling
 again does not help) saves at most once in `PIXELIA_BBS_WALL_COOLDOWN`
 seconds, and the board takes at most `PIXELIA_BBS_WALL_PER_HOUR` works an
-hour.
+hour. Both limits are looked at together and a save counts in both only once
+its file is written, so a refused or failed save costs no turn.
 
 ## Running
 
@@ -142,6 +144,14 @@ The running board holds the canvas in memory, so `bin/canvas clear` leaves a
 flag file (`data/canvas.clear`) that the board answers within a few seconds;
 when no board answers, the script clears the file itself. An archive is
 `data/archive/canvas-<date>-<time>-<4 hex>.json`, written whole or not at all.
+
+## Logs
+
+Every line on stderr starts with the log tag `pixelia-bbs:` (rubbs' `BBS.log`):
+`16colors`, `canvas`, `canvas writer`, `art cache`, `wall`. The 16colo.rs
+repository lets a failure go up (`BBS::HTTP::Error`, `BBS::HTTP::TooLarge` for a
+file over `PIXELIA_BBS_MAX_FILE_KB`); the gallery service logs it once and the faces
+say why the piece does not show.
 
 ## Tests
 

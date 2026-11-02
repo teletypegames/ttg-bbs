@@ -7,8 +7,8 @@ require 'time'
 
 # The shared canvas: the cells in memory behind a Mutex, a version that
 # grows with every change, and data/canvas.json on disk. Writes are
-# debounced: a thread writes the file (to a temporary file, then renamed) at
-# most every +flush_seconds+, when something changed.
+# debounced: a BBS.background thread writes the file (to a temporary file,
+# then renamed) at most every +flush_seconds+, when something changed.
 #
 # The admin script asks for a clear by creating +clear_flag+: the thread
 # archives the canvas into +archive_dir+, blanks it and removes the flag.
@@ -72,22 +72,22 @@ class CanvasRepository
     @lock.synchronize { write if @dirty }
   end
 
-  # Starts the thread that writes the file and answers the clear flag.
+  # Starts the thread that writes the file and answers the clear flag every
+  # +flush_seconds+; an error is logged and the next round comes as usual.
   def start
-    Thread.new do
-      loop do
-        sleep @flush_seconds
-        if File.exist?(@clear_flag)
-          clear
-          FileUtils.rm_f(@clear_flag)
-        end
-        flush
-      rescue StandardError => e
-        warn "pixelia-bbs: canvas writer: #{e.class}: #{e.message}"
-      end
-    end
+    BBS.background('canvas writer', every: @flush_seconds, retry_after: @flush_seconds,
+                                    max_retry: @flush_seconds) { tick }
     at_exit { flush }
     self
+  end
+
+  # One round of the writer: the clear the admin asked for, then the file.
+  def tick
+    if File.exist?(@clear_flag)
+      clear
+      FileUtils.rm_f(@clear_flag)
+    end
+    flush
   end
 
   private
@@ -100,10 +100,10 @@ class CanvasRepository
 
   def load
     canvas = File.exist?(@path) ? CanvasModel.from_h(JSON.parse(File.read(@path))) : nil
-    warn "pixelia-bbs: #{@path} is not a canvas, starting blank" if canvas.nil? && File.exist?(@path)
+    BBS.log('canvas', "#{@path} is not a canvas, starting blank") if canvas.nil? && File.exist?(@path)
     assign(canvas || CanvasModel.blank)
   rescue SystemCallError, JSON::ParserError => e
-    warn "pixelia-bbs: #{@path}: #{e.class}: #{e.message}"
+    BBS.log('canvas', "#{@path}: #{e.class}: #{e.message}")
     assign(CanvasModel.blank)
   end
 
@@ -117,14 +117,14 @@ class CanvasRepository
     save(@path)
     @dirty = false
   rescue SystemCallError => e
-    warn "pixelia-bbs: #{@path}: #{e.class}: #{e.message}"
+    BBS.log('canvas', "#{@path}: #{e.class}: #{e.message}")
   end
 
   def archive
     FileUtils.mkdir_p(@archive_dir)
     save(File.join(@archive_dir, "canvas-#{Time.now.strftime('%Y%m%d-%H%M%S')}-#{SecureRandom.hex(2)}.json"))
   rescue SystemCallError => e
-    warn "pixelia-bbs: #{@archive_dir}: #{e.class}: #{e.message}"
+    BBS.log('canvas', "#{@archive_dir}: #{e.class}: #{e.message}")
     nil
   end
 

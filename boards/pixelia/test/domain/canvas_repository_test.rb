@@ -5,10 +5,12 @@ require 'test_helper'
 class CanvasRepositoryTest < Minitest::Test
   include TmpDir
 
-  def repo
-    CanvasRepository.new(File.join(@dir, 'canvas.json'), archive_dir: File.join(@dir, 'archive'),
-                                                         clear_flag: File.join(@dir, 'canvas.clear'))
+  def repo(flush_seconds: 2)
+    CanvasRepository.new(path('canvas.json'), archive_dir: path('archive'), clear_flag: path('canvas.clear'),
+                                              flush_seconds: flush_seconds)
   end
+
+  def path(name) = File.join(@dir, name)
 
   def test_put_flush_and_load
     r = repo
@@ -27,6 +29,31 @@ class CanvasRepositoryTest < Minitest::Test
     assert_equal ['A', 2, 0], CanvasModel.from_h(JSON.parse(File.read(first))).at(0, 0)
     assert_empty Dir.glob(File.join(@dir, '**', '*.tmp'))
     assert r.snapshot.empty?
+  end
+
+  # Runs the block with the writer started on +r+, every 20 ms.
+  def writing(r)
+    r.start
+    thread = Thread.list.find { |t| t.name == 'bbs: canvas writer' }
+    yield
+  ensure
+    thread&.kill
+  end
+
+  def test_the_writer_writes_in_the_background
+    r = repo(flush_seconds: 0.02)
+    r.put(0, 'A', 2, 0)
+    writing(r) { sleep 0.01 until File.exist?(path('canvas.json')) }
+    assert_equal ['A', 2, 0], repo.snapshot.at(0, 0)
+  end
+
+  def test_the_writer_answers_the_clear_flag
+    r = repo(flush_seconds: 0.02)
+    r.put(0, 'A', 2, 0)
+    File.write(path('canvas.clear'), '')
+    writing(r) { sleep 0.01 while File.exist?(path('canvas.clear')) }
+    assert r.snapshot.empty?
+    assert_equal 1, Dir.children(path('archive')).size
   end
 
   def test_a_broken_canvas_starts_blank

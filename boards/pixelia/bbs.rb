@@ -10,6 +10,7 @@ require_relative 'lib/ui/petscii'
 # and an ANSI terminal gets the modern desktop, a Commodore 64 the PETSCII
 # screens. Both paint on one canvas. Mouse reporting waits for the choice:
 # its escape sequence would be garbage on a C64.
+BBS.config.log_tag = 'pixelia-bbs'
 bbs = PixeliaBBS.new
 
 BBS.configure do |config|

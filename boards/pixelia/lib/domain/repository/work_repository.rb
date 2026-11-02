@@ -36,7 +36,7 @@ class WorkRepository
     end
     work
   rescue SystemCallError => e
-    warn "pixelia-bbs: #{@dir}: #{e.class}: #{e.message}"
+    BBS.log('wall', "#{@dir}: #{e.class}: #{e.message}")
     nil
   end
 
@@ -53,7 +53,7 @@ class WorkRepository
       true
     end
   rescue SystemCallError => e
-    warn "pixelia-bbs: #{path}: #{e.class}: #{e.message}"
+    BBS.log('wall', "#{path}: #{e.class}: #{e.message}")
     false
   end
 
@@ -100,7 +100,7 @@ class WorkRepository
 
   def broken(id, reason)
     @broken << id
-    warn "pixelia-bbs: #{path(id)}: #{reason}"
+    BBS.log('wall', "#{path(id)}: #{reason}")
   end
 
   def remember(work)
