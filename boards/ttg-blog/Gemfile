@@ -6,6 +6,7 @@ gem 'bbs', git: 'https://git.teletypegames.org/engines/rubbs.git'
 gem 'kramdown', '~> 2.5'
 gem 'kramdown-parser-gfm', '~> 1.1'
 gem 'sqlite3', '~> 2.1'
+gem 'ttg-common', git: 'https://git.teletypegames.org/bbs/common.git'
 gem 'webrick', '~> 1.9'
 
 group :development do

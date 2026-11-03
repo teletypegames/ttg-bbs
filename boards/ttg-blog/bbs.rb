@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'bbs'
+require 'ttg/common'
 require_relative 'lib/domain'
 require_relative 'lib/ui/modern'
 require_relative 'lib/ui/petscii'
@@ -22,7 +23,8 @@ BBS.configure do |config|
   config.mouse_on_connect = false
   config.idle_seconds     = 900
 
-  config.flow = BBS::Terminal.flow(title: 'TTG Blog BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs))
+  config.flow = BBS::Terminal.flow(title: 'TTG Blog BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs),
+                                   splash: TTG::Logo.splash)
 end
 
 BBS.start

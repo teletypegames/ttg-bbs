@@ -1,8 +1,15 @@
 GIT
-  remote: https://git.teletypegames.org/engines/rubbs.git
-  revision: 1667dd2d11a6537fc414ffb58ad96a273f838611
+  remote: https://git.teletypegames.org/bbs/common.git
+  revision: 16d65b83a025359a5f97e194bf6df3a24cdb0e67
   specs:
-    bbs (1.6.1)
+    ttg-common (0.1.0)
+      bbs (>= 1.7)
+
+GIT
+  remote: https://git.teletypegames.org/engines/rubbs.git
+  revision: 75d737508902edd7ee9652b1f5cfb104b1dabe96
+  specs:
+    bbs (1.7.0)
       artii (~> 2.1)
       csv (~> 3.3)
       rqrcode_core (~> 2.1)
@@ -85,6 +92,7 @@ DEPENDENCIES
   minitest (~> 5.25)
   rubocop
   sqlite3 (~> 2.1)
+  ttg-common!
   webrick (~> 1.9)
 
 BUNDLED WITH
