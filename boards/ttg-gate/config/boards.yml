@@ -109,3 +109,12 @@ boards:
     accent: "#5fd7ff"
     petscii: true
     enabled: true
+
+  - id: hackercave-bbs
+    name: "HackerCave BBS"
+    summary: "The hacker's reading room: every RFC, the documents the Internet is made of, from RFC 1 of 1969 to today. Search by number, series or words, follow what obsoletes what, and read them as published, or reflowed for a Commodore 64 in PETSCII."
+    tags: ["RFC", "internet", "C64"]
+    port: 2334
+    accent: "#d7ff5f"
+    petscii: true
+    enabled: true
