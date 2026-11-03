@@ -8,7 +8,7 @@ class GutenbergRepositoryTest < Minitest::Test
 
   def setup
     super
-    @gutenberg = GutenbergRepository.new(mirror: 'https://mirror.example/', user_agent: 'Test/1',
+    @gutenberg = GutenbergRepository.new(mirror: 'https://mirror.example/',
                                          catalog_url: 'https://mirror.example/pg_catalog.csv.gz')
   end
 
@@ -28,7 +28,7 @@ class GutenbergRepositoryTest < Minitest::Test
     asked
   end
 
-  def test_fetches_a_text_with_the_board_user_agent_and_the_cap
+  def test_fetches_a_text_with_the_cap
     text = nil
     asked = with_http(answer(200, 'Call me Ishmael.')) { text = @gutenberg.text(2701, max_bytes: 100) }
 
@@ -36,7 +36,6 @@ class GutenbergRepositoryTest < Minitest::Test
     url, options = asked.first
     assert_equal 'https://mirror.example/cache/epub/2701/pg2701.txt', url
     assert_equal 100, options[:max_bytes]
-    assert_equal 'Test/1', options[:user_agent]
   end
 
   def test_a_failing_mirror_raises

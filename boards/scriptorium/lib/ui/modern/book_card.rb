@@ -5,21 +5,16 @@ module UI
     # A book's record on the right of a list of books: the title, the
     # authors, the facts, the subjects and the shelves, and the credit.
     module BookCard
-      def book_lines(book, width)
-        wrap = ->(s) { BBS::FrameBuffer.wrap_ansi(s, width - 1) }
-        [*book_heading(book), '', *book_topics(book), card_credit(book), '',
-         "#{theme[:text_dim]}Enter opens the book.#{theme[:text]}"].flat_map { |line| line.empty? ? [line] : wrap.call(line) }
+      def book_lines(book)
+        [*book_heading(book), '', *book_topics(book), card_credit(book), '', dim('Enter opens the book.')]
       end
 
       private
 
       def book_heading(book)
-        t = theme
         authors = book.author_names.empty? ? 'Anonymous' : book.author_names.join(', ')
-        ["#{t[:text_bright]}#{book.short_title}#{t[:text]}",
-         *("#{t[:text_dim]}#{book.subtitle}#{t[:text]}" unless book.subtitle.empty?),
-         "#{t[:accent]}by #{authors}#{t[:text]}",
-         "#{t[:text_dim]}#{book_facts(book).join(' · ')}#{t[:text]}"]
+        [bright(book.short_title), *(dim(book.subtitle) unless book.subtitle.empty?), accent("by #{authors}"),
+         dim(book_facts(book).join(' · '))]
       end
 
       def book_facts(book)
@@ -31,10 +26,9 @@ module UI
       # The subjects and the bookshelves, then an empty line; nothing when
       # the book has neither.
       def book_topics(book)
-        t = theme
         lines = []
-        lines << "#{t[:label]}Subjects:#{t[:text]} #{book.subject_list.first(6).join('; ')}" unless book.subjects.empty?
-        lines << "#{t[:label]}Bookshelves:#{t[:text]} #{book.shelf_names.first(6).join('; ')}" unless book.bookshelves.empty?
+        lines << "#{paint(:label, 'Subjects:')} #{book.subject_list.first(6).join('; ')}" unless book.subjects.empty?
+        lines << "#{paint(:label, 'Bookshelves:')} #{book.shelf_names.first(6).join('; ')}" unless book.bookshelves.empty?
         lines.empty? ? lines : [*lines, '']
       end
 

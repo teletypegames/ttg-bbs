@@ -19,11 +19,9 @@ class GutenbergRepository
 
   # [mirror]      the base URL of the mirror (https://www.gutenberg.org)
   # [catalog_url] the URL of pg_catalog.csv.gz
-  # [user_agent]  the User-Agent sent with every request
-  def initialize(mirror:, catalog_url:, user_agent:)
+  def initialize(mirror:, catalog_url:)
     @mirror      = mirror.delete_suffix('/')
     @catalog_url = catalog_url
-    @user_agent  = user_agent
   end
 
   def text_url(id) = "#{@mirror}/cache/epub/#{Integer(id)}/pg#{Integer(id)}.txt"
@@ -50,7 +48,7 @@ class GutenbergRepository
   # The Response of a successful GET of +url+; an error status raises
   # BBS::HTTP::Error.
   def get(url, **)
-    response = BBS::HTTP.get(url, read_timeout: READ_TIMEOUT, user_agent: @user_agent, **)
+    response = BBS::HTTP.get(url, read_timeout: READ_TIMEOUT, **)
     raise BBS::HTTP::Error, "GET #{url}: answered #{response.status}" unless response.ok?
 
     response

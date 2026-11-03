@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  module Petscii
+  class Petscii < BBS::Petscii::Face
     # The reader of the C64 face: a book's chapter in pages of ROWS lines.
     # RETURN turns the page (and at the end of a chapter goes on to the
     # next one), B goes back a page, N and P change the chapter, Q goes back
@@ -9,12 +9,12 @@ module UI
     class Reader
       # Rows of text on a page: the title bar above, the key line below.
       ROWS = 21
+      UNREADABLE = '(This chapter could not be read. Try again later.)'
 
-      def initialize(screen, reading, book, text)
-        @screen  = screen
-        @reading = reading
-        @book    = book
-        @text    = text
+      def initialize(face, book, text)
+        @face = face
+        @book = book
+        @text = text
       end
 
       # Reads from chapter +number+ until the caller goes back.
@@ -27,9 +27,6 @@ module UI
 
           turn(step)
         end
-      ensure
-        @screen.puts
-        @screen.title(@book.short_title.upcase[0, 26], "#{@text.size} ch")
       end
 
       private
@@ -46,11 +43,11 @@ module UI
 
       def show_page
         @page = @page.clamp(0, pages - 1)
-        @screen.title(@text.chapter(@number).title[0, 24], "#{@number}/#{@text.size} p#{@page + 1}/#{pages}")
+        @face.title(@text.chapter(@number).title[0, 24], "#{@number}/#{@text.size} p#{@page + 1}/#{pages}")
         rows = @lines[@page * ROWS, ROWS]
-        rows.each { |l| @screen.puts l }
-        (ROWS - rows.size).times { @screen.puts }
-        @screen.write " #{DG}ret:#{last_page? ? 'next ch' : 'more'} b:back n/p:chapter q:list#{LG}"
+        rows.each { |l| @face.puts l }
+        (ROWS - rows.size).times { @face.puts }
+        @face.write " #{DG}ret:#{last_page? ? 'next ch' : 'more'} b:back n/p:chapter q:list#{LG}"
       end
 
       def turn(step)
@@ -63,14 +60,10 @@ module UI
 
       def reader_key
         loop do
-          step = step_of(key)
+          key  = @face.key
+          step = step_of(key.is_a?(String) ? key.downcase : key)
           return step if step
         end
-      end
-
-      def key
-        k = @screen.key
-        k.is_a?(String) ? k.downcase : k
       end
 
       # What a key does: :more, :back, :quit, or a chapter step (1 or -1);
@@ -90,9 +83,9 @@ module UI
       # The chapter wrapped to 38 columns in characters the C64 has, the
       # heading in white, a blank line between paragraphs.
       def chapter_lines
-        body = @reading.chapter(@text, @number) || '(This chapter could not be read. Try again later.)'
+        body = @face.reading.chapter(@text, @number) || UNREADABLE
         body.split("\n\n").each_with_index.flat_map do |para, i|
-          lines = para.split("\n").flat_map { |line| @screen.wrap(@screen.plain(line), WIDTH) }
+          lines = para.split("\n").flat_map { |line| @face.wrap(@face.plain(line), WIDTH) }
           lines = lines.map { |l| i.zero? ? " #{WH}#{l}#{LG}" : " #{l}" }
           i.zero? ? lines : ['', *lines]
         end
