@@ -14,6 +14,8 @@ module UI
 
     LANGUAGES = { 'en' => 'english', 'hu' => 'magyar', 'de' => 'deutsch' }.freeze
 
+    QR_COMMAND = { 'c' => 'qr code' }.freeze
+
     PHAROS = ['▄▀▄', '▐*▌', '▄███▄', '▐█▀█▌', '▄█████▄', '▄██▀▀▀██▄'].freeze
     WAVES  = '▄▀▀▄▄▄▀▄▄▀▀▀▄▄▀▄'
 
@@ -143,23 +145,51 @@ module UI
         show(article)
       end
 
-      # The article: its contents when it has sections, else its pages.
+      # The article: its contents when it has sections, else its pages; C
+      # shows its QR code.
       def show(article)
         heading = article.title.upcase[0, 30]
         if article.sections.size == 1
-          section(article, article.sections.first, heading)
+          single(article, heading)
         else
-          loop do
-            picked = @screen.pick(heading, article.sections, right: lang, &:title)
-            break unless picked
-
-            section(article, picked, heading)
-          end
+          contents(article, heading)
         end
         @screen.title('ALEXANDRIA BBS', right)
       end
 
-      def section(article, section, heading)
+      def single(article, heading)
+        section(article, article.sections.first, heading, wait: false)
+        qr(article) if @screen.actions(['c', 'qr code'], %w[q back]) == 'c'
+      end
+
+      def contents(article, heading)
+        loop do
+          picked = @screen.pick(heading, article.sections, right: lang, commands: QR_COMMAND, &:title)
+          break unless picked
+
+          picked == 'c' ? qr(article) : section(article, picked, heading)
+        end
+      end
+
+      # The article's address as a QR code, in the middle of the screen.
+      def qr(article)
+        @screen.title('SCAN THE ARTICLE', right)
+        code   = qr_code(article.short_url)
+        indent = ' ' * ((COLS - 1 - BBS::FrameBuffer.plain(code.first).size) / 2)
+        code.each { |line| @screen.puts("#{indent}#{line}") }
+        @screen.pause
+      rescue BBS::QR::TooLong
+        @screen.say('This address is too long for a QR code on the C64.', color: RD)
+        @screen.pause
+      end
+
+      def qr_code(link)
+        BBS::QR.petscii(link)
+      rescue BBS::QR::TooLong
+        BBS::QR.petscii(link, quiet: 1)
+      end
+
+      def section(article, section, heading, wait: true)
         lines = BBS::Markdown.to_lines(section.markdown, width: WIDTH, theme: MARKDOWN).map { |l| " #{l}" }
         if section == article.sections.first
           lines.unshift(" #{GR}(redirected from #{article.redirected_from})#{LG}", '') if article.redirected_from
@@ -167,7 +197,7 @@ module UI
         else
           lines.unshift(" #{WH}#{section.title}#{LG}", '')
         end
-        @screen.page(heading, lines, right: lang)
+        @screen.page(heading, lines, right: lang, wait: wait, room: 2)
       end
     end
   end

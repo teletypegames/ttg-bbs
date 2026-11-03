@@ -5,7 +5,7 @@ require 'test_helper'
 class ArticleServiceTest < Minitest::Test
   # Wikipedia with one article, "Ada", and one search hit for anything.
   class Wikipedia
-    def article(title, lang:) = title == 'Ada' ? ArticleModel.new('Ada', 'u', lang, [], nil) : nil
+    def article(title, lang:) = title == 'Ada' ? ArticleModel.new('Ada', 'u', lang, [], nil, 1) : nil
     def search(query, lang:) = [SearchResultModel.new("#{query} (#{lang})", '', 1)]
     def random_title(lang:) = "Random #{lang}"
   end

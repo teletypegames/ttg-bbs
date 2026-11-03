@@ -4,7 +4,7 @@ require 'test_helper'
 
 class WikipediaRepositoryTest < Minitest::Test
   ARTICLE = { 'query' => { 'redirects' => [{ 'from' => "Old\e[5m" }],
-                           'pages' => [{ 'title' => "Ada\e]0;x\a", 'fullurl' => 'https://en.wikipedia.org/wiki/Ada',
+                           'pages' => [{ 'pageid' => 1208, 'title' => "Ada\e]0;x\a", 'fullurl' => 'https://en.wikipedia.org/wiki/Ada',
                                          'extract' => "Lead \e[31mtext.\n\n== History ==\nBorn.\n\n== References ==\nx" }] } }
             .freeze
 
@@ -26,6 +26,12 @@ class WikipediaRepositoryTest < Minitest::Test
     article = wiki.serve { repository.article('Ada', lang: 'en') }
     assert_equal ['Ada]0;x', 'Old[5m'], [article.title, article.redirected_from]
     assert_equal([['Ada]0;x', 'Lead [31mtext.'], ['History', 'Born.']], article.sections.map { |s| [s.title, s.markdown] })
+  end
+
+  def test_the_short_address_is_by_page_id
+    article = wiki.serve { repository.article('Ada', lang: 'en') }
+    assert_equal 'https://en.wikipedia.org/?curid=1208', article.short_url
+    assert_equal 'https://en.wikipedia.org/wiki/Ada', article.with(pageid: nil).short_url
   end
 
   def test_answers_are_cached

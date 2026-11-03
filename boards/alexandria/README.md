@@ -82,7 +82,10 @@ Alexandria stands by the sea, its light turning while the caller types.
 
 The results window lists the titles with the matching snippet and the word
 count; the article window has its sections on the left and the text on the
-right, the article's address under it.
+right, the article's address under it. `QR code` shows the article as a QR
+code (rubbs' `BBS::QR`) for a phone, with the pictures and tables a terminal
+cannot show. The code holds the short address by the page id,
+`https://<lang>.wikipedia.org/?curid=<id>`, so it fits whatever the title.
 
 ### The C64 face
 
@@ -94,7 +97,9 @@ the lit item, and the letters (or the number typed, in a list) work as well;
 CRSR left and right turn the pages of a list, `Q` or `←` (RUN/STOP too) goes
 back. A section stops at every
 screenful. Accented letters come as their nearest ASCII (the PETSCII line of
-rubbs).
+rubbs). `C` shows the article's QR code (the same short address, quadrant
+blocks): in the list of sections, or under the last page of an article
+without sections.
 
 ## Project structure
 

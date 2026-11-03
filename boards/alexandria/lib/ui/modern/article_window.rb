@@ -19,6 +19,14 @@ module UI
         w.item_label    { |s, _ctx| s.title }
         w.render_detail { |s, width, ctx| detail(ctx[:article], s, width, ctx[:app]) }
         w.bottom_meta   { |_s, ctx| "#{ctx[:article].url} · CC BY-SA" }
+        qr_action(w)
+      end
+
+      def qr_action(w)
+        w.action(label: '&QR code') do |_win, ctx|
+          ctx[:app].show_qr(ctx[:article])
+          :keep
+        end
       end
 
       def detail(article, section, width, app)

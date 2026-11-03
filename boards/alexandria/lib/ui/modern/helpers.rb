@@ -8,6 +8,9 @@ module UI
       LANGUAGES = { 'en' => 'English', 'hu' => 'Magyar', 'de' => 'Deutsch' }.freeze
       HELP      = 'F2 search · F3 random article · F4 language · Alt-X log off'
       NO_ANSWER = 'Wikipedia did not answer. Try again later.'
+      QR_PADDING = { sides: 2, top: 1, bottom: 0 }.freeze
+      QR_SIDES   = 4
+      QR_ROWS    = 7
 
       def articles = services[:articles]
 
@@ -33,6 +36,22 @@ module UI
         article = with_loading('Loading the article…') { articles.article(title, lang: lang) }
         return open_window(:article, article: article) if article
         BBS::Dialogs.message(self, "Wikipedia has no article \"#{title}\", or did not answer.", title: ' Article ')
+      end
+
+      # The article's address as a QR code, in a window as big as the
+      # screen allows.
+      def show_qr(article)
+        code = qr_code(article.short_url, width: cols - QR_SIDES, height: rows - QR_ROWS)
+        BBS::Windows::Info.open(self, title: ' Scan the article ', width: BBS::FrameBuffer.plain(code.first).size + QR_SIDES,
+                                      body: code, padding: QR_PADDING)
+      rescue BBS::QR::TooLong
+        BBS::Dialogs.message(self, 'The screen is too small for the QR code of this article.', title: ' QR code ')
+      end
+
+      def qr_code(link, **room)
+        BBS::QR.ansi(link, **room)
+      rescue BBS::QR::TooLong
+        BBS::QR.ansi(link, **room, quiet: 1)
       end
 
       def random
