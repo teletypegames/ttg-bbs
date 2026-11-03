@@ -9,9 +9,7 @@ module UI
       # menubar, the status bar and the window's frame.
       TOWN_CHROME = 4
 
-      def bbs = BBS.config.board
-
-      def sysop? = bbs.sysop?(context[:username], context[:authenticated])
+      def sysop? = board.sysop?(context[:username], context[:authenticated])
 
       def registered? = context[:authenticated] == true
 
@@ -19,11 +17,11 @@ module UI
 
       def anonymous? = caller_name == AccountService::ANONYMOUS
 
-      # Node, clock and time on line, the way the old status lines had them.
+      # Node and time on line; the clock goes before them.
       def status_text
         node = online.node(session_id)
         on   = Formatters.duration(Time.now - (context[:call_started] || Time.now))
-        "#{"Node #{node.number} │ " if node}#{Time.now.strftime('%H:%M')} │ #{on}"
+        "#{"Node #{node.number} │ " if node}#{on}"
       end
 
       # Mail that arrives during a call rings once, the way it used to.
@@ -57,7 +55,7 @@ module UI
 
         context[:paged] = true
         session.write("\a")
-        return message(Formatters::PageSysop.text(true), title: 'Paging the Sysop…', width: 60) if bbs.page_sysop(caller_name)
+        return message(Formatters::PageSysop.text(true), title: 'Paging the Sysop…', width: 60) if board.page_sysop(caller_name)
 
         confirm(Formatters::PageSysop.text(false), title: 'Paging the Sysop…') do
           write_mail(to: MailService::SYSOP, subject: 'Page')
@@ -94,10 +92,10 @@ module UI
       end
 
       def open_new_post
-        board = boards.boards.first
-        return message('Select a board first.', title: 'Compose') unless board
+        first = boards.boards.first
+        return message('Select a board first.', title: 'Compose') unless first
 
-        show(:compose_message, board: board)
+        show(:compose_message, message_board: first)
       end
 
       def open_profile
@@ -116,7 +114,7 @@ module UI
 
       def sysop_broadcast
         ask('Sysop broadcast message:', title: 'Broadcast', width: 64) do |text|
-          bbs.sysop_broadcast(context[:username], text, registered: registered?)
+          board.sysop_broadcast(context[:username], text, registered: registered?)
         end
       end
 
@@ -133,7 +131,7 @@ module UI
       def open_trophies
         return show(:hall_of_fame) if cols < 80
 
-        PictureWindow.open(self, Clubhouse::Trophies.new(fame: bbs.hall_of_fame),
+        PictureWindow.open(self, Clubhouse::Trophies.new(fame: board.hall_of_fame),
                            title: 'Trophy Case — the Hall of Fame', section: :people)
       end
 
@@ -141,7 +139,7 @@ module UI
       def open_games_room
         return show(:doors) if cols < 80
 
-        @games_room = GamesRoom.new(doors: bbs.doors, scene: @scene, on_open: ->(door) { open_door(door.name) })
+        @games_room = GamesRoom.new(doors: board.doors, scene: @scene, on_open: ->(door) { open_door(door.name) })
         PictureWindow.open(self, @games_room, title: 'Games Room', section: :doors)
       end
 
@@ -151,10 +149,13 @@ module UI
         refresh_dashboard
       end
 
+      # The clubhouse from the street, the desktop's widget.
+      def dashboard = desktop.widget
+
       def refresh_dashboard
         @scene = scene.scene(caller_name, registered: registered?, sysop: sysop?)
         @games_room&.scene = @scene
-        @dashboard.data = Dashboard::Data.new(
+        dashboard.data = Dashboard::Data.new(
           name: caller_name, registered: registered?, caller_number: context[:caller_number],
           node: online.node(session_id)&.number, scene: @scene
         )
@@ -167,7 +168,6 @@ module UI
       def tick
         top_window_shown
         context[:ticks] = (context[:ticks] || 0) + 1
-        @dashboard.tick!
         refresh_dashboard if (context[:ticks] % 5).zero?
         check_mail if (context[:ticks] % 10).zero?
       end
@@ -176,13 +176,11 @@ module UI
       def top_window_shown
         top = Icon.strip(top_window&.title)
         online.activity(session_id, top.empty? ? 'At the main menu' : top)
-        @dashboard.room = Clubhouse::Cards.room(top)
+        dashboard.room = Clubhouse::Cards.room(top)
       end
 
-      # The desktop at the start: the dashboard under everything.
-      def furnish
-        @dashboard = add(Dashboard.new)
-        refresh_dashboard
+      # The mailbox as it is at the start, so only new mail rings.
+      def count_mail
         context[:mail_seen] ||= mail.unread_count(context[:username], sysop: sysop?) if registered?
       end
     end

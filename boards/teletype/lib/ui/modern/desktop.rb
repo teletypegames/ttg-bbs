@@ -75,10 +75,9 @@ module UI
         @house = nil
       end
 
-      def tick! = @ticks += 1
+      def tick = @ticks += 1
 
       def render(frame)
-        @bounds = parent.bounds.dup if parent&.bounds
         return if @data.nil? || bounds.width < 40 || bounds.height < 12
 
         width = [bounds.width - 4, WIDTH].min

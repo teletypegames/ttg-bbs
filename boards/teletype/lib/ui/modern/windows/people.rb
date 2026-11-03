@@ -40,7 +40,7 @@ module UI
             width  74
             scroll true
             height { (accounts.names.size + 9).clamp(10, [rows - 4, 10].max) }
-            body   { Formatters::UserList.body(bbs.user_rows) }
+            body   { Formatters::UserList.body(board.user_rows) }
           end
 
           window :hall_of_fame, :info do
@@ -49,7 +49,7 @@ module UI
             width  { fame_width }
             height { [rows - 4, 24].min }
             scroll true
-            body   { Formatters::HallOfFame.body(**bbs.hall_of_fame, width: fame_width - 8) }
+            body   { Formatters::HallOfFame.body(**board.hall_of_fame, width: fame_width - 8) }
           end
         end
 

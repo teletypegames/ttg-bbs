@@ -61,7 +61,7 @@ module UI
           end
 
           def logon_bulletin
-            Formatters::Bulletin.body(**bbs.bulletin(context[:username], registered: registered?)).map do |l|
+            Formatters::Bulletin.body(**board.bulletin(context[:username], registered: registered?)).map do |l|
               next l[:text] if l.is_a?(Hash)
 
               l == :spacer ? '' : " #{l}"

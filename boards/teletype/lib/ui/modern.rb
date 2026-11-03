@@ -26,23 +26,20 @@ module UI
     APP = BBS::Application.define do
       theme :neumanntronics
       helpers { include Helpers }
-      init { furnish }
+      init { count_mail }
       on_tick { tick }
-      status(clock: false) { status_text }
+      status(clock: :before) { status_text }
+      doors { board.doors }
+      on_door { |door, context| board.enter_door(context[:session_id], door) }
 
       desktop do
+        widget(fill: true) { Dashboard.new }
+        on_show { refresh_dashboard }
         button(Formatters::Master::DESKTOP_LABEL, bottom: 1, align: :right, margin: 2) { open_master }
       end
 
       parts Menus, Windows::Board, Windows::Messages, Windows::Mail, Windows::Chat, Windows::People, Windows::You,
             Windows::Doors
-    end
-
-    # The doors of +bbs+ on the Doors menu; a caller behind one is in it on
-    # the node list.
-    def self.doors(bbs)
-      bbs.doors.each { |door| APP.door(door.name, door.program, label: door.label, hint: door.hint) }
-      APP.on_door { |door, context| bbs.enter_door(context[:session_id], door) }
     end
   end
 end

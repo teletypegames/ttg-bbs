@@ -52,7 +52,7 @@ module UI
             field :subject, label: 'Subject', max_length: MailService::SUBJECT_MAX
             field :body,    type: :textarea, max_length: MailService::BODY_MAX
             on_submit do |values|
-              result = bbs.send_letter(context[:username], values[:to], values[:subject], values[:body],
+              result = board.send_letter(context[:username], values[:to], values[:subject], values[:body],
                                        registered: registered?, caller_key: caller_key)
               error!(LETTER_ERRORS.fetch(result, 'Call with a name to write letters.')) unless result == :ok
               extras[:on_sent]&.call

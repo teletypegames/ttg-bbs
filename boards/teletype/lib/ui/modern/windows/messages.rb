@@ -23,7 +23,7 @@ module UI
             label { |board| board_label(board) }
             detail { |board, width| board_lines(board, width) }
             action('New', align: :left) do |board|
-              show(:compose_message, board: board, on_posted: -> { window.reload_detail })
+              show(:compose_message, message_board: board, on_posted: -> { window.reload_detail })
             end
             action('Refresh', align: :left) { window.reload_detail }
           end
@@ -31,7 +31,7 @@ module UI
           # A post to a board.
           window :compose_message, :form do
             maximizable true
-            title { board ? "Post to #{board.title}" : 'Compose' }
+            title { message_board ? "Post to #{message_board.title}" : 'Compose' }
             width { [cols - 8, 70].min }
             height 14
             hint { "From: #{caller_name} — Ctrl-Enter sends" }
@@ -40,9 +40,9 @@ module UI
             field :body, type: :textarea, max_length: BoardService::MAX_LENGTH
             errors POST_ERRORS
             on_submit do |values|
-              next :unknown unless board
+              next :unknown unless message_board
 
-              result = bbs.post_message(board, caller_name, values[:body], caller_key: caller_key)
+              result = board.post_message(message_board, caller_name, values[:body], caller_key: caller_key)
               extras[:on_posted]&.call if result == :ok
               result
             end

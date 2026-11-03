@@ -22,6 +22,7 @@ module UI
       command(:chat, '&Live Chat', key: 'F4', hint: 'Chat',
                                    about: 'Talk with everyone on the lines now, C64 callers too') { show(:chat) }
       command(:mail, '&Mail…', key: 'F7', about: 'Private letters between registered names') { open_mail }
+      command(:log_off, 'Log &off', key: 'Alt-X', hint: 'Bye', about: 'Hang up: +++ ATH0 NO CARRIER') { log_off }
 
       menu 'Board' do
         item('&Dashboard', hint: 'The clubhouse from the street: who is inside, the notice board, the graffiti wall') do
@@ -37,7 +38,7 @@ module UI
           open_town_map
         end
         separator
-        item('Log &off', shortcut: 'Alt-X', hint: 'Hang up: +++ ATH0 NO CARRIER') { log_off }
+        command :log_off
       end
 
       menu 'Messages' do
@@ -88,7 +89,7 @@ module UI
         end
       end
 
-      menu 'Help' do
+      help(about: ABOUT) do
         command :master
         Formatters::Master::QUICK_QUESTIONS.each do |label, question|
           next item(label, hint: NETWORK) { open_town_map } if question == :network
@@ -97,15 +98,7 @@ module UI
         end
         separator
         item('&New to BBSes?', hint: 'How a board like this works, in a bulletin') { show(:bulletins) }
-        item('&Keys', hint: 'Every key of the board') { show(:keys) }
-        item('A&bout', hint: 'What this board is') { message(ABOUT, title: 'About', width: 64) }
-      end
-
-      # Every key of the board: the commands', then rubbs' own.
-      window :keys, :info do
-        title 'Keys'
-        width 72
-        body  { BBS::Application::Command.keys_page(APP.all_commands.values) }
+        separator
       end
     end
   end

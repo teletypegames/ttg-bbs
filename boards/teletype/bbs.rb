@@ -28,6 +28,5 @@ BBS.board 'Teletype BBS', TeletypeBBS do
     face UI::Petscii
   end
 
-  on_start { |bbs| UI::Modern.doors(bbs) }
   on_session_end { |session, bbs| bbs.end_call(session.session_id) }
 end

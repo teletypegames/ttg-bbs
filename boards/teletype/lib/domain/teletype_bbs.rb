@@ -20,6 +20,7 @@ class TeletypeBBS
   path    :db, 'data/teletype.sqlite3'
   setting :ftp_host, 'ftp.teletypegames.org'
   setting :discord_webhook, ''
+  setting :irc_server, 'irc.libera.chat', blank: true
   setting :irc_port, 6697
   setting :irc_channel, '#teletypegames'
   setting :irc_nick, 'ttgbbs'
@@ -88,9 +89,6 @@ class TeletypeBBS
   end
 
   def llm = @llm ||= TeletypeBBS.llm(ENV)
-
-  # TELETYPE_BBS_IRC_SERVER, where set and empty: no IRC.
-  def irc_server = ENV.fetch("#{BBS.config.env_prefix}IRC_SERVER", 'irc.libera.chat')
 
   def sysop?(name, authenticated) = authenticated == true && sysop_names.include?(name.to_s.downcase)
 

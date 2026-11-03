@@ -39,7 +39,7 @@ class FacesTest < Minitest::Test
   WINDOWS = {
     system_info: {}, messages: {}, oneliners: {}, voting: {}, mail: {}, chat: {}, irc: {},
     online_users: {}, last_callers: {}, user_list: {}, hall_of_fame: {}, register: {}, profile: {},
-    my_stats: {}, sysop_console: {}, doors: {}, keys: {}, compose_mail: { to: 'Sysop', subject: '', on_sent: nil },
+    my_stats: {}, sysop_console: {}, doors: {}, compose_mail: { to: 'Sysop', subject: '', on_sent: nil },
     master: { replies: Queue.new, question: nil }
   }.freeze
 
@@ -52,7 +52,7 @@ class FacesTest < Minitest::Test
       assert_equal name, window.id
       app.close_window(window)
     end
-    app.show(:compose_message, board: @bbs.boards.boards.first)
+    app.show(:compose_message, message_board: @bbs.boards.boards.first)
     app.send(:render_screen)
   end
 

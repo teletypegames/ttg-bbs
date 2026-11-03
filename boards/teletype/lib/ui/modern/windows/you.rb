@@ -56,7 +56,7 @@ module UI
             width  60
             height 16
             body do
-              Formatters::MyStats.body(**bbs.my_stats(caller_name, registered: context[:authenticated],
+              Formatters::MyStats.body(**board.my_stats(caller_name, registered: context[:authenticated],
                                                                    session_id: session_id,
                                                                    caller_number: context[:caller_number],
                                                                    sysop: sysop?))

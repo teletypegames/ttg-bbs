@@ -12,7 +12,7 @@ module UI
           window :doors, :master_detail do
             title      'Door Lobby'
             list_width 22
-            items      { bbs.doors }
+            items      { board.doors }
             label      :title
             detail     { |door, width| Formatters::Doors.detail(door, width, inside: inside(door)) }
             meta       { 'Enter or Open: step in · leaving the door brings you back' }
