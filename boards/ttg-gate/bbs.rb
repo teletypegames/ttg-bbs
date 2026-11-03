@@ -17,7 +17,8 @@ BBS.configure do |config|
 
   bbs = TTGGateBBS.new
 
-  config.flow = BBS::Terminal.flow(title: 'TTG Gate BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs), splash: true)
+  config.flow = BBS::Terminal.flow(title: 'TTG Gate BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs),
+                                   splash: true)
 end
 
 BBS.start
