@@ -5,7 +5,7 @@ module UI
     # The menubar, the status bar's hints, and the browser on start.
     module Menu
       KEYS = 'Up/Down: pick page - Tab: focus reader - PgUp/PgDn: scroll - ' \
-             'F5: window/full screen - * = supervisor only'
+             'F3: QR code of the page - F5: window/full screen - * = supervisor only'
 
       module_function
 
@@ -20,6 +20,7 @@ module UI
           item('&Supervisor login...') { supervisor_login }
           separator
           item('&Browse pages', shortcut: 'F2') { open_browser }
+          item('Page &QR code', shortcut: 'F3') { show_qr }
           item('&Refresh index', shortcut: 'F8') { refresh_pages }
           separator
           item('E&xit', shortcut: 'Alt-X') { :halt }
@@ -32,6 +33,7 @@ module UI
 
       def hints(app)
         app.status_hint('F2',  'Browse')  { open_browser }
+        app.status_hint('F3',  'QR')      { show_qr }
         app.status_hint('F8',  'Refresh') { refresh_pages }
         app.status_hint('F10', 'Menu')    { menubar.open(0) }
         app.status_hint('Alt-X', 'Quit')  { :halt }

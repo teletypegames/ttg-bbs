@@ -5,6 +5,10 @@
 # whether it is private, by its own flag or by a private ancestor's. The
 # texts of the wiki are cleaned of control characters.
 class PageModel
+  # Where the wiki is on the web, for a caller's browser: the board reads it
+  # on the Docker network (WIKI_BBS_URL), under another address.
+  PUBLIC_URL = 'https://wiki.teletypegames.org'
+
   attr_reader :route, :title, :depth, :updated_at, :tags
 
   def self.from_json(entry)
@@ -29,6 +33,9 @@ class PageModel
   end
 
   def private? = @private
+
+  # The page on the web; a private one asks for the wiki's login there.
+  def public_url = "#{PUBLIC_URL}#{route}"
 
   # The same page, private.
   def as_private = self.class.new(route: route, title: title, updated_at: updated_at, tags: tags, private: true)

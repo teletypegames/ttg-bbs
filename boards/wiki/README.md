@@ -30,6 +30,7 @@ window and back.
 | Tab | Move focus to the reader pane |
 | PgUp/PgDn/Home/End | Scroll the reader |
 | F2 | Reopen the browser |
+| F3 | QR code of the picked page (also **Wiki > Page QR code**) |
 | F5 / Alt-Enter | Window / full screen |
 | F8 | Refresh the wiki index (clears the page cache) |
 | F10 | Menubar |
@@ -38,6 +39,13 @@ window and back.
 Pages marked `*` in the list are private (login-protected on the wiki).
 Unlock them with **Wiki > Supervisor login** — the password comes from the
 `WIKI_BBS_SUPERVISOR_PASSWORD` env var. Locking back: same menu item, confirm.
+
+The QR code (rubbs' `BBS::QR`, half blocks) is the page's address on the
+web, `https://wiki.teletypegames.org<route>`, for a phone to open it with its
+pictures and diagrams; a private page asks for the wiki's login there. It
+takes the room the screen has: on 80×24 a route of up to 22 characters fits,
+on 80×25 up to 47, on a taller screen more; one that does not fit gets a message with the
+address.
 
 Mouse works too (xterm SGR), including wheel scroll in both panes.
 
@@ -48,7 +56,9 @@ numbered list, a cursor menu of rubbs (`BBS::Selector`): a page with pages
 under it is marked `>`, a private one `*`. CRSR moves the bar (left and right
 turn the pages), the number typed lights a page, and RETURN opens it, or goes
 down a level, where line 1 is the page itself; `Q` (or ←) goes back up. Pages are shown a screenful at a time
-(RETURN: more, `Q`: back), with their public address at the end. On the top
+(RETURN: more, `Q`: back), with their public address at the end; under the
+last screenful `C` (qr code) shows that address as a QR code (rubbs'
+`BBS::QR`, quadrant blocks) for a phone to open the page on the web. On the top
 level `S` is the supervisor login (again: lock back) and `R` re-reads the
 index.
 

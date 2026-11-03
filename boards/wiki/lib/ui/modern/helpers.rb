@@ -6,6 +6,9 @@ module UI
     # browser, the refresh and the About box.
     module Helpers
       ABOUT_WIDTH = 56
+      QR_PADDING  = { sides: 2, top: 1, bottom: 0 }.freeze
+      QR_SIDES    = 4
+      QR_ROWS     = 7
 
       def wiki = services[:wiki]
 
@@ -40,6 +43,26 @@ module UI
                                                 title: ' Wiki ')
         else BBS::Dialogs.message(self, 'Could not reach the wiki.', title: ' Error ')
         end
+      end
+
+      # The address of the page picked in the browser as a QR code, for a
+      # phone to open it on the web (with its pictures and diagrams).
+      def show_qr
+        page = windows.grep(BBS::Windows::MasterDetail).last&.list_widget&.selected_item
+        return BBS::Dialogs.message(self, 'Pick a page in the browser first.', title: ' QR code ') unless page
+
+        code = qr_code(page.public_url, width: cols - QR_SIDES, height: rows - QR_ROWS)
+        BBS::Windows::Info.open(self, title: ' Scan the page ', width: BBS::FrameBuffer.plain(code.first).size + QR_SIDES,
+                                      body: code, padding: QR_PADDING)
+      rescue BBS::QR::TooLong
+        BBS::Dialogs.message(self, "This address is too long for a QR code on this screen: #{page.public_url}",
+                             title: ' QR code ')
+      end
+
+      def qr_code(url, **room)
+        BBS::QR.ansi(url, **room)
+      rescue BBS::QR::TooLong
+        BBS::QR.ansi(url, **room, quiet: 1)
       end
 
       def show_about

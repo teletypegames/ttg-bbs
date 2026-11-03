@@ -98,7 +98,27 @@ module UI
         md    = @wiki.page_markdown(page)
         lines = BBS::Markdown.to_lines(md, width: WIDTH, theme: MARKDOWN).map { |l| " #{l}" }
         @screen.page(heading, lines + ['', " #{GR}updated #{page.updated_at}#{LG}",
-                                       " #{CY}#{PUBLIC_HOST}#{page.route}#{LG}"], numbers: true)
+                                       " #{CY}#{PUBLIC_HOST}#{page.route}#{LG}"], numbers: true, wait: false, room: 2)
+        qr(page) if @screen.actions(['c', 'qr code'], %w[q back]) == 'c'
+      end
+
+      # The page's address as a QR code in the middle of the screen, for a
+      # phone to open it on the web.
+      def qr(page)
+        @screen.title('SCAN THE PAGE', top_right)
+        code   = qr_code(page.public_url)
+        indent = ' ' * ((COLS - 1 - BBS::FrameBuffer.plain(code.first).size) / 2)
+        code.each { |line| @screen.puts("#{indent}#{line}") }
+        @screen.pause
+      rescue BBS::QR::TooLong
+        @screen.say('This address is too long for a QR code on the C64.', color: RD)
+        @screen.pause
+      end
+
+      def qr_code(url)
+        BBS::QR.petscii(url)
+      rescue BBS::QR::TooLong
+        BBS::QR.petscii(url, quiet: 1)
       end
 
       def supervisor_login
