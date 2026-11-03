@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'wording'
 require_relative 'modern/helpers'
-require_relative 'modern/menu'
 require_relative 'modern/browser_window'
 require_relative 'modern/supervisor_window'
 
@@ -12,28 +12,28 @@ module UI
   # ANSI markdown on the right. F5 / Alt-Enter (the window's zoom) puts it
   # back into a window and out again.
   module Modern
-    PARTS = [Menu, BrowserWindow, SupervisorWindow].freeze
+    ABOUT = 'TTG Wiki BBS — the Teletype Games wiki over telnet, from Teletype Games, powered by rubbs and Grav. ' \
+            'Pick a page on the left, read it on the right. Pages marked * are private: ' \
+            'Wiki > Supervisor login unlocks them for the call.'
+    KEYS  = ['Up/Down      pick a page', 'Tab          focus the reader', 'PgUp/PgDn    scroll',
+             '*            supervisor only'].freeze
 
-    def self.flow(bbs)
-      wiki    = bbs.wiki
-      browser = application(bbs)
-      BBS::Flow.define do
-        big_banner 'TTG WIKI', style: :success
-        text(style: :muted) { "Teletype Games wiki over telnet — #{wiki.pages.size} pages indexed." }
+    APP = BBS::Application.define do
+      theme :nortoncommander
+      helpers { include Helpers }
 
-        app browser
+      command(:supervisor, '&Supervisor login…') { supervisor_login }
+      command(:browse,  '&Browse pages',  key: 'F2', hint: 'Browse')  { open_browser }
+      command(:qr,      'Page &QR code',  key: 'F3', hint: 'QR')      { show_qr }
+      command(:refresh, '&Refresh index', key: 'F8', hint: 'Refresh') { refresh_pages }
+      menu 'Wiki', :supervisor, :separator, :browse, :qr, :refresh, :separator, :log_off
+      help about: ABOUT, keys: KEYS
 
-        say 'NO CARRIER', style: :muted
-      end
-    end
+      status { "#{wiki.pages.size} pages" }
 
-    def self.application(bbs)
-      BBS::Application.define do
-        theme BBS::Theme.nortoncommander
-        services bbs.services
-        helpers { include Helpers }
-        PARTS.each { |part| part.install(self) }
-      end
+      desktop { on_show { open_browser } }
+
+      parts BrowserWindow, SupervisorWindow
     end
   end
 end

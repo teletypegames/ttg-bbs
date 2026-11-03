@@ -7,7 +7,7 @@ class WikiRepositoryTest < Minitest::Test
                             'tags' => ["t\u202e"], 'private' => false }] }.freeze
   PAGE    = { 'title' => "Hi\e[2J", 'markdown' => "line\n\e[31mred" }.freeze
 
-  def repository = @repository ||= WikiRepository.new('http://wiki-grav', user_agent: 'Test/1', token: 'secret')
+  def repository = @repository ||= WikiRepository.new('http://wiki-grav', token: 'secret')
 
   def test_the_sitemap_is_cleaned
     page = FakeWiki.new('/custom/sitemap.json' => [200, SITEMAP]).serve { repository.sitemap.first }
@@ -20,10 +20,10 @@ class WikiRepositoryTest < Minitest::Test
     assert_equal 1, wiki.urls.size
   end
 
-  def test_requests_go_to_the_docker_network_with_the_user_agent
+  def test_requests_go_to_the_docker_network
     wiki = FakeWiki.new('/custom/page.json' => [200, PAGE])
     wiki.serve { repository.page('/a') }
-    assert_equal({ user_agent: 'Test/1', public_only: false }, wiki.urls.first[1])
+    assert_equal({ public_only: false }, wiki.urls.first[1])
   end
 
   def test_the_token_goes_only_with_a_private_page

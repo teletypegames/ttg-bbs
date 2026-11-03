@@ -24,12 +24,10 @@ class WikiRepository
   # +token+ is sent as the X-Wiki-Token header on private page requests only
   # (a header stays out of the wiki's access log): the wiki serves
   # private page bodies when it matches its own SUPERVISOR_PASSWORD.
-  # +user_agent+ names the board in every request.
-  def initialize(base_url, user_agent:, token: nil)
-    @base_url   = base_url.chomp('/')
-    @user_agent = user_agent
-    @token      = token.to_s
-    @pages      = BBS::Cache.new(ttl: PAGE_TTL, max_entries: PAGE_LIMIT, max_bytes: PAGE_BYTES)
+  def initialize(base_url, token: nil)
+    @base_url = base_url.chomp('/')
+    @token    = token.to_s
+    @pages    = BBS::Cache.new(ttl: PAGE_TTL, max_entries: PAGE_LIMIT, max_bytes: PAGE_BYTES)
   end
 
   # Every routable page as a PageModel, in the wiki's order, each with its
@@ -58,7 +56,7 @@ class WikiRepository
   def get(path, headers, **params)
     uri = URI("#{@base_url}#{path}")
     uri.query = URI.encode_www_form(params) unless params.empty?
-    options = { user_agent: @user_agent, public_only: false }
+    options = { public_only: false }
     options[:headers] = headers unless headers.empty?
     response = BBS::HTTP.get(uri.to_s, **options)
     raise Error, "HTTP #{response.status} for #{path}" unless response.ok?

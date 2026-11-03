@@ -34,7 +34,7 @@ window and back.
 | F5 / Alt-Enter | Window / full screen |
 | F8 | Refresh the wiki index (clears the page cache) |
 | F10 | Menubar |
-| Alt-X / Esc | Quit / close window |
+| Alt-X / Esc | Log off / close window |
 
 Pages marked `*` in the list are private (login-protected on the wiki).
 Unlock them with **Wiki > Supervisor login** — the password comes from the
@@ -44,8 +44,9 @@ The QR code (rubbs' `BBS::QR`, half blocks) is the page's address on the
 web, `https://wiki.teletypegames.org<route>`, for a phone to open it with its
 pictures and diagrams; a private page asks for the wiki's login there. It
 takes the room the screen has: on 80×24 a route of up to 22 characters fits,
-on 80×25 up to 47, on a taller screen more; one that does not fit gets a message with the
-address.
+on 80×25 up to 47, on a taller screen more; one that does not fit gets a message
+instead. The statusbar shows the number of pages indexed and the clock; **Help**
+has About and Keys.
 
 Mouse works too (xterm SGR), including wheel scroll in both panes.
 
@@ -60,7 +61,8 @@ down a level, where line 1 is the page itself; `Q` (or ←) goes back up. Pages 
 last screenful `C` (qr code) shows that address as a QR code (rubbs'
 `BBS::QR`, quadrant blocks) for a phone to open the page on the web. On the top
 level `S` is the supervisor login (again: lock back) and `R` re-reads the
-index.
+index. A call ends with rubbs' goodbye screen: the wiki's web address, the
+Teletype Games address and its QR code.
 
 ## Data source
 
@@ -138,13 +140,13 @@ telnet localhost 2323
 |---|---|---|
 | `BBS_PORT` | `2323` | Telnet listen port |
 | `BBS_MAX_SESSIONS` | `100` | Callers at once (the compose file sets 50) |
-| `WIKI_BBS_IDLE` | `900` | Idle disconnect (seconds; the compose file sets 600) |
 | `WIKI_BBS_URL` | `http://localhost:9120` | Grav wiki base URL |
 | `WIKI_BBS_SUPERVISOR_PASSWORD` | — | Unlocks private pages (Wiki > Supervisor login) and is sent to the wiki as the API token — must match the grav service's `SUPERVISOR_PASSWORD`; empty = private pages stay locked |
 
 `env-example` lists them all with their defaults. `WikiBBS`
-(`lib/domain/wiki_bbs.rb`) is the one place that reads them, apart from
-`BBS_PORT` and `BBS_MAX_SESSIONS`, which rubbs reads itself.
+(`lib/domain/wiki_bbs.rb`) declares the `WIKI_BBS_` ones as `BBS::Domain`
+settings; rubbs reads `BBS_PORT` and `BBS_MAX_SESSIONS` itself. A quiet caller
+is dropped after 600 seconds (`idle` in `bbs.rb`).
 
 Every log line (the board's and rubbs') starts with `wiki-bbs:` (rubbs'
 `BBS.log`, `log_tag`).
@@ -155,7 +157,7 @@ reaches the board with a lock bump (devarea `scripts/bbs-lock-bump.sh`).
 ## Project structure
 
 ```
-bbs.rb                        Entry point: one WikiBBS, its index loading, BBS::Terminal with the two faces
+bbs.rb                        Entry point: BBS.board with WikiBBS and the two faces
 Gemfile, Gemfile.lock         rubbs from git; rubocop, minitest and rake in :development
 Rakefile                      rake test
 Dockerfile, .dockerignore     The image
@@ -170,16 +172,14 @@ lib/
     repository/wiki_repository.rb   WikiRepository: the JSON API over BBS::HTTP, the page cache
     service/wiki_service.rb   WikiService: the shared index, private flags, pages as markdown, refreshes
     service/supervisor_service.rb   SupervisorService: the supervisor password
-    wiki_bbs.rb               WikiBBS: the composition root, reads ENV
+    wiki_bbs.rb               WikiBBS (BBS::Domain): settings, services, the index loaded in the background
   ui/
-    modern.rb                 UI::Modern: the two-pane browser on an ANSI terminal
-    modern/helpers.rb         UI::Modern::Helpers: the lock, the browser, refresh, About
-    modern/menu.rb            UI::Modern::Menu: the menubar and the status bar's hints
+    wording.rb                UI::Wording: what both faces tell the caller
+    modern.rb                 UI::Modern::APP: the commands, menus and help of the ANSI face
+    modern/helpers.rb         UI::Modern::Helpers: the lock, the browser, refresh, the QR code
     modern/browser_window.rb  UI::Modern::BrowserWindow: the page tree and the reader
     modern/supervisor_window.rb  UI::Modern::SupervisorWindow: the supervisor login form
-    petscii.rb                UI::Petscii: the C64 face, its masthead and goodbye
-    petscii/screen.rb         UI::Petscii::Screen: rubbs' BBS::Petscii::Screen, back key n
-    petscii/browser.rb        UI::Petscii::Browser: the page tree as cursor menus
+    petscii.rb                UI::Petscii (BBS::Petscii::Face): the masthead, the page tree as cursor lists
 test/                         Minitest tests of the domain (no network: BBS::HTTP is stubbed)
 ```
 

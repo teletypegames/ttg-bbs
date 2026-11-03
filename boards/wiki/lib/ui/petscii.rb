@@ -1,53 +1,135 @@
 # frozen_string_literal: true
 
-require_relative 'petscii/screen'
-require_relative 'petscii/browser'
+require_relative 'wording'
 
 module UI
-  # The wiki on a Commodore 64: PETSCII on a 40×25 screen, the page tree as
-  # numbered cursor menus, the pages as screenfuls of text that wait for RETURN.
-  module Petscii
-    LOGO_COLORS = [CY, CY, LB, LB, "\e[0;34m"].freeze
+  # The wiki on a Commodore 64: PETSCII on a 40×25 screen, one level of the
+  # page tree per screen as a numbered cursor list, the ones with pages
+  # under them marked with >. A number opens the page or goes down a level,
+  # where the first line is the page itself; q goes back up. At the top S
+  # unlocks the private pages (marked *) and R re-reads the index. A page
+  # comes in screenfuls that wait for RETURN.
+  class Petscii < BBS::Petscii::Face
+    include Wording
 
-    # TTG WIKI in reversed blocks, five rows.
-    def self.logo = BBS::BlockFont.petscii('TTG WIKI', colors: LOGO_COLORS, glyphs: BBS::BlockFont::WIDE_W, indent: 2)
+    LOGO_COLORS = [CY, CY, LB, LB, BL].freeze
+    TOP         = { 's' => 'login', 'r' => 'refresh' }.freeze
 
-    def self.flow(bbs)
-      wiki = bbs.wiki
-      BBS::Flow.define do
-        call do |ctx, runner|
-          screen = Screen.new(runner.session)
-          ctx[:call_started] = Time.now
-          Petscii.welcome(screen, wiki)
-          Browser.new(bbs, screen, ctx, caller_key: BBS::RateLimit.caller_key(runner.session)).run
-          Petscii.goodbye(screen, seconds: Time.now - ctx[:call_started])
-          nil
-        rescue IOError, Errno::EPIPE, Errno::ECONNRESET
-          :halt
+    title('TTG WIKI BBS') { right }
+
+    masthead do
+      gap
+      logo 'TTG WIKI', colors: LOGO_COLORS, glyphs: BBS::BlockFont::WIDE_W
+      gap
+      line(color: WH) { " ttg wiki bbs#{LG}, the c64 side" }
+      line(color: GR) { " #{wiki.pages.size} pages indexed" }
+      gap
+    end
+
+    def run
+      show_masthead
+      say('CRSR and RETURN, or the number, opens a page; Q goes back. Pages marked * are private.', color: GR)
+      pause('return: enter the wiki')
+      level(nil)
+    end
+
+    private
+
+    def unlocked? = context[:unlocked] == true
+
+    def locked?(page) = page.private? && !unlocked?
+
+    # One level of the tree under +parent+ (nil: the top), until q.
+    def level(parent)
+      loop do
+        case (choice = pick_on(parent))
+        when nil then return
+        when 's' then supervisor_login
+        when 'r' then refresh
+        else enter(choice, parent)
         end
+      rescue BBS::Abort
+        next
       end
     end
 
-    def self.welcome(screen, wiki)
-      screen.cls
-      screen.puts
-      logo.each { |l| screen.puts l }
-      screen.puts
-      screen.puts "  #{WH}ttg wiki bbs#{LG}, the c64 side"
-      screen.puts "  #{GR}#{wiki.pages.size} pages indexed#{LG}"
-      screen.puts
-      screen.say('CRSR and RETURN, or the number, opens a page; Q goes back. Pages marked * are private.', color: GR)
-      screen.pause('return: enter the wiki')
+    # The page picked on the level of +parent+, a top-level command, or nil.
+    def pick_on(parent)
+      return pick('TTG WIKI BBS', tree[nil] || [], commands: TOP, right: right) { |page| label(page) } unless parent
+
+      pick(parent.title.upcase, [parent, *tree[parent.route]]) { |page| label(page, own: page.equal?(parent)) }
     end
 
-    def self.goodbye(screen, seconds:)
-      minutes = (seconds / 60).to_i
-      BBS::Goodbye.petscii(screen, title: 'ttg wiki bbs') do |s|
-        s.puts " #{GR}on line #{minutes.positive? ? "#{minutes}m" : "#{seconds.to_i}s"}#{LG}"
-        s.puts
-        s.puts " #{GR}the wiki on the web:#{LG}"
-        s.puts " #{CY}#{Browser::PUBLIC_HOST}#{LG}"
+    def right = "#{'sv ' if unlocked?}#{wiki.pages.size} pages "
+
+    # Reads +page+, or goes down to its level when it has pages under it.
+    def enter(page, parent)
+      page.equal?(parent) || (tree[page.route] || []).empty? ? read(page) : level(page)
+    end
+
+    def label(page, own: false)
+      mark = if own then " #{DG}(this page)"
+             elsif tree.key?(page.route) then " #{CY}>"
+             else ''
+             end
+      lock = locked?(page) ? " #{RD}*" : ''
+      "#{own ? WH : LG}#{page.title}#{mark}#{lock}#{LG}"
+    end
+
+    # Route of the parent → its pages, each page under its nearest ancestor
+    # in the index; the top level (and the home page, /) under nil. Built
+    # again when the index changes.
+    def tree
+      pages = wiki.pages
+      return @tree if @tree_of.equal?(pages)
+
+      routes   = pages.to_h { |p| [p.route, p] }
+      @tree_of = pages
+      @tree    = pages.group_by do |p|
+        parts = p.route.split('/').reject(&:empty?)
+        parts.pop
+        parts.size.downto(1).map { |n| "/#{parts.first(n).join('/')}" }.find { |r| routes.key?(r) }
       end
+    end
+
+    def read(wiki_page)
+      heading = wiki_page.title.upcase[0, 30]
+      title(heading)
+      fail_with('Supervisor only. This page is private: S on the top level unlocks it.') if locked?(wiki_page)
+
+      lines = markdown(loading('loading...') { wiki.page_markdown(wiki_page) })
+      page(heading, [*lines, '', " #{GR}updated #{wiki_page.updated_at}#{LG}", " #{CY}#{PUBLIC_HOST}#{wiki_page.route}#{LG}"],
+           numbers: true, wait: false, room: 2)
+      show_qr(wiki_page) if actions(['c', 'qr code'], %w[q back]) == 'c'
+    end
+
+    # The page's address as a QR code in the middle of the screen, for a
+    # phone to open it on the web.
+    def show_qr(wiki_page)
+      title('SCAN THE PAGE', right)
+      pause if qr(wiki_page.public_url)
+    end
+
+    def supervisor_login
+      title('SUPERVISOR')
+      puts
+      if unlocked?
+        context[:unlocked] = false if confirm?('supervisor access is on. lock it?')
+        return
+      end
+      fail_with(UNLOCK[:unconfigured]) unless supervisor.configured?
+
+      result = supervisor.unlock(prompt('password', mask: '*').to_s)
+      return report(result, UNLOCK) unless result == :granted
+
+      context[:unlocked] = true
+      notice(GRANTED)
+    end
+
+    # Re-reads the shared index: every session sees the new one.
+    def refresh
+      home
+      report(loading('refreshing the index...') { wiki.refresh(caller_key) }, REFRESH)
     end
   end
 end
