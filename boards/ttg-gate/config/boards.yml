@@ -112,7 +112,7 @@ boards:
 
   - id: hackercave-bbs
     name: "HackerCave BBS"
-    summary: "The hacker's reading room: every RFC, the documents the Internet is made of, from RFC 1 of 1969 to today. Search by number, series or words, follow what obsoletes what, and read them as published, or reflowed for a Commodore 64 in PETSCII."
+    summary: "The hacker's reading room: every RFC from RFC 1 of 1969 to today, the IENs before them, and the Jargon File. Search titles or the full text, follow what obsoletes what, see the errata, and read them as published, or reflowed for a Commodore 64 in PETSCII."
     tags: ["RFC", "internet", "C64"]
     port: 2334
     accent: "#d7ff5f"
