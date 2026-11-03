@@ -31,6 +31,7 @@ class JargonTest < Minitest::Test
     j = jargon
     assert_includes j.letter('H').last.summary, 'Café culture.'
     assert_equal ['hacker'], j.search('cafe').map(&:headword)
+    assert_equal 'hack', j.search('hack').first.headword
     assert_equal :too_short, j.search('a')
     titles = j.sections.map(&:title)
     assert_equal ['Welcome to the Jargon File', 'Chapter 1. Hacker Slang and Hacker Culture', 'Appendix A. Hacker Folklore'],

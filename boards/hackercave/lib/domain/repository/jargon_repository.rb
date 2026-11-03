@@ -57,11 +57,13 @@ class JargonRepository
   end
 
   # At most +limit+ entries that have every word of +words+ (a word
-  # prefix), the headword weighing most.
+  # prefix): the entry whose headword is the words first, then the headword
+  # weighing most.
   def search(words, limit:)
     terms = words.map { |w| %("#{w.delete('"')}"*) }.join(' ')
     query('SELECT e.* FROM entries_fts f JOIN entries e ON e.id = f.rowid WHERE entries_fts MATCH ? ' \
-          'ORDER BY bm25(entries_fts, 20.0, 1.0) LIMIT ?', [terms, limit]).map { |r| entry_of(r) }
+          'ORDER BY e.key = ? DESC, bm25(entries_fts, 20.0, 1.0) LIMIT ?',
+          [terms, JargonEntryModel.key(words.join(' ')), limit]).map { |r| entry_of(r) }
   end
 
   def sections = query('SELECT * FROM sections ORDER BY id').map { |r| section_of(r) }
