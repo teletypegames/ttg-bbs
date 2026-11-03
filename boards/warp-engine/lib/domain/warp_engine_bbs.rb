@@ -1,40 +1,28 @@
 # frozen_string_literal: true
 
 # The board itself, whatever terminal a caller has: the catalog wired to the
-# shelf list, the archive and the download log. Both faces (lib/ui/modern,
-# lib/ui/petscii) work on one instance of it. The only place that reads ENV.
+# shelf list, the archive and the download log.
 class WarpEngineBBS
-  ROOT = File.expand_path('../..', __dir__)
+  include BBS::Domain
 
-  attr_reader :catalog
+  setting :archive_url, 'http://archive.teletypegames.org'
+  setting :index_ttl, 300
+  setting :download_max, 1024 * 1024
+  path    :shelves, 'config/shelves.yml'
+  path    :db, 'data/warp-engine.sqlite3'
 
-  def initialize
-    @catalog = CatalogService.new(shelves: shelves, archive: archive, downloads: downloads,
-                                  max_bytes: Integer(env('DOWNLOAD_MAX', (1024 * 1024).to_s)))
+  service(:catalog) do
+    CatalogService.new(shelves: ShelfRepository.new(shelves), archive: ArchiveRepository.new(archive_url, ttl: index_ttl),
+                       downloads: downloads, max_bytes: download_max)
   end
-
-  # The services by name.
-  def services = { catalog: @catalog }
 
   private
 
-  def env(name, default) = ENV.fetch("WARP_ENGINE_BBS_#{name}", default)
-
-  def path(name, default) = File.expand_path(env(name, default), ROOT)
-
-  def shelves = ShelfRepository.new(path('SHELVES', 'config/shelves.yml'))
-
-  def archive
-    ArchiveRepository.new(env('ARCHIVE_URL', 'http://archive.teletypegames.org'),
-                          ttl: Integer(env('INDEX_TTL', '300')))
-  end
-
-  # The download log in data/warp-engine.sqlite3, with the JSONL log of the
-  # board before it imported on the first start.
+  # The download log, with the JSONL log of the board before it imported on
+  # the first start.
   def downloads
-    db = BBS::SQLite.new(path('DB', 'data/warp-engine.sqlite3'))
-    DownloadRepository.new(db).tap do |repository|
-      LegacyDownloadLog.new(File.join(File.dirname(db.path), 'downloads.jsonl'), repository).import
+    DownloadRepository.new(database(db)).tap do |repository|
+      LegacyDownloadLog.new(File.join(File.dirname(db), 'downloads.jsonl'), repository).import
     end
   end
 end

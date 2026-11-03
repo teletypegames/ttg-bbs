@@ -1,153 +1,112 @@
 # frozen_string_literal: true
 
-require_relative 'petscii/screen'
-require_relative 'transfer'
-require_relative 'logo'
+require_relative 'words'
 
 module UI
-  # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor menu
-  # of the shelves, their titles as numbered lists, a title on a page of its
-  # own, and its download by XMODEM-1K or XMODEM, the protocols a C64
-  # terminal knows.
-  module Petscii
-    LOGO_COLORS = [LB, LB, CY, CY, WH].freeze
+  # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor menu of
+  # the shelves, their titles as numbered lists, a title on a page of its own,
+  # and its download by XMODEM-1K or XMODEM, the protocols a C64 terminal
+  # knows.
+  class Petscii < BBS::Petscii::Face
+    LOGO_COLORS   = [LB, LB, CY, CY, WH].freeze
+    PROTOCOL_KEYS = { '1' => :xmodem_1k, 'x' => :xmodem }.freeze
 
-    # WARP in reversed blocks, five rows.
-    def self.logo = BBS::BlockFont.petscii(Logo::WORD, colors: LOGO_COLORS, indent: 10)
+    HELP = [
+      " #{WH}1#{LG} xmodem-1k is the faster one; #{WH}x#{LG} plain xmodem is for a terminal that has no 1k.", '',
+      ' Pick a title and a protocol, then start the download in your terminal: in ccgms, ' \
+      'novaterm or ultimateterm it is the download or receive menu. It asks for a file name, ' \
+      'and saves the file as a program on your disk.', '',
+      ' The board waits a minute for your terminal. run/stop gives up.', '',
+      ' Every file is checked against its shelf before it goes. Xmodem fills its last block up, ' \
+      'so the file on your disk may be a little longer: it loads all the same.'
+    ].freeze
 
-    def self.masthead
-      rule = " #{DG}#{'─' * (COLS - 2)}#{LG}"
-      [rule, '', *logo, '', rule,
-       "  #{WH}the file area of teletype games#{LG}", "  #{GR}telnet downloads for your c64#{LG}", rule]
+    title 'WARPENGINE BBS'
+
+    masthead do
+      gap
+      rule
+      gap
+      logo 'WARP', colors: LOGO_COLORS, indent: 10
+      gap
+      rule
+      line ' the file area of teletype games', color: WH
+      line ' telnet downloads for your c64', color: GR
+      rule
     end
 
-    def self.flow(bbs)
-      BBS::Flow.define do
-        call do |ctx, runner|
-          Board.new(bbs.catalog, Screen.new(runner.session), ctx).run
-          nil
+    def show_masthead
+      super
+      @under_masthead = true
+    end
+
+    # The first menu goes under the masthead, the others under the title.
+    def home
+      return super unless @under_masthead
+
+      @under_masthead = false
+    end
+
+    def main_menu_choice = shelf_menu.take(self)
+
+    private
+
+    # The main menu: a shelf on each number, the help and the log off.
+    def shelf_menu
+      shelves = catalog.shelves
+      @shelf_menu ||= MainMenu.new(MENU_HINT) do
+        shelves.each_with_index do |shelf, i|
+          name = shelf.name.downcase
+          item((i + 1).to_s, name, "#{name} titles to download") { open_shelf(shelf) }
         end
-        call do |_ctx, runner|
-          BBS::Goodbye.petscii(Screen.new(runner.session), title: 'warpengine bbs', color: LB)
-          nil
-        rescue IOError, Errno::EPIPE, Errno::ECONNRESET
-          nil
-        end
+        item('h', 'how to download', 'protocols, terminals, file names') { page('HOW TO DOWNLOAD', HELP) }
+        log_off
       end
     end
 
-    # One call: the shelves, their titles, the downloads.
-    class Board
-      PROTOCOL_KEYS = { '1' => :xmodem_1k, 'x' => :xmodem }.freeze
-
-      HELP = [
-        " #{WH}1#{LG} xmodem-1k is the faster one; #{WH}x#{LG} plain xmodem is for a terminal that has no 1k.", '',
-        ' Pick a title and a protocol, then start the download in your terminal: in ccgms, ' \
-        'novaterm or ultimateterm it is the download or receive menu. It asks for a file name, ' \
-        'and saves the file as a program on your disk.', '',
-        ' The board waits a minute for your terminal. run/stop gives up.', '',
-        ' Every file is checked against its shelf before it goes. Xmodem fills its last block up, ' \
-        'so the file on your disk may be a little longer: it loads all the same.'
-      ].freeze
-
-      def initialize(catalog, screen, ctx)
-        @catalog = catalog
-        @screen  = screen
-        @ctx     = ctx
-      end
-
-      def run
-        @screen.cls
-        @screen.puts
-        Petscii.masthead.each { |l| @screen.puts l }
-        loop do
-          @screen.puts
-          items = menu_items
-          @choice = @screen.menu(items, index: items.index { |i| i.value == @choice }, back: 'q',
-                                        hint: 'crsr: choose  return: take')
-          case @choice
-          when 'h' then help
-          when 'q' then return
-          else shelf(@choice)
-          end
-          @screen.title('WARPENGINE BBS')
+    def open_shelf(shelf)
+      say('reading the shelf…', color: GR)
+      loop do
+        titles = catalog.titles(shelf) || fail_with(Words::NO_ANSWER)
+        picked = pick(shelf.name.upcase, titles, empty: 'this shelf is empty right now.', right: "#{titles.size} titles") do |t|
+          "#{t.title} #{GR}#{t.version}#{LG}"
         end
+        return unless picked
+
+        show_title(shelf, picked)
       end
+    end
 
-      private
+    def show_title(shelf, title)
+      count = catalog.downloads(title)
+      lines = [*wrap(title.title).map { |l| " #{WH}#{l}#{LG}" },
+               " #{CY}v#{title.version}#{LG}  #{title.size} bytes",
+               " #{GR}#{title.author.downcase}  #{count} download#{'s' unless count == 1}#{LG}", '',
+               *wrap(title.about).map { |l| " #{l}" }, '',
+               " #{GR}load\"#{title.disk_name.downcase}\",8,1 and run#{LG}"]
+      page(shelf.name.upcase, lines, wait: false)
+      key = actions(%w[1 xmodem-1k], %w[x xmodem], %w[q back])
+      download(title, PROTOCOL_KEYS[key]) if PROTOCOL_KEYS.key?(key)
+    end
 
-      def menu_items
-        [*@catalog.shelves.each_with_index.map do |s, i|
-          BBS::Selector.item(s.name.downcase, key: (i + 1).to_s, value: s, about: "#{s.name.downcase} titles to download")
-        end,
-         BBS::Selector.item('how to download', key: 'h', value: 'h', about: 'protocols, terminals, file names'),
-         BBS::Selector.item('log off', key: 'q', value: 'q', about: 'hang up. see you!')]
-      end
+    def download(file, protocol)
+      title("DOWNLOAD #{file.disk_name}")
+      say("fetching #{file.file.downcase}…", color: GR)
+      data = catalog.fetch(file)
+      return alert(Words.refusal(data, file)) if data.is_a?(Symbol)
 
-      def shelf(shelf)
-        @screen.puts " #{GR}reading the shelf…#{LG}"
-        loop do
-          titles = @catalog.titles(shelf)
-          unless titles
-            @screen.puts
-            @screen.say('The archive did not answer. Try again later.', color: RD)
-            @screen.pause
-            return
-          end
+      result = transfer(file, protocol, data)
+      catalog.downloaded(file, protocol) if result == :ok
+      title("DOWNLOAD #{file.disk_name}")
+      text = BBS::Transfer.result(result, protocol, file.file)
+      result == :ok ? notice(text) : alert(text)
+    end
 
-          title = @screen.pick(shelf.name.upcase, titles, empty: 'this shelf is empty right now.',
-                                                          right: "#{titles.size} titles") do |t|
-            "#{t.title} #{GR}#{t.version}#{LG}"
-          end
-          return unless title
-
-          show(shelf, title)
-        end
-      end
-
-      def show(shelf, title)
-        count = @catalog.downloads(title)
-        lines = [*@screen.wrap(title.title).map { |l| " #{WH}#{l}#{LG}" },
-                 " #{CY}v#{title.version}#{LG}  #{title.size} bytes",
-                 " #{GR}#{title.author.downcase}  #{count} download#{'s' unless count == 1}#{LG}", '',
-                 *@screen.wrap(title.about).map { |l| " #{l}" }, '',
-                 " #{GR}load\"#{title.disk_name.downcase}\",8,1 and run#{LG}"]
-        @screen.page(shelf.name.upcase, lines, wait: false)
-        k = @screen.actions(%w[1 xmodem-1k], %w[x xmodem], %w[q back])
-        download(title, PROTOCOL_KEYS[k]) if PROTOCOL_KEYS.key?(k)
-      end
-
-      def download(title, protocol)
-        @screen.title("DOWNLOAD #{title.disk_name}")
-        @screen.puts " #{GR}fetching #{title.file.downcase}…#{LG}"
-        data = @catalog.fetch(title)
-        return notice(Transfer.refusal(data, title), RD) if data.is_a?(Symbol)
-
-        result = transfer(title, protocol, data)
-        @catalog.downloaded(title, protocol) if result == :ok
-        @screen.title("DOWNLOAD #{title.disk_name}")
-        notice(Transfer.result(result, protocol, title), result == :ok ? GN : RD)
-      end
-
-      # Tells the caller to start the download, then sends; raises IOError
-      # when the line drops.
-      def transfer(title, protocol, data)
-        @screen.puts
-        @screen.say(Transfer.start(protocol, title), color: WH)
-        @screen.puts
-        result = Transfer.send_file(@screen.session, protocol, title, data)
-        raise IOError, 'the caller hung up' if result == :hangup
-
-        result
-      end
-
-      def notice(text, color)
-        @screen.puts
-        @screen.say(text, color: color)
-        @screen.pause
-      end
-
-      def help = @screen.page('HOW TO DOWNLOAD', HELP)
+    def transfer(file, protocol, data)
+      puts
+      say(BBS::Transfer.start(protocol, file.file, file.size, save_as: file.disk_name), color: WH)
+      puts
+      BBS::Transfer.send(session, protocol, file.file, data)
     end
   end
 end

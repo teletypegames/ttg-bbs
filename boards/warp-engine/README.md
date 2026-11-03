@@ -75,7 +75,7 @@ Every log line (the board's and rubbs') starts with `warp-engine-bbs:`
 ## Project structure
 
 ```
-bbs.rb                      entry point: BBS.configure + BBS::Terminal.flow
+bbs.rb                      entry point: BBS.board (rubbs 2.0 DSL)
 config/shelves.yml          the shelves of the archive
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
@@ -86,17 +86,14 @@ lib/domain/
   repository/download_repository.rb  the downloads table and the counts
   repository/legacy_download_log.rb  the one-time import of data/downloads.jsonl
   service/catalog_service.rb         shelves, titles, a checked fetch, the log
-  warp_engine_bbs.rb        the composition root (WarpEngineBBS)
+  warp_engine_bbs.rb        the composition root (WarpEngineBBS, a BBS::Domain)
 lib/ui/
-  transfer.rb               the protocols and what the caller is told, both faces
-  logo.rb                   WARP in blocks (BBS::BlockFont), both faces
-  modern.rb                 UI::Modern: the rubbs Application
-  modern/actions.rb         its helpers: open a shelf, a download, the desktop
-  modern/shelves.rb         the shelves window
-  modern/titles.rb          a shelf's titles window and its protocol buttons
-  modern/menu.rb            the menubar, the help texts, the statusbar keys
-  petscii.rb                UI::Petscii: the C64 board
-  petscii/screen.rb         the 40×25 screen: rubbs' BBS::Petscii::Screen
+  words.rb                  why a download cannot go, both faces
+  modern.rb                 UI::Modern::APP: commands, menus, help, desktop
+  modern/helpers.rb         its helpers: open a shelf, a download, a title's card
+  modern/shelves_window.rb  the shelves window
+  modern/titles_window.rb   a shelf's titles window and its protocol buttons
+  petscii.rb                UI::Petscii: the C64 face (a BBS::Petscii::Face)
 ```
 
 ## Tests
@@ -110,8 +107,7 @@ bundle exec bin/test            # all
 bundle exec bin/test archive    # the files whose name has the word
 ```
 
-The downloads are rubbs' `BBS::Zmodem` and `BBS::Xmodem` (rubbs 0.26.0 and
-later).
+The downloads are rubbs' `BBS::Transfer` (`BBS::Zmodem` and `BBS::Xmodem`).
 
 ## License
 

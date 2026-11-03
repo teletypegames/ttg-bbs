@@ -6,21 +6,11 @@ require_relative 'lib/domain'
 require_relative 'lib/ui/modern'
 require_relative 'lib/ui/petscii'
 
-# The file area of Teletype Games on a telnet line, two faces on one port: the
-# caller picks a terminal (BBS::Terminal guesses it first), and an ANSI terminal
-# gets the modern desktop with ZMODEM and XMODEM, a Commodore 64 the PETSCII
-# screens with XMODEM. Mouse reporting waits for the choice: its escape
-# sequence would be garbage on a C64.
-BBS.configure do |config|
-  config.log_tag          = 'warp-engine-bbs'
-  config.mouse            = true
-  config.mouse_on_connect = false
-  config.idle_seconds     = 600
-
-  bbs = WarpEngineBBS.new
-
-  config.flow = BBS::Terminal.flow(title: 'WarpEngine BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs),
-                                   splash: TTG::Logo.splash)
+# The file area of Teletype Games on a telnet line, two faces on one port: an
+# ANSI terminal gets the modern desktop with ZMODEM and XMODEM, a Commodore 64
+# the PETSCII screens with XMODEM.
+BBS.board 'WarpEngine BBS', WarpEngineBBS, slug: 'warp-engine-bbs' do
+  preset  TTG::PRESET
+  modern  UI::Modern::APP
+  petscii UI::Petscii
 end
-
-BBS.start
