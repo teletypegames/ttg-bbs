@@ -33,6 +33,7 @@ module UI
       @screen     = screen
       @ctx        = ctx
       @autosave   = bbs.autosave_seconds
+      @site       = bbs.site_url
     end
 
     def run
@@ -80,11 +81,18 @@ module UI
       @screen.choose("\r\n #{WH}ttgblog#{LG}> ", user ? %w[l c g u w p o q] : %w[l c g e q])
     end
 
-    # What an editor does with a post after its last page: e, p, d or q.
+    # What an editor does with a post after its last page: e, p, d, c
+    # (a published post's QR code) or q.
     def post_choice(post)
       flip = post.published? ? 'unpublish' : 'publish'
-      @screen.choose("\r\n #{YE}E#{LG} edit  #{YE}P#{LG} #{flip}  #{YE}D#{LG} delete  #{DG}return: back#{LG} ",
-                     ['e', 'p', 'd', 'q', :enter])
+      qr   = post.published? ? "#{YE}C#{LG} qr  " : ''
+      @screen.choose("\r\n #{qr}#{YE}E#{LG} edit  #{YE}P#{LG} #{flip}  #{YE}D#{LG} delete  #{DG}return: back#{LG} ",
+                     [*('c' if post.published?), 'e', 'p', 'd', 'q', :enter])
+    end
+
+    # What a reader does after the last page of a post: c or q.
+    def reader_choice
+      @screen.choose("\r\n #{YE}C#{LG} qr code of its web page  #{DG}return: back#{LG} ", ['c', 'q', :enter])
     end
 
     # The draft on its screen and the key of the caller's choice.
@@ -170,19 +178,47 @@ module UI
       return false unless readable?(post)
 
       heading = @categories.find(post.category).name.upcase
+      @screen.page(heading, post_lines(post), right: right, wait: false, room: 2)
       unless user
-        @screen.page(heading, post_lines(post), right: right)
+        show_qr(post) if reader_choice == 'c'
         return false
       end
 
-      @screen.page(heading, post_lines(post), right: right, wait: false, room: 2)
       case post_choice(post)
+      when 'c' then show_qr(post)
       when 'e' then compose(post)
       when 'p' then publish?(post, !post.published?)
       when 'd' then delete?(post)
       else false
       end
     end
+
+    # The address of a published post on the web.
+    def post_url(post) = "#{@site}/blog/#{post.slug}"
+
+    # The QR code of the post's web page in the middle of the screen, until
+    # a key; a quiet zone of one module when two leave no room. Returns nil.
+    def show_qr(post)
+      @screen.title('SCAN THE ADDRESS', right)
+      code   = qr_lines(post_url(post))
+      indent = ' ' * [(@screen.cols - 1 - BBS::FrameBuffer.visible_width(code.first)) / 2, 0].max
+      code.each { |l| @screen.puts("#{indent}#{l}") }
+      @screen.pause
+      nil
+    rescue BBS::QR::TooLong
+      @screen.say('This address is too long for a QR code on this screen.', color: RD)
+      @screen.pause
+      nil
+    end
+
+    def qr_lines(url)
+      qr_code(url, quiet: BBS::QR::QUIET)
+    rescue BBS::QR::TooLong
+      qr_code(url, quiet: 1)
+    end
+
+    # The QR code of +url+ in the face's blocks, drawn by the face.
+    def qr_code(_url, quiet:) = raise(NotImplementedError)
 
     def post_lines(post) = PostPage.lines(@categories, post, width: @screen.width, long_dates: wide?)
 

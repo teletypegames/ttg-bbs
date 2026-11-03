@@ -94,6 +94,7 @@ module UI
           return changed unless readable?(post)
 
           case read(post)
+          when 'c' then show_qr(post)
           when 'e' then changed = compose(post) || changed
           when 'p' then changed = publish?(post, !post.published?) || changed
           when 'd' then return true if delete?(post)
@@ -102,14 +103,22 @@ module UI
         end
       end
 
+      # The post under its footer, with the key of its QR code when it is
+      # published and the editor's keys: the key of the action taken.
       def read(post)
-        actions = if user
-                    [%w[e edit], ['p', post.published? ? 'unpublish' : 'publish'], %w[d delete]]
-                  else
-                    []
-                  end
-        @screen.view(@categories.find(post.category).name.upcase, post_lines(post), right: right, actions: actions)
+        qr      = post.published? ? [['c', qr_label]] : []
+        actions = user ? editor_actions(post) : []
+        @screen.view(@categories.find(post.category).name.upcase, post_lines(post), right: right, actions: qr + actions)
       end
+
+      # The editor's row is full: the QR code is just "qr" there.
+      def qr_label = user ? 'qr' : 'qr code of its web page'
+
+      def editor_actions(post) = [%w[e edit], ['p', post.published? ? 'unpublish' : 'publish'], %w[d delete]]
+
+      # Quadrant blocks in the C64's screen less its title bar, the prompt
+      # under the code and the last row.
+      def qr_code(url, quiet:) = BBS::QR.petscii(url, quiet: quiet)
 
       def saved_new(post) = "Saved as number #{post.id}, unpublished. Open it and press P to publish it."
 

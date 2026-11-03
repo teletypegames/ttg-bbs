@@ -155,7 +155,7 @@ module UI
         title(heading, right)
         pages[index].each { |l| puts l }
         (view_rows(actions) - pages[index].size).times { puts }
-        puts " #{GR}editor#{LG} #{actions.map { |k, label| "#{YE}#{k.upcase}#{LG} #{label}" }.join('  ')}" if actions.any?
+        puts " #{actions.map { |k, label| "#{YE}#{k.upcase}#{LG} #{label}" }.join('  ')}" if actions.any?
         write page_footer(pages, index)
         @at = [footer_row, cols]
       end

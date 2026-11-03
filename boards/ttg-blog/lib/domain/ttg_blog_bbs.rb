@@ -11,7 +11,10 @@ class TTGBlogBBS
   # Seconds between the autosaves of what an editor writes.
   AUTOSAVE_SECONDS = 15
 
-  attr_reader :posts, :editors, :categories, :http_port, :autosave_seconds
+  # Where the blog is on the web: a published post is at <tt>/blog/SLUG</tt>.
+  SITE_URL = 'https://teletypegames.org'
+
+  attr_reader :posts, :editors, :categories, :http_port, :autosave_seconds, :site_url
 
   def initialize(env: ENV)
     db = BBS::SQLite.new(env.fetch('TTG_BLOG_BBS_DB', File.join(ROOT, 'data/ttgblog.sqlite3')))
@@ -22,6 +25,7 @@ class TTGBlogBBS
     @posts      = PostService.new(PostRepository.new(db), categories: @categories)
     @http_port  = env.fetch('TTG_BLOG_BBS_HTTP_PORT', '8080').to_i
     @autosave_seconds = positive(env['TTG_BLOG_BBS_AUTOSAVE_SECONDS'], AUTOSAVE_SECONDS)
+    @site_url = env.fetch('TTG_BLOG_BBS_SITE_URL', SITE_URL).chomp('/')
     announce(env)
   end
 
@@ -33,7 +37,7 @@ class TTGBlogBBS
     webhook = env['TTG_BLOG_BBS_DISCORD_WEBHOOK'].to_s
     return if webhook.empty?
 
-    discord = DiscordNotifier.new(webhook: webhook, site: env.fetch('TTG_BLOG_BBS_SITE_URL', 'https://teletypegames.org'))
+    discord = DiscordNotifier.new(webhook: webhook, site: @site_url)
     @posts.on_publish { |post| discord.call(post) }
   end
 end

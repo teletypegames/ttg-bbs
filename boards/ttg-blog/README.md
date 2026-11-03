@@ -61,7 +61,7 @@ and shows its bare id.
 | `TTG_BLOG_BBS_HTTP_PORT` | `8080` | Port of the read API (`0` turns it off); compose does not publish it |
 | `TTG_BLOG_BBS_AUTOSAVE_SECONDS` | `15` | Seconds between the autosaves of a draft while an editor writes |
 | `TTG_BLOG_BBS_DISCORD_WEBHOOK` | — | A post rings this Discord webhook when first published, with its link on the web (`.env` on the server) |
-| `TTG_BLOG_BBS_SITE_URL` | `https://teletypegames.org` | The site the Discord message links to |
+| `TTG_BLOG_BBS_SITE_URL` | `https://teletypegames.org` | The site a published post is on, `/blog/SLUG`: the Discord message links to it, the QR code of a post shows it |
 
 ## Log
 
@@ -171,6 +171,14 @@ every page, the questions (publish? delete?) and their answers come in the
 footer over the post, and after an edit or a publish the post is shown again.
 A reader sees the published posts only; an
 editor sees all of them, the unpublished ones marked so.
+
+Under a published post `C` shows the QR code of its page on the web
+(`TTG_BLOG_BBS_SITE_URL/blog/SLUG`), for a phone to open it with its pictures
+and links: rubbs' `BBS::QR`, half blocks on a modern terminal, quadrant
+blocks on a C64, in the middle of the screen until a key (a quiet zone of
+one module when two leave no room). A reader gets it after the last page
+(on a C64 on the row over the footer), an editor beside `E`/`P`/`D`; an
+unpublished post has no page on the web and no `C`.
 
 ### Writing
 

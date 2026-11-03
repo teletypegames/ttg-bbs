@@ -16,6 +16,10 @@ module UI
 
       private
 
+      # Half blocks in the screen less its title bar and the prompt under
+      # the code.
+      def qr_code(url, quiet:) = BBS::QR.ansi(url, width: @screen.cols - 1, height: @screen.rows - 4, quiet: quiet)
+
       def masthead
         rule = " #{DG}#{'─' * (@screen.cols - 2)}#{LG}"
         [rule, *Board.logo.map { |l| "  #{YE}#{l}#{LG}" }, rule, "  #{WH}#{MOTTO}#{LG}"]
