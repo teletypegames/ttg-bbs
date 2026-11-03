@@ -17,5 +17,5 @@ rescue BBS::HTTP::Error => e
 end
 abort 'Wikidata answered no games; nothing written' if records.empty?
 
-BBS::Snapshot.write(path, { 'games' => records }, Time.now.utc, source: CatalogService::SOURCE)
+BBS::Snapshot.write(path, { 'license' => CatalogService::LICENSE, 'games' => records }, Time.now.utc, source: CatalogService::SOURCE)
 puts "#{records.size} games written to #{path}"

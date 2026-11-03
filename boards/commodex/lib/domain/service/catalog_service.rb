@@ -2,10 +2,9 @@
 
 # The game compendium: search by title, browse by year, genre and company,
 # a random game. It reads the games of the catalog file (a BBS::Snapshot)
-# and builds its indexes once per snapshot. A BBS.background thread refreshes the
-# snapshot from Wikidata when it is older than +ttl+ seconds; a failed
-# refresh is logged, keeps the old one and tries again after +retry_after+
-# seconds.
+# and builds its indexes once per snapshot. #refresh_if_stale replaces the
+# snapshot from Wikidata when it is older than +ttl+ seconds (CommodexBBS runs
+# it in the background, a failed one again after RETRY_AFTER seconds).
 class CatalogService
   MIN_QUERY   = 2
   MAX_RESULTS = 300
@@ -13,26 +12,28 @@ class CatalogService
   # Wikidata answered, but with no games: the old snapshot stays.
   class EmptyCatalog < StandardError; end
 
-  SOURCE = 'Wikidata, https://www.wikidata.org (CC0 1.0)'
+  SOURCE  = 'Wikidata, https://www.wikidata.org (CC0 1.0)'
+  LICENSE = 'CC0-1.0'
+  # Seconds before a failed refresh is tried again.
+  RETRY_AFTER = 3600
 
   Index = Data.define(:games, :by_id, :folded, :years, :genres, :companies)
 
   # The catalog file kept whole in memory: the newer of +seed+ and +path+,
   # its records the games.
   def self.snapshot(seed:, path:)
-    BBS::Snapshot.new(seed: seed, path: path, source: SOURCE) do |records|
+    BBS::Snapshot.new(seed: seed, path: path, source: SOURCE, meta: { 'license' => LICENSE }) do |records|
       names = {}
       Array(records['games']).filter_map { |r| GameModel.from_record(r, names) }.freeze
     end
   end
 
-  def initialize(snapshot, wikidata:, ttl:, retry_after: 3600)
-    @snapshot    = snapshot
-    @wikidata    = wikidata
-    @ttl         = ttl
-    @retry_after = retry_after
-    @lock        = Mutex.new
-    @index       = nil
+  def initialize(snapshot, wikidata:, ttl:)
+    @snapshot = snapshot
+    @wikidata = wikidata
+    @ttl      = ttl
+    @lock     = Mutex.new
+    @index    = nil
   end
 
   def games = index.games
@@ -80,16 +81,6 @@ class CatalogService
   def of_company(name) = index.companies.fetch(name, [])
 
   def random = games.sample
-
-  # Starts the BBS.background thread that keeps the catalog fresh: it looks
-  # at the snapshot's age every +ttl+ seconds (at least hourly). nil when
-  # +ttl+ is 0.
-  def start_refresh
-    return nil unless @ttl.positive?
-
-    BBS.background('catalog refresh', every: [@ttl, @retry_after].min, retry_after: @retry_after,
-                                      max_retry: @retry_after) { refresh_if_stale }
-  end
 
   # Reads the catalog from Wikidata when it is +ttl+ old: :ok, or :fresh.
   # Raises when Wikidata does not answer or has no games, or the snapshot

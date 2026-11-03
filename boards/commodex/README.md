@@ -73,7 +73,7 @@ with its default.
 | Variable | Default | |
 |---|---|---|
 | `COMMODEX_BBS_CATALOG_SEED` | `config/catalog.json.gz` | the snapshot shipped with the image |
-| `COMMODEX_BBS_CATALOG_FILE` | `data/catalog.json.gz` | the snapshot a refresh writes |
+| `COMMODEX_BBS_CATALOG` | `data/catalog.json.gz` | the snapshot a refresh writes |
 | `COMMODEX_BBS_CATALOG_TTL` | `604800` | seconds before Wikidata is read again; `0` never |
 | `COMMODEX_BBS_WIKIPEDIA_CACHE` | `200` | Wikipedia leads kept in memory |
 | `COMMODEX_BBS_TIPS_DB` | `data/tips.sqlite3` | the tips |

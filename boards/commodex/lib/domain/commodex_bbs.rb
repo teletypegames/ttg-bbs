@@ -8,7 +8,7 @@ class CommodexBBS
   include BBS::Domain
 
   path    :catalog_seed, 'config/catalog.json.gz'
-  path    :catalog_file, 'data/catalog.json.gz'
+  path    :catalog_file, 'data/catalog.json.gz', env: 'CATALOG'
   setting :catalog_ttl, 7 * 86_400
   setting :wikipedia_cache, 200
   path    :tips_db, 'data/tips.sqlite3'
@@ -25,12 +25,10 @@ class CommodexBBS
                                                          notifier: notifier)
   end
 
-  # The services, and the catalog refresh unless COMMODEX_BBS_CATALOG_TTL is 0.
-  def start
-    super
-    catalog.start_refresh
-    self
-  end
+  # Wikidata read again when the catalog is CATALOG_TTL old; never for a TTL of 0.
+  background('catalog refresh', every: -> { [catalog_ttl, CatalogService::RETRY_AFTER].min },
+                                if: -> { catalog_ttl.positive? }, retry_after: CatalogService::RETRY_AFTER,
+                                max_retry: CatalogService::RETRY_AFTER) { catalog.refresh_if_stale }
 
   private
 

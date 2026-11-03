@@ -43,18 +43,6 @@ module UI
       log_off
     end
 
-    def show_masthead
-      super
-      @under_masthead = true
-    end
-
-    # The first menu goes under the masthead, the others under the title.
-    def home
-      return super unless @under_masthead
-
-      @under_masthead = false
-    end
-
     private
 
     def search

@@ -22,8 +22,8 @@ class CatalogServiceTest < Minitest::Test
     CatalogService.snapshot(seed: path('seed.json.gz'), path: path('catalog.json.gz'))
   end
 
-  def service(wikidata: nil, at: Time.now, retry_after: 0)
-    CatalogService.new(snapshot(at), wikidata: wikidata, ttl: 60, retry_after: retry_after)
+  def service(wikidata: nil, at: Time.now)
+    CatalogService.new(snapshot(at), wikidata: wikidata, ttl: 60)
   end
 
   def test_search_folds_and_puts_the_starts_first
@@ -62,19 +62,20 @@ class CatalogServiceTest < Minitest::Test
     refute File.exist?(path('catalog.json.gz'))
   end
 
-  def test_the_refresh_runs_in_the_background_and_retries
-    calls = Queue.new
-    flaky = Object.new
-    flaky.define_singleton_method(:records) do
-      calls << :asked
-      calls.size == 1 ? raise(IOError, 'socket closed') : []
-    end
-    s = service(wikidata: flaky, at: Time.now - 3600, retry_after: 0.01)
-    _, err = capture_io do
-      thread = s.start_refresh
-      sleep 0.01 until calls.size >= 2
-      thread.kill
-    end
-    assert_match(/: catalog refresh: IOError: socket closed/, err)
+  def test_the_board_refreshes_in_the_background_unless_the_ttl_is_zero
+    assert_equal [['catalog refresh', 3600]], jobs('604800')
+    assert_empty jobs('0')
+  end
+
+  # The background jobs CommodexBBS#start begins with CATALOG_TTL set to +ttl+.
+  def jobs(ttl)
+    started = []
+    ENV['COMMODEX_BBS_CATALOG_TTL'] = ttl
+    board = CommodexBBS.new
+    board.define_singleton_method(:services) { {} }
+    BBS.stub(:background, ->(name, every:, **) { started << [name, every] }) { board.start }
+    started
+  ensure
+    ENV.delete('COMMODEX_BBS_CATALOG_TTL')
   end
 end
