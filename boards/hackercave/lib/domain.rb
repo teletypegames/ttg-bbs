@@ -1,0 +1,17 @@
+# frozen_string_literal: true
+
+require_relative 'domain/model/rfc_model'
+require_relative 'domain/model/entry_model'
+require_relative 'domain/model/shelf_model'
+require_relative 'domain/model/document_model'
+require_relative 'domain/repository/index_parser'
+require_relative 'domain/repository/index_repository'
+require_relative 'domain/repository/index_builder'
+require_relative 'domain/repository/rfc_editor_repository'
+require_relative 'domain/repository/text_repository'
+require_relative 'domain/repository/shelves_repository'
+require_relative 'domain/repository/read_repository'
+require_relative 'domain/service/reflow_service'
+require_relative 'domain/service/library_service'
+require_relative 'domain/service/reading_service'
+require_relative 'domain/hackercave_bbs'

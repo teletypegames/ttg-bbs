@@ -1,0 +1,24 @@
+# Every environment variable of HackerCave BBS, with its default. The board
+# has no secrets.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=50
+
+# The RFC Editor: the index (rfc-index.xml) and the texts come from here
+HACKERCAVE_BBS_SITE=https://www.rfc-editor.org
+# Days the imported index is kept before it is downloaded and imported again
+HACKERCAVE_BBS_INDEX_TTL=1
+
+# The board's own shelves
+HACKERCAVE_BBS_SHELVES=config/shelves.yml
+
+# The board's own data in SQLite: the RFCs opened (the "most read" list)
+HACKERCAVE_BBS_DB=data/hackercave.sqlite3
+
+# The index in SQLite (a cache, rebuilt from the download), and where its
+# download waits for the import
+HACKERCAVE_BBS_INDEX_DB=data/index.sqlite3
+HACKERCAVE_BBS_INDEX_FILE=data/rfc-index.xml
+# The texts of the RFCs, rfc<N>.txt as published: fetched on the first read
+HACKERCAVE_BBS_TEXTS=data/rfc
