@@ -198,7 +198,7 @@ module Discovery
       text = MetricsService.new(File.join(@tmp, 'm.prom'), catalog: catalog, probes: probes, db_path: @db.path,
                                                             optout: OptoutRepository.new(optout))
                            .text(5_100, in_flight: 3)
-      ['probes_in_flight 3', 'probes_due 2', 'next_probe_due_seconds 0',
+      ['probes_in_flight 3', 'probes_due 2', 'next_probe_due_seconds 0', 'oldest_overdue_seconds 5099',
        'probes_total{result="ok",kind="scheduled"} 1', 'probe_duration_seconds_avg_last_hour{result="ok"} 1.5',
        'probe_duration_seconds_max_last_hour 1.5', 'banner_bytes_avg_last_hour 40.0',
        'boards_by_encoding{encoding="ansi"} 1', 'boards_by_encoding{encoding="unknown"} 1',
@@ -208,6 +208,16 @@ module Discovery
         assert_includes text, "ttg_gate_bbs_discovery_#{line}\n"
       end
       assert_match(/ttg_gate_bbs_discovery_db_bytes [1-9]/, text)
+    end
+
+    def test_oldest_overdue_is_zero_when_nothing_is_due
+      catalog = CatalogRepository.new(@db)
+      probes = ProbeRepository.new(@db)
+      id = catalog.board_id('a.example.org', 23, 1)
+      probes.save_state(id, state: 'online', next_probe_at: 9_000)
+      text = MetricsService.new(File.join(@tmp, 'm.prom'), catalog: catalog, probes: probes, dials_path: @live).text(5_100)
+      assert_includes text, "ttg_gate_bbs_discovery_probes_due 0\n"
+      assert_includes text, "ttg_gate_bbs_discovery_oldest_overdue_seconds 0\n"
     end
 
     def test_the_limits_come_from_the_environment

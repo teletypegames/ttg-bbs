@@ -100,6 +100,10 @@ module Discovery
       next_at = schedule['next_at']
       gauge(lines, 'next_probe_due_seconds', 'Seconds until the earliest next probe, 0 when one is overdue.',
             { {} => next_at ? [next_at - now, 0].max : 0 })
+      oldest = schedule['oldest_due_at']
+      gauge(lines, 'oldest_overdue_seconds',
+            'How long the longest-waiting due board has been due, 0 when none is (a stuck prober makes it grow).',
+            { {} => oldest ? [now - oldest, 0].max : 0 })
     end
 
     def durations(lines, now)

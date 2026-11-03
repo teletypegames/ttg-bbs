@@ -117,11 +117,14 @@ module Discovery
     def last_probe_at = @db.value('SELECT MAX(at) FROM probes')
 
     # The boards the prober may call (not hidden, not archived): how many are
-    # due at +now+, and the earliest next probe time (nil without one).
+    # due at +now+, the earliest next probe time (nil without one), and since
+    # when the longest-waiting due board has been due (+oldest_due_at+, nil
+    # when none is; a board never probed is due since it was first seen).
     def schedule(now)
-      @db.first(<<~SQL, now)
+      @db.first(<<~SQL, now, now)
         SELECT COUNT(*) FILTER (WHERE s.next_probe_at IS NULL OR s.next_probe_at <= ?) AS due,
-               MIN(COALESCE(s.next_probe_at, 0)) AS next_at
+               MIN(COALESCE(s.next_probe_at, 0)) AS next_at,
+               MIN(COALESCE(s.next_probe_at, b.first_seen_at)) FILTER (WHERE s.next_probe_at IS NULL OR s.next_probe_at <= ?) AS oldest_due_at
         FROM boards b LEFT JOIN board_state s ON s.board_id = b.id
         WHERE (b.optout IS NULL OR b.optout != 'hide') AND COALESCE(s.archived, 0) = 0
       SQL
