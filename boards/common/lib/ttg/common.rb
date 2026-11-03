@@ -7,8 +7,9 @@ require 'bbs'
 # itself. Each part is a module of its own under TTG, in its own file.
 #
 #   require 'ttg/common'
-#   BBS::Terminal.flow(title: 'Teletype BBS', modern: m, petscii: p, splash: TTG::Logo.splash)
+#   BBS.board('Teletype BBS', TeletypeBBS) { preset TTG::PRESET; … }
 module TTG
 end
 
 require_relative 'logo'
+require_relative 'preset'
