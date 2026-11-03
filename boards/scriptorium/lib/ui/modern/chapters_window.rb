@@ -10,6 +10,7 @@ module UI
           frame(w)
           list(w)
           w.action(label: '&Read') { |win, ctx| read(win, ctx) }
+          w.action(label: '&QR code') { |_win, ctx| ctx[:app].show_qr(ctx[:book]) }
         end
       end
 

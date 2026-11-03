@@ -18,6 +18,14 @@ It has two faces on one port, like every board of the network:
   chapter, `b` back a page, `q` back to the list. Typography and accented
   letters become the ASCII the C64 has.
 
+Both faces show a book's Project Gutenberg page,
+`https://www.gutenberg.org/ebooks/<number>`, as a QR code (rubbs'
+`BBS::QR`), so a phone or an e-reader takes the whole book (EPUB, Kindle)
+from there: the **QR code** button of the books and the chapters windows on
+the modern face (half blocks, in a window as big as the screen allows), and
+`c` (qr code) under a book's record on the C64 (quadrant blocks, in the middle
+of the screen).
+
 ### The library
 
 - **Classics** — the board's own shelf of well-known books

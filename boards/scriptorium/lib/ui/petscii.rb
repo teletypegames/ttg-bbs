@@ -158,7 +158,28 @@ module UI
 
       def info(book)
         @screen.page("EBOOK ##{book.id}", record(book), wait: false)
-        open_book(book) if @screen.actions(%w[r read], %w[q back]) == 'r'
+        case @screen.actions(%w[r read], ['c', 'qr code'], %w[q back])
+        when 'r' then open_book(book)
+        when 'c' then qr(book)
+        end
+      end
+
+      # The book's Project Gutenberg page as a QR code, in the middle of the
+      # screen: a phone or an e-reader takes the whole book from there.
+      def qr(book)
+        @screen.title("EBOOK ##{book.id}", 'scan me ')
+        code   = qr_code(book.link)
+        indent = ' ' * ((COLS - 1 - BBS::FrameBuffer.plain(code.first).size) / 2)
+        code.each { |line| @screen.puts("#{indent}#{line}") }
+        @screen.pause
+      rescue BBS::QR::TooLong
+        message("The address is too long for a QR code: #{book.url}")
+      end
+
+      def qr_code(link)
+        BBS::QR.petscii(link)
+      rescue BBS::QR::TooLong
+        BBS::QR.petscii(link, quiet: 1)
       end
 
       # A book's record: the title, the author, the facts, the subjects and

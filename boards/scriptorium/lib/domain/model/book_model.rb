@@ -35,6 +35,9 @@ BookModel = Data.define(:id, :title, :authors, :language, :issued, :subjects, :b
 
   def url = "gutenberg.org/ebooks/#{id}"
 
+  # The book's page on Project Gutenberg, the address of its QR code.
+  def link = "https://www.#{url}"
+
   # "Shelley, Mary Wollstonecraft, 1797-1851 [Editor]" → "Mary Wollstonecraft Shelley".
   def self.person(name)
     name = name.sub(/\s*\[[^\]]*\]\s*\z/, '').sub(/,\s*(?:active\s+)?(?:\d|BCE|-|\?)[^,]*\z/, '').strip

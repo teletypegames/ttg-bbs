@@ -10,6 +10,7 @@ module UI
           frame(w)
           list(w)
           w.action(label: '&Read') { |win, ctx| read(win, ctx[:app]) }
+          w.action(label: '&QR code') { |win, ctx| qr(win, ctx[:app]) }
         end
       end
 
@@ -33,6 +34,12 @@ module UI
       def self.label(book, counts)
         count = counts&.fetch(book.id, nil)
         count ? "#{count.to_s.rjust(3)}  #{book.short_title}" : book.short_title
+      end
+
+      def self.qr(window, app)
+        book = app.selected(window)
+        app.show_qr(book) if book
+        :keep
       end
 
       def self.read(window, app)

@@ -6,6 +6,10 @@ module UI
     # library's lists opened in windows, the search, opening a book and
     # the desktop around them.
     module Library
+      QR_PADDING = { sides: 2, top: 1, bottom: 0 }.freeze
+      QR_SIDES   = 4
+      QR_ROWS    = 7
+
       def library = services[:library]
       def reading = services[:reading]
 
@@ -71,6 +75,25 @@ module UI
       end
 
       def read(book, text, number) = ReaderWindow.open(self, reading: reading, book: book, text: text, number: number)
+
+      # The book's Project Gutenberg page as a QR code, for a phone or an
+      # e-reader to take the whole book.
+      def show_qr(book)
+        code = qr_code(book.link, width: cols - QR_SIDES, height: rows - QR_ROWS)
+        BBS::Windows::Info.open(self, title: " eBook ##{book.id} on your phone ",
+                                      width: BBS::FrameBuffer.plain(code.first).size + QR_SIDES,
+                                      body: code, padding: QR_PADDING)
+        :keep
+      rescue BBS::QR::TooLong
+        BBS::Dialogs.message(self, "The screen is too small for a QR code. The book is at #{book.url}.", title: ' QR code ')
+        :keep
+      end
+
+      def qr_code(link, **room)
+        BBS::QR.ansi(link, **room)
+      rescue BBS::QR::TooLong
+        BBS::QR.ansi(link, **room, quiet: 1)
+      end
 
       def selected(window) = window.list_widget.selected_item
 
