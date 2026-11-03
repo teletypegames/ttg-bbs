@@ -3,41 +3,32 @@
 # The blog itself, whatever terminal a caller has: its services wired to the
 # SQLite file (BlogSchema) and the category list, and Discord rung when a
 # post is first published. Both faces (lib/ui/modern, lib/ui/petscii), the
-# read API (lib/web) and bin/user work on one instance of it. The only place
-# that reads the environment.
+# read API (lib/web) and bin/user work on one instance of it.
 class TTGBlogBBS
-  ROOT = File.expand_path('../..', __dir__)
+  include BBS::Domain
 
-  # Seconds between the autosaves of what an editor writes.
-  AUTOSAVE_SECONDS = 15
+  setting :http_port, 8080
+  setting :autosave_seconds, 15
+  setting :site_url, 'https://teletypegames.org'
+  setting :discord_webhook, ''
+  path    :db, 'data/ttgblog.sqlite3'
+  path    :categories_file, 'config/categories.yml'
 
-  # Where the blog is on the web: a published post is at <tt>/blog/SLUG</tt>.
-  SITE_URL = 'https://teletypegames.org'
+  service(:categories) { CategoryService.new(CategoryRepository.new(categories_file)) }
+  service(:editors)    { EditorService.new(UserRepository.new(store), guard: LoginGuard.new(store: store)) }
+  service(:posts)      { PostService.new(PostRepository.new(store), categories: categories).tap { |posts| announce(posts) } }
 
-  attr_reader :posts, :editors, :categories, :http_port, :autosave_seconds, :site_url
-
-  def initialize(env: ENV)
-    db = BBS::SQLite.new(env.fetch('TTG_BLOG_BBS_DB', File.join(ROOT, 'data/ttgblog.sqlite3')))
-    BlogSchema.migrate(db)
-    @categories = CategoryService.new(CategoryRepository.new(env.fetch('TTG_BLOG_BBS_CATEGORIES',
-                                                                       File.join(ROOT, 'config/categories.yml'))))
-    @editors    = EditorService.new(UserRepository.new(db), guard: LoginGuard.new(store: db))
-    @posts      = PostService.new(PostRepository.new(db), categories: @categories)
-    @http_port  = env.fetch('TTG_BLOG_BBS_HTTP_PORT', '8080').to_i
-    @autosave_seconds = positive(env['TTG_BLOG_BBS_AUTOSAVE_SECONDS'], AUTOSAVE_SECONDS)
-    @site_url = env.fetch('TTG_BLOG_BBS_SITE_URL', SITE_URL).chomp('/')
-    announce(env)
-  end
+  # Where a published post is on the web.
+  def post_url(post) = "#{site_url.chomp('/')}/blog/#{post.slug}"
 
   private
 
-  def positive(value, default) = value.to_i.positive? ? value.to_i : default
+  def store = @store ||= database(db, BlogSchema)
 
-  def announce(env)
-    webhook = env['TTG_BLOG_BBS_DISCORD_WEBHOOK'].to_s
-    return if webhook.empty?
+  def announce(posts)
+    return if discord_webhook.empty?
 
-    discord = DiscordNotifier.new(webhook: webhook, site: @site_url)
-    @posts.on_publish { |post| discord.call(post) }
+    discord = DiscordNotifier.new(webhook: discord_webhook, site: site_url)
+    posts.on_publish { |post| discord.call(post) }
   end
 end

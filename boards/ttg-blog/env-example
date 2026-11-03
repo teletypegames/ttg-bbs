@@ -7,7 +7,7 @@ BBS_MAX_SESSIONS=50
 
 # The SQLite database and the category list
 TTG_BLOG_BBS_DB=data/ttgblog.sqlite3
-TTG_BLOG_BBS_CATEGORIES=config/categories.yml
+TTG_BLOG_BBS_CATEGORIES_FILE=config/categories.yml
 
 # The read API for teletypegames.org; 0 turns it off
 TTG_BLOG_BBS_HTTP_PORT=8080

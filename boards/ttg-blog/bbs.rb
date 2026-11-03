@@ -7,24 +7,15 @@ require_relative 'lib/ui/modern'
 require_relative 'lib/ui/petscii'
 require_relative 'lib/web/api'
 
-# The Teletype Games blog on a telnet line, two faces on one port: the caller
-# picks a terminal (BBS::Terminal guesses it first), and both faces read and
-# write line by line, 80 columns of ANSI or 40 of PETSCII. Readers need no
-# account; the editors log in from the menu, and bin/user manages them.
-# Beside the telnet line, Web::Api serves the posts to teletypegames.org.
-BBS.configure { |config| config.log_tag = 'ttg-blog-bbs' }
-
-bbs = TTGBlogBBS.new
-
-Web::Api.new(bbs, port: bbs.http_port).start if bbs.http_port.positive?
-
-BBS.configure do |config|
-  config.mouse            = false
-  config.mouse_on_connect = false
-  config.idle_seconds     = 900
-
-  config.flow = BBS::Terminal.flow(title: 'TTG Blog BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs),
-                                   splash: TTG::Logo.splash)
+# The Teletype Games blog on a telnet line, two faces on one port, both line
+# by line: 80 columns of ANSI or 40 of PETSCII. Readers need no account; the
+# editors log in from the menu, and bin/user manages them. Beside the telnet
+# line, Web::Api serves the posts to teletypegames.org.
+BBS.board 'TTG Blog BBS', TTGBlogBBS do
+  preset  TTG::PRESET
+  modern  UI::Modern
+  petscii UI::Petscii
+  idle 900
+  mouse false
+  on_start { |bbs| Web::Api.new(bbs, port: bbs.http_port).start if bbs.http_port.positive? }
 end
-
-BBS.start

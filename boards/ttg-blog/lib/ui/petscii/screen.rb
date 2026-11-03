@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 module UI
-  module Petscii
-    # The Screen on a Commodore 64, every view the whole 40×25: a title bar
+  class Petscii < Board
+    # The screen on a Commodore 64, every view the whole 40×25: a title bar
     # on the first row and a footer bar on the last but one that tells the
     # keys of the view. A post is read under a footer that stays on every
-    # page, and the questions about it are asked in the footer, over the
-    # post. The last row stays empty, so nothing scrolls the screen.
-    class Screen < UI::Screen
+    # page, and the questions about it and what came of them are told in the
+    # footer, over the post. The last row stays empty, so nothing scrolls the
+    # screen.
+    class Screen < BBS::Petscii::Screen
       # The menus with their hint row as a footer bar, like the title bar.
       FULL = BBS::Selector::COLORS.merge(hint: "#{CY}#{RV}").freeze
 
@@ -34,7 +35,7 @@ module UI
       # A numbered list filling the screen under its title bar; the keys of
       # +item_commands+ return <tt>[key, item]</tt> for the lit item.
       def pick(heading, items, empty: EMPTY, right: '', item_commands: {}, &label)
-        return nothing(heading, empty, right: right) if items.empty?
+        return super if items.empty?
 
         label ||= :to_s.to_proc
         title(heading, right)
@@ -79,31 +80,31 @@ module UI
 
       # +question+ in the footer when the view has one, a yes/no row the
       # cursor moves along under it; elsewhere the question under the text.
-      def confirm?(question, color)
+      def confirm?(question)
         return super unless @at
 
-        footer_choice(question, color, [%w[y yes], %w[n no]], back: 'n', index: 1) == 'y'
+        footer_choice(question, [%w[y yes], %w[n no]], back: 'n', index: 1) == 'y'
       end
 
       # +question+ in the footer, a row of +choices+ (<tt>[key, label]</tt>
       # pairs) the cursor moves along under it: the key taken, +back+ for
       # RUN/STOP or ←.
-      def footer_choice(question, color, choices, back:, index: 0)
-        footer_text(question, color)
+      def footer_choice(question, choices, back:, index: 0)
+        footer_text(question, YE)
         items  = choices.map { |k, label| BBS::Selector.item(label, key: k, value: k) }
         choice = BBS::Selector.new(session, items, width: cols - 1, across: true, index: index, back: back).run
         @at = [rows, 1]
         choice
       end
 
-      # +text+ in the footer when the view has one, until a key.
-      def notice(text, color, gap: true)
-        return super unless @at
+      # +text+ in green in the footer when the view has one, until a key.
+      def notice(text)
+        @at ? footer_notice(text, GN) : super
+      end
 
-        footer_text(text, color)
-        write footer_bar('return: ok')
-        @at = [footer_row, cols]
-        key
+      # +text+ in red in the footer when the view has one, until a key.
+      def alert(text)
+        @at ? footer_notice(text, RD) : super
       end
 
       # A reversed bar like the title bar, out of the last column, so the
@@ -114,6 +115,13 @@ module UI
       end
 
       private
+
+      def footer_notice(text, color)
+        footer_text(text, color)
+        write footer_bar('return: ok')
+        @at = [footer_row, cols]
+        key
+      end
 
       # The lines of a #view in pages, as many as fit over its footer.
       def view_pages(lines, actions)

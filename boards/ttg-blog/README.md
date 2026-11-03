@@ -57,7 +57,7 @@ and shows its bare id.
 |---|---|---|
 | `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2328) |
 | `TTG_BLOG_BBS_DB` | `data/ttgblog.sqlite3` | The SQLite database (compose mounts `./data`) |
-| `TTG_BLOG_BBS_CATEGORIES` | `config/categories.yml` | The category list |
+| `TTG_BLOG_BBS_CATEGORIES_FILE` | `config/categories.yml` | The category list |
 | `TTG_BLOG_BBS_HTTP_PORT` | `8080` | Port of the read API (`0` turns it off); compose does not publish it |
 | `TTG_BLOG_BBS_AUTOSAVE_SECONDS` | `15` | Seconds between the autosaves of a draft while an editor writes |
 | `TTG_BLOG_BBS_DISCORD_WEBHOOK` | — | A post rings this Discord webhook when first published, with its link on the web (`.env` on the server) |
@@ -158,10 +158,10 @@ the modern face.
 | `O` | Log out (logged in) |
 | `Q` | Log off |
 
-Lists are numbered: the number and RETURN opens a post, RETURN alone turns the
-page, `Q` or `←` (Esc, RUN/STOP) goes back. On a C64 the number lights the
-post, CRSR moves the bar, RETURN opens the lit one, and the pages turn with
-CRSR left and right (or as the bar runs past the end). A post shows its title, category,
+Lists are numbered cursor lists on both faces: the number lights the post,
+CRSR moves the bar, RETURN opens the lit one, the pages turn with CRSR left
+and right (or as the bar runs past the end), `Q` or `←` (Esc, RUN/STOP) goes
+back. A post shows its title, category,
 date, author, the date of its last change, the summary, then the body,
 paged a screenful at a time. An editor gets `E` edit, `P` publish or
 unpublish and `D` delete under it. On a C64 the post keeps its footer on
@@ -242,7 +242,7 @@ here: the site does that.
 ## Project structure
 
 ```
-bbs.rb                         entry point: the terminal question, then a face
+bbs.rb                         entry point: BBS.board, the two faces and the read API
 bin/user                       the editors, from the server's shell
 config/categories.yml          the categories
 env-example                    every environment variable, with its default
@@ -256,18 +256,17 @@ lib/
                                (names, passwords, login), LoginGuard (failed tries
                                by name and caller, two derivations at a time),
                                CategoryService, DiscordNotifier (a new post on Discord)
-    ttg_blog_bbs.rb            TTGBlogBBS, the composition root: reads ENV, wires it all
+    ttg_blog_bbs.rb            TTGBlogBBS (BBS::Domain): its settings and services
   web/api.rb                   the read API for teletypegames.org
   ui/
-    screen.rb                  the colours and the screen (BBS::Petscii::Screen of
-                               rubbs), with a number typed up to RETURN
-    board.rb                   one call, shared by the faces: menu, lists, a post, goodbye
+    board.rb                   UI::Board (BBS::Petscii::Face), one call shared by the
+                               faces: the menu's items, lists, a post
     board/account.rb           logging in and changing the password
     board/composer.rb          writing and editing a post
     post_page.rb               a post as lines, for both faces and the web's C64 screen
-    modern.rb, modern/board.rb    UI::Modern: the caller's window, half-block masthead
-    modern/screen.rb              its lists, numbered, picked by typing the number
-    petscii.rb, petscii/board.rb  UI::Petscii: 40×25 PETSCII, the front page of cursor
+    modern.rb                     UI::Modern: the caller's window, half-block masthead,
+                                  the menu typed at a prompt
+    petscii.rb                    UI::Petscii: 40×25 PETSCII, the front page of cursor
                                   menus, a post's C64 screen for the web
     petscii/screen.rb             full-screen menus and lists, the footer bar, a post
                                   read under its footer, questions in the footer

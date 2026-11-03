@@ -22,7 +22,8 @@ class PostServiceTest < Minitest::Test
 
   def test_a_missing_category_list_leaves_none_to_write_in
     blog = nil
-    _, err = capture_io { blog = TTGBlogBBS.new(env: { 'TTG_BLOG_BBS_DB' => db_path, 'TTG_BLOG_BBS_CATEGORIES' => '/nope.yml' }) }
+    with_env(db_path, '/nope.yml')
+    _, err = capture_io { blog = TTGBlogBBS.new.tap(&:categories) }
     assert_empty blog.categories.all
     assert_match(/categories: Errno::ENOENT/, err)
   end

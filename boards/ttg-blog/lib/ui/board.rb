@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative 'screen'
 require_relative 'post_page'
 require_relative 'board/account'
 require_relative 'board/composer'
@@ -10,10 +9,9 @@ module UI
   # latest posts, the categories, a post paged a screenful at a time) and,
   # after an editor logs in, writing, editing and deleting posts. The body is
   # Markdown, typed in a line editor with slash commands, which a C64 can
-  # type as well as a modern terminal. It works on the services of a
-  # TTGBlogBBS; a face (UI::Modern::Board, UI::Petscii::Board) gives it its
-  # FACE, its screen and its masthead.
-  class Board
+  # type as well as a modern terminal. A face (UI::Modern, UI::Petscii) gives
+  # it its masthead and the shape of its menus.
+  class Board < BBS::Petscii::Face
     include Account
     include Composer
 
@@ -22,63 +20,35 @@ module UI
     # The name on the masthead, in BBS::BlockFont.
     LOGO = 'TTG BLOG'
 
-    # The main menu's keys and what they do; q hangs up.
-    ACTIONS = { 'l' => :latest, 'u' => :unpublished, 'c' => :categories, 'g' => :go_to, 'e' => :login,
-                'w' => :compose, 'p' => :password, 'o' => :log_out }.freeze
-
-    def initialize(bbs, screen, ctx)
-      @posts      = bbs.posts
-      @editors    = bbs.editors
-      @categories = bbs.categories
-      @screen     = screen
-      @ctx        = ctx
-      @autosave   = bbs.autosave_seconds
-      @site       = bbs.site_url
-    end
-
-    def run
-      start
-      loop do
-        choice = main_choice
-        return if choice == 'q'
-
-        choice.is_a?(PostModel) ? show(choice.id) : ACTIONS[choice]&.then { |action| __send__(action) }
-      end
-    end
-
-    def goodbye = BBS::Goodbye.petscii(@screen, bar: 'thanks for reading ttg blog bbs', color: YE)
+    title('TTG BLOG BBS') { right }
 
     private
 
-    # The lines over the menu, drawn by the face.
-    def masthead = raise(NotImplementedError)
-
-    # The screen before the first menu: the masthead.
-    def start
-      @screen.cls
-      @screen.puts
-      masthead.each { |l| @screen.puts l }
+    # The main menu: the readers' items, the editor's after a login. Each
+    # item's value is the method it runs; :log_off hangs up.
+    def menu_items
+      items = [item('l', 'latest posts', :latest, 'every post, newest first'),
+               item('c', 'categories', :browse_categories, categories.all.map(&:name).join(', ')),
+               item('g', 'go to post #', :go_to, 'by the number the web shows')]
+      items += user ? editor_items : [item('e', 'editor login', :login, 'for the editors of the blog')]
+      items << item('q', 'log off', :log_off, 'hang up. see you!')
     end
 
-    # The main menu, under the masthead the first time and under a title
-    # bar after: the key of the caller's choice.
-    def main_choice
-      @screen.title('TTG BLOG BBS', right) if @home_shown
-      @home_shown = true
-      @screen.puts
-      menu_line('L', 'latest posts')
-      menu_line('C', 'categories')
-      menu_line('G', 'go to post #')
-      if user
-        menu_line('U', "unpublished posts #{GR}(#{@posts.total(published: false)})#{LG}")
-        menu_line('W', "write a post#{drafts_note}")
-        menu_line('P', 'change your password')
-        menu_line('O', "log out #{GR}(#{user.name})#{LG}")
-      else
-        menu_line('E', 'editor login')
-      end
-      menu_line('Q', 'log off')
-      @screen.choose("\r\n #{WH}ttgblog#{LG}> ", user ? %w[l c g u w p o q] : %w[l c g e q])
+    def editor_items
+      [item('u', "unpublished posts #{GR}(#{posts.total(published: false)})#{LG}", :unpublished, 'waiting to be published'),
+       item('w', "write a post#{drafts_note}", :compose, 'it waits unpublished until you publish it'),
+       item('p', 'change your password', :password, "#{user.name}'s password"),
+       item('o', 'log out', :log_out, "back to a reader, #{user.name}")]
+    end
+
+    def item(key, label, action, about) = BBS::Selector.item(label, key: key, value: action, about: about)
+
+    # Runs what the main menu gave: a post opens, a method name runs.
+    def take(choice)
+      return :log_off if choice == :log_off
+
+      choice.is_a?(PostModel) ? show(choice.id) : __send__(choice)
+      nil
     end
 
     # What an editor does with a post after its last page: e, p, d, c
@@ -86,30 +56,24 @@ module UI
     def post_choice(post)
       flip = post.published? ? 'unpublish' : 'publish'
       qr   = post.published? ? "#{YE}C#{LG} qr  " : ''
-      @screen.choose("\r\n #{qr}#{YE}E#{LG} edit  #{YE}P#{LG} #{flip}  #{YE}D#{LG} delete  #{DG}return: back#{LG} ",
-                     [*('c' if post.published?), 'e', 'p', 'd', 'q', :enter])
+      choose("\r\n #{qr}#{YE}E#{LG} edit  #{YE}P#{LG} #{flip}  #{YE}D#{LG} delete  #{DG}return: back#{LG} ",
+             [*('c' if post.published?), 'e', 'p', 'd', 'q', :enter])
     end
 
     # What a reader does after the last page of a post: c or q.
     def reader_choice
-      @screen.choose("\r\n #{YE}C#{LG} qr code of its web page  #{DG}return: back#{LG} ", ['c', 'q', :enter])
+      choose("\r\n #{YE}C#{LG} qr code of its web page  #{DG}return: back#{LG} ", ['c', 'q', :enter])
     end
 
-    # The draft on its screen and the key of the caller's choice.
-    def draft_choice(draft, post)
-      draft_screen(draft, post)
-      @screen.choose("\r\n #{WH}edit#{LG}> ", %w[t c s b v w q])
-    end
+    def face_name = session.petscii? ? 'petscii' : 'modern'
 
-    def face = self.class::FACE
+    def latest = browse('LATEST POSTS') { posts.all(published: shown) }
 
-    def latest = browse('LATEST POSTS') { @posts.all(published: shown) }
+    def unpublished = browse('UNPUBLISHED POSTS') { posts.all(published: false) }
 
-    def unpublished = browse('UNPUBLISHED POSTS') { @posts.all(published: false) }
+    def log_out = context.delete(:user)
 
-    def log_out = @ctx.delete(:user)
-
-    def user = @ctx[:user]
+    def user = context[:user]
 
     # What the caller may read: everything for an editor, the published
     # posts for a reader (nil and true, as PostService#all takes them).
@@ -119,66 +83,61 @@ module UI
 
     def draft_tag = wide? ? 'unpublished' : 'u'
 
-    def wide? = @screen.cols >= 60
+    def wide? = screen.cols >= 60
 
-    def right = user ? "#{user.name} " : "#{@posts.total(published: true)} posts "
-
-    def menu_line(key, text) = @screen.puts(" #{YE}#{key}#{LG} #{text}")
+    def right = user ? "#{user.name} " : "#{posts.total(published: true)} posts "
 
     # The drafts of new posts waiting, as " (2 drafts)"; empty for none.
     def drafts_note
-      n = @posts.drafts.size
+      n = posts.drafts.size
       n.zero? ? '' : " #{GR}(#{n} draft#{'s' unless n == 1})#{LG}"
     end
 
     # A post by its number, the one the web shows beside it.
     def go_to
-      @screen.title('GO TO POST', right)
-      @screen.say('The number of a post, as the web shows it. Return alone: back.', color: GR)
-      @screen.write "\r\n #{WH}post ##{LG} "
-      id = @screen.number
-      return if id.nil? || id.zero?
-      return show(id) if readable?(@posts.find(id))
+      title('GO TO POST', right)
+      say('The number of a post, as the web shows it. Return alone: back.', color: GR)
+      id = number('post #', 1.., max: 4)
+      return unless id
+      return show(id) if readable?(posts.find(id))
 
-      @screen.say("No post number #{id}.", color: RD)
-      @screen.pause
+      alert("No post number #{id}.")
     end
 
-    def categories
-      loop do
-        category = @screen.pick('CATEGORIES', @categories.all, empty: 'no categories are configured.', right: right) do |c|
-          about = wide? && !c.about.empty? ? " #{GR}#{c.about}#{LG}" : ''
-          "#{c.name} #{GR}(#{@posts.count(c.id, published: shown)})#{LG}#{about}"
-        end
-        break unless category
-
-        browse(category.name.upcase) { @posts.all(category: category.id, published: shown) }
+    def browse_categories
+      label = lambda do |c|
+        about = wide? && !c.about.empty? ? " #{GR}#{c.about}#{LG}" : ''
+        "#{c.name} #{GR}(#{posts.count(c.id, published: shown)})#{LG}#{about}"
+      end
+      each_pick('CATEGORIES', categories.all, empty: 'no categories are configured.', right: right, label: label) do |c|
+        browse(c.name.upcase) { posts.all(category: c.id, published: shown) }
       end
     end
 
     # The posts the block lists, listed again after one was changed.
-    def browse(heading, &posts)
-      list = posts.call
+    def browse(heading, &list)
+      found = list.call
       loop do
-        post = @screen.pick(heading, list, empty: 'no posts here yet.', right: right) do |p|
-          tag   = wide? ? " #{CY}#{@categories.find(p.category).name}#{LG}" : ''
-          draft = p.published? ? '' : "#{RD}#{draft_tag}#{LG} "
-          "#{GR}#{p.created_at.localtime.strftime(wide? ? '%Y-%m-%d' : '%m-%d')}#{LG} #{draft}#{p.title}#{tag}"
-        end
+        post = pick(heading, found, empty: 'no posts here yet.', right: right) { |p| headline(p) }
         break unless post
 
-        list = posts.call if show(post.id)
+        found = list.call if show(post.id)
       end
+    end
+
+    def headline(post)
+      tag   = wide? ? " #{CY}#{categories.find(post.category).name}#{LG}" : ''
+      draft = post.published? ? '' : "#{RD}#{draft_tag}#{LG} "
+      "#{GR}#{post.created_at.localtime.strftime(wide? ? '%Y-%m-%d' : '%m-%d')}#{LG} #{draft}#{post.title}#{tag}"
     end
 
     # The post paged; an editor gets to edit or delete it after its last
     # page. True when it was changed or deleted.
     def show(id)
-      post = @posts.find(id)
+      post = posts.find(id)
       return false unless readable?(post)
 
-      heading = @categories.find(post.category).name.upcase
-      @screen.page(heading, post_lines(post), right: right, wait: false, room: 2)
+      page(categories.find(post.category).name.upcase, post_lines(post), right: right, wait: false, room: 2)
       unless user
         show_qr(post) if reader_choice == 'c'
         return false
@@ -193,50 +152,31 @@ module UI
       end
     end
 
-    # The address of a published post on the web.
-    def post_url(post) = "#{@site}/blog/#{post.slug}"
-
     # The QR code of the post's web page in the middle of the screen, until
-    # a key; a quiet zone of one module when two leave no room. Returns nil.
+    # a key. Returns nil.
     def show_qr(post)
-      @screen.title('SCAN THE ADDRESS', right)
-      code   = qr_lines(post_url(post))
-      indent = ' ' * [(@screen.cols - 1 - BBS::FrameBuffer.visible_width(code.first)) / 2, 0].max
-      code.each { |l| @screen.puts("#{indent}#{l}") }
-      @screen.pause
-      nil
-    rescue BBS::QR::TooLong
-      @screen.say('This address is too long for a QR code on this screen.', color: RD)
-      @screen.pause
+      title('SCAN THE ADDRESS', right)
+      pause if qr(board.post_url(post))
       nil
     end
 
-    def qr_lines(url)
-      qr_code(url, quiet: BBS::QR::QUIET)
-    rescue BBS::QR::TooLong
-      qr_code(url, quiet: 1)
-    end
-
-    # The QR code of +url+ in the face's blocks, drawn by the face.
-    def qr_code(_url, quiet:) = raise(NotImplementedError)
-
-    def post_lines(post) = PostPage.lines(@categories, post, width: @screen.width, long_dates: wide?)
+    def post_lines(post) = PostPage.lines(categories, post, screen, long_dates: wide?)
 
     # Publishes the post, or takes it back to the editors. True when changed.
     def publish?(post, published)
       question = published ? "Publish \"#{post.title}\" on the web and to the readers?" : "Take \"#{post.title}\" back?"
-      return false unless @screen.confirm?(question, published ? GN : RD)
+      return false unless confirm?(question)
 
-      @posts.set_published(post.id, published)
-      @screen.notice(published ? 'Published.' : 'Unpublished: only the editors see it now.', GN, gap: false)
+      posts.set_published(post.id, published)
+      notice(published ? 'Published.' : 'Unpublished: only the editors see it now.')
       true
     end
 
     def delete?(post)
-      return false unless @screen.confirm?("Delete \"#{post.title}\" for good?", RD)
+      return false unless confirm?("Delete \"#{post.title}\" for good?")
 
-      @posts.delete(post.id)
-      @screen.notice('Deleted.', GN, gap: false)
+      posts.delete(post.id)
+      notice('Deleted.')
       true
     end
   end

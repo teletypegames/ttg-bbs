@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  class Board
+  class Board < BBS::Petscii::Face
     # Writing a post: the fields one after the other for a new one, then a
     # menu of fields until it is saved or left. The body is Markdown, typed
     # in a line editor with slash commands, which a C64 can type as well as a
@@ -45,7 +45,7 @@ module UI
 
           change(work, choice)
         end
-      rescue IOError
+      rescue *BBS::LINE_DROPPED
         keep(work) if work
         raise
       end
@@ -54,11 +54,11 @@ module UI
       # :fresh at once.
       def choose_draft(post)
         loop do
-          drafts = @posts.drafts(post)
+          drafts = posts.drafts(post)
           return :fresh if drafts.empty?
 
-          choice = @screen.pick(post ? "EDIT POST #{post.id}" : 'NEW POST', [:fresh, *drafts], right: right,
-                                item_commands: { 'd' => 'discard' }) { |d| draft_label(d, post) }
+          choice = pick(post ? "EDIT POST #{post.id}" : 'NEW POST', [:fresh, *drafts], right: right,
+                        item_commands: { 'd' => 'discard' }) { |d| draft_label(d, post) }
           return choice unless choice.is_a?(Array)
 
           discard_draft(choice.last)
@@ -75,9 +75,9 @@ module UI
 
       def discard_draft(draft)
         return if draft == :fresh
-        return unless @screen.confirm?("Throw away the draft of #{draft.updated_at.localtime.strftime('%m-%d %H:%M')}?", RD)
+        return unless confirm?("Throw away the draft of #{draft.updated_at.localtime.strftime('%m-%d %H:%M')}?")
 
-        @posts.discard(draft.id)
+        posts.discard(draft.id)
       end
 
       def fresh_work(post)
@@ -125,7 +125,7 @@ module UI
       def keep(work, force: false)
         return if work.fields == work.kept && !(force && work.id.nil?)
 
-        id = @posts.autosave(work.id, author: user, face: face, original: work.original, **work.fields)
+        id = posts.autosave(work.id, author: user, face: face_name, original: work.original, **work.fields)
         return unless id
 
         work.id      = id
@@ -138,32 +138,30 @@ module UI
       # The draft on its screen and the key of the caller's choice.
       def draft_choice(draft, post)
         draft_screen(draft, post)
-        @screen.choose("\r\n #{WH}edit#{LG}> ", %w[t c s b v w q])
+        choose("\r\n #{WH}edit#{LG}> ", %w[t c s b v w q])
       end
 
       def draft_screen(draft, post)
-        @screen.title(post ? "EDIT POST #{post.id}" : 'NEW POST', right)
+        title(post ? "EDIT POST #{post.id}" : 'NEW POST', right)
         field('T', 'title', draft[:title])
-        field('C', 'category', @categories.find(draft[:category]).name)
+        field('C', 'category', categories.find(draft[:category]).name)
         field('S', 'summary', draft[:summary].empty? ? '-' : draft[:summary])
         field('B', 'body', "#{draft[:body].lines.size} lines")
-        @screen.puts
-        @screen.puts " #{YE}V#{LG} view  #{YE}W#{LG} save  #{YE}Q#{LG} quit"
+        puts
+        puts " #{YE}V#{LG} view  #{YE}W#{LG} save  #{YE}Q#{LG} quit"
       end
 
       def field(key, name, value)
-        @screen.puts " #{YE}#{key}#{LG} #{GR}#{name}#{LG}"
-        @screen.wrap(value, @screen.width - 3).first(3).each { |l| @screen.puts "    #{l}" }
+        puts " #{YE}#{key}#{LG} #{GR}#{name}#{LG}"
+        wrap(value, screen.width - 3).first(3).each { |l| puts "    #{l}" }
       end
 
       # The title in a field, the current one to start from. Nil when the
       # caller quit or left it empty.
       def ask_title(current)
-        @screen.title('TITLE', right)
-        @screen.say("Up to #{PostService::MAX_TITLE} characters. Return alone or Stop: back.", color: GR)
-        @screen.puts
-        title = @screen.ask(" #{WH}title#{LG}> ", text: current, max: PostService::MAX_TITLE)
-        title.empty? ? nil : title
+        title('TITLE', right)
+        prompt('title', hint: "Up to #{PostService::MAX_TITLE} characters. Return alone or Stop: back.", text: current,
+                        max: PostService::MAX_TITLE)
       end
 
       # The summary in the editor, autosaved; the one before when the
@@ -173,7 +171,7 @@ module UI
       end
 
       def pick_category
-        @screen.pick('CATEGORY', @categories.all, empty: 'no categories are configured.', right: right, &:name)&.id
+        pick('CATEGORY', categories.all, empty: 'no categories are configured.', right: right, &:name)&.id
       end
 
       # The body in the editor, in Markdown, autosaved; the one before when
@@ -185,7 +183,7 @@ module UI
       # caller quits, the field and the draft go back to what they were.
       def in_editor(work, name, **options, &tidy)
         before = work.fields[name]
-        text   = @screen.edit(before.to_s, autosave: @autosave, **options) do |typed|
+        text   = edit(before.to_s, autosave: board.autosave_seconds, **options) do |typed|
           work.fields[name] = tidy.call(typed)
           keep(work)
         end
@@ -194,32 +192,31 @@ module UI
       end
 
       def preview(draft)
-        post = PostModel.new(id: 0, slug: '', **draft, author: user.name, face: face, status: 'published',
+        post = PostModel.new(id: 0, slug: '', **draft, author: user.name, face: face_name, status: 'published',
                              original_id: nil, base_updated_at: nil, published_at: nil, created_at: Time.now,
                              updated_at: Time.now)
-        @screen.page('PREVIEW', post_lines(post), right: right)
+        page('PREVIEW', post_lines(post), right: right)
       end
 
       # Saves the draft into its post; on a conflict, after asking. True
       # when saved; the draft stays when not.
       def save?(work)
         keep(work, force: true)
-        result = work.id ? @posts.commit(work.id) : :not_saved
-        result = @posts.commit(work.id, force: true) if result == :conflict && overwrite?(work.original)
+        result = work.id ? posts.commit(work.id) : :not_saved
+        result = posts.commit(work.id, force: true) if result == :conflict && overwrite?(work.original)
         return false if result == :conflict
-
         if result.is_a?(Symbol)
-          @screen.notice(ERRORS.fetch(result, 'The post could not be saved.'), RD)
+          alert(ERRORS.fetch(result, 'The post could not be saved.'))
           return false
         end
-        @screen.notice(work.original ? 'Saved.' : saved_new(result), GN)
+        notice(work.original ? 'Saved.' : saved_new(result))
         true
       end
 
       def overwrite?(post)
-        saved = @posts.find(post.id)
+        saved = posts.find(post.id)
         at    = saved ? saved.updated_at.localtime.strftime('%H:%M') : '?'
-        @screen.confirm?("Another editor saved this post at #{at}, after you began. Overwrite it with yours?", RD)
+        confirm?("Another editor saved this post at #{at}, after you began. Overwrite it with yours?")
       end
 
       def saved_new(post)
@@ -233,16 +230,15 @@ module UI
 
         case leave_choice
         when 'k' then keep(work)
-        when 'd' then @posts.discard(work.id) if work.id
+        when 'd' then posts.discard(work.id) if work.id
         else return false
         end
         true
       end
 
       def leave_choice
-        @screen.puts
-        @screen.choose(" #{YE}K#{LG} keep the draft  #{YE}D#{LG} discard it  #{DG}return: back#{LG} ",
-                       ['k', 'd', :enter])
+        puts
+        choose(" #{YE}K#{LG} keep the draft  #{YE}D#{LG} discard it  #{DG}return: back#{LG} ", ['k', 'd', :enter])
       end
     end
   end

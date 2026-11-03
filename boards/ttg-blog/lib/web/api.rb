@@ -80,7 +80,7 @@ module Web
 
     def full(post)
       summary(post).merge(body: post.body, html: Api.html(post.body),
-                          screen: { cols: UI::Petscii::COLS, page: UI::Petscii::PAGE,
+                          screen: { cols: UI::Petscii::COLS, page: UI::Petscii::Screen::PAGE,
                                     lines: UI::Petscii.post_screen(@bbs, post) })
     end
   end
