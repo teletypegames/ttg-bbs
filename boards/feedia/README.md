@@ -82,7 +82,11 @@ cannot send escape sequences to the terminal. Most feeds carry only a summary: t
 A desktop under a menubar, the feed list open on it: the feeds on the left,
 the one picked on the right. Enter opens a feed in a window of its own: the
 items on the left, the text of the one picked on the right, its address under
-it. `Reload` fetches the feed again, past the cache.
+it. `QR code` shows the item's address as a QR code (rubbs' `BBS::QR`, half
+blocks) to read with a phone; `Reload` fetches the feed again, past the cache.
+The code takes the room the screen has: on 80×24 an address of up to about 55
+characters fits, on a taller screen a longer one; one that does not fit gets a
+message, and the address stays under the text.
 
 | Key | Action |
 |---|---|
@@ -109,6 +113,11 @@ rubbs (`BBS::Field`: the cursor keys move in it, DEL deletes, RETURN ends it,
 RUN/STOP or `←` goes back), the feedback in its full-screen editor
 (`BBS::Editor`): RUN/STOP or `←`, then `S` sends it. Accented letters come as their
 nearest ASCII (the PETSCII line of rubbs).
+
+Under the last page of an item with an address, `C` (qr code) shows the
+address as a QR code (rubbs' `BBS::QR`, quadrant blocks, up to about 100
+characters) in the middle of the screen, for a phone to open what the C64
+cannot.
 
 ## The admins' inbox
 

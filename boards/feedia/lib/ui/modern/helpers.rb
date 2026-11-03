@@ -5,6 +5,10 @@ module UI
     # The methods of the modern face's Application: opening the windows,
     # the loading dialogs, the answers to a message.
     module Helpers
+      QR_PADDING = { sides: 2, top: 1, bottom: 0 }.freeze
+      QR_SIDES   = 4
+      QR_ROWS    = 7
+
       def feed_list = open_window(:feeds)
 
       def open_feed(feed)
@@ -20,6 +24,22 @@ module UI
         return window.replace_items(fresh.items, title: " #{fresh.title} ") if fresh
 
         BBS::Dialogs.message(self, "#{channel.feed.name} did not answer. Try again later.", title: ' Reload ')
+      end
+
+      def show_qr(item)
+        return BBS::Dialogs.message(self, 'This story has no address.', title: ' QR code ') unless item&.link
+
+        code = qr_code(item.link, width: cols - QR_SIDES, height: rows - QR_ROWS)
+        BBS::Windows::Info.open(self, title: ' Scan the address ', width: BBS::FrameBuffer.plain(code.first).size + QR_SIDES,
+                                      body: code, padding: QR_PADDING)
+      rescue BBS::QR::TooLong
+        BBS::Dialogs.message(self, 'This address is too long for a QR code on this screen.', title: ' QR code ')
+      end
+
+      def qr_code(link, **room)
+        BBS::QR.ansi(link, **room)
+      rescue BBS::QR::TooLong
+        BBS::QR.ansi(link, **room, quiet: 1)
       end
 
       # Who is calling, as the inbox counts messages.

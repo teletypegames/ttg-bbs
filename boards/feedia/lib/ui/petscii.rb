@@ -113,7 +113,23 @@ module UI
       end
 
       def show(heading, item, feed)
-        @screen.page(heading, [*head(item), '', *body(item), *address(item)], right: feed.lang)
+        lines = [*head(item), '', *body(item), *address(item)]
+        return @screen.page(heading, lines, right: feed.lang) unless item.link
+
+        @screen.page(heading, lines, right: feed.lang, wait: false, room: 2)
+        qr(item) if @screen.actions(['c', 'qr code'], %w[q back]) == 'c'
+      end
+
+      # The address of +item+ as a QR code, in the middle of the screen.
+      def qr(item)
+        @screen.title('SCAN THE ADDRESS', right)
+        code   = qr_code(item.link)
+        indent = ' ' * ((COLS - 1 - BBS::FrameBuffer.plain(code.first).size) / 2)
+        code.each { |line| @screen.puts("#{indent}#{line}") }
+        @screen.pause
+      rescue BBS::QR::TooLong
+        @screen.say('This address is too long for a QR code on the C64.', color: RD)
+        @screen.pause
       end
 
       # The title and the byline of +item+.
@@ -132,6 +148,12 @@ module UI
         return [] unless item.link
 
         ['', " #{GR}read it all at:#{LG}", *item.link.scan(/.{1,37}/).map { |w| " #{CY}#{w}#{LG}" }]
+      end
+
+      def qr_code(link)
+        BBS::QR.petscii(link)
+      rescue BBS::QR::TooLong
+        BBS::QR.petscii(link, quiet: 1)
       end
 
       def can_send?

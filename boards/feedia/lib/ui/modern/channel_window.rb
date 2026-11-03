@@ -19,6 +19,14 @@ module UI
         w.empty_message 'This feed has nothing in it right now.'
         w.render_detail { |item, width, ctx| detail(item, width, ctx[:app]) }
         w.bottom_meta   { |item, _ctx| item.link.to_s }
+        actions(w)
+      end
+
+      def actions(w)
+        w.action(label: '&QR code') do |win, ctx|
+          ctx[:app].show_qr(win.list_widget.selected_item)
+          :keep
+        end
         w.action(label: '&Reload') do |win, ctx|
           ctx[:app].reload(win, ctx[:channel])
           :keep
