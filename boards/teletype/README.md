@@ -207,7 +207,7 @@ statusbar while it is highlighted.
 - **Dev Log** — the public activity of every organisation on git.teletypegames.org (pushes with their commit messages, tags, releases, new repositories), newest first, read anonymously from the Gitea API, so private repositories never show.
 - **Team** — the members of teletypegames.org with their mottos.
 - **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `BBS::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
-- **BBS Network** (Board > BBS Network, Help > Where are the games, files, wiki?, N on the C64) — the town map on the clubhouse wall: every board of the network a building in its bbsweb colour around the clubhouse (the town gate of TTG Gate BBS, the archive of the wiki, the great library of Alexandria, the news kiosk of Feedia, the printing press of the blog, the warehouse of WarpEngine, the scriptorium, the game shop of Commodex, the gallery of Pixelia, the dark alley of the Impostor). The arrows walk from building to building; under the map what the chosen one carries and how to walk over. The list of the boards, with bbsweb and archive.teletypegames.org, is a bulletin. This board has no gateway doors: a caller goes to another board by calling it, or through TTG Gate BBS.
+- **BBS Network** (Board > BBS Network, Help > Where are the games, files, wiki?, N on the C64) — the town map on the clubhouse wall: every board of the network a building in its bbsweb colour around the clubhouse (the town gate of TTG Gate BBS, the archive of the wiki, the great library of Alexandria, the news kiosk of Feedia, the printing press of the blog, the warehouse of WarpEngine, the scriptorium, the game shop of Commodex, the gallery of Pixelia, the dark alley of the Impostor, and on the fourth row of the town the starbase of Starbase BBS). The arrows walk from building to building; under the map what the chosen one carries and how to walk over. On a screen shorter than the town the map scrolls to the chosen building (rubbs' `FrameBuffer#clip`). The list of the boards, with bbsweb and archive.teletypegames.org, is a bulletin. This board has no gateway doors: a caller goes to another board by calling it, or through TTG Gate BBS.
 - **Registered names** — a caller can register the name they logged in with (You > Register…); from then on that name asks for its password, three tries a call with a growing wait after each wrong one (2, 4, 6 seconds). Wrong passwords are counted by the name and by the line: past 10 for a name or 6 from a line in 15 minutes, it waits out the quarter hour before the board even checks a password again; the count is kept in the database (rubbs' `rate_limit_events` table), so a restart does not lift it. One login (`AccountService#log_on`) serves both faces, and one PBKDF2 runs at a time. A name that looks like a registered or a sysop one (a Cyrillic а for an a, an l or a 1 for an i: `Names.skeleton`) can neither register nor call as a guest. Profiles belong to registered names only. `bin/account` writes the same database, so it works on a running server.
 - **Sysop console** — stats + broadcast, for names in `TELETYPE_BBS_SYSOPS` that logged in with their password (the domain checks it again for the broadcast).
 - **Feedback for the sysop** — a guest (a name without a password) may leave three letters a day, from a name and from a line, and all the guests together thirty.
@@ -337,7 +337,7 @@ uppercase/graphics set, 40 wide. `UI::Arts` loads and keeps them.
 | the clubhouse, by time of day | `house_{dawn,day,dusk,night}.yml` 80×12 | `house_*.yml` 40×10 |
 | its season layers | `{snow,pumpkin,fireworks,bunting}_<time>.yml` | the same |
 | the entrance | `entrance.yml` 80×22 | `entrance.yml` 40×25 |
-| the town and its buildings | `town.yml` 76×17, `building_<id>.yml` 12×4 | `town.yml` 40×17, `building_<id>.yml` 3×3 |
+| the town and its buildings | `town.yml` 76×23, `building_<id>.yml` 12×4 | `town.yml` 40×21, `building_<id>.yml` 3×3 |
 | the games room | `games_room.yml` 76×12 | `games_room.yml` 40×11 |
 | the trophy case | `trophies.yml` 76×10 | `trophies.yml` 40×9 |
 | the room cards | `card_{cork,mailbox,sofa,notice,workshop,guestbook}.yml` 80×5 | the same, 40×6 |
@@ -362,7 +362,10 @@ board with its id, name, port, building, a line about it, a short name and two
 words for the C64, its bbsweb accent colour and C64 colour, and where its
 building stands on each map. It is kept in step by hand with TTG Gate BBS's
 `config/boards.yml` and the bbsweb cards. A new board: a row there, and its two
-buildings, `modern/building_<id>.yml` and `c64/building_<id>.yml`.
+buildings, `modern/building_<id>.yml` and `c64/building_<id>.yml`. The town has four
+rows of four plots (the clubhouse takes the middle two of the second); the fourth row
+has three free plots, `[22, 18]`, `[41, 18]`, `[60, 18]` on the modern map and `[14, 16]`,
+`[24, 16]`, `[34, 16]` on the C64 one.
 
 **The C64 line is slow**, so the pictures have budgets: the first screen at most
 1.2 KB, a step of an animation at most 200 bytes, a room card about 300, a
@@ -371,7 +374,7 @@ worst-case scene (`docker exec teletype-bbs bin/c64-bytes`); with a folder it
 writes the raw PETSCII of each screen too, to replay through a C64's CHROUT in
 VICE. As measured: the main menu 1105–1123 bytes at every time of day and
 season, a move of its bar 146–205, a puff of smoke about 60; the entrance about
-1.1 KB; the town map 1000, a step 161–209; the games room 770, a step 216–333
+1.1 KB; the town map 1149 (four rows of the town since 2026-11-03), a step 161–209; the games room 770, a step 216–333
 (it rewrites the station's description); the trophy case 609; a room card
 231–265; leaving 570, the lamps out 29–78 each.
 

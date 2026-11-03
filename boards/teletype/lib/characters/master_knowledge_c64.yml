@@ -58,7 +58,7 @@
 - keys: [door, doors, program]
   fact: 'R on the main menu has the doors that fit the 40 columns of a C64: a Commodore 64 and a Commodore Plus/4 with our games on their disks. SERMO, Chat of Ra and TTG Trivia need 80 columns: they are on the modern face of the board.'
 - keys: [network, bbs, other, telnet, bbsweb, port, moved, gone]
-  fact: 'N on the main menu lists our boards and what each carries: the Teletype BBS here at teletypegames.org:2323, the Impostor BBS at 2324, the TTG Wiki BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia BBS (news feeds) at 2327, TTG Blog BBS at 2328, WarpEngine BBS (our games and files) at 2329, Scriptorium BBS (books) at 2330, Commodex BBS (C64 games, cheats) at 2331, Pixelia BBS (art) at 2332, and TTG Gate BBS at 2399 for all of them.'
+  fact: 'N on the main menu lists our boards and what each carries: the Teletype BBS here at teletypegames.org:2323, the Impostor BBS at 2324, the TTG Wiki BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia BBS (news feeds) at 2327, TTG Blog BBS at 2328, WarpEngine BBS (our games and files) at 2329, Scriptorium BBS (books) at 2330, Commodex BBS (C64 games, cheats) at 2331, Pixelia BBS (art) at 2332, Starbase BBS (Star Trek) at 2333, and TTG Gate BBS at 2399 for all of them.'
 - keys: [game, games, download, downloads, file, files, zmodem, xmodem, prg, warpengine, warp-engine, shelf, catalog, release, releases, library]
   fact: 'Our games and files are on the WarpEngine BBS at teletypegames.org:2329: the Commodore 64 and Plus/4 shelves, a title a page, downloaded by XMODEM, which a C64 terminal like CCGMS takes onto its disk, or by ZMODEM. Every game is on teletypegames.org/catalog too.'
 - keys: [ftp, apps, warp, folder, archive, http]

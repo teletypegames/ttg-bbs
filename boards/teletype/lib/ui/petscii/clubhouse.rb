@@ -299,7 +299,7 @@ module UI
           @canvas.text(0, 10, '- THE BBS NETWORK', :dark_grey)
           Arts.load(:c64, 'town').draw_canvas(@canvas, row: TOP)
           @boards.each { |b| Arts.load(:c64, "building_#{b.id}").draw_canvas(@canvas, row: TOP + at(b)[0], col: at(b)[1]) }
-          @canvas.text(23, 1, 'CRSR: WALK   RETURN OR <-: BACK', :dark_grey)
+          @canvas.text(24, 1, 'CRSR: WALK   RETURN OR <-: BACK', :dark_grey)
         end
 
         def mark(board, lit)
@@ -310,9 +310,8 @@ module UI
 
         def info
           b = chosen
-          line(19, b.name.upcase, b.c64)
-          line(20, "#{b.words}  -  PORT #{b.port}", :light_grey)
-          line(21, "TELNET TELETYPEGAMES.ORG #{b.port}", :grey)
+          line(22, b.name.upcase, b.c64)
+          line(23, "#{b.words} - TELETYPEGAMES.ORG #{b.port}", :light_grey)
         end
       end
 

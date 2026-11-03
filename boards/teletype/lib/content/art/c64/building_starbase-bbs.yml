@@ -1,0 +1,14 @@
+# starbase-bbs on the town map of the C64 face (3×3): its building, a starbase in orbit.
+size: [3, 3]
+charset: petscii-upper
+palette:
+  a: cyan
+  y: yellow
+chars: |2
+  ◢█◣
+  ─●─
+  ◥█◤
+colors: |2
+  aaa
+  aya
+  aaa

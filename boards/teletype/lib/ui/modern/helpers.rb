@@ -5,6 +5,10 @@ module UI
     # The methods the desktop (a BBS::Application) gets besides its own:
     # what the menus, the status keys and the windows' buttons do.
     module Helpers
+      # The rows of the screen the town map's window cannot have: the
+      # menubar, the status bar and the window's frame.
+      TOWN_CHROME = 4
+
       def sysop? = services[:bbs].sysop?(context[:username], context[:authenticated])
 
       def registered? = context[:authenticated] == true
@@ -148,7 +152,7 @@ module UI
       def open_town_map
         return open_window(:bulletins) if cols < 80
 
-        PictureWindow.open(self, TownMap.new(network: services[:network]),
+        PictureWindow.open(self, TownMap.new(network: services[:network], rows: rows - TOWN_CHROME),
                            title: Icon.title(:board, 'Town Map — the BBS Network'), accent: Accent::STYLES[:board])
       end
 

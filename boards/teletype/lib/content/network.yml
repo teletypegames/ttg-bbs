@@ -122,3 +122,13 @@ boards:
     accent: '#ff5f56'
     c64: red
     place: { modern: [60, 12], c64: [34, 11] }
+  - id: starbase-bbs
+    name: Starbase BBS
+    port: 2333
+    building: the starbase
+    about: a Star Trek library, every episode and Memory Alpha to read
+    short: TREK
+    words: STAR TREK
+    accent: '#5fd7ff'
+    c64: cyan
+    place: { modern: [3, 18], c64: [4, 16] }

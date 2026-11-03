@@ -86,20 +86,28 @@ module UI
     # (art town.yml), each board of the network a building
     # (building_<id>.yml) where lib/content/network.yml puts it, with its
     # name under it in its accent. The chosen one's name lights up, and
-    # under the map what it carries and how to walk over.
+    # under the map what it carries and how to walk over. On a screen
+    # shorter than the town it shows +rows+ of it, scrolled so that the
+    # chosen building and its name are in sight.
     class TownMap < PictureView
       LABEL = 18
+      # A building and its name, in rows.
+      PLOT = 5
+      # The lines about the chosen board under the map.
+      INFO = 4
 
-      def initialize(network:, **kw)
+      def initialize(network:, rows: nil, **kw)
         super(**kw)
         @boards = network.boards
         @town   = Arts.load(:modern, 'town')
         @icons  = @boards.to_h { |b| [b.id, Arts.load(:modern, "building_#{b.id}")] }
+        @shown  = (rows ? rows - INFO : @town.rows).clamp(PLOT, @town.rows)
+        @scroll = 0
       end
 
       def places = @boards
       def width = @town.cols
-      def height = @town.rows + 4
+      def height = @shown + INFO
       def activate = :handled
 
       private
@@ -108,10 +116,22 @@ module UI
 
       def inside?(board, x, y)
         bx, by = at(board)
-        x.between?(bx - 3, bx + LABEL - 4) && y.between?(by, by + 4)
+        x.between?(bx - 3, bx + LABEL - 4) && (y + @scroll).between?(by, by + 4)
+      end
+
+      # The rows scrolled away so the chosen building's plot is in sight.
+      def follow
+        top = at(chosen)[1]
+        @scroll = @scroll.clamp(top + PLOT - @shown, top).clamp(0, @town.rows - @shown)
       end
 
       def draw(frame, x, y)
+        follow
+        frame.clip(x, y, width, @shown) { draw_town(frame, x, y - @scroll) }
+        info(frame, x, y + @shown)
+      end
+
+      def draw_town(frame, x, y)
         @town.draw(frame, x: x, y: y)
         @boards.each do |b|
           bx, by = at(b)
@@ -120,7 +140,6 @@ module UI
           sgr = b.equal?(chosen) ? "\e[0;1;38;5;16;48;5;#{color}m" : "\e[0;38;5;#{color}m"
           write(frame, x + bx - 3, y + by + 4, b.name.center(LABEL), sgr)
         end
-        info(frame, x, y + @town.rows)
       end
 
       def info(frame, x, y)
