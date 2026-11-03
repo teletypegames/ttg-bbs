@@ -29,10 +29,17 @@ class ArticleService
   def random(lang:) = answer('random') { @wikipedia.random_title(lang: lang) }
 
   # What a caller typed: [article, nil] when there is an article of that
-  # title (or one it redirects to), else [nil, the search results].
+  # title (or one it redirects to), or a search hit of that title in
+  # another case ("jack tramiel"), else [nil, the search results].
   def look_up(query, lang:)
-    found = article(query.to_s.strip, lang: lang) unless query.to_s.strip.empty?
-    found ? [found, nil] : [nil, search(query, lang: lang)]
+    query = query.to_s.strip
+    found = article(query, lang: lang) unless query.empty?
+    return [found, nil] if found
+
+    results = search(query, lang: lang)
+    same    = results&.find { |hit| hit.title.casecmp?(query) }
+    found   = article(same.title, lang: lang) if same
+    found ? [found, nil] : [nil, results]
   end
 
   # The language after +lang+, round the list.

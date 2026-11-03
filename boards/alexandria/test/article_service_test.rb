@@ -19,6 +19,23 @@ class ArticleServiceTest < Minitest::Test
     assert_equal ['Babbage (hu)'], results.map(&:title)
   end
 
+  # Wikipedia whose titles are case-sensitive, as they are past the first
+  # letter: "jack tramiel" is no article, but a search finds "Jack Tramiel".
+  class CaseSensitive
+    def article(title, lang:) = title == 'Jack Tramiel' ? ArticleModel.new(title, 'u', lang, [], nil, 1) : nil
+    def search(*, **) = [SearchResultModel.new('Jack Tramiel', '', 1), SearchResultModel.new('Tramiel', '', 1)]
+  end
+
+  def test_a_title_in_another_case_opens_its_article
+    service = ArticleService.new(CaseSensitive.new, languages: %w[en])
+    ['jack tramiel', 'JACK TRAMIEL', 'jACK tRAMIEL'].each do |typed|
+      assert_equal 'Jack Tramiel', service.look_up(typed, lang: 'en').first&.title, typed
+    end
+    article, results = service.look_up('tramiel family', lang: 'en')
+    assert_nil article
+    assert_equal ['Jack Tramiel', 'Tramiel'], results.map(&:title)
+  end
+
   def test_an_empty_query_finds_nothing
     assert_equal [nil, []], service.look_up('  ', lang: 'en')
   end
