@@ -2,6 +2,7 @@
 
 require 'bundler/setup'
 require 'bbs'
+require 'ttg/common'
 require_relative 'lib/domain'
 require_relative 'lib/ui/modern'
 require_relative 'lib/ui/petscii'
@@ -30,7 +31,8 @@ BBS.configure do |config|
   config.mouse_on_connect = false
   config.idle_seconds     = bbs.idle_seconds
 
-  config.flow = BBS::Terminal.flow(title: 'TTG Wiki BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs))
+  config.flow = BBS::Terminal.flow(title: 'TTG Wiki BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs),
+                                   splash: TTG::Logo.splash)
 end
 
 BBS.start
