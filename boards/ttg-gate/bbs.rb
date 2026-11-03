@@ -6,20 +6,11 @@ require_relative 'lib/domain'
 require_relative 'lib/ui/modern'
 require_relative 'lib/ui/petscii'
 
-# TTG Gate BBS: one port for the whole Teletype BBS network. The caller picks a
-# terminal (BBS::Terminal guesses it first), then a board from the menu, and
-# the gate hands the line on to that board's port with a telnet gateway of
-# rubbs; when the board hangs up the caller is back at the menu.
-BBS.configure do |config|
-  config.log_tag          = 'ttg-gate-bbs'
-  config.mouse            = false
-  config.mouse_on_connect = false
-  config.idle_seconds     = 600
-
-  bbs = TTGGateBBS.new
-
-  config.flow = BBS::Terminal.flow(title: 'TTG Gate BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs),
-                                   splash: TTG::Logo.splash)
+# The gate of the Teletype Games boards and of the telnet BBSes of the
+# world: on a modern terminal and on a Commodore 64.
+BBS.board 'TTG Gate BBS', TTGGateBBS do
+  preset  TTG::PRESET
+  mouse   false
+  modern  { |bbs| call { UI::Modern::Gate.new(session, bbs).run } }
+  petscii(goodbye: false) { |bbs| call { UI::Petscii.call(session, bbs) } }
 end
-
-BBS.start

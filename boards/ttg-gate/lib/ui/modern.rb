@@ -14,15 +14,5 @@ module UI
   # one to the other; each keeps its place. Q on either hangs up with the
   # goodbye of our boards.
   module Modern
-    def self.flow(bbs)
-      BBS::Flow.define do
-        call do |_ctx, runner|
-          Gate.new(runner.session, bbs).run
-          BBS::Goodbye.modern(runner.session, title: 'TTG Gate BBS')
-        rescue IOError, Errno::EPIPE, Errno::ECONNRESET
-          nil
-        end
-      end
-    end
   end
 end

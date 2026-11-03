@@ -13,20 +13,14 @@ module UI
     # The node numbers of the C64 callers, for the header.
     NODES = BBS::Nodes.new
 
-    def self.flow(bbs)
-      BBS::Flow.define do
-        call do |_ctx, runner|
-          session = runner.session
-          NODES.take do |node|
-            Gate.new(session, boards: bbs.directory.boards(petscii: true), browse: bbs.browse, dials: bbs.dials,
-                              node: node).run
-          end
-          Petscii.goodbye(session)
-          nil
-        rescue IOError, Errno::EPIPE, Errno::ECONNRESET
-          nil
-        end
+    # The call on a C64: a node of its own while the gate runs, then the
+    # gate's own goodbye.
+    def self.call(session, bbs)
+      NODES.take do |node|
+        Gate.new(session, boards: bbs.directory.boards(petscii: true), browse: bbs.browse, dials: bbs.dials,
+                          node: node).run
       end
+      goodbye(session)
     end
 
     def self.goodbye(session)

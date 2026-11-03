@@ -1,42 +1,27 @@
 # frozen_string_literal: true
 
-# The composition root of TTG Gate BBS: reads the environment and builds the
-# repositories and services once; both faces work on the one instance. When
-# Global Discovery's catalog cannot be opened, the gate still dials its own
-# boards and says so on the Discovery side.
+# TTG Gate BBS itself: our own boards from config/boards.yml and Global
+# Discovery's catalog. When the catalog cannot be opened, the gate still
+# dials its own boards and says so on the Discovery side.
 class TTGGateBBS
-  ROOT = File.expand_path('../..', __dir__)
+  include BBS::Domain
 
-  attr_reader :directory
+  path    :boards,       'config/boards.yml'
+  setting :gateway_host, 'host.docker.internal'
+  setting :public_host,  'teletypegames.org'
 
-  def initialize(env = ENV)
-    boards = BoardRepository.new(
-      env.fetch('TTG_GATE_BBS_BOARDS', File.join(ROOT, 'config/boards.yml')),
-      host:        env.fetch('TTG_GATE_BBS_GATEWAY_HOST', 'host.docker.internal'),
-      public_host: env.fetch('TTG_GATE_BBS_PUBLIC_HOST', 'teletypegames.org')
-    )
-    @directory = DirectoryService.new(boards)
-    open_discovery(env)
-  end
-
-  # Global Discovery's lists and pages (Discovery::BrowseService), nil
-  # without a catalog.
-  attr_reader :browse
-
-  # Global Discovery's dial rules and records (Discovery::DialService), nil
-  # without a catalog.
-  attr_reader :dials
-
-  def services = { directory: @directory, browse: @browse, dials: @dials }
+  service(:directory) { DirectoryService.new(BoardRepository.new(boards, host: gateway_host, public_host: public_host)) }
+  service(:browse)    { discovery&.browse }
+  service(:dials)     { discovery&.dials }
 
   private
 
-  def open_discovery(env)
-    root = Discovery::Root.new(env)
-    @browse = root.browse
-    @dials  = root.dials
+  def discovery
+    return @discovery if defined?(@discovery)
+
+    @discovery = Discovery::Root.new(ENV)
   rescue StandardError => e
     BBS.log('discovery', "off: #{e.class}: #{e.message}")
-    @browse = @dials = nil
+    @discovery = nil
   end
 end
