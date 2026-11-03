@@ -4,38 +4,38 @@ require_relative 'modern/pharos'
 require_relative 'modern/helpers'
 require_relative 'modern/results_window'
 require_relative 'modern/article_window'
-require_relative 'modern/menu'
 
 module UI
-  # The proxy on a modern terminal (ANSI colours, UTF-8, a mouse): a desktop
-  # under a menubar, the search in a dialog, the results and the article in
-  # two-pane windows that can fill the screen.
+  # The board on a modern terminal (ANSI colours, UTF-8, a mouse): the
+  # Pharos on the desktop, the search in a dialog, the results and the
+  # article in two-pane windows.
   module Modern
-    PARTS = [ResultsWindow, ArticleWindow, Menu].freeze
+    ABOUT = 'Alexandria BBS — Wikipedia on a telnet line, from Teletype Games, powered by rubbs. ' \
+            'Type a title: the article of that title opens at once, otherwise the search results. ' \
+            'An article opens with its sections on the left. ' \
+            "The text is Wikipedia's, under CC BY-SA; the address is under each article."
+    HELP  = 'F2 search · F3 random article · F4 language · Alt-X log off'
 
-    def self.flow(bbs)
-      app = application(bbs)
-      BBS::Flow.define do
-        call do |ctx, runner|
-          app.run(session: runner.session, session_id: ctx[:session_id], context: ctx)
-          nil
-        end
-        call do |_ctx, runner|
-          BBS::Goodbye.modern(runner, title: 'Alexandria BBS', note: 'Articles from wikipedia.org, under CC BY-SA.')
-          nil
-        rescue IOError, Errno::EPIPE, Errno::ECONNRESET
-          nil
-        end
-      end
-    end
+    APP = BBS::Application.define do
+      theme :synchronet
+      helpers { include Helpers }
+      init { context[:lang] ||= articles.languages.first }
 
-    def self.application(bbs)
-      BBS::Application.define do
-        theme BBS::Theme.synchronet
-        services bbs.services
-        helpers { include Helpers }
-        PARTS.each { |part| part.install(self) }
+      command(:search,   'Search…',        key: 'F2') { search }
+      command(:random,   'Random article', key: 'F3', hint: 'Random') { random }
+      command(:language, 'Language…',      key: 'F4') { switch_language }
+      menu 'Wiki', :search, :random, :language, :separator, :log_off
+      help about: ABOUT
+
+      status { "#{lang}.wikipedia.org" }
+
+      desktop do
+        widget(height: Pharos::HEIGHT, middle: -12) { Pharos.new }
+        line HELP, middle: 4
+        on_show { search }
       end
+
+      parts ResultsWindow, ArticleWindow
     end
   end
 end

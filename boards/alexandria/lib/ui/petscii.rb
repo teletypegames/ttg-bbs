@@ -1,204 +1,115 @@
 # frozen_string_literal: true
 
-require_relative 'petscii/screen'
-
 module UI
-  # The proxy on a Commodore 64: PETSCII on a 40×25 screen. A title typed at
+  # The board on a Commodore 64: PETSCII on a 40×25 screen. A title typed at
   # the prompt is looked up, the results come as a numbered list, and an
   # article as its contents, each section paged a screenful at a time.
-  module Petscii
+  class Petscii < BBS::Petscii::Face
     LOGO_COLORS = [CY, CY, LB, LB, BL].freeze
-
-    # The colours of an article, in the keys of a BBS::Theme.
-    MARKDOWN = { text: LG, text_bright: WH, accent: YE, label: CY, text_dim: GR }.freeze
-
-    LANGUAGES = { 'en' => 'english', 'hu' => 'magyar', 'de' => 'deutsch' }.freeze
-
-    QR_COMMAND = { 'c' => 'qr code' }.freeze
-
-    PHAROS = ['▄▀▄', '▐*▌', '▄███▄', '▐█▀█▌', '▄█████▄', '▄██▀▀▀██▄'].freeze
-    WAVES  = '▄▀▀▄▄▄▀▄▄▀▀▀▄▄▀▄'
+    LANGUAGES   = { 'en' => 'english', 'hu' => 'magyar', 'de' => 'deutsch' }.freeze
+    NO_ANSWER   = 'Wikipedia did not answer. Try again later.'
+    QR_COMMAND  = { 'c' => 'qr code' }.freeze
+    TOWER       = ['▄▀▄', '▐*▌', '▄███▄', '▐█▀█▌', '▄█████▄', '▄██▀▀▀██▄'].freeze
+    WAVES       = '▄▀▀▄▄▄▀▄▄▀▀▀▄▄▀▄'
 
     # The Pharos of Alexandria by the sea, its light thrown both ways.
-    def self.pharos
-      PHAROS.each_with_index.map do |t, i|
-        next "#{YE}#{'░░░▒▒▒▒▓▓▓▓████'.rjust(19)}#{LG}▐#{WH}*#{LG}▌#{YE}████▓▓▓▓▒▒▒▒░░░#{LG}" if i == 1
+    PHAROS = TOWER.each_with_index.map do |t, i|
+      next "#{YE}#{'░░░▒▒▒▒▓▓▓▓████'.rjust(19)}#{LG}▐#{WH}*#{LG}▌#{YE}████▓▓▓▓▒▒▒▒░░░#{LG}" if i == 1
 
-        "  #{LG}#{t.center(37).rstrip}"
-      end + ["#{BL}#{(WAVES * 3)[0, 39]}#{LG}"]
+      "  #{LG}#{t.center(37).rstrip}"
+    end.push("#{BL}#{(WAVES * 3)[0, 39]}#{LG}").freeze
+
+    title('ALEXANDRIA BBS') { "#{lang}.wikipedia " }
+
+    masthead do
+      gap
+      art PHAROS
+      gap
+      logo 'ALEXANDRIA', colors: LOGO_COLORS, glyphs: BBS::BlockFont::NARROW_I
+      gap
+      line 'wikipedia on your commodore', color: WH
     end
 
-    # ALEXANDRIA in reversed blocks, five rows.
-    def self.logo
-      BBS::BlockFont.petscii('ALEXANDRIA', colors: LOGO_COLORS, glyphs: BBS::BlockFont::NARROW_I, indent: 2)
+    main_menu back: 's' do
+      item 's', 'search a title', 'back to the prompt'
+      item('r', 'random article', 'wherever the wiki takes you') { read(articles.random(lang: lang)) }
+      item('l', -> { "language: #{WH}#{language_name}#{LG}" }, 'the next wikipedia') { next_language }
+      log_off 'hang up. see you!'
     end
 
-    def self.flow(bbs)
-      BBS::Flow.define do
-        call do |ctx, runner|
-          Proxy.new(bbs.articles, Screen.new(runner.session), ctx).run
-          nil
-        end
-        call do |_ctx, runner|
-          BBS::Goodbye.petscii(Screen.new(runner.session), title: 'alexandria bbs',
-                                                           note: 'Articles from wikipedia.org, under CC BY-SA.')
-          nil
-        rescue IOError, Errno::EPIPE, Errno::ECONNRESET
-          nil
-        end
+    # The prompt, again and again; return alone brings the menu.
+    def run
+      context[:lang] ||= articles.languages.first
+      show_masthead
+      loop do
+        query = ask_title
+        next look_up(query) if query
+        break if main_menu_choice == :log_off
+      rescue BBS::Abort
+        home
       end
     end
 
-    # One call: the prompt, the results, the article.
-    class Proxy
-      def initialize(articles, screen, ctx)
-        @articles = articles
-        @screen   = screen
-        @ctx      = ctx
-        @ctx[:lang] ||= articles.languages.first
-      end
+    private
 
-      def run
-        @screen.cls
-        @screen.puts
-        Petscii.pharos.each { |l| @screen.puts l }
-        @screen.puts
-        Petscii.logo.each { |l| @screen.puts l }
-        @screen.puts
-        @screen.puts "  #{WH}wikipedia on your commodore#{LG}"
-        loop do
-          query = prompt
-          if query
-            look_up(query)
-          elsif menu_choice == :quit
-            return
-          end
-        rescue LookupFailed => e
-          @screen.puts
-          @screen.say(e.message, color: RD)
-          @screen.pause
-          @screen.title('ALEXANDRIA BBS', right)
-        end
-      end
+    def lang = context[:lang]
 
-      private
+    def language_name = LANGUAGES.fetch(lang, lang)
 
-      class LookupFailed < StandardError
-      end
+    def next_language = context[:lang] = articles.next_language(lang)
 
-      def lang = @ctx[:lang]
+    def ask_title
+      puts
+      say('type a title and return.', color: GR)
+      prompt(language_name, hint: 'return alone: menu', max: 80)
+    end
 
-      def right = "#{lang}.wikipedia "
+    def look_up(query)
+      article, results = loading('searching…') { articles.look_up(query, lang: lang) }
+      return show(article) if article
+      fail_with(NO_ANSWER) if results.nil?
+      fail_with("Nothing found for \"#{query}\".") if results.empty?
 
-      # A title to look up, nil for the menu.
-      def prompt
-        @screen.puts
-        @screen.puts " #{GR}type a title and return.#{LG}"
-        @screen.puts " #{GR}return alone: menu#{LG}"
-        query = @screen.ask(" #{WH}#{LANGUAGES.fetch(lang, lang)}#{LG}> ", max: 80)
-        query.empty? ? nil : query
-      end
+      each_pick("SEARCH: #{query.upcase}"[0, 30], results, right: lang, label: :title) { |r| read(r.title) }
+      home
+    end
 
-      # :quit when the caller logs off.
-      def menu_choice
-        @screen.title('ALEXANDRIA BBS', right)
-        @screen.puts
-        items = [BBS::Selector.item('search a title', key: 's', value: :search, about: 'back to the prompt'),
-                 BBS::Selector.item('random article', key: 'r', value: :random, about: 'wherever the wiki takes you'),
-                 BBS::Selector.item("language: #{WH}#{LANGUAGES.fetch(lang, lang)}#{LG}", key: 'l', value: :language,
-                                                                                         about: 'the next wikipedia'),
-                 BBS::Selector.item('log off', key: 'q', value: :quit, about: 'hang up. see you!')]
-        case @screen.menu(items, back: :search, hint: 'crsr: choose  return: take')
-        when :random
-          title = @articles.random(lang: lang) or raise LookupFailed, 'Wikipedia did not answer. Try again later.'
-          read(title)
-        when :language
-          @ctx[:lang] = @articles.next_language(lang)
-          @screen.title('ALEXANDRIA BBS', right)
-        when :quit then return :quit
-        else @screen.title('ALEXANDRIA BBS', right)
-        end
-        nil
-      end
+    def read(title)
+      fail_with(NO_ANSWER) unless title
+      show(loading('loading…', failed: "Wikipedia has no article \"#{title}\", or did not answer.") do
+        articles.article(title, lang: lang)
+      end)
+    end
 
-      def look_up(query)
-        @screen.puts " #{GR}searching…#{LG}"
-        article, results = @articles.look_up(query, lang: lang)
-        return show(article) if article
-        raise LookupFailed, 'Wikipedia did not answer. Try again later.' if results.nil?
-        raise LookupFailed, "Nothing found for \"#{query}\"." if results.empty?
-
-        loop do
-          result = @screen.pick("SEARCH: #{query.upcase}"[0, 30], results, right: lang, &:title)
-          break unless result
-
-          read(result.title)
-        end
-        @screen.title('ALEXANDRIA BBS', right)
-      end
-
-      def read(title)
-        @screen.puts " #{GR}loading…#{LG}"
-        article = @articles.article(title, lang: lang)
-        raise LookupFailed, "Wikipedia has no article \"#{title}\", or did not answer." if article.nil?
-
-        show(article)
-      end
-
-      # The article: its contents when it has sections, else its pages; C
-      # shows its QR code.
-      def show(article)
-        heading = article.title.upcase[0, 30]
-        if article.sections.size == 1
-          single(article, heading)
-        else
-          contents(article, heading)
-        end
-        @screen.title('ALEXANDRIA BBS', right)
-      end
-
-      def single(article, heading)
+    # The article: its contents when it has sections, else its one page; C
+    # shows its QR code.
+    def show(article)
+      heading = article.title.upcase[0, 30]
+      if article.sections.size == 1
         section(article, article.sections.first, heading, wait: false)
-        qr(article) if @screen.actions(['c', 'qr code'], %w[q back]) == 'c'
-      end
-
-      def contents(article, heading)
-        loop do
-          picked = @screen.pick(heading, article.sections, right: lang, commands: QR_COMMAND, &:title)
-          break unless picked
-
-          picked == 'c' ? qr(article) : section(article, picked, heading)
+        show_qr(article) if actions(['c', 'qr code'], %w[q back]) == 'c'
+      else
+        each_pick(heading, article.sections, right: lang, label: :title, commands: QR_COMMAND) do |picked|
+          picked == 'c' ? show_qr(article) : section(article, picked, heading)
         end
       end
+      home
+    end
 
-      # The article's address as a QR code, in the middle of the screen.
-      def qr(article)
-        @screen.title('SCAN THE ARTICLE', right)
-        code   = qr_code(article.short_url)
-        indent = ' ' * ((COLS - 1 - BBS::FrameBuffer.plain(code.first).size) / 2)
-        code.each { |line| @screen.puts("#{indent}#{line}") }
-        @screen.pause
-      rescue BBS::QR::TooLong
-        @screen.say('This address is too long for a QR code on the C64.', color: RD)
-        @screen.pause
-      end
+    def show_qr(article)
+      title('SCAN THE ARTICLE', lang)
+      pause if qr(article.short_url)
+    end
 
-      def qr_code(link)
-        BBS::QR.petscii(link)
-      rescue BBS::QR::TooLong
-        BBS::QR.petscii(link, quiet: 1)
+    def section(article, section, heading, wait: true)
+      lines = markdown(section.markdown)
+      if section == article.sections.first
+        lines.unshift(" #{GR}(redirected from #{article.redirected_from})#{LG}", '') if article.redirected_from
+        lines += ['', " #{GR}source, under cc by-sa:#{LG}", *article.url.scan(/.{1,37}/).map { |w| " #{CY}#{w}#{LG}" }]
+      else
+        lines.unshift(" #{WH}#{section.title}#{LG}", '')
       end
-
-      def section(article, section, heading, wait: true)
-        lines = BBS::Markdown.to_lines(section.markdown, width: WIDTH, theme: MARKDOWN).map { |l| " #{l}" }
-        if section == article.sections.first
-          lines.unshift(" #{GR}(redirected from #{article.redirected_from})#{LG}", '') if article.redirected_from
-          lines += ['', " #{GR}source, under cc by-sa:#{LG}", *article.url.scan(/.{1,37}/).map { |w| " #{CY}#{w}#{LG}" }]
-        else
-          lines.unshift(" #{WH}#{section.title}#{LG}", '')
-        end
-        @screen.page(heading, lines, right: lang, wait: wait, room: 2)
-      end
+      page(heading, lines, right: lang, wait: wait, room: 2)
     end
   end
 end
