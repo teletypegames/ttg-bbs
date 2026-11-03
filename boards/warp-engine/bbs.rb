@@ -13,4 +13,5 @@ BBS.board 'WarpEngine BBS', WarpEngineBBS, slug: 'warp-engine-bbs' do
   preset  TTG::PRESET
   modern  UI::Modern::APP
   petscii UI::Petscii
+  goodbye color: BBS::Petscii::Colors::LB
 end

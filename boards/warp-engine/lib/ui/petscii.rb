@@ -30,39 +30,21 @@ module UI
       logo 'WARP', colors: LOGO_COLORS, indent: 10
       gap
       rule
-      line ' the file area of teletype games', color: WH
-      line ' telnet downloads for your c64', color: GR
+      line 'the file area of teletype games', color: WH, indent: 2
+      line 'telnet downloads for your c64', color: GR, indent: 2
       rule
     end
 
-    def show_masthead
-      super
-      @under_masthead = true
+    main_menu do
+      each_of(-> { catalog.shelves }) do |shelf, i|
+        name = shelf.name.downcase
+        item((i + 1).to_s, name, "#{name} titles to download") { open_shelf(shelf) }
+      end
+      item('h', 'how to download', 'protocols, terminals, file names') { page('HOW TO DOWNLOAD', HELP) }
+      log_off
     end
-
-    # The first menu goes under the masthead, the others under the title.
-    def home
-      return super unless @under_masthead
-
-      @under_masthead = false
-    end
-
-    def main_menu_choice = shelf_menu.take(self)
 
     private
-
-    # The main menu: a shelf on each number, the help and the log off.
-    def shelf_menu
-      shelves = catalog.shelves
-      @shelf_menu ||= MainMenu.new(MENU_HINT) do
-        shelves.each_with_index do |shelf, i|
-          name = shelf.name.downcase
-          item((i + 1).to_s, name, "#{name} titles to download") { open_shelf(shelf) }
-        end
-        item('h', 'how to download', 'protocols, terminals, file names') { page('HOW TO DOWNLOAD', HELP) }
-        log_off
-      end
-    end
 
     def open_shelf(shelf)
       say('reading the shelf…', color: GR)
