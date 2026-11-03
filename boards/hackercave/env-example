@@ -20,5 +20,18 @@ HACKERCAVE_BBS_DB=data/hackercave.sqlite3
 # download waits for the import
 HACKERCAVE_BBS_INDEX_DB=data/index.sqlite3
 HACKERCAVE_BBS_INDEX_FILE=data/rfc-index.xml
-# The texts of the RFCs, rfc<N>.txt as published: fetched on the first read
+# The texts of the RFCs, rfc<N>.txt as published (and ien<N>.txt): the mirror, or fetched on the first read
 HACKERCAVE_BBS_TEXTS=data/rfc
+# The errata download waits here for the import
+HACKERCAVE_BBS_ERRATA_FILE=data/errata.json
+
+# The mirror of every RFC's text (rsync, about 540 MB into HACKERCAVE_BBS_TEXTS)
+# and its full-text index; "off" turns both off
+HACKERCAVE_BBS_MIRROR=on
+HACKERCAVE_BBS_MIRROR_SOURCE=rsync://rsync.rfc-editor.org/rfcs-text-only/
+# Days between two syncs
+HACKERCAVE_BBS_MIRROR_TTL=1
+HACKERCAVE_BBS_FULLTEXT_DB=data/fulltext.sqlite3
+
+# The Jargon File in SQLite, built from config/jargon/jarg447.txt
+HACKERCAVE_BBS_JARGON_DB=data/jargon.sqlite3

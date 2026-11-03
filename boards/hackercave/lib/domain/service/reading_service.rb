@@ -9,6 +9,8 @@
 # same way.
 class ReadingService
   FETCHES = 2
+  # An RFC or IEN named in a text.
+  MENTION = /\b(RFC|IEN)[ -]?(\d{1,5})\b/i
   WAIT    = 60
   # Seconds a parsed RFC is kept in memory.
   KEEP = 900
@@ -44,7 +46,22 @@ class ReadingService
   def reflowed(doc, width) = @flowed.fetch([doc.number, width]) { @reflow.reflow(doc, width) }
 
   # The kind of each line of +doc+ (ReflowService#kinds).
-  def kinds(doc) = @reflow.kinds(doc)
+  def kinds(doc) = @flowed.fetch([doc.number, :kinds]) { @reflow.kinds(doc) }
+
+  # The headings of +doc+ as [line index, text]: its table of contents.
+  def contents(doc) = kinds(doc).each_with_index.filter_map { |kind, i| [i, doc.lines[i].strip] if kind == :heading }
+
+  # The RFCs and IENs +doc+ mentions ("RFC 793", "[RFC2119]", "IEN 116"),
+  # each once, in the order they first come, as [number, line index]; an
+  # IEN's number negative. +doc+ itself is left out.
+  def mentions(doc)
+    seen = {}
+    doc.lines.each_with_index do |line, i|
+      line.scan(MENTION) { |kind, n| seen[kind.upcase == 'IEN' ? -n.to_i : n.to_i] ||= i }
+    end
+    seen.delete(doc.number)
+    seen.to_a
+  end
 
   private
 

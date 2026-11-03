@@ -10,7 +10,7 @@ module UI
         rfc = entry.rfc
         wrap = ->(s) { s.empty? ? [s] : BBS::FrameBuffer.wrap_ansi(s, width - 1) }
         [*rfc_heading(entry), *rfc_links(rfc), '', *abstract_lines(rfc), rfc_credit(rfc), '',
-         "#{theme[:text_dim]}Enter reads it. Alt-L: its links.#{theme[:text]}"].flat_map { |line| wrap.call(line) }
+         "#{theme[:text_dim]}#{rfc_hint(rfc)}#{theme[:text]}"].flat_map { |line| wrap.call(line) }
       end
 
       private
@@ -20,13 +20,14 @@ module UI
         rfc = entry.rfc
         ["#{t[:text_bright]}#{rfc.name}: #{rfc.title}#{t[:text]}",
          *("#{t[:label]}#{entry.note}#{t[:text]}" if entry.kind == :remark),
+         *("#{t[:label]}Found:#{t[:text]} #{entry.note}" if entry.kind == :match),
          *("#{t[:accent]}#{rfc.author_list.join(', ')}#{t[:text]}" unless rfc.authors.empty?),
          "#{t[:text_dim]}#{rfc_facts(rfc).join(' · ')}#{t[:text]}"]
       end
 
       def rfc_facts(rfc)
         reads = library.reads(rfc)
-        [rfc.date_label, ("#{rfc.pages} pages" if rfc.pages.positive?), rfc_status(rfc),
+        [rfc.date_label, ("#{rfc.pages} pages" if rfc.pages.positive?), rfc.ien? ? 'Internet Experiment Note' : rfc_status(rfc),
          "read #{reads} time#{'s' unless reads == 1} here"].compact.reject(&:empty?)
       end
 
@@ -37,14 +38,22 @@ module UI
         series.empty? ? rfc.status_label : "#{rfc.status_label} (#{series.join(', ')})"
       end
 
-      # The relations of the RFC, "obsoleted by" in red.
+      # The relations of the RFC, "obsoleted by" in red, and its errata.
       def rfc_links(rfc)
         return [] if rfc.status.empty?
 
-        library.relations(rfc).map do |kind, numbers|
+        links = library.relations(rfc).map do |kind, numbers|
           style = kind == 'obsoleted by' ? :error : :label
           "#{theme[style]}#{kind.capitalize}:#{theme[:text]} #{numbers.map { |n| "RFC #{n}" }.join(', ')}"
         end
+        [*links, *errata_line(rfc)]
+      end
+
+      def errata_line(rfc)
+        count = library.errata_count(rfc)
+        return [] if count[:total].zero?
+
+        ["#{theme[:label]}Errata:#{theme[:text]} #{count[:total]} (#{count[:verified]} verified) — Alt-E"]
       end
 
       def abstract_lines(rfc)
@@ -53,7 +62,13 @@ module UI
         [*rfc.abstract.split("\n\n").flat_map { |p| [p, ''] }]
       end
 
-      def rfc_credit(rfc) = "#{theme[:text_dim]}#{rfc.name}, IETF · #{rfc.url}#{theme[:text]}"
+      def rfc_hint(rfc)
+        return "Only a scan of it is kept: #{rfc.url}" unless rfc.text?
+
+        'Enter reads it. Alt-L: its links.'
+      end
+
+      def rfc_credit(rfc) = "#{theme[:text_dim]}#{rfc.name}#{', IETF' unless rfc.ien?} · #{rfc.url}#{theme[:text]}"
     end
   end
 end

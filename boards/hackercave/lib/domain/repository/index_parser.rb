@@ -42,7 +42,7 @@ class IndexParser
   def enter(name)
     @stack << name
     @text = +''
-    @entry = { kind: name, authors: [], keywords: [], abstract: [], lists: Hash.new { |h, k| h[k] = [] } } if
+    @entry = { kind: name, authors: [], keywords: [], abstract: [], formats: [], lists: Hash.new { |h, k| h[k] = [] } } if
       ENTRIES.include?(name)
   end
 
@@ -60,6 +60,7 @@ class IndexParser
     when 'doc-id' then doc_id(parent, text)
     when 'name' then @entry[:authors] << text if parent == 'author'
     when 'kw' then @entry[:keywords] << text
+    when 'file-format' then @entry[:formats] << text
     when 'p' then @entry[:abstract] << text if parent == 'abstract'
     else field(name, parent, text)
     end

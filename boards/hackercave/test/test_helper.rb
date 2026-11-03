@@ -26,8 +26,16 @@ module TempDir
     BBS::SQLite.new(path('hackercave.sqlite3')).tap { |db| db.migrate(*ReadRepository::MIGRATIONS) }
   end
 
-  # The index of test/fixtures/rfc-index.xml.
+  # The index of test/fixtures: rfc-index.xml, errata.json and the IENs.
   def index
-    IndexRepository.new(path('index.sqlite3')).tap { |i| i.import(File.join(FIXTURES, 'rfc-index.xml')) }
+    IndexRepository.new(path('index.sqlite3')).tap do |i|
+      i.import(fixture('rfc-index.xml'), errata: fixture('errata.json'), iens: ien_index)
+    end
   end
+
+  def ien_index
+    IenIndex.new(File.read(fixture('ien-index.txt')), texts: IenIndex.texts_in(File.read(fixture('ien-listing.html'))))
+  end
+
+  def fixture(name) = File.join(FIXTURES, name)
 end

@@ -200,17 +200,28 @@ class ReflowService
     end
   end
 
-  # +text+ in lines of at most +width+ columns, broken between words; a
-  # word longer than that is broken where it must.
+  # +part+ after +gap+ on the last of +lines+, or on a new line when it
+  # does not fit.
+  def append(lines, part, gap, width)
+    if lines.last.empty? then lines.last << part
+    elsif lines.last.length + gap.length + part.length <= width then lines.last << gap << part
+    else lines << part.dup
+    end
+  end
+
+  # +text+ in lines of at most +width+ columns, broken between words, the
+  # spaces between the words of a line kept as they were; a word longer
+  # than that is broken where it must.
   def wrap(text, width)
     width = [width, 8].max
-    text.split.each_with_object([+'']) do |word, lines|
+    lines = [+'']
+    text.strip.scan(/(\S+)(\s*)/).each_with_object(['']) do |(word, space), gap|
       word.scan(/.{1,#{width}}/).each do |part|
-        if lines.last.empty? then lines.last << part
-        elsif lines.last.length + 1 + part.length <= width then lines.last << ' ' << part
-        else lines << part.dup
-        end
+        append(lines, part, gap[0], width)
+        gap[0] = ''
       end
+      gap[0] = space
     end
+    lines
   end
 end

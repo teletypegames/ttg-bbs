@@ -59,6 +59,44 @@ class IndexRepositoryTest < Minitest::Test
     assert_equal [2549], repo.search(%w[avian], year: 1999).map(&:number)
   end
 
+  def test_iens_are_under_negative_numbers_and_apart
+    repo = index
+    assert_equal 7, repo.count
+    assert_equal [-1, -4, -7, -137], repo.iens.map(&:number)
+    ien = repo.rfc(-137)
+    assert_equal ['IEN 137', 'On Holy Wars and a Plea for Peace', 'Cohen', '1 April 1980'],
+                 [ien.name, ien.title, ien.authors, ien.date_label]
+    assert ien.text?
+    refute repo.rfc(-4).text?
+    assert_equal 'rfc-editor.org/ien/ien4.pdf', repo.rfc(-4).url
+  end
+
+  def test_iens_are_searched_but_not_on_the_rfc_shelves
+    repo = index
+    assert_equal 'Issues in the Interconnection of Datagram Networks', repo.rfc(-1).title
+    assert_equal [-137], repo.search(%w[holy wars]).map(&:number)
+    refute_includes repo.newest(20).map(&:number), -137
+  end
+
+  def test_errata
+    repo = index
+    assert_equal({ total: 2, verified: 1 }, repo.errata_count(793))
+    first = repo.errata(793).first
+    assert_equal [1001, 'Verified', 'Technical', '3.9'], [first.id, first.status, first.type, first.section]
+    assert_includes first.correct_text, "\nbut special allowance"
+    assert_equal({ total: 0, verified: 0 }, repo.errata_count(854))
+  end
+
+  def test_formats
+    assert index.rfc(793).text?
+    refute index.rfc(854).text?
+  end
+
+  def test_of_month
+    assert_equal [1149, 2549], index.of_month(4, limit: 10).map(&:number)
+    assert_equal 2, index.month_count(9)
+  end
+
   def test_shelves_of_status_decade_and_newest
     repo = index
     assert_equal ['INTERNET STANDARD', 3], repo.statuses.first

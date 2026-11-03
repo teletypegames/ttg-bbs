@@ -73,4 +73,9 @@ class ReflowServiceTest < Minitest::Test
                                  "RFC 854            May 1983\n\nmore\n")
     assert_equal %i[heading text text text text page page text heading], ReflowService.new.kinds(doc)
   end
+
+  def test_a_wide_line_keeps_the_spaces_between_its_words
+    toc = "    14.1.  Initial Datagram Size\n    14.2.  Path Maximum Transmission Unit Discovery and Some More Words\n"
+    assert_equal ['14.1.  Initial Datagram Size', '14.2.  Path Maximum Transmission'], texts(reflow(toc)).first(2)
+  end
 end

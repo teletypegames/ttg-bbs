@@ -32,6 +32,31 @@ module UI
         open_entries(library.shelves.find { |s| s.kind == :newest })
       end
 
+      def search_text
+        unless library.text_search?
+          return BBS::Dialogs.message(self, 'The full text of every RFC is being mirrored from the RFC Editor and ' \
+                                            'indexed. Try again later; the search of titles and abstracts (F3) works.',
+                                      title: ' Search text ', width: 60)
+        end
+
+        BBS::Dialogs.input(self, prompt: 'Words anywhere in the text of the RFCs:', title: ' Search text ',
+                                 value: context[:text_query].to_s, width: 64, on_submit: ->(query) { find_text(query) })
+      end
+
+      def find_text(query)
+        context[:text_query] = query
+        case (found = library.search_text(query))
+        when :preparing then preparing
+        when :too_short then search_says('A word of two letters or more, please.')
+        when [] then search_says('No RFC has all these words.')
+        else open_window(:rfcs, entries: found, title: " Text: #{query.strip[0, 40]} (#{found.size}) ")
+        end
+      end
+
+      def this_month = open_entries(library.shelves.find { |s| s.kind == :month })
+
+      def iens = open_entries(library.shelves.find { |s| s.kind == :ien })
+
       def most_read
         list = library.most_read
         return BBS::Dialogs.message(self, 'Nothing has been read here yet.', title: ' Most read ') if list.empty?
@@ -62,6 +87,28 @@ module UI
 
         open_window(:rfcs, entries: list, title: " Links of #{rfc.name} ")
       end
+
+      # The errata of +rfc+ in a TextWindow: what the RFC says and what it
+      # should say, the verified ones first.
+      def show_errata(rfc)
+        list = library.errata(rfc)
+        return BBS::Dialogs.message(self, "#{rfc.name} has no errata.", title: ' Errata ') if list.empty?
+
+        TextWindow.open(self, title: "Errata of #{rfc.name} (#{list.size})", paragraphs: list.flat_map { |e| erratum(e) },
+                              where: "rfc-editor.org/errata/rfc#{rfc.number}")
+        :keep
+      end
+
+      # The RFCs and IENs the text of +rfc+ names, to open any of them.
+      def references(rfc, doc)
+        list = library.mentioned(reading.mentions(doc))
+        return BBS::Dialogs.message(self, "#{rfc.name} names no other RFC.", title: ' References ') if list.empty?
+
+        open_window(:rfcs, entries: list, title: " Named in #{rfc.name} (#{list.size}) ")
+      end
+
+      # The headings of +doc+; Enter moves +reader+ there.
+      def contents(reader, rfc, doc) = open_window(:contents, headings: reading.contents(doc), rfc: rfc, reader: reader)
 
       def preparing
         BBS::Dialogs.message(self, 'The index is being prepared: it is downloaded from the RFC Editor and ' \
@@ -105,6 +152,12 @@ module UI
       def help(text, title) = BBS::Dialogs.message(self, text, title: title, width: 64)
 
       private
+
+      def erratum(e)
+        [[:heading, ["Erratum #{e.id}", e.status, e.type, ("Section #{e.section}" unless e.section.empty?)].compact.join(' · ')],
+         [:text, "Reported #{e.submitted}. It says:"], [:pre, e.orig_text], [:text, 'It should say:'], [:pre, e.correct_text],
+         *([[:text, "Notes: #{e.notes.tr("\n", ' ')}"]] unless e.notes.strip.empty?)]
+      end
 
       def search_says(text) = BBS::Dialogs.message(self, text, title: ' Search ')
 

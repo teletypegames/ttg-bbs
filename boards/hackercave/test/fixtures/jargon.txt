@@ -1,0 +1,55 @@
+#======= THIS IS THE JARGON FILE, VERSION 4.4.7, 29 DEC 2003 =======#
+
+Welcome to the Jargon File
+
+   This document (the Jargon File) is in the public domain, to be freely
+   used, shared, and modified.
+
+Chapter 1. Hacker Slang and Hacker Culture
+
+   This  document  is  a  collection  of  slang terms used by various
+   subcultures of computer hackers.
+
+The Jargon Lexicon
+
+Glossary
+
+   A
+
+        hack
+
+A
+
+   hack
+   kluge
+
+:hack:
+
+   1.  n.  Originally, a quick job that produces what is needed, but not
+   well. See {kluge}, {hacker} and {nowhere}.
+
+:kluge: /klooj/
+
+   [from the German `klug', clever]
+
+   1. n. A Rube Goldberg device. Often involves {hack}.
+
+        if (x) { y(); }
+        else z();
+
+H
+
+   hacker
+
+:hacker: n.
+
+   A person who enjoys exploring the details of programmable systems.
+   Café culture.
+
+Appendix A. Hacker Folklore
+
+The Story of Mel
+
+   Mel wrote code for the RPC-4000.
+
+#===================== THE JARGON FILE ENDS HERE ====================#

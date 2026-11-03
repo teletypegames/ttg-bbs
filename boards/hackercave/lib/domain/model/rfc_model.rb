@@ -4,13 +4,16 @@ require 'date'
 
 # One RFC of the RFC Editor's index: a row of the rfcs table. +authors+ and
 # +keywords+ are joined with "; ", +date+ is "1981-09" or "1990-04-01",
-# +abstract+ has its paragraphs separated by an empty line. A number that was
-# never issued has +issued+ false and nothing else.
+# +abstract+ has its paragraphs separated by an empty line, +formats+ is
+# what the RFC Editor has of it ("TXT HTML PDF"). A number that was never
+# issued has +issued+ false and nothing else. An Internet Experiment Note
+# (1977-1982) is in the same table under a negative number: IEN 137 is
+# -137 (#ien?).
 RfcModel = Data.define(:number, :title, :authors, :date, :pages, :status, :pub_status, :stream, :area, :wg,
-                       :abstract, :keywords, :issued) do
+                       :abstract, :keywords, :formats, :issued) do
   # The RFC of an index row, a Hash with the column names as String keys.
   def self.from_row(row)
-    texts = %i[title authors date status pub_status stream area wg abstract keywords].to_h { |k| [k, row[k.to_s].to_s] }
+    texts = %i[title authors date status pub_status stream area wg abstract keywords formats].to_h { |k| [k, row[k.to_s].to_s] }
     new(number: row['number'], pages: row['pages'].to_i, issued: row['issued'] != 0, **texts)
   end
 
@@ -18,7 +21,7 @@ RfcModel = Data.define(:number, :title, :authors, :date, :pages, :status, :pub_s
   # the index is not there yet.
   def self.stub(number, title = '')
     new(number: number, title: title, authors: '', date: '', pages: 0, status: '', pub_status: '', stream: '',
-        area: '', wg: '', abstract: '', keywords: '', issued: true)
+        area: '', wg: '', abstract: '', keywords: '', formats: 'TXT', issued: true)
   end
 
   # The status as it is read: "Internet Standard", "Best Current Practice".
@@ -26,7 +29,16 @@ RfcModel = Data.define(:number, :title, :authors, :date, :pages, :status, :pub_s
 
   def issued? = issued
 
-  def name = "RFC #{number}"
+  # Whether this is an Internet Experiment Note, not an RFC.
+  def ien? = number.negative?
+
+  # Its number in its own series: 137 for IEN 137.
+  def serial = number.abs
+
+  # Whether the RFC Editor has it as plain text.
+  def text? = formats.split.include?('TXT')
+
+  def name = "#{ien? ? 'IEN' : 'RFC'} #{serial}"
 
   def author_list = authors.split('; ').reject(&:empty?)
 
@@ -44,8 +56,13 @@ RfcModel = Data.define(:number, :title, :authors, :date, :pages, :status, :pub_s
 
   def status_label = self.class.status_label(status)
 
-  def url = "rfc-editor.org/rfc/rfc#{number}"
+  def url
+    return "rfc-editor.org/ien/ien#{serial}.#{text? ? 'txt' : 'pdf'}" if ien?
 
-  # The RFC's page at the RFC Editor, the address of its QR code.
+    "rfc-editor.org/rfc/rfc#{number}"
+  end
+
+  # The RFC's page at the RFC Editor (an IEN's file), the address of its QR
+  # code.
   def link = "https://www.#{url}"
 end

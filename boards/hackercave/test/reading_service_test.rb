@@ -54,4 +54,12 @@ class ReadingServiceTest < Minitest::Test
     doc = @reading.open(RfcModel.stub(854))
     assert_same @reading.reflowed(doc, 38), @reading.reflowed(doc, 38)
   end
+
+  def test_mentions_and_contents
+    @texts.store(2, "INTRODUCTION\n\n   See RFC 793 and [RFC2119], IEN 116, and RFC 793 again.\n\n" \
+                    "1.  Scope\n\n   This RFC 2 names itself.\n")
+    doc = @reading.open(RfcModel.stub(2))
+    assert_equal [[793, 2], [2119, 2], [-116, 2]], @reading.mentions(doc)
+    assert_equal [[0, 'INTRODUCTION'], [4, '1.  Scope']], @reading.contents(doc)
+  end
 end

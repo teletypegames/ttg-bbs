@@ -1,0 +1,21 @@
+
+                                                                2 Mar 83
+Internet Experiment Note Index
+
+
+
+IEN     Author       Date        Title
+---     ------       ----        -----
+  1     Hinchley     29-Jul-77   Issues in the Interconnection of
+                                     Datagram Networks
+  4     Rubin        16-May-77   Specification for a General Network
+                                     Conferencing System
+  7     -----           Jul-77   X.25 Specification
+
+
+                                                                [page 1]
+
+                                                                2 Mar 83
+Internet Experiment Note Index
+
+ 137    Cohen         1-Apr-80   On Holy Wars and a Plea for Peace

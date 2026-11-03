@@ -6,13 +6,21 @@ module UI
     # on the left, the record of the one picked on the right; Enter reads
     # it.
     module RfcsWindow
+      # The buttons under the list, each a helper of the Application that
+      # takes the RFC picked.
+      ACTIONS = [['&Read', :open_rfc], ['&Links', :links], ['&Errata', :show_errata], ['&QR code', :show_qr]].freeze
+
       def self.define(app)
         app.window(:rfcs, type: :master_detail) do |w|
           frame(w)
           list(w)
-          w.action(label: '&Read') { |win, ctx| on_selected(win, ctx) { |e| ctx[:app].open_rfc(e.rfc) } }
-          w.action(label: '&Links') { |win, ctx| on_selected(win, ctx) { |e| ctx[:app].links(e.rfc) } }
-          w.action(label: '&QR code') { |win, ctx| on_selected(win, ctx) { |e| ctx[:app].show_qr(e.rfc) } }
+          ACTIONS.each { |label, helper|
+            w.action(label: label) { |win, ctx|
+              on_selected(win, ctx) { |e|
+                ctx[:app].send(helper, e.rfc)
+              }
+            }
+          }
         end
       end
 
@@ -32,16 +40,19 @@ module UI
         w.on_activate { |e, _window, ctx| ctx[:app].open_rfc(e.rfc) }
       end
 
-      # The number and the title; a series ("STD 7") or a relation
-      # ("obsoleted by") before them, the number of reads in the Most read
-      # list.
+      # The number and the title; a series ("STD 7"), a relation
+      # ("obsoleted by"), the line it is named on, the year, or the number of
+      # reads before them.
       def self.label(entry)
         prefix = case entry.kind
                  when :reads then entry.note.to_s.rjust(3)
                  when :series then entry.note.ljust(7)
                  when :relation then entry.note.ljust(12)
+                 when :line then "l.#{entry.note}".ljust(6)
+                 when :year then entry.note
                  end
-        [prefix, entry.number.to_s.rjust(4), entry.rfc.title].compact.join('  ')
+        number = entry.rfc.ien? ? "IEN #{entry.rfc.serial}" : entry.number.to_s.rjust(4)
+        [prefix, number, entry.rfc.title].compact.join('  ')
       end
 
       def self.on_selected(window, ctx)

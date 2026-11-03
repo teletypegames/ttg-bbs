@@ -8,6 +8,9 @@ require_relative 'modern/shelves_window'
 require_relative 'modern/rfcs_window'
 require_relative 'modern/menu'
 require_relative 'modern/reader_window'
+require_relative 'modern/text_window'
+require_relative 'modern/contents_window'
+require_relative 'modern/jargon'
 
 module UI
   # The board on a modern terminal (ANSI colours, UTF-8, a mouse): a desktop
@@ -35,8 +38,8 @@ module UI
       BBS::Application.define do
         theme BBS::Theme.synchronet
         services bbs.services
-        helpers { include Library, Desktop, RfcCard }
-        [ShelvesWindow, RfcsWindow, Menu].each { |part| part.define(self) }
+        helpers { include Library, Desktop, RfcCard, Jargon }
+        [ShelvesWindow, RfcsWindow, ContentsWindow, JargonWindows, Menu].each { |part| part.define(self) }
         on_tick { statusbar.right_text = status_text }
         init { open_desktop }
       end

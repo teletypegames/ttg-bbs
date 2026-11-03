@@ -7,6 +7,8 @@ module UI
     # (the running heads and feet of the pages dim, the headings bright),
     # PgUp/PgDn, Home/End and the arrows to move, and a line under the text
     # that says where the reader is: "RFC 793 · page 3/91 · line 140/5247".
+    # The RFCs it names are coloured; Contents jumps to a heading, References
+    # lists the RFCs named, Links the ones it obsoletes or updates.
     class ReaderWindow < BBS::Window
       # 73 columns of text (a few RFCs have 73), the border and a margin.
       MAX_WIDTH = 78
@@ -23,9 +25,7 @@ module UI
         @where = BBS::Widgets::Label.new(text: '', style_key: :input_label)
         add(@view)
         add(@where)
-        @buttons = [{ label: '&Links', keep_open: true, align: :left, on_click: ->(_w) { @app.links(@rfc) } },
-                    { label: '&QR code', keep_open: true, align: :left, on_click: ->(_w) { @app.show_qr(@rfc) } },
-                    { label: '&Close', cancel: true }]
+        @buttons = buttons
         layout(*normal_rect)
         @bar = BBS::Windows::ButtonBar.attach(self, app, @buttons)
         @view.lines = styled(reading.kinds(doc))
@@ -40,6 +40,12 @@ module UI
       end
 
       def resizable? = true
+
+      # Moves the reader to line +index+ of the RFC, a line of context above.
+      def jump(index)
+        @view.scroll = (index - 1).clamp(0, [@view.lines.size - @view.bounds.height, 0].max)
+        :keep
+      end
 
       # As wide as the screen allows up to MAX_WIDTH, as tall as the desktop
       # less a row above and below.
@@ -65,17 +71,25 @@ module UI
 
       private
 
+      def buttons
+        [button('C&ontents') { @app.contents(self, @rfc, @doc) }, button('&References') { @app.references(@rfc, @doc) },
+         button('&Links') { @app.links(@rfc) }, button('&QR code') { @app.show_qr(@rfc) }, { label: '&Close', cancel: true }]
+      end
+
+      def button(label, &action) = { label: label, keep_open: true, align: :left, on_click: ->(_w) { action.call } }
+
       # The scroll within the text after a resize.
       def keep_in_view = @view.scroll = @view.scroll.clamp(0, [@view.lines.size - @view.bounds.height, 0].max)
 
-      # The lines of the RFC, a page's head and foot dim, a heading bright.
+      # The lines of the RFC, a page's head and foot dim, a heading bright, the
+      # RFCs it names in the accent colour.
       def styled(kinds)
         th = @app.theme
         @doc.lines.each_with_index.map do |line, i|
           case kinds[i]
           when :page then "#{th[:text_dim]}#{line}#{th[:text]}"
           when :heading then "#{th[:text_bright]}#{line}#{th[:text]}"
-          else line
+          else line.gsub(ReadingService::MENTION) { |m| "#{th[:accent]}#{m}#{th[:text]}" }
           end
         end
       end

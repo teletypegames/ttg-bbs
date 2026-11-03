@@ -4,15 +4,21 @@ require 'fileutils'
 require 'sqlite3'
 
 # The RFC Editor's index in SQLite (data/index.sqlite3): the RFCs (the
-# numbers never issued too), how they are related (obsoletes, updates, see
-# also), the STD, BCP and FYI series, and a full-text index of the titles,
+# numbers never issued too) and the Internet Experiment Notes (IENs, under
+# negative numbers: IEN 137 is -137, see RfcModel#ien?), how the RFCs are
+# related (obsoletes, updates, see also), the STD, BCP and FYI series, the
+# errata (IndexErrata), the shelves (IndexShelves), and a full-text index of the titles,
 # authors, keywords and abstracts (FTS5; an indexed LIKE where the SQLite has
 # no FTS5). Nothing of it is held in Ruby: every list is a query. #import
 # builds a new database from rfc-index.xml next to the old one (IndexBuilder)
 # and swaps it in, so callers read the old index meanwhile. One read-only connection
 # behind a Mutex.
 class IndexRepository
-  COLUMNS = 'number, title, authors, date, pages, status, pub_status, stream, area, wg, abstract, keywords, issued'
+  include IndexShelves
+  include IndexErrata
+
+  COLUMNS = 'number, title, authors, date, pages, status, pub_status, stream, area, wg, abstract, keywords, formats, ' \
+            'issued'
   # The same, of the rfcs table under the name r.
   R_COLUMNS = COLUMNS.split(', ').map { |c| "r.#{c}" }.join(', ')
   # The relations of an RFC to others, and what each reads as.
@@ -33,7 +39,8 @@ class IndexRepository
   # When the index was last imported, or nil.
   def imported_at = File.exist?(@path) ? File.mtime(@path) : nil
 
-  # The number of RFCs issued, counted when the index was opened.
+  # The number of RFCs issued (IENs not counted), counted when the index was
+  # opened.
   def count = @count || 0
 
   # The RFC of +number+ (issued or not), or nil.
@@ -96,41 +103,13 @@ class IndexRepository
           'ORDER BY r.number', [kind, Integer(number)]).map { |r| RfcModel.from_row(r) }
   end
 
-  # How many RFCs there are of each status, the most first: [[status, n]].
-  def statuses
-    query('SELECT status, COUNT(*) AS n FROM rfcs WHERE issued = 1 GROUP BY status ORDER BY n DESC')
-      .map { |r| [r['status'], r['n']] }
-  end
-
-  # The RFCs of +status+, the newest first.
-  def with_status(status, limit:)
-    query("SELECT #{COLUMNS} FROM rfcs WHERE issued = 1 AND status = ? ORDER BY number DESC LIMIT ?", [status, limit])
-      .map { |r| RfcModel.from_row(r) }
-  end
-
-  # How many RFCs each decade has: [[1960, 1], [1970, 700], …].
-  def decades
-    query('SELECT (year / 10) * 10 AS decade, COUNT(*) AS n FROM rfcs WHERE issued = 1 GROUP BY decade ORDER BY decade')
-      .map { |r| [r['decade'], r['n']] }
-  end
-
-  # The RFCs of the ten years from +decade+, by number.
-  def of_decade(decade, limit:)
-    query("SELECT #{COLUMNS} FROM rfcs WHERE issued = 1 AND year BETWEEN ? AND ? ORDER BY number LIMIT ?",
-          [decade, decade + 9, limit]).map { |r| RfcModel.from_row(r) }
-  end
-
-  # The +n+ RFCs of the highest numbers.
-  def newest(n)
-    query("SELECT #{COLUMNS} FROM rfcs WHERE issued = 1 ORDER BY number DESC LIMIT ?", [n]).map { |r| RfcModel.from_row(r) }
-  end
-
-  # Builds the index from +xml+ (rfc-index.xml) and swaps it in. Returns
-  # the number of RFCs issued. Raises what reading the file raises; the old
+  # Builds the index from +xml+ (rfc-index.xml) and swaps it in; +errata+
+  # (errata.json) and +iens+ (an IenIndex) go in too when given. Returns the
+  # number of RFCs issued. Raises what reading the files raises; the old
   # index stays then.
-  def import(xml)
+  def import(xml, errata: nil, iens: nil)
     tmp = "#{@path}.new"
-    n = IndexBuilder.new(tmp).build(xml)
+    n = IndexBuilder.new(tmp).build(xml, errata: errata, iens: iens)
     swap(tmp)
     n
   ensure
@@ -166,13 +145,16 @@ class IndexRepository
     end
   end
 
+  # Opens the database; one of an older board (without the formats or the
+  # errata) is not opened, so the next refresh imports it anew.
   def open_db
     db = SQLite3::Database.new(@path, readonly: true)
     db.results_as_hash = true
     db.busy_timeout = 5000
     db.execute('PRAGMA cache_size = -2000')
+    db.execute('SELECT formats FROM rfcs, errata LIMIT 0')
     @fts   = !db.execute("SELECT 1 FROM sqlite_master WHERE name = 'rfcs_fts'").empty?
-    @count = db.execute('SELECT COUNT(*) AS n FROM rfcs WHERE issued = 1').first['n']
+    @count = db.execute('SELECT COUNT(*) AS n FROM rfcs WHERE issued = 1 AND number > 0').first['n']
     @db    = db
   rescue SQLite3::Exception => e
     BBS.log('index', "#{@path}: #{e.class}: #{e.message}")
