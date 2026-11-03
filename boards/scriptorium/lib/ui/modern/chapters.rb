@@ -12,24 +12,7 @@ module UI
       # The book, its text and the chapter open in a reader.
       Bookmark = Struct.new(:book, :text, :number, :paragraphs)
 
-      # ← and → in the text of a reader turn the chapter.
-      module TurnKeys
-        attr_accessor :on_turn
-
-        def handle_event(event)
-          return super unless on_turn && event.key? && %i[left right].include?(event.key)
-
-          on_turn.call(event.key == :left ? -1 : 1)
-          :handled
-        end
-      end
-
-      def read(book, text, number)
-        bookmark = Bookmark.new(book, text, number)
-        reader   = show(:reader, bookmark: bookmark)
-        reader.view.extend(TurnKeys).on_turn = ->(step) { turn(reader, bookmark, step) }
-        reader
-      end
+      def read(book, text, number) = show(:reader, bookmark: Bookmark.new(book, text, number))
 
       def turn(reader, bookmark, step)
         number = bookmark.number + step
@@ -37,7 +20,7 @@ module UI
 
         bookmark.number     = number
         bookmark.paragraphs = nil
-        reader.lines = ->(width) { chapter_lines(bookmark, width) }
+        reader.reload.jump(0)
       end
 
       # The chapter wrapped to +width+, the heading bright, an empty line

@@ -33,7 +33,7 @@ module UI
       rule
     end
 
-    main_menu do
+    main_menu(above: -> { ['', " #{GR}#{catalog_line}#{LG}"] }) do
       item('1', 'the classics shelf', 'the great books, open at once') { classics }
       item('2', 'gutenberg bookshelves', 'the shelves of project gutenberg') { shelves }
       item('3', 'search by title or author', 'words, and lang:fr for one language') { search }
@@ -42,32 +42,14 @@ module UI
       log_off 'hang up. see you!'
     end
 
-    def run
-      show_masthead
-      @under_masthead = true
-      main_menu_loop
-    end
-
-    # The home title bar (none right under the masthead), and the size of
-    # the catalog over the menu.
-    def home
-      @under_masthead ? @under_masthead = false : super
-      puts
-      say(library.ready? ? "#{library.count} books in the catalog" : 'the catalog is being prepared', color: GR)
-    end
-
     private
 
-    def tell(text)
-      puts
-      say(text, color: YE)
-      pause
-    end
+    def catalog_line = library.ready? ? "#{library.count} books in the catalog" : 'the catalog is being prepared'
 
     def classics = books('CLASSICS', library.books_on(library.classics_shelf))
 
     def shelves
-      return tell(PREPARING) unless library.ready?
+      return alert(PREPARING, color: YE) unless library.ready?
 
       list = library.shelves.drop(1)
       each_pick('BOOKSHELVES', list, right: "#{list.size} shelves",
@@ -77,7 +59,7 @@ module UI
     end
 
     def search
-      return tell(PREPARING) unless library.ready?
+      return alert(PREPARING, color: YE) unless library.ready?
 
       title('SEARCH')
       query = prompt('search', hint: 'Words of the title or the author. Add lang:fr (de, es, ...) for one language.',
@@ -85,15 +67,15 @@ module UI
       return unless query
 
       case (found = library.search(query))
-      when :too_short then tell('A word of two letters or more, please.')
-      when [] then tell('Nothing found. Fewer or other words?')
+      when :too_short then alert('A word of two letters or more, please.', color: YE)
+      when [] then alert('Nothing found. Fewer or other words?', color: YE)
       else books("SEARCH: #{query.upcase}"[0, 28], found)
       end
     end
 
     def most_read
       list = library.most_read
-      return tell('Nothing has been read here yet. Be the first!') if list.empty?
+      return alert('Nothing has been read here yet. Be the first!', color: YE) if list.empty?
 
       counts = list.to_h { |b, n| [b.id, n] }
       books('MOST READ HERE', list.map(&:first), label: ->(b) { "#{GR}#{counts[b.id]}#{LG} #{b.short_title}" })
@@ -139,7 +121,7 @@ module UI
 
     def open_book(book)
       text = loading('opening the book...') { reading.open(book, seen: context[:seen] ||= Set.new) }
-      return tell(refusal(text)) if text.is_a?(Symbol)
+      return alert(refusal(text), color: YE) if text.is_a?(Symbol)
 
       each_pick(book.short_title.upcase[0, 26], text.chapters, right: "#{text.size} ch", label: :title) do |chapter|
         Reader.new(self, book, text).read(chapter.number)

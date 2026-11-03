@@ -15,6 +15,8 @@ module UI
         where     { |view| chapter_where(bookmark, view) }
         action('Prev') { |reader| turn(reader, bookmark, -1) }
         action('Next') { |reader| turn(reader, bookmark, 1) }
+        on_key(left: ->(reader, _key) { turn(reader, bookmark, -1) },
+               right: ->(reader, _key) { turn(reader, bookmark, 1) })
       end
     end
   end
