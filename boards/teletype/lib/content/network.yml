@@ -136,7 +136,7 @@ boards:
     name: HackerCave BBS
     port: 2334
     building: the hacker's cave
-    about: every RFC, the documents the Internet is made of
+    about: every RFC, the IENs and the Jargon File
     short: CAVE
     words: THE RFCS
     accent: '#d7ff5f'
