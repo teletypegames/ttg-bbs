@@ -73,7 +73,7 @@ with its default.
 | Variable | Default | |
 |---|---|---|
 | `COMMODEX_BBS_CATALOG_SEED` | `config/catalog.json.gz` | the snapshot shipped with the image |
-| `COMMODEX_BBS_CATALOG` | `data/catalog.json.gz` | the snapshot a refresh writes |
+| `COMMODEX_BBS_CATALOG_FILE` | `data/catalog.json.gz` | the snapshot a refresh writes |
 | `COMMODEX_BBS_CATALOG_TTL` | `604800` | seconds before Wikidata is read again; `0` never |
 | `COMMODEX_BBS_WIKIPEDIA_CACHE` | `200` | Wikipedia leads kept in memory |
 | `COMMODEX_BBS_TIPS_DB` | `data/tips.sqlite3` | the tips |
@@ -115,7 +115,7 @@ bin/refresh-catalog [path]                   # a new seed from Wikidata (in a de
 ## Project structure
 
 ```
-bbs.rb                      entry point: BBS.configure + BBS::Terminal.flow
+bbs.rb                      entry point: BBS.board (rubbs 2.0 DSL)
 bin/tips                    the admins' tool for the tips
 bin/refresh-catalog         writes the seed catalog from Wikidata
 config/catalog.json.gz      the seed catalog (Wikidata, CC0)
@@ -125,29 +125,23 @@ lib/domain/
   model/game_model.rb       a game: QID, title, year, article, the name lists
   model/tip_model.rb        a tip and its status
   model/summary_model.rb    a Wikipedia lead
-  repository/catalog_repository.rb    the snapshot files, the games in memory
   repository/wikidata_repository.rb   the SPARQL queries (BBS::Wikidata)
   repository/wikipedia_repository.rb  article leads over BBS::Wikipedia, cached (BBS::Cache)
   repository/tip_repository.rb        the tips table (BBS::SQLite), its migrations
   repository/tip_seed_repository.rb   config/tips.yml
   service/catalog_service.rb          search, years, genres, companies, the refresh
+                                      (the catalog file is a BBS::Snapshot)
   service/about_service.rb            a game's Wikipedia lead
   service/tip_service.rb              tips: submit, limits, approve, reject
   service/discord_notifier.rb         a new tip on Discord (BBS::DiscordWebhook)
-  commodex_bbs.rb           the composition root (CommodexBBS)
+  commodex_bbs.rb           the composition root (CommodexBBS, a BBS::Domain)
 lib/ui/
-  logo.rb                   COMMODEX in blocks (BBS::BlockFont), both faces
   words.rb                  a game's facts and the messages, both faces
-  modern.rb                 UI::Modern: the rubbs Application and its parts
-  modern/helpers.rb         search, the lists, about, tips, the desktop
-  modern/menu.rb            the menubar, the status bar's hints, the desktop on start
-  modern/pane.rb            the frame of the list windows
-  modern/card.rb            a game's card in the games window
+  modern.rb                 UI::Modern::APP: commands, menus, help, desktop
+  modern/helpers.rb         search, the lists, a game's card, about, tips
   modern/games_window.rb, groups_window.rb, letters_window.rb, about_window.rb,
-  modern/tips_window.rb, add_tip_window.rb     one module per window
-  petscii.rb                UI::Petscii: the masthead, the flow, goodbye
-  petscii/screen.rb         the 40×25 screen: rubbs' BBS::Petscii::Screen
-  petscii/board.rb          the C64 board: menu, lists, game page, tips
+  modern/tips_window.rb, add_tip_window.rb     one BBS::Part per window
+  petscii.rb                UI::Petscii: the C64 face (a BBS::Petscii::Face)
 test/                       minitest tests of the domain
 Rakefile                    rake test
 ```

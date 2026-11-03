@@ -4,27 +4,17 @@ module UI
   module Modern
     # The publishers and developers by their first letter.
     module LettersWindow
-      module_function
+      extend BBS::Part
 
-      def install(app)
-        app.window(:letters, type: :master_detail) { |w| configure(w) }
-      end
-
-      def configure(w)
-        w.title      ' Publishers & developers '
-        w.height     { |ctx| ctx[:app].rows - 6 }
-        w.list_width 20
-        w.items      { |ctx| ctx[:catalog].letters }
-        w.item_label { |(letter, count), _ctx| "#{letter.upcase}  (#{count})" }
-        w.render_detail { |(letter, _count), width, ctx| detail(ctx[:app], letter, width) }
-        w.bottom_meta { |_item, _ctx| 'Enter lists the companies' }
-        w.on_activate { |(letter, _count), _window, ctx| ctx[:app].open_letter(letter) }
-      end
-
-      def detail(app, letter, width)
-        t     = app.theme
-        names = app.catalog.companies(letter).map(&:first)
-        ["#{t[:text_bright]}#{letter.upcase}#{t[:text]}", '', *app.wrap(names.join(' · '), width - 1)]
+      window :letters, :master_detail do
+        title 'Publishers & developers'
+        height(-6)
+        list_width 20
+        items      { catalog.letters }
+        label      { |(letter, count)| "#{letter.upcase}  (#{count})" }
+        detail     { |(letter, _count)| [bright(letter.upcase), '', catalog.companies(letter).map(&:first).join(' · ')] }
+        meta       { 'Enter lists the companies' }
+        on_pick    { |(letter, _count)| open_letter(letter) }
       end
     end
   end

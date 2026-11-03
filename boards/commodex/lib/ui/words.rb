@@ -16,6 +16,16 @@ module UI
               'are the leads of the English Wikipedia articles, under CC BY-SA 4.0, with the article\'s address. ' \
               'The tips are sent by callers and read by an admin before they show.'
 
+    # What becomes of a tip a caller sends (TipService#submit).
+    TIP = {
+      ok: 'Thanks! Your tip waits for an admin, and shows once approved.',
+      empty: 'Write the tip first.',
+      too_long: "A tip is at most #{TipService::MAX_TEXT} characters.",
+      rate_limited: "That is enough tips for now: #{TipService::PER_CALLER} an hour, one every " \
+                    "#{TipService::GAP} seconds.",
+      failed: 'The tip could not be saved. Try again later.'
+    }.freeze
+
     TIP_RULES = "One cheat, POKE or tip, up to #{TipService::MAX_TEXT} characters. An admin reads it before it " \
                 'shows on the board.'.freeze
 
@@ -42,17 +52,6 @@ module UI
       case result
       when :no_article then 'Wikipedia has no English article on this game.'
       when :unavailable then 'Wikipedia did not answer. Try again later.'
-      end
-    end
-
-    def self.tip(result)
-      case result
-      when :ok           then 'Thanks! Your tip waits for an admin, and shows once approved.'
-      when :empty        then 'Write the tip first.'
-      when :too_long     then "A tip is at most #{TipService::MAX_TEXT} characters."
-      when :rate_limited then "That is enough tips for now: #{TipService::PER_CALLER} an hour, one every " \
-                              "#{TipService::GAP} seconds."
-      else 'The tip could not be saved. Try again later.'
       end
     end
   end

@@ -3,17 +3,7 @@
 require 'test_helper'
 
 class CatalogServiceTest < Minitest::Test
-  # A snapshot that is as old as the test says.
-  class Repository
-    attr_reader :snapshot, :replaced
-
-    def initialize(games, at: Time.now)
-      @snapshot = CatalogRepository::Snapshot.new(games: games.freeze, generated_at: at)
-      @replaced = []
-    end
-
-    def replace(records) = @replaced << records
-  end
+  include TmpData
 
   # Wikidata that answers +records+, or raises +error+.
   def wikidata(records: [], error: nil)
@@ -22,12 +12,18 @@ class CatalogServiceTest < Minitest::Test
     end
   end
 
-  GAMES = [game('Q1', 'Zork', 'y' => 1982, 'gen' => ['adventure'], 'pub' => ['Infocom']),
-           game('Q2', 'Élite', 'y' => 1985, 'gen' => ['space'], 'dev' => ['Acornsoft']),
-           game('Q3', 'Zork II', 'y' => 1982, 'gen' => ['adventure'])].freeze
+  RECORDS = [{ 'id' => 'Q1', 't' => 'Zork', 'y' => 1982, 'gen' => ['adventure'], 'pub' => ['Infocom'] },
+             { 'id' => 'Q2', 't' => 'Élite', 'y' => 1985, 'gen' => ['space'], 'dev' => ['Acornsoft'] },
+             { 'id' => 'Q3', 't' => 'Zork II', 'y' => 1982, 'gen' => ['adventure'] }].freeze
 
-  def service(wikidata: nil, at: Time.now)
-    CatalogService.new(Repository.new(GAMES, at: at), wikidata: wikidata, ttl: 60, retry_after: 0)
+  # A catalog file of RECORDS written +at+, as the seed.
+  def snapshot(at)
+    BBS::Snapshot.write(path('seed.json.gz'), { 'games' => RECORDS }, at)
+    CatalogService.snapshot(seed: path('seed.json.gz'), path: path('catalog.json.gz'))
+  end
+
+  def service(wikidata: nil, at: Time.now, retry_after: 0)
+    CatalogService.new(snapshot(at), wikidata: wikidata, ttl: 60, retry_after: retry_after)
   end
 
   def test_search_folds_and_puts_the_starts_first
@@ -53,7 +49,8 @@ class CatalogServiceTest < Minitest::Test
     records = [{ 'id' => 'Q9', 't' => 'Uridium' }]
     s = service(wikidata: wikidata(records: records), at: Time.now - 3600)
     assert_equal :ok, s.refresh_if_stale
-    assert_equal [records], s.instance_variable_get(:@repository).replaced
+    assert_equal %w[Q9], s.games.map(&:id)
+    assert File.exist?(path('catalog.json.gz'))
   end
 
   def test_a_failed_refresh_raises_and_keeps_the_old_snapshot
@@ -61,7 +58,8 @@ class CatalogServiceTest < Minitest::Test
     assert_raises(BBS::HTTP::Error) { service(wikidata: wikidata(error: BBS::HTTP::Error.new('timeout')), at: stale).refresh_if_stale }
     s = service(wikidata: wikidata(records: []), at: stale)
     assert_raises(CatalogService::EmptyCatalog) { s.refresh_if_stale }
-    assert_empty s.instance_variable_get(:@repository).replaced
+    assert_equal %w[Q1 Q2 Q3], s.games.map(&:id)
+    refute File.exist?(path('catalog.json.gz'))
   end
 
   def test_the_refresh_runs_in_the_background_and_retries
@@ -71,7 +69,7 @@ class CatalogServiceTest < Minitest::Test
       calls << :asked
       calls.size == 1 ? raise(IOError, 'socket closed') : []
     end
-    s = CatalogService.new(Repository.new(GAMES, at: Time.now - 3600), wikidata: flaky, ttl: 60, retry_after: 0.01)
+    s = service(wikidata: flaky, at: Time.now - 3600, retry_after: 0.01)
     _, err = capture_io do
       thread = s.start_refresh
       sleep 0.01 until calls.size >= 2

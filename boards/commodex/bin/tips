@@ -21,6 +21,8 @@ def show(tips, list)
   end
 end
 
+BBS.config.env_prefix = 'COMMODEX_BBS_'
+CommodexBBS.root = File.expand_path('..', __dir__)
 tips = CommodexBBS.new.tips
 command, id = ARGV
 result = case command

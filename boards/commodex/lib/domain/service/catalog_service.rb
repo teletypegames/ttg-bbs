@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # The game compendium: search by title, browse by year, genre and company,
-# a random game. It reads the snapshot of the catalog repository and builds
-# its indexes once per snapshot. A BBS.background thread refreshes the
+# a random game. It reads the games of the catalog file (a BBS::Snapshot)
+# and builds its indexes once per snapshot. A BBS.background thread refreshes the
 # snapshot from Wikidata when it is older than +ttl+ seconds; a failed
 # refresh is logged, keeps the old one and tries again after +retry_after+
 # seconds.
@@ -13,10 +13,21 @@ class CatalogService
   # Wikidata answered, but with no games: the old snapshot stays.
   class EmptyCatalog < StandardError; end
 
-  Index = Data.define(:snapshot, :by_id, :folded, :years, :genres, :companies)
+  SOURCE = 'Wikidata, https://www.wikidata.org (CC0 1.0)'
 
-  def initialize(repository, wikidata:, ttl:, retry_after: 3600)
-    @repository  = repository
+  Index = Data.define(:games, :by_id, :folded, :years, :genres, :companies)
+
+  # The catalog file kept whole in memory: the newer of +seed+ and +path+,
+  # its records the games.
+  def self.snapshot(seed:, path:)
+    BBS::Snapshot.new(seed: seed, path: path, source: SOURCE) do |records|
+      names = {}
+      Array(records['games']).filter_map { |r| GameModel.from_record(r, names) }.freeze
+    end
+  end
+
+  def initialize(snapshot, wikidata:, ttl:, retry_after: 3600)
+    @snapshot    = snapshot
     @wikidata    = wikidata
     @ttl         = ttl
     @retry_after = retry_after
@@ -24,11 +35,11 @@ class CatalogService
     @index       = nil
   end
 
-  def games = index.snapshot.games
+  def games = index.games
 
   def count = games.size
 
-  def updated_at = index.snapshot.generated_at
+  def updated_at = @snapshot.generated_at
 
   def find(id) = index.by_id[id]
 
@@ -84,13 +95,12 @@ class CatalogService
   # Raises when Wikidata does not answer or has no games, or the snapshot
   # cannot be written; the old snapshot stays then.
   def refresh_if_stale
-    return :fresh if Time.now - updated_at < @ttl
+    @snapshot.refresh_if_older(@ttl) do
+      records = @wikidata.records
+      raise EmptyCatalog, 'Wikidata answered no games' if records.empty?
 
-    records = @wikidata.records
-    raise EmptyCatalog, 'Wikidata answered no games' if records.empty?
-
-    @repository.replace(records)
-    :ok
+      { 'games' => records }
+    end
   end
 
   def letter(name)
@@ -101,16 +111,15 @@ class CatalogService
   private
 
   def index
-    snapshot = @repository.snapshot
+    games = @snapshot.value
     @lock.synchronize do
-      @index = build(snapshot) unless @index&.snapshot.equal?(snapshot)
+      @index = build(games) unless @index&.games.equal?(games)
       @index
     end
   end
 
-  def build(snapshot)
-    games = snapshot.games
-    Index.new(snapshot: snapshot, by_id: games.to_h { |g| [g.id, g] }, folded: games.map { |g| GameModel.fold(g.title) },
+  def build(games)
+    Index.new(games: games, by_id: games.to_h { |g| [g.id, g] }, folded: games.map { |g| GameModel.fold(g.title) },
               years: sorted(group(games) { |g| [g.year].compact }) { |y, _| y },
               genres: sorted(group(games, &:genres)) { |n, _| n.downcase },
               companies: sorted(group(games, &:companies)) { |n, _| GameModel.fold(n) })

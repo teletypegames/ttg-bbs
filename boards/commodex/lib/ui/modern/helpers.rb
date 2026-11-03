@@ -2,43 +2,30 @@
 
 module UI
   module Modern
-    # The helpers of the Application: the search, the lists of games, a
-    # game's about page and tips, and the desktop.
+    # What the caller does on the modern face: the search, the lists of
+    # games, a game's card, its about page and tips.
     module Helpers
-      HELP = 'F2 search · F3 random game · F10 menu: years, genres, companies, tips'
-
-      def catalog = services[:catalog]
-
-      def tip_service = services[:tips]
-
-      # Who a tip is counted for: the caller's address, not the session.
-      def caller_key = BBS::RateLimit.caller_key(session)
+      CARD_KEYS = 'Enter or Alt-B: about · Alt-T: tips · Alt-D: add a tip'
+      SHOWN     = 40
 
       def search
-        BBS::Dialogs.input(self, prompt: 'Part of a game title:', title: ' Search ', width: 60,
-                                 on_submit: ->(text) { find(text) unless text.strip.empty? })
+        ask('Part of a game title:', title: 'Search', width: 60) { |text| find(text) }
       end
 
       def find(query)
-        games = catalog.search(query)
-        return note(Words.search(games, query), ' Search ') unless games.is_a?(Array) && games.any?
+        found = catalog.search(query)
+        return note(Words.search(found, query), 'Search') unless found.is_a?(Array) && found.any?
 
-        open_window(:games, title: " Search: #{query.strip} ", games: games)
+        show(:games, caption: "Search: #{query.strip}", games: found)
       end
 
-      def random = open_window(:games, title: ' Random game ', games: [catalog.random])
-
-      def years = open_window(:groups, title: ' Years ', kind: :year, groups: catalog.years)
-
-      def genres = open_window(:groups, title: ' Genres ', kind: :genre, groups: catalog.genres)
-
-      def companies = open_window(:letters)
+      def random = show(:games, caption: 'Random game', games: [catalog.random])
 
       def with_tips
-        games = tip_service.games_with_tips
-        return note('No game has an approved tip yet. Be the first!', ' Tips ') if games.empty?
+        games = tips.games_with_tips
+        return note('No game has an approved tip yet. Be the first!', 'Tips') if games.empty?
 
-        open_window(:games, title: ' Games with tips ', games: games)
+        show(:games, caption: 'Games with tips', games: games)
       end
 
       # The games of a year, a genre or a company.
@@ -50,47 +37,64 @@ module UI
         end
       end
 
-      def open_group(kind, name) = open_window(:games, title: " #{name} ", games: games_of(kind, name))
+      def open_group(kind, name) = show(:games, caption: name.to_s, games: games_of(kind, name))
 
       def open_letter(letter)
-        open_window(:groups, title: " Companies: #{letter.upcase} ", kind: :company, groups: catalog.companies(letter))
+        show(:groups, caption: "Companies: #{letter.upcase}", kind: :company, groups: catalog.companies(letter))
       end
 
-      def about(game)
-        found = with_loading('Asking Wikipedia…') { services[:about].summary(game) }
-        return note(Words.about(found), ' About ') if found.is_a?(Symbol)
+      def read_about(game)
+        found = loading('Asking Wikipedia…') { about.summary(game) }
+        return note(Words.about(found), 'About') if found.is_a?(Symbol)
 
-        open_window(:about, game: game, summary: found)
+        show(:about, game: game, summary: found)
       end
 
-      def tips(game) = open_window(:tips, game: game, tips: tip_service.tips(game))
+      def show_tips(game) = show(:tips, game: game, entries: tips.tips(game))
 
-      def add_tip(game) = open_window(:add_tip, game: game)
+      def add_tip(game) = show(:add_tip, game: game)
 
-      def note(text, title) = BBS::Dialogs.message(self, text, title: title, width: 64)
-
-      def selected(window) = window.list_widget.selected_item
+      def note(text, title) = message(text, title: title, width: 64)
 
       def wrap(text, width) = BBS::FrameBuffer.wrap_ansi(text.to_s, width)
 
       def about_width = [cols - 4, 78].min
 
-      def status_text = "#{catalog.count} games │ #{Time.now.strftime('%H:%M')}"
-
-      # The desktop: the logo, the tagline, the keys, then the search.
-      def desktop
-        mark = ((cols - Logo.half_blocks.first.length) / 2) + 1
-        Logo.half_blocks.each_with_index { |row, i| desktop_label(row, :accent, mark, 2 + i, row.length) }
-        desktop_label("─── #{Words::TAGLINE} ───", :text_dim, 1, 6, cols, align: :center)
-        desktop_label(HELP, :text_dim, 1, rows - 2, cols, align: :center)
-        statusbar.right_text = status_text
-        search
+      # The card of a game: the title, the facts in a column, the tips, the
+      # addresses and the keys.
+      def game_card(game, width)
+        links = [*(game.article ? [game.wikipedia_url] : []), game.wikidata_url].map { |l| dim(l) }
+        [bright(game.title), '', *facts(game, width), '', *links, '', dim(CARD_KEYS)]
       end
 
-      def desktop_label(text, style, x, y, width, align: :left)
-        label = BBS::Widgets::Label.new(text: text, align: align, style_key: style)
-        label.layout(x, y, width, 1)
-        add(label)
+      # A year, a genre or a company, and the first SHOWN of its games.
+      def group_card(kind, name, count, width)
+        games = games_of(kind, name)
+        [bright(name), accent("#{count} game#{'s' unless count == 1}"), '',
+         *games.first(SHOWN).map { |g| BBS::FrameBuffer.clip_ansi(g.label, width - 1) },
+         *(games.size > SHOWN ? [dim("… and #{games.size - SHOWN} more")] : [])]
+      end
+
+      # The lead of a game's Wikipedia article with its licence and address.
+      def about_body(summary)
+        inner = about_width - 5
+        [bright(summary.title), '', *summary.paragraphs.flat_map { |p| [*wrap(p, inner), ''] },
+         dim(SummaryModel::LICENSE), *wrap(dim(summary.url), inner)]
+      end
+
+      private
+
+      # The facts and the tips, the labels padded to one column.
+      def facts(game, width)
+        facts = Words.facts(game)
+        pad   = facts.map { |label, _| label.size }.max.to_i + 2
+        facts.flat_map { |label, text| fact(label, text, pad, width) } +
+          ["#{paint(:label, 'Tips'.ljust(pad))}#{accent(Words.tips(tips.count(game)))}"]
+      end
+
+      def fact(label, text, pad, width)
+        first, *rest = wrap(text, width - 1 - pad)
+        ["#{paint(:label, label.ljust(pad))}#{first}", *rest.map { |r| "#{' ' * pad}#{r}" }]
       end
     end
   end
