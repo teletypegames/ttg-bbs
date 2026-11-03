@@ -5,7 +5,7 @@ module UI
   # the feeds and their items as numbered lists, an item paged a screenful at
   # a time, and the messages to the admins typed line by line.
   class Petscii < BBS::Petscii::Face
-    LOGO_COLORS = [YE, YE, OR, OR, "\e[0;31m"].freeze
+    LOGO_COLORS = [YE, YE, OR, OR, DR].freeze
     ISSUE       = 'vol. i  no. 2327'
     NO_TEXT     = '*(no text in the feed)*'
     ANSWERS     = { ok: 'Sent to the admins. Thank you!',
@@ -29,25 +29,14 @@ module UI
         "#{ISSUE}#{' ' * [COLS - 2 - ISSUE.length - date.length, 1].max}#{date}"
       end
       rule
-      line 'all the news that fits in 40 columns', color: WH
+      line 'all the news that fits in 40 columns', color: WH, indent: 2
     end
 
     main_menu do
-      item('f', 'feeds', 'the papers to read') { feed_list }
+      item('f', 'feeds', -> { "#{feeds.list.size} papers to read" }) { feed_list }
       item('s', 'suggest a feed to the admins', 'an address for the list') { suggest }
       item('w', 'write to the admins', 'a bug, an idea, a word of thanks') { feedback }
       log_off 'hang up. see you!'
-    end
-
-    def run
-      show_masthead
-      @under_masthead = true
-      main_menu_loop
-    end
-
-    # The home title bar, but none right under the masthead.
-    def home
-      @under_masthead ? @under_masthead = false : super
     end
 
     private
@@ -62,8 +51,8 @@ module UI
     end
 
     def read(feed)
-      channel = loading("fetching #{feed.name.downcase}…") { feeds.read(feed) }
-      return alert("#{feed.name} did not answer, or what it sent is not a feed. Try again later.") unless channel
+      failed  = "#{feed.name} did not answer, or what it sent is not a feed. Try again later."
+      channel = loading("fetching #{feed.name.downcase}…", failed: failed) { feeds.read(feed) }
 
       heading = feed.name.upcase[0, 30]
       each_pick(heading, channel.items, empty: 'this feed has nothing in it right now.', right: feed.lang,

@@ -6,7 +6,6 @@
 require 'bundler/setup'
 require_relative '../lib/domain'
 
-BBS.config.env_prefix = 'FEEDIA_BBS_'
 FeediaBBS.root = File.expand_path('..', __dir__)
 
 messages = FeediaBBS.new.inbox.messages((ARGV.first || 20).to_i)

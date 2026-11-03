@@ -7,18 +7,14 @@
 class FeediaBBS
   include BBS::Domain
 
-  FEED_LIST = 'config/feeds.yml'
-
   setting :discord_webhook, ''
   path    :db, 'data/feedia.sqlite3'
+  path    :feed_list, 'config/feeds.yml', env: 'FEEDS'
 
   service(:feeds) { FeedService.new(FeedListRepository.new(feed_list), FeedRepository.new) }
   service(:inbox) { InboxService.new(inbox_repository, discord: DiscordRepository.new(discord_webhook)) }
 
   private
-
-  # FEEDIA_BBS_FEEDS: the feed list (a setting named like the service).
-  def feed_list = File.expand_path(BBS::Domain.read(:feeds, FEED_LIST), self.class.root)
 
   # The inbox in the board's database; the inbox.jsonl of earlier versions
   # beside it is taken in on the first start.
