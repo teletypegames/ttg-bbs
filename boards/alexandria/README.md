@@ -59,7 +59,8 @@ Otherwise the search results come, best first, up to 30. An article opens with
 its sections: the lead under the article's title, then the `==` sections, the
 deeper headings inside them. The sections nobody reads on a terminal (See also,
 References, External links, and their Hungarian and German names) are left
-out. A formula is shown as its TeX made readable (`e^(iπ)+1=0`). Search
+out. A formula is shown as its TeX made readable (`e^(iπ)+1=0`). The cutting is rubbs'
+`BBS::MediaWiki::Extract`. Search
 results and articles are cached for 10 minutes, at most 200 answers and 16 MiB
 (rubbs' `BBS::Cache`).
 
@@ -112,7 +113,6 @@ lib/
     model/article_model.rb    an article: title, address, language, sections
     model/section_model.rb    one section: heading and Markdown
     model/search_result_model.rb  one search hit: title, snippet, word count
-    model/extract_text.rb     the plain extract → sections in Markdown, TeX made readable
     repository/wikipedia_repository.rb  search, article, random over BBS::Wikipedia; the cache
     service/article_service.rb  look up, search, read, random, the languages
   ui/modern.rb                the modern face: the Application and its parts

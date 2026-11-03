@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative 'domain/model/extract_text'
 require_relative 'domain/model/section_model'
 require_relative 'domain/model/article_model'
 require_relative 'domain/model/search_result_model'

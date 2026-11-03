@@ -24,7 +24,7 @@ ArticleModel = Data.define(:title, :url, :lang, :sections, :redirected_from, :pa
   def short_url = pageid ? "https://#{lang}.wikipedia.org/?curid=#{pageid}" : url
 
   def self.sections(title, extract)
-    ExtractText.sections(title, extract).map { |name, text| SectionModel.new(name, text) }
+    BBS::MediaWiki::Extract.sections(title, extract).map { |name, text| SectionModel.new(name, text) }
   end
 
   def self.line(text) = BBS::Text.line(text)
