@@ -74,6 +74,8 @@
   fact: 'Our blog is on the TTG Blog BBS at teletypegames.org:2328: the latest posts read a screenful at a time, and our editors write there. On the web it is at teletypegames.org/blog.'
 - keys: [ansi, ascii, art, gallery, background, picture, graphics, petscii, canvas, draw, paint, pixelia]
   fact: 'The art is on the Pixelia BBS at teletypegames.org:2332: ANSI art from the 16colo.rs archive, a 40x25 canvas every caller paints on together, and the Wall of works saved from it.'
+- keys: [star, trek, startrek, starbase, enterprise, episode, episodes, spock, kirk, picard, klingon, vulcan, memory, alpha, tribble, tribbles]
+  fact: 'Star Trek is on the Starbase BBS at teletypegames.org:2333: every series and film with its episodes, the day each first aired, its directors and writers, the episodes that first aired on this day, and the articles of Memory Alpha, the fans'' wiki, to read section by section, with a QR code to take one along. It is on TTG Gate BBS (2399) too.'
 - keys: [alexandria, wikipedia, encyclopedia]
   fact: 'Wikipedia is on the Alexandria BBS at teletypegames.org:2326: search, and read an article a screenful at a time.'
 - keys: [feedia, rss, news, feed, feeds, headlines]

@@ -24,6 +24,8 @@
   expect: [ftp.teletypegames.org, archive.teletypegames.org]
 - q: where is the ANSI art?
   expect: [Pixelia BBS, '2332']
+- q: is there anything about star trek?
+  expect: [Starbase BBS, '2333']
 - q: what is the meaning of life?
   expect: [do not know, wiki]
 - q: write me a poem about cats
