@@ -24,7 +24,7 @@ moves every board to the latest rubbs and ttg-common together.
 
 | Module | What | Used by |
 |--------|------|---------|
-| `TTG::Logo` | The Teletype Games logo as two `BBS::Art` drawings (modern: 66×23 half blocks, 256 colours; C64: 33×23 quarter blocks) and as a `BBS::Splash` | teletype-bbs, ttg-gate-bbs |
+| `TTG::Logo` | The Teletype Games logo as two `BBS::Art` drawings (modern: 66×23 half blocks, 256 colours; C64: 33×23 quarter blocks) and as a `BBS::Splash` | every board (all twelve) |
 
 ### `TTG::Logo`
 
