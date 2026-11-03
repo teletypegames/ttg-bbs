@@ -6,59 +6,43 @@ require_relative 'modern/classic_formatters'
 require_relative 'modern/desktop'
 require_relative 'modern/rooms'
 require_relative 'modern/clubhouse'
-require_relative 'modern/steps'
+require_relative 'modern/logon'
+require_relative 'modern/section'
 require_relative 'modern/helpers'
-require_relative 'modern/windows'
 require_relative 'modern/menus'
+require_relative 'modern/windows/board'
+require_relative 'modern/windows/messages'
+require_relative 'modern/windows/mail'
+require_relative 'modern/windows/chat'
+require_relative 'modern/windows/people'
+require_relative 'modern/windows/you'
+require_relative 'modern/windows/doors'
 
 module UI
-  # The board on a modern terminal (ANSI colours, UTF-8, a mouse): the modem
-  # and the logon matrix, then a desktop of windows under a menubar.
+  # The board on a modern terminal (ANSI colours, UTF-8, a mouse): after the
+  # modem and the logon matrix, a desktop of windows under a menubar, the
+  # clubhouse from the street on it.
   module Modern
-    def self.flow(bbs)
-      desktop = desktop(bbs)
-      BBS::Flow.define do
-        call { |ctx, runner| Steps.entrance(bbs, ctx, runner) }
-        call { |ctx, runner| Steps.logon(bbs, ctx, runner) }
-        call do |ctx, runner|
-          desktop.run(session: runner.session, session_id: ctx[:session_id], context: ctx)
-          nil
-        end
-        call { |ctx, runner| Steps.leaving(bbs, ctx, runner) }
+    APP = BBS::Application.define do
+      theme :neumanntronics
+      helpers { include Helpers }
+      init { furnish }
+      on_tick { tick }
+      status(clock: false) { status_text }
+
+      desktop do
+        button(Formatters::Master::DESKTOP_LABEL, bottom: 1, align: :right, margin: 2) { open_master }
       end
+
+      parts Menus, Windows::Board, Windows::Messages, Windows::Mail, Windows::Chat, Windows::People, Windows::You,
+            Windows::Doors
     end
 
-    # The desktop: the windows (Windows), the menubar (Menus), the status
-    # keys, the doors, and what runs every second (Helpers#tick).
-    def self.desktop(bbs)
-      BBS::Application.define do
-        theme BBS::Theme.neumanntronics
-        Modern.doors(self, bbs)
-        services bbs.services
-        helpers { include Helpers }
-        Windows.define(self)
-        menubar { Menus.define(self) }
-        Modern.status_keys(self)
-        on_tick { tick }
-        init { furnish }
-      end
-    end
-
-    # Doors: full-line programs a caller can step into from the Doors menu.
-    # The BBS hands the telnet line over and takes it back when the program exits.
-    def self.doors(app, bbs)
-      bbs.doors.each { |d| app.door d.name, d.program, label: d.label, hint: d.hint }
-      app.on_door { |door, ctx| bbs.online.activity(ctx[:session_id], "Door: #{door.label.delete('&')}") }
-    end
-
-    def self.status_keys(app)
-      app.status_hint('F1',  'Ask')    { open_window(:master) }
-      app.status_hint('F2',  'Boards') { open_window(:messages) }
-      app.status_hint('F3',  'Post', hidden: true) { open_new_post }
-      app.status_hint('F4',  'Chat')   { open_window(:chat) }
-      app.status_hint('F7',  'Mail')   { open_mail }
-      app.status_hint('F10', 'Menu')   { menubar.open(0) }
-      app.status_hint('Alt-X', 'Bye')  { :halt }
+    # The doors of +bbs+ on the Doors menu; a caller behind one is in it on
+    # the node list.
+    def self.doors(bbs)
+      bbs.doors.each { |door| APP.door(door.name, door.program, label: door.label, hint: door.hint) }
+      APP.on_door { |door, context| bbs.enter_door(context[:session_id], door) }
     end
   end
 end

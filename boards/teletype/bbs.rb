@@ -4,26 +4,30 @@ require 'ttg/common'
 require_relative 'lib/domain'
 require_relative 'lib/ui/logo'
 require_relative 'lib/ui/arts'
+require_relative 'lib/ui/login'
 require_relative 'lib/ui/modern'
 require_relative 'lib/ui/petscii'
 
-# One board, two faces: the caller picks a terminal (BBS::Terminal guesses it
-# first), and an ANSI terminal gets the modern desktop, a Commodore 64 the
-# PETSCII board. Both work on the same TeletypeBBS. Mouse reporting waits for
-# the choice: its escape sequence would be garbage on a C64.
-BBS.configure { |config| config.log_tag = 'teletype-bbs' }
+# One board, two faces: an ANSI terminal gets the modern desktop, a
+# Commodore 64 the PETSCII board, both on the same TeletypeBBS. Each face
+# opens with the clubhouse's entrance and the logon scans, and closes with
+# its lamps going out: that is its goodbye.
+BBS.board 'Teletype BBS', TeletypeBBS do
+  preset  TTG::PRESET
+  goodbye false
 
-bbs = TeletypeBBS.new
+  modern do |bbs|
+    call { UI::Login.call(self, bbs, UI::Modern::Clubhouse::Entrance.new(session, bbs)) }
+    call { UI::Modern::Logon.show(self, bbs) }
+    app  UI::Modern::APP
+    call { UI::Modern::Clubhouse::Leaving.play(self, bbs) }
+  end
 
-BBS.configure do |config|
-  config.mouse            = true
-  config.mouse_on_connect = false
-  config.idle_seconds     = 600
+  petscii do |bbs|
+    call { UI::Login.call(self, bbs, UI::Petscii::Clubhouse::Entrance.new(session, bbs)) }
+    face UI::Petscii
+  end
 
-  config.on_session_end = ->(session) { bbs.end_call(session.session_id) }
-
-  config.flow = BBS::Terminal.flow(title: 'Teletype BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs),
-                                   splash: TTG::Logo.splash)
+  on_start { |bbs| UI::Modern.doors(bbs) }
+  on_session_end { |session, bbs| bbs.end_call(session.session_id) }
 end
-
-BBS.start

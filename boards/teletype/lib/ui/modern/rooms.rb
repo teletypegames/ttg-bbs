@@ -6,11 +6,12 @@ module UI
     # on it to choose with the arrows or the mouse, and a few lines about
     # the chosen one under it. The town map and the games room.
     class PictureWindow < BBS::Window
-      # Opens +view+ (a PictureView) in a window titled +title+ with the
-      # +accent+ of its part of the board, in the middle of +app+.
-      def self.open(app, view, title:, accent:)
-        window = new(title: title, maximizable: false)
-        window.accent = accent
+      # Opens +view+ (a PictureView) in a window titled +title+, in the
+      # colour and with the sign of its +section+ of the board, in the
+      # middle of +app+.
+      def self.open(app, view, title:, section:)
+        window = new(title: Icon.title(section, title), maximizable: false)
+        window.accent = Accent::STYLES.fetch(section)
         window.centre_on(app, view)
         app.open_window(window)
         window.reset_focus

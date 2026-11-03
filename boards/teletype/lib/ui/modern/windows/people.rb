@@ -3,69 +3,59 @@
 module UI
   module Modern
     module Windows
-      # People > Team.
-      module Team
-        def self.configure(w)
-          w.accent Accent::STYLES[:people]
-          w.maximizable true
-          w.title  Icon.title(:people, 'The Team')
-          w.width  64
-          w.height { |ctx| [ctx[:app].rows - 4, 22].min }
-          w.scroll true
-          w.body   { |ctx| Formatters::Team.body(ctx[:site].members) }
-        end
-      end
+      # People: the team, who is online, the last callers, the user listing
+      # and the Hall of Fame as lists (the trophy case under 80 columns).
+      module People
+        extend Section
 
-      # People > Who is Online: the nodes.
-      module OnlineUsers
-        def self.configure(w)
-          w.accent Accent::STYLES[:people]
-          w.title  Icon.title(:people, 'Who is Online')
-          w.width  74
-          w.scroll true
-          w.height { |ctx| [ctx[:online].count + 8, 10].max }
-          w.body   { |ctx| Formatters::Nodes.body(ctx[:online].nodes, ctx[:app].session_id) }
-        end
-      end
+        section :people do
+          window :team, :info do
+            maximizable true
+            title  'The Team'
+            width  64
+            height { [rows - 4, 22].min }
+            scroll true
+            body   { Formatters::Team.body(site.members) }
+          end
 
-      # People > Last Callers.
-      module LastCallers
-        def self.configure(w)
-          w.accent Accent::STYLES[:people]
-          w.title  Icon.title(:people, 'Last Callers')
-          w.width  64
-          w.scroll true
-          w.height { |ctx| [ctx[:last_callers].recent(15).size + 6, 10].max }
-          w.body   { |ctx| Formatters::Users.last_callers_list(ctx[:last_callers].recent(15)) }
-        end
-      end
+          window :online_users, :info do
+            title  'Who is Online'
+            width  74
+            scroll true
+            height { [online.count + 8, 10].max }
+            body   { Formatters::Nodes.body(online.nodes, session_id) }
+          end
 
-      # People > User Listing: the registered names.
-      module UserList
-        def self.configure(w)
-          w.accent Accent::STYLES[:people]
-          w.maximizable true
-          w.title  Icon.title(:people, 'User Listing')
-          w.width  74
-          w.scroll true
-          w.height { |ctx| (ctx[:accounts].names.size + 9).clamp(10, [ctx[:app].rows - 4, 10].max) }
-          w.body   { |ctx| Formatters::UserList.body(ctx[:bbs].user_rows) }
-        end
-      end
+          window :last_callers, :info do
+            title  'Last Callers'
+            width  64
+            scroll true
+            height { [last_callers.recent(15).size + 6, 10].max }
+            body   { Formatters::Users.last_callers_list(last_callers.recent(15)) }
+          end
 
-      # People > Hall of Fame, as lists (the trophy case under 80 columns).
-      module HallOfFame
-        def self.configure(w)
-          w.accent Accent::STYLES[:people]
-          w.maximizable true
-          w.title  Icon.title(:people, 'Hall of Fame')
-          w.width  { |ctx| width(ctx) }
-          w.height { |ctx| [ctx[:app].rows - 4, 24].min }
-          w.scroll true
-          w.body   { |ctx| Formatters::HallOfFame.body(**ctx[:bbs].hall_of_fame, width: width(ctx) - 8) }
+          window :user_list, :info do
+            maximizable true
+            title  'User Listing'
+            width  74
+            scroll true
+            height { (accounts.names.size + 9).clamp(10, [rows - 4, 10].max) }
+            body   { Formatters::UserList.body(bbs.user_rows) }
+          end
+
+          window :hall_of_fame, :info do
+            maximizable true
+            title  'Hall of Fame'
+            width  { fame_width }
+            height { [rows - 4, 24].min }
+            scroll true
+            body   { Formatters::HallOfFame.body(**bbs.hall_of_fame, width: fame_width - 8) }
+          end
         end
 
-        def self.width(ctx) = [ctx[:app].cols - 6, 76].min
+        helpers do
+          def fame_width = [cols - 6, 76].min
+        end
       end
     end
   end

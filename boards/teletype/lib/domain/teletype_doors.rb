@@ -11,14 +11,14 @@ module TeletypeDoors
   end
 
   def self.sermo
-    DoorModel.new(name: :sermo, program: Sermo::OS, label: '&SERMO', cols: 80, tag: 'neumatronic machine',
+    DoorModel.new(:sermo, Sermo::OS, label: '&SERMO', cols: 80, tag: 'neumatronic machine',
                   hint: 'SERMO: a dual machine of the Neumatronic universe; type a command, or just talk to it',
                   about: 'The Margittai machine of the Neumatronic universe, running SERMO. Type its commands, ' \
                          'or talk to it: its Lapis-ACP answers. EXIT brings you back.')
   end
 
   def self.c64(games, sizes)
-    DoorModel.new(name: :c64, program: Commodore.os(Commodore::C64, games: games, sizes: sizes),
+    DoorModel.new(:c64, Commodore.os(Commodore::C64, games: games, sizes: sizes),
                   label: '&Commodore 64', cols: 40, tag: 'c64 + our games',
                   hint: 'A Commodore 64 at READY., with our C64 games on its disk: LOAD"$",8 lists them',
                   about: 'A Commodore 64 at its READY. prompt, with a small BASIC V2. The disk holds our C64 games: ' \
@@ -26,7 +26,7 @@ module TeletypeDoors
   end
 
   def self.plus4(games, sizes)
-    DoorModel.new(name: :plus4, program: Commodore.os(Commodore::PLUS4, games: games, sizes: sizes),
+    DoorModel.new(:plus4, Commodore.os(Commodore::PLUS4, games: games, sizes: sizes),
                   label: 'Commodore &Plus/4', cols: 40, tag: 'plus/4 + our games',
                   hint: 'A Commodore Plus/4 with our Plus/4 games on its disk: DIRECTORY lists them',
                   about: 'The grey screen of the Plus/4 and its BASIC 3.5 habits: DIRECTORY and DLOAD work, and ' \
@@ -34,7 +34,7 @@ module TeletypeDoors
   end
 
   def self.ra(games, llm)
-    DoorModel.new(name: :ra, program: Ra.os(games: games, chat: Ra.chat(llm)), label: 'Chat of &Ra', cols: 80,
+    DoorModel.new(:ra, Ra.os(games: games, chat: Ra.chat(llm)), label: 'Chat of &Ra', cols: 80,
                   tag: 'talk to the sun god',
                   hint: 'Talk to Ra in the pyramid of Blessing of Ra; solve three riddles for his blessing',
                   about: 'You are the worker sealed in the pyramid of Blessing of Ra, and the sun god answers from ' \
@@ -42,7 +42,7 @@ module TeletypeDoors
   end
 
   def self.trivia(games, site, scores)
-    DoorModel.new(name: :trivia, program: Trivia.door(games: games, site: site, scores: scores),
+    DoorModel.new(:trivia, Trivia.door(games: games, site: site, scores: scores),
                   label: '&TTG Trivia', cols: 80, tag: 'quiz, high scores',
                   hint: 'Ten questions, 20 seconds each, A to D: quick answers and streaks score more',
                   about: 'A door game of the old kind: ten questions about our games, the team and old computers, ' \

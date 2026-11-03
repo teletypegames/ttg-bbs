@@ -94,10 +94,6 @@ module Trivia
         sleep 1.2
       end
       finish(@points, @correct, questions.size)
-    rescue IOError, Errno::EPIPE, Errno::ECONNRESET
-      nil
-    rescue StandardError => e
-      BBS.log('trivia', e)
     end
 
     private

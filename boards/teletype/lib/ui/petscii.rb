@@ -1,151 +1,242 @@
 # frozen_string_literal: true
 
 require_relative 'wording'
-require_relative 'petscii/screen'
-require_relative 'petscii/board'
-require_relative 'petscii/messages'
-require_relative 'petscii/content'
-require_relative 'petscii/people'
-require_relative 'petscii/more'
-require_relative 'petscii/clubhouse'
 
 module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen, single-key
   # menus and numbered lists, the way the C64 boards of the eighties were.
-  # It works on the same TeletypeBBS as the modern face.
-  module Petscii
-    def self.flow(bbs)
-      BBS::Flow.define do
-        call { |ctx, runner| Petscii.entrance(bbs, ctx, runner) }
-        call { |ctx, runner| Petscii.logon(bbs, ctx, runner) }
-        call do |ctx, runner|
-          Board.new(bbs, Screen.new(runner.session), ctx).run
-          nil
-        end
-        call { |ctx, runner| Petscii.leaving(bbs, ctx, runner) }
+  # It works on the same TeletypeBBS as the modern face. A call: the logon
+  # scans, the main menu (the clubhouse, or a menu of text) and what its
+  # keys open, then leaving the clubhouse.
+  class Petscii < BBS::Petscii::Face
+    # Two rows of two sections, each with its colour: the keys of a section
+    # and its bar wear it, so the eye finds the group first. Each item:
+    # its key, its label and the line about it under the menu.
+    MENU = [
+      [['messages', GN, [['m', 'message boards', 'read and post on the boards'],
+                         ['e', 'e-mail', 'your letters; feedback to the sysop'],
+                         ['o', 'oneliners', 'a line on the wall for every caller'],
+                         ['l', 'live chat', 'talk with whoever is on line'],
+                         ['i', 'irc channel', 'the irc channel, from a c64'],
+                         ['p', 'page the sysop', 'call the sysop to a chat']]],
+       ['board', CY, [['u', 'bulletins', 'the bulletins of the board'],
+                      ['d', 'dev log', 'what we are making, commit by commit'],
+                      ['n', 'network', 'our boards: games, wiki, blog, art']]]],
+      [['people', PU, [['c', 'callers & users', 'who is on line, who called'],
+                       ['v', 'voting booth', 'the polls of the board'],
+                       ['s', 'you & your name', 'your stats, profile and registration'],
+                       ['h', 'hall of fame', 'the top callers and posters']]],
+       ['more', YE, [['r', 'doors', 'games and programs behind the doors'],
+                     ['t', 'ttg master', 'ask the sysop where things are'],
+                     ['y', 'system info', 'the numbers of this board'],
+                     ['?', 'help', 'how the keys of this board work'],
+                     ['q', 'log off', 'hang up. see you on the wire!']]]]
+    ].freeze
+    SYSOP = ['z', 'sysop console', 'the nodes, a broadcast: sysops only'].freeze
+    # The width of the menu: two columns of COLS / 2 less one.
+    MENU_WIDTH = COLS - 1
+
+    HELP = [
+      'The main menu is the clubhouse: each item a room of the club. CRSR up and down (and left and right) ' \
+      'lights a room, RETURN opens it, and the letter in front of a room opens it at once too. ? is this help, ' \
+      'Y the system info, and * swaps the pictures for a menu of plain text and back (for a terminal that ' \
+      'cannot show the C64 graphics).',
+      '',
+      'Lists are numbered: CRSR, or type the number, then RETURN. CRSR left and right turn the pages, Q goes ' \
+      'back. The <- key and RUN/STOP go back too.',
+      '',
+      'Long texts stop at every screenful: RETURN shows more, Q leaves.',
+      '',
+      'Posts and letters take several lines: an empty line, or a lone dot, ends the text.',
+      '',
+      'In the live chat what the others say shows up above your line. An empty line leaves.',
+      '',
+      'Our games and files are on the WarpEngine BBS, port 2329: it sends them by XMODEM onto a C64 disk. ' \
+      'N, the town map, shows every board of the network.',
+      '',
+      'The board has a modern face too, with windows: call with a PC terminal and choose 1.',
+      '',
+      'Lost? T asks the TTG Master.'
+    ].freeze
+
+    ACTIONS = {
+      'm' => :read_boards, 'e' => :read_mail, 'o' => :wall, 'l' => :live_chat, 'i' => :listen_irc,
+      'p' => :page_sysop, 'n' => :show_network, 'u' => :read_bulletins, 'd' => :read_dev_log, 'c' => :people,
+      'v' => :voting_booth, 's' => :you, 'h' => :fame, 'r' => :door_list, 't' => :ask_master,
+      'y' => :system_info, '?' => :help, 'z' => :sysop_console
+    }.freeze
+
+    # The rooms the clubhouse shows as pictures (Clubhouse) instead of
+    # the text screens of ACTIONS.
+    GRAPHICS = { 'n' => :town_map, 'r' => :games_room, 'h' => :trophies }.freeze
+
+    title('TELETYPE BBS') { node_text }
+
+    def run
+      context[:plain] = capitals?(context[:username])
+      Logon.show(self)
+      loop do
+        doing('At the main menu')
+        k = text_menu? ? text_main_menu : clubhouse_menu
+        next context[:plain] = !text_menu? if k == '*'
+        break if %w[q x].include?(k) && logoff?
+
+        enter_room(k) if ACTIONS[k]
       end
+      Leaving.play(self)
     end
 
-    # The entrance of the clubhouse: the name and the password go into the
-    # guestbook. :halt when the caller does not get in.
-    def self.entrance(bbs, ctx, runner)
-      screen = Screen.new(runner.session)
-      ctx[:call_started]  = Time.now
-      ctx[:authenticated] = false
-      ctx[:caller_key]    = BBS::RateLimit.caller_key(runner.session)
-      door = Clubhouse::Entrance.new(screen, bbs)
-      door.show
-      typed = door.ask_name
-      ctx[:plain] = capitals?(typed)
-      log_on(bbs, ctx, screen, door, AccountService.normalize_name(typed))
-    end
+    def name = context[:username] || AccountService::ANONYMOUS
+    def registered? = context[:authenticated] == true
+    def anonymous? = name == AccountService::ANONYMOUS
+    def sysop? = board.sysop?(name, context[:authenticated])
+    def session_id = context[:session_id]
 
-    def self.log_on(bbs, ctx, screen, door, name)
-      ctx[:username] = name
-      result = bbs.accounts.log_on(name, caller_key: ctx[:caller_key]) do |again|
-        door.wrong('WRONG PASSWORD.') if again
-        door.ask_password
+    private
+
+    # The room of key +k+: a picture of the clubhouse, or its card and
+    # then its text screen.
+    def enter_room(k)
+      return send(GRAPHICS[k]) if !text_menu? && GRAPHICS[k]
+
+      unless text_menu?
+        Clubhouse::Cards.show(session, Clubhouse::Cards::KEYS[k], context[:cards] ||= Set.new)
+        Clubhouse.text_mode(session)
       end
-      ctx[:authenticated] = result == :ok
-      return turned_away(screen, name, result) unless %i[ok guest].include?(result)
-
-      bbs.start_call(ctx[:session_id], name, listed: true)
-      nil
+      send(ACTIONS[k])
     end
 
-    def self.turned_away(screen, name, result)
-      Clubhouse.text_mode(screen.session)
-      screen.cls
-      screen.say(Wording.turned_away(name, result), color: RD)
-      :halt
-    end
-
-    # The logon sequence: who is calling, then the scans of the old boards.
-    def self.logon(bbs, ctx, runner)
-      Clubhouse.text_mode(runner.session)
-      screen = Screen.new(runner.session)
-      s = bbs.logon_summary(ctx[:username], registered: ctx[:authenticated], session_id: ctx[:session_id])
-      ctx[:caller_number] = s[:caller_number]
-      welcome(screen, s)
-      scans(screen, s)
-      quote(screen, s[:quote])
-      screen.pause('return: enter the board')
-      nil
-    end
-
-    def self.welcome(screen, s)
-      screen.title('TELETYPE BBS', s[:node] ? "node #{s[:node]}" : '')
-      screen.puts
-      screen.say(s[:stats] ? "Welcome back, #{s[:name]}!" : "Welcome, #{s[:name]}! Your first call here.", color: WH)
-      screen.puts " #{GR}you are caller ##{s[:caller_number]}#{LG}"
-      if s[:stats]
-        screen.puts " #{GR}calls: #{s[:stats].calls}, last on #{s[:stats].last_call.localtime.strftime('%Y-%m-%d')}#{LG}"
-      end
-      return if s[:registered]
-
-      screen.say(s[:name] == AccountService::ANONYMOUS ? 'Call with a name to keep one.' : 'A guest: S, then R keeps your name.',
-                 color: GR)
-    end
-
-    def self.scans(screen, s)
-      screen.puts
-      scan(screen, 'mailbox', s[:mail].nil? ? "#{DG}register for mail" : "#{s[:mail]} new letter#{'s' if s[:mail] != 1}")
-      scan(screen, 'message bases', new_posts(s[:new_scan]))
-      scan(screen, 'voting booth',
-           s[:polls_open].zero? ? 'all voted' : "#{s[:polls_open]} poll#{'s' if s[:polls_open] != 1} open")
-    end
-
-    def self.new_posts(new_scan)
-      if new_scan.nil? then "#{DG}register to track"
-      elsif new_scan.empty? then 'nothing new'
-      else new_scan.map { |b, n| "#{b.title} #{n}" }.join(', ')
-      end
-    end
-
-    def self.quote(screen, quote)
-      screen.puts
-      screen.puts " #{CY}quote of the day#{LG}"
-      text, who = quote
-      screen.say("\"#{text}\"#{" - #{who}" if who}", color: WH)
-    end
-
-    def self.leaving(bbs, ctx, runner)
-      goodbye = ctx[:plain] ? method(:goodbye) : Clubhouse::Leaving.method(:play)
-      goodbye.call(ctx[:plain] ? Screen.new(runner.session) : runner.session,
-                   name: ctx[:username] || AccountService::ANONYMOUS,
-                   seconds: Time.now - (ctx[:call_started] || Time.now),
-                   caller_number: ctx[:caller_number], quote: bbs.taglines.pick)
-      nil
-    rescue IOError, Errno::EPIPE, Errno::ECONNRESET
-      nil
-    end
+    def doing(text) = online.activity(session_id, "#{text} (C64)")
 
     # Whether a name came in capitals only: UltimateTerm in its ANSI mode
     # swaps the case of what is typed (and cannot show the graphics), so its
     # caller gets the text menu.
-    def self.capitals?(text) = text.to_s.count('A-Z') >= 2 && !text.to_s.match?(/[a-z]/)
+    def capitals?(text) = text.to_s.count('A-Z') >= 2 && !text.to_s.match?(/[a-z]/)
 
-    def self.scan(screen, label, result)
-      screen.write " #{GR}#{label} #{DG}#{'.' * (15 - label.length)}#{LG} "
-      sleep 0.25
-      screen.puts "#{YE}#{BBS::FrameBuffer.clip_ansi(result.to_s, 21)}#{LG}"
+    # The lowercase menu of text instead of the clubhouse: chosen with *,
+    # or for a caller whose letters come in capitals (UltimateTerm in its
+    # ANSI mode swaps the case and cannot show the graphics).
+    def text_menu? = context[:plain] == true
+
+    # The main menu as the clubhouse (Clubhouse::MainMenu); the key taken.
+    def clubhouse_menu
+      @unread = registered? ? mail.unread_count(name, sysop: sysop?) : 0
+      ring_for_mail
+      menu = Clubhouse::MainMenu.new(session, scene.scene(name, registered: registered?, sysop: sysop?),
+                                     node: online.node(session_id)&.number, name: name)
+      @lit = menu.run(lit: @lit, unread: @unread) || @lit
     end
 
-    # The C64's goodbye (BBS::Goodbye): the caller's number and time on
-    # line, a quote, and where to find us.
-    def self.goodbye(screen, name:, seconds:, caller_number:, quote:)
-      BBS::Goodbye.petscii(screen, bar: "thanks for calling, #{name}") do |s|
-        minutes = (seconds / 60).to_i
-        s.puts " #{GR}caller ##{caller_number}, on line #{minutes.positive? ? "#{minutes}m" : "#{seconds.to_i}s"}#{LG}"
-        s.puts
-        text, who = quote
-        s.say("...\"#{text}\"#{" - #{who}" if who}", color: WH)
-        s.puts
-        s.puts " #{GR}our games:#{LG}"
-        s.puts " #{CY}teletypegames.org#{LG}"
-        s.puts " #{GR}every board of ours, one port:#{LG}"
-        s.puts " #{CY}teletypegames.org:2399#{LG}"
+    # New mail since the last look rings once, as on the old boards.
+    def ring_for_mail
+      seen = context[:mail_seen] || @unread
+      context[:mail_seen] = @unread
+      bell if @unread.to_i > seen.to_i
+    end
+
+    def node_text
+      node = online.node(session_id)
+      "#{"node #{node.number} " if node}#{Time.now.strftime('%H:%M')}"
+    end
+
+    # The front page: the title bar, the caller and what is going on, then
+    # the sections as a cursor menu in two columns. The key of the item
+    # taken; nil for ← or RUN/STOP.
+    def text_main_menu
+      @unread = registered? ? mail.unread_count(name, sysop: sysop?) : nil
+      home
+      live_strip
+      puts rule_line
+      items = menu_items
+      index = items.index { |i| i.selectable? && i.value == @lit }
+      @lit  = menu(items, columns: 2, height: items.size / 2, index: index, exits: { 'x' => 'x', '*' => '*' },
+                          hint: 'crsr: choose  return: open  *: art')
+    end
+
+    # The cells of the menu, down the left column, then down the right: a
+    # section's band, its items, then the next section's band level with
+    # the one beside it.
+    def menu_items
+      left, right = MENU.transpose.map { |sections| sections.map { |section| section_cells(*section) } }
+      rows = left.zip(right).map { |l, r| [l.size, r.size].max }
+      [left, right].flat_map do |column|
+        column.each_with_index.flat_map { |cells, i| cells + Array.new(rows[i] - cells.size) { BBS::Selector.heading } }
       end
+    end
+
+    def section_cells(title, color, items)
+      items += [SYSOP] if title == 'people' && sysop?
+      [band(title, color), *items.map { |k, label, about| item(k, label, about, color) }]
+    end
+
+    # A section's name on a band of its colour.
+    def band(title, color)
+      BBS::Selector.heading("#{color}#{RV} #{title} #{RO}#{DG} #{'─' * (MENU_WIDTH / 2)}")
+    end
+
+    def item(key, label, about, color)
+      if key == 'e' && @unread.to_i.positive?
+        label = "#{label} #{GN}#{@unread}#{LG}"
+        about = "#{@unread} new letter#{'s' unless @unread == 1}: #{about}"
+      end
+      BBS::Selector.item(label, key: key, value: key, about: about, color: color)
+    end
+
+    # Who is calling and what is happening, over the menu: the caller and
+    # the nodes, the next event and the newest post, one line each. New
+    # mail since the last look rings once, as on the old boards.
+    def live_strip
+      puts " #{WH}hi #{name}!#{LG} #{GR}·#{LG} #{YE}#{online.count}#{LG} on line#{new_mail}"
+      next_event
+      newest_post
+    end
+
+    def new_mail
+      seen = context[:mail_seen] || @unread
+      context[:mail_seen] = @unread
+      return '' unless @unread.to_i.positive?
+
+      bell if seen && @unread > seen
+      " #{GR}·#{LG} #{GN}#{@unread} new mail#{LG}"
+    end
+
+    def next_event
+      event = site.upcoming_events(1).first
+      return unless event
+
+      days = ((event.date - Time.now) / 86_400).ceil
+      when_ = days <= 0 ? 'today' : "in #{days} day#{'s' unless days == 1}"
+      puts " #{GR}next:#{LG} #{event.name[0, 38 - 7 - when_.length - 1]} #{CY}#{when_}#{LG}"
+    end
+
+    def newest_post
+      _board, post = boards.latest(1).first
+      return unless post
+
+      text = "#{post.username}: #{post.text.to_s.gsub(/\s+/, ' ')}"
+      puts " #{GR}new:#{LG}  #{YE}#{text[0, 38 - 7]}#{LG}"
+    end
+
+    def logoff?
+      return Clubhouse.leave?(self) unless text_menu?
+
+      choose("#{WH}log off now? (y/n)#{LG} ", %w[y n], back: 'n') == 'y'
+    end
+
+    # The text written in the full-screen editor under +heading+, at most
+    # +max+ long; empty when the caller quit. The title bar stays.
+    def write_text(heading, max)
+      text = edit(title: heading, max: max).to_s
+      title(heading)
+      text
     end
   end
 end
+
+require_relative 'petscii/logon'
+require_relative 'petscii/messages'
+require_relative 'petscii/chat'
+require_relative 'petscii/content'
+require_relative 'petscii/people'
+require_relative 'petscii/more'
+require_relative 'petscii/clubhouse'

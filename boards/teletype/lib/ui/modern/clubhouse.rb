@@ -38,6 +38,7 @@ module UI
         end
 
         def show
+          Formatters::Logon.connect(@session)
           number = @bbs.last_callers.caller_number
           return plain(number) unless @fits
 
@@ -55,13 +56,23 @@ module UI
 
         def ask_password = ask(:password, 'Password: ', mask: '*')
 
-        def wrong(text)
+        def wrong_password
+          text = 'Wrong password.'
           return @session.write("  \e[1;31m#{text}\e[0m\r\n") unless @fits
 
           put(:password, '', INK)
           spot = @art.hotspot(:status)
           @session.write("#{Clubhouse.at(spot.row + 1, 1)}\e[0;1;38;5;203;48;5;234m  #{text.ljust(spot.width - 2)}\e[0m")
         end
+
+        # Why the caller does not get in, on a cleared screen.
+        def turn_away(text)
+          @session.write("\e[0m\e[2J\e[H\r\n  \e[1;31m#{text}\e[0m\r\n\r\n")
+        end
+
+        # A terminal that never reported its size is a scanner, not a
+        # caller: it may look around, but it is not listed anywhere.
+        def listed? = @session.naws_reported?
 
         private
 
@@ -114,14 +125,21 @@ module UI
 
       # Leaving: the clubhouse from the inside, the lamps going out one by
       # one (the layers leaving_out_1..4), the coat ticket with the length
-      # of the call, the thanks, a quote, and the line hanging up.
+      # of the call, the thanks, a quote, and the line hanging up. On a
+      # terminal under 80×24 the goodbye of the rubbs boards.
       module Leaving
         STEP = 0.5
 
-        def self.play(runner, name:, seconds:, caller_number:, quote:)
-          session = runner.session
-          return plain(runner, seconds, caller_number) unless Clubhouse.fits?(session)
+        def self.play(runner, bbs)
+          context = runner.context
+          seconds = Time.now - (context[:call_started] || Time.now)
+          number  = context[:caller_number] || bbs.last_callers.caller_number
+          return plain(runner.session, seconds, number) unless Clubhouse.fits?(runner.session)
 
+          lamps_out(runner.session, context[:username] || AccountService::ANONYMOUS, seconds, number, bbs.taglines.pick)
+        end
+
+        def self.lamps_out(session, name, seconds, caller_number, quote)
           session.write("\e[0m\e[2J")
           frame(session, [], caller_number, seconds)
           thanks(session, name, quote)
@@ -133,11 +151,10 @@ module UI
           session.write("#{Clubhouse.at(22, 3)}\e[0;37m+++   ATH0   \e[1;31mNO CARRIER\e[0m\r\n\r\n")
         end
 
-        # The goodbye of the rubbs boards, for a terminal under 80×24.
-        def self.plain(runner, seconds, caller_number)
-          BBS::Goodbye.modern(runner, title: 'the Teletype BBS',
-                                      note: "Caller ##{Formatters.number(caller_number)}, " \
-                                            "on line for #{Formatters.duration(seconds)}.")
+        def self.plain(session, seconds, caller_number)
+          BBS::Goodbye.modern(session, title: 'the Teletype BBS',
+                                       note: "Caller ##{Formatters.number(caller_number)}, " \
+                                             "on line for #{Formatters.duration(seconds)}.")
         end
 
         # The thanks, the quote and where to find us, under the picture.

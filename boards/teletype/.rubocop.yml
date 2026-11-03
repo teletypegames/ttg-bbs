@@ -59,7 +59,7 @@ Metrics/ModuleLength:
   Max: 200
 Metrics/BlockLength:
   Max: 30
-  AllowedMethods: [define, flow, window, app, describe, it]
+  AllowedMethods: [define, flow, window, app, section, helpers, menu, describe, it]
   Exclude:
     - "test/**/*"
 

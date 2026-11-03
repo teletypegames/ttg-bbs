@@ -5,37 +5,75 @@
 # (logging on, posting, mail, paging the sysop, the statistics). The modern
 # ANSI interface (lib/ui/modern) and the Commodore 64 one (lib/ui/petscii) both
 # work on one instance of it, so a C64 caller and an ANSI caller see the same
-# nodes, boards, mail and chat. The only place that reads the environment
-# (TELETYPE_BBS_*).
+# nodes, boards, mail and chat.
 class TeletypeBBS
+  include BBS::Domain
+
   STARTED_AT    = Time.now
   CONTENT_DIR   = File.expand_path('../content', __dir__)
   BULLETINS_DIR = File.join(CONTENT_DIR, 'bulletins')
   DOOR_NAMES    = TeletypeDoors::NAMES
+  # The answers of AccountService#log_on that let a caller in.
+  LET_IN = %i[ok guest].freeze
 
-  attr_reader :online, :boards, :games, :chat, :irc, :last_callers, :profile, :accounts, :site,
-              :discord, :oneliners, :warp_sizes, :dev_log, :master, :mail, :voting, :trivia,
-              :taglines, :c64_master, :scene, :network, :bulletins
+  setting :sysops, []
+  path    :db, 'data/teletype.sqlite3'
+  setting :ftp_host, 'ftp.teletypegames.org'
+  setting :discord_webhook, ''
+  setting :irc_port, 6697
+  setting :irc_channel, '#teletypegames'
+  setting :irc_nick, 'ttgbbs'
+  setting :irc_password, ''
 
-  def initialize(env: ENV)
-    @env    = env
-    @sysops = setting('SYSOPS', '').split(',').map { |name| name.strip.downcase }.reject(&:empty?)
-    @db     = Database.open(setting('DB', 'data/teletype.sqlite3'))
-    open_community
-    open_outside
-    open_characters
+  # What the callers make: boards, mail, the wall, the chat, the people.
+  service(:store)        { Database.open(db) }
+  service(:online)       { OnlineService.new(OnlineUsersRepository.new) }
+  service(:boards)       { BoardService.new(BoardRepository.new(store), last_read: LastReadRepository.new(store), store: store) }
+  service(:chat)         { ChatService.new }
+  service(:last_callers) { LastCallersService.new(LastCallersRepository.new(store)) }
+  service(:profile)      { ProfileService.new(ProfileRepository.new(store)) }
+  service(:oneliners)    { OnelinerService.new(OnelinerRepository.new(store), store: store) }
+  service(:accounts) do
+    AccountService.new(AccountRepository.new(store), reserved: sysop_names, guard: LoginGuard.new(store: store))
+  end
+  service(:mail)      { MailService.new(MailRepository.new(store), accounts: accounts, sysops: sysop_names, store: store) }
+  service(:trivia)    { TriviaScoreRepository.new(store) }
+  service(:bulletins) { BulletinRepository.new(BULLETINS_DIR) }
+
+  # What comes from elsewhere: the catalog, the site, Gitea, the FTP
+  # server, Discord, IRC, and the content files.
+  service(:games)      { GamesService.new(CatalogRepository.new) }
+  service(:site)       { SiteService.new(SiteRepository.new) }
+  service(:dev_log)    { DevLogService.new(GiteaRepository.new) }
+  service(:warp_sizes) { WarpSizes.new(FtpRepository.new(ftp_host)) }
+  service(:discord)    { DiscordNotifier.new(discord_webhook) }
+  service(:irc) do
+    IrcRelay.new(server: irc_server, port: irc_port, channel: irc_channel, nick: irc_nick, password: irc_password)
+  end
+  service(:network) { NetworkService.new(NetworkRepository.new(File.join(CONTENT_DIR, 'network.yml'))) }
+  service(:voting) do
+    VotingService.new(VoteRepository.new(store), path: File.join(CONTENT_DIR, 'polls.yml'), games: games,
+                                                 doors: DOOR_NAMES)
   end
 
-  # The services by name, the way an Application's windows reach them.
-  def services
-    { online: @online, boards: @boards, games: @games, chat: @chat, irc: @irc,
-      last_callers: @last_callers, profile: @profile, accounts: @accounts, site: @site, discord: @discord,
-      oneliners: @oneliners, dev_log: @dev_log, master: @master, mail: @mail, voting: @voting, trivia: @trivia,
-      scene: @scene, network: @network, bulletins: @bulletins, bbs: self, uptime: STARTED_AT }
+  # The board's own characters and what the desktop draws from.
+  service(:master)     { TtgMaster.new(games: games, site: site, client: llm) }
+  service(:c64_master) { TtgMaster.new(games: games, site: site, client: llm, **TtgMaster::C64) }
+  service(:taglines)   { TaglineService.new(site) }
+  service(:scene) do
+    SceneService.new(online: online, chat: chat, boards: boards, mail: mail, last_callers: last_callers, site: site,
+                     oneliners: oneliners, door_titles: DOOR_NAMES)
+  end
+
+  # Every service made, and the IRC channel joined.
+  def start
+    super
+    irc.start
+    self
   end
 
   def doors
-    @doors ||= TeletypeDoors.build(games: @games, sizes: @warp_sizes, site: @site, scores: @trivia, llm: @llm)
+    @doors ||= TeletypeDoors.build(games: games, sizes: warp_sizes, site: site, scores: trivia, llm: llm)
   end
 
   # The model of the BBS's own characters (Characters.client):
@@ -49,25 +87,50 @@ class TeletypeBBS
     Characters.client(url: setting.call('URL'), model: setting.call('MODEL'), api_key: setting.call('API_KEY'))
   end
 
-  def sysop?(name, authenticated) = authenticated == true && @sysops.include?(name.to_s.downcase)
+  def llm = @llm ||= TeletypeBBS.llm(ENV)
+
+  # TELETYPE_BBS_IRC_SERVER, where set and empty: no IRC.
+  def irc_server = ENV.fetch("#{BBS.config.env_prefix}IRC_SERVER", 'irc.libera.chat')
+
+  def sysop?(name, authenticated) = authenticated == true && sysop_names.include?(name.to_s.downcase)
 
   # ── a call ────────────────────────────────────────────────────────────
+
+  # Logs the caller of +context+ on as +typed+ (the name as typed, blank for
+  # Anonymous): the name, whether it is theirs, and their place on the
+  # board when it lets them in (a node and a place among the last callers
+  # when +listed+). The block gets +again+ (true after a wrong one) and
+  # answers the password. Returns AccountService#log_on's answer; LET_IN
+  # holds the ones that let the caller in.
+  def log_on(context, typed, caller_key:, listed: true, &password)
+    name = context[:username] = AccountService.normalize_name(typed)
+    result = accounts.log_on(name, caller_key: caller_key, &password)
+    context[:authenticated] = result == :ok
+    start_call(context[:session_id], name, listed: listed) if LET_IN.include?(result)
+    result
+  end
 
   # The caller is on the board: a node and a place among the last callers
   # when +listed+ (a scanner looks around unlisted), and the live chat.
   def start_call(session_id, name, listed:)
     if listed
-      @online.add(session_id, name)
-      @last_callers.start(name, session_id)
+      online.add(session_id, name)
+      last_callers.start(name, session_id)
     end
-    @chat.subscribe(session_id)
+    chat.subscribe(session_id)
   end
 
   def end_call(session_id)
-    @online.remove(session_id)
-    @chat.unsubscribe(session_id)
-    @irc.unsubscribe(session_id)
-    @last_callers.finish(session_id)
+    online.remove(session_id)
+    chat.unsubscribe(session_id)
+    irc.unsubscribe(session_id)
+    last_callers.finish(session_id)
+  end
+
+  # The node of +session_id+ is behind +door+ (a BBS::Door) now: the games
+  # room's lamps and the Door Lobby count it.
+  def enter_door(session_id, door, suffix = nil)
+    online.activity(session_id, ["Door: #{door.label.delete('&')}", suffix].compact.join(' '))
   end
 
   # What the logon sequence tells a caller: who they are, then the scans of
@@ -75,14 +138,14 @@ class TeletypeBBS
   def logon_summary(name, registered:, session_id:)
     {
       name:          name,
-      node:          @online.node(session_id)&.number,
-      caller_number: @last_callers.caller_number,
-      stats:         @last_callers.user_stats(name),
+      node:          online.node(session_id)&.number,
+      caller_number: last_callers.caller_number,
+      stats:         last_callers.user_stats(name),
       registered:    registered,
-      mail:          registered ? @mail.unread_count(name, sysop: sysop?(name, registered)) : nil,
-      new_scan:      registered ? @boards.new_scan(name) : nil,
+      mail:          registered ? mail.unread_count(name, sysop: sysop?(name, registered)) : nil,
+      new_scan:      registered ? boards.new_scan(name) : nil,
       polls_open:    polls_open(name),
-      quote:         @taglines.of_the_day
+      quote:         taglines.of_the_day
     }
   end
 
@@ -92,12 +155,12 @@ class TeletypeBBS
     {
       username:       name || AccountService::ANONYMOUS,
       registered:     registered,
-      online_count:   @online.count,
-      total_messages: @boards.total_count,
-      recent_callers: @last_callers.recent(3),
-      posts:          @boards.latest(3),
-      events:         @site.upcoming_events(2),
-      oneliners:      @oneliners.recent(5)
+      online_count:   online.count,
+      total_messages: boards.total_count,
+      recent_callers: last_callers.recent(3),
+      posts:          boards.latest(3),
+      events:         site.upcoming_events(2),
+      oneliners:      oneliners.recent(5)
     }
   end
 
@@ -105,25 +168,25 @@ class TeletypeBBS
 
   # BoardService#post's answer; a post that went up is told on Discord too.
   def post_message(board, username, text, caller_key:)
-    result = @boards.post(board.id, username, text, caller_key: caller_key)
-    @discord.board_post(board.title, username, text) if result == :ok
+    result = boards.post(board.id, username, text, caller_key: caller_key)
+    discord.board_post(board.title, username, text) if result == :ok
     result
   end
 
   # MailService#send_letter's answer; feedback for the sysop rings on Discord.
   def send_letter(from, to, subject, body, registered:, caller_key:)
-    result = @mail.send_letter(from, to, subject, body, registered: registered, caller_key: caller_key)
-    @discord.feedback(from) if result == :ok && @mail.recipient(to) == MailService::SYSOP
+    result = mail.send_letter(from, to, subject, body, registered: registered, caller_key: caller_key)
+    discord.feedback(from) if result == :ok && mail.recipient(to) == MailService::SYSOP
     result
   end
 
   # The sysop's bell: the chat and Discord hear it. True when a sysop is on
   # line to answer.
   def page_sysop(name)
-    online = @online.nodes.any? { |n| @sysops.include?(n.name.downcase) }
-    @chat.broadcast('[PAGE]', "#{name} is paging the sysop!")
-    @discord.page(name)
-    online
+    on_line = online.nodes.any? { |n| sysop_names.include?(n.name.downcase) }
+    chat.broadcast('[PAGE]', "#{name} is paging the sysop!")
+    discord.page(name)
+    on_line
   end
 
   # A line to every caller and to Discord, from a logged-on sysop only:
@@ -134,8 +197,8 @@ class TeletypeBBS
     line = BBS::Text.line(text)
     return :empty if line.empty?
 
-    @chat.broadcast("[SYSOP] #{name}", line)
-    @discord.broadcast(name, line)
+    chat.broadcast("[SYSOP] #{name}", line)
+    discord.broadcast(name, line)
     :ok
   end
 
@@ -143,9 +206,9 @@ class TeletypeBBS
 
   # [name, stats, location, online] of every registered name, most calls first.
   def user_rows
-    stats = @last_callers.all_stats
-    rows = @accounts.names.map do |name|
-      [name, stats[Names.key(name)], @profile.find(name)&.fetch('location', nil), @online.online?(name)]
+    stats = last_callers.all_stats
+    rows = accounts.names.map do |name|
+      [name, stats[Names.key(name)], profile.find(name)&.fetch('location', nil), online.online?(name)]
     end
     rows.sort_by { |_, st, _, _| -(st&.calls || 0) }
   end
@@ -154,76 +217,32 @@ class TeletypeBBS
     {
       name:          name,
       registered:    registered,
-      stats:         @last_callers.user_stats(name),
-      node:          @online.node(session_id),
-      caller_number: caller_number || @last_callers.caller_number,
-      posts:         @boards.posts_by(name),
-      ballots:       @voting.polls.count { |p| @voting.ballot(p, name) },
-      letters:       registered ? @mail.inbox(name, sysop: sysop).size : nil,
-      member_since:  @accounts.created_at(name)
+      stats:         last_callers.user_stats(name),
+      node:          online.node(session_id),
+      caller_number: caller_number || last_callers.caller_number,
+      posts:         boards.posts_by(name),
+      ballots:       voting.polls.count { |p| voting.ballot(p, name) },
+      letters:       registered ? mail.inbox(name, sysop: sysop).size : nil,
+      member_since:  accounts.created_at(name)
     }
   end
 
   # The best of the board: [[name, number], ...] lists, eight each.
   def hall_of_fame
     {
-      callers: @last_callers.top_callers(8),
-      posters: @boards.top_posters(8),
-      trivia:  @trivia.best(8).map { |score| [score.username, score.points] }
+      callers: last_callers.top_callers(8),
+      posters: boards.top_posters(8),
+      trivia:  trivia.best(8).map { |score| [score.username, score.points] }
     }
   end
 
   private
 
-  def setting(name, default) = @env.fetch("TELETYPE_BBS_#{name}", default)
+  def sysop_names = sysops.map(&:downcase)
 
   def polls_open(name)
     return 0 if name == AccountService::ANONYMOUS
 
-    @voting.polls.count { |poll| @voting.ballot(poll, name).nil? }
-  end
-
-  # What the callers make: boards, mail, the wall, the chat, the people.
-  def open_community
-    @online       = OnlineService.new(OnlineUsersRepository.new)
-    @boards       = BoardService.new(BoardRepository.new(@db), last_read: LastReadRepository.new(@db), store: @db)
-    @chat         = ChatService.new
-    @last_callers = LastCallersService.new(LastCallersRepository.new(@db))
-    @profile      = ProfileService.new(ProfileRepository.new(@db))
-    @oneliners    = OnelinerService.new(OnelinerRepository.new(@db), store: @db)
-    @accounts     = AccountService.new(AccountRepository.new(@db), reserved: @sysops, guard: LoginGuard.new(store: @db))
-    @mail         = MailService.new(MailRepository.new(@db), accounts: @accounts, sysops: @sysops, store: @db)
-    @trivia       = TriviaScoreRepository.new(@db)
-    @bulletins    = BulletinRepository.new(BULLETINS_DIR)
-  end
-
-  # What comes from elsewhere: the catalog, the site, Gitea, the FTP
-  # server, Discord, IRC, and the content files.
-  def open_outside
-    @games      = GamesService.new(CatalogRepository.new)
-    @site       = SiteService.new(SiteRepository.new)
-    @dev_log    = DevLogService.new(GiteaRepository.new)
-    @warp_sizes = WarpSizes.new(FtpRepository.new(setting('FTP_HOST', 'ftp.teletypegames.org')))
-    @discord    = DiscordNotifier.new(setting('DISCORD_WEBHOOK', nil))
-    @irc        = open_irc
-    @network    = NetworkService.new(NetworkRepository.new(File.join(CONTENT_DIR, 'network.yml')))
-    @voting     = VotingService.new(VoteRepository.new(@db), path: File.join(CONTENT_DIR, 'polls.yml'),
-                                                             games: @games, doors: DOOR_NAMES)
-  end
-
-  def open_irc
-    IrcRelay.new(server: setting('IRC_SERVER', 'irc.libera.chat'), port: setting('IRC_PORT', '6697'),
-                 channel: setting('IRC_CHANNEL', '#teletypegames'), nick: setting('IRC_NICK', 'ttgbbs'),
-                 password: setting('IRC_PASSWORD', '')).start
-  end
-
-  def open_characters
-    @llm        = TeletypeBBS.llm(@env)
-    @master     = TtgMaster.new(games: @games, site: @site, client: @llm)
-    @c64_master = TtgMaster.new(games: @games, site: @site, client: @llm, **TtgMaster::C64)
-    @taglines   = TaglineService.new(@site)
-    @scene      = SceneService.new(online: @online, chat: @chat, boards: @boards, mail: @mail,
-                                   last_callers: @last_callers, site: @site, oneliners: @oneliners,
-                                   door_titles: DOOR_NAMES)
+    voting.polls.count { |poll| voting.ballot(poll, name).nil? }
   end
 end

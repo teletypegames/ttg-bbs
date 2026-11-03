@@ -3,13 +3,20 @@
 require_relative '../test_helper'
 
 class TeletypeBBSTest < Minitest::Test
+  ENVIRONMENT = %w[TELETYPE_BBS_DB TELETYPE_BBS_SYSOPS].freeze
+
   def setup
     @dir = Dir.mktmpdir('teletype-bbs')
-    @bbs = TeletypeBBS.new(env: { 'TELETYPE_BBS_DB' => File.join(@dir, 'teletype.sqlite3'),
-                                  'TELETYPE_BBS_SYSOPS' => 'Tasi', 'TELETYPE_BBS_IRC_SERVER' => '' })
+    BBS.config.env_prefix = 'TELETYPE_BBS_'
+    ENV['TELETYPE_BBS_DB'] = File.join(@dir, 'teletype.sqlite3')
+    ENV['TELETYPE_BBS_SYSOPS'] = 'Tasi'
+    @bbs = TeletypeBBS.new
   end
 
-  def teardown = FileUtils.rm_rf(@dir)
+  def teardown
+    ENVIRONMENT.each { |name| ENV.delete(name) }
+    FileUtils.rm_rf(@dir)
+  end
 
   def test_only_a_logged_on_sysop_broadcasts
     @bbs.chat.subscribe('s')
@@ -21,7 +28,7 @@ class TeletypeBBSTest < Minitest::Test
   end
 
   def board_with_history
-    calls = LastCallersRepository.new(@bbs.instance_variable_get(:@db))
+    calls = LastCallersRepository.new(@bbs.store)
     [%w[Kali a], %w[kali b], %w[Zed c], %w[Anonymous d]].each { |name, id| calls.record(name, id, 30) }
     @bbs.accounts.register('Kali', 'password', 'password')
     @bbs.boards.post('general', 'Kali', 'hi', caller_key: 'a')

@@ -438,12 +438,14 @@ lib/
                                        eval questions, the shared model client
   ui/arts.rb                           loads and keeps the pictures (UI::Arts)
   ui/wording.rb                        what both faces say about the domain's answers
-  ui/modern.rb                         the modern face: the steps of a call and the
-                                       Application (windows, menus, doors, status keys)
-  ui/modern/steps.rb                   modem and entrance, logon screen, leaving
+  ui/login.rb                          the logon of both faces (name, password,
+                                       let in or turned away)
+  ui/modern.rb                         the modern face: the Application (rubbs 2.0 DSL)
+  ui/modern/logon.rb                   the logon screen with the scans
   ui/modern/helpers.rb                 the desktop's own methods (menus, buttons, tick)
-  ui/modern/windows.rb, windows/       one module a window, listed with its kind
-  ui/modern/menus.rb                   the menubar, one method a menu
+  ui/modern/section.rb                 a part of the board: its windows' colour and sign
+  ui/modern/windows/                   the windows, a BBS::Part per part of the board
+  ui/modern/menus.rb                   the commands (F-keys) and the menubar
   ui/logo.rb                           the board's logo (TTG BBS, BBS::BlockFont) for both faces
   ui/modern/desktop.rb                 the dashboard (the clubhouse from the street),
                                        the colours and icons of the menus
@@ -455,19 +457,19 @@ lib/
                                        dev log, the Master's quick questions
   ui/modern/classic_formatters.rb      logon/logoff, nodes, mail, voting,
                                        bulletins, hall of fame
-  ui/petscii.rb                        the PETSCII face: entrance, logon, goodbye
+  ui/petscii.rb                        the PETSCII face (BBS::Petscii::Face): the main menu
+  ui/petscii/logon.rb                  its logon scans and its goodbye
   ui/petscii/clubhouse.rb              its pictures: the main menu, the town map,
                                        the games room, trophies, cards, entrance,
                                        leaving
-  ui/petscii/screen.rb                 the 40×25 screen (BBS::Petscii::Screen of
-                                       rubbs) and its chat line
-  ui/petscii/board.rb                  the main menu
+  ui/petscii/chat.rb                   the live chat with its chat line, IRC
   ui/petscii/more.rb                   doors, Master, system info, help, sysop
   ui/petscii/messages.rb, content.rb,  its sections (content.rb: bulletins,
                                        the network, dev log)
   ui/petscii/people.rb
 bin/persona-eval                       count a character's slips over many runs
-test/                                  minitest: the domain, the legacy import, BASIC
+test/                                  minitest: the domain, the legacy import, BASIC,
+                                       both faces on BBS::Test::Session
 Rakefile                               bundle exec rake test
 bin/c64-bytes                          the bytes of the C64 pictures on the line
 data/
@@ -477,12 +479,12 @@ bin/account                            create an account / reset a password
 
 ## Doors
 
-A door is one entry of `TeletypeBBS#doors` (`lib/domain/teletype_bbs.rb`):
+A door is one entry of `TeletypeBBS#doors` (`lib/domain/teletype_doors.rb`), a `BBS::Door`:
 its name, the program, the label with its hotkey, the narrowest screen it
 draws for, optionally the same door drawn for 40 columns, and three texts:
 `tag` (a few words for the C64's list), `hint` (the statusbar line of its menu
 item) and `about` (its paragraph in the Door Lobby). The modern face declares
-them all in its Application, and its Doors menu (`doors` in the menubar block)
+them all in its Application at boot (`UI::Modern.doors`), and its Doors menu
 lists them by itself under the Door Lobby; the PETSCII face offers the ones of
 40 columns and the ones with a C64 version (`petscii:`).
 
@@ -491,10 +493,10 @@ Plus/4, Chat of Ra and TTG Trivia. The other boards of the network are no
 doors here (no `BBS::Gateway`): TTG Gate BBS dials them.
 
 ```ruby
-Door.new(name: :c64, program: Commodore.os(Commodore::C64, games: @games, sizes: @warp_sizes),
-         label: '&Commodore 64', cols: 40, tag: 'c64 + our games',
-         hint: 'A Commodore 64 at READY., with our C64 games on its disk: LOAD"$",8 lists them',
-         about: 'A Commodore 64 at its READY. prompt, with a small BASIC V2. …'),
+DoorModel.new(:c64, Commodore.os(Commodore::C64, games: games, sizes: sizes),
+              label: '&Commodore 64', cols: 40, tag: 'c64 + our games',
+              hint: 'A Commodore 64 at READY., with our C64 games on its disk: LOAD"$",8 lists them',
+              about: 'A Commodore 64 at its READY. prompt, with a small BASIC V2. …'),
 ```
 
 The program is a `BBS::FakeOS` definition, a `BBS::Flow` or a callable `(session, context)`.

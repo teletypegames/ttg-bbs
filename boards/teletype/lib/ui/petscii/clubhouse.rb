@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  module Petscii
+  class Petscii
     # The graphics screens of the C64 face: the clubhouse drawn in the
     # uppercase/graphics set on a BBS::Petscii::Canvas (raw PETSCII, the
     # whole screen once, then only what changes), where the menus are the
@@ -96,11 +96,11 @@ module UI
 
       # Asks on the bottom row of the main menu whether the caller leaves;
       # true for Y.
-      def self.leave?(screen)
+      def self.leave?(face)
         row = C.new.text(MENU_ROW + 10, 2, 'LEAVE THE CLUBHOUSE?  Y/N', :white)
-        screen.session.write_raw(row.span(MENU_ROW + 10, 0, 39) + row.cursor(C::ROWS - 1, 0))
+        face.session.write_raw(row.span(MENU_ROW + 10, 0, 39) + row.cursor(C::ROWS - 1, 0))
         loop do
-          k = screen.key
+          k = face.key
           k = k.downcase if k.is_a?(String)
           return k == 'y' if ['y', 'n', :escape].include?(k)
         end
@@ -133,16 +133,20 @@ module UI
       # on, and the rooms as a cursor menu. The key of the room taken (or of
       # an EXITS key); nil for ← or RUN/STOP.
       class MainMenu
-        def initialize(bbs, session, ctx)
-          @bbs     = bbs
+        # The menu of +name+'s call on +session+, the house lit from +scene+
+        # (a SceneModel), their own window that of +node+.
+        def initialize(session, scene, node:, name:)
           @session = session
-          @ctx     = ctx
+          @scene   = scene
+          @node    = node
+          @name    = name
         end
 
         def run(lit: nil, unread: 0)
-          scene  = @bbs.scene.scene(name, registered: registered?, sysop: sysop?)
+          scene  = @scene
           canvas = C.new
-          art    = house(canvas, scene)
+          art    = Clubhouse.house(canvas, scene, node: @node,
+                                               status: "#{"NODE #{@node}  " if @node}#{Time.now.strftime('%H:%M')}")
           live(canvas, scene, unread)
           Clubhouse.box(canvas, MENU_ROW - 1, 1, 38, 11, C::DARK_GREY)
           canvas.text(MENU_ROW + 10, 2, HINT, :dark_grey)
@@ -154,19 +158,10 @@ module UI
 
         private
 
-        def name = @ctx[:username] || AccountService::ANONYMOUS
-        def registered? = @ctx[:authenticated] == true
-        def sysop? = @bbs.sysop?(name, @ctx[:authenticated])
-
-        def house(canvas, scene)
-          node = @bbs.online.node(@ctx[:session_id])&.number
-          Clubhouse.house(canvas, scene, node: node, status: "#{"NODE #{node}  " if node}#{Time.now.strftime('%H:%M')}")
-        end
-
         # Who is calling and what is going on, under the house.
         def live(canvas, scene, unread)
           mail = unread.positive? ? "  #{unread} NEW LETTER#{'S' unless unread == 1}" : ''
-          canvas.text(HOUSE_ROWS, 1, "HI #{BBS::Petscii.plain(name).upcase[0, 14]}!", :white)
+          canvas.text(HOUSE_ROWS, 1, "HI #{BBS::Petscii.plain(@name).upcase[0, 14]}!", :white)
           inside = "#{scene.inside} INSIDE#{mail}"
           canvas.text(HOUSE_ROWS, 39 - inside.length, inside, unread.positive? ? :light_green : :yellow)
           next_event(canvas, scene.events.first) if scene.events.first
@@ -234,7 +229,7 @@ module UI
         def walk
           loop do
             key = @session.readkey
-            raise IOError, 'the caller hung up' if key.nil?
+            raise BBS::Hangup if key.nil?
 
             key = key.downcase if key.is_a?(String)
             return nil if BACK.include?(key)
@@ -403,10 +398,10 @@ module UI
       # and the coats of the callers inside; the name and the password are
       # written into the guestbook.
       class Entrance
-        def initialize(screen, bbs)
-          @screen = screen
-          @bbs    = bbs
-          @art    = Arts.load(:c64, 'entrance')
+        def initialize(session, bbs)
+          @session = session
+          @bbs     = bbs
+          @art     = Arts.load(:c64, 'entrance')
         end
 
         def show
@@ -415,18 +410,29 @@ module UI
           guests
           count = @bbs.online.count
           put(:coats, count.zero? ? 'NONE YET' : '♠' * count.clamp(0, 15), :orange)
-          @screen.session.write_raw(@canvas.frame)
+          @session.write_raw(@canvas.frame)
         end
 
         def ask_name = ask(:name)
 
         def ask_password = ask(:password, mask: '*')
 
-        # +text+ on the line under the guestbook.
-        def wrong(text)
-          row = C.new.text(24, 1, text, :light_red)
-          @screen.session.write_raw(row.span(24, 0, C::COLS - 1))
+        # Under the guestbook: the password was wrong.
+        def wrong_password
+          row = C.new.text(24, 1, 'WRONG PASSWORD.', :light_red)
+          @session.write_raw(row.span(24, 0, C::COLS - 1))
         end
+
+        # Why the caller does not get in, on the reading screen.
+        def turn_away(text)
+          Clubhouse.text_mode(@session)
+          screen = BBS::Petscii::Screen.new(@session)
+          screen.cls
+          screen.say(text, color: RD)
+        end
+
+        # Every C64 caller goes on the node list.
+        def listed? = true
 
         private
 
@@ -439,9 +445,9 @@ module UI
 
         def ask(name, mask: nil)
           spot = @art.hotspot(name)
-          @screen.session.write_raw(@canvas.cursor(spot.row, spot.col) + [C::YELLOW].pack('C'))
+          @session.write_raw(@canvas.cursor(spot.row, spot.col) + [C::YELLOW].pack('C'))
           width = [spot.width - 1, 20].min
-          BBS::Field.new(@screen.session, width: width, max: width, mask: mask).run.to_s.strip
+          BBS::Field.new(@session, width: width, max: width, mask: mask).run.to_s.strip
         end
 
         def put(name, text, color)

@@ -25,7 +25,7 @@ module UI
     module Icon
       SIGNS = { board: '☼', messages: '✉', people: '☺', doors: '♫', you: '♥', help: '¿' }.freeze
 
-      def self.title(section, text) = " #{SIGNS.fetch(section)} #{text} "
+      def self.title(section, text) = "#{SIGNS.fetch(section)} #{text}"
 
       # A window title without its icon: what the node list tells others.
       def self.strip(title) = title.to_s.strip.sub(/\A[#{SIGNS.values.join}] /o, '')

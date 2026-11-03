@@ -3,85 +3,81 @@
 module UI
   module Modern
     module Windows
-      # Board > System Info: the board in numbers.
-      module SystemInfo
-        def self.configure(w)
-          w.accent Accent::STYLES[:board]
-          w.title  Icon.title(:board, 'System Info')
-          w.width  60
-          w.height 15
-          w.body { |ctx| [{ kv: rows(ctx), label_width: 15 }] }
-        end
+      # Board > System Info, Bulletins and Dev Log.
+      module Board
+        extend Section
 
-        def self.rows(ctx)
-          [['Nodes in use', ctx[:online].count.to_s],
-           ['Calls',        "#{ctx[:last_callers].total_calls} (#{ctx[:last_callers].calls_today} today)"],
-           ['Messages',     ctx[:boards].total_count.to_s],
-           ['Boards',       ctx[:boards].boards.size.to_s],
-           ['Wiki',         'https://wiki.teletypegames.org'],
-           ['Games API',    'https://teletypegames.org'],
-           ['Discord feed', ctx[:discord].enabled? ? 'on' : 'off'],
-           ['Platform',     RUBY_PLATFORM],
-           ['Ruby',         RUBY_VERSION],
-           ['Uptime',       Formatters::SystemInfo.format_uptime(ctx[:uptime])]]
-        end
-      end
+        section :board do
+          # The board in numbers.
+          window :system_info, :info do
+            title 'System Info'
+            width 60
+            height 15
+            body { [{ kv: system_rows, label_width: 15 }] }
+          end
 
-      # Board > Bulletins: the logon bulletin, the events, the network and
-      # the Markdown ones.
-      module Bulletins
-        def self.configure(w)
-          w.accent Accent::STYLES[:board]
-          w.maximizable true
-          w.title         Icon.title(:board, 'Bulletins')
-          w.list_width    30
-          w.items         { |_ctx| Formatters::Bulletins::LIST }
-          w.item_label    { |b, _ctx| b[:label] }
-          w.render_detail { |b, width, ctx| lines(b, width, ctx) }
-        end
+          # The logon bulletin, the events, the network and the Markdown ones.
+          window :bulletins, :master_detail do
+            title 'Bulletins'
+            list_width 30
+            items { Formatters::Bulletins::LIST }
+            label { |b| b[:label] }
+            detail { |b, width| bulletin_lines(b, width) }
+          end
 
-        def self.lines(bulletin, width, ctx)
-          case bulletin[:kind]
-          when :logon   then logon(ctx)
-          when :events  then events(ctx)
-          when :network then Formatters::Network.body(ctx[:network].all).map { |l| l == :spacer ? '' : l }
-          when :file
-            BBS::Markdown.to_lines(ctx[:bulletins].read(bulletin[:file]).to_s, width: width - 1, theme: ctx[:app].theme)
+          # What the team pushed, tagged and released.
+          window :dev_log, :master_detail do
+            title 'Dev Log — git.teletypegames.org'
+            list_width 36
+            empty '  (no activity, or Gitea did not answer)'
+            items { dev_log.recent(60) }
+            label { |activity| Formatters::DevLog.label(activity) }
+            detail { |activity, width| dev_log_detail(activity, width) }
+            meta { '· push   ◆ tag   ★ release   + repository' }
           end
         end
 
-        def self.logon(ctx)
-          Formatters::Bulletin.body(**ctx[:bbs].bulletin(ctx[:username], registered: ctx[:authenticated])).map do |l|
-            next l[:text] if l.is_a?(Hash)
-
-            l == :spacer ? '' : " #{l}"
+        helpers do
+          def system_rows
+            [['Nodes in use', online.count.to_s],
+             ['Calls',        "#{last_callers.total_calls} (#{last_callers.calls_today} today)"],
+             ['Messages',     boards.total_count.to_s],
+             ['Boards',       boards.boards.size.to_s],
+             ['Wiki',         'https://wiki.teletypegames.org'],
+             ['Games API',    'https://teletypegames.org'],
+             ['Discord feed', discord.enabled? ? 'on' : 'off'],
+             ['Platform',     RUBY_PLATFORM],
+             ['Ruby',         RUBY_VERSION],
+             ['Uptime',       Formatters::SystemInfo.format_uptime(TeletypeBBS::STARTED_AT)]]
           end
-        end
 
-        def self.events(ctx)
-          events = ctx[:site].upcoming_events(10)
-          events.empty? ? ['  (nothing scheduled)'] : events.map { |e| Formatters::Events.line(e) }
-        end
-      end
+          def bulletin_lines(bulletin, width)
+            case bulletin[:kind]
+            when :logon   then logon_bulletin
+            when :events  then upcoming_events
+            when :network then Formatters::Network.body(network.all).map { |l| l == :spacer ? '' : l }
+            when :file    then markdown(bulletins.read(bulletin[:file]).to_s, width - 1)
+            end
+          end
 
-      # Board > Dev Log: what the team pushed, tagged and released.
-      module DevLog
-        def self.configure(w)
-          w.accent Accent::STYLES[:board]
-          w.maximizable true
-          w.title         Icon.title(:board, 'Dev Log — git.teletypegames.org')
-          w.list_width    36
-          w.empty_message '  (no activity, or Gitea did not answer)'
-          w.items         { |ctx| ctx[:dev_log].recent(60) }
-          w.item_label    { |activity, _ctx| Formatters::DevLog.label(activity) }
-          w.render_detail { |activity, width, ctx| detail(activity, width, ctx[:dev_log]) }
-          w.bottom_meta { |_activity, _ctx| '· push   ◆ tag   ★ release   + repository' }
-        end
+          def logon_bulletin
+            Formatters::Bulletin.body(**bbs.bulletin(context[:username], registered: registered?)).map do |l|
+              next l[:text] if l.is_a?(Hash)
 
-        def self.detail(activity, width, log)
-          Formatters::DevLog.detail(activity, width, commit_url:  ->(sha) { log.commit_url(activity, sha) },
-                                                     release_url: log.release_url(activity),
-                                                     repo_url:    log.repo_url(activity))
+              l == :spacer ? '' : " #{l}"
+            end
+          end
+
+          def upcoming_events
+            events = site.upcoming_events(10)
+            events.empty? ? ['  (nothing scheduled)'] : events.map { |e| Formatters::Events.line(e) }
+          end
+
+          def dev_log_detail(activity, width)
+            Formatters::DevLog.detail(activity, width, commit_url:  ->(sha) { dev_log.commit_url(activity, sha) },
+                                                       release_url: dev_log.release_url(activity),
+                                                       repo_url:    dev_log.repo_url(activity))
+          end
         end
       end
     end
