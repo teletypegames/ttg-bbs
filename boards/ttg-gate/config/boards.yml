@@ -100,3 +100,12 @@ boards:
     accent: "#af5fff"
     petscii: true
     enabled: true
+
+  - id: starbase-bbs
+    name: "Starbase BBS"
+    summary: "A Star Trek library: every series and film with its episodes, air dates, directors and writers, and Memory Alpha's articles to read section by section, with a QR code to take one with you. On a modern terminal or, in PETSCII, on a Commodore 64."
+    tags: ["Star Trek", "library", "C64"]
+    port: 2333
+    accent: "#5fd7ff"
+    petscii: true
+    enabled: true
