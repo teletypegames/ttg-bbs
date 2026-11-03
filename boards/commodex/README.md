@@ -126,7 +126,7 @@ lib/domain/
   model/tip_model.rb        a tip and its status
   model/summary_model.rb    a Wikipedia lead
   repository/catalog_repository.rb    the snapshot files, the games in memory
-  repository/wikidata_repository.rb   the SPARQL queries
+  repository/wikidata_repository.rb   the SPARQL queries (BBS::Wikidata)
   repository/wikipedia_repository.rb  article leads over BBS::Wikipedia, cached (BBS::Cache)
   repository/tip_repository.rb        the tips table (BBS::SQLite), its migrations
   repository/tip_seed_repository.rb   config/tips.yml

@@ -1,27 +1,22 @@
 # frozen_string_literal: true
 
-require 'json'
 require 'uri'
 
 # The Commodore 64 games of Wikidata (CC0), read from its SPARQL endpoint:
 # every item on the platform Commodore 64 (P400 = Q99775) that is a video
 # game (P31/P279* Q7889). One query for the items, their labels and English
 # Wikipedia articles, then one per property, merged here into the records of
-# the catalog file, over BBS::HTTP (a deadline, a body cap). Any failed
-# query raises (BBS::HTTP::Error, or Error for an answer that is no JSON),
+# the catalog file, with rubbs' BBS::Wikidata (a deadline, a body cap, a
+# pause before each query). Any failed query raises (BBS::HTTP::Error, or
+# Error for an error status or an answer that is no JSON),
 # so a refresh never leaves a half catalog. The names are cleaned of control
 # characters.
 class WikidataRepository
   # Wikidata answered an error status or no JSON.
-  class Error < BBS::HTTP::Error; end
+  Error = BBS::Wikidata::Error
 
-  ENDPOINT     = 'https://query.wikidata.org/sparql'
   USER_AGENT   = 'CommodexBBS/0.1 (Commodex BBS, Teletype Games telnet BBS; https://teletypegames.org; ' \
                  'https://git.teletypegames.org/bbs/commodex-bbs)'
-  OPEN_TIMEOUT = 10
-  READ_TIMEOUT = 90
-  DEADLINE     = 180
-  MAX_BYTES    = 32 * 1024 * 1024
   LANGUAGES    = 'en,mul,de,fr,it,es,nl,sv,pl,hu,ja'
   GAMES        = '?item wdt:P400 wd:Q99775 . ?item wdt:P31/wdt:P279* wd:Q7889 .'
   LABELS       = "SERVICE wikibase:label { bd:serviceParam wikibase:language \"#{LANGUAGES}\". }".freeze
@@ -48,9 +43,8 @@ class WikidataRepository
 
   C64 = 'Q99775'
 
-  def initialize(endpoint: ENDPOINT, pause: 1)
-    @endpoint = endpoint
-    @pause    = pause
+  def initialize(pause: 1, client: BBS::Wikidata.new(user_agent: USER_AGENT, pause: pause))
+    @client = client
   end
 
   # The records of every game, sorted by title.
@@ -113,19 +107,7 @@ class WikidataRepository
 
   def text(value) = BBS::Text.line(value)
 
-  def qid(binding) = binding&.dig('value').to_s[%r{/entity/(Q\d+)\z}, 1]
+  def qid(binding) = BBS::Wikidata.qid(binding)
 
-  def select(query)
-    sleep @pause
-    response = BBS::HTTP.post(@endpoint, body: URI.encode_www_form(query: query), user_agent: USER_AGENT,
-                                         headers: { 'Accept' => 'application/sparql-results+json',
-                                                    'Content-Type' => 'application/x-www-form-urlencoded' },
-                                         open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT,
-                                         deadline: DEADLINE, max_bytes: MAX_BYTES)
-    raise Error, "Wikidata answered #{response.status}" unless response.ok?
-
-    JSON.parse(BBS::Text.utf8(response.body)).dig('results', 'bindings') || []
-  rescue JSON::ParserError => e
-    raise Error, "Wikidata answered no JSON: #{e.message[0, 80]}"
-  end
+  def select(query) = @client.select(query)
 end
