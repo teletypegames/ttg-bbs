@@ -132,3 +132,13 @@ boards:
     accent: '#5fd7ff'
     c64: cyan
     place: { modern: [3, 18], c64: [4, 16] }
+  - id: hackercave-bbs
+    name: HackerCave BBS
+    port: 2334
+    building: the hacker's cave
+    about: every RFC, the documents the Internet is made of
+    short: CAVE
+    words: THE RFCS
+    accent: '#d7ff5f'
+    c64: light_green
+    place: { modern: [22, 18], c64: [14, 16] }

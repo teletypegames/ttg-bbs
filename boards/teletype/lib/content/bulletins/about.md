@@ -18,6 +18,7 @@ the Commodore 64 and Plus/4, Chat of Ra, TTG Trivia).
 - **TTG Blog BBS** (2328): our blog
 - **Pixelia BBS** (2332): ANSI and PETSCII art
 - **Starbase BBS** (2333): a Star Trek library, every episode and Memory Alpha
+- **HackerCave BBS** (2334): every RFC, the documents the Internet is made of
 - **TTG Gate BBS** (2399): every board from one port
 
 All of them are at teletypegames.org, and in a browser at

@@ -26,6 +26,8 @@
   expect: [Pixelia BBS, '2332']
 - q: is there anything about star trek?
   expect: [Starbase BBS, '2333']
+- q: where can I read the RFCs?
+  expect: [HackerCave BBS, '2334']
 - q: what is the meaning of life?
   expect: [do not know, wiki]
 - q: write me a poem about cats

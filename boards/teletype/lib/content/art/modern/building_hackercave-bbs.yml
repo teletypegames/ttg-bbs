@@ -1,0 +1,17 @@
+# hackercave-bbs on the town map of the modern face (12×4): its building, a cave with a terminal glowing inside.
+size: [12, 4]
+charset: cp437
+palette:
+  a: '#d7ff5f'
+  d: 244
+  k: 240
+chars: |2
+     ▄▄██▄▄   
+   ▄██▀  ▀██▄ 
+   ██ ▐▓▓▌ ██ 
+  ▀▀▀ ▀▀▀▀ ▀▀▀
+colors: |2
+  ...dddddd...
+  .dddd..dddd.
+  .dd.kaak.dd.
+  kkk.kkkk.kkk
