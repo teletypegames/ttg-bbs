@@ -6,23 +6,20 @@ module UI
     # date, the status and the series, a red line when a newer RFC replaced
     # it, the other links, the abstract and the credit.
     module RfcCard
-      def rfc_lines(entry, width)
+      def rfc_lines(entry)
         rfc = entry.rfc
-        wrap = ->(s) { s.empty? ? [s] : BBS::FrameBuffer.wrap_ansi(s, width - 1) }
-        [*rfc_heading(entry), *rfc_links(rfc), '', *abstract_lines(rfc), rfc_credit(rfc), '',
-         "#{theme[:text_dim]}#{rfc_hint(rfc)}#{theme[:text]}"].flat_map { |line| wrap.call(line) }
+        [*rfc_heading(entry), *rfc_links(rfc), '', *abstract_lines(rfc), rfc_credit(rfc), '', dim(rfc_hint(rfc))]
       end
 
       private
 
       def rfc_heading(entry)
-        t = theme
         rfc = entry.rfc
-        ["#{t[:text_bright]}#{rfc.name}: #{rfc.title}#{t[:text]}",
-         *("#{t[:label]}#{entry.note}#{t[:text]}" if entry.kind == :remark),
-         *("#{t[:label]}Found:#{t[:text]} #{entry.note}" if entry.kind == :match),
-         *("#{t[:accent]}#{rfc.author_list.join(', ')}#{t[:text]}" unless rfc.authors.empty?),
-         "#{t[:text_dim]}#{rfc_facts(rfc).join(' · ')}#{t[:text]}"]
+        [bright("#{rfc.name}: #{rfc.title}"),
+         *(paint(:label, entry.note) if entry.kind == :remark),
+         *("#{paint(:label, 'Found:')} #{entry.note}" if entry.kind == :match),
+         *(accent(rfc.author_list.join(', ')) unless rfc.authors.empty?),
+         dim(rfc_facts(rfc).join(' · '))]
       end
 
       def rfc_facts(rfc)
@@ -43,8 +40,7 @@ module UI
         return [] if rfc.status.empty?
 
         links = library.relations(rfc).map do |kind, numbers|
-          style = kind == 'obsoleted by' ? :error : :label
-          "#{theme[style]}#{kind.capitalize}:#{theme[:text]} #{numbers.map { |n| "RFC #{n}" }.join(', ')}"
+          "#{paint(kind == 'obsoleted by' ? :error : :label, "#{kind.capitalize}:")} #{numbers.map { |n| "RFC #{n}" }.join(', ')}"
         end
         [*links, *errata_line(rfc)]
       end
@@ -53,7 +49,7 @@ module UI
         count = library.errata_count(rfc)
         return [] if count[:total].zero?
 
-        ["#{theme[:label]}Errata:#{theme[:text]} #{count[:total]} (#{count[:verified]} verified) — Alt-E"]
+        ["#{paint(:label, 'Errata:')} #{count[:total]} (#{count[:verified]} verified) — Alt-E"]
       end
 
       def abstract_lines(rfc)
@@ -68,7 +64,7 @@ module UI
         'Enter reads it. Alt-L: its links.'
       end
 
-      def rfc_credit(rfc) = "#{theme[:text_dim]}#{rfc.name}#{', IETF' unless rfc.ien?} · #{rfc.url}#{theme[:text]}"
+      def rfc_credit(rfc) = dim("#{rfc.name}#{', IETF' unless rfc.ien?} · #{rfc.url}")
     end
   end
 end

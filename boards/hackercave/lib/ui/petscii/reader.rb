@@ -1,24 +1,25 @@
 # frozen_string_literal: true
 
 module UI
-  module Petscii
+  class Petscii
     # The reader of the C64 face: an RFC reflowed to 38 columns
     # (ReflowService) in pages of ROWS lines, the headings white, the
     # figures cyan and their lines going on grey. RETURN turns the page, B
     # goes back one, T picks a heading to go to, F lists the RFCs it names
-    # (+on_named+ gets them), Q goes back to the record.
+    # (+on_named+ gets them), Q goes back to the record. It writes on the
+    # face it is made with.
     class Reader
       # Rows of text on a page: the title bar above, the key line below.
       ROWS = 21
       COLORS = { heading: WH, figure: CY, more: GR }.freeze
 
-      def initialize(screen, reading, rfc, doc, on_named: nil)
-        @screen   = screen
-        @reading  = reading
+      def initialize(face, rfc, doc, on_named: nil)
+        @face     = face
+        @reading  = face.reading
         @rfc      = rfc
         @doc      = doc
         @on_named = on_named
-        @flowed   = reading.reflowed(doc, WIDTH)
+        @flowed   = @reading.reflowed(doc, WIDTH)
         @lines    = @flowed.map { |l| line(l) }
       end
 
@@ -38,7 +39,7 @@ module UI
           break if @page >= pages
         end
       ensure
-        @screen.puts
+        @face.puts
       end
 
       private
@@ -49,16 +50,16 @@ module UI
 
       def show_page
         @page = @page.clamp(0, pages - 1)
-        @screen.title(@rfc.name, "p#{@page + 1}/#{pages}")
+        @face.title(@rfc.name, "p#{@page + 1}/#{pages}")
         rows = @lines[@page * ROWS, ROWS]
-        rows.each { |l| @screen.puts l }
-        (ROWS - rows.size).times { @screen.puts }
-        @screen.write " #{DG}ret:#{last_page? ? 'done' : 'more'} b:back t:contents f:rfcs q#{LG}"
+        rows.each { |l| @face.puts l }
+        (ROWS - rows.size).times { @face.puts }
+        @face.write " #{DG}ret:#{last_page? ? 'done' : 'more'} b:back t:contents f:rfcs q#{LG}"
       end
 
       def reader_key
         loop do
-          k = @screen.key
+          k = @face.key
           k = k.downcase if k.is_a?(String)
           case k
           when :enter, ' ', :down then return :more
@@ -74,7 +75,7 @@ module UI
       # picked turns to its page.
       def contents
         heads = headings
-        picked = @screen.pick("CONTENTS #{@rfc.name}", heads, empty: 'no headings found.', right: "#{heads.size} ") do |(_, text)|
+        picked = @face.pick("CONTENTS #{@rfc.name}", heads, empty: 'no headings found.', right: "#{heads.size} ") do |(_, text)|
           text.strip.downcase
         end
         @page = picked.first / ROWS if picked
@@ -90,7 +91,7 @@ module UI
       # A reflowed line in characters the C64 has, indented by one, in the
       # colour of its kind.
       def line(reflowed)
-        text = @screen.plain(reflowed.text)
+        text = @face.plain(reflowed.text)
         color = COLORS[reflowed.kind]
         color ? " #{color}#{text}#{LG}" : " #{text}"
       end

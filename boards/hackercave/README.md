@@ -94,8 +94,8 @@ credited "Jargon File 4.4.7 (public domain)".
 
 An RFC is fetched when someone first opens it,
 `https://www.rfc-editor.org/rfc/rfc<N>.txt`, through `BBS::HTTP` (a 60-second
-deadline, a 4 MB cap, redirects to public addresses only) with a User-Agent
-that names the board, and kept as it came in `data/rfc/rfc<N>.txt`. That is
+deadline, a 4 MB cap, redirects to public addresses only) with the
+User-Agent of the Teletype Games boards, and kept as it came in `data/rfc/rfc<N>.txt`. That is
 the layout of the RFC Editor's rsync module `rfcs-text-only`. An RFC never
 changes: nothing there expires. An IEN is `ien<N>.txt` beside them.
 
@@ -185,7 +185,7 @@ day). CI runs both before a deploy.
 ## Project structure
 
 ```
-bbs.rb                      entry point: BBS.configure + BBS::Terminal.flow
+bbs.rb                      entry point: BBS.board (rubbs 2.0) with the two faces
 config/shelves.yml          the board's own shelves: Classics, Telnet, April 1st
 config/jargon/jarg447.txt   the Jargon File 4.4.7 (public domain)
 lib/domain.rb               requires the domain in dependency order
@@ -215,25 +215,23 @@ lib/domain/
   service/jargon_service.rb           the Jargon File: letters, search, word of the day
   service/reading_service.rb          opening an RFC (fetch once, parse, keep a while)
   service/reflow_service.rb           an RFC made to fit 38 columns; what each line is
-  hackercave_bbs.rb         the composition root (HackerCaveBBS)
+  hackercave_bbs.rb         the board's BBS::Domain: settings, services, background work
 lib/ui/
   logo.rb                   HACKERCAVE in blocks (BBS::BlockFont), both faces
-  modern.rb                 UI::Modern: the rubbs Application, put together from:
+  modern.rb                 UI::Modern::APP: commands, menus, help, desktop, put together from:
   modern/library.rb         the helpers: shelves, search, opening an RFC, links, QR
-  modern/desktop.rb         the logo, the tagline, the statusbar
   modern/rfc_card.rb        an RFC's record beside a list
   modern/shelves_window.rb  the shelves window
   modern/rfcs_window.rb     a list of RFCs
-  modern/menu.rb            the menubar, the help texts, the function keys
   modern/reader_window.rb   the reader window: the RFC as published
   modern/contents_window.rb the headings of the RFC read, to jump to
-  modern/text_window.rb     a window of paragraphs: errata, a Jargon entry or chapter
-  modern/jargon.rb          the Jargon menu's helpers and windows
-  petscii.rb                UI::Petscii: the C64 board
+  modern/text_window.rb     a window of paragraphs: errata, a Jargon chapter
+  modern/jargon.rb          the Jargon menu's helpers
+  modern/jargon_windows.rb  the Jargon windows: letters, entries, chapters, an entry
+  petscii.rb                UI::Petscii: the C64 face (BBS::Petscii::Face)
   petscii/records.rb        the lists and an RFC's record: links, errata, QR code
   petscii/reader.rb         the C64 reader: the RFC reflowed, in pages, contents
   petscii/jargon_room.rb    the Jargon File on the C64
-  petscii/screen.rb         the 40×25 screen: rubbs' BBS::Petscii::Screen
 bin/test                    runs the tests
 test/                       the domain tests (minitest)
 ```

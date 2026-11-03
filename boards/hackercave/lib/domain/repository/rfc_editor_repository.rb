@@ -17,11 +17,9 @@ class RfcEditorRepository
   TEXT_DEADLINE = 60
   READ_TIMEOUT  = 30
 
-  # [site]       the base URL of the RFC Editor (https://www.rfc-editor.org)
-  # [user_agent] the User-Agent sent with every request
-  def initialize(site:, user_agent:)
-    @site       = site.delete_suffix('/')
-    @user_agent = user_agent
+  # [site] the base URL of the RFC Editor (https://www.rfc-editor.org)
+  def initialize(site:)
+    @site = site.delete_suffix('/')
   end
 
   def index_url = "#{@site}/rfc-index.xml"
@@ -64,7 +62,7 @@ class RfcEditorRepository
   # The Response of a successful GET of +url+; an error status raises
   # BBS::HTTP::Error.
   def get(url, **)
-    response = BBS::HTTP.get(url, read_timeout: READ_TIMEOUT, user_agent: @user_agent, **)
+    response = BBS::HTTP.get(url, read_timeout: READ_TIMEOUT, **)
     raise BBS::HTTP::Error, "GET #{url}: answered #{response.status}" unless response.ok?
 
     response

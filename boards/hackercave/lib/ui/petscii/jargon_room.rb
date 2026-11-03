@@ -1,146 +1,110 @@
 # frozen_string_literal: true
 
 module UI
-  module Petscii
-    # The Jargon File on the C64: the word of the day, a search, the
-    # entries by letter, a random entry, and the chapters and folklore to
-    # read; an entry is a page with L for the entries it links to and R for
-    # a random one.
-    class JargonRoom
-      def initialize(jargon, screen)
-        @jargon = jargon
-        @screen = screen
+  # The Jargon File on the C64: the word of the day, a search, the entries
+  # by letter, a random entry, and the chapters and folklore to read; an
+  # entry is a page with L for the entries it links to and R for a random
+  # one.
+  class Petscii
+    # The menu of the room: key => [label, about, method].
+    JARGON_MENU = {
+      '1' => ['word of the day', 'the same for everyone today', :jargon_today],
+      '2' => ['search', 'a headword or words of the text', :jargon_search],
+      '3' => ['a to z', 'the entries by letter', :jargon_letters],
+      '4' => ['random entry', 'surprise me', :jargon_random],
+      '5' => ['chapters and folklore', 'the story of mel, the koans', :jargon_chapters],
+      'q' => ['back', 'to the main menu', nil]
+    }.freeze
+
+    private
+
+    def jargon_room
+      return message('The Jargon File is being prepared. Try again in a moment.') unless jargon.ready?
+
+      loop do
+        title('THE JARGON FILE', '4.4.7 ')
+        say('The lexicon of hacker slang, public domain.', color: GR)
+        @jargon_choice = menu(JARGON_MENU.map { |k, (label, about)| BBS::Selector.item(label, key: k, value: k, about: about) },
+                              index: JARGON_MENU.keys.index(@jargon_choice), back: 'q', hint: MENU_HINT)
+        action = JARGON_MENU.dig(@jargon_choice, 2) or return
+        send(action)
+      end
+    end
+
+    def jargon_today = jargon_entry(jargon.word_of_the_day)
+
+    def jargon_random = jargon_entry(jargon.random)
+
+    def jargon_search
+      title('SEARCH THE JARGON FILE')
+      puts
+      query = prompt('search', max: 60) or return
+
+      case (found = jargon.search(query))
+      when :too_short then message('A word of two letters or more, please.')
+      when [] then message('No entry has these words.')
+      else jargon_entries("JARGON: #{query.strip.upcase}"[0, 26], found)
+      end
+    end
+
+    def jargon_letters
+      label = ->((l, n)) { "#{l == '0' ? '0-9 and signs' : l.downcase} #{GR}#{n}#{LG}" }
+      each_pick('THE LEXICON', jargon.letters, right: "#{jargon.count} ", label: label) do |(l, _)|
+        jargon_entries("JARGON: #{l}", jargon.letter(l))
+      end
+    end
+
+    def jargon_entries(heading, list)
+      each_pick(heading, list, empty: 'no entries.', right: "#{list.size} ", label: :headword) { |e| jargon_entry(e) }
+    end
+
+    # An entry on pages, then: L its links, R a random one, Q back.
+    def jargon_entry(entry)
+      while entry
+        page(entry.headword.upcase[0, 30], jargon_text(entry), wait: false, numbers: true)
+        entry = case actions(%w[l links], %w[r random], %w[q back])
+                when 'l' then jargon_links(entry)
+                when 'r' then jargon.random
+                end
+      end
+    end
+
+    # The entries +entry+ links to; the one picked, or nil.
+    def jargon_links(entry)
+      list = jargon.links(entry)
+      if list.empty?
+        message("#{entry.headword} links to no other entry.")
+        return nil
       end
 
-      def run
-        return message('The Jargon File is being prepared. Try again in a moment.') unless @jargon.ready?
+      pick("LINKS OF #{entry.headword.upcase}"[0, 30], list, right: "#{list.size} ", &:headword)
+    end
 
-        loop do
-          @screen.title('THE JARGON FILE', '4.4.7 ')
-          @screen.say('The lexicon of hacker slang, public domain.', color: GR)
-          @choice = @screen.menu(items, index: items.index { |i|
-            i.value == @choice
-          }, back: 'q', hint: 'crsr: choose  return: take')
-          return if @choice == 'q'
-
-          take(@choice)
-        end
+    def jargon_chapters
+      list = jargon.sections
+      each_pick('CHAPTERS AND FOLKLORE', list, right: "#{list.size} ", label: ->(s) { s.title.downcase }) do |s|
+        page(s.title.upcase[0, 30], jargon_paragraphs(s.paragraphs), numbers: true)
       end
+    end
 
-      private
+    def jargon_text(entry)
+      [*(" #{GR}#{plain(entry.pron)}#{LG}" unless entry.pron.empty?), *jargon_paragraphs(entry.paragraphs), '',
+       " #{GR}#{JargonService::CREDIT.downcase}#{LG}"]
+    end
 
-      def items
-        @items ||= [
-          BBS::Selector.item('word of the day', key: '1', value: '1', about: 'the same for everyone today'),
-          BBS::Selector.item('search', key: '2', value: '2', about: 'a headword or words of the text'),
-          BBS::Selector.item('a to z', key: '3', value: '3', about: 'the entries by letter'),
-          BBS::Selector.item('random entry', key: '4', value: '4', about: 'surprise me'),
-          BBS::Selector.item('chapters and folklore', key: '5', value: '5', about: 'the story of mel, the koans'),
-          BBS::Selector.item('back', key: 'q', value: 'q', about: 'to the main menu')
-        ]
+    # Paragraphs wrapped to the screen: a heading white, a {link} cyan, an
+    # example line by line.
+    def jargon_paragraphs(list)
+      list.each_with_index.flat_map do |(kind, body), i|
+        [*('' unless i.zero?), *jargon_paragraph(kind, plain(body))]
       end
+    end
 
-      def take(choice)
-        case choice
-        when '1' then entry(@jargon.word_of_the_day)
-        when '2' then search
-        when '3' then letters
-        when '4' then entry(@jargon.random)
-        when '5' then chapters
-        end
-      end
-
-      def search
-        @screen.title('SEARCH THE JARGON FILE')
-        @screen.puts
-        query = BBS::Field.ask(@screen.session, ' search> ', max: 60)
-        return if query.nil? || query.strip.empty?
-
-        case (found = @jargon.search(query))
-        when :too_short then message('A word of two letters or more, please.')
-        when [] then message('No entry has these words.')
-        else entries("JARGON: #{query.strip.upcase}"[0, 26], found)
-        end
-      end
-
-      def letters
-        list = @jargon.letters
-        loop do
-          picked = @screen.pick('THE LEXICON', list, right: "#{@jargon.count} ") do |(l, n)|
-            "#{l == '0' ? '0-9 and signs' : l.downcase} #{GR}#{n}#{LG}"
-          end
-          return unless picked
-
-          entries("JARGON: #{picked.first}", @jargon.letter(picked.first))
-        end
-      end
-
-      def entries(heading, list)
-        loop do
-          picked = @screen.pick(heading, list, empty: 'no entries.', right: "#{list.size} ", &:headword)
-          return unless picked
-
-          entry(picked)
-        end
-      end
-
-      # An entry on pages, then: L its links, R a random one, Q back.
-      def entry(entry)
-        while entry
-          @screen.page(entry.headword.upcase[0, 30], text(entry), wait: false, numbers: true)
-          entry = case @screen.actions(%w[l links], %w[r random], %w[q back])
-                  when 'l' then links(entry)
-                  when 'r' then @jargon.random
-                  end
-        end
-      end
-
-      # The entries +entry+ links to; the one picked, or nil.
-      def links(entry)
-        list = @jargon.links(entry)
-        if list.empty?
-          message("#{entry.headword} links to no other entry.")
-          return nil
-        end
-
-        @screen.pick("LINKS OF #{entry.headword.upcase}"[0, 30], list, right: "#{list.size} ", &:headword)
-      end
-
-      def chapters
-        list = @jargon.sections
-        loop do
-          picked = @screen.pick('CHAPTERS AND FOLKLORE', list, right: "#{list.size} ") { |s| s.title.downcase }
-          return unless picked
-
-          @screen.page(picked.title.upcase[0, 30], paragraphs(picked.paragraphs), numbers: true)
-        end
-      end
-
-      def text(entry)
-        [*(" #{GR}#{@screen.plain(entry.pron)}#{LG}" unless entry.pron.empty?), *paragraphs(entry.paragraphs), '',
-         " #{GR}#{JargonService::CREDIT.downcase}#{LG}"]
-      end
-
-      # Paragraphs wrapped to the screen: a heading white, a {link} cyan, an
-      # example line by line.
-      def paragraphs(list)
-        list.each_with_index.flat_map do |(kind, body), i|
-          [*('' unless i.zero?), *paragraph(kind, @screen.plain(body))]
-        end
-      end
-
-      def paragraph(kind, body)
-        case kind
-        when :heading then @screen.wrap(body).map { |l| " #{WH}#{l}#{LG}" }
-        when :pre then body.split("\n").flat_map { |l| l.strip.scan(/.{1,#{WIDTH}}/) }.map { |l| " #{GR}#{l}#{LG}" }
-        else @screen.wrap(body.gsub(JargonEntryModel::LINK) { "#{CY}#{::Regexp.last_match(1)}#{LG}" }).map { |l| " #{l}" }
-        end
-      end
-
-      def message(text)
-        @screen.puts
-        @screen.say(text, color: YE)
-        @screen.pause
+    def jargon_paragraph(kind, body)
+      case kind
+      when :heading then wrap(body).map { |l| " #{WH}#{l}#{LG}" }
+      when :pre then body.split("\n").flat_map { |l| l.strip.scan(/.{1,#{WIDTH}}/) }.map { |l| " #{GR}#{l}#{LG}" }
+      else wrap(body.gsub(JargonEntryModel::LINK) { "#{CY}#{::Regexp.last_match(1)}#{LG}" }).map { |l| " #{l}" }
       end
     end
   end

@@ -2,31 +2,22 @@
 
 module UI
   module Modern
-    # The table of contents of the RFC a ReaderWindow shows: its headings on
-    # the left; Enter takes the reader there.
+    # The table of contents of the RFC a reader shows: its headings on the
+    # left; Enter takes the reader there.
     module ContentsWindow
-      def self.define(app)
-        app.window(:contents, type: :master_detail) do |w|
-          frame(w)
-          list(w)
-        end
-      end
+      extend BBS::Part
 
-      def self.frame(w)
-        w.maximizable true
-        w.title         { |ctx| " Contents of #{ctx[:rfc].name} (#{ctx[:headings].size}) " }
-        w.height        { |ctx| ctx[:app].rows - 8 }
-        w.list_width    { |ctx| [52, ctx[:app].cols - 24].min }
-      end
-
-      def self.list(w)
-        w.items         { |ctx| ctx[:headings] }
-        w.item_label    { |(_, text), _ctx| text }
-        w.empty_message 'No headings found in this RFC.'
-        w.render_detail { |(line, _), _width, _ctx| ["line #{line + 1}", '', 'Enter takes the', 'reader there.'] }
-        w.on_activate do |(line, _), window, ctx|
-          ctx[:app].close_window(window)
-          ctx[:reader].jump(line)
+      window :contents, :master_detail do
+        title      { "Contents of #{rfc.name} (#{headings.size})" }
+        height     { rows - 8 }
+        list_width { [52, cols - 24].min }
+        items      { headings }
+        label      { |(_, text)| text }
+        empty      'No headings found in this RFC.'
+        detail     { |(line, _)| ["line #{line + 1}", '', 'Enter takes the', 'reader there.'] }
+        on_pick do |(line, _)|
+          close
+          reader.jump(line)
         end
       end
     end
