@@ -1,87 +1,62 @@
 # frozen_string_literal: true
 
-require_relative 'pen'
-
 module UI
-  module Petscii
+  class Petscii < BBS::Petscii::Face
     # The 16colo.rs gallery on a C64: the years, a year's packs and a pack's
     # files as numbered cursor lists, the credits of a piece, then the piece itself
     # in pages of 22 rows, 40 columns at a time (the left half of an 80
     # column piece first; R or CRSR right shows the next 40, CRSR left the
     # ones before).
-    class Gallery
+    module Gallery
       PAGE_ROWS = 22
       HALF      = 40
       # A " this near the right edge would leave the C64 in quote mode (see
       # BBS::Petscii::Encoder), so there it is an apostrophe.
       QUOTE_FROM = HALF - 3
-
-      def initialize(gallery, screen)
-        @gallery = gallery
-        @screen  = screen
-      end
-
-      def run
-        @screen.title('16COLO.RS')
-        @screen.puts " #{GR}reading the archive…#{LG}"
-        years = @gallery.years
-        return unavailable unless years
-
-        loop do
-          year = @screen.pick('16COLO.RS  ANSI ART BY YEAR', years, right: "#{years.size} years") do |y|
-            "#{y.year} #{GR}#{y.packs} packs#{LG}"
-          end
-          return unless year
-
-          year(year)
-        end
-      end
+      NO_ANSWER  = '16colo.rs did not answer. Try again later.'
+      PIECE      = { too_big: 'This piece is too large for the board.', unavailable: NO_ANSWER }.freeze
 
       private
 
-      def year(year)
-        @screen.title("16COLO.RS #{year.year}")
-        @screen.puts " #{GR}reading #{year.packs} packs…#{LG}"
-        packs = @gallery.packs(year)
-        return unavailable unless packs
+      def gallery_years
+        title('16COLO.RS')
+        years = loading('reading the archive…') { gallery.years }
+        return alert(NO_ANSWER) unless years
 
-        loop do
-          pack = @screen.pick("16COLO.RS #{year.year}", packs, right: "#{packs.size} packs") do |p|
-            "#{p.name} #{GR}#{p.credits}#{LG}"
-          end
-          return unless pack
-
-          pack(pack)
+        each_pick('16COLO.RS  ANSI ART BY YEAR', years, right: "#{years.size} years",
+                                                       label: ->(y) { "#{y.year} #{GR}#{y.packs} packs#{LG}" }) do |year|
+          gallery_year(year)
         end
       end
 
-      def pack(pack)
-        @screen.title(pack.name)
-        @screen.puts " #{GR}reading the pack…#{LG}"
-        files = @gallery.files(pack)
-        return unavailable unless files
+      def gallery_year(year)
+        title("16COLO.RS #{year.year}")
+        packs = loading("reading #{year.packs} packs…") { gallery.packs(year) }
+        return alert(NO_ANSWER) unless packs
 
-        loop do
-          file = @screen.pick(pack.name, files, empty: 'no text art in this pack.', right: "#{files.size} files") do |f|
-            "#{f.name} #{GR}#{f.credits}#{LG}"
-          end
-          return unless file
-
-          piece(pack, file)
+        each_pick("16COLO.RS #{year.year}", packs, right: "#{packs.size} packs",
+                                                   label: ->(p) { "#{p.name} #{GR}#{p.credits}#{LG}" }) do |pack|
+          gallery_pack(pack)
         end
       end
 
-      def piece(pack, file)
-        @screen.page(file.name, credits(pack, file), wait: false)
-        return if @screen.actions([nil, 'view'], %w[q back]) == 'q'
+      def gallery_pack(pack)
+        title(pack.name)
+        files = loading('reading the pack…') { gallery.files(pack) }
+        return alert(NO_ANSWER) unless files
 
-        @screen.puts " #{GR}fetching…#{LG}"
-        art = @gallery.piece(file)
-        case art
-        when :too_big then say('This piece is too large for the board.')
-        when :unavailable then unavailable
-        else show(file, art)
+        each_pick(pack.name, files, empty: 'no text art in this pack.', right: "#{files.size} files",
+                                    label: ->(f) { "#{f.name} #{GR}#{f.credits}#{LG}" }) do |file|
+          gallery_piece(pack, file)
         end
+      end
+
+      def gallery_piece(pack, file)
+        page(file.name, credits(pack, file), wait: false)
+        return if actions([nil, 'view'], %w[q back]) == 'q'
+
+        art = loading('fetching…') { gallery.piece(file) }
+        art.is_a?(Symbol) ? report(art, PIECE) : show_piece(file, art)
       end
 
       def credits(pack, file)
@@ -90,16 +65,16 @@ module UI
          " #{GR}file#{LG}  #{file.name}", " #{GR}pack#{LG}  #{pack.name} (#{pack.year})",
          (" #{GR}date#{LG}  #{file.date}" unless file.date.empty?),
          (" #{GR}by#{LG}    #{file.artists.join(', ')}" unless file.artists.empty?), '',
-         " #{GR}#{@gallery.file_url(file)}#{LG}"].compact
+         " #{GR}#{gallery.file_url(file)}#{LG}"].compact
       end
 
-      def show(file, art)
+      def show_piece(file, art)
         top   = 0
         left  = 0
         pages = [(art.height + PAGE_ROWS - 1) / PAGE_ROWS, 1].max
         loop do
-          draw(file, art, top, left, pages)
-          case @screen.key
+          draw_piece(file, art, top, left, pages)
+          case key
           when :enter, 'n', 'N', :down, ' '
             return if (top / PAGE_ROWS) + 1 >= pages
 
@@ -112,13 +87,13 @@ module UI
         end
       end
 
-      def draw(file, art, top, left, pages)
+      def draw_piece(file, art, top, left, pages)
         half = " col #{left + 1}" if art.width > HALF
-        @screen.title("#{file.name}#{half}", "#{(top / PAGE_ROWS) + 1}/#{pages}")
+        title("#{file.name}#{half}", "#{(top / PAGE_ROWS) + 1}/#{pages}")
         pen = Pen.new
-        @screen.write(PAGE_ROWS.times.map { |i| pen.row(page_row(art, top + i, left), HALF) }.join)
+        write(PAGE_ROWS.times.map { |i| pen.row(page_row(art, top + i, left), HALF) }.join)
         right = art.width > HALF ? "  #{YE}R#{LG} right" : ''
-        @screen.write("#{BBS::Ansi::RESET}#{RO} #{YE}ret#{LG} next #{YE}P#{LG} back#{right}  #{YE}Q#{LG} quit")
+        write("#{BBS::Ansi::RESET}#{RO} #{YE}ret#{LG} next #{YE}P#{LG} back#{right}  #{YE}Q#{LG} quit")
       end
 
       # Row +y+ of +art+ from column +left+, 40 C64 cells.
@@ -127,14 +102,6 @@ module UI
         cells[QUOTE_FROM..].each { |c| c[0] = "'" if c[0] == '"' }
         cells
       end
-
-      def say(text)
-        @screen.puts
-        @screen.say(text, color: RD)
-        @screen.pause
-      end
-
-      def unavailable = say('16colo.rs did not answer. Try again later.')
     end
   end
 end

@@ -1,41 +1,32 @@
 # frozen_string_literal: true
 
-require_relative 'canvas_view'
-
 module UI
-  module Petscii
+  class Petscii < BBS::Petscii::Face
     # The Wall on a C64: the works newest first as a numbered cursor list, and a
     # work on the whole screen, as it was painted (CRSR down shows its last
     # row).
-    class Wall
-      def initialize(wall, screen)
-        @wall   = wall
-        @screen = screen
-      end
+    module Wall
+      private
 
-      def run
+      def wall_list
         loop do
-          works = @wall.all
-          work = @screen.pick('THE WALL', works, empty: 'nothing on the wall yet: paint on the canvas and save it.',
-                                                 right: "#{works.size} works") do |w|
-            "#{w.title} #{GR}#{w.handle}#{LG}"
-          end
-          return unless work
+          works = wall.all
+          work = pick('THE WALL', works, empty: 'nothing on the wall yet: paint on the canvas and save it.',
+                                         right: "#{works.size} works") { |w| "#{w.title} #{GR}#{w.handle}#{LG}" }
+          break unless work
 
-          show(work)
+          show_work(work)
         end
       end
 
-      private
-
-      def show(work)
-        view   = CanvasView.new(@screen.session)
+      def show_work(work)
+        view   = CanvasView.new(session)
         canvas = work.canvas
         loop do
           view.sync(canvas)
           view.status([[" #{work.title[0, 18]}", 1], [" #{work.handle[0, 10]}", 3], [' ret', 7]])
           view.place(0, view.offset)
-          case @screen.key
+          case key
           when :down then view.follow?(CanvasModel::ROWS - 1)
           when :up then view.follow?(0)
           else return

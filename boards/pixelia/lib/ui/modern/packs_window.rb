@@ -4,27 +4,17 @@ module UI
   module Modern
     # The packs of a year on the left, the one picked on the right.
     module PacksWindow
-      module_function
+      extend BBS::Part
 
-      def install(app)
-        app.window(:packs, type: :master_detail) { |w| configure(w) }
-      end
-
-      def configure(w)
-        w.title { |ctx| " 16colo.rs #{ctx[:year].year} " }
-        Pane.size(w) { |app| [28, app.cols / 3].max }
-        w.items         { |ctx| ctx[:packs] }
-        w.item_label    { |p, _ctx| p.name }
-        w.render_detail { |p, width, ctx| detail(p, width, ctx[:app]) }
-        w.bottom_meta   { |_p, _ctx| 'Enter opens the pack' }
-        w.on_activate   { |p, _window, ctx| ctx[:app].open_pack(p) }
-      end
-
-      def detail(pack, width, app)
-        t = app.theme
-        ["#{t[:text_bright]}#{pack.name}#{t[:text]}", "#{t[:accent]}#{pack.credits}#{t[:text]}",
-         "#{t[:label]}#{pack.year}#{t[:text]}", '',
-         *BBS::FrameBuffer.wrap_ansi("#{t[:text_dim]}#{app.gallery.pack_url(pack)}#{t[:text]}", width - 1)]
+      window :packs, :master_detail do
+        title      { "16colo.rs #{year.year}" }
+        list_width { [28, cols / 3].max }
+        items      { packs }
+        label      :name
+        detail     { |p| [bright(p.name), accent(p.credits), paint(:label, p.year), '', dim(gallery.pack_url(p))] }
+        meta       { 'Enter opens the pack' }
+        on_pick    { |p| open_pack(p) }
+        height(-6)
       end
     end
   end

@@ -168,7 +168,7 @@ module UI
       attr_reader :widget
 
       def initialize(app, canvas:, who:, on_save:)
-        super(title: ' The Canvas ', on_close: ->(_w) { canvas.leave(who) })
+        super(title: 'The Canvas', on_close: ->(_w) { canvas.leave(who) })
         @widget = CanvasWidget.new(canvas: canvas, who: who, on_save: on_save)
         add(@widget)
         place(*rect(app))

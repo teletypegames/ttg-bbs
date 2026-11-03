@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  module Petscii
+  class Petscii < BBS::Petscii::Face
     # Draws cells on a C64: a character, one of the sixteen colours and
     # reverse video, written as the C64's own colour and RVS control codes
     # (sent as they are through the PETSCII line) and the Unicode glyphs

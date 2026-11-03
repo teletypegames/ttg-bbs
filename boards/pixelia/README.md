@@ -119,7 +119,6 @@ with its default. The board has no secrets.
 | `PIXELIA_BBS_DATA` | `data` | the canvas, the Wall, the archive and the cache |
 | `PIXELIA_BBS_API_URL` | `https://api.16colo.rs` | the 16colo.rs API |
 | `PIXELIA_BBS_SITE_URL` | `https://16colo.rs` | where the raw files are |
-| `PIXELIA_BBS_USER_AGENT` | `PixeliaBBS/1.0 (+https://teletypegames.org; …)` | how the board introduces itself |
 | `PIXELIA_BBS_API_TTL` | `3600` | seconds a listing stays in memory |
 | `PIXELIA_BBS_MAX_FILE_KB` | `512` | the largest art file fetched |
 | `PIXELIA_BBS_CACHE_MB` | `100` | the disk cache of art files |
@@ -168,7 +167,7 @@ renderer. CI runs them with RuboCop before a deploy.
 ## Project structure
 
 ```
-bbs.rb                      entry point: BBS.configure + BBS::Terminal.flow
+bbs.rb                      entry point: BBS.board (the title, the domain, both faces)
 bin/works, bin/canvas       admin scripts, run with docker exec
 bin/test                    the tests (test/domain/*_test.rb)
 lib/domain.rb               requires the domain in dependency order
@@ -188,23 +187,20 @@ lib/domain/
   service/gallery_service.rb                years, packs, text-art files, a piece
   service/canvas_service.rb                 painting rules, rate limit, undo, who is here
   service/wall_service.rb                   saving to the Wall, its limits
-  pixelia_bbs.rb            the composition root (PixeliaBBS)
+  pixelia_bbs.rb            the board's domain (PixeliaBBS): settings and services
 lib/ui/
   logo.rb                   PIXELIA in blocks (BBS::BlockFont), a colour a letter, both faces
   glyph_keys.rb             glyph mode's keyboard, both faces
   wall_text.rb              what a caller is told about a save, both faces
-  modern.rb                 UI::Modern: the rubbs Application and the flow
-  modern/helpers.rb         the Application's helpers: opening windows, saving
-  modern/pane.rb            the size of a two-pane window
+  modern.rb                 UI::Modern::APP: commands, menus, help, statusbar and desktop
+  modern/helpers.rb         what the caller does: opening windows, a piece, the canvas, saving
   modern/years_window.rb, packs_window.rb, files_window.rb, wall_window.rb   one window each
-  modern/menu.rb            the menubar, the status hints and the desktop
+  modern/save_window.rb     the form that saves the canvas to the Wall
   modern/canvas_widget.rb   the canvas's keys and mouse, and its window
   modern/canvas_panel.rb    drawing the canvas and its panel
   modern/viewer.rb          a piece or a work on the whole screen
   modern/art_lines.rb       rows of cells as ANSI lines
-  modern/logo_widget.rb     the logo on the desktop
-  petscii.rb                UI::Petscii: the C64 board and its menu
-  petscii/screen.rb         the 40×25 screen: rubbs' BBS::Petscii::Screen
+  petscii.rb                UI::Petscii: the C64 face, its masthead and main menu
   petscii/pen.rb            cells in C64 colours and reverse; ANSI cells to C64 ones
   petscii/canvas_view.rb    the canvas on a C64 screen, sending only what changed
   petscii/canvas.rb         painting on a C64

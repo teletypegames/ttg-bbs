@@ -3,7 +3,7 @@
 require_relative 'pen'
 
 module UI
-  module Petscii
+  class Petscii < BBS::Petscii::Face
     # The 40×25 canvas on a C64 screen: 24 of its rows (the top 24 or the
     # bottom 24) and a status line on the last screen row, which is never
     # written to its last column, so the screen does not scroll.

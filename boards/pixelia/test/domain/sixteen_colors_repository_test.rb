@@ -5,8 +5,8 @@ require 'minitest/mock'
 
 class SixteenColorsRepositoryTest < Minitest::Test
   def repo(ttl: 3600, max_bytes: 1024)
-    SixteenColorsRepository.new(api_url: 'https://api.test', site_url: 'https://site.test', user_agent: 'test',
-                                ttl: ttl, max_bytes: max_bytes)
+    SixteenColorsRepository.new(api_url: 'https://api.test', site_url: 'https://site.test', ttl: ttl,
+                                max_bytes: max_bytes)
   end
 
   def ok(body) = BBS::HTTP::Response.new(status: 200, body: body.b, headers: {})
@@ -27,7 +27,7 @@ class SixteenColorsRepositoryTest < Minitest::Test
   def test_years_newest_first_without_empty_ones
     answering(body('{"1996":{"packs":3},"1997":{"packs":0},"2001":{"packs":1}}')) do |calls|
       assert_equal [2001, 1996], repo.years.map(&:year)
-      assert_equal 'test', calls.first[1][:user_agent]
+      refute calls.first[1].key?(:user_agent)
     end
   end
 

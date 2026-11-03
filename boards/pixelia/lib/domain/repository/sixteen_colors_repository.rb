@@ -25,10 +25,9 @@ class SixteenColorsRepository
 
   attr_reader :site_url
 
-  def initialize(api_url:, site_url:, user_agent:, ttl:, max_bytes:)
+  def initialize(api_url:, site_url:, ttl:, max_bytes:)
     @api_url    = api_url.delete_suffix('/')
     @site_url   = site_url.delete_suffix('/')
-    @user_agent = user_agent
     @max_bytes  = max_bytes
     @listings   = BBS::Cache.new(ttl: ttl, max_entries: MAX_LISTINGS)
     @raws       = BBS::Cache.new(ttl: RAW_TTL, max_entries: MAX_RAWS, max_bytes: MAX_RAWS * max_bytes)
@@ -98,8 +97,7 @@ class SixteenColorsRepository
   end
 
   def get(url, max_bytes)
-    response = BBS::HTTP.get(url, headers: { 'Accept-Encoding' => 'identity' }, user_agent: @user_agent,
-                                  max_bytes: max_bytes)
+    response = BBS::HTTP.get(url, headers: { 'Accept-Encoding' => 'identity' }, max_bytes: max_bytes)
     raise Unavailable, "#{url.split('?').first} answered #{response.status}" unless response.ok?
 
     response.body

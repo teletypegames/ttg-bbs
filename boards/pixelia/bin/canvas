@@ -13,7 +13,8 @@ require_relative '../lib/domain'
 
 WAIT = 8
 
-bbs = PixeliaBBS.new(start: false)
+BBS.config.env_prefix = 'PIXELIA_BBS_'
+bbs = PixeliaBBS.new
 repository = bbs.canvas_repository
 flag = File.join(File.dirname(repository.path), 'canvas.clear')
 

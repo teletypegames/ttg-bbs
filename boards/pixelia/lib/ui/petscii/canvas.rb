@@ -1,11 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'canvas_view'
-require_relative '../glyph_keys'
-require_relative '../wall_text'
-
 module UI
-  module Petscii
+  class Petscii < BBS::Petscii::Face
     # The shared canvas on a C64. The cursor keys move, a typed character
     # paints itself in the ink (or its glyph in glyph mode), DEL rubs out
     # the cell on the left. F3 and F4 step the ink, F5 turns reverse on and
@@ -30,13 +26,14 @@ module UI
         " #{GR}Save to the wall keeps the canvas as it is now under a title and your handle.#{LG}"
       ].freeze
 
-      def initialize(bbs, screen, session_id)
-        @canvas  = bbs.canvas
-        @wall    = bbs.wall
-        @screen  = screen
-        @who     = session_id
-        @caller  = BBS::RateLimit.caller_key(screen.session)
-        @view    = CanvasView.new(screen.session)
+      # The canvas for the caller of +face+ (the UI::Petscii of the call).
+      def initialize(face)
+        @face    = face
+        @canvas  = face.canvas
+        @wall    = face.wall
+        @who     = face.session.session_id
+        @caller  = face.caller_key
+        @view    = CanvasView.new(face.session)
         @x       = 0
         @y       = 0
         @ink     = 1
@@ -49,7 +46,7 @@ module UI
         @canvas.touch(@who)
         refresh(full: true)
         loop do
-          k = @screen.key(timeout: POLL)
+          k = @face.key(timeout: POLL)
           @message = nil unless k == :idle
           return if key(k) == :quit
 
@@ -124,7 +121,7 @@ module UI
       def command
         @view.status([[' i', 7], ['nk ', 15], ['r', 7], ['vs ', 15], ['g', 7], ['lyphs ', 15], ['s', 7], ['ave ', 15],
                       ['h', 7], ['elp ', 15], ['q', 7], ['uit', 15]])
-        case @screen.key
+        case @face.key
         when 'i', 'I' then pick_ink
         when 'r', 'R' then @rvs = !@rvs
         when 'g', 'G' then @glyphs = !@glyphs
@@ -140,41 +137,36 @@ module UI
           i.zero? ? [c, 11] : [c, i, true]
         end
         @view.status([[' ink ', 15], *swatches, [' ? ', 15]])
-        k = @screen.key
+        k = @face.key
         index = k.is_a?(String) ? HEX.index(k.downcase) : nil
         @ink = index if index
       end
 
       def help
-        @screen.page('THE CANVAS', HELP)
+        @face.page('THE CANVAS', HELP)
         @view.forget!
       end
 
       def save
-        @screen.title('SAVE TO THE WALL')
-        @screen.puts
+        @face.title('SAVE TO THE WALL')
         wait = @wall.wait(@caller)
-        if wait.positive?
-          @screen.say(WallText.wait(wait), color: RD)
-          @screen.pause
-        else
-          ask_and_save
-        end
+        wait.positive? ? @face.alert(WallText.wait(wait)) : ask_and_save
         @view.forget!
       end
 
       def ask_and_save
-        @screen.say('The canvas as it is now goes on the wall under a title and your handle.', color: GR)
-        @screen.puts
-        title  = BBS::Field.ask(@screen.session, " #{WH}title#{LG}  ", max: WallService::MAX_TITLE)
-        handle = title && BBS::Field.ask(@screen.session, " #{WH}handle#{LG} ", text: @handle.to_s,
+        @face.puts
+        @face.say('The canvas as it is now goes on the wall under a title and your handle.', color: GR)
+        @face.puts
+        title  = BBS::Field.ask(@face.session, " #{WH}title#{LG}  ", max: WallService::MAX_TITLE)
+        handle = title && BBS::Field.ask(@face.session, " #{WH}handle#{LG} ", text: @handle.to_s,
                                                                                 max: WallService::MAX_HANDLE)
         return unless title && handle
 
         @handle = handle
-        @screen.puts
-        @screen.say(WallText.result(@wall.save(@caller, title: title, handle: handle)), color: WH)
-        @screen.pause
+        @face.puts
+        @face.say(WallText.result(@wall.save(@caller, title: title, handle: handle)), color: WH)
+        @face.pause
       end
     end
   end
