@@ -2,75 +2,56 @@
 
 module UI
   module Modern
-    # The methods of the modern face's Application: opening the windows,
-    # the loading dialogs, the answers to a message.
+    # What the caller does on the modern face: the feeds opened in windows,
+    # a story's QR code, the messages to the admins.
     module Helpers
-      QR_PADDING = { sides: 2, top: 1, bottom: 0 }.freeze
-      QR_SIDES   = 4
-      QR_ROWS    = 7
+      NO_TEXT = '*(no text in the feed)*'
+      ANSWERS = { ok: 'Sent to the admins. Thank you!',
+                  limited: 'That is all the messages the admins can take for now. Thank you!' }.freeze
 
-      def feed_list = open_window(:feeds)
+      def feed_list = show(:feeds)
 
       def open_feed(feed)
-        channel = with_loading("Fetching #{feed.name}…") { services[:feeds].read(feed) }
-        return open_window(:channel, channel: channel) if channel
-
-        BBS::Dialogs.message(self, "#{feed.name} did not answer, or what it sent is not a feed. Try again later.",
-                             title: ' Feed ')
+        channel = loading("Fetching #{feed.name}…",
+                          failed: "#{feed.name} did not answer, or what it sent is not a feed. Try again later.") do
+          feeds.read(feed)
+        end
+        show(:channel, channel: channel)
       end
 
       def reload(window, channel)
-        fresh = with_loading("Fetching #{channel.feed.name}…") { services[:feeds].read(channel.feed, fresh: true) }
-        return window.replace_items(fresh.items, title: " #{fresh.title} ") if fresh
+        fresh = loading("Fetching #{channel.feed.name}…", failed: "#{channel.feed.name} did not answer. Try again later.") do
+          feeds.read(channel.feed, fresh: true)
+        end
+        window.replace_items(fresh.items, title: fresh.title)
+      end
 
-        BBS::Dialogs.message(self, "#{channel.feed.name} did not answer. Try again later.", title: ' Reload ')
+      # A story: its title, the byline, the text.
+      def story(item, width)
+        byline = [item.date&.localtime&.strftime('%Y-%m-%d %H:%M'), item.author].compact.reject(&:empty?).join(' · ')
+        [*markdown("# #{item.title}", width), *(dim(byline) unless byline.empty?), '',
+         *markdown(item.markdown.empty? ? NO_TEXT : item.markdown, width)]
       end
 
       def show_qr(item)
-        return BBS::Dialogs.message(self, 'This story has no address.', title: ' QR code ') unless item&.link
+        return message('This story has no address.', title: 'QR code') unless item.link
 
-        code = qr_code(item.link, width: cols - QR_SIDES, height: rows - QR_ROWS)
-        BBS::Windows::Info.open(self, title: ' Scan the address ', width: BBS::FrameBuffer.plain(code.first).size + QR_SIDES,
-                                      body: code, padding: QR_PADDING)
-      rescue BBS::QR::TooLong
-        BBS::Dialogs.message(self, 'This address is too long for a QR code on this screen.', title: ' QR code ')
+        qr(item.link, title: 'Scan the address')
       end
 
-      def qr_code(link, **room)
-        BBS::QR.ansi(link, **room)
-      rescue BBS::QR::TooLong
-        BBS::QR.ansi(link, **room, quiet: 1)
-      end
+      def suggest = can_send? && show(:suggest)
 
-      # Who is calling, as the inbox counts messages.
-      def caller_key = BBS::RateLimit.caller_key(session)
-
-      def suggest = can_send? && open_window(:suggest)
-
-      def feedback = can_send? && open_window(:feedback)
+      def feedback = can_send? && show(:feedback)
 
       def can_send?
-        return true if services[:inbox].open?(caller_key)
+        return true if inbox.open?(caller_key)
 
-        limited
+        answer(:limited)
         false
       end
 
-      def limited
-        BBS::Dialogs.message(self, 'That is all the messages the admins can take for now. Thank you!', title: ' Admins ')
-      end
-
-      def sent = BBS::Dialogs.message(self, 'Sent to the admins. Thank you!', title: ' Admins ')
-
-      def status_text = "#{services[:feeds].list.size} feeds │ #{Time.now.strftime('%H:%M')}"
-
-      def desktop_label(text, style, x, y, width, align: :left)
-        label = BBS::Widgets::Label.new(text: text, align: align, style_key: style)
-        label.layout(x, y, width, 1)
-        add(label)
-      end
-
-      def markdown(text, width) = BBS::Markdown.to_lines(text, width: width - 1, theme: theme)
+      # Tells the caller what the inbox answered; returns the answer.
+      def answer(result) = report(result, ANSWERS, title: 'Admins')
     end
   end
 end

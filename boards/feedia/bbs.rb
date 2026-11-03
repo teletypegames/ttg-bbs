@@ -6,20 +6,11 @@ require_relative 'lib/domain'
 require_relative 'lib/ui/modern'
 require_relative 'lib/ui/petscii'
 
-# An RSS reader on a telnet line, two faces on one port: the caller picks a
-# terminal (BBS::Terminal guesses it first), and an ANSI terminal gets the modern
-# desktop, a Commodore 64 the PETSCII screens. Mouse reporting waits for the
-# choice: its escape sequence would be garbage on a C64.
-bbs = FeediaBBS.new
-
-BBS.configure do |config|
-  config.log_tag          = 'feedia-bbs'
-  config.mouse            = true
-  config.mouse_on_connect = false
-  config.idle_seconds     = 600
-
-  config.flow = BBS::Terminal.flow(title: 'Feedia BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs),
-                                   splash: TTG::Logo.splash)
+# An RSS reader on a telnet line, two faces on one port: an ANSI terminal
+# gets the modern desktop, a Commodore 64 the PETSCII screens.
+BBS.board 'Feedia BBS', FeediaBBS do
+  preset  TTG::PRESET
+  modern  UI::Modern::APP
+  petscii UI::Petscii
+  goodbye "The stories are their publishers'."
 end
-
-BBS.start

@@ -4,35 +4,22 @@ module UI
   module Modern
     # The feed list: the feeds on the left, the one picked on the right.
     module FeedsWindow
-      module_function
+      extend BBS::Part
 
-      def install(app)
-        app.window(:feeds, type: :master_detail) { |w| configure(w) }
-      end
-
-      def configure(w)
-        TwoPane.size(w)
-        w.title         ' Feeds '
-        w.items         { |ctx| ctx[:feeds].list }
-        w.item_label    { |f, _ctx| f.name }
-        w.empty_message 'No feeds are configured.'
-        w.render_detail { |f, width, ctx| detail(f, width, ctx[:app].theme) }
-        w.bottom_meta   { |_f, _ctx| 'Enter opens the feed' }
-        w.on_activate   { |f, _window, ctx| ctx[:app].open_feed(f) }
-        w.action(label: '&Open') { |win, ctx| open_selected(win, ctx) }
-      end
-
-      def detail(feed, width, t)
-        ["#{t[:text_bright]}#{feed.name}#{t[:text]}",
-         "#{t[:accent]}#{[feed.group, feed.lang].reject(&:empty?).join(' · ')}#{t[:text]}", '',
-         *BBS::FrameBuffer.wrap_ansi(feed.about, width - 1), '',
-         *BBS::FrameBuffer.wrap_ansi("#{t[:text_dim]}#{feed.url}#{t[:text]}", width - 1)]
-      end
-
-      def open_selected(win, ctx)
-        feed = win.list_widget.selected_item
-        ctx[:app].open_feed(feed) if feed
-        :keep
+      window :feeds, :master_detail do
+        title 'Feeds'
+        height     { rows - 8 }
+        list_width { [30, cols / 3].max }
+        items      { feeds.list }
+        label      :name
+        empty 'No feeds are configured.'
+        detail do |feed|
+          [bright(feed.name), accent([feed.group, feed.lang].reject(&:empty?).join(' · ')), '', feed.about, '',
+           dim(feed.url)]
+        end
+        meta       { 'Enter opens the feed' }
+        on_pick    { |feed| open_feed(feed) }
+        action('Open') { |feed| open_feed(feed) }
       end
     end
   end
