@@ -41,7 +41,7 @@ module UI
 
         def listing = @page.listing
 
-        def replace(page) = @page = page
+        def refresh(page) = @page = page
 
         # Whether there is a banner the C64 can show: a PETSCII one, of the
         # C64-style call or of the scheduled one.
@@ -53,16 +53,12 @@ module UI
           banner? ? HINT : HINT[0, 2] + HINT[4, 2]
         end
 
-        def handle(key)
-          case key
-          when :enter then -> { @on_dial.call(listing) }
-          when 'b', 'B' then banner? ? -> { @on_banner.call(@page) } : :redraw
-          end
-        end
+        key(:enter) { @on_dial.call(listing) }
+        key('b', 'B') { @on_banner.call(@page) if banner? }
 
         def draw(canvas)
           down = head(canvas)
-          answer(canvas, Layout.row(2 + down))
+          answered(canvas, Layout.row(2 + down))
           strip(canvas, Layout.row(4 + down))
           fields(canvas, Layout.row(7 + down), Layout.row(TAGS_LINE - 1))
           tags(canvas, Layout.row(TAGS_LINE))
@@ -85,7 +81,7 @@ module UI
           Layout.runs(canvas, Layout.row(line + 1), 1, [['Opt-out/policy: ', Canvas::DARK_GREY], [WIKI, Canvas::GREY]])
         end
 
-        def answer(canvas, row)
+        def answered(canvas, row)
           if !listing.first_probe_at
             canvas.text(row, 1, 'Not called yet', Canvas::LIGHT_GREY)
           elsif !@page.last_success_at

@@ -8,9 +8,7 @@ module UI
       # left and right (or PgUp, PgDn) turn the pages, RETURN opens the
       # board's page, / searches, F filters by state, Q or Esc goes back. The
       # list keeps its place while a board's page or a call is open.
-      class ListView
-        include Style
-
+      class ListView < Screen
         # The F filter steps through these; nil shows every state the list has.
         FILTERS = [nil, 'online', 'flaky', 'down', 'unknown'].freeze
 
@@ -20,6 +18,17 @@ module UI
         # [empty]  what an empty list says
         SEARCH_HINT = 'Words and tags: petscii hu online · synchronet · fidonet · all (the dead too)'
 
+        key(:up) { @index = [@index - 1, 0].max }
+        key(:down) { @index = (@index + 1).clamp(0, last) }
+        key(:left, :page_up) { @index = [@index - per_page, 0].max }
+        key(:right, :page_down) { @index = (@index + per_page).clamp(0, last) }
+        key(:home) { @index = 0 }
+        key(:end) { @index = last }
+        key(:enter) { open }
+        key('/') { search }
+        key('f', 'F') { filter }
+        key(:escape, 'q', 'Q') { back }
+
         # A list of the search +text+.
         def self.search(ctx, text)
           new(ctx, "SEARCH “#{text}”", query: text, empty: 'Nothing found. `all` takes the dead boards in too.') do |state|
@@ -28,8 +37,8 @@ module UI
         end
 
         def initialize(ctx, path, query: nil, empty: 'No board here.', &loader)
+          super()
           @ctx     = ctx
-          @session = ctx.session
           @path    = path
           @query   = query
           @empty   = empty
@@ -39,19 +48,18 @@ module UI
           load
         end
 
-        def run
-          loop do
-            draw
-            k = key
-            next if moved?(k)
+        # Back from a board's page: its state may have moved.
+        def resume = load
 
-            case k
-            when :enter then open
-            when '/' then search
-            when 'f', 'F' then filter
-            when :escape, 'q', 'Q' then return
-            end
+        def lines
+          lines = [crumbs(@path, counts), rule]
+          if @boards.empty?
+            lines.push('', "#{TEXT}#{@state ? "No #{@state} board here." : @empty}#{RESET}")
+          else
+            lines.concat(page_rows)
           end
+          lines.fill('', lines.size...(rows - 3))
+          lines.push(rule, hints)
         end
 
         private
@@ -67,32 +75,17 @@ module UI
 
         def last = [@boards.size - 1, 0].max
 
-        # Moves the choice by +key+; whether +key+ was a move.
-        def moved?(key)
-          @index = case key
-                   when :up then [@index - 1, 0].max
-                   when :down then (@index + 1).clamp(0, last)
-                   when :left, :page_up then [@index - per_page, 0].max
-                   when :right, :page_down then (@index + per_page).clamp(0, last)
-                   when :home then 0
-                   when :end then last
-                   else return false
-                   end
-          true
-        end
-
         def open
           board = @boards[@index]
           return unless board
 
-          BoardPage.new(@ctx, board.id, path: @path).run
-          load
+          BoardPage.open(self, @ctx, board.id, path: @path)
         end
 
         # In a search list, / edits the words; elsewhere it starts a search
         # of its own, and Q comes back here.
         def search
-          text = Prompt.new(@session).read('Search:', @query.to_s, hint: SEARCH_HINT)
+          text = read_line('Search:', text: @query.to_s, max: Home::SEARCH_MAX, hint: SEARCH_HINT)&.strip
           return if text.nil? || text.empty?
 
           if @query
@@ -102,7 +95,7 @@ module UI
             @loader = ->(state) { @ctx.browse.search(@query, state: state) }
             load
           else
-            ListView.search(@ctx, text).run
+            push(ListView.search(@ctx, text))
           end
         end
 
@@ -110,18 +103,6 @@ module UI
           @state = FILTERS[(FILTERS.index(@state).to_i + 1) % FILTERS.size]
           @index = 0
           load
-        end
-
-        def draw
-          lines = [crumbs(@path, counts), rule]
-          if @boards.empty?
-            lines.push('', "#{TEXT}#{@state ? "No #{@state} board here." : @empty}#{RESET}")
-          else
-            lines.concat(page_rows)
-          end
-          lines.fill('', lines.size...(rows - 3))
-          lines.push(rule, hints)
-          paint(lines)
         end
 
         # The boards, the state filter and the page, for the top line.

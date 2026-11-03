@@ -3,18 +3,18 @@
 module UI
   module Modern
     # The look of the modern face, shared by its screens: the palette of
-    # bbsweb, a margin, a width of at most MAX_WIDTH, and the whole-screen
-    # repaint (each line cleared to its end, nothing scrolls).
+    # bbsweb, a margin and a width of at most MAX_WIDTH. A screen is a
+    # BBS::Page of lines (Screen).
     module Style
-      GREEN  = "\e[38;5;84m"
-      TEXT   = "\e[38;5;250m"
-      DIM    = "\e[38;5;244m"
-      LINE   = "\e[38;5;238m"
-      YELLOW = "\e[38;5;221m"
-      RED    = "\e[38;5;203m"
-      SELECT = "\e[48;5;235m"
-      BOLD   = "\e[1m"
-      RESET  = "\e[0m"
+      GREEN  = BBS::Style[fg: 84]
+      TEXT   = BBS::Style[fg: 250]
+      DIM    = BBS::Style[fg: 244]
+      LINE   = BBS::Style[fg: 238]
+      YELLOW = BBS::Style[fg: 221]
+      RED    = BBS::Style[fg: 203]
+      SELECT = BBS::Style[bg: 235]
+      BOLD   = BBS::Style[bold: true]
+      RESET  = BBS::Style::RESET
 
       # The colour of a board's state mark.
       STATE_COLORS = { 'online' => GREEN, 'flaky' => YELLOW, 'down' => RED, 'dead' => DIM, 'unknown' => TEXT }.freeze
@@ -31,9 +31,9 @@ module UI
 
       TABS = { own: 'OWN SERVERS', discovery: 'GLOBAL DISCOVERY' }.freeze
 
-      def width = @session.term_cols.clamp(40, MAX_WIDTH) - MARGIN
+      def width = session.term_cols.clamp(40, MAX_WIDTH) - MARGIN
 
-      def rows = @session.term_rows.clamp(12, 200)
+      def rows = session.term_rows.clamp(12, 200)
 
       def pad = ' ' * MARGIN
 
@@ -77,31 +77,27 @@ module UI
         "#{GREEN}#{BOLD}#{left}#{RESET}#{' ' * [width - left.length - right.length, 1].max}#{DIM}#{right}#{RESET}"
       end
 
-      # Repaints the screen with +lines+, at most a screenful, the cursor
-      # hidden.
-      def paint(lines)
-        out = "\e[?25l#{RESET}\e[H"
-        lines.first(rows - 1).each { |l| out << "#{pad}#{l}#{RESET}\e[K\r\n" }
-        out << "\e[J"
-        @session.write(out)
-      end
-
-      # A key; a hang-up ends the call (IOError).
-      def key
-        k = @session.readkey
-        raise IOError, 'the caller hung up' if k.nil?
-
-        k
-      end
-
-      # Clears the screen for a line of text (a dial, a banner).
-      def clear = @session.write("#{RESET}\e[2J\e[H\e[?25h")
-
-      # After a board or a banner had the screen: colours, mouse and cursor
-      # back to ours.
-      def restore = @session.write("#{RESET}\e[?1000l\e[?1002l\e[?1006l\e[?25h")
-
       def date(at) = at ? Time.at(at).strftime('%Y-%m-%d %H:%M') : 'never'
+    end
+
+    # A screen of the modern face: its #lines from the top, after the
+    # margin, at most a screenful (the last row stays free).
+    class Screen < BBS::Page
+      include Style
+
+      def draw(frame) = print_lines(frame, lines, x: MARGIN + 1, limit: rows - 1)
+
+      def lines = []
+    end
+
+    # A screen of given lines: a question, a notice, until a key (#show).
+    class Lines < Screen
+      attr_reader :lines
+
+      def initialize(lines)
+        super()
+        @lines = lines
+      end
     end
   end
 end

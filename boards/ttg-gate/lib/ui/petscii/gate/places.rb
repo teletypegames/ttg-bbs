@@ -2,7 +2,7 @@
 
 module UI
   module Petscii
-    class Gate
+    class Gate < BBS::Pages
       # The places of the gate: our own boards, Help, and the lists, menus
       # and pages of Global Discovery, each a view for the Gate's stack.
       module Places
@@ -98,13 +98,6 @@ module UI
 
         def tagged(facet, axis)
           list(facet.label, axis, band: :browse) { |state| @browse.tagged(facet.tag, petscii: true, state: state) }
-        end
-
-        def push(target)
-          @stack.push(target)
-          @focus = :main
-          paint(whole: true)
-          nil
         end
 
         def random

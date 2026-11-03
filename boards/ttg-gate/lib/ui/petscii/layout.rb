@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
-require_relative 'canvas'
-
 module UI
   module Petscii
+    # The 40×25 cell grid of the C64 face: rubbs' Canvas in the lower/upper
+    # character set (<tt>Canvas.new(charset: :lower)</tt>), so text keeps
+    # its case.
+    Canvas = BBS::Petscii::Canvas
+
     # The grid every screen of the C64 face shares (40×25): the header on
     # row 0, the two tabs on row 1, the sub-menu on row 2, the content on
     # rows 3 to 23 across all 40 columns, the hint bar on row 24. And the
@@ -67,14 +70,7 @@ module UI
       end
 
       # +text+ in the letters and signs the lower/upper set has.
-      def plain(text)
-        text.to_s.each_char.map do |c|
-          next c if Canvas.glyph?(c)
-
-          near = BBS::Petscii.plain(c)
-          near.each_char.all? { |n| Canvas.glyph?(n) } ? near : '?'
-        end.join
-      end
+      def plain(text) = Canvas.plain(text, :lower)
 
       # Draws the address +host+ (and +port+ after a colon, unless nil) from
       # +row+, +col+ whole: past +width+ it goes on at +col+ of the next

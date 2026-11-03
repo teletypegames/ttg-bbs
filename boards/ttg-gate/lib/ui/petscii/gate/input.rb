@@ -2,71 +2,45 @@
 
 module UI
   module Petscii
-    class Gate
+    class Gate < BBS::Pages
       # What the gate reads besides a view's keys: the search line on the
-      # hint row, a key over a notice, and the wait for a key that counts the
-      # caller's idle time.
+      # hint row, and a key over a notice.
       module Input
         private
 
         # The search: the input line in place of the hint bar, then its list.
         def search
           text = input
-          return paint if text.nil? || text.empty?
+          return if text.nil? || text.empty?
 
           @section = :search
           @tab = :discover
-          @stack = [list("FIND #{text}", :search) { |state| @browse.search(text, petscii: true, state: state) }]
-          paint(whole: true)
+          reset(list("FIND #{text}", :search) { |state| @browse.search(text, petscii: true, state: state) })
         end
 
         # Reads a line on the hint row: letters, digits and signs, DEL takes
         # one back, RETURN takes it, RUN/STOP gives up (nil).
         def input
-          unless @browse
-            show(resting)
-            return nil
-          end
+          return pop_up(resting) && nil unless @browse
 
-          @input = +''
-          paint
-          loop do
-            case (key = wait)
-            when :enter then return @input.strip.downcase
-            when :escape then return nil
-            when :backspace then @input.chop!
-            when String then @input << key if BBS::Text.printable?(key) && @input.length < INPUT_MAX
-            end
-            paint
-          end
-        ensure
-          @input = nil
+          read_line(INPUT_LABEL, max: INPUT_MAX)&.strip&.downcase
         end
 
-        # A key, the idle time of the session counted: past it the call ends.
-        def wait
-          idle = 0.0
-          loop do
-            key = @screen.key(timeout: TICK)
-            return key unless key == :idle
-
-            idle += TICK
-            raise IOError, 'idle' if @screen.idle_limit && idle >= @screen.idle_limit
-
-            tick
-          end
+        # The line being read, on the hint row: the label, the words, a
+        # reversed cell for the cursor.
+        def input_line(canvas)
+          text = line.text
+          canvas.text(Layout::HINT_ROW, 0, INPUT_LABEL, Canvas::LIGHT_GREEN)
+          canvas.text(Layout::HINT_ROW, INPUT_LABEL.length + 1, text, Canvas::WHITE)
+          canvas.text(Layout::HINT_ROW, INPUT_LABEL.length + 1 + text.length, ' ', Canvas::WHITE, rvs: true)
         end
 
         # Shows +target+ (a Views::TextView) over the current view until a
-        # key; the key.
-        def show(target, hint: [['Press a key', false]])
+        # key (or until the block answers one, see BBS::Pages#show); the
+        # answer.
+        def pop_up(target, hint: [['Press a key', false]], &)
           target.hint = hint
-          @stack.push(target)
-          paint
-          key = wait
-          @stack.pop
-          paint
-          key
+          show(target, &)
         end
       end
     end

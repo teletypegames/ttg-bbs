@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative 'chrome'
-require_relative 'diff'
 require_relative 'views/picker'
 require_relative 'views/own_view'
 require_relative 'views/list_view'
@@ -24,10 +23,10 @@ module UI
     # anywhere (a view's own keys first: B on a board's page is its banner).
     # ← or RUN/STOP goes back, Q hangs up.
     #
-    # Each change is drawn on a new Canvas and only the cells that differ
-    # from what the C64 shows go out (a patch), or the whole screen when
-    # that is shorter; a new screen goes out whole.
-    class Gate
+    # The views are the pages of a BBS::Pages runner: each change is drawn
+    # on a new Canvas and only the cells that differ from what the C64
+    # shows go out, or the whole screen when that is shorter.
+    class Gate < BBS::Pages
       include Places
       include Dialing
       include Input
@@ -60,16 +59,18 @@ module UI
       BANDS = { discover: Canvas::LIGHT_GREEN, all: Canvas::LIGHT_GREEN, search: Canvas::WHITE, browse: Canvas::ORANGE, new: Canvas::PURPLE,
                 died: Canvas::LIGHT_RED, graves: Canvas::GREY }.freeze
 
-      attr_reader :focus, :stack, :tab
+      attr_reader :focus, :tab
 
-      # [screen] the C64 line (Screen)
+      every(TICK) { tick }
+
+      # [session] the C64 line
       # [boards] our boards with a C64 face (BoardModel)
       # [browse] Discovery::BrowseService, nil without a catalog
       # [dials]  Discovery::DialService
       # [node]   the node number in the header
       # [clock]  the time, for the header
-      def initialize(screen, boards:, browse:, dials:, node: 1, clock: -> { Time.now })
-        @screen = screen
+      def initialize(session, boards:, browse:, dials:, node: 1, clock: -> { Time.now })
+        super(session, face: :petscii, charset: :lower)
         @boards = boards
         @browse = browse
         @dials  = dials
@@ -77,68 +78,40 @@ module UI
         @clock  = clock
         @focus  = :main
         @tab    = :own
-        @cursor = 0
-        @stack  = []
-        @shown  = nil
+        @menu   = 0
         @status = nil
-        @input  = nil
       end
 
       # Runs the call until the caller hangs up (Q, or RUN/STOP on our own
       # boards) or idles too long.
-      def run
-        start
-        idle = 0.0
-        loop do
-          key = @screen.key(timeout: TICK)
-          if key == :idle
-            idle += TICK
-            return if @screen.idle_limit && idle >= @screen.idle_limit
-
-            tick
-            next
-          end
-
-          idle = 0.0
-          return if press(key) == :quit
-        end
-      end
+      def run = super(own)
 
       # The first screen: our own boards.
-      def start
+      def start(page = own)
         @stats = stats
         @section = :own
         @tab = :own
-        @stack = [own]
-        paint(whole: true)
+        super
       end
 
-      def view = @stack.last
+      def view = page
 
-      # Answers one key; :quit when the call should end.
-      def press(key)
-        return menu_key(key) if @focus == :menu && %i[left right up down enter].include?(key)
-        return to_menu if key == :up && to_menu?
-        return back if key == :escape
+      # Answers one key: the sub-menu while it has the focus, CRSR up to it,
+      # RUN/STOP back, then the view's own keys, then the hotkeys.
+      def handle(key)
+        return menu_key(key) || true if @focus == :menu && %i[left right up down enter].include?(key)
+        return to_menu || true if key == :up && to_menu?
+        return back || true if key == :escape
 
-        result = view.handle(key)
-        return act(result) if result
-
-        go(Chrome::HOTKEYS[key.downcase]) if key.is_a?(String) && Chrome::HOTKEYS.key?(key.downcase)
+        view.handle(key) || hotkey(key)
       end
 
-      # The clock: a new minute repaints its cells.
-      def tick
-        minute = @clock.call.strftime('%H:%M')
-        return if minute == @minute
-
-        paint
-      end
-
-      # The screen as it is now, on a Canvas.
-      def compose
-        canvas = Canvas.new
-        Chrome.header(canvas, node: @node, time: @clock.call)
+      # The screen as it is now: the frame around the view, the search line
+      # or the hint bar, the cursor resting at the end of the hint row.
+      def draw(canvas)
+        time = @clock.call
+        @minute = time.strftime('%H:%M')
+        Chrome.header(canvas, node: @node, time: time)
         Chrome.tabs(canvas, active: @tab, stats: @stats)
         if @tab == :own
           Chrome.own_line(canvas, @boards.size)
@@ -146,45 +119,38 @@ module UI
           Chrome.menu(canvas, lit: lit, focused: @focus == :menu)
         end
         view.draw(canvas)
-        if @input
-          canvas.text(Layout::HINT_ROW, 0, INPUT_LABEL, Canvas::LIGHT_GREEN)
-          canvas.text(Layout::HINT_ROW, INPUT_LABEL.length + 1, @input, Canvas::WHITE)
-          canvas.text(Layout::HINT_ROW, INPUT_LABEL.length + 1 + @input.length, ' ', Canvas::WHITE, rvs: true)
+        if line
+          input_line(canvas)
         else
           Chrome.hint(canvas, @status || (@focus == :menu ? MENU_HINT : view.hint))
         end
-        canvas
+        cursor(Layout::HINT_ROW, Layout::HINT_WIDTH)
       end
 
-      # Sends what changed since the last screen (+whole+: the whole screen).
-      # The bytes sent.
-      def paint(whole: false)
-        canvas = compose
-        bytes = whole || @shown.nil? ? canvas.frame : changes(canvas)
-        @shown  = canvas
-        @minute = @clock.call.strftime('%H:%M')
-        return bytes if bytes.empty?
+      # Over another view: the focus back on the content.
+      def push(target)
+        @focus = :main
+        super
+      end
 
-        bytes += canvas.cursor(Layout::HINT_ROW, Layout::HINT_WIDTH)
-        @screen.raw(bytes)
-        bytes
+      # Back a screen; from a section's first one to our own boards, and from
+      # there the call ends.
+      def back
+        @focus = :main
+        return super if stack.size > 1
+        return quit if @section == :own
+
+        go(:own)
       end
 
       private
 
-      def changes(canvas)
-        changed = canvas.changes(@shown)
-        return ''.b if changed.empty?
-
-        patch = Diff.patch(canvas, changed)
-        frame = canvas.frame
-        patch.bytesize <= frame.bytesize ? patch : frame
-      end
+      def hint = @status || (@focus == :menu ? MENU_HINT : view.hint)
 
       # The place of the sub-menu lit: the cursor's while the menu has the
       # focus, else the section's (Browse for its axes).
       def lit
-        return Chrome::MENU[@cursor].key if @focus == :menu
+        return Chrome::MENU[@menu].key if @focus == :menu
 
         section = view.section || @section
         Chrome::UNDER.fetch(section, section)
@@ -205,59 +171,43 @@ module UI
       end
 
       def to_menu
-        @cursor = Chrome::MENU.index { |i| i.key == lit } || 0
+        @menu = Chrome::MENU.index { |i| i.key == lit } || 0
         @focus = :menu
-        paint
       end
 
       def menu_key(key)
         case key
-        when :left, :right
-          @cursor = (@cursor + (key == :left ? -1 : 1)) % Chrome::MENU.size
-          paint
-        when :down
-          @focus = :main
-          paint
-        when :enter then go(Chrome::MENU[@cursor].key)
+        when :left, :right then @menu = (@menu + (key == :left ? -1 : 1)) % Chrome::MENU.size
+        when :down then @focus = :main
+        when :enter then go(Chrome::MENU[@menu].key)
         end
       end
 
-      def act(result)
-        return paint if result == :redraw
-
-        outcome = result.call
-        paint
-        outcome
+      # The clock: a new minute repaints its cells.
+      def tick
+        redraw unless @clock.call.strftime('%H:%M') == @minute
       end
 
-      # Back a screen; from a section's first one to our own boards, and from
-      # there the call ends.
-      def back
-        @focus = :main
-        if @stack.size > 1
-          @stack.pop
-          view.reload if view.respond_to?(:reload)
-          return paint
-        end
-        return :quit if @section == :own
+      # A hotkey opens its place from anywhere.
+      def hotkey(key)
+        return unless key.is_a?(String) && Chrome::HOTKEYS.key?(key.downcase)
 
-        go(:own)
+        go(Chrome::HOTKEYS[key.downcase]) || true
       end
 
       # Opens the place +key+: a tab, a place of the sub-menu, Help.
       def go(key)
-        return :quit if key == :quit
+        return quit if key == :quit
 
         @focus = :main
         return search if key == :search
 
         target = section_view(key)
-        return paint unless target
+        return unless target
 
         @section = key
         @tab = key == :own ? :own : :discover unless key == :help
-        @stack = [target]
-        paint(whole: true)
+        reset(target)
       end
     end
   end

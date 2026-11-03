@@ -7,53 +7,38 @@ module UI
     # bar, and under the list the chosen board's description. The arrows
     # choose, RETURN or the board's number dials, TAB turns to Global
     # Discovery, Q or Esc hangs up.
-    class OwnServers
-      include Style
-
+    class OwnServers < Screen
       NAME = 18
 
-      def initialize(session, boards)
-        @session = session
-        @boards  = boards
-        @index   = 0
+      key(:up)   { @index = (@index - 1) % @boards.size }
+      key(:down) { @index = (@index + 1) % @boards.size }
+      key(:enter) { dial(@boards[@index]) }
+      key(:tab, :right, :left, 'g', 'G') { pages.switch }
+      key(:escape, 'q', 'Q') { quit }
+      key(/\A[1-9]\z/) do |k|
+        board = @boards[k.to_i - 1]
+        next unless board
+
+        @index = k.to_i - 1
+        dial(board)
       end
 
-      # Runs the menu until the caller hangs up (nil) or turns to the other
-      # side of the chooser (:switch). Raises IOError when the line drops.
-      def run
-        loop do
-          draw
-          case (k = key)
-          when :up    then @index = (@index - 1) % @boards.size
-          when :down  then @index = (@index + 1) % @boards.size
-          when :enter then dial(@boards[@index])
-          when :tab, :right, :left, 'g', 'G' then return :switch
-          when :escape, 'q', 'Q' then return
-          when /\A[1-9]\z/
-            board = @boards[k.to_i - 1]
-            next unless board
-
-            @index = k.to_i - 1
-            dial(board)
-          end
-        end
+      def initialize(boards)
+        super()
+        @boards = boards
+        @index  = 0
       end
 
-      private
-
-      def dial(board)
-        clear
-        UI.dial(@session, board)
-        restore
-      end
-
-      def draw
+      def lines
         lines = [*masthead(:own), '']
         lines.concat(@boards.each_with_index.map { |b, i| row(b, i) })
         room = rows - 1 - lines.size - 5
         lines.push('', rule, *detail(@boards[@index], room.clamp(0, 4)), '', hints)
-        paint(lines)
       end
+
+      private
+
+      def dial(board) = hand_over { UI.dial(session, board) }
 
       # One board: its colour bar, number, name, tags and address; the
       # chosen one on a lit background with DIAL at its end.

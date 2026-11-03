@@ -2,7 +2,6 @@
 
 require_relative 'colors'
 require_relative 'dial'
-require_relative 'petscii/screen'
 require_relative 'petscii/gate'
 
 module UI
@@ -11,18 +10,18 @@ module UI
   # around our own boards, Global Discovery's lists and pages and the
   # Sources.
   module Petscii
-    @nodes = []
-    @nodes_lock = Mutex.new
+    # The node numbers of the C64 callers, for the header.
+    NODES = BBS::Nodes.new
 
     def self.flow(bbs)
       BBS::Flow.define do
         call do |_ctx, runner|
-          screen = Screen.new(runner.session)
-          Petscii.on_node do |node|
-            Gate.new(screen, boards: bbs.directory.boards(petscii: true), browse: bbs.browse, dials: bbs.dials,
-                             node: node).run
+          session = runner.session
+          NODES.take do |node|
+            Gate.new(session, boards: bbs.directory.boards(petscii: true), browse: bbs.browse, dials: bbs.dials,
+                              node: node).run
           end
-          Petscii.goodbye(screen)
+          Petscii.goodbye(session)
           nil
         rescue IOError, Errno::EPIPE, Errno::ECONNRESET
           nil
@@ -30,22 +29,14 @@ module UI
       end
     end
 
-    # Yields the lowest node number no other C64 caller has, for the call.
-    def self.on_node
-      node = @nodes_lock.synchronize { (1..).find { |n| !@nodes.include?(n) }.tap { |n| @nodes << n } }
-      yield node
-    ensure
-      @nodes_lock.synchronize { @nodes.delete(node) }
-    end
-
-    def self.goodbye(screen)
-      canvas = Canvas.new
+    def self.goodbye(session)
+      canvas = Canvas.new(charset: :lower)
       canvas.text(9, 10, '> Link severed', Canvas::GREEN)
       canvas.text(10, 10, '> Trace wiped', Canvas::GREEN)
       canvas.text(11, 10, '> TTG Gate BBS offline', Canvas::GREEN)
       canvas.text(13, 10, 'See you on the wire', Canvas::DARK_GREY)
       canvas.text(16, 15, 'NO CARRIER', Canvas::LIGHT_GREEN)
-      screen.raw(canvas.frame + [Canvas::LOWERCASE].pack('C*'))
+      session.write_raw(canvas.frame + [Canvas::LOWERCASE].pack('C*'))
       nil
     end
   end

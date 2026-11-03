@@ -70,22 +70,21 @@ module UI
           @twins = twins
         end
 
-        def take(listing) = -> { @on_open.call(listing) }
+        def take(listing) = @on_open.call(listing)
 
-        def handle(key)
-          return super unless @filter && %w[f F].include?(key)
-
+        key('f', 'F') do
+          pass unless @filter
           filters = @all_states ? ALL_FILTERS : FILTERS
           @state = filters[(filters.index(@state).to_i + 1) % filters.size]
           @items = @loader.call(@state)
           @twins = twins
           @page = @index = 0
-          :redraw
         end
 
-        # Reloads the list, keeping its place: after a dial its states move.
-        def reload
-          replace(@loader.call(@state))
+        # Back from a board's page: the list reloaded, keeping its place
+        # (after a dial its states move).
+        def resume
+          reload_items(@loader.call(@state))
           @twins = twins
         end
 
@@ -94,7 +93,7 @@ module UI
 
           parts = [['RETURN', true], [' Open  ', false]]
           parts += [['F', true], [' Filter  ', false]] if @filter
-          parts += [['+/-', true], [' Page ', false]] if pages > 1
+          parts += [['+/-', true], [' Page ', false]] if pages_count > 1
           parts + [['/', true], [' Find', false]]
         end
 

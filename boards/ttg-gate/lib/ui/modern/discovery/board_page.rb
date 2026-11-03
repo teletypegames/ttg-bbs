@@ -7,9 +7,7 @@ module UI
       # last answer, the uptime strip of 30 days, the fields with the source
       # of each, the tags, the lists that name it, the banner (B shows its
       # first screen) and the Dial button (RETURN or D). Q or Esc goes back.
-      class BoardPage
-        include Style
-
+      class BoardPage < Screen
         WIKI = 'wiki.teletypegames.org/services/ttg-gate-bbs'
         # The width of a field's label.
         LABEL = 13
@@ -28,6 +26,10 @@ module UI
           unknown: 'This board is not in the catalog any more.'
         }.freeze
 
+        # The keys of a warning's question: Y dials, N goes back.
+        ANSWERS = { 'y' => true, 'Y' => true, 'n' => false, 'N' => false, :escape => false, 'q' => false,
+                    'Q' => false }.freeze
+
         WARNINGS = {
           petscii_only: ['This board is made for a Commodore 64.',
                          'It speaks PETSCII, which a modern terminal shows as noise. Dial anyway?'],
@@ -35,38 +37,44 @@ module UI
                  'It may be gone for good. Dial anyway? Your call is recorded as one of ours.']
         }.freeze
 
-        def initialize(ctx, id, path:)
-          @ctx     = ctx
-          @session = ctx.session
-          @id      = id
-          @path    = path
+        key(:enter, 'd', 'D') { dial }
+        key('b', 'B') { banner }
+        key(:escape, :left, 'q', 'Q') { back }
+
+        # Pushes the page of the board +id+ over +from+ (a page of the
+        # gate), unless the board is gone from the catalog.
+        def self.open(from, ctx, id, path:)
+          page = new(ctx, id, path: path)
+          from.push(page) if page.reload
         end
 
-        def run
-          loop do
-            @page = @ctx.browse.page(@id)
-            return unless @page
+        def initialize(ctx, id, path:)
+          super()
+          @ctx  = ctx
+          @id   = id
+          @path = path
+        end
 
-            draw
-            case key
-            when :enter, 'd', 'D' then dial
-            when 'b', 'B' then banner
-            when :escape, :left, 'q', 'Q' then return
-            end
-          end
+        # The board's page as the catalog has it now; nil when it is gone.
+        def reload = @page = @ctx.browse.page(@id)
+
+        # Each key reloads the page; a board gone from the catalog goes back.
+        def handle(key)
+          taken = super
+          back if pages.page.equal?(self) && !reload
+          taken
+        end
+
+        def lines
+          lines = [header, rule, '', *status, '', *fields, *tag_lines]
+          lines << "#{DIM}#{fit('Banner', LABEL)}#{TEXT}#{banner_note}#{RESET}"
+          lines.fill('', lines.size...(rows - 4))
+          lines.push(rule, dial_line, "#{DIM}#{fit("How we call boards, and opting out: #{WIKI}", width)}#{RESET}")
         end
 
         private
 
         def listing = @page.listing
-
-        def draw
-          lines = [header, rule, '', *status, '', *fields, *tag_lines]
-          lines << "#{DIM}#{fit('Banner', LABEL)}#{TEXT}#{banner_note}#{RESET}"
-          lines.fill('', lines.size...(rows - 4))
-          lines.push(rule, dial_line, "#{DIM}#{fit("How we call boards, and opting out: #{WIKI}", width)}#{RESET}")
-          paint(lines)
-        end
 
         def header = crumbs("#{@path} › #{listing.title}", listing.address)
 
@@ -133,13 +141,11 @@ module UI
         def dial
           return unless @ctx.dials.warnings(listing, face: :modern).all? { |w| confirm(w) }
 
-          caller = UI.caller_key(@session)
+          caller = UI.caller_key(session)
           refusal = @ctx.dials.check(caller, listing, face: :modern)
           return refused(refusal) if refusal
 
-          clear
-          result = UI.dial_catalog(@session, @ctx.dials, caller, listing, face: :modern)
-          restore
+          result = hand_over { UI.dial_catalog(session, @ctx.dials, caller, listing, face: :modern) }
           refused(result) if result.is_a?(::Discovery::DialService::Refusal)
         end
 
@@ -147,21 +153,12 @@ module UI
           lines = [header, rule, '']
           WARNINGS.fetch(warning).each { |l| lines << "#{YELLOW}#{l}#{RESET}" }
           lines.push('', "#{GREEN}#{BOLD}Y#{RESET}#{DIM} dial   #{RESET}#{GREEN}#{BOLD}N#{RESET}#{DIM} back#{RESET}")
-          paint(lines)
-          loop do
-            case key
-            when 'y', 'Y' then return true
-            when 'n', 'N', :escape, 'q', 'Q' then return false
-            end
-          end
+          show(Lines.new(lines)) { |key| ANSWERS[key] }
         end
 
         def refused(refusal)
           text = format(REFUSALS.fetch(refusal.reason), limit: limit(refusal.reason), wait: wait(refusal.wait))
-          lines = [header, rule, '', "#{YELLOW}#{text}#{RESET}", '',
-                   "#{DIM}Press a key.#{RESET}"]
-          paint(lines)
-          key
+          show(Lines.new([header, rule, '', "#{YELLOW}#{text}#{RESET}", '', "#{DIM}Press a key.#{RESET}"]))
         end
 
         def limit(reason) = reason == :rate ? ::Discovery::DialService::PER_CALLER : ::Discovery::DialService::PER_HOST
@@ -177,12 +174,12 @@ module UI
           bytes = @page.banner
           return unless bytes && @page.encoding != 'petscii'
 
-          clear
-          @session.write(::Discovery::BannerPreview.ansi(bytes))
-          @session.write("#{RESET}\e[#{rows};1H\e[K#{SELECT}#{DIM} The banner of #{plain(listing.title)}, " \
-                         "#{date(@page.banner_at)}. Press a key. #{RESET}")
-          key
-          restore
+          hand_over do
+            session.write(::Discovery::BannerPreview.ansi(bytes))
+            session.write("#{RESET}\e[#{rows};1H\e[K#{SELECT}#{DIM} The banner of #{plain(listing.title)}, " \
+                          "#{date(@page.banner_at)}. Press a key. #{RESET}")
+            pages.wait_key
+          end
         end
       end
     end

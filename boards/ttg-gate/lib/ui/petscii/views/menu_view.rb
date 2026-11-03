@@ -27,9 +27,9 @@ module UI
 
         attr_reader :section, :title
 
-        def take(entry) = entry.action
+        def take(entry) = entry.action.call
 
-        def hint = pages > 1 ? HINT + [['+/-', true], [' Page', false]] : HINT + [['←', true], [' Back', false]]
+        def hint = pages_count > 1 ? HINT + [['+/-', true], [' Page', false]] : HINT + [['←', true], [' Back', false]]
 
         def draw(canvas)
           Layout.band(canvas, @title, [@items.size, page_mark].reject { |s| s.to_s.empty? }.join('  '), @color)

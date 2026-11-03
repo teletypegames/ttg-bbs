@@ -5,16 +5,11 @@ require_relative '../layout'
 module UI
   module Petscii
     module Views
-      # A view in the content area of the C64 face: draws itself on a Canvas,
-      # tells the hint bar its keys, and answers the keys that are its own
-      # (#handle: :redraw, an action to call, or nil when the key is not its
-      # own).
-      class View
-        def draw(canvas); end
-
+      # A view in the content area of the C64 face: a page of the Gate that
+      # draws itself on a Canvas, tells the hint bar its keys, and answers
+      # the keys that are its own (the others go to the Gate's hotkeys).
+      class View < BBS::Page
         def hint = []
-
-        def handle(_key) = nil
 
         # The section this view belongs to (the place of the sub-menu it
         # lights), nil for the one it was opened in.
@@ -26,7 +21,19 @@ module UI
       # turn the pages, a digit takes that place of the page (0 the tenth),
       # RETURN takes the lit one (#take).
       class Picker < View
-        PAGES = { '+' => 1, '-' => -1 }.freeze
+        key(:up) { move(-1) }
+        key(:down) { move(1) }
+        key('+') { turn(1) }
+        key('-') { turn(-1) }
+        key(:enter) { selected ? take(selected) : pass }
+        key(/\A\d\z/) do |digit|
+          slot = (digit.to_i - 1) % 10
+          pass unless slot < @per_page
+          next unless on_page[slot]
+
+          @index = slot
+          take(selected)
+        end
 
         attr_reader :items, :index, :page
 
@@ -38,7 +45,7 @@ module UI
           @index    = 0
         end
 
-        def pages = [(@items.size + @per_page - 1) / @per_page, 1].max
+        def pages_count = [(@items.size + @per_page - 1) / @per_page, 1].max
 
         def on_page = @items[@page * @per_page, @per_page] || []
 
@@ -47,55 +54,38 @@ module UI
         # Whether the first item of the first page is lit.
         def at_top? = @page.zero? && @index.zero?
 
-        def handle(key)
-          case key
-          when :up, :down then move(key == :up ? -1 : 1)
-          when *PAGES.keys then turn(PAGES[key])
-          when :enter then selected && take(selected)
-          when /\A\d\z/
-            slot = (key.to_i - 1) % 10
-            return nil unless slot < @per_page
-            return :redraw unless on_page[slot]
-
-            @index = slot
-            take(selected)
-          end
-        end
-
         # Moves the lit item +delta+ places, over the edge of the page.
         def move(delta)
           slot = @index + delta
           if slot.negative? && @page.positive?
             @page -= 1
             @index = on_page.size - 1
-          elsif slot >= on_page.size && @page < pages - 1
+          elsif slot >= on_page.size && @page < pages_count - 1
             @page += 1
             @index = 0
           else
             @index = slot.clamp(0, [on_page.size - 1, 0].max)
           end
-          :redraw
         end
 
         def turn(delta)
-          target = (@page + delta).clamp(0, pages - 1)
+          target = (@page + delta).clamp(0, pages_count - 1)
           @index = 0 unless target == @page
           @page = target
-          :redraw
         end
 
         # Keeps the place of the list when its items change: the same page
         # and place where they still exist.
-        def replace(items)
+        def reload_items(items)
           @items = items
-          @page  = @page.clamp(0, pages - 1)
+          @page  = @page.clamp(0, pages_count - 1)
           @index = @index.clamp(0, [on_page.size - 1, 0].max)
         end
 
         def take(_item) = nil
 
         # "1/5" when there is more than one page.
-        def page_mark = pages > 1 ? "#{@page + 1}/#{pages}" : ''
+        def page_mark = pages_count > 1 ? "#{@page + 1}/#{pages_count}" : ''
       end
     end
   end
