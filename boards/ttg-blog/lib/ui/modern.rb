@@ -15,24 +15,14 @@ module UI
       art "  #{WH}#{MOTTO}#{LG}"
     end
 
-    def initialize(session, context = {}, board = nil)
-      super
-      @screen = BBS::Petscii::Screen.new(session, cols: session.term_cols.clamp(40, 80),
-                                                  rows: session.term_rows.clamp(16, 60))
+    def make_screen(session)
+      BBS::Petscii::Screen.new(session, cols: session.term_cols.clamp(40, 80), rows: session.term_rows.clamp(16, 60))
     end
 
-    private
-
-    # The main menu, under the masthead the first time and under the title
-    # bar after.
-    def main_menu_choice
-      home if @menu_shown
-      @menu_shown = true
-      puts
-      items = menu_items
+    # The main menu as a list of keys, one typed at the prompt.
+    def menu(items, **)
       items.each { |i| puts " #{YE}#{i.key.upcase}#{LG} #{i.label}" }
-      key = choose("\r\n #{WH}ttgblog#{LG}> ", items.map(&:key))
-      take(items.find { |i| i.key == key }.value)
+      choose("\r\n #{WH}ttgblog#{LG}> ", items.map(&:key))
     end
   end
 end

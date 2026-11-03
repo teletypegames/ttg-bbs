@@ -57,7 +57,7 @@ and shows its bare id.
 |---|---|---|
 | `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2328) |
 | `TTG_BLOG_BBS_DB` | `data/ttgblog.sqlite3` | The SQLite database (compose mounts `./data`) |
-| `TTG_BLOG_BBS_CATEGORIES_FILE` | `config/categories.yml` | The category list |
+| `TTG_BLOG_BBS_CATEGORIES` | `config/categories.yml` | The category list |
 | `TTG_BLOG_BBS_HTTP_PORT` | `8080` | Port of the read API (`0` turns it off); compose does not publish it |
 | `TTG_BLOG_BBS_AUTOSAVE_SECONDS` | `15` | Seconds between the autosaves of a draft while an editor writes |
 | `TTG_BLOG_BBS_DISCORD_WEBHOOK` | — | A post rings this Discord webhook when first published, with its link on the web (`.env` on the server) |

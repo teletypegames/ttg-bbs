@@ -20,7 +20,6 @@ def password
   first
 end
 
-BBS.config.env_prefix = 'TTG_BLOG_BBS_'
 editors = TTGBlogBBS.new.editors
 command, name = ARGV
 result = case command

@@ -9,11 +9,10 @@ require_relative '../lib/domain'
 module TestHelper
   CATEGORIES = File.expand_path('../config/categories.yml', __dir__)
 
-  ENV_NAMES = %w[TTG_BLOG_BBS_DB TTG_BLOG_BBS_CATEGORIES_FILE].freeze
+  ENV_NAMES = %w[TTG_BLOG_BBS_DB TTG_BLOG_BBS_CATEGORIES].freeze
 
   def setup
     @dir = Dir.mktmpdir('ttg-blog-bbs-test')
-    BBS.config.env_prefix = 'TTG_BLOG_BBS_'
     with_env(db_path, CATEGORIES)
   end
 

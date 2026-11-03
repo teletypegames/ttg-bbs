@@ -12,7 +12,7 @@ class TTGBlogBBS
   setting :site_url, 'https://teletypegames.org'
   setting :discord_webhook, ''
   path    :db, 'data/ttgblog.sqlite3'
-  path    :categories_file, 'config/categories.yml'
+  path    :categories_file, 'config/categories.yml', env: 'CATEGORIES'
 
   service(:categories) { CategoryService.new(CategoryRepository.new(categories_file)) }
   service(:editors)    { EditorService.new(UserRepository.new(store), guard: LoginGuard.new(store: store)) }

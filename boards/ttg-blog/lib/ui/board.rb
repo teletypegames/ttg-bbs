@@ -22,34 +22,29 @@ module UI
 
     title('TTG BLOG BBS') { right }
 
+    # The items of the main menu on both faces: the readers' items, the
+    # editor's after a login.
+    ITEMS = proc do
+      item('l', 'latest posts', 'every post, newest first') { latest }
+      item('c', 'categories', -> { categories.all.map(&:name).join(', ') }) { browse_categories }
+      item('g', 'go to post #', 'by the number the web shows') { go_to }
+      item('e', 'editor login', 'for the editors of the blog', if: -> { !user }) { login }
+      item('u', -> { unpublished_label }, 'waiting to be published', if: -> { user }) { unpublished }
+      item('w', -> { "write a post#{drafts_note}" }, 'it waits unpublished until you publish it', if: -> { user }) do
+        compose
+      end
+      item('p', 'change your password', -> { "#{user.name}'s password" }, if: -> { user }) { password }
+      item('o', -> { log_out_label }, -> { "back to a reader, #{user.name}" }, if: -> { user }) { log_out }
+      log_off
+    end
+
+    main_menu(&ITEMS)
+
     private
 
-    # The main menu: the readers' items, the editor's after a login. Each
-    # item's value is the method it runs; :log_off hangs up.
-    def menu_items
-      items = [item('l', 'latest posts', :latest, 'every post, newest first'),
-               item('c', 'categories', :browse_categories, categories.all.map(&:name).join(', ')),
-               item('g', 'go to post #', :go_to, 'by the number the web shows')]
-      items += user ? editor_items : [item('e', 'editor login', :login, 'for the editors of the blog')]
-      items << item('q', 'log off', :log_off, 'hang up. see you!')
-    end
+    def unpublished_label = "unpublished posts #{GR}(#{posts.total(published: false)})#{LG}"
 
-    def editor_items
-      [item('u', "unpublished posts #{GR}(#{posts.total(published: false)})#{LG}", :unpublished, 'waiting to be published'),
-       item('w', "write a post#{drafts_note}", :compose, 'it waits unpublished until you publish it'),
-       item('p', 'change your password', :password, "#{user.name}'s password"),
-       item('o', 'log out', :log_out, "back to a reader, #{user.name}")]
-    end
-
-    def item(key, label, action, about) = BBS::Selector.item(label, key: key, value: action, about: about)
-
-    # Runs what the main menu gave: a post opens, a method name runs.
-    def take(choice)
-      return :log_off if choice == :log_off
-
-      choice.is_a?(PostModel) ? show(choice.id) : __send__(choice)
-      nil
-    end
+    def log_out_label = "log out #{GR}(#{user.name})#{LG}"
 
     # What an editor does with a post after its last page: e, p, d, c
     # (a published post's QR code) or q.

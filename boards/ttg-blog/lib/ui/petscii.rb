@@ -33,35 +33,37 @@ module UI
        *screen.fit(PostPage.lines(bbs.categories, post, screen))]
     end
 
-    def initialize(session, context = {}, board = nil)
-      super
-      @screen = Screen.new(session)
+    main_menu(home: :masthead, hint: 'crsr: move  return: open  q: log off') do
+      heading "latest #{'─' * (COLS - 4 - 6)}"
+      each_of(-> { latest_posts }) do |post, i|
+        next heading("#{GR}no posts yet") unless post
+
+        item((i + 1).to_s, -> { headline_label(post) }, -> { post_about(post) }) { show(post.id) }
+      end
+      heading "menu #{'─' * (COLS - 4 - 4)}"
+      instance_exec(&ITEMS)
     end
 
-    # The front page draws its masthead each time.
-    def run = main_menu_loop
+    def make_screen(session) = Screen.new(session)
+
+    # The front page's menu on the whole screen down to the footer bar.
+    def menu(items, back: nil, index: nil, hint: nil)
+      screen.full_menu(items, top: MASTHEAD_ROWS + 2, index: index, back: back, hint: hint)
+    end
 
     private
 
-    def main_menu_choice
-      show_masthead
-      items  = front_items
-      index  = items.index { |i| i.selectable? && same?(i.value, @front) }
-      @front = screen.full_menu(items, top: MASTHEAD_ROWS + 1, index: index, back: :log_off,
-                                       hint: 'crsr: move  return: open  q: log off')
-      take(@front)
+    # The newest posts, as many as the screen holds over the menu items;
+    # [nil] for none.
+    def latest_posts
+      room  = screen.footer_row - MASTHEAD_ROWS - 1 - 2 - 2 - menu_size
+      found = posts.all(published: shown, limit: room)
+      found.empty? ? [nil] : found
     end
 
-    # The newest posts, as many as the screen holds over the menu items.
-    def front_items
-      menu   = menu_items
-      room   = screen.footer_row - MASTHEAD_ROWS - 2 - 2 - menu.size
-      found  = posts.all(published: shown, limit: room)
-      latest = found.empty? ? [S.heading("#{GR}no posts yet")] : found.each_with_index.map { |p, i| headline_item(p, i) }
-      [S.heading(rule_label('latest')), *latest, S.heading(rule_label('menu')), *menu]
+    def menu_size
+      self.class.main_menu.entries.count { |e| !e.heading && (e.shown.nil? || instance_exec(&e.shown)) }
     end
-
-    def same?(value, other) = value.is_a?(PostModel) ? other.is_a?(PostModel) && other.id == value.id : value == other
 
     def motto
       gap = COLS - 1 - 2 - MOTTO.length - right.length
@@ -70,12 +72,16 @@ module UI
 
     def rule_label(text) = "#{text} #{'─' * (COLS - 4 - text.length)}"
 
-    def headline_item(post, index)
+    def headline_label(post)
       draft = post.published? ? '' : "#{RD}u#{LG} "
-      about = post.summary.empty? ? categories.find(post.category).name : post.summary
-      S.item("#{GR}#{post.created_at.localtime.strftime('%m-%d')}#{LG} #{draft}#{post.title}",
-             key: (index + 1).to_s, value: post, about: about)
+      "#{GR}#{post.created_at.localtime.strftime('%m-%d')}#{LG} #{draft}#{post.title}"
     end
+
+    def post_about(post) = post.summary.empty? ? categories.find(post.category).name : post.summary
+
+    def unpublished_label = "unpublished #{GR}(#{posts.total(published: false)})#{LG}"
+
+    def log_out_label = 'log out'
 
     # A post read under its footer; after an edit or a change of its
     # state it is shown again, until the caller goes back or deletes it.
