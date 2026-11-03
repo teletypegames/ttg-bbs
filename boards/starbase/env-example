@@ -7,5 +7,5 @@ BBS_MAX_SESSIONS=50
 # The catalog of series and episodes (Wikidata, CC0): the seed shipped with the image, the
 # refreshed copy in data/, and how old it may get before the board reads Wikidata again (s).
 STARBASE_BBS_CATALOG_SEED=config/catalog.json.gz
-STARBASE_BBS_CATALOG=data/catalog.json.gz
+STARBASE_BBS_CATALOG_FILE=data/catalog.json.gz
 STARBASE_BBS_CATALOG_TTL=604800

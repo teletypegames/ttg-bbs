@@ -1,33 +1,24 @@
 # frozen_string_literal: true
 
-# The board itself, whatever terminal a caller has: the one place that
-# reads ENV and wires the repositories to the services. Both faces
-# (lib/ui/modern, lib/ui/petscii) work on one instance.
+# The board itself, whatever terminal a caller has: the catalog snapshot kept
+# fresh from Wikidata, and Memory Alpha to read.
 class StarbaseBBS
-  ROOT = File.expand_path('../..', __dir__)
+  include BBS::Domain
 
-  attr_reader :catalog, :library
+  SOURCE = 'Wikidata, https://www.wikidata.org (CC0 1.0)'
 
-  def initialize(env = ENV)
-    @env     = env
-    @catalog = catalog_service
-    @library = LibraryService.new(MemoryAlphaRepository.new)
-  end
+  path    :catalog_seed, 'config/catalog.json.gz'
+  path    :catalog_file, 'data/catalog.json.gz'
+  setting :catalog_ttl, CatalogService::WEEK
 
-  # Starts keeping the catalog fresh from Wikidata in the background.
-  def start = @catalog.start_refresh
+  service(:catalog) { CatalogService.new(snapshot, wikidata: WikidataRepository.new, ttl: catalog_ttl) }
+  service(:library) { LibraryService.new(MemoryAlphaRepository.new) }
 
-  # The services by name.
-  def services = { catalog: @catalog, library: @library }
+  background('catalog', every: CatalogService::CHECK) { catalog.refresh_if_stale }
 
   private
 
-  def path(name, default) = @env.fetch(name, File.join(ROOT, default))
-
-  def catalog_service
-    repository = CatalogRepository.new(seed: path('STARBASE_BBS_CATALOG_SEED', 'config/catalog.json.gz'),
-                                       path: path('STARBASE_BBS_CATALOG', 'data/catalog.json.gz'))
-    CatalogService.new(repository, wikidata: WikidataRepository.new,
-                                   ttl: Integer(@env.fetch('STARBASE_BBS_CATALOG_TTL', CatalogService::WEEK.to_s)))
+  def snapshot
+    BBS::Snapshot.new(seed: catalog_seed, path: catalog_file, source: SOURCE) { |records| CatalogModel.from_records(records) }
   end
 end

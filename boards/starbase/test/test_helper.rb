@@ -23,16 +23,8 @@ module Fixtures
       ] }
   end
 
-  # A CatalogRepository stand-in holding records.
-  class Repository
-    def initialize(records) = @records = records
+  # A BBS::Snapshot stand-in holding the records.
+  Snapshot = Struct.new(:value, :generated_at)
 
-    def snapshot
-      CatalogRepository::Snapshot.new(series: @records['series'].map { |r| SeriesModel.from_record(r) },
-                                      episodes: @records['episodes'].map { |r| EpisodeModel.from_record(r) },
-                                      generated_at: Time.now)
-    end
-  end
-
-  def catalog = CatalogService.new(Repository.new(records))
+  def catalog = CatalogService.new(Snapshot.new(CatalogModel.from_records(records), Time.now))
 end

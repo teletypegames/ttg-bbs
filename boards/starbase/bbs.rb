@@ -6,19 +6,11 @@ require_relative 'lib/domain'
 require_relative 'lib/ui/modern'
 require_relative 'lib/ui/petscii'
 
-# Starbase BBS: two faces on one port. The caller picks a terminal (BBS::Terminal guesses
-# first); mouse reporting waits for the choice, its escape would be garbage on a C64.
-bbs = StarbaseBBS.new
-
-BBS.configure do |config|
-  config.log_tag          = 'starbase-bbs'
-  config.mouse            = true
-  config.mouse_on_connect = false
-  config.idle_seconds     = 600
-
-  config.flow = BBS::Terminal.flow(title: 'Starbase BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs),
-                                   splash: TTG::Logo.splash)
+# A Star Trek library on a telnet line, two faces on one port: a modern
+# terminal gets the desktop, a Commodore 64 the PETSCII screens.
+BBS.board 'Starbase BBS', StarbaseBBS do
+  preset  TTG::PRESET
+  modern  UI::Modern::APP
+  petscii UI::Petscii
+  goodbye 'Articles from memory-alpha.fandom.com, under CC BY-NC.'
 end
-
-bbs.start
-BBS.start

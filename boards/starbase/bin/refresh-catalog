@@ -18,5 +18,5 @@ rescue BBS::HTTP::Error => e
 end
 abort 'Wikidata answered no episodes; nothing written' if records['episodes'].empty?
 
-CatalogRepository.write(path, records, Time.now.utc)
+BBS::Snapshot.write(path, records, Time.now.utc, source: StarbaseBBS::SOURCE)
 puts "#{records['series'].size} series, #{records['episodes'].size} episodes and films written to #{path}"

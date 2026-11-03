@@ -91,7 +91,7 @@ with its default.
 | Variable | Default | |
 |---|---|---|
 | `STARBASE_BBS_CATALOG_SEED` | `config/catalog.json.gz` | the snapshot shipped with the image |
-| `STARBASE_BBS_CATALOG` | `data/catalog.json.gz` | the snapshot a refresh writes |
+| `STARBASE_BBS_CATALOG_FILE` | `data/catalog.json.gz` | the snapshot a refresh writes |
 | `STARBASE_BBS_CATALOG_TTL` | `604800` | seconds before Wikidata is read again |
 
 The board keeps no other data and has no secrets.
@@ -123,7 +123,7 @@ bin/refresh-catalog [path]     # a new seed from Wikidata (in a dev checkout)
 ## Project structure
 
 ```
-bbs.rb                      entry point: BBS.configure + BBS::Terminal.flow
+bbs.rb                      entry point: BBS.board (rubbs 2.0 DSL)
 bin/refresh-catalog         writes the seed catalog from Wikidata
 config/catalog.json.gz      the seed catalog (Wikidata, CC0)
 lib/domain.rb               requires the domain in dependency order
@@ -133,24 +133,20 @@ lib/domain/
   model/article_model.rb    a Memory Alpha article in sections, its short address
   model/section_model.rb    a section of an article
   model/search_result_model.rb  a search hit
+  model/catalog_model.rb    the series and episodes of a catalog file
   repository/wikidata_repository.rb       the SPARQL queries (BBS::Wikidata)
-  repository/catalog_repository.rb        the snapshot files, the catalog in memory
   repository/memory_alpha_repository.rb   the Action API (BBS::MediaWiki), cached
   service/catalog_service.rb              series, seasons, on this day, the refresh
+                                          (the catalog file is a BBS::Snapshot)
   service/library_service.rb              look-up, articles, an episode's article
-  starbase_bbs.rb           the composition root (StarbaseBBS)
+  starbase_bbs.rb           the composition root (StarbaseBBS, a BBS::Domain)
 lib/ui/
-  logo.rb                   STARBASE in blocks (BBS::BlockFont), both faces
   card.rb                   an episode's and a series' facts, both faces
-  modern.rb                 UI::Modern: the rubbs Application and its parts
-  modern/helpers.rb         the windows it opens, the library, the QR code, the desktop
-  modern/menu.rb            the menubar, the status bar's hints
+  modern.rb                 UI::Modern::APP: commands, menus, help, desktop
+  modern/helpers.rb         the windows it opens, the library, a card
   modern/series_window.rb, episodes_window.rb, results_window.rb,
-  modern/article_window.rb  one module per window
-  petscii.rb                UI::Petscii: the masthead, the flow, goodbye
-  petscii/screen.rb         the 40×25 screen: rubbs' BBS::Petscii::Screen
-  petscii/library.rb        the C64 menu, the series, seasons, episodes, cards
-  petscii/reader.rb         Memory Alpha on the C64: search, contents, sections, QR
+  modern/article_window.rb  one BBS::Part per window
+  petscii.rb                UI::Petscii: the C64 face (a BBS::Petscii::Face)
 test/                       minitest tests of the domain
 Rakefile                    rake test
 ```
