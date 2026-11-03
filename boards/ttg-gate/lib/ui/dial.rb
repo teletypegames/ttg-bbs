@@ -6,9 +6,12 @@ module UI
   # hangs up and the caller pressed a key. Raises IOError when the caller
   # hangs up meanwhile. Our own boards are on the host (host.docker.internal,
   # a private address), so this gateway may call a non-public address; a
-  # board of the catalog never goes through it (dial_catalog).
+  # board of the catalog never goes through it (dial_catalog). It forwards
+  # who is calling (the face picked here, the caller's address): our board
+  # skips its terminal question and logo, and counts the real caller.
   def self.dial(session, board)
-    BBS::Gateway.new(host: board.host, port: board.port, name: board.name, public_only: false).call(session)
+    BBS::Gateway.new(host: board.host, port: board.port, name: board.name, public_only: false, forward: true)
+                .call(session)
   end
 
   # Dials +board+ of Global Discovery (a Discovery::ListingModel) by the rules
