@@ -1,0 +1,28 @@
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.2
+  SuggestExtensions: false
+  Exclude:
+    - "vendor/**/*"
+    - "doc/**/*"
+
+# The house style of rubbs: tables aligned, short lines, RDoc instead.
+Layout/HashAlignment:
+  Enabled: false
+Layout/ExtraSpacing:
+  AllowForAlignment: true
+Layout/LineLength:
+  Max: 130
+  AutoCorrect: false
+Layout/EmptyLineAfterGuardClause:
+  Enabled: false
+Style/Documentation:
+  Enabled: false
+Metrics/BlockLength:
+  Exclude:
+    - "test/**/*"
+    - "*.gemspec"
+
+# The gem is installed from git, not pushed to rubygems.org.
+Gemspec/RequireMFA:
+  Enabled: false

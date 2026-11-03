@@ -1,0 +1,31 @@
+# Checks: the minitest suite against the latest rubbs, rubocop, and 100%
+# RDoc. A release is a version bump in ttg-common.gemspec plus a vX.Y.Z tag;
+# the tag pipeline checks the two match. The boards pin a revision in their
+# Gemfile.lock (devarea/scripts/bbs-lock-bump.sh).
+steps:
+  - name: test
+    image: ruby:3.3
+    commands:
+      - bundle install
+      - bundle exec rake test
+
+  - name: rubocop
+    image: ruby:3.3
+    commands:
+      - bundle install
+      - bundle exec rubocop
+
+  - name: rdoc-coverage
+    image: ruby:3.3
+    commands:
+      - gem install --no-document rdoc -v 8.1.0
+      - rdoc -C lib | tee coverage.txt
+      - grep -q '100.00% documented' coverage.txt
+
+  - name: tag-matches-version
+    image: ruby:3.3-slim
+    commands:
+      - V="$(ruby -e 'puts Gem::Specification.load("ttg-common.gemspec").version')"
+      - test "$CI_COMMIT_TAG" = "v$$V" || { echo "the tag ($CI_COMMIT_TAG) is not the gemspec version (v$$V)"; exit 1; }
+    when:
+      - event: tag
