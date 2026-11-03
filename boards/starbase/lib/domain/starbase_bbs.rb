@@ -8,7 +8,7 @@ class StarbaseBBS
   SOURCE = 'Wikidata, https://www.wikidata.org (CC0 1.0)'
 
   path    :catalog_seed, 'config/catalog.json.gz'
-  path    :catalog_file, 'data/catalog.json.gz'
+  path    :catalog_file, 'data/catalog.json.gz', env: 'CATALOG'
   setting :catalog_ttl, CatalogService::WEEK
 
   service(:catalog) { CatalogService.new(snapshot, wikidata: WikidataRepository.new, ttl: catalog_ttl) }

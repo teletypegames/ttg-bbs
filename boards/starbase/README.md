@@ -91,7 +91,7 @@ with its default.
 | Variable | Default | |
 |---|---|---|
 | `STARBASE_BBS_CATALOG_SEED` | `config/catalog.json.gz` | the snapshot shipped with the image |
-| `STARBASE_BBS_CATALOG_FILE` | `data/catalog.json.gz` | the snapshot a refresh writes |
+| `STARBASE_BBS_CATALOG` | `data/catalog.json.gz` | the snapshot a refresh writes |
 | `STARBASE_BBS_CATALOG_TTL` | `604800` | seconds before Wikidata is read again |
 
 The board keeps no other data and has no secrets.

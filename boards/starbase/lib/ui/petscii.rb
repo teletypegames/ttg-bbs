@@ -26,32 +26,15 @@ module UI
       line ' a star trek library on your commodore', color: WH
     end
 
-    def show_masthead
-      super
-      @under_masthead = true
+    main_menu do
+      item('s', 'series and films', -> { "#{catalog.series.size} to browse" }) { series_list }
+      item('t', 'on this day', 'first aired on this day') { today }
+      item('l', 'library computer', 'search memory alpha') { search }
+      item('r', 'random article', 'wherever the archive takes you') { random }
+      log_off 'hang up. live long and prosper!'
     end
-
-    # The first menu goes under the masthead, the others under the title.
-    def home
-      return super unless @under_masthead
-
-      @under_masthead = false
-    end
-
-    def main_menu_choice = library_menu.take(self)
 
     private
-
-    def library_menu
-      count = catalog.series.size
-      @library_menu ||= MainMenu.new(MENU_HINT) do
-        item('s', 'series and films', "#{count} to browse") { series_list }
-        item('t', 'on this day', 'first aired on this day') { today }
-        item('l', 'library computer', 'search memory alpha') { search }
-        item('r', 'random article', 'wherever the archive takes you') { random }
-        log_off 'hang up. live long and prosper!'
-      end
-    end
 
     def episodes_right = "#{catalog.size} episodes "
 
