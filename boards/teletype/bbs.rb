@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'ttg/common'
 require_relative 'lib/domain'
 require_relative 'lib/ui/logo'
 require_relative 'lib/ui/arts'
@@ -22,7 +23,7 @@ BBS.configure do |config|
   config.on_session_end = ->(session) { bbs.end_call(session.session_id) }
 
   config.flow = BBS::Terminal.flow(title: 'Teletype BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs),
-                                   splash: true)
+                                   splash: TTG::Logo.splash)
 end
 
 BBS.start
