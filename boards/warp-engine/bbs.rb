@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'bbs'
+require 'ttg/common'
 require_relative 'lib/domain'
 require_relative 'lib/ui/modern'
 require_relative 'lib/ui/petscii'
@@ -18,7 +19,8 @@ BBS.configure do |config|
 
   bbs = WarpEngineBBS.new
 
-  config.flow = BBS::Terminal.flow(title: 'WarpEngine BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs))
+  config.flow = BBS::Terminal.flow(title: 'WarpEngine BBS', modern: UI::Modern.flow(bbs), petscii: UI::Petscii.flow(bbs),
+                                   splash: TTG::Logo.splash)
 end
 
 BBS.start
