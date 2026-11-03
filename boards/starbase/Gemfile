@@ -3,6 +3,7 @@
 source 'https://rubygems.org'
 
 gem 'bbs', git: 'https://git.teletypegames.org/engines/rubbs.git'
+gem 'ttg-common', git: 'https://git.teletypegames.org/bbs/common.git'
 
 group :development do
   gem 'minitest', '~> 5.25'
