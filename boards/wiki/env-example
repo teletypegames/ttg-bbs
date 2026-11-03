@@ -5,6 +5,9 @@
 BBS_PORT=2323
 BBS_MAX_SESSIONS=50
 
+# Idle disconnect, seconds
+WIKI_BBS_IDLE=900
+
 # Where the Grav wiki lives. On the server it is http://wiki-grav on the interstack
 # network (compose.yaml); for local dev against the wiki-pages stack it's
 # http://localhost:9120.

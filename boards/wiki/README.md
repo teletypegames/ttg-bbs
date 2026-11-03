@@ -61,7 +61,7 @@ down a level, where line 1 is the page itself; `Q` (or ←) goes back up. Pages 
 last screenful `C` (qr code) shows that address as a QR code (rubbs'
 `BBS::QR`, quadrant blocks) for a phone to open the page on the web. On the top
 level `S` is the supervisor login (again: lock back) and `R` re-reads the
-index. A call ends with rubbs' goodbye screen: the wiki's web address, the
+index. A call ends with rubbs' goodbye screen: the time on line, the wiki's web address, the
 Teletype Games address and its QR code.
 
 ## Data source
@@ -140,13 +140,13 @@ telnet localhost 2323
 |---|---|---|
 | `BBS_PORT` | `2323` | Telnet listen port |
 | `BBS_MAX_SESSIONS` | `100` | Callers at once (the compose file sets 50) |
+| `WIKI_BBS_IDLE` | `900` | Idle disconnect (seconds; the compose file sets 600) |
 | `WIKI_BBS_URL` | `http://localhost:9120` | Grav wiki base URL |
 | `WIKI_BBS_SUPERVISOR_PASSWORD` | — | Unlocks private pages (Wiki > Supervisor login) and is sent to the wiki as the API token — must match the grav service's `SUPERVISOR_PASSWORD`; empty = private pages stay locked |
 
 `env-example` lists them all with their defaults. `WikiBBS`
 (`lib/domain/wiki_bbs.rb`) declares the `WIKI_BBS_` ones as `BBS::Domain`
-settings; rubbs reads `BBS_PORT` and `BBS_MAX_SESSIONS` itself. A quiet caller
-is dropped after 600 seconds (`idle` in `bbs.rb`).
+settings; rubbs reads `BBS_PORT` and `BBS_MAX_SESSIONS` itself.
 
 Every log line (the board's and rubbs') starts with `wiki-bbs:` (rubbs'
 `BBS.log`, `log_tag`).

@@ -26,12 +26,10 @@ module UI
         message(GRANTED, title: 'Unlocked')
       end
 
-      # The browser opens maximized: as much of the page as the screen holds.
       def open_browser
         return message(EMPTY_INDEX, title: 'Wiki') if wiki.pages.empty?
 
-        browser = show(:browser)
-        browser.toggle_maximize unless browser.maximized?
+        show(:browser)
       end
 
       # Re-reads the shared index (every session sees the new one) and reopens
@@ -47,7 +45,7 @@ module UI
       # The address of the page picked in the browser as a QR code, for a
       # phone to open it on the web (with its pictures and diagrams).
       def show_qr
-        page = window(:browser)&.list_widget&.selected_item
+        page = window(:browser)&.selected
         return message('Pick a page in the browser first.', title: 'QR code') unless page
 
         qr(page.public_url, title: 'Scan the page')

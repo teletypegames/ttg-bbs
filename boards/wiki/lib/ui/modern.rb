@@ -27,7 +27,7 @@ module UI
       command(:qr,      'Page &QR code',  key: 'F3', hint: 'QR')      { show_qr }
       command(:refresh, '&Refresh index', key: 'F8', hint: 'Refresh') { refresh_pages }
       menu 'Wiki', :supervisor, :separator, :browse, :qr, :refresh, :separator, :log_off
-      help about: ABOUT, keys: KEYS
+      help about: -> { "#{ABOUT}\n\nSource: #{wiki.base_url}\nPages:  #{wiki.pages.size}" }, keys: KEYS
 
       status { "#{wiki.pages.size} pages" }
 

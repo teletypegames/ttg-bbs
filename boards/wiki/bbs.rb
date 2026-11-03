@@ -25,6 +25,6 @@ BBS.board 'TTG Wiki BBS', WikiBBS, slug: 'wiki-bbs' do
     app UI::Modern::APP
   end
   petscii UI::Petscii
-  goodbye "The wiki on the web: #{UI::Wording::PUBLIC_HOST}."
-  idle 600
+  goodbye { |context| UI::Wording.goodbye(context) }
+  idle(&:idle_seconds)
 end

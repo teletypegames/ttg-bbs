@@ -9,6 +9,7 @@ services:
       - "2325:2323"
     environment:
       - TZ=Europe/Budapest
+      - WIKI_BBS_IDLE=600
       # Callers at once: each costs up to ~1.7 MB on top of ~25 MB, sized to mem_limit.
       - BBS_MAX_SESSIONS=50
       # The wiki's Grav, reached on the interstack network (wiki-pages gives it this alias).

@@ -10,6 +10,7 @@ module UI
       window :browser, :master_detail do
         title 'Teletype Games Wiki'
         close_button false
+        maximized    true
         list_width 32
         empty '  (no pages)'
         items { wiki.pages }
