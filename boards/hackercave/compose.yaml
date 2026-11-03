@@ -1,6 +1,9 @@
 services:
   hackercave-bbs:
-    mem_limit: 160m
+    # 64 MB of Ruby, ~1.7 MB a caller, and the page cache of the daily mirror
+    # (540 MB of texts, a 135 MB index) that the cgroup counts too: 160m left
+    # the working set near 90% while it ran.
+    mem_limit: 256m
     cpus: 1.0
     pids_limit: 256
     build: .
