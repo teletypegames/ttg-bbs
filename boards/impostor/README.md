@@ -15,8 +15,8 @@ A call starts with one question: which terminal is calling (rubbs'
 picks a modern terminal (ANSI/xterm), `2` a Commodore 64 (PETSCII): the C64
 gets the same terminal on 40 columns, with its own screens. The two faces are
 two modules, `Impostor::Modern` and `Impostor::Petscii`, each with its screens in
-`screens/modern/` and `screens/petscii/`. The board wraps them in `UI::Modern` and
-`UI::Petscii`: when the debrief ends (or the code is refused), it thanks the caller
+`screens/modern/` and `screens/petscii/`. The board runs each in a runner of its own (`UI.debrief`)
+and, when the debrief ends (or the code is refused), thanks the caller
 (rubbs' `BBS::Goodbye`, on a C64 with the IMPOSTOR logo in block letters) and hangs up
 with NO CARRIER. A door gets only the gem's flows, so the host BBS keeps
 the caller.
@@ -77,7 +77,7 @@ and `SessionService` is the store the gem's flow persists into, so every field p
 rules before it is written.
 
 ```
-bbs.rb                        Entry point: one ImpostorBBS, BBS::Terminal with the two faces
+bbs.rb                        Entry point: BBS.board with the two faces
 impostor.gemspec              The gem another rubbs BBS mounts as a door (lib/impostor*, screens/)
 Gemfile, Gemfile.lock         rubbs from git; rubocop, minitest and rake in :development
 Rakefile                      rake test
@@ -88,13 +88,11 @@ bin/
   generate_code               CLI tool: generates a player's code from IMPOSTOR_BBS_PLAYER_NAME
 lib/
   domain.rb                   Requires the gem, then the domain
-  domain/impostor_bbs.rb      ImpostorBBS: the composition root, the only place that reads ENV
+  domain/impostor_bbs.rb      ImpostorBBS: the board's domain (BBS::Domain), its one setting and service
   domain/model/session_model.rb            SessionModel: one call, and the rules of its fields
   domain/repository/session_repository.rb  SessionRepository: the calls in SQLite (BBS::Store)
   domain/service/session_service.rb        SessionService: the store the gem's flow persists into
-  ui/modern.rb                UI::Modern: the gem's modern face, then goodbye and NO CARRIER
-  ui/petscii.rb               UI::Petscii: the gem's PETSCII face, then logo, goodbye and NO CARRIER
-  ui/petscii/screen.rb        UI::Petscii::Screen: rubbs' C64 screen
+  ui.rb                       UI: the debrief in a runner of its own, the goodbyes (on a C64 with the logo)
   impostor.rb                 The gem: Impostor.debrief, the whole terminal as a BBS::Flow
   impostor/modern.rb          Impostor::Modern.flow(sessions:): the face for an ANSI terminal
   impostor/petscii.rb         Impostor::Petscii.flow(sessions:): the face for a C64, in PETSCII
@@ -104,7 +102,7 @@ screens/
   modern/congrats.erb         Mission complete screen
   petscii/welcome.erb         The same two on 40 columns, for a C64
   petscii/congrats.erb
-test/                         Minitest tests of the domain and the code generator
+test/                         Minitest tests of the domain, the code generator and the faces
 data/
   sessions.sqlite3            Player session records (auto-created, git-ignored)
 ```

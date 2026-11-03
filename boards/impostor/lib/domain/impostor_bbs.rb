@@ -1,18 +1,16 @@
 # frozen_string_literal: true
 
-# The board itself, whatever terminal a caller has, and the only place that
-# reads ENV. The debrief terminal and its code check live in the impostor gem
-# (lib/impostor), which another rubbs BBS can mount as a door; the board gives
-# it its sessions, kept by the domain (lib/domain). Both faces (lib/ui/modern,
-# lib/ui/petscii) work on one instance of it.
+# The board itself, whatever terminal a caller has. The debrief terminal and
+# its code check live in the impostor gem (lib/impostor), which another rubbs
+# BBS can mount as a door; the board gives it the record of its calls, kept
+# by the domain (lib/domain). Both faces work on one instance of it.
 class ImpostorBBS
-  ROOT = File.expand_path('../..', __dir__)
+  include BBS::Domain
 
-  attr_reader :sessions
+  path :sessions, 'data/sessions.sqlite3'
 
-  def initialize(env = ENV)
-    path      = File.expand_path(env.fetch('IMPOSTOR_BBS_SESSIONS', 'data/sessions.sqlite3'), ROOT)
-    @sessions = SessionService.new(SessionRepository.new(path).open!)
-    BBS.log('sessions', "kept in #{path}")
+  service(:debriefs) do
+    BBS.log('sessions', "kept in #{sessions}")
+    SessionService.new(SessionRepository.new(sessions).open!)
   end
 end

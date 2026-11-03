@@ -66,12 +66,6 @@ Metrics/BlockLength:
 Style/Documentation:
   Enabled: false
 
-# The helpers of an Application are methods defined in its DSL block, and the
-# modern face builds its Application inside UI::Modern.flow.
-Lint/NestedMethodDefinition:
-  Exclude:
-    - lib/ui/modern.rb
-
 # Short names (f, el, w) are the idiom of the window callbacks and the parser.
 Naming/MethodParameterName:
   MinNameLength: 1
