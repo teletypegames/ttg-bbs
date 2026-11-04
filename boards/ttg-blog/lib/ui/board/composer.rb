@@ -57,8 +57,14 @@ module UI
           drafts = posts.drafts(post)
           return :fresh if drafts.empty?
 
-          choice = pick(post ? "EDIT POST #{post.id}" : 'NEW POST', [:fresh, *drafts], right: right,
-                        item_commands: { 'd' => 'discard' }) { |d| draft_label(d, post) }
+          choice = pick(
+            post ? "EDIT POST #{post.id}" : 'NEW POST',
+            [:fresh, *drafts],
+            right:         right,
+            item_commands: { 'd' => 'discard' }
+          ) { |d|
+            draft_label(d, post)
+          }
           return choice unless choice.is_a?(Array)
 
           discard_draft(choice.last)
@@ -160,8 +166,12 @@ module UI
       # caller quit or left it empty.
       def ask_title(current)
         title('TITLE', right)
-        prompt('title', hint: "Up to #{PostService::MAX_TITLE} characters. Return alone or Stop: back.", text: current,
-                        max: PostService::MAX_TITLE)
+        prompt(
+          'title',
+          hint: "Up to #{PostService::MAX_TITLE} characters. Return alone or Stop: back.",
+          text: current,
+          max:  PostService::MAX_TITLE
+        )
       end
 
       # The summary in the editor, autosaved; the one before when the
@@ -203,6 +213,7 @@ module UI
         result = work.id ? posts.commit(work.id) : :not_saved
         result = posts.commit(work.id, force: true) if result == :conflict && overwrite?(work.original)
         return false if result == :conflict
+
         if result.is_a?(Symbol)
           alert(ERRORS.fetch(result, 'The post could not be saved.'))
           return false

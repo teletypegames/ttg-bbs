@@ -25,9 +25,17 @@ module UI
       # stand at the bottom.
       def full_menu(items, top:, hint:, back: nil, index: nil)
         about  = items.any?(&:about) ? 1 : 0
-        choice = BBS::Selector.new(session, items, width: cols - 1, height: footer_row - top + 1 - about - 1,
-                                                   fill: true, index: index, hint: hint, back: back,
-                                                   colors: FULL).run
+        choice = BBS::Selector.new(
+          session,
+          items,
+          width:  cols - 1,
+          height: footer_row - top + 1 - about - 1,
+          fill:   true,
+          index:  index,
+          hint:   hint,
+          back:   back,
+          colors: FULL
+        ).run
         @at = [rows, 1]
         choice
       end
@@ -40,9 +48,17 @@ module UI
         label ||= :to_s.to_proc
         title(heading, right)
         hint   = ['crsr/number  return: open', *item_commands.map { |k, v| "#{k}: #{v}" }, 'q: back'].join('  ')
-        choice = BBS::Selector.list(session, items, width: cols - 1, height: footer_row - 2, fill: true,
-                                                    hint: hint, colors: FULL, exits: { 'q' => nil },
-                                                    item_exits: item_commands.keys.to_h { |k| [k, k] }) do |item|
+        choice = BBS::Selector.list(
+          session,
+          items,
+          width:      cols - 1,
+          height:     footer_row - 2,
+          fill:       true,
+          hint:       hint,
+          colors:     FULL,
+          exits:      { 'q' => nil },
+          item_exits: item_commands.keys.to_h { |k| [k, k] }
+        ) do |item|
           plain(label.call(item))
         end
         @at = [rows, 1]

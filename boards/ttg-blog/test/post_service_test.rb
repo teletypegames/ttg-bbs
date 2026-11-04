@@ -7,8 +7,11 @@ class PostServiceTest < Minitest::Test
   include TestHelper
 
   def test_control_characters_never_reach_the_database
-    post = blog.posts.create(author: editor, **draft(title: "Hi\e[2J‮there\n", summary: "a\rb\u0085",
-                                                     body: "one\n\e]0;x\atwo"))
+    post = blog.posts.create(author: editor, **draft(
+      title:   "Hi\e[2J‮there\n",
+      summary: "a\rb\u0085",
+      body:    "one\n\e]0;x\atwo"
+    ))
     assert_equal ['Hi[2Jthere', 'a b', "one\n]0;xtwo"], [post.title, post.summary, post.body]
   end
 

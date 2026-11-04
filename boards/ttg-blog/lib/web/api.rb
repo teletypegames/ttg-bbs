@@ -25,8 +25,12 @@ module Web
     def initialize(bbs, port:, host: '0.0.0.0')
       @bbs    = bbs
       @posts  = bbs.posts
-      @server = WEBrick::HTTPServer.new(BindAddress: host, Port: port, Logger: WEBrick::Log.new($stderr, WEBrick::Log::WARN),
-                                        AccessLog: [])
+      @server = WEBrick::HTTPServer.new(
+        BindAddress: host,
+        Port:        port,
+        Logger:      WEBrick::Log.new($stderr, WEBrick::Log::WARN),
+        AccessLog:   []
+      )
       @server.mount_proc('/') { |req, res| serve(req, res) }
     end
 
@@ -72,16 +76,31 @@ module Web
 
     def summary(post)
       category = @bbs.categories.find(post.category)
-      { id: post.id, slug: post.slug, title: post.title, summary: post.summary,
-        category: { id: category.id, name: category.name }, author: post.author, face: post.face,
-        published_at: post.published_at&.utc&.iso8601, created_at: post.created_at.utc.iso8601,
-        updated_at: post.updated_at.utc.iso8601, updated: post.updated? }
+      {
+        id:           post.id,
+        slug:         post.slug,
+        title:        post.title,
+        summary:      post.summary,
+        category:     { id: category.id, name: category.name },
+        author:       post.author,
+        face:         post.face,
+        published_at: post.published_at&.utc&.iso8601,
+        created_at:   post.created_at.utc.iso8601,
+        updated_at:   post.updated_at.utc.iso8601,
+        updated:      post.updated?
+      }
     end
 
     def full(post)
-      summary(post).merge(body: post.body, html: Api.html(post.body),
-                          screen: { cols: UI::Petscii::COLS, page: UI::Petscii::Screen::PAGE,
-                                    lines: UI::Petscii.post_screen(@bbs, post) })
+      summary(post).merge(
+        body:   post.body,
+        html:   Api.html(post.body),
+        screen: {
+          cols:  UI::Petscii::COLS,
+          page:  UI::Petscii::Screen::PAGE,
+          lines: UI::Petscii.post_screen(@bbs, post)
+        }
+      )
     end
   end
 end

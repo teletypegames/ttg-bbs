@@ -6,10 +6,7 @@ module UI
     # The limits on tries are the EditorService's, counted by the name and
     # by the caller, so a new call does not start over.
     module Account
-      LOGIN_ERRORS = {
-        busy:  'The board is busy. Try again in a moment.',
-        wrong: 'Wrong name or password.'
-      }.freeze
+      LOGIN_ERRORS = { busy: 'The board is busy. Try again in a moment.', wrong: 'Wrong name or password.' }.freeze
 
       PASSWORD_WORDING = Hash.new('The password could not be changed.').merge(
         ok:             'Password changed.',

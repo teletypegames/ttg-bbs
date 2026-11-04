@@ -78,9 +78,14 @@ class PostService
   # nil for a new post. The id of the draft; nil, logged, when it could not
   # be kept: the editing goes on.
   def autosave(id, author:, face:, original: nil, **fields)
-    kept = PostModel.save_draft(id, clean(**fields), original_id: original&.id, author_id: author.id,
-                                              face: PostModel::FACES.include?(face) ? face : 'modern',
-                                              base_updated_at: original && original.updated_at.utc.iso8601)
+    kept = PostModel.save_draft(
+      id,
+      clean(**fields),
+      original_id:     original&.id,
+      author_id:       author.id,
+      face:            PostModel::FACES.include?(face) ? face : 'modern',
+      base_updated_at: original && original.updated_at.utc.iso8601
+    )
     BBS.log('autosave', "post #{original.id} is gone") unless kept
     kept
   rescue Sequel::DatabaseError => e
@@ -114,8 +119,12 @@ class PostService
   # The draft as it is kept: no control characters, the title and the
   # summary on one line and trimmed.
   def clean(title:, summary:, body:, category:)
-    { title: BBS::Text.line(title), summary: BBS::Text.line(summary),
-      body: BBS::Text.clean(body), category: category.to_s }
+    {
+      title:    BBS::Text.line(title),
+      summary:  BBS::Text.line(summary),
+      body:     BBS::Text.clean(body),
+      category: category.to_s
+    }
   end
 
   def check(title:, summary:, body:, category:)

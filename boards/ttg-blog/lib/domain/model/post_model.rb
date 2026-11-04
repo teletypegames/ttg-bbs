@@ -30,7 +30,7 @@ class PostModel < BBS::Model
     # keeps only the published or the unpublished ones, nil keeps both.
     def newest(category: nil, limit: nil, published: nil)
       list = kept(with_author(body: false), category: category, published: published)
-             .order(Sequel.desc(Sequel[:posts][:created_at]), Sequel.desc(Sequel[:posts][:id]))
+        .order(Sequel.desc(Sequel[:posts][:created_at]), Sequel.desc(Sequel[:posts][:id]))
       (limit ? list.limit(Integer(limit)) : list).all
     end
 
@@ -46,8 +46,18 @@ class PostModel < BBS::Model
     def add(title:, summary:, body:, category:, face:, author_id:)
       now = stamp
       db.transaction(mode: :immediate) do
-        insert(slug: free_slug(slug_base(title, Time.iso8601(now))), title: title, summary: summary, body: body,
-               category: category, face: face, status: 'unpublished', author_id: author_id, created_at: now, updated_at: now)
+        insert(
+          slug:       free_slug(slug_base(title, Time.iso8601(now))),
+          title:      title,
+          summary:    summary,
+          body:       body,
+          category:   category,
+          face:       face,
+          status:     'unpublished',
+          author_id:  author_id,
+          created_at: now,
+          updated_at: now
+        )
       end
     end
 
@@ -66,8 +76,10 @@ class PostModel < BBS::Model
         next nil unless row
 
         first = published && row[:published_at].nil?
-        where(id: id.to_i).update(status: published ? 'published' : 'unpublished',
-                                  published_at: Sequel.function(:coalesce, :published_at, first ? stamp : nil))
+        where(id: id.to_i).update(
+          status:       published ? 'published' : 'unpublished',
+          published_at: Sequel.function(:coalesce, :published_at, first ? stamp : nil)
+        )
         first
       end
     end
@@ -84,7 +96,7 @@ class PostModel < BBS::Model
     # written first.
     def drafts(original_id)
       with_author.where(Sequel[:posts][:status] => 'draft', Sequel[:posts][:original_id] => original_id&.to_i)
-                 .order(Sequel.desc(Sequel[:posts][:updated_at]), Sequel.desc(Sequel[:posts][:id])).all
+        .order(Sequel.desc(Sequel[:posts][:updated_at]), Sequel.desc(Sequel[:posts][:id])).all
     end
 
     # Writes the fields into draft +id+; a new draft when +id+ is nil or the
@@ -98,8 +110,16 @@ class PostModel < BBS::Model
         next id.to_i if changed&.positive?
         next nil if original_id && posts(original_id).empty?
 
-        insert(**fields.slice(*FIELDS), face: face, status: 'draft', original_id: original_id&.to_i,
-                                        base_updated_at: base_updated_at, author_id: author_id, created_at: now, updated_at: now)
+        insert(
+          **fields.slice(*FIELDS),
+          face:            face,
+          status:          'draft',
+          original_id:     original_id&.to_i,
+          base_updated_at: base_updated_at,
+          author_id:       author_id,
+          created_at:      now,
+          updated_at:      now
+        )
       end
     end
 
@@ -125,8 +145,19 @@ class PostModel < BBS::Model
     # +author+ (a name) on +face+, published and dated now.
     def preview(fields, author:, face:)
       now = Time.now.iso8601
-      load(id: 0, slug: '', **fields.slice(*FIELDS), author: author, face: face, status: 'published', original_id: nil,
-           base_updated_at: nil, published_at: nil, created_at: now, updated_at: now)
+      load(
+        id:              0,
+        slug:            '',
+        **fields.slice(*FIELDS),
+        author:          author,
+        face:            face,
+        status:          'published',
+        original_id:     nil,
+        base_updated_at: nil,
+        published_at:    nil,
+        created_at:      now,
+        updated_at:      now
+      )
     end
 
     # The address of a post on the web: its date and its title, in plain
@@ -181,8 +212,13 @@ class PostModel < BBS::Model
 
     def commit_new(draft)
       now = stamp
-      where(id: draft.id).update(status: 'unpublished', slug: free_slug(slug_base(draft[:title], Time.iso8601(now))),
-                                 base_updated_at: nil, created_at: now, updated_at: now)
+      where(id: draft.id).update(
+        status:          'unpublished',
+        slug:            free_slug(slug_base(draft[:title], Time.iso8601(now))),
+        base_updated_at: nil,
+        created_at:      now,
+        updated_at:      now
+      )
       draft.id
     end
 

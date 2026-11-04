@@ -51,8 +51,10 @@ module UI
     def post_choice(post)
       flip = post.published? ? 'unpublish' : 'publish'
       qr   = post.published? ? "#{YE}C#{LG} qr  " : ''
-      choose("\r\n #{qr}#{YE}E#{LG} edit  #{YE}P#{LG} #{flip}  #{YE}D#{LG} delete  #{DG}return: back#{LG} ",
-             [*('c' if post.published?), 'e', 'p', 'd', 'q', :enter])
+      choose(
+        "\r\n #{qr}#{YE}E#{LG} edit  #{YE}P#{LG} #{flip}  #{YE}D#{LG} delete  #{DG}return: back#{LG} ",
+        [*('c' if post.published?), 'e', 'p', 'd', 'q', :enter]
+      )
     end
 
     # What a reader does after the last page of a post: c or q.
