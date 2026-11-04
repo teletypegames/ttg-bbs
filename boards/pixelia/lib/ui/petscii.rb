@@ -50,7 +50,7 @@ module UI
       rule
     end
 
-    main_menu do
+    main_menu(home: :masthead) do
       item('1', "the ansi gallery #{GR}16colo.rs#{LG}", 'the 16colo.rs archive, year by year') { gallery_years }
       item('2', -> { "the canvas #{GR}#{canvas.painters} painting now#{LG}" }, 'one picture, every caller paints on it') do
         Canvas.new(self).run
@@ -59,10 +59,5 @@ module UI
       item('h', 'help', 'how the board works') { page('PIXELIA BBS', HELP) }
       log_off 'hang up. see you!'
     end
-
-    # The main menu stands under the masthead, not under a title bar.
-    def home = show_masthead
-
-    def run = main_menu_loop
   end
 end

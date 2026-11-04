@@ -13,5 +13,6 @@ BBS.board 'Pixelia BBS', PixeliaBBS do
   preset  TTG::PRESET
   modern  UI::Modern::APP
   petscii UI::Petscii
+  goodbye color: UI::Petscii::PU
   on_session_end { |session, bbs| bbs.canvas.leave(session.session_id) }
 end

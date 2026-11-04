@@ -20,8 +20,7 @@ module UI
 
       def gallery_years
         title('16COLO.RS')
-        years = loading('reading the archive…') { gallery.years }
-        return alert(NO_ANSWER) unless years
+        years = loading('reading the archive…', failed: NO_ANSWER) { gallery.years }
 
         each_pick('16COLO.RS  ANSI ART BY YEAR', years, right: "#{years.size} years",
                                                        label: ->(y) { "#{y.year} #{GR}#{y.packs} packs#{LG}" }) do |year|
@@ -31,8 +30,7 @@ module UI
 
       def gallery_year(year)
         title("16COLO.RS #{year.year}")
-        packs = loading("reading #{year.packs} packs…") { gallery.packs(year) }
-        return alert(NO_ANSWER) unless packs
+        packs = loading("reading #{year.packs} packs…", failed: NO_ANSWER) { gallery.packs(year) }
 
         each_pick("16COLO.RS #{year.year}", packs, right: "#{packs.size} packs",
                                                    label: ->(p) { "#{p.name} #{GR}#{p.credits}#{LG}" }) do |pack|
@@ -42,8 +40,7 @@ module UI
 
       def gallery_pack(pack)
         title(pack.name)
-        files = loading('reading the pack…') { gallery.files(pack) }
-        return alert(NO_ANSWER) unless files
+        files = loading('reading the pack…', failed: NO_ANSWER) { gallery.files(pack) }
 
         each_pick(pack.name, files, empty: 'no text art in this pack.', right: "#{files.size} files",
                                     label: ->(f) { "#{f.name} #{GR}#{f.credits}#{LG}" }) do |file|

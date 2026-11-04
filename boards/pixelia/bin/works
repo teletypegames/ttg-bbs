@@ -9,7 +9,6 @@
 require 'bundler/setup'
 require_relative '../lib/domain'
 
-BBS.config.env_prefix = 'PIXELIA_BBS_'
 wall = PixeliaBBS.new.wall
 command, id = ARGV
 case command
