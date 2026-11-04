@@ -9,9 +9,12 @@ class SessionModel < Data.define(:session_id, :timestamp, :player_name, :code, :
   LIMITS = { player_name: Impostor::CodeGenerator::NAME_LEN, code: 12, feedback: 1000, email: 254 }.freeze
   EMAIL  = /\A[^@\s]+@[^@\s]+\.[^@\s]+\z/
   CODE   = /\A[[:alnum:]]{1,12}\z/
-  SHAPES = { player_name: ->(text) { Impostor.name?(text) }, code: ->(text) { text.match?(CODE) },
-             email: ->(text) { email?(text) } }.freeze
-  ANY    = ->(_) { true }
+  SHAPES = {
+    player_name: ->(text) { Impostor.name?(text) },
+    code:        ->(text) { text.match?(CODE) },
+    email:       ->(text) { email?(text) }
+  }.freeze
+  ANY = ->(_) { true }
 
   # The fields the board keeps of +raw+ (name => what was typed): cleaned,
   # trimmed and cut to LIMITS; an email that is not a valid address is left

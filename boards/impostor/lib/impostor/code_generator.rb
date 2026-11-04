@@ -6,15 +6,12 @@ module Impostor
     BASE36   = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     NAME_LEN = 3
 
-    SALTS = [
-      SALT % 36,
-      (SALT / 36) % 36,
-      (SALT / 1296) % 36
-    ].freeze
+    SALTS = [SALT % 36, (SALT / 36) % 36, (SALT / 1296) % 36].freeze
 
     def self.decrypt(encrypted_text)
       t = encrypted_text.to_s.upcase
       return '???' if t.length != NAME_LEN * 2
+
       result = +''
       NAME_LEN.times do |i|
         pair = decode_pair(t[i * 2, 2])
@@ -37,6 +34,7 @@ module Impostor
       d1 = BASE36.index(s[0].upcase)
       d2 = BASE36.index(s[1].upcase)
       return 0 if d1.nil? || d2.nil?
+
       (d1 * 36) + d2
     end
     private_class_method :decode_pair
