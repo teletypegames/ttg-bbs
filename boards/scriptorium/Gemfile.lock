@@ -1,15 +1,15 @@
 GIT
   remote: https://git.teletypegames.org/bbs/common.git
-  revision: 7101ba19a33337c239c9ec5235e654a7fd23a6b0
+  revision: 6004de1d13fe32cf0413d0df271d5e2eb81aef31
   specs:
-    ttg-common (0.3.0)
+    ttg-common (0.4.0)
       bbs (>= 2.2)
 
 GIT
   remote: https://git.teletypegames.org/engines/rubbs.git
-  revision: 0b8fc20e917fe0ddd9388270af56fd8a94b48e78
+  revision: a0cf807ee273e653230a0c24d8cf7772c8f21519
   specs:
-    bbs (2.3.0)
+    bbs (2.4.0)
       artii (~> 2.1)
       csv (~> 3.3)
       rqrcode_core (~> 2.1)

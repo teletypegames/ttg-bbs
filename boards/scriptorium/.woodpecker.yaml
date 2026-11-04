@@ -1,12 +1,16 @@
-# Every push is linted with RuboCop and runs the domain tests (rake test). A push to master that changes the server deploys it:
-# the stack runs in /srv/stacks/scriptorium-bbs on the server.
+# Written by `rake ttg:sync` from ttg-common (lib/ttg/board/woodpecker.yaml.erb): change it there.
 #
-# The deploy step only asks the server to deploy. Its key (secret deploy_ssh_key) is bound
-# on the server to one fixed command, `ci-deploy scriptorium-bbs` (infra/host-config), which
-# clones master from Gitea itself, checks compose.yaml against a policy (no privileged, no
-# extra capabilities or host namespaces, no docker socket, bind mounts only in the stack,
-# public port 2330 only), copies the server's files into the stack and runs docker compose
-# up -d --build there.
+# Every push is linted with RuboCop, runs the tests and rake bbs:check (rake), and compose.yaml is
+# checked. A push to master that changes the server deploys it: the stack runs in
+# /srv/stacks/scriptorium-bbs on the server.
+#
+# The deploy step only asks the server to deploy. Its key (secret deploy_ssh_key) is bound on the
+# server to one fixed command, `ci-deploy scriptorium-bbs` (infra/host-config), which clones master from
+# Gitea itself, checks compose.yaml against a policy (no privileged, no extra capabilities or host
+# namespaces, no docker socket, bind mounts only in the stack, public port 2330 only), copies the
+# server's files into the stack, runs docker compose up -d --build there and waits until the board
+# answers its health probe; data/ stays as it is. The old container stops in order: its callers are
+# told and get BBS_SHUTDOWN_SECONDS to leave.
 when:
   - event: [push, manual]
     branch: master
