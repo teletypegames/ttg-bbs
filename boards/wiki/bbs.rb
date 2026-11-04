@@ -25,6 +25,6 @@ BBS.board 'TTG Wiki BBS', WikiBBS, slug: 'wiki-bbs' do
     app UI::Modern::APP
   end
   petscii UI::Petscii
-  goodbye { |context| UI::Wording.goodbye(context) }
+  goodbye { |context, session| UI::Wording.goodbye(context, session) }
   idle(&:idle_seconds)
 end

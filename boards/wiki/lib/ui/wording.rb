@@ -15,15 +15,13 @@ module UI
                locked:       'Too many wrong passwords. Try again later.',
                wrong:        'Wrong password.' }.freeze
 
-    # The board's line on the goodbye screen: the time on line (when the face
-    # noted the call's start in +context+) and the wiki's address.
-    def self.goodbye(context)
+    # The board's line on the goodbye screen: the wiki's address, after the
+    # time on line on a C64.
+    def self.goodbye(context, session)
       web = "The wiki on the web: #{PUBLIC_HOST}."
-      return web unless (started = context[:call_started])
+      return web unless session.respond_to?(:petscii?) && session.petscii? && context[:started_at]
 
-      seconds = Time.now - started
-      minutes = (seconds / 60).to_i
-      "On line #{minutes.positive? ? "#{minutes}m" : "#{seconds.to_i}s"}. #{web}"
+      "On line #{BBS.duration(context[:started_at])}. #{web}"
     end
   end
 end

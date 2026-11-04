@@ -27,7 +27,6 @@ module UI
     end
 
     def run
-      context[:call_started] = Time.now
       show_masthead
       say('CRSR and RETURN, or the number, opens a page; Q goes back. Pages marked * are private.', color: GR)
       pause('return: enter the wiki')
