@@ -4,11 +4,10 @@ require 'fileutils'
 
 # Keeps the index fresh: when it is older than the TTL, #refresh downloads
 # the RFC Editor's rfc-index.xml and errata.json and the index of the IENs,
-# and imports them (IndexRepository#import). The errata and the IENs are
+# and imports them (IndexBuilder). The errata and the IENs are
 # extras: when they do not come, the RFCs are imported without them.
 class ImportService
-  def initialize(index:, editor:, index_file:, errata_file:, ttl:)
-    @index       = index
+  def initialize(editor:, index_file:, errata_file:, ttl:)
     @editor      = editor
     @index_file  = index_file
     @errata_file = errata_file
@@ -19,8 +18,8 @@ class ImportService
 
   # Whether the index is older than the TTL, or there is none to read.
   def stale?
-    at = @index.imported_at
-    at.nil? || !@index.ready? || Time.now - at > @ttl
+    at = RfcModel.imported_at
+    at.nil? || !RfcModel.ready? || Time.now - at > @ttl
   end
 
   # Downloads and imports the index when it is stale (or when +force+).
@@ -42,7 +41,7 @@ class ImportService
   def import
     started = Time.now
     @editor.download_index(@index_file)
-    n = @index.import(@index_file, errata: errata, iens: iens)
+    n = IndexBuilder.new.build(@index_file, errata: errata, iens: iens)
     BBS.log('index', format('imported, %<n>d RFCs in %<s>.1f s', n: n, s: Time.now - started))
     GC.start
     :updated

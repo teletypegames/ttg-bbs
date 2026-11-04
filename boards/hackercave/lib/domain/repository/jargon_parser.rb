@@ -13,6 +13,10 @@ class JargonParser
   THE_END = /\A#=+ THE JARGON FILE ENDS HERE/
   # The body of the File is indented by this much.
   MARGIN = 3
+  # An entry of the lexicon (JargonEntryModel's columns) and a part of the
+  # File that is not (JargonSectionModel's), as read.
+  Entry   = Data.define(:id, :headword, :pron, :paragraphs)
+  Section = Data.define(:id, :title, :paragraphs)
 
   attr_reader :entries, :sections
 
@@ -61,9 +65,9 @@ class JargonParser
     o = @open
     paragraphs = paragraphs(o[:lines], o[:kind] == :section)
     if o[:kind] == :entry
-      @entries << JargonEntryModel.new(id: @entries.size + 1, headword: o[:title], pron: o[:rest], paragraphs: paragraphs)
+      @entries << Entry.new(id: @entries.size + 1, headword: o[:title], pron: o[:rest], paragraphs: paragraphs)
     else
-      @sections << JargonSectionModel.new(id: @sections.size + 1, title: o[:title], paragraphs: paragraphs)
+      @sections << Section.new(id: @sections.size + 1, title: o[:title], paragraphs: paragraphs)
     end
     @open = nil
   end

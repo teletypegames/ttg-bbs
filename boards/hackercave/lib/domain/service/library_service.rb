@@ -24,19 +24,18 @@ class LibraryService
              'BCP' => 'Best Current Practices: how the Internet is run',
              'FYI' => 'For Your Information: the guides of the 1990s for newcomers' }.freeze
 
-  # [mirror] the MirrorService of the full-text search, or nil
-  def initialize(index:, shelves:, reads:, mirror: nil, clock: -> { Time.now })
-    @index   = index
+  # [shelves] the ShelvesRepository of the board's own shelves
+  # [mirror]  the MirrorService of the full-text search, or nil
+  def initialize(shelves:, mirror: nil, clock: -> { Time.now })
     @shelves = shelves
-    @reads   = reads
     @mirror  = mirror
     @clock   = clock
   end
 
-  def ready? = @index.ready?
+  def ready? = RfcModel.ready?
 
   # The number of RFCs in the index (0 before the first import).
-  def count = @index.count
+  def count = RfcModel.issued_count
 
   # The board's own shelves.
   def own_shelves
@@ -59,8 +58,8 @@ class LibraryService
   def entries_on(shelf)
     case shelf.kind
     when :curated then curated(@shelves[shelf.key])
-    when :series then @index.series(shelf.key).map { |label, rfc| EntryModel.of(rfc, label, :series) }
-    when :month then @index.of_month(shelf.key, limit: SHELF_LIMIT).map { |rfc| EntryModel.of(rfc, rfc.year, :year) }
+    when :series then SeriesModel.rfcs(shelf.key).map { |label, rfc| EntryModel.of(rfc, label, :series) }
+    when :month then RfcModel.of_month(shelf.key, limit: SHELF_LIMIT).map { |rfc| EntryModel.of(rfc, rfc.year, :year) }
     else shelf_rfcs(shelf).map { |rfc| EntryModel.of(rfc) }
     end
   end
@@ -77,39 +76,39 @@ class LibraryService
     if (m = /\A\s*(?:rfc\s*)?(\d{1,5})\s*\z/i.match(query)) then by_number(m[1].to_i)
     elsif (m = /\A\s*ien\s*(\d{1,3})\s*\z/i.match(query)) then by_number(-m[1].to_i)
     elsif (m = /\A\s*(std|bcp|fyi)\s*(\d{1,4})\s*\z/i.match(query))
-      @index.series_members(m[1].upcase, m[2]).map { |rfc| EntryModel.of(rfc, "#{m[1].upcase} #{m[2].to_i}", :series) }
+      SeriesModel.members_of(m[1].upcase, m[2]).map { |rfc| EntryModel.of(rfc, "#{m[1].upcase} #{m[2].to_i}", :series) }
     else by_words(query)
     end
   end
 
   # The index's record of RFC +number+, or nil.
-  def rfc(number) = @index.rfc(number)
+  def rfc(number) = RfcModel.rfc(number)
 
   # The RFCs +rfc+ is related to, as EntryModels with the relation as the
   # note ("obsoleted by").
-  def links(rfc) = @index.relations(rfc.number).map { |kind, other| EntryModel.of(other, kind, :relation) }
+  def links(rfc) = RelationModel.of(rfc.number).map { |kind, other| EntryModel.of(other, kind, :relation) }
 
   # The relations of +rfc+ by kind: { 'obsoleted by' => [9293], … }.
-  def relations(rfc) = @index.relations(rfc.number).group_by(&:first).transform_values { |l| l.map { |_, r| r.number } }
+  def relations(rfc) = RelationModel.of(rfc.number).group_by(&:first).transform_values { |l| l.map { |_, r| r.number } }
 
   # The RFCs and IENs of +mentions+ ([number, line index], ReadingService#mentions)
   # that the index has, each with the line it is first named on as the note
   # (:line, from 1).
   def mentioned(mentions)
-    by_number = @index.rfcs(mentions.map(&:first)).to_h { |r| [r.number, r] }
+    by_number = RfcModel.rfcs(mentions.map(&:first)).to_h { |r| [r.number, r] }
     mentions.filter_map { |number, line| (rfc = by_number[number]) && EntryModel.of(rfc, line + 1, :line) }
   end
 
   # The series +rfc+ stands for: ["STD 7"].
-  def series_of(rfc) = @index.series_of(rfc.number)
+  def series_of(rfc) = SeriesModel.of(rfc.number)
 
-  def reads(rfc) = @reads.count(rfc.number)
+  def reads(rfc) = ReadModel.count_of(rfc.number)
 
   # The errata of +rfc+ (ErratumModel), the verified ones first.
-  def errata(rfc) = @index.errata(rfc.number)
+  def errata(rfc) = ErratumModel.of(rfc.number)
 
   # How many errata +rfc+ has: { total: 5, verified: 3 }.
-  def errata_count(rfc) = @index.errata_count(rfc.number)
+  def errata_count(rfc) = ErratumModel.counts(rfc.number)
 
   # Whether the full text of every RFC can be searched (the mirror is
   # indexed).
@@ -125,15 +124,15 @@ class LibraryService
     return :too_short if words.empty?
 
     hits = @mirror.search(words, limit: SEARCH_LIMIT)
-    by_number = @index.rfcs(hits.map(&:first)).to_h { |r| [r.number, r] }
+    by_number = RfcModel.rfcs(hits.map(&:first)).to_h { |r| [r.number, r] }
     hits.filter_map { |number, line| (rfc = by_number[number]) && EntryModel.of(rfc, line, :match) }
   end
 
   # The +n+ RFCs most read on this board, with the number of reads as the
   # note.
   def most_read(n = 20)
-    top = @reads.top(n)
-    by_number = @index.rfcs(top.map(&:first)).to_h { |r| [r.number, r] }
+    top = ReadModel.top(n)
+    by_number = RfcModel.rfcs(top.map(&:first)).to_h { |r| [r.number, r] }
     top.filter_map { |number, count| (rfc = by_number[number]) && EntryModel.of(rfc, count, :reads) }
   end
 
@@ -142,34 +141,34 @@ class LibraryService
   def curated(shelf)
     return [] unless shelf
 
-    known = ready? ? @index.rfcs(shelf.entries.map(&:first)).to_h { |r| [r.number, r] } : {}
+    known = ready? ? RfcModel.rfcs(shelf.entries.map(&:first)).to_h { |r| [r.number, r] } : {}
     shelf.entries.map { |number, title, note| EntryModel.of(known[number] || RfcModel.stub(number, title), note, :remark) }
   end
 
   def shelf_rfcs(shelf)
     case shelf.kind
-    when :status then @index.with_status(shelf.key, limit: SHELF_LIMIT)
-    when :decade then @index.of_decade(shelf.key, limit: SHELF_LIMIT)
-    when :ien then @index.iens
-    else @index.newest(NEWEST)
+    when :status then RfcModel.with_status(shelf.key, limit: SHELF_LIMIT)
+    when :decade then RfcModel.of_decade(shelf.key, limit: SHELF_LIMIT)
+    when :ien then RfcModel.iens
+    else RfcModel.newest(NEWEST)
     end
   end
 
   def series_shelves
     SERIES.map do |kind, about|
-      ShelfModel.new(kind: :series, key: kind, name: kind, about: about, count: @index.series(kind).size)
+      ShelfModel.new(kind: :series, key: kind, name: kind, about: about, count: SeriesModel.rfcs(kind).size)
     end
   end
 
   def status_shelves
-    @index.statuses.map do |status, n|
+    RfcModel.statuses.map do |status, n|
       ShelfModel.new(kind: :status, key: status, name: RfcModel.status_label(status), about: "Status: #{status.downcase}.",
                      count: n)
     end
   end
 
   def decade_shelves
-    @index.decades.map do |decade, n|
+    RfcModel.decades.map do |decade, n|
       ShelfModel.new(kind: :decade, key: decade, name: "#{decade}s", about: "The RFCs of #{decade}-#{decade + 9}.", count: n)
     end
   end
@@ -178,16 +177,16 @@ class LibraryService
     month = @clock.call.month
     name = Date::MONTHNAMES[month]
     ShelfModel.new(kind: :month, key: month, name: "This month: #{name}",
-                   about: "The RFCs published in a #{name}, from the first one on.", count: @index.month_count(month))
+                   about: "The RFCs published in a #{name}, from the first one on.", count: RfcModel.month_count(month))
   end
 
   def ien_shelf
-    ShelfModel.new(kind: :ien, key: nil, name: 'IENs', count: @index.iens.size,
+    ShelfModel.new(kind: :ien, key: nil, name: 'IENs', count: RfcModel.iens.size,
                    about: 'The Internet Experiment Notes of 1977-1982, the working papers of TCP/IP before the RFCs took over.')
   end
 
   def by_number(number)
-    rfc = @index.rfc(number)
+    rfc = RfcModel.rfc(number)
     return [:unknown, number] unless rfc
     return [:not_issued, number] unless rfc.issued?
 
@@ -200,6 +199,6 @@ class LibraryService
     words  = query.gsub(/(?:\A|\s)(?:status|year):\S*/i, ' ').scan(/[\p{L}\p{N}]+/).select { |w| w.length >= MIN_WORD }
     return :too_short if words.empty? && status.nil? && year.nil?
 
-    @index.search(words.first(MAX_WORDS), status: status, year: year, limit: SEARCH_LIMIT).map { |rfc| EntryModel.of(rfc) }
+    RfcModel.search(words.first(MAX_WORDS), status: status, year: year, limit: SEARCH_LIMIT).map { |rfc| EntryModel.of(rfc) }
   end
 end

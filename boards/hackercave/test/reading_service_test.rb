@@ -23,8 +23,7 @@ class ReadingServiceTest < Minitest::Test
     super
     @editor  = FakeEditor.new
     @texts   = TextRepository.new(path('rfc'))
-    @reads   = ReadRepository.new(database)
-    @reading = ReadingService.new(texts: @texts, editor: @editor, reads: @reads, reflow: ReflowService.new)
+    @reading = ReadingService.new(texts: @texts, editor: @editor, reflow: ReflowService.new)
   end
 
   def test_an_rfc_is_fetched_once_kept_on_disk_and_counted_once_a_call
@@ -35,7 +34,7 @@ class ReadingServiceTest < Minitest::Test
     assert File.exist?(path('rfc/rfc854.txt'))
     @reading.open(RfcModel.stub(854), seen: seen)
     assert_equal 1, @editor.fetches
-    assert_equal 1, @reads.count(854)
+    assert_equal 1, ReadModel.count_of(854)
   end
 
   def test_a_text_on_disk_is_not_fetched

@@ -73,8 +73,9 @@ SQLite has no FTS5). The import runs in a background thread (rubbs'
 `BBS.background`) at start when there is no index or it is older than
 `HACKERCAVE_BBS_INDEX_TTL` days (one), and the thread looks again every hour;
 a failed import is logged and tried again after five minutes, then less and
-less often. It builds a new database next to the old one and swaps it in, so
-callers keep reading meanwhile. It takes about 7 seconds.
+less often. It builds the tables anew in one transaction (`RfcModel.rebuild`),
+so callers keep reading the old index meanwhile (WAL), and a failed import
+leaves it as it was. It takes about 7 seconds.
 
 ### The Jargon File
 
@@ -190,25 +191,25 @@ config/shelves.yml          the board's own shelves: Classics, Telnet, April 1st
 config/jargon/jarg447.txt   the Jargon File 4.4.7 (public domain)
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
-  model/rfc_model.rb        an RFC of the index: title, authors, date, status
+  migrations.rb             the schemas of the four SQLite files (BBS::Database), the index's and the Jargon File's
+  model/rfc_model.rb        an RFC of the index (rfcs): search, shelves (status, decade, month, newest, IENs), rebuild
+  model/relation_model.rb   how RFCs are related (relations): obsoletes, updates, see also
+  model/series_model.rb     the STD, BCP and FYI series (series)
+  model/erratum_model.rb    an erratum of an RFC (errata)
+  model/read_model.rb       a read (reads of data/hackercave.sqlite3) and the counts
+  model/doc_model.rb        a text in the full-text index (docs and text_fts of data/fulltext.sqlite3)
+  model/jargon_entry_model.rb, jargon_section_model.rb, jargon_meta_model.rb   the Jargon File (data/jargon.sqlite3)
   model/entry_model.rb      an RFC on a list, with a note (remark, series, relation, reads)
   model/shelf_model.rb      a shelf: own, series, status, decade, newest
   model/document_model.rb   an RFC's text in lines, and where its pages start
-  model/erratum_model.rb    an erratum of an RFC
-  model/jargon_entry_model.rb, jargon_section_model.rb   the Jargon File's entries and parts
   repository/index_parser.rb          rfc-index.xml read as a stream
-  repository/index_builder.rb         a new index database from rfc-index.xml
-  repository/index_repository.rb      the index in SQLite: search, relations, series, swap
-  repository/index_shelves.rb         its shelves: status, decade, month, newest, IENs
-  repository/index_errata.rb          its errata
+  repository/index_builder.rb         the index built anew from rfc-index.xml, through the models
   repository/ien_index.rb             ien-index.txt: the IENs' numbers, authors, dates, titles
   repository/rfc_editor_repository.rb the RFC Editor over BBS::HTTP: the index, a text
   repository/text_repository.rb       data/rfc: the texts as published
-  repository/fulltext_repository.rb   data/fulltext.sqlite3: the full-text index of the texts
   repository/jargon_parser.rb         jarg447.txt read into entries and sections
-  repository/jargon_repository.rb     data/jargon.sqlite3: built from it, searched
+  repository/jargon_file_repository.rb  config/jargon/jarg447.txt: its digest, parsed
   repository/shelves_repository.rb    config/shelves.yml
-  repository/read_repository.rb       the reads table of data/hackercave.sqlite3 and the counts
   service/library_service.rb          shelves, search, links, errata, most read
   service/import_service.rb           the daily import: index, errata, IENs
   service/mirror_service.rb           the rsync mirror and the text search

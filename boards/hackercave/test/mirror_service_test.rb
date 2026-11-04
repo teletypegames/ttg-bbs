@@ -31,8 +31,8 @@ class MirrorServiceTest < Minitest::Test
   def setup
     super
     @rsync = FakeRsync.new
-    @mirror = MirrorService.new(texts: TextRepository.new(path('rfc')), fulltext: FulltextRepository.new(path('ft.sqlite3')),
-                                index: index, editor: FakeEditor.new, ttl: 86_400, rsync: @rsync)
+    index
+    @mirror = MirrorService.new(texts: TextRepository.new(path('rfc')), editor: FakeEditor.new, ttl: 86_400, rsync: @rsync)
   end
 
   def test_a_sync_indexes_the_texts_and_the_iens

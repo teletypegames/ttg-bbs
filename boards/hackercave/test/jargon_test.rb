@@ -6,8 +6,8 @@ class JargonTest < Minitest::Test
   include TempDir
 
   def jargon(clock: -> { Time.new(2026, 11, 3) })
-    repo = JargonRepository.new(path('jargon.sqlite3'), source: fixture('jargon.txt'))
-    JargonService.new(repository: repo, clock: clock, random: Random.new(1)).tap(&:prepare)
+    JargonService.new(file: JargonFileRepository.new(fixture('jargon.txt')), clock: clock, random: Random.new(1))
+                 .tap(&:prepare)
   end
 
   def test_the_entries_by_letter
@@ -43,5 +43,15 @@ titles
     assert_equal jargon.word_of_the_day, jargon(clock: -> { Time.new(2026, 11, 3, 23, 59) }).word_of_the_day
     assert_equal :fresh, jargon.prepare
     assert jargon.random
+  end
+
+  def test_a_new_file_is_built_in_place_of_the_old
+    jargon
+    File.write(path('jargon.txt'), File.binread(fixture('jargon.txt')).sub(':kluge:', ':kludge:'))
+    j = JargonService.new(file: JargonFileRepository.new(path('jargon.txt')))
+    assert_equal :built, j.prepare
+    assert_equal ['kludge'], j.letter('K').map(&:headword)
+    assert_equal 3, j.count
+    assert_equal 3, j.sections.size
   end
 end

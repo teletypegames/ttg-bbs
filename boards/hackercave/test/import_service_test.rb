@@ -31,9 +31,7 @@ class ImportServiceTest < Minitest::Test
   end
 
   def import(editor)
-    @index = IndexRepository.new(path('index.sqlite3'))
-    ImportService.new(index: @index, editor: editor, index_file: path('rfc-index.xml'),
-                      errata_file: path('errata.json'), ttl: 86_400)
+    ImportService.new(editor: editor, index_file: path('rfc-index.xml'), errata_file: path('errata.json'), ttl: 86_400)
   end
 
   def test_refresh_imports_once_until_stale
@@ -44,25 +42,29 @@ class ImportServiceTest < Minitest::Test
     assert_equal 1, editor.downloads
     refute File.exist?(path('rfc-index.xml'))
     refute File.exist?(path('errata.json'))
-    assert_equal 2, @index.errata_count(793)[:total]
-    assert_equal 4, @index.iens.size
+    assert_equal 2, ErratumModel.counts(793)[:total]
+    assert_equal 4, RfcModel.iens.size
   end
 
   def test_an_index_of_an_older_board_is_imported_anew
-    db = SQLite3::Database.new(path('index.sqlite3'))
-    db.execute('CREATE TABLE rfcs (number INTEGER PRIMARY KEY, title TEXT, issued INTEGER)')
-    db.close
+    db = Sequel.sqlite(path('old-index.sqlite3'))
+    db.run('CREATE TABLE rfcs (number INTEGER PRIMARY KEY, title TEXT, issued INTEGER)')
+    db[:rfcs].insert(number: 1, title: 'Host Software', issued: 1)
+    close_database(db)
+    old = open_database('old-index.sqlite3', INDEX_MIGRATIONS, name: :index)
     service = import(FakeEditor.new)
-    refute @index.ready?
+    refute RfcModel.ready?
     assert service.stale?
     assert_equal :updated, service.refresh
-    assert @index.ready?
+    assert RfcModel.ready?
+  ensure
+    close_database(old) if old
   end
 
   def test_the_rfcs_come_without_the_errata
     service = import(FakeEditor.new(errata: false))
     assert_equal :updated, service.refresh
-    assert_equal 7, @index.count
-    assert_equal 0, @index.errata_count(793)[:total]
+    assert_equal 7, RfcModel.issued_count
+    assert_equal 0, ErratumModel.counts(793)[:total]
   end
 end

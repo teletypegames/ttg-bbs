@@ -12,35 +12,45 @@ class JargonService
   SEARCH_LIMIT = 100
   MIN_WORD     = 2
 
-  def initialize(repository:, clock: -> { Time.now }, random: Random.new)
-    @repository = repository
-    @clock      = clock
-    @random     = random
+  # [file] the JargonFileRepository of the File
+  def initialize(file:, clock: -> { Time.now }, random: Random.new)
+    @file   = file
+    @clock  = clock
+    @random = random
   end
 
-  # Builds the database from the File when it changed; :built or :fresh.
-  def prepare = @repository.prepare
+  # Builds the database from the File when the File changed (or the
+  # database is new); :built or :fresh.
+  def prepare
+    digest = @file.digest
+    return :fresh if JargonMetaModel.source == digest
+
+    parsed = @file.parse
+    JargonEntryModel.rebuild(parsed.entries, parsed.sections, digest)
+    BBS.log('jargon', "built: #{parsed.entries.size} entries, #{parsed.sections.size} sections")
+    :built
+  end
 
   def ready? = count.positive?
 
-  def count = @repository.count
+  def count = JargonEntryModel.total
 
   # [letter, entries]: ["0", 12], ["A", 160], …
-  def letters = @repository.letters
+  def letters = JargonEntryModel.letters
 
-  def letter(letter) = @repository.letter(letter)
+  def letter(letter) = JargonEntryModel.letter(letter)
 
-  def entry(id) = @repository.entry(id)
+  def entry(id) = JargonEntryModel.entry(id)
 
   # The entries +entry+ links to that the lexicon has.
-  def links(entry) = @repository.by_headwords(entry.links)
+  def links(entry) = JargonEntryModel.by_headwords(entry.links)
 
   # The entries of +query+'s words, or :too_short.
   def search(query)
     words = query.scan(/[\p{L}\p{N}]+/).select { |w| w.length >= MIN_WORD }.first(6)
     return :too_short if words.empty?
 
-    @repository.search(words, limit: SEARCH_LIMIT)
+    JargonEntryModel.search(words, limit: SEARCH_LIMIT)
   end
 
   # The entry of today: the same for everyone on a day.
@@ -54,5 +64,5 @@ class JargonService
     n.zero? ? nil : entry(@random.rand(n) + 1)
   end
 
-  def sections = @repository.sections
+  def sections = JargonSectionModel.in_order
 end

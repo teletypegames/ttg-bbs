@@ -14,9 +14,9 @@ class LibraryServiceTest < Minitest::Test
     end
   end
 
-  def library(index_repo: IndexRepository.new(path('index.sqlite3')), mirror: nil)
-    LibraryService.new(index: index_repo, shelves: ShelvesRepository.new(File.expand_path('../config/shelves.yml', __dir__)),
-                       reads: ReadRepository.new(database), mirror: mirror, clock: -> { Time.new(2026, 4, 1) })
+  def library(mirror: nil)
+    LibraryService.new(shelves: ShelvesRepository.new(File.expand_path('../config/shelves.yml', __dir__)), mirror: mirror,
+                       clock: -> { Time.new(2026, 4, 1) })
   end
 
   def test_before_the_index_only_the_own_shelves_stand
@@ -29,7 +29,8 @@ class LibraryServiceTest < Minitest::Test
   end
 
   def test_the_shelves_of_the_index
-    lib = library(index_repo: index)
+    index
+    lib = library
     names = lib.shelves.map(&:name)
     assert_includes names, 'STD'
     assert_includes names, 'This month: April'
@@ -40,7 +41,8 @@ class LibraryServiceTest < Minitest::Test
   end
 
   def test_search_by_number
-    lib = library(index_repo: index)
+    index
+    lib = library
     assert_equal [854], lib.search('854').map(&:number)
     assert_equal [854], lib.search('RFC 854').map(&:number)
     assert_equal [-137], lib.search('ien 137').map(&:number)
@@ -49,7 +51,8 @@ class LibraryServiceTest < Minitest::Test
   end
 
   def test_search_by_series_and_words
-    lib = library(index_repo: index)
+    index
+    lib = library
     assert_equal([[9293, 'STD 7']], lib.search('std 7').map { |e| [e.number, e.note] })
     assert_equal [2549], lib.search('avian year:1999').map(&:number)
     assert_equal [793, 854, 9293].sort, lib.search('status:standard').map(&:number).sort
@@ -57,8 +60,9 @@ class LibraryServiceTest < Minitest::Test
   end
 
   def test_search_the_text
-    assert_equal :preparing, library(index_repo: index).search_text('avian')
-    lib = library(index_repo: index, mirror: FakeMirror.new)
+    index
+    assert_equal :preparing, library.search_text('avian')
+    lib = library(mirror: FakeMirror.new)
     assert lib.text_search?
     assert_equal([[1149, 'IP datagrams on avian carriers', :match]], lib.search_text('avian').map { |e|
       [e.number, e.note, e.kind]
@@ -67,7 +71,8 @@ class LibraryServiceTest < Minitest::Test
   end
 
   def test_links_relations_errata_and_mentions
-    lib = library(index_repo: index)
+    index
+    lib = library
     rfc = lib.rfc(793)
     assert_equal({ 'obsoleted by' => [9293] }, lib.relations(rfc))
     assert_equal([['obsoleted by', 9293]], lib.links(rfc).map { |e| [e.note, e.number] })
@@ -76,10 +81,12 @@ class LibraryServiceTest < Minitest::Test
   end
 
   def test_most_read_counts_reads
-    lib = library(index_repo: index)
-    reads = ReadRepository.new(database)
-    2.times { reads.add(854) }
-    reads.add(793)
+    index
+    lib = library
+    2.times { ReadModel.add(854) }
+    ReadModel.add(793)
+    ReadModel.add(99_999)
     assert_equal([[854, 2], [793, 1]], lib.most_read.map { |e| [e.number, e.note] })
+    assert_equal 2, lib.reads(RfcModel.rfc(854))
   end
 end

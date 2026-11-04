@@ -5,7 +5,7 @@ require 'open3'
 # The full text of every RFC: #refresh mirrors the RFC Editor's
 # rfcs-text-only rsync module into the text folder (TextRepository, so the
 # reader finds the texts there too), fetches the IENs that are plain text,
-# and indexes whatever is new or changed (FulltextRepository), one text at a
+# and indexes whatever is new or changed (DocModel), one text at a
 # time so memory stays flat. #search finds the RFCs that have the words, and
 # the first line of each that has the first word. Runs in a BBS.background
 # thread once a day; the first run takes a while (about 540 MB).
@@ -18,16 +18,12 @@ class MirrorService
   # Texts indexed between two garbage collections: the heap stays small.
   GC_EVERY = 200
 
-  # [texts]    the TextRepository the mirror fills
-  # [fulltext] the FulltextRepository
-  # [index]    the IndexRepository (which IENs are text)
-  # [editor]   the RfcEditorRepository (the IEN texts)
-  # [ttl]      seconds between two syncs
-  # [rsync]    a callable that runs rsync with its arguments; true when it succeeded
-  def initialize(texts:, fulltext:, index:, editor:, ttl:, source: SOURCE, rsync: nil)
+  # [texts]  the TextRepository the mirror fills
+  # [editor] the RfcEditorRepository (the IEN texts)
+  # [ttl]    seconds between two syncs
+  # [rsync]  a callable that runs rsync with its arguments; true when it succeeded
+  def initialize(texts:, editor:, ttl:, source: SOURCE, rsync: nil)
     @texts    = texts
-    @fulltext = fulltext
-    @index    = index
     @editor   = editor
     @ttl      = ttl
     @source   = source
@@ -35,10 +31,10 @@ class MirrorService
     @synced   = nil
   end
 
-  def ready? = @fulltext.ready?
+  def ready? = count.positive?
 
   # How many texts are indexed.
-  def count = @fulltext.count
+  def count = DocModel.indexed
 
   # Syncs and indexes when the last sync is older than the TTL (or with
   # +force+). Returns the number of texts indexed now, or :fresh.
@@ -57,7 +53,7 @@ class MirrorService
   # The RFCs whose text has every word of +words+ as [number, line]: the
   # first line that has the first word, trimmed.
   def search(words, limit:)
-    @fulltext.search(words, limit: limit).map { |number| [number, line_with(number, words.first)] }
+    DocModel.search(words, limit: limit).map { |number| [number, line_with(number, words.first)] }
   end
 
   private
@@ -76,7 +72,7 @@ class MirrorService
 
   # The IENs the RFC Editor has as text and the folder has not.
   def fetch_iens
-    @index.iens.select(&:text?).reject { |ien| @texts.exist?(ien.number) }.each do |ien|
+    RfcModel.iens.select(&:text?).reject { |ien| @texts.exist?(ien.number) }.each do |ien|
       @texts.store(ien.number, @editor.text(ien.number))
     rescue BBS::HTTP::Error => e
       BBS.log('mirror', "#{ien.name}: #{e.message}")
@@ -86,11 +82,11 @@ class MirrorService
   # Indexes the texts whose size or mtime changed since they were indexed;
   # their number.
   def index_changed
-    known = @fulltext.stats
+    known = DocModel.stats
     changed = @texts.stats.reject { |number, stat| known[number] == stat }
     changed.each_with_index do |(number, (size, mtime)), i|
       body = @texts.read(number) or next
-      @fulltext.put(number, body, size: size, mtime: mtime)
+      DocModel.put(number, body, size: size, mtime: mtime)
       GC.start if (i % GC_EVERY).zero?
     end
     changed.size

@@ -15,10 +15,9 @@ class ReadingService
   # Seconds a parsed RFC is kept in memory.
   KEEP = 900
 
-  def initialize(texts:, editor:, reads:, reflow:)
+  def initialize(texts:, editor:, reflow:)
     @texts     = texts
     @editor    = editor
-    @reads     = reads
     @reflow    = reflow
     @documents = BBS::Cache.new(ttl: KEEP, max_entries: 24)
     @flowed    = BBS::Cache.new(ttl: KEEP, max_entries: 24)
@@ -69,7 +68,7 @@ class ReadingService
     return unless seen && !seen.include?(number)
 
     seen << number
-    @reads.add(number)
+    ReadModel.add(number)
   end
 
   def load(number)
