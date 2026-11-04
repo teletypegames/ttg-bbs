@@ -10,12 +10,15 @@ class TTGGateBBS
 
   path     :boards,       'config/boards.yml'
   path     :accounts_db,  'data/accounts.sqlite3'
+  path     :accounts_metrics, 'data/accounts-metrics.prom'
   setting  :gateway_host, 'host.docker.internal'
   setting  :public_host,  'teletypegames.org'
   setting  :auth_port,    TTG::Auth::PORT
   database :accounts_db, BBS::Auth::MIGRATIONS, name: :auth
 
   service(:accounts) { BBS::Auth::Directory.new(store: databases[:auth], roles: TTG::Auth::NEW) }
+
+  background('accounts metrics', every: 120) { AccountsMetrics.new(accounts, accounts_metrics).write }
 
   service(:directory) { DirectoryService.new(BoardRepository.new(boards, host: gateway_host, public_host: public_host)) }
   service(:browse)    { discovery&.browse }
