@@ -1,0 +1,50 @@
+size: [22, 13]
+charset: petscii-upper
+palette:
+  G: light_green
+  L: light_grey
+  W: white
+  g: green
+  l: grey
+chars: |2
+  ███████▐██████ ▘██████
+  ███████▐█████▗▐██████▄
+  ▖██████▐█████▌███▀▀▖▖▘
+   ▚▖██▀▀▝▀███▀▘██▌     
+   ▝▐██▀▘  ███▀▘██▌ ███▖
+    ▐██    ███  ██▌ ████
+    ▐██    ███  ██▌ ████
+    ▐██    ███  ██▌  ▐██
+    ▐██    ███  ██▝  ▘██
+    ▐██    ███  ▀███████
+    ▐██    ███   ▖█████▚
+                        
+  ▐█████▝▘████▝▄▘██████▌
+colors: |2
+  GGGGGGGGGGGGGG.gGGGGGG
+  gggggggggggggggggggggg
+  gggggggggggggggggggggg
+  .gggggggggggggggg.....
+  .gggggg..gggggggg.gggg
+  ..ggg....ggg..ggg.gggg
+  ..WWW....WWW..WWW.WWWW
+  ..LLL....LLL..LLL..LLL
+  ..LLL....LLL..LLL..LLL
+  ..LLL....LLL..LLLLLLLL
+  ..lll....lll...lllllll
+  ......................
+  gggggggggggggggggggggg
+reverse: |2
+  ...............R......
+  .............R........
+  ...................RR.
+  .RR...................
+  ......................
+  ......................
+  ......................
+  ......................
+  ................R..R..
+  ......................
+  ...............R......
+  ......................
+  ......RR....R.R.......
