@@ -15,8 +15,9 @@ module UI
         field :from, label: 'Your name', max_length: InboxService::MAX_FIELD, placeholder: 'optional'
         field :note, type: :textarea, rows: 4, max_length: InboxService::MAX_TEXT
         submit_label '&Send'
-        errors no_url: 'The address of the feed, please.', bad_url: 'That is not an http:// or https:// address.',
-               failed: 'The message could not be saved. Try again later.'
+        errors no_url:  'The address of the feed, please.',
+               bad_url: 'That is not an http:// or https:// address.',
+               failed:  'The message could not be saved. Try again later.'
         on_submit { |values| answer(inbox.suggest(caller: caller_key, **values)) }
       end
     end

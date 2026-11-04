@@ -6,23 +6,30 @@ module UI
     # a story's QR code, the messages to the admins.
     module Helpers
       NO_TEXT = '*(no text in the feed)*'
-      ANSWERS = { ok: 'Sent to the admins. Thank you!',
-                  limited: 'That is all the messages the admins can take for now. Thank you!' }.freeze
+      ANSWERS = {
+        ok:      'Sent to the admins. Thank you!',
+        limited: 'That is all the messages the admins can take for now. Thank you!'
+      }.freeze
 
       def feed_list = show(:feeds)
 
       def open_feed(feed)
-        channel = loading("Fetching #{feed.name}…",
-                          failed: "#{feed.name} did not answer, or what it sent is not a feed. Try again later.",
-                          title: 'Feed') do
+        channel = loading(
+          "Fetching #{feed.name}…",
+          failed: "#{feed.name} did not answer, or what it sent is not a feed. Try again later.",
+          title:  'Feed'
+        ) do
           feeds.read(feed)
         end
         show(:channel, channel: channel)
       end
 
       def reload(window, channel)
-        fresh = loading("Fetching #{channel.feed.name}…", failed: "#{channel.feed.name} did not answer. Try again later.",
-                                                          title: 'Reload') do
+        fresh = loading(
+          "Fetching #{channel.feed.name}…",
+          failed: "#{channel.feed.name} did not answer. Try again later.",
+          title:  'Reload'
+        ) do
           feeds.read(channel.feed, fresh: true)
         end
         window.replace_items(fresh.items, title: fresh.title)

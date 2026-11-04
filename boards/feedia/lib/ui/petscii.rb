@@ -8,10 +8,12 @@ module UI
     LOGO_COLORS = [YE, YE, OR, OR, DR].freeze
     ISSUE       = 'vol. i  no. 2327'
     NO_TEXT     = '*(no text in the feed)*'
-    ANSWERS     = { ok: 'Sent to the admins. Thank you!',
-                    limited: 'That is all the messages the admins can take for now. Thank you!',
-                    bad_url: 'That is not an http:// or https:// address.',
-                    failed: 'The message could not be saved. Try again later.' }.freeze
+    ANSWERS     = {
+      ok:      'Sent to the admins. Thank you!',
+      limited: 'That is all the messages the admins can take for now. Thank you!',
+      bad_url: 'That is not an http:// or https:// address.',
+      failed:  'The message could not be saved. Try again later.'
+    }.freeze
 
     title('FEEDIA BBS') { feeds_note }
 
@@ -44,8 +46,13 @@ module UI
     def feeds_note = "#{feeds.list.size} feeds"
 
     def feed_list
-      each_pick('FEEDS', feeds.list, empty: 'no feeds are configured.', right: feeds_note,
-                                     label: ->(f) { f.lang.empty? ? f.name : "#{f.name} #{GR}#{f.lang}#{LG}" }) do |feed|
+      each_pick(
+        'FEEDS',
+        feeds.list,
+        empty: 'no feeds are configured.',
+        right: feeds_note,
+        label: ->(f) { f.lang.empty? ? f.name : "#{f.name} #{GR}#{f.lang}#{LG}" }
+      ) do |feed|
         read(feed)
       end
     end
@@ -55,8 +62,13 @@ module UI
       channel = loading("fetching #{feed.name.downcase}…", failed: failed) { feeds.read(feed) }
 
       heading = feed.name.upcase[0, 30]
-      each_pick(heading, channel.items, empty: 'this feed has nothing in it right now.', right: feed.lang,
-                                        label: :title) { |item| show(heading, item, feed) }
+      each_pick(
+        heading,
+        channel.items,
+        empty: 'this feed has nothing in it right now.',
+        right: feed.lang,
+        label: :title
+      ) { |item| show(heading, item, feed) }
     end
 
     def show(heading, item, feed)
@@ -96,8 +108,11 @@ module UI
       return unless can_send?
 
       title('SUGGEST A FEED', feeds_note)
-      url = prompt('address', hint: 'The admins look at every address before it goes on the list. Return alone: back.',
-                              max: InboxService::MAX_FIELD)
+      url = prompt(
+        'address',
+        hint: 'The admins look at every address before it goes on the list. Return alone: back.',
+        max:  InboxService::MAX_FIELD
+      )
       return unless url
       return report(:bad_url, ANSWERS) unless InboxService.url?(url)
 
@@ -111,8 +126,12 @@ module UI
       return unless can_send?
 
       title('WRITE TO THE ADMINS', feeds_note)
-      from = prompt('your name', hint: 'A bug, an idea, a word of thanks. Your name, then the message in the editor: ' \
-                                       'stop or ← and S sends it, Q goes back.', max: InboxService::MAX_FIELD).to_s
+      from = prompt(
+        'your name',
+        hint: 'A bug, an idea, a word of thanks. Your name, then the message in the editor: ' \
+              'stop or ← and S sends it, Q goes back.',
+        max:  InboxService::MAX_FIELD
+      ).to_s
       text = edit(title: 'WRITE TO THE ADMINS', max: InboxService::MAX_TEXT).to_s
       title('WRITE TO THE ADMINS')
       return if text.strip.empty?

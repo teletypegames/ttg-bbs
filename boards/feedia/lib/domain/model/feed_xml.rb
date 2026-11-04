@@ -37,32 +37,45 @@ module FeedXml
 
   # RSS 2.0 keeps its items in the channel, RSS 1.0 next to it.
   def rss(feed, channel, rdf)
-    ChannelModel.new(feed: feed, title: channel_title(feed, text(child(channel, 'title'))),
-                     link: link(text(child(channel, 'link'))),
-                     description: HtmlText.plain(text(child(channel, 'description'))),
-                     items: children(rdf || channel, 'item').first(MAX_ITEMS).map { |item| rss_item(item) })
+    ChannelModel.new(
+      feed:        feed,
+      title:       channel_title(feed, text(child(channel, 'title'))),
+      link:        link(text(child(channel, 'link'))),
+      description: HtmlText.plain(text(child(channel, 'description'))),
+      items:       children(rdf || channel, 'item').first(MAX_ITEMS).map { |item| rss_item(item) }
+    )
   end
 
   def rss_item(item)
     body = text(child(item, 'encoded', prefix: 'content')) || text(child(item, 'description'))
-    ItemModel.new(title: title(text(child(item, 'title')), body), link: link(text(child(item, 'link'))) || guid(item),
-                  date: date(text(child(item, 'pubDate')) || text(child(item, 'date', prefix: 'dc'))),
-                  author: HtmlText.plain(text(child(item, 'creator', prefix: 'dc')) || text(child(item, 'author'))),
-                  markdown: HtmlText.markdown(body))
+    ItemModel.new(
+      title:    title(text(child(item, 'title')), body),
+      link:     link(text(child(item, 'link'))) || guid(item),
+      date:     date(text(child(item, 'pubDate')) || text(child(item, 'date', prefix: 'dc'))),
+      author:   HtmlText.plain(text(child(item, 'creator', prefix: 'dc')) || text(child(item, 'author'))),
+      markdown: HtmlText.markdown(body)
+    )
   end
 
   def atom(feed, root)
-    ChannelModel.new(feed: feed, title: channel_title(feed, content(child(root, 'title'))), link: atom_link(root),
-                     description: HtmlText.plain(content(child(root, 'subtitle'))),
-                     items: children(root, 'entry').first(MAX_ITEMS).map { |entry| atom_item(entry) })
+    ChannelModel.new(
+      feed:        feed,
+      title:       channel_title(feed, content(child(root, 'title'))),
+      link:        atom_link(root),
+      description: HtmlText.plain(content(child(root, 'subtitle'))),
+      items:       children(root, 'entry').first(MAX_ITEMS).map { |entry| atom_item(entry) }
+    )
   end
 
   def atom_item(entry)
     body = content(child(entry, 'content')) || content(child(entry, 'summary'))
-    ItemModel.new(title: title(content(child(entry, 'title')), body), link: atom_link(entry),
-                  date: date(text(child(entry, 'published')) || text(child(entry, 'updated'))),
-                  author: HtmlText.plain(text(child(child(entry, 'author'), 'name'))),
-                  markdown: HtmlText.markdown(body))
+    ItemModel.new(
+      title:    title(content(child(entry, 'title')), body),
+      link:     atom_link(entry),
+      date:     date(text(child(entry, 'published')) || text(child(entry, 'updated'))),
+      author:   HtmlText.plain(text(child(child(entry, 'author'), 'name'))),
+      markdown: HtmlText.markdown(body)
+    )
   end
 
   def channel_title(feed, raw) = HtmlText.plain(raw).then { |t| t.empty? ? feed.name : t }

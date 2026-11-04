@@ -12,8 +12,11 @@ class InboxServiceTest < Minitest::Test
   end
 
   def service(per_caller: 5, global: 30)
-    InboxService.new(discord: @discord, per_caller: BBS::RateLimit.new(limit: per_caller, per: 3600),
-                     global: BBS::RateLimit.new(limit: global, per: 3600))
+    InboxService.new(
+      discord:    @discord,
+      per_caller: BBS::RateLimit.new(limit: per_caller, per: 3600),
+      global:     BBS::RateLimit.new(limit: global, per: 3600)
+    )
   end
 
   def test_a_suggestion_is_kept_and_rung

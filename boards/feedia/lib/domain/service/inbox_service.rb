@@ -21,8 +21,11 @@ class InboxService
 
   def self.url?(url) = url.to_s.strip.match?(%r{\Ahttps?://[^\s/]+\.[^\s]+\z}i)
 
-  def initialize(discord:, per_caller: BBS::RateLimit.new(limit: PER_CALLER, per: HOUR),
-                 global: BBS::RateLimit.new(limit: GLOBAL, per: HOUR))
+  def initialize(
+    discord:,
+    per_caller: BBS::RateLimit.new(limit: PER_CALLER, per: HOUR),
+    global: BBS::RateLimit.new(limit: GLOBAL, per: HOUR)
+  )
     @discord    = discord
     @per_caller = per_caller
     @global     = global
@@ -38,8 +41,14 @@ class InboxService
     return :no_url if url.empty?
     return :bad_url unless InboxService.url?(url)
 
-    deliver(caller, MessageModel.from_h(kind: 'suggestion', at: Time.now.iso8601, from: field(from), name: field(name),
-                                        url: url, text: text(note)))
+    deliver(caller, MessageModel.from_h(
+                      kind: 'suggestion',
+                      at:   Time.now.iso8601,
+                      from: field(from),
+                      name: field(name),
+                      url:  url,
+                      text: text(note)
+                    ))
   end
 
   # :ok, or why not: :empty, :limited, :failed.

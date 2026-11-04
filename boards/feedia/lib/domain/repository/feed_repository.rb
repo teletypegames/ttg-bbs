@@ -22,8 +22,12 @@ class FeedRepository
 
   def initialize(http: BBS::HTTP)
     @http  = http
-    @cache = BBS::Cache.new(ttl: TTL, max_entries: CACHE_ENTRIES, max_bytes: CACHE_BYTES,
-                            size: ->(channel) { FeedRepository.bytes(channel) })
+    @cache = BBS::Cache.new(
+      ttl:         TTL,
+      max_entries: CACHE_ENTRIES,
+      max_bytes:   CACHE_BYTES,
+      size:        ->(channel) { FeedRepository.bytes(channel) }
+    )
   end
 
   # The bytes a ChannelModel holds, roughly: the text of its items.
@@ -43,8 +47,13 @@ class FeedRepository
   # The body as it came, bytes: REXML reads the encoding from the XML
   # declaration.
   def fetch(url)
-    response = @http.get(url, headers: { 'Accept' => ACCEPT }, max_bytes: MAX_BYTES, redirects: REDIRECTS,
-                              user_agent: USER_AGENT)
+    response = @http.get(
+      url,
+      headers:    { 'Accept' => ACCEPT },
+      max_bytes:  MAX_BYTES,
+      redirects:  REDIRECTS,
+      user_agent: USER_AGENT
+    )
     raise BBS::HTTP::Error, "HTTP #{response.status}" unless response.ok?
 
     response.body

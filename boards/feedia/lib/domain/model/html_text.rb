@@ -11,14 +11,45 @@ require 'bbs/text'
 # so a feed cannot send escape sequences down the line.
 module HtmlText
   ENTITIES = {
-    'nbsp' => ' ', 'hellip' => '…', 'ndash' => '–', 'mdash' => '—', 'lsquo' => '‘', 'rsquo' => '’',
-    'sbquo' => '‚', 'ldquo' => '“', 'rdquo' => '”', 'bdquo' => '„', 'laquo' => '«', 'raquo' => '»',
-    'bull' => '•', 'middot' => '·', 'copy' => '©', 'reg' => '®', 'trade' => '™', 'euro' => '€',
-    'pound' => '£', 'deg' => '°', 'times' => '×', 'shy' => '', 'zwnj' => '', 'zwj' => '',
-    'odblac' => 'ő', 'Odblac' => 'Ő', 'udblac' => 'ű', 'Udblac' => 'Ű', 'szlig' => 'ß'
+    'nbsp'   => ' ',
+    'hellip' => '…',
+    'ndash'  => '–',
+    'mdash'  => '—',
+    'lsquo'  => '‘',
+    'rsquo'  => '’',
+    'sbquo'  => '‚',
+    'ldquo'  => '“',
+    'rdquo'  => '”',
+    'bdquo'  => '„',
+    'laquo'  => '«',
+    'raquo'  => '»',
+    'bull'   => '•',
+    'middot' => '·',
+    'copy'   => '©',
+    'reg'    => '®',
+    'trade'  => '™',
+    'euro'   => '€',
+    'pound'  => '£',
+    'deg'    => '°',
+    'times'  => '×',
+    'shy'    => '',
+    'zwnj'   => '',
+    'zwj'    => '',
+    'odblac' => 'ő',
+    'Odblac' => 'Ő',
+    'udblac' => 'ű',
+    'Udblac' => 'Ű',
+    'szlig'  => 'ß'
   }.merge(
-    { 'acute' => "\u0301", 'grave' => "\u0300", 'uml' => "\u0308", 'circ' => "\u0302", 'tilde' => "\u0303",
-      'cedil' => "\u0327", 'ring' => "\u030A" }.flat_map do |mark, combining|
+    {
+      'acute' => "\u0301",
+      'grave' => "\u0300",
+      'uml'   => "\u0308",
+      'circ'  => "\u0302",
+      'tilde' => "\u0303",
+      'cedil' => "\u0327",
+      'ring'  => "\u030A"
+    }.flat_map do |mark, combining|
       ('a'..'z').to_a.concat(('A'..'Z').to_a).filter_map do |letter|
         composed = (letter + combining).unicode_normalize(:nfc)
         ["#{letter}#{mark}", composed] if composed.length == 1
