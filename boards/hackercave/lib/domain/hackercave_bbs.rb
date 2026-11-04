@@ -8,6 +8,8 @@
 class HackerCaveBBS
   include BBS::Domain
 
+  env_prefix 'HACKERCAVE_BBS_'
+
   # How often the refreshers look at the age of what they keep, in seconds.
   CHECK_EVERY = 3600
   # Seconds before a failed refresh is tried again (doubled up to
