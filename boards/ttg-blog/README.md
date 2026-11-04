@@ -271,14 +271,14 @@ lib/
     petscii/screen.rb             full-screen menus and lists, the footer bar, a post
                                   read under its footer, questions in the footer
 test/                          minitest: the schema and the legacy shapes, the services,
-                               the login limits, the read API (bin/test)
+                               the login limits, the read API (rake test)
 ```
 
 ## Tests
 
 ```bash
-bundle exec bin/test               # all of them
-bundle exec bin/test schema        # the files whose name has one of the words
+bundle exec rake test               # all of them
+bundle exec rake test schema        # the files whose name has one of the words
 ```
 
 They need no network: each test works on a database in a temporary folder.
