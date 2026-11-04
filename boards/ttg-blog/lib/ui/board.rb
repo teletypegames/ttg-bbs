@@ -30,7 +30,7 @@ module UI
       item('w', -> { "write a post#{drafts_note}" }, 'it waits unpublished until you publish it', if: -> { user }) do
         compose
       end
-      item('p', 'profile', -> { signed_in? ? identity.name : 'log in: the editors of the blog' }) { profile }
+      item('p', 'profile', -> { signed_in? ? identity.name : 'log in: the editors of the blog' }) { open_profile }
       log_off
     end
 
