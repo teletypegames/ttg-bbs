@@ -6,29 +6,22 @@ module UI
   # entry is a page with L for the entries it links to and R for a random
   # one.
   class Petscii
-    # The menu of the room: key => [label, about, method].
-    JARGON_MENU = {
-      '1' => ['word of the day', 'the same for everyone today', :jargon_today],
-      '2' => ['search', 'a headword or words of the text', :jargon_search],
-      '3' => ['a to z', 'the entries by letter', :jargon_letters],
-      '4' => ['random entry', 'surprise me', :jargon_random],
-      '5' => ['chapters and folklore', 'the story of mel, the koans', :jargon_chapters],
-      'q' => ['back', 'to the main menu', nil]
-    }.freeze
+    sub_menu(:jargon, title: 'THE JARGON FILE', right: '4.4.7 ',
+                      above: -> { " #{GR}The lexicon of hacker slang, public domain.#{LG}" }, gap: :after) do
+      item('1', 'word of the day', 'the same for everyone today') { jargon_today }
+      item('2', 'search', 'a headword or words of the text') { jargon_search }
+      item('3', 'a to z', 'the entries by letter') { jargon_letters }
+      item('4', 'random entry', 'surprise me') { jargon_random }
+      item('5', 'chapters and folklore', 'the story of mel, the koans') { jargon_chapters }
+      back 'to the main menu'
+    end
 
     private
 
     def jargon_room
       return alert('The Jargon File is being prepared. Try again in a moment.', color: YE) unless jargon.ready?
 
-      loop do
-        title('THE JARGON FILE', '4.4.7 ')
-        say('The lexicon of hacker slang, public domain.', color: GR)
-        @jargon_choice = menu(JARGON_MENU.map { |k, (label, about)| BBS::Selector.item(label, key: k, value: k, about: about) },
-                              index: JARGON_MENU.keys.index(@jargon_choice), back: 'q', hint: MENU_HINT)
-        action = JARGON_MENU.dig(@jargon_choice, 2) or return
-        send(action)
-      end
+      sub_menu(:jargon)
     end
 
     def jargon_today = jargon_entry(jargon.word_of_the_day)
