@@ -12,8 +12,11 @@ class WikiService
 
   attr_reader :pages
 
-  def initialize(repository, caller_refreshes: BBS::RateLimit.new(limit: CALLER_REFRESHES, per: 60),
-                 board_refreshes: BBS::RateLimit.new(limit: BOARD_REFRESHES, per: 60))
+  def initialize(
+    repository,
+    caller_refreshes: BBS::RateLimit.new(limit: CALLER_REFRESHES, per: 60),
+    board_refreshes: BBS::RateLimit.new(limit: BOARD_REFRESHES, per: 60)
+  )
     @repository       = repository
     @pages            = []
     @caller_refreshes = caller_refreshes
@@ -34,6 +37,7 @@ class WikiService
   # when the wiki does not answer.
   def refresh(caller_key)
     return :limited unless BBS::RateLimit.allow_all?([[@caller_refreshes, caller_key], [@board_refreshes, :board]])
+
     @repository.clear_cache
     refresh_index!
     :refreshed
@@ -63,6 +67,6 @@ class WikiService
   def index(pages)
     private_roots = pages.select(&:private?).map(&:route)
     pages.map { |p| !p.private? && private_roots.any? { |r| p.route.start_with?("#{r}/") } ? p.as_private : p }
-         .sort_by(&:route)
+      .sort_by(&:route)
   end
 end

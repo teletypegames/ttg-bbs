@@ -8,12 +8,13 @@ module UI
     LOCKED      = "# Supervisor only\n\nThis page is private. Unlock it via **Wiki > Supervisor login**."
     GRANTED     = 'Supervisor access granted.'
 
-    REFRESH = { limited: 'The index was just refreshed. Try again in a minute.',
-                failed:  'Could not reach the wiki.' }.freeze
+    REFRESH = { limited: 'The index was just refreshed. Try again in a minute.', failed: 'Could not reach the wiki.' }.freeze
 
-    UNLOCK = { unconfigured: 'No supervisor password configured.',
-               locked:       'Too many wrong passwords. Try again later.',
-               wrong:        'Wrong password.' }.freeze
+    UNLOCK = {
+      unconfigured: 'No supervisor password configured.',
+      locked:       'Too many wrong passwords. Try again later.',
+      wrong:        'Wrong password.'
+    }.freeze
 
     # The board's line on the goodbye screen: the wiki's address, after the
     # time on line on a C64.

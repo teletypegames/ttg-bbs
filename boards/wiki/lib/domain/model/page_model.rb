@@ -12,11 +12,13 @@ class PageModel
   attr_reader :route, :title, :depth, :updated_at, :tags
 
   def self.from_json(entry)
-    new(route:      clean(entry['route']),
-        title:      clean(entry['title']),
-        updated_at: clean(entry['updatedAt'])[0, 10],
-        tags:       Array(entry['tags']).map { |tag| clean(tag) },
-        private:    entry['private'] == true)
+    new(
+      route:      clean(entry['route']),
+      title:      clean(entry['title']),
+      updated_at: clean(entry['updatedAt'])[0, 10],
+      tags:       Array(entry['tags']).map { |tag| clean(tag) },
+      private:    entry['private'] == true
+    )
   end
 
   def self.clean(text) = BBS::Text.clean(text.to_s, keep_newlines: false)

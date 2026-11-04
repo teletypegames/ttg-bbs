@@ -98,8 +98,13 @@ module UI
       fail_with('Supervisor only. This page is private: S on the top level unlocks it.') if locked?(wiki_page)
 
       lines = markdown(loading('loading...') { wiki.page_markdown(wiki_page) })
-      page(heading, [*lines, '', " #{GR}updated #{wiki_page.updated_at}#{LG}", " #{CY}#{PUBLIC_HOST}#{wiki_page.route}#{LG}"],
-           numbers: true, wait: false, room: 2)
+      page(
+        heading,
+        [*lines, '', " #{GR}updated #{wiki_page.updated_at}#{LG}", " #{CY}#{PUBLIC_HOST}#{wiki_page.route}#{LG}"],
+        numbers: true,
+        wait:    false,
+        room:    2
+      )
       show_qr(wiki_page) if actions(['c', 'qr code'], %w[q back]) == 'c'
     end
 

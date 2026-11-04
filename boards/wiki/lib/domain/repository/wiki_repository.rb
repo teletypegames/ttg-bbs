@@ -60,6 +60,7 @@ class WikiRepository
     options[:headers] = headers unless headers.empty?
     response = BBS::HTTP.get(uri.to_s, **options)
     raise Error, "HTTP #{response.status} for #{path}" unless response.ok?
+
     BBS::Text.utf8(response.body)
   rescue BBS::HTTP::Error => e
     raise Error, "#{path}: #{e.message}"

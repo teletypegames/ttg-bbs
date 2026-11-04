@@ -17,6 +17,7 @@ class WikiServiceTest < Minitest::Test
 
     def sitemap
       raise WikiRepository::Error, 'HTTP 502 for /custom/sitemap.json' if @fail
+
       @sitemaps += 1
       @pages
     end
@@ -57,8 +58,11 @@ class WikiServiceTest < Minitest::Test
     service = WikiService.new(Repository.new([page('/a')]), board_refreshes: BBS::RateLimit.new(limit: 1, per: 60))
     assert_equal %i[refreshed limited], [service.refresh('1.2.3.4'), service.refresh('5.6.7.8')]
     caller_refreshes = BBS::RateLimit.new(limit: 1, per: 60)
-    service = WikiService.new(Repository.new([page('/a')]), caller_refreshes: caller_refreshes,
-                                                            board_refreshes: BBS::RateLimit.new(limit: 0, per: 60))
+    service = WikiService.new(
+      Repository.new([page('/a')]),
+      caller_refreshes: caller_refreshes,
+      board_refreshes:  BBS::RateLimit.new(limit: 0, per: 60)
+    )
     assert_equal :limited, service.refresh('1.2.3.4')
     assert caller_refreshes.room?('1.2.3.4')
   end
