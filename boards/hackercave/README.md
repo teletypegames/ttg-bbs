@@ -166,8 +166,8 @@ with its default. The board has no secrets.
 ## Tests
 
 ```bash
-bundle exec bin/test            # all of them (minitest, no network)
-bundle exec bin/test reflow     # the files whose name has the word
+bundle exec rake test            # all of them (minitest, no network)
+bundle exec rake test reflow     # the files whose name has the word
 bundle exec rubocop
 ```
 
@@ -232,7 +232,7 @@ lib/ui/
   petscii/records.rb        the lists and an RFC's record: links, errata, QR code
   petscii/reader.rb         the C64 reader: the RFC reflowed, in pages, contents
   petscii/jargon_room.rb    the Jargon File on the C64
-bin/test                    runs the tests
+rake test                    runs the tests
 test/                       the domain tests (minitest)
 ```
 
