@@ -18,22 +18,39 @@ class MemoryAlphaRepository
 
   def initialize(client: BBS::MediaWiki.new(endpoint: ENDPOINT, user_agent: USER_AGENT, name: 'Memory Alpha', rate: RATE))
     @client  = client
-    @answers = BBS::Cache.new(ttl: TTL, max_entries: CACHE_SIZE, max_bytes: CACHE_BYTES,
-                              size: ->(data) { JSON.generate(data).bytesize })
+    @answers = BBS::Cache.new(
+      ttl:         TTL,
+      max_entries: CACHE_SIZE,
+      max_bytes:   CACHE_BYTES,
+      size:        ->(data) { JSON.generate(data).bytesize }
+    )
   end
 
   # The SearchResultModels for +query+, best first.
   def search(query)
-    data = cached(action: 'query', list: 'search', srsearch: query, srlimit: SEARCH_LIMIT, srnamespace: 0,
-                  srprop: 'wordcount')
+    data = cached(
+      action:      'query',
+      list:        'search',
+      srsearch:    query,
+      srlimit:     SEARCH_LIMIT,
+      srnamespace: 0,
+      srprop:      'wordcount'
+    )
     (data.dig('query', 'search') || []).map { |hit| SearchResultModel.from_api(hit) }
   end
 
   # The ArticleModel titled +title+ (redirects followed); nil when it is
   # missing.
   def article(title)
-    ArticleModel.from_api(cached(action: 'query', prop: 'extracts|info', explaintext: 1, exsectionformat: 'wiki',
-                                 redirects: 1, inprop: 'url', titles: title))
+    ArticleModel.from_api(cached(
+                            action:          'query',
+                            prop:            'extracts|info',
+                            explaintext:     1,
+                            exsectionformat: 'wiki',
+                            redirects:       1,
+                            inprop:          'url',
+                            titles:          title
+                          ))
   end
 
   # A random article's title, or nil.

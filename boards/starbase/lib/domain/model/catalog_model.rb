@@ -4,7 +4,9 @@
 # catalog file (BBS::Snapshot), frozen.
 CatalogModel = Data.define(:series, :episodes) do
   def self.from_records(records)
-    new(series: Array(records['series']).map { |r| SeriesModel.from_record(r) }.freeze,
-        episodes: Array(records['episodes']).map { |r| EpisodeModel.from_record(r) }.freeze)
+    new(
+      series:   Array(records['series']).map { |r| SeriesModel.from_record(r) }.freeze,
+      episodes: Array(records['episodes']).map { |r| EpisodeModel.from_record(r) }.freeze
+    )
   end
 end

@@ -23,8 +23,12 @@ class LibraryServiceTest < Minitest::Test
   end
 
   def test_an_episode_opens_the_article_wikidata_names_else_a_search_hit
-    farpoint = EpisodeModel.from_record({ 'id' => 'Q1', 't' => 'Encounter at Farpoint', 'se' => 'x',
-                                          'ma' => 'Encounter at Farpoint (episode)' })
+    farpoint = EpisodeModel.from_record({
+      'id' => 'Q1',
+      't'  => 'Encounter at Farpoint',
+      'se' => 'x',
+      'ma' => 'Encounter at Farpoint (episode)'
+    })
     assert_equal 'Encounter at Farpoint (episode)', library.article_of(farpoint).title
     unnamed = EpisodeModel.from_record({ 'id' => 'Q2', 't' => 'Datalore', 'se' => 'x' })
     assert_equal 'Data', library.article_of(unnamed).title

@@ -39,8 +39,12 @@ module UI
     def episodes_right = "#{catalog.size} episodes "
 
     def series_list
-      each_pick('SERIES AND FILMS', catalog.series, right: episodes_right,
-                                                    label: ->(s) { "#{s.short_title} #{GR}#{s.years}#{LG}" }) do |series|
+      each_pick(
+        'SERIES AND FILMS',
+        catalog.series,
+        right: episodes_right,
+        label: ->(s) { "#{s.short_title} #{GR}#{s.years}#{LG}" }
+      ) do |series|
         seasons(series)
       end
     end
@@ -59,9 +63,12 @@ module UI
     end
 
     def today
-      each_pick("ON #{Date.today.strftime('%B %-d').upcase}", catalog.on_this_day(Date.today),
-                empty: 'nothing first aired on this day.',
-                label: ->((e, s)) { "#{e.year} #{s.abbreviation.downcase} #{e.title}" }) do |episode, series|
+      each_pick(
+        "ON #{Date.today.strftime('%B %-d').upcase}",
+        catalog.on_this_day(Date.today),
+        empty: 'nothing first aired on this day.',
+        label: ->((e, s)) { "#{e.year} #{s.abbreviation.downcase} #{e.title}" }
+      ) do |episode, series|
         card(episode, series)
       end
     end
@@ -95,6 +102,7 @@ module UI
     def look_up(query)
       article, results = loading('accessing…') { library.look_up(query) }
       return show_article(article) if article
+
       fail_with(NO_ANSWER) if results.nil?
       fail_with("Nothing found for \"#{query}\".") if results.empty?
 

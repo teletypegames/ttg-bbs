@@ -23,7 +23,7 @@ class CatalogService
   # number in the series, by air date; the films by date.
   def episodes(series)
     all_episodes.select { |e| e.series_id == series.id }
-                .sort_by { |e| [e.season || 999, e.number || e.ordinal || 999, e.aired || Date.new(9999), e.title] }
+      .sort_by { |e| [e.season || 999, e.number || e.ordinal || 999, e.aired || Date.new(9999), e.title] }
   end
 
   # +series+'s episodes as [[season, episodes]] pairs, in order; one pair

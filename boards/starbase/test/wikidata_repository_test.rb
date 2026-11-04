@@ -19,8 +19,15 @@ class WikidataRepositoryTest < Minitest::Test
 
     def episodes
       (1..3).map do |n|
-        row("E#{n}", label: "Episode #{n}", series: 'S1', ord: n.to_s, sn: '1', n: n.to_s,
-                     ma: n == 1 ? 'memory-alpha:Episode_1' : nil)
+        row(
+          "E#{n}",
+          label:  "Episode #{n}",
+          series: 'S1',
+          ord:    n.to_s,
+          sn:     '1',
+          n:      n.to_s,
+          ma:     n == 1 ? 'memory-alpha:Episode_1' : nil
+        )
       end + [row('E1', label: 'Episode 1', series: 'S1', ma: 'memory-alpha:Episode_1_(episode)'),
              row('X1', label: 'Stray', series: 'S2')]
     end
@@ -40,8 +47,10 @@ class WikidataRepositoryTest < Minitest::Test
   def records = @records ||= WikidataRepository.new(client: Client.new).records
 
   def test_the_series_with_enough_episodes_and_the_films
-    assert_equal([['Star Trek: Test', 1987, 'Star Trek: Test'], ['The films', 1982, nil]],
-                 records['series'].map { |s| [s['t'], s['s'], s['ma']] })
+    assert_equal(
+      [['Star Trek: Test', 1987, 'Star Trek: Test'], ['The films', 1982, nil]],
+      records['series'].map { |s| [s['t'], s['s'], s['ma']] }
+    )
     refute(records['episodes'].any? { |e| e['t'] == 'Stray' })
   end
 

@@ -7,10 +7,18 @@ require 'date'
 # first aired, its directors and writers, and its Memory Alpha article.
 EpisodeModel = Data.define(:id, :title, :series_id, :season, :number, :ordinal, :aired, :directors, :writers, :ma) do
   def self.from_record(record)
-    new(id: record['id'].to_s, title: line(record['t']), series_id: record['se'].to_s,
-        season: record['sn']&.to_i, number: record['n']&.to_i, ordinal: record['o']&.to_i,
-        aired: date(record['d']), directors: names(record['dir']), writers: names(record['wr']),
-        ma: record['ma']&.then { |title| line(title) })
+    new(
+      id:        record['id'].to_s,
+      title:     line(record['t']),
+      series_id: record['se'].to_s,
+      season:    record['sn']&.to_i,
+      number:    record['n']&.to_i,
+      ordinal:   record['o']&.to_i,
+      aired:     date(record['d']),
+      directors: names(record['dir']),
+      writers:   names(record['wr']),
+      ma:        record['ma']&.then { |title| line(title) }
+    )
   end
 
   def self.line(text) = BBS::Text.line(text)

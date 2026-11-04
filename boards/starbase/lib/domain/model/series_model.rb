@@ -5,8 +5,13 @@
 # record of the catalog file (short keys, see WikidataRepository).
 SeriesModel = Data.define(:id, :title, :start, :finish, :ma) do
   def self.from_record(record)
-    new(id: record['id'].to_s, title: BBS::Text.line(record['t']), start: record['s']&.to_i,
-        finish: record['e']&.to_i, ma: record['ma']&.then { |title| BBS::Text.line(title) })
+    new(
+      id:     record['id'].to_s,
+      title:  BBS::Text.line(record['t']),
+      start:  record['s']&.to_i,
+      finish: record['e']&.to_i,
+      ma:     record['ma']&.then { |title| BBS::Text.line(title) }
+    )
   end
 
   def films? = id == SeriesModel::FILMS
@@ -35,8 +40,20 @@ class SeriesModel
   # The id of the pseudo-series of the films.
   FILMS = 'films'
   # The fans' abbreviations of the series, by short title.
-  ABBREVIATIONS = { 'The Original Series' => 'TOS', 'The Animated Series' => 'TAS', 'The Next Generation' => 'TNG',
-                    'Deep Space Nine' => 'DS9', 'Voyager' => 'VOY', 'Enterprise' => 'ENT', 'Discovery' => 'DIS',
-                    'Short Treks' => 'ST', 'Lower Decks' => 'LD', 'Picard' => 'PIC', 'Prodigy' => 'PRO',
-                    'Strange New Worlds' => 'SNW', 'Very Short Treks' => 'VST', 'Starfleet Academy' => 'SFA' }.freeze
+  ABBREVIATIONS = {
+    'The Original Series' => 'TOS',
+    'The Animated Series' => 'TAS',
+    'The Next Generation' => 'TNG',
+    'Deep Space Nine'     => 'DS9',
+    'Voyager'             => 'VOY',
+    'Enterprise'          => 'ENT',
+    'Discovery'           => 'DIS',
+    'Short Treks'         => 'ST',
+    'Lower Decks'         => 'LD',
+    'Picard'              => 'PIC',
+    'Prodigy'             => 'PRO',
+    'Strange New Worlds'  => 'SNW',
+    'Very Short Treks'    => 'VST',
+    'Starfleet Academy'   => 'SFA'
+  }.freeze
 end

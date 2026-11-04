@@ -4,10 +4,15 @@ require 'test_helper'
 
 class ArticleModelTest < Minitest::Test
   def answer(extract)
-    { 'query' => { 'redirects' => [{ 'from' => 'Tribbles' }],
-                   'pages' => [{ 'pageid' => 454, 'title' => 'The Trouble with Tribbles (episode)',
-                                 'fullurl' => 'https://memory-alpha.fandom.com/wiki/The_Trouble_with_Tribbles_(episode)',
-                                 'extract' => extract }] } }
+    { 'query' => {
+      'redirects' => [{ 'from' => 'Tribbles' }],
+      'pages'     => [{
+        'pageid'  => 454,
+        'title'   => 'The Trouble with Tribbles (episode)',
+        'fullurl' => 'https://memory-alpha.fandom.com/wiki/The_Trouble_with_Tribbles_(episode)',
+        'extract' => extract
+      }]
+    } }
   end
 
   def test_an_article_cut_into_sections_without_the_links

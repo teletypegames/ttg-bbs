@@ -12,9 +12,13 @@ ArticleModel = Data.define(:title, :url, :pageid, :sections, :redirected_from) d
     return nil if page.nil? || page['missing'] || page['invalid'] || page['extract'].to_s.strip.empty?
 
     title = BBS::Text.line(page['title'])
-    new(title: title, url: BBS::Text.line(page['fullurl']), pageid: page['pageid'].is_a?(Integer) ? page['pageid'] : nil,
-        sections: sections(title, BBS::Text.clean(page['extract'])),
-        redirected_from: data.dig('query', 'redirects', 0, 'from')&.then { |from| BBS::Text.line(from) })
+    new(
+      title:           title,
+      url:             BBS::Text.line(page['fullurl']),
+      pageid:          page['pageid'].is_a?(Integer) ? page['pageid'] : nil,
+      sections:        sections(title, BBS::Text.clean(page['extract'])),
+      redirected_from: data.dig('query', 'redirects', 0, 'from')&.then { |from| BBS::Text.line(from) }
+    )
   end
 
   def self.sections(title, extract)
