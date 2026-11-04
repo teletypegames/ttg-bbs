@@ -7,7 +7,7 @@ module UI
     module Logon
       def self.show(face)
         Clubhouse.text_mode(face.session)
-        s = face.board.logon_summary(face.name, registered: face.registered?, session_id: face.session_id)
+        s = face.board.logon_summary(face.name, registered: face.registered?, sysop: face.sysop?, session_id: face.session_id)
         face.context[:caller_number] = s[:caller_number]
         welcome(face, s)
         scans(face, s)
@@ -26,7 +26,7 @@ module UI
         return if s[:registered]
 
         face.say(
-          s[:name] == AccountService::ANONYMOUS ? 'Call with a name to keep one.' : 'A guest: S, then R keeps your name.',
+          s[:name] == MemberService::ANONYMOUS ? 'Call with a name to keep one.' : 'A guest: S, then R keeps your name.',
           color: GR
         )
       end

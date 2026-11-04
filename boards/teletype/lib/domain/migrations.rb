@@ -4,9 +4,11 @@
 # step per version, counted in PRAGMA user_version (BBS::Database.migrate):
 # a step is never changed or reordered, a change of the schema is a new
 # step at the end. Besides these tables the file holds rubbs'
-# rate_limit_events, which BBS::RateLimit makes itself.
+# rate_limit_events, which BBS::RateLimit makes itself. Step 2 keeps the
+# members (MemberModel) once the accounts moved to the network (BBS::Auth);
+# the accounts table stays as it was, for TTG Gate BBS to import.
 MIGRATIONS = [
-  <<~SQL
+  <<~SQL,
     CREATE TABLE accounts (
       name_key TEXT PRIMARY KEY, name TEXT NOT NULL, skeleton TEXT NOT NULL,
       salt TEXT NOT NULL, digest TEXT NOT NULL, created_at TEXT NOT NULL);
@@ -48,5 +50,12 @@ MIGRATIONS = [
       recipient_key TEXT NOT NULL, subject TEXT NOT NULL, body TEXT NOT NULL,
       read INTEGER NOT NULL DEFAULT 0);
     CREATE INDEX mail_recipient ON mail (recipient_key);
+  SQL
+  <<~SQL
+    CREATE TABLE members (
+      name_key TEXT PRIMARY KEY, name TEXT NOT NULL, account_id TEXT, created_at TEXT NOT NULL);
+
+    INSERT INTO members (name_key, name, created_at)
+      SELECT name_key, name, created_at FROM accounts ORDER BY rowid;
   SQL
 ].freeze

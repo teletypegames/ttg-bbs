@@ -69,14 +69,14 @@ Copy `env-example` to `.env`:
 | Variable | Default | Description |
 |---|---|---|
 | `BBS_PORT` | `2323` | TCP port to listen on |
-| `TELETYPE_BBS_SYSOPS` | empty | Comma-separated sysop names. Sysop rights need the name's password; these accounts are created only with `bin/account` |
+| `RUBBS_AUTH_SECRET` | empty | The secret every board of the network shares (rubbs `BBS::Auth`): the accounts are asked of TTG Gate BBS on the `interstack` network, and a caller handed on by the gate comes in signed in. In `.env` on the server, never in the repository |
 | `TELETYPE_BBS_DISCORD_WEBHOOK` | empty | Discord webhook for new board posts and sysop broadcasts; empty = off |
 | `TELETYPE_BBS_IRC_SERVER` | `irc.libera.chat` | IRC server of the read-only channel window (TLS); empty = off |
 | `TELETYPE_BBS_IRC_PORT` | `6697` | Its TLS port |
 | `TELETYPE_BBS_IRC_CHANNEL` | `#teletypegames` | The channel the board listens on |
 | `TELETYPE_BBS_IRC_NICK` | `ttgbbs` | The board's nick there; taken at login → `ttgbbs_` |
 | `TELETYPE_BBS_IRC_PASSWORD` | empty | NickServ password of the nick (SASL PLAIN); empty = no login |
-| `TELETYPE_BBS_DB` | `data/teletype.sqlite3` | The board's SQLite database: accounts (salted PBKDF2-SHA256), the boards' posts, mail, calls, last-read marks, the wall, profiles, votes and TTG Trivia scores (see *Data*) |
+| `TELETYPE_BBS_DB` | `data/teletype.sqlite3` | The board's SQLite database: the members, the boards' posts, mail, calls, last-read marks, the wall, profiles, votes and TTG Trivia scores (see *Data*) |
 | `TELETYPE_BBS_FTP_HOST` | `ftp.teletypegames.org` | The FTP server whose `/WARP` sizes give the Commodore doors the blocks of each game (anonymous, passive); the catalog API carries no sizes |
 | `SERMO_LLM_URL` | set by compose | SERMO's model, `http://llm:8080`; empty = canned replies only |
 | `SERMO_LLM_MODEL` | set by compose | the model's name in infra/llm, `qwen3.5-0.8b` |
@@ -91,7 +91,7 @@ connection to the channel, which runs as a `BBS.background` thread:
 reconnecting after a drop in 5 seconds, after errors with a pause doubled up
 to five minutes), `catalog`, `site events`, `site members`, `dev log`, `ftp`
 (a remote source failed: the repository raised, the service logged it and
-shows nothing), `polls`, `import` (the legacy files), `login`, `logon screen`,
+shows nothing), `polls`, `login`, `logon screen`,
 `dashboard`, `TTG Master`, `trivia`, and rubbs' own lines (sessions, doors,
 `Discord`).
 
@@ -208,8 +208,8 @@ statusbar while it is highlighted.
 - **Team** — the members of teletypegames.org with their mottos.
 - **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `BBS::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
 - **BBS Network** (Board > BBS Network, Help > Where are the games, files, wiki?, N on the C64) — the town map on the clubhouse wall: every board of the network a building in its bbsweb colour around the clubhouse (the town gate of TTG Gate BBS, the archive of the wiki, the great library of Alexandria, the news kiosk of Feedia, the printing press of the blog, the warehouse of WarpEngine, the scriptorium, the game shop of Commodex, the gallery of Pixelia, the dark alley of the Impostor, and on the fourth row of the town the starbase of Starbase BBS and the cave of HackerCave BBS). The arrows walk from building to building; under the map what the chosen one carries and how to walk over. On a screen shorter than the town the map scrolls to the chosen building (rubbs' `FrameBuffer#clip`). The list of the boards, with bbsweb and archive.teletypegames.org, is a bulletin. This board has no gateway doors: a caller goes to another board by calling it, or through TTG Gate BBS.
-- **Registered names** — a caller can register the name they logged in with (You > Register…); from then on that name asks for its password, three tries a call with a growing wait after each wrong one (2, 4, 6 seconds). Wrong passwords are counted by the name and by the line: past 10 for a name or 6 from a line in 15 minutes, it waits out the quarter hour before the board even checks a password again; the count is kept in the database (rubbs' `rate_limit_events` table), so a restart does not lift it. One login (`AccountService#log_on`) serves both faces, and one PBKDF2 runs at a time. A name that looks like a registered or a sysop one (a Cyrillic а for an a, an l or a 1 for an i: `Names.skeleton`) can neither register nor call as a guest. Profiles belong to registered names only. `bin/account` writes the same database, so it works on a running server.
-- **Sysop console** — stats + broadcast, for names in `TELETYPE_BBS_SYSOPS` that logged in with their password (the domain checks it again for the broadcast).
+- **Registered names** — the accounts are the network's (rubbs `BBS::Auth`, kept on TTG Gate BBS, asked through `TTG::AUTH`): one name and password on every board. The entrance asks the name; a name without an account comes in as a guest, a blank one as Anonymous, and a name with an account asks for its password, three tries a call with a growing wait after each wrong one (2, 4, 6 seconds). A caller who dialled the board from the gate signed in walks past the guestbook. A guest can register the name they called with (You > Register…, S then R on the C64): the account is made on the gate. The limits on wrong passwords and the look-alike names (a Cyrillic а for an a, an l or a 1 for an i: `BBS::Auth::Names.skeleton`) are the gate's; a look-alike of an account's name cannot call as a guest either. One login (`UI::Login`, `MemberService#log_on`) serves both faces. A caller who came in signed in is a member of the board (the `members` table: User Listing, *member since*, the spelling mail is addressed to). Profiles belong to registered names only. When the gate does not answer, a name comes in as a guest.
+- **Sysop console** — stats + broadcast, for an account with the **sysop** role (the domain checks it again for the broadcast).
 - **Feedback for the sysop** — a guest (a name without a password) may leave three letters a day, from a name and from a line, and all the guests together thirty.
 - **Discord feed** — new board posts and sysop broadcasts go to `TELETYPE_BBS_DISCORD_WEBHOOK`, mentions disabled.
 - **Last callers** — a call is logged when it ends, and only if the terminal reported its window size (telnet NAWS) and stayed at least 10 seconds. Telnet password-guessing bots never get listed, and neither do they show up as online.
@@ -392,7 +392,8 @@ lib/
   domain/migrations.rb                 the schema of the SQLite file (MIGRATIONS)
   domain/model/                        a BBS::Model (Sequel) for each table, its
                                        queries as class methods:
-    account_model.rb                   registered names, PBKDF2 hashes, look-alikes
+    member_model.rb                    the members: callers who came in signed in
+    account_model.rb                   the board's own accounts of before (read by the gate's import)
     post_model.rb                      the boards' posts
     last_read_model.rb                 how far each name has read each board
     call_model.rb                      finished calls and their statistics (SQL)
@@ -402,9 +403,7 @@ lib/
     vote_model.rb                      the voting booth's ballots
     letter_model.rb                    private mail and feedback (the mail table)
                                        and value objects (BoardModel, GameModel, …),
-                                       Names (keys, skeletons), Password (PBKDF2)
   domain/repository/
-    legacy_import.rb                   the CSV files of earlier versions, imported once
     online_users_repository.rb         the nodes: who, since when, doing what
     catalog_repository.rb              games API client (the doors, the Master)
     bulletin_repository.rb             the Markdown bulletins
@@ -416,13 +415,12 @@ lib/
   domain/service/
     online_service.rb, board_service.rb, games_service.rb,
     chat_service.rb, irc_relay.rb, last_callers_service.rb,
-    profile_service.rb, account_service.rb, site_service.rb,
+    profile_service.rb, member_service.rb, site_service.rb,
     oneliner_service.rb, warp_sizes.rb, dev_log_service.rb,
     discord_notifier.rb, mail_service.rb, voting_service.rb,
     tagline_service.rb, network_service.rb
     throttle.rb                        a limit by name and by line (BBS::RateLimit,
                                        kept in the database)
-    login_guard.rb                     wrong passwords by name and by line
     remote.rb                          a failed remote source: logged, an empty answer
     tls_connect.rb                     TLS with a deadline (the IRC relay)
     scene_service.rb                   what the clubhouse pictures show, for both
@@ -470,13 +468,12 @@ lib/
                                        the network, dev log)
   ui/petscii/people.rb
 bin/persona-eval                       count a character's slips over many runs
-test/                                  minitest: the domain, the legacy import, BASIC,
+test/                                  minitest: the domain, the logon, BASIC,
                                        both faces on BBS::Test::Session
 Rakefile                               bundle exec rake test
 bin/c64-bytes                          the bytes of the C64 pictures on the line
 data/
   teletype.sqlite3                     the board's database (TELETYPE_BBS_DB)
-bin/account                            create an account / reset a password
 ```
 
 ## Doors
@@ -542,12 +539,15 @@ then commit and redeploy.
 
 ### Sysop accounts
 
-Names in `TELETYPE_BBS_SYSOPS` cannot be registered over telnet, so nobody can take one
-first. Create the account (or reset any password) from the server shell:
+The accounts and their roles are kept on TTG Gate BBS; a sysop is an account
+with the **sysop** role, given (or a password reset) on the gate's shell:
 
 ```bash
-docker exec -it teletype-bbs bin/account Tasi
+docker exec -it ttg-gate-bbs bin/account grant NAME sysop
+docker exec -it ttg-gate-bbs bin/account password NAME
 ```
+
+The board needs `RUBBS_AUTH_SECRET`, the secret every board shares, in its `.env`.
 
 ## Characters
 
@@ -608,7 +608,7 @@ All persisted state lives under `data/` which is mounted as a volume in Docker
 so it survives container restarts.
 
 Everything the callers leave is in one SQLite file, `data/teletype.sqlite3`
-(WAL mode; `bin/account` and the board use it at the same time). Its schema is
+(WAL mode). Its schema is
 `lib/domain/migrations.rb` (the steps are counted in `PRAGMA user_version`, so
 a step is never changed, only added), declared in `TeletypeBBS` with rubbs'
 `database` and read and written through a `BBS::Model` (Sequel) for each
@@ -617,15 +617,11 @@ caller numbers, a name's calls, the top callers and posters and the trivia
 hall of fame are aggregates, not loops over the whole history. The server's
 nightly backup copies every `data/*.sqlite3`.
 
-Earlier versions kept CSV files. On the first start each one whose table is
-still empty is imported in one transaction and renamed to `<file>.imported`:
-`accounts.csv` (the PBKDF2 salts and digests as they were, so passwords keep
-working), `boards/*.csv`, `last_callers.csv`, `last_read.csv`, `oneliners.csv`,
-`profiles.csv` (or `profiles.sqlite3`, the BBS::Store file rubbs 0.33 made of
-it), `trivia_scores.csv`, `votes.csv` and `mail.csv`. A row that does not parse
-(the half line a killed write left) is skipped and counted; the rows after it
-still come in. One log line tells the counts. Anything else under `data/`
-(such as `archive/`) is left alone.
+The `accounts` table holds the board's own accounts from before the accounts
+of the network (salted PBKDF2-SHA256): the board no longer writes it, TTG Gate
+BBS imports them. Step 2 of the schema made the `members` table and brought
+those names in with their sign-up dates. Anything else under `data/` (such as
+`archive/`) is left alone.
 
 ## Tests
 
@@ -633,7 +629,8 @@ still come in. One log line tells the counts. Anything else under `data/`
 bundle exec rake test
 ```
 
-Minitest, no network: the legacy import (with torn rows), logins and their
-limits, registration, look-alike names, the rate limits of posts, mail, chat
+Minitest, no network: the logon on a throwaway directory of accounts
+(`BBS::Test.accounts`: a caller signed in at the gate, a password, three wrong
+ones, a guest, a look-alike), registration, the sysop role, the rate limits of posts, mail, chat
 and oneliners, the sysop's broadcast, the SQL statistics, and the BASIC
 interpreter of the Commodore doors. CI runs them with RuboCop before a deploy.

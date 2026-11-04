@@ -19,7 +19,7 @@ class PostModel < BBS::Model
       board:     board_id,
       timestamp: Time.now.strftime(STAMP),
       username:  username,
-      user_key:  Names.key(username),
+      user_key:  BBS::Auth::Names.key(username),
       text:      text
     )
   end
@@ -33,8 +33,8 @@ class PostModel < BBS::Model
   # The posts on the boards +board_ids+ (one id or several).
   def self.count_on(board_ids) = where(board: board_ids).count
 
-  def self.count_by(name) = where(user_key: Names.key(name)).count
+  def self.count_by(name) = where(user_key: BBS::Auth::Names.key(name)).count
 
   # [[name, posts], ...] most posts first, +except+ left out.
-  def self.top_posters(n, except:) = db.fetch(TOP, Names.key(except), n).map { |row| [row[:username], row[:posts]] }
+  def self.top_posters(n, except:) = db.fetch(TOP, BBS::Auth::Names.key(except), n).map { |row| [row[:username], row[:posts]] }
 end

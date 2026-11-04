@@ -14,11 +14,10 @@ class MailService
   GUESTS_DAILY = 30
   DAY          = 86_400
 
-  # +store+ is the Sequel::Database the limits are kept in; nil keeps
-  # them in memory.
-  def initialize(accounts:, sysops:, store: nil)
-    @accounts = accounts
-    @sysops   = sysops
+  # +members+ (a MemberService) knows the names that receive mail; +store+
+  # is the Sequel::Database the limits are kept in, nil keeps them in memory.
+  def initialize(members:, store: nil)
+    @members  = members
     @throttle = Throttle.new(limit: 1, per: COOLDOWN, store: store, name: 'letter')
     @guest    = Throttle.new(limit: GUEST_DAILY, per: DAY, store: store, name: 'guest letter')
     @guests   = BBS::RateLimit.new(limit: GUESTS_DAILY, per: DAY, store: store, name: store && 'guest letters')
@@ -36,9 +35,9 @@ class MailService
   # The registered spelling of a recipient, SYSOP for the sysop, nil when
   # nobody by that name can receive mail.
   def recipient(name)
-    return SYSOP if name.to_s.strip.casecmp?(SYSOP) || @sysops.include?(name.to_s.strip.downcase)
+    return SYSOP if name.to_s.strip.casecmp?(SYSOP)
 
-    @accounts.canonical(name)
+    @members.canonical(name)
   end
 
   # Guests may only write to the sysop; registered names to anyone.
@@ -58,7 +57,7 @@ class MailService
   private
 
   def problem(from, target, text, registered)
-    return :anonymous if from.to_s.casecmp?(AccountService::ANONYMOUS)
+    return :anonymous if from.to_s.casecmp?(MemberService::ANONYMOUS)
     return :unknown if target.nil?
     return :guest unless registered || target == SYSOP
 

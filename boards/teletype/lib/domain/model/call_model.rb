@@ -31,7 +31,7 @@ class CallModel < BBS::Model
     create(
       timestamp:  Time.now.iso8601,
       username:   username,
-      user_key:   Names.key(username),
+      user_key:   BBS::Auth::Names.key(username),
       session_id: session_id,
       seconds:    seconds&.to_i
     )
@@ -45,7 +45,7 @@ class CallModel < BBS::Model
 
   # The Stats of +name+, nil before its first call.
   def self.stats(name)
-    row = db.fetch(format(STATS, where: 'WHERE user_key = ?'), Names.key(name)).first
+    row = db.fetch(format(STATS, where: 'WHERE user_key = ?'), BBS::Auth::Names.key(name)).first
     row && stats_of(row)
   end
 
@@ -53,7 +53,7 @@ class CallModel < BBS::Model
   def self.all_stats = db.fetch(format(STATS, where: '')).to_h { |row| [row[:user_key], stats_of(row)] }
 
   # [[name, calls], ...] most calls first, +except+ left out.
-  def self.top(n, except:) = db.fetch(TOP, Names.key(except), n).map { |row| [row[:username], row[:calls]] }
+  def self.top(n, except:) = db.fetch(TOP, BBS::Auth::Names.key(except), n).map { |row| [row[:username], row[:calls]] }
 
   def self.stats_of(row)
     Stats.new(

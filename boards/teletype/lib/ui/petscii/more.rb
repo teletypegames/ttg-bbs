@@ -107,7 +107,7 @@ module UI
       puts
       online.nodes.each { |n| puts node_line(n) }
       text = ask("\r\n#{WH}broadcast#{LG} (empty: back)\r\n> ")
-      board.sysop_broadcast(name, text, registered: registered?) unless text.empty?
+      board.sysop_broadcast(name, text, sysop: sysop?) unless text.empty?
     end
 
     def node_line(node)

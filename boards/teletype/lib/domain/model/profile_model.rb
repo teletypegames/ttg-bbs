@@ -10,12 +10,12 @@ class ProfileModel < BBS::Model
   FIELDS = %i[signature location homepage notes art].freeze
 
   # The profile of +username+ in any case, or nil.
-  def self.of(username) = self[Names.key(username)]
+  def self.of(username) = self[BBS::Auth::Names.key(username)]
 
   # Makes or updates the profile of +username+: the FIELDS given (nil ones
   # left as they are), the name's spelling and the time.
   def self.upsert(username:, **fields)
-    key    = Names.key(username)
+    key    = BBS::Auth::Names.key(username)
     values = fields.slice(*FIELDS).compact
     db.transaction do
       dataset.insert_conflict(target: :user_key, update: {

@@ -15,7 +15,7 @@ class LetterModel < BBS::Model
       timestamp:     Time.now.iso8601,
       sender:        from,
       recipient:     to,
-      recipient_key: Names.key(to),
+      recipient_key: BBS::Auth::Names.key(to),
       subject:       subject,
       body:          body,
       read:          0
@@ -24,7 +24,7 @@ class LetterModel < BBS::Model
 
   # Letters to any of the names, newest first.
   def self.to(names)
-    where(recipient_key: names.map { |name| Names.key(name) }).order(Sequel.desc(Sequel.lit('rowid'))).all
+    where(recipient_key: names.map { |name| BBS::Auth::Names.key(name) }).order(Sequel.desc(Sequel.lit('rowid'))).all
   end
 
   def self.mark_read(id) = where(id: id).update(read: 1)

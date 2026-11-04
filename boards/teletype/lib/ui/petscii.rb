@@ -87,7 +87,7 @@ module UI
     title('TELETYPE BBS') { node_text }
 
     def run
-      context[:plain] = capitals?(context[:username])
+      context[:plain] = capitals?(name)
       Logon.show(self)
       loop do
         doing('At the main menu')
@@ -100,10 +100,10 @@ module UI
       Leaving.play(self)
     end
 
-    def name = context[:username] || AccountService::ANONYMOUS
-    def registered? = context[:authenticated] == true
-    def anonymous? = name == AccountService::ANONYMOUS
-    def sysop? = board.sysop?(name, context[:authenticated])
+    def name = identity.name || MemberService::ANONYMOUS
+    def registered? = signed_in?
+    def anonymous? = name == MemberService::ANONYMOUS
+    def sysop? = board.sysop?(identity)
     def session_id = context[:session_id]
 
     private

@@ -44,5 +44,5 @@ class LastCallersService
   def all_stats = CallModel.all_stats
 
   # [[name, calls], ...] most calls first, Anonymous left out.
-  def top_callers(n = 10) = CallModel.top(n, except: AccountService::ANONYMOUS)
+  def top_callers(n = 10) = CallModel.top(n, except: MemberService::ANONYMOUS)
 end

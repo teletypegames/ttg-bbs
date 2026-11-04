@@ -202,7 +202,7 @@ module Trivia
       out "\e[0m\e[2J\e[H\r\n"
       out "  #{C}═══ GAME OVER ═══#{O}\r\n\r\n"
       out "  #{W}#{@name}#{O}, you answered #{Y}#{correct}#{O} of #{total} and scored #{Y}#{points}#{O} points.\r\n\r\n"
-      if @name.casecmp?(AccountService::ANONYMOUS)
+      if @name.casecmp?(MemberService::ANONYMOUS)
         out "  #{D}Anonymous scores do not go on the wall: call with a name next time.#{O}\r\n\r\n"
       else
         @scores.add(@name, points, correct)

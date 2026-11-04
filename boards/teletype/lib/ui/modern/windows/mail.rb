@@ -18,11 +18,11 @@ module UI
 
         section :messages do
           window :mail, :master_detail do
-            title      { "Mail — #{context[:username]}" }
+            title { "Mail — #{caller_name}" }
             list_width 36
-            empty      { Formatters::Mail.empty(registered?) }
-            items      { inbox }
-            label      { |letter| Formatters::Mail.label(letter) }
+            empty { Formatters::Mail.empty(registered?) }
+            items { inbox }
+            label { |letter| Formatters::Mail.label(letter) }
             detail do |letter, width|
               mail.mark_read(letter)
               Formatters::Mail.detail(letter, width)
@@ -44,7 +44,7 @@ module UI
             title        'Write a Letter'
             width        { [cols - 8, 70].min }
             height       18
-            hint         { "From: #{context[:username]} — to a registered name, or Sysop. Ctrl-Enter sends" }
+            hint         { "From: #{caller_name} — to a registered name, or Sysop. Ctrl-Enter sends" }
             submit_label '&Send'
             cancel_label '&Cancel'
             prefill      { { to: extras[:to].to_s, subject: extras[:subject].to_s } }
@@ -53,7 +53,7 @@ module UI
             field :body,    type: :textarea, max_length: MailService::BODY_MAX
             on_submit do |values|
               result = board.send_letter(
-                context[:username],
+                caller_name,
                 values[:to],
                 values[:subject],
                 values[:body],
@@ -68,7 +68,7 @@ module UI
         end
 
         helpers do
-          def inbox = mail.inbox(context[:username], sysop: sysop?)
+          def inbox = mail.inbox(caller_name, sysop: sysop?)
 
           def reply_to(letter)
             subject = letter.subject.start_with?('Re: ') ? letter.subject : "Re: #{letter.subject}"

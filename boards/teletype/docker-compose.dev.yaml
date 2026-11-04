@@ -7,7 +7,7 @@ services:
     volumes:
       - ./:/app/
     environment:
-      - TELETYPE_BBS_SYSOPS=${TELETYPE_BBS_SYSOPS:-}
+      - RUBBS_AUTH_SECRET=${RUBBS_AUTH_SECRET:-}
       - TELETYPE_BBS_DISCORD_WEBHOOK=${TELETYPE_BBS_DISCORD_WEBHOOK:-}
       - SERMO_LLM_URL=http://acp:8080
     depends_on:

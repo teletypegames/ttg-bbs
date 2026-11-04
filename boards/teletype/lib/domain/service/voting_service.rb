@@ -34,7 +34,7 @@ class VotingService
   def total(poll) = VoteModel.tally(poll.id).values.sum
 
   def vote(poll, username, option)
-    return :anonymous if username.to_s.casecmp?(AccountService::ANONYMOUS)
+    return :anonymous if username.to_s.casecmp?(MemberService::ANONYMOUS)
     return :unknown unless poll.options.include?(option)
 
     VoteModel.cast(poll.id, username, option)

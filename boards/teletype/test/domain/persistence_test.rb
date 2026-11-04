@@ -7,17 +7,6 @@ require_relative '../test_helper'
 class PersistenceTest < Minitest::Test
   include DatabaseCase
 
-  def accounts
-    service = AccountService.new(guard: LoginGuard.new(store: @db, per_name: 3), pause: ->(_) {})
-    service.register('Kali', 'password', 'password')
-    service
-  end
-
-  def test_a_login_lockout_outlasts_a_restart
-    assert_equal :wrong, accounts.log_on('Kali', caller_key: 'a') { 'nope' }
-    assert_equal :locked, accounts.log_on('Kali', caller_key: 'b') { 'password' }
-  end
-
   def test_a_post_cooldown_outlasts_a_restart
     boards = -> { BoardService.new(store: @db) }
     assert_equal :ok, boards.call.post('general', 'Kali', 'hi', caller_key: 'a')

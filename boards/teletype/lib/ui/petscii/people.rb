@@ -214,23 +214,18 @@ module UI
         say('Next time the board asks for this password.', color: GR)
         password = ask(" #{WH}password#{LG}: ", mask: '*')
         confirm  = ask(" #{WH}again#{LG}:    ", mask: '*')
-        say(register_result(accounts.register(name, password, confirm)))
+        say(register_result(members.register(name, password, confirm)))
       end
       pause('return')
     end
 
     def register_result(result)
-      case result
-      when :ok
-        context[:authenticated] = true
-        "#{GN}#{name} is yours now.#{LG}"
-      when :reserved  then "#{RD}This name is reserved for the sysop.#{LG}"
-      when :taken     then "#{RD}This name is already registered.#{LG}"
-      when :look_alike then "#{RD}This name looks too much like a registered one.#{LG}"
-      when :too_short then "#{RD}At least #{AccountService::MIN_PASSWORD} characters.#{LG}"
-      when :mismatch  then "#{RD}The two passwords differ.#{LG}"
-      else "#{RD}Log in with a name first, not as Anonymous.#{LG}"
+      unless result.is_a?(BBS::Auth::Identity)
+        return "#{RD}#{Wording::REGISTER.fetch(result, Wording::REGISTER[:unavailable])}#{LG}"
       end
+
+      session.identity = result
+      "#{GN}#{name} is yours now.#{LG}"
     end
   end
 end

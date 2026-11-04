@@ -49,7 +49,7 @@ class BoardService
   def latest(n = 5) = PostModel.latest(ids, n).map { |post| [board(post.board), post] }
 
   # [[name, posts], ...] most posts first.
-  def top_posters(n = 10) = PostModel.top_posters(n, except: AccountService::ANONYMOUS)
+  def top_posters(n = 10) = PostModel.top_posters(n, except: MemberService::ANONYMOUS)
 
   # :ok, :empty, :unknown (no such board) or :too_fast.
   def post(board_id, username, text, caller_key:)

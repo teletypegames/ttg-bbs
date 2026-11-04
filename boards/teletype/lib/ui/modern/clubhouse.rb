@@ -140,7 +140,7 @@ module UI
           number  = context[:caller_number] || bbs.last_callers.caller_number
           return plain(runner.session, seconds, number) unless Clubhouse.fits?(runner.session)
 
-          lamps_out(runner.session, context[:username] || AccountService::ANONYMOUS, seconds, number, bbs.taglines.pick)
+          lamps_out(runner.session, runner.session.identity.name || MemberService::ANONYMOUS, seconds, number, bbs.taglines.pick)
         end
 
         def self.lamps_out(session, name, seconds, caller_number, quote)

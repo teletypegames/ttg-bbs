@@ -9,13 +9,13 @@ module UI
       # menubar, the status bar and the window's frame.
       TOWN_CHROME = 4
 
-      def sysop? = board.sysop?(context[:username], context[:authenticated])
+      def sysop? = board.sysop?(identity)
 
-      def registered? = context[:authenticated] == true
+      def registered? = signed_in?
 
-      def caller_name = context[:username] || AccountService::ANONYMOUS
+      def caller_name = identity.name || MemberService::ANONYMOUS
 
-      def anonymous? = caller_name == AccountService::ANONYMOUS
+      def anonymous? = caller_name == MemberService::ANONYMOUS
 
       # Node and time on line; the clock goes before them.
       def status_text
@@ -28,7 +28,7 @@ module UI
       def check_mail
         return unless registered?
 
-        unread = mail.unread_count(context[:username], sysop: sysop?)
+        unread = mail.unread_count(caller_name, sysop: sysop?)
         known  = context[:mail_seen] || unread
         context[:mail_seen] = unread
         return unless unread > known
@@ -91,7 +91,7 @@ module UI
           width: 74
         ) do |text|
           next unless report(
-            oneliners.add(context[:username], text, caller_key: caller_key),
+            oneliners.add(caller_name, text, caller_key: caller_key),
             Wording::ONELINER,
             title: 'Oneliners'
           ) == :ok
@@ -119,7 +119,7 @@ module UI
       end
 
       def open_register
-        return message("#{context[:username]} is already registered and logged in.", title: 'Register') if registered?
+        return message("#{caller_name} is already registered and logged in.", title: 'Register') if registered?
         return message('Call again with a name to register it.', title: 'Register') if anonymous?
 
         show(:register)
@@ -127,7 +127,7 @@ module UI
 
       def sysop_broadcast
         ask('Sysop broadcast message:', title: 'Broadcast', width: 64) do |text|
-          board.sysop_broadcast(context[:username], text, registered: registered?)
+          board.sysop_broadcast(caller_name, text, sysop: sysop?)
         end
       end
 
@@ -205,7 +205,7 @@ module UI
 
       # The mailbox as it is at the start, so only new mail rings.
       def count_mail
-        context[:mail_seen] ||= mail.unread_count(context[:username], sysop: sysop?) if registered?
+        context[:mail_seen] ||= mail.unread_count(caller_name, sysop: sysop?) if registered?
       end
     end
   end

@@ -10,7 +10,7 @@ class TriviaScoreModel < BBS::Model
     create(
       timestamp: Time.now.iso8601,
       username:  username,
-      user_key:  Names.key(username),
+      user_key:  BBS::Auth::Names.key(username),
       points:    points,
       correct:   correct
     )

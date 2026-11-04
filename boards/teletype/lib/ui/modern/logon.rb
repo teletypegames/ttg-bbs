@@ -8,8 +8,14 @@ module UI
       WAIT = 120
 
       def self.show(runner, bbs)
-        context = runner.context
-        summary = bbs.logon_summary(context[:username], registered: context[:authenticated], session_id: context[:session_id])
+        context  = runner.context
+        identity = runner.session.identity
+        summary  = bbs.logon_summary(
+          identity.name || MemberService::ANONYMOUS,
+          registered: identity.signed_in?,
+          sysop:      bbs.sysop?(identity),
+          session_id: context[:session_id]
+        )
         context[:caller_number] = summary[:caller_number]
         Formatters::Logon.screen(runner, **summary)
         runner.session.readkey(timeout: WAIT)

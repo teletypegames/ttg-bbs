@@ -6,14 +6,6 @@ module UI
       # You: registering the name, the profile, the stats and the Sysop
       # Console.
       module You
-        REGISTER_ERRORS = {
-          anonymous:  'Log in with a name first, not as Anonymous.',
-          reserved:   'This name is reserved for the sysop.',
-          taken:      'This name is already registered.',
-          look_alike: 'This name looks too much like a registered one.',
-          too_short:  "At least #{AccountService::MIN_PASSWORD} characters.",
-          mismatch:   'The two passwords differ.'
-        }.freeze
         PROFILE = %i[signature location homepage notes].freeze
 
         extend Section
@@ -21,7 +13,7 @@ module UI
         section :you do
           # The name called with, tied to a password.
           window :register, :form do
-            title        { "Register — #{context[:username]}" }
+            title        { "Register — #{caller_name}" }
             width        60
             height       11
             hint         'Next time the BBS asks for this password.'
@@ -29,13 +21,13 @@ module UI
             cancel_label '&Cancel'
             field :password, label: 'Password', password: true
             field :confirm,  label: 'Again',    password: true
-            errors REGISTER_ERRORS
+            errors Wording::REGISTER
             on_submit do |values|
-              result = accounts.register(context[:username], values[:password], values[:confirm])
-              next result unless result == :ok
+              result = members.register(caller_name, values[:password], values[:confirm])
+              next result unless result.is_a?(BBS::Auth::Identity)
 
-              context[:authenticated] = true
-              message("#{context[:username]} is yours now.", title: 'Registered')
+              session.identity = result
+              message("#{result.name} is yours now.", title: 'Registered')
             end
           end
 
@@ -46,19 +38,19 @@ module UI
             prefill { PROFILE.to_h { |key| [key, (profile.find(caller_name) || {})[key].to_s] } }
             PROFILE.each { |key| field key, label: key.to_s.capitalize }
             on_submit do |values|
-              profile.update(context[:username], **values)
+              profile.update(caller_name, **values)
               message('Profile saved.', title: 'Saved')
             end
           end
 
           window :my_stats, :info do
-            title  { "Your Stats — #{context[:username]}" }
+            title  { "Your Stats — #{caller_name}" }
             width  60
             height 16
             body do
               Formatters::MyStats.body(**board.my_stats(
                 caller_name,
-                registered:    context[:authenticated],
+                registered:    registered?,
                 session_id:    session_id,
                 caller_number: context[:caller_number],
                 sysop:         sysop?
@@ -74,7 +66,7 @@ module UI
             scroll true
             body do
               Formatters::Sysop.console_body(
-                username:         context[:username],
+                username:         caller_name,
                 online_count:     online.count,
                 total_messages:   boards.total_count,
                 chat_subscribers: chat.subscriber_count,

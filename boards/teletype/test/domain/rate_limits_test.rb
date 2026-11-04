@@ -5,10 +5,9 @@ require_relative '../test_helper'
 class RateLimitsTest < Minitest::Test
   include DatabaseCase
 
-  def accounts
-    AccountService.new(pause: ->(_) {}).tap do |a|
-      a.register('Kali', 'password', 'password')
-    end
+  def members
+    MemberModel.remember(BBS::Auth::Identity.new(id: 1, name: 'Kali'))
+    MemberService.new(directory: -> {})
   end
 
   def test_a_post_every_cooldown_by_name_and_by_line
@@ -46,7 +45,7 @@ class RateLimitsTest < Minitest::Test
   end
 
   def test_guest_feedback_has_a_daily_cap
-    mail = MailService.new(accounts: accounts, sysops: [])
+    mail = MailService.new(members: members)
     stub_cooldown(mail)
     results = (1..(MailService::GUEST_DAILY + 1)).map do |i|
       mail.send_letter('Guest', 'Sysop', "s#{i}", 'body', registered: false, caller_key: 'a')
@@ -57,7 +56,7 @@ class RateLimitsTest < Minitest::Test
   end
 
   def test_mail_cooldown
-    mail = MailService.new(accounts: accounts, sysops: [])
+    mail = MailService.new(members: members)
     assert_equal :ok, mail.send_letter('Kali', 'kali', 'hi', 'body', registered: true, caller_key: 'a')
     assert_equal :too_fast, mail.send_letter('Kali', 'kali', 'hi', 'body', registered: true, caller_key: 'b')
     letter = mail.inbox('Kali').first

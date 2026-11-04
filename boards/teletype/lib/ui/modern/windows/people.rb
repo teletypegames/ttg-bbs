@@ -39,7 +39,7 @@ module UI
             title  'User Listing'
             width  74
             scroll true
-            height { (accounts.names.size + 9).clamp(10, [rows - 4, 10].max) }
+            height { (members.names.size + 9).clamp(10, [rows - 4, 10].max) }
             body   { Formatters::UserList.body(board.user_rows) }
           end
 

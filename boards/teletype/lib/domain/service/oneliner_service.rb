@@ -16,7 +16,7 @@ class OnelinerService
 
   # :ok, :anonymous, :empty, :too_long or :too_fast.
   def add(username, text, caller_key:)
-    return :anonymous if username.to_s.casecmp?(AccountService::ANONYMOUS)
+    return :anonymous if username.to_s.casecmp?(MemberService::ANONYMOUS)
 
     line = BBS::Text.line(text)
     return :empty if line.empty?

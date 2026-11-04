@@ -68,7 +68,7 @@ module UI
             list_width 26
             empty '  (no polls)'
             items { voting.polls }
-            label { |poll| Formatters::Voting.label(poll, voting.ballot(poll, context[:username])) }
+            label { |poll| Formatters::Voting.label(poll, voting.ballot(poll, caller_name)) }
             detail { |poll, width| poll_detail(poll, width) }
             meta { '✓ voted   • open   Enter or Vote: cast or change your vote' }
             on_pick { |poll| vote_on(poll, window) }
@@ -78,23 +78,17 @@ module UI
 
         helpers do
           def board_label(board)
-            unread = registered? ? boards.unread(context[:username], board.id) : 0
+            unread = registered? ? boards.unread(caller_name, board.id) : 0
             unread.positive? ? "#{board.title} (#{unread})" : board.title
           end
 
           def board_lines(board, width)
-            boards.mark_read(context[:username], board.id) if registered?
+            boards.mark_read(caller_name, board.id) if registered?
             Formatters::Board.lines(boards.messages(board.id, 100), board.title, width)
           end
 
           def poll_detail(poll, width)
-            Formatters::Voting.detail(
-              poll,
-              voting.results(poll),
-              voting.total(poll),
-              voting.ballot(poll, context[:username]),
-              width
-            )
+            Formatters::Voting.detail(poll, voting.results(poll), voting.total(poll), voting.ballot(poll, caller_name), width)
           end
         end
       end

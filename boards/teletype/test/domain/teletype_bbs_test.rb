@@ -3,34 +3,50 @@
 require_relative '../test_helper'
 
 class TeletypeBBSTest < Minitest::Test
-  ENVIRONMENT = %w[TELETYPE_BBS_DB TELETYPE_BBS_SYSOPS].freeze
+  include AccountsCase
+
+  ENVIRONMENT = %w[TELETYPE_BBS_DB].freeze
 
   def setup
     @dir = Dir.mktmpdir('teletype-bbs')
     BBS.config.env_prefix = 'TELETYPE_BBS_'
     ENV['TELETYPE_BBS_DB'] = File.join(@dir, 'teletype.sqlite3')
-    ENV['TELETYPE_BBS_SYSOPS'] = 'Tasi'
     @bbs = TeletypeBBS.new
   end
 
   def teardown
     ENVIRONMENT.each { |name| ENV.delete(name) }
     FileUtils.rm_rf(@dir)
+    super
   end
 
-  def test_only_a_logged_on_sysop_broadcasts
+  def test_only_a_signed_in_sysop_broadcasts
     @bbs.chat.subscribe('s')
-    assert_equal :forbidden, @bbs.sysop_broadcast('Kali', 'hi', registered: true)
-    assert_equal :forbidden, @bbs.sysop_broadcast('Tasi', 'hi', registered: false)
-    assert_equal :empty, @bbs.sysop_broadcast('Tasi', ' ', registered: true)
-    assert_equal :ok, @bbs.sysop_broadcast('tasi', 'hello', registered: true)
+    assert_equal :forbidden, @bbs.sysop_broadcast('Kali', 'hi', sysop: false)
+    assert_equal :empty, @bbs.sysop_broadcast('Tasi', ' ', sysop: true)
+    assert_equal :ok, @bbs.sysop_broadcast('tasi', 'hello', sysop: true)
     assert_equal ['[SYSOP] tasi', 'hello'], @bbs.chat.drain('s').map { |l| [l.username, l.text] }.last
+  end
+
+  def test_the_sysop_role_makes_a_sysop
+    assert @bbs.sysop?(account('Tasi', :sysop))
+    refute @bbs.sysop?(account('Kali'))
+    refute @bbs.sysop?(BBS::Auth::Identity.guest('Tasi'))
+  end
+
+  def test_a_paged_sysop_is_on_line_with_the_role
+    @bbs.databases
+    @bbs.start_call('s1', account('Kali'), listed: true)
+    refute @bbs.page_sysop('Zed')
+    @bbs.start_call('s2', account('Tasi', :sysop), listed: true)
+    assert @bbs.page_sysop('Zed')
   end
 
   def board_with_history
     @bbs.databases
     [%w[Kali a], %w[kali b], %w[Zed c], %w[Anonymous d]].each { |name, id| CallModel.record(name, id, 30) }
-    @bbs.accounts.register('Kali', 'password', 'password')
+    accounts
+    @bbs.members.register('Kali', 'password', 'password')
     @bbs.boards.post('general', 'Kali', 'hi', caller_key: 'a')
     @bbs.trivia.add('Zed', 500, 7)
   end

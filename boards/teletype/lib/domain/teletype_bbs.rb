@@ -13,11 +13,8 @@ class TeletypeBBS
   CONTENT_DIR   = File.expand_path('../content', __dir__)
   BULLETINS_DIR = File.join(CONTENT_DIR, 'bulletins')
   DOOR_NAMES    = TeletypeDoors::NAMES
-  # The answers of AccountService#log_on that let a caller in.
-  LET_IN = %i[ok guest].freeze
 
-  setting :sysops, []
-  path    :db, 'data/teletype.sqlite3'
+  path :db, 'data/teletype.sqlite3'
   database :db, MIGRATIONS
   setting :ftp_host, 'ftp.teletypegames.org'
   setting :discord_webhook, ''
@@ -36,10 +33,8 @@ class TeletypeBBS
   service(:last_callers) { store && LastCallersService.new }
   service(:profile)      { store && ProfileService.new }
   service(:oneliners)    { OnelinerService.new(store: store) }
-  service(:accounts) do
-    AccountService.new(reserved: sysop_names, guard: LoginGuard.new(store: store))
-  end
-  service(:mail)      { MailService.new(accounts: accounts, sysops: sysop_names, store: store) }
+  service(:members)      { store && MemberService.new(directory: -> { directory }) }
+  service(:mail)      { MailService.new(members: members, store: store) }
   service(:trivia)    { store && TriviaScoreModel }
   service(:bulletins) { BulletinRepository.new(BULLETINS_DIR) }
 
@@ -75,15 +70,6 @@ class TeletypeBBS
     )
   end
 
-  # The databases, opened and migrated, the models bound to them; on the
-  # first open the CSV files of earlier versions beside the database are
-  # brought in (LegacyImport).
-  def databases
-    return super if @databases
-
-    super.tap { |opened| LegacyImport.new(opened[:main], File.dirname(db)).run }
-  end
-
   # Every service made, and the IRC channel joined.
   def start
     super
@@ -108,29 +94,23 @@ class TeletypeBBS
 
   def llm = @llm ||= TeletypeBBS.llm(ENV)
 
-  def sysop?(name, authenticated) = authenticated == true && sysop_names.include?(name.to_s.downcase)
+  # The accounts of the network (a BBS::Auth::Directory or Remote, from
+  # the board's +auth+), nil when the board has none.
+  def directory = BBS.config.auth&.directory
+
+  # Whether +identity+ (a BBS::Auth::Identity) is a signed-in sysop.
+  def sysop?(identity) = identity.signed_in? && identity.role?(:sysop)
 
   # ── a call ────────────────────────────────────────────────────────────
 
-  # Logs the caller of +context+ on as +typed+ (the name as typed, blank for
-  # Anonymous): the name, whether it is theirs, and their place on the
-  # board when it lets them in (a node and a place among the last callers
-  # when +listed+). The block gets +again+ (true after a wrong one) and
-  # answers the password. Returns AccountService#log_on's answer; LET_IN
-  # holds the ones that let the caller in.
-  def log_on(context, typed, caller_key:, listed: true, &password)
-    name = context[:username] = AccountService.normalize_name(typed)
-    result = accounts.log_on(name, caller_key: caller_key, &password)
-    context[:authenticated] = result == :ok
-    start_call(context[:session_id], name, listed: listed) if LET_IN.include?(result)
-    result
-  end
-
-  # The caller is on the board: a node and a place among the last callers
-  # when +listed+ (a scanner looks around unlisted), and the live chat.
-  def start_call(session_id, name, listed:)
+  # The caller of +identity+ (a BBS::Auth::Identity) is on the board: a
+  # member when signed in, a node and a place among the last callers when
+  # +listed+ (a scanner looks around unlisted), and the live chat.
+  def start_call(session_id, identity, listed:)
+    name = identity.name || MemberService::ANONYMOUS
+    members.remember(identity)
     if listed
-      online.add(session_id, name)
+      online.add(session_id, name, sysop: sysop?(identity))
       last_callers.start(name, session_id)
     end
     chat.subscribe(session_id)
@@ -151,14 +131,14 @@ class TeletypeBBS
 
   # What the logon sequence tells a caller: who they are, then the scans of
   # the old boards (mail, message bases, voting booth).
-  def logon_summary(name, registered:, session_id:)
+  def logon_summary(name, registered:, sysop:, session_id:)
     {
       name:          name,
       node:          online.node(session_id)&.number,
       caller_number: last_callers.caller_number,
       stats:         last_callers.user_stats(name),
       registered:    registered,
-      mail:          registered ? mail.unread_count(name, sysop: sysop?(name, registered)) : nil,
+      mail:          registered ? mail.unread_count(name, sysop: sysop) : nil,
       new_scan:      registered ? boards.new_scan(name) : nil,
       polls_open:    polls_open(name),
       quote:         taglines.of_the_day
@@ -169,7 +149,7 @@ class TeletypeBBS
   # what is coming up, who called last and the wall.
   def bulletin(name, registered:)
     {
-      username:       name || AccountService::ANONYMOUS,
+      username:       name || MemberService::ANONYMOUS,
       registered:     registered,
       online_count:   online.count,
       total_messages: boards.total_count,
@@ -199,16 +179,16 @@ class TeletypeBBS
   # The sysop's bell: the chat and Discord hear it. True when a sysop is on
   # line to answer.
   def page_sysop(name)
-    on_line = online.nodes.any? { |n| sysop_names.include?(n.name.downcase) }
+    on_line = online.nodes.any?(&:sysop)
     chat.broadcast('[PAGE]', "#{name} is paging the sysop!")
     discord.page(name)
     on_line
   end
 
-  # A line to every caller and to Discord, from a logged-on sysop only:
-  # :ok, :forbidden or :empty.
-  def sysop_broadcast(name, text, registered:)
-    return :forbidden unless sysop?(name, registered)
+  # A line to every caller and to Discord, from a signed-in sysop only
+  # (+sysop+): :ok, :forbidden or :empty.
+  def sysop_broadcast(name, text, sysop:)
+    return :forbidden unless sysop
 
     line = BBS::Text.line(text)
     return :empty if line.empty?
@@ -220,11 +200,11 @@ class TeletypeBBS
 
   # ── the users ─────────────────────────────────────────────────────────
 
-  # [name, stats, location, online] of every registered name, most calls first.
+  # [name, stats, location, online] of every member, most calls first.
   def user_rows
     stats = last_callers.all_stats
-    rows = accounts.names.map do |name|
-      [name, stats[Names.key(name)], profile.find(name)&.location, online.online?(name)]
+    rows = members.names.map do |name|
+      [name, stats[BBS::Auth::Names.key(name)], profile.find(name)&.location, online.online?(name)]
     end
     rows.sort_by { |_, st, _, _| -(st&.calls || 0) }
   end
@@ -239,7 +219,7 @@ class TeletypeBBS
       posts:         boards.posts_by(name),
       ballots:       voting.polls.count { |p| voting.ballot(p, name) },
       letters:       registered ? mail.inbox(name, sysop: sysop).size : nil,
-      member_since:  accounts.created_at(name)
+      member_since:  members.created_at(name)
     }
   end
 
@@ -254,14 +234,12 @@ class TeletypeBBS
 
   private
 
-  def sysop_names = sysops.map(&:downcase)
-
   # The board's database (a Sequel::Database): the rate limits are kept in
   # it, and opening it binds the models.
   def store = databases[:main]
 
   def polls_open(name)
-    return 0 if name == AccountService::ANONYMOUS
+    return 0 if name == MemberService::ANONYMOUS
 
     voting.polls.count { |poll| voting.ballot(poll, name).nil? }
   end

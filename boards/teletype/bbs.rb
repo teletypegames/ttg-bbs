@@ -11,9 +11,12 @@ require_relative 'lib/ui/petscii'
 # One board, two faces: an ANSI terminal gets the modern desktop, a
 # Commodore 64 the PETSCII board, both on the same TeletypeBBS. Each face
 # opens with the clubhouse's entrance and the logon scans, and closes with
-# its lamps going out: that is its goodbye.
+# its lamps going out: that is its goodbye. The accounts are the network's
+# (TTG Gate BBS): the entrance asks the name and the password itself
+# (UI::Login), and a caller handed on by the gate signed in walks past it.
 BBS.board 'Teletype BBS', TeletypeBBS do
   preset  TTG::PRESET
+  auth    TTG::AUTH, login: :menu
   goodbye false
 
   modern do |bbs|

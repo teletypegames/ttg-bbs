@@ -18,7 +18,7 @@ class Throttle
   # The [limit, key] pairs of an event, for BBS::RateLimit.allow_all? with
   # other limits.
   def checks(name, caller_key)
-    key = Names.key(name)
-    [[@callers, caller_key.to_s], *([[@names, key]] unless key.empty? || key == Names.key(AccountService::ANONYMOUS))]
+    key = BBS::Auth::Names.key(name)
+    [[@callers, caller_key.to_s], *([[@names, key]] unless key.empty? || key == BBS::Auth::Names.key(MemberService::ANONYMOUS))]
   end
 end
