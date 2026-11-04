@@ -42,7 +42,8 @@ module LegacyFixtures
                       "user-tasi,2026-05-01T10:00:00Z,Tasi,-- t,Budapest,https://teletypegames.org,hi,\n",
     'trivia_scores.csv' => "2026-05-12T20:41:32+02:00,Tasi,700,8\n2026-05-13T20:41:32+02:00,Kali,900,9\n" \
                            "2026-05-14T20:41:32+02:00,Kali,x,1\n",
-    'votes.csv' => "favourite,tasi,SERMO,2026-05-01T10:00:00+02:00\nfavourite,tasi,TTG Trivia,2026-05-02T10:00:00+02:00\n" \
+    'votes.csv' => "favourite,tasi,SERMO,2026-05-01T10:00:00+02:00\n" \
+                   "favourite,tasi,TTG Trivia,2026-05-02T10:00:00+02:00\n" \
                    "favourite,kali,SERMO,2026-05-02T11:00:00+02:00\n",
     'mail.csv' => "id,timestamp,from,to,subject,body,read\n" \
                   "a1,2026-05-01T10:00:00+02:00,Kali,Tasi,Hi,\"two\nlines\",1\n" \
