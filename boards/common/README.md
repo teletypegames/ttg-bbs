@@ -24,13 +24,14 @@ moves every board to the latest rubbs and ttg-common together.
 
 | Module | What | Used by |
 |--------|------|---------|
+| `TTG::PRESET` | The `BBS::Preset` of every board: the logo splash, teletypegames.org and its QR code on the goodbye, the User-Agent | every board (`preset TTG::PRESET`) |
+| `ttg/rake` | The house rules of `rake bbs:check` (`TTG::Check`): `<slug>-bbs`, the same Dockerfile and .dockerignore (`lib/ttg/board/`), compose limits and one 23xx port, the four CI steps, the preset, every setting in `env-example` | every board's Rakefile |
 | `TTG::Logo` | The Teletype Games logo as two `BBS::Art` drawings (modern: 66×23 half blocks, 256 colours; C64: 33×23 quarter blocks) and as a `BBS::Splash` | every board (all twelve) |
 
 ### `TTG::Logo`
 
 ```ruby
-config.flow = BBS::Terminal.flow(title: 'Teletype BBS', modern: m, petscii: p,
-                                 splash: TTG::Logo.splash)
+BBS.board('Teletype BBS', TeletypeBBS) { preset TTG::PRESET; … }   # the splash comes with the preset
 ```
 
 After the terminal question the caller gets the logo, centred, with
@@ -49,3 +50,17 @@ in the table above. Everything is RDoc-documented (CI fails below 100%).
 
 Bump `ttg-common.gemspec`, commit, tag `vX.Y.Z` (annotated) and push both; CI
 rejects a tag that does not match the gemspec.
+
+### The house rules: `ttg/rake`
+
+```ruby
+# Rakefile of every TTG board
+require 'bbs/rake'
+require 'ttg/rake'
+BBS::Rake.board
+```
+
+`rake bbs:check` (and `rake`, in CI) then also checks the TTG house rules
+(`lib/ttg/check.rb`). The canonical `Dockerfile` and `.dockerignore` live in
+`lib/ttg/board/`: changing them there and bumping every board's lock is how the
+boards change together.
