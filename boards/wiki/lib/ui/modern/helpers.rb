@@ -18,7 +18,7 @@ module UI
       end
 
       def page_text(page)
-        locked?(page) ? "# Supervisor only\n\n#{locked_text('**Wiki > Profile** to log in and read it.')}" : wiki.page_markdown(page)
+        locked?(page) ? "# Supervisor only\n\n#{locked_text('**Wiki > Profile** to log in.')}" : wiki.page_markdown(page)
       end
 
       def open_browser
