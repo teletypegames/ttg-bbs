@@ -4,12 +4,15 @@ require 'minitest/autorun'
 require 'tmpdir'
 require 'fileutils'
 require 'domain'
+require 'bbs/test'
 
-# A test that works in a directory of its own, removed after it.
+# A test that works in a directory of its own, removed after it, and on a
+# fresh database.
 module TmpDir
   def setup
     super
     @dir = Dir.mktmpdir('feedia-test')
+    BBS::Test.database(MIGRATIONS)
   end
 
   def teardown
@@ -18,9 +21,6 @@ module TmpDir
   end
 
   def path(name) = File.join(@dir, name)
-
-  # A fresh database in the test's directory.
-  def database = BBS::SQLite.new(path('feedia.sqlite3'))
 end
 
 # BBS::HTTP for a test: every GET answers +body+ (or raises +error+) and is

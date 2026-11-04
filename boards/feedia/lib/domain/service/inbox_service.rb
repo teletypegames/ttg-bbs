@@ -21,9 +21,8 @@ class InboxService
 
   def self.url?(url) = url.to_s.strip.match?(%r{\Ahttps?://[^\s/]+\.[^\s]+\z}i)
 
-  def initialize(inbox, discord:, per_caller: BBS::RateLimit.new(limit: PER_CALLER, per: HOUR),
+  def initialize(discord:, per_caller: BBS::RateLimit.new(limit: PER_CALLER, per: HOUR),
                  global: BBS::RateLimit.new(limit: GLOBAL, per: HOUR))
-    @inbox      = inbox
     @discord    = discord
     @per_caller = per_caller
     @global     = global
@@ -52,17 +51,17 @@ class InboxService
   end
 
   # The newest messages first, for the admins' look at the inbox.
-  def messages(limit = 50) = @inbox.last(limit)
+  def messages(limit = 50) = MessageModel.last(limit)
 
   private
 
   def deliver(caller, message)
     return :limited unless BBS::RateLimit.allow_all?([[@per_caller, caller], [@global, :all]])
 
-    @inbox.append(message)
+    MessageModel.append(message)
     @discord.post(discord_text(message))
     :ok
-  rescue SQLite3::Exception => e
+  rescue Sequel::DatabaseError => e
     BBS.log('inbox', "#{e.class}: #{e.message}")
     :failed
   end

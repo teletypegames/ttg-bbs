@@ -3,7 +3,7 @@
 require 'test_helper'
 require 'json'
 
-class InboxRepositoryTest < Minitest::Test
+class MessageModelTest < Minitest::Test
   include TmpDir
 
   def setup
@@ -19,17 +19,15 @@ class InboxRepositoryTest < Minitest::Test
   def note(text) = MessageModel.from_h(kind: 'feedback', at: '2026-11-01T10:00:00+01:00', from: 'Ada', text: text)
 
   def test_append_and_last
-    inbox = InboxRepository.new(database)
-    assert inbox.append(note('one'))
-    assert inbox.append(note('two'))
-    assert_equal %w[two one], inbox.last(10).map(&:text)
-    assert_equal 'Ada', inbox.last(1).first.from
+    assert MessageModel.append(note('one'))
+    assert MessageModel.append(note('two'))
+    assert_equal %w[two one], MessageModel.last(10).map(&:text)
+    assert_equal %w[Ada Ada], [MessageModel.last(1).first.from, MessageModel.last(1).first.sender]
   end
 
   def test_only_the_newest_are_kept
-    inbox = InboxRepository.new(database, keep: 3)
-    5.times { |i| inbox.append(note(i.to_s)) }
-    assert_equal %w[4 3 2], inbox.last(10).map(&:text)
+    5.times { |i| MessageModel.append(note(i.to_s), keep: 3) }
+    assert_equal %w[4 3 2], MessageModel.last(10).map(&:text)
   end
 
   def test_the_old_inbox_is_imported_once
@@ -41,19 +39,19 @@ class InboxRepositoryTest < Minitest::Test
       '',
       JSON.generate(kind: 'feedback', at: '2026-10-29T10:00:00+01:00', text: "hi\e[2J")
     ].join("\n"))
-    inbox = InboxRepository.new(database, legacy: legacy)
-    assert_equal ['hi[2J', nil], inbox.last(10).map(&:text)
-    assert_equal 'https://x.example/rss', inbox.last(10).last.url
+    assert_equal [2, 2], LegacyInbox.new(legacy).import
+    assert_equal ['hi[2J', nil], MessageModel.last(10).map(&:text)
+    assert_equal %w[https://x.example/rss Bob], MessageModel.last(10).last.values.values_at(:url, :sender)
     refute File.exist?(legacy)
     assert File.exist?("#{legacy}.imported")
     assert_match(/imported 2 messages from inbox.jsonl \(2 skipped\)/, $stderr.string)
   end
 
   def test_no_import_into_a_full_inbox
-    inbox = InboxRepository.new(database)
-    inbox.append(note('kept'))
+    MessageModel.append(note('kept'))
     File.write(path('inbox.jsonl'), JSON.generate(kind: 'feedback', at: 'x', text: 'old'))
-    assert_equal 1, InboxRepository.new(database, legacy: path('inbox.jsonl')).count
+    assert_nil LegacyInbox.new(path('inbox.jsonl')).import
+    assert_equal 1, MessageModel.count
     assert File.exist?(path('inbox.jsonl'))
   end
 end

@@ -8,7 +8,9 @@ require_relative '../lib/domain'
 
 FeediaBBS.root = File.expand_path('..', __dir__)
 
-messages = FeediaBBS.new.inbox.messages((ARGV.first || 20).to_i)
+bbs = FeediaBBS.new
+bbs.databases
+messages = bbs.inbox.messages((ARGV.first || 20).to_i)
 puts 'The inbox is empty.' if messages.empty?
 messages.each do |m|
   puts "#{m.at}  #{m.kind.upcase}  from #{m.from.to_s.empty? ? '(anonymous)' : m.from}"

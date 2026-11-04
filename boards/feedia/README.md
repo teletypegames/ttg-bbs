@@ -149,15 +149,16 @@ lib/
   domain.rb                     requires the domain in dependency order
   domain/
     feedia_bbs.rb               FeediaBBS, the composition root: reads ENV, wires the rest
+    migrations.rb               the schema of the database, one step per version
     model/feed_model.rb         one feed of the list
     model/channel_model.rb      what a feed said: title, link, description, items
     model/item_model.rb         one item: title, link, date, author, Markdown
-    model/message_model.rb      a suggestion or feedback to the admins
+    model/message_model.rb      the messages table (BBS::Model): a suggestion or feedback
     model/feed_xml.rb           RSS/RDF/Atom → a channel and its items
     model/html_text.rb          an item's HTML → Markdown, numbered links
     repository/feed_list_repository.rb  config/feeds.yml
     repository/feed_repository.rb       fetching a feed (BBS::HTTP), the cache (BBS::Cache)
-    repository/inbox_repository.rb      the messages table, the import of inbox.jsonl
+    repository/legacy_inbox.rb          the one-time import of inbox.jsonl
     repository/discord_repository.rb    the admins' Discord webhook, rate-limited
     service/feed_service.rb     the feed list, reading a feed
     service/inbox_service.rb    suggestions and feedback: checks, limits, the inbox, Discord

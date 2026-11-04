@@ -10,13 +10,17 @@ class FeediaBBS
   setting :discord_webhook, ''
   path    :db, 'data/feedia.sqlite3'
   path    :feed_list, 'config/feeds.yml', env: 'FEEDS'
+  database :db, MIGRATIONS
 
   service(:feeds) { FeedService.new(FeedListRepository.new(feed_list), FeedRepository.new) }
-  service(:inbox) { InboxService.new(inbox_repository, discord: DiscordRepository.new(discord_webhook)) }
+  service(:inbox) do
+    import_legacy_inbox
+    InboxService.new(discord: DiscordRepository.new(discord_webhook))
+  end
 
   private
 
-  # The inbox in the board's database; the inbox.jsonl of earlier versions
-  # beside it is taken in on the first start.
-  def inbox_repository = InboxRepository.new(database(db), legacy: File.join(File.dirname(db), 'inbox.jsonl'))
+  # The inbox.jsonl of earlier versions beside the database, taken in on
+  # the first start.
+  def import_legacy_inbox = LegacyInbox.new(File.join(File.dirname(db), 'inbox.jsonl')).import
 end
