@@ -33,7 +33,7 @@ module UI
       rule
     end
 
-    main_menu(above: -> { ['', " #{GR}#{catalog_line}#{LG}"] }) do
+    main_menu(above: -> { " #{GR}#{catalog_line}#{LG}" }) do
       item('1', 'the classics shelf', 'the great books, open at once') { classics }
       item('2', 'gutenberg bookshelves', 'the shelves of project gutenberg') { shelves }
       item('3', 'search by title or author', 'words, and lang:fr for one language') { search }
