@@ -5,8 +5,7 @@ module UI
     module Windows
       # The live windows: the chat, the IRC channel and the TTG Master.
       module Chat
-        MASTER_GREETING = 'Hey, caller! I am the sysop of this board. Ask me where things are, what is new, what ' \
-                          'is coming up.'
+        MASTER_GREETING = 'Hey, caller! I am the sysop of this board. Ask me where things are, what is new, what is coming up.'
 
         extend Section
 

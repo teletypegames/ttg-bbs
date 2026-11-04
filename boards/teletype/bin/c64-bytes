@@ -63,10 +63,18 @@ Door  = Struct.new(:name, :title, :about, :c64) do
 end
 
 def scene(at)
-  SceneModel.new(nodes: (1..7).map { |n| Node.new(n, n, "caller#{n}", at, 'At the main menu') }, smoking: true,
-                 mail: 12, notes: 3, doors: {}, sofa: 1, guestbook: [],
-                 events: [Event.new('Underwater Sun Rising - Implementation day', at + (30 * 86_400))],
-                 oneliners: [], season: BBS::Season.now(at: at, jam: Date.new(2027, 1, 8)..Date.new(2027, 1, 10)))
+  SceneModel.new(
+    nodes:     (1..7).map { |n| Node.new(n, n, "caller#{n}", at, 'At the main menu') },
+    smoking:   true,
+    mail:      12,
+    notes:     3,
+    doors:     {},
+    sofa:      1,
+    guestbook: [],
+    events:    [Event.new('Underwater Sun Rising - Implementation day', at + (30 * 86_400))],
+    oneliners: [],
+    season:    BBS::Season.now(at: at, jam: Date.new(2027, 1, 8)..Date.new(2027, 1, 10))
+  )
 end
 
 def keep(name, bytes)
@@ -79,8 +87,13 @@ ctx = { username: 'tasi', authenticated: true, session_id: 1 }
 
 puts 'Main menu, the whole screen (7 windows lit, mail, an event):'
 HOURS = { dawn: [6, 30], day: [12, 0], dusk: [16, 30], night: [22, 0] }.freeze
-DAYS  = { 'no layer' => [2026, 11, 1], 'snow' => [2026, 12, 24], 'pumpkins' => [2026, 10, 30],
-          'snow, fireworks' => [2026, 12, 31], 'snow, bunting' => [2027, 1, 9] }.freeze
+DAYS  = {
+  'no layer'        => [2026, 11, 1],
+  'snow'            => [2026, 12, 24],
+  'pumpkins'        => [2026, 10, 30],
+  'snow, fireworks' => [2026, 12, 31],
+  'snow, bunting'   => [2027, 1, 9]
+}.freeze
 worst = DAYS.map do |label, day|
   sizes = HOURS.map do |_, (hour, min)|
     at = Time.new(*day, hour, min)
@@ -108,8 +121,7 @@ end
 puts "  a puff of smoke: #{puffs.join(', ')}"
 
 line = Stub::Line.new(%i[right right right down left left down right right up up enter])
-Clubhouse::TownMap.new(line, NetworkService.new(NetworkRepository.new(File.join(TeletypeBBS::CONTENT_DIR,
-                                                                                'network.yml')))).run
+Clubhouse::TownMap.new(line, NetworkService.new(NetworkRepository.new(File.join(TeletypeBBS::CONTENT_DIR, 'network.yml')))).run
 keep('town', line.out.join)
 puts "Town map: #{line.sizes.first}, a step #{line.sizes.drop(1).join(', ')}"
 
@@ -123,8 +135,11 @@ Clubhouse::GamesRoom.new(line, doors, scene(at)).run
 keep('games', line.out.join)
 puts "Games room: #{line.sizes.first}, a step #{line.sizes.drop(1).join(', ')}"
 
-fame = { callers: [['tasi', 40], ['kali', 22], ['zsolt', 9], ['a', 3], ['b', 2], ['c', 1], ['d', 1]],
-         posters: [['tasi', 12], ['kali', 5], ['zsolt', 2]], trivia: [['kali', 900], ['tasi', 700]] }
+fame = {
+  callers: [['tasi', 40], ['kali', 22], ['zsolt', 9], ['a', 3], ['b', 2], ['c', 1], ['d', 1]],
+  posters: [['tasi', 12], ['kali', 5], ['zsolt', 2]],
+  trivia:  [['kali', 900], ['tasi', 700]]
+}
 line = Stub::Line.new([:enter])
 Clubhouse::Trophies.show(line, fame)
 keep('trophies', line.out.join)

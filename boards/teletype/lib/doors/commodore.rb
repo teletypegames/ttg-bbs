@@ -16,8 +16,15 @@ module Commodore
   C64 = Machine.new(
     platform:      'c64',
     boot:          ['', '    **** COMMODORE 64 BASIC V2 ****', '', ' 64K RAM SYSTEM  38911 BASIC BYTES FREE'],
-    colors:        { base: BLUE_SCREEN, text: BLUE_SCREEN, bright: { fg: :bright_white, bg: :blue }, accent: BLUE_SCREEN,
-                     error: BLUE_SCREEN, dim: { fg: :white, bg: :blue }, prompt: BLUE_SCREEN },
+    colors:        {
+      base:   BLUE_SCREEN,
+      text:   BLUE_SCREEN,
+      bright: { fg: :bright_white, bg: :blue },
+      accent: BLUE_SCREEN,
+      error:  BLUE_SCREEN,
+      dim:    { fg: :white, bg: :blue },
+      prompt: BLUE_SCREEN
+    },
     reset_address: 64_738,
     basic35:       false,
     disk:          '"TELETYPE GAMES  " TT 2A'
@@ -26,8 +33,15 @@ module Commodore
   PLUS4 = Machine.new(
     platform:      'plus4',
     boot:          ['', 'COMMODORE BASIC V3.5 60671 BYTES FREE', '3-PLUS-1 ON KEY F1'],
-    colors:        { base: GREY_SCREEN, text: GREY_SCREEN, bright: GREY_SCREEN, accent: GREY_SCREEN,
-                     error: GREY_SCREEN, dim: { fg: :bright_black, bg: :white }, prompt: GREY_SCREEN },
+    colors:        {
+      base:   GREY_SCREEN,
+      text:   GREY_SCREEN,
+      bright: GREY_SCREEN,
+      accent: GREY_SCREEN,
+      error:  GREY_SCREEN,
+      dim:    { fg: :bright_black, bg: :white },
+      prompt: GREY_SCREEN
+    },
     reset_address: nil,
     basic35:       true,
     disk:          '"TELETYPE GAMES  " TT 3D'

@@ -9,7 +9,7 @@ class VoteModel < BBS::Model
 
   def self.cast(poll_id, username, option)
     dataset.insert_conflict(:replace)
-           .insert(poll: poll_id, user_key: Names.key(username), option: option, timestamp: Time.now.iso8601)
+      .insert(poll: poll_id, user_key: Names.key(username), option: option, timestamp: Time.now.iso8601)
   end
 
   # The option +username+ chose in the poll, or nil.

@@ -66,7 +66,7 @@ module UI
       def step(dx, dy)
         from = at(chosen)
         best = places.each_index.select { |i| ahead?(at(places[i]), from, dx, dy) }
-                     .min_by { |i| distance(at(places[i]), from, dx) }
+          .min_by { |i| distance(at(places[i]), from, dx) }
         @index = best if best
         :handled
       end
@@ -148,10 +148,14 @@ module UI
         color = BBS::Art.color(b.accent).ansi
         write(frame, x, y, "#{b.name} · #{b.building}".ljust(width), "\e[0;1;38;5;#{color}m")
         write(frame, x, y + 1, b.about.ljust(width), "\e[0;38;5;252m")
-        write(frame, x, y + 2, "walk over: from TTG Gate BBS (2399), or telnet #{b.address.sub(':', ' ')}".ljust(width),
-              "\e[0;38;5;116m")
-        write(frame, x, y + 3, '←↑↓→ or a click: another building · Esc: back to the clubhouse'.ljust(width),
-              "\e[0;38;5;66m")
+        write(
+          frame,
+          x,
+          y + 2,
+          "walk over: from TTG Gate BBS (2399), or telnet #{b.address.sub(':', ' ')}".ljust(width),
+          "\e[0;38;5;116m"
+        )
+        write(frame, x, y + 3, '←↑↓→ or a click: another building · Esc: back to the clubhouse'.ljust(width), "\e[0;38;5;66m")
       end
     end
 
@@ -243,8 +247,7 @@ module UI
         n = inside(door)
         who = n.zero? ? 'nobody inside right now' : "#{n} caller#{'s' unless n == 1} inside"
         write(frame, x, y + 2, "#{door.title} · #{who}".ljust(width), "\e[0;38;5;209m")
-        write(frame, x, y + 3, '←→ or a click: another station · Enter: step in · Esc: back'.ljust(width),
-              "\e[0;38;5;66m")
+        write(frame, x, y + 3, '←→ or a click: another station · Enter: step in · Esc: back'.ljust(width), "\e[0;38;5;66m")
       end
     end
   end

@@ -60,10 +60,24 @@ module UI
     ].freeze
 
     ACTIONS = {
-      'm' => :read_boards, 'e' => :read_mail, 'o' => :wall, 'l' => :live_chat, 'i' => :listen_irc,
-      'p' => :page_sysop, 'n' => :show_network, 'u' => :read_bulletins, 'd' => :read_dev_log, 'c' => :people,
-      'v' => :voting_booth, 's' => :you, 'h' => :fame, 'r' => :door_list, 't' => :ask_master,
-      'y' => :system_info, '?' => :help, 'z' => :sysop_console
+      'm' => :read_boards,
+      'e' => :read_mail,
+      'o' => :wall,
+      'l' => :live_chat,
+      'i' => :listen_irc,
+      'p' => :page_sysop,
+      'n' => :show_network,
+      'u' => :read_bulletins,
+      'd' => :read_dev_log,
+      'c' => :people,
+      'v' => :voting_booth,
+      's' => :you,
+      'h' => :fame,
+      'r' => :door_list,
+      't' => :ask_master,
+      'y' => :system_info,
+      '?' => :help,
+      'z' => :sysop_console
     }.freeze
 
     # The rooms the clubhouse shows as pictures (Clubhouse) instead of
@@ -122,8 +136,12 @@ module UI
     def clubhouse_menu
       @unread = registered? ? mail.unread_count(name, sysop: sysop?) : 0
       ring_for_mail
-      menu = Clubhouse::MainMenu.new(session, scene.scene(name, registered: registered?, sysop: sysop?),
-                                     node: online.node(session_id)&.number, name: name)
+      menu = Clubhouse::MainMenu.new(
+        session,
+        scene.scene(name, registered: registered?, sysop: sysop?),
+        node: online.node(session_id)&.number,
+        name: name
+      )
       @lit = menu.run(lit: @lit, unread: @unread) || @lit
     end
 
@@ -149,8 +167,14 @@ module UI
       puts rule_line
       items = menu_items
       index = items.index { |i| i.selectable? && i.value == @lit }
-      @lit  = menu(items, columns: 2, height: items.size / 2, index: index, exits: { 'x' => 'x', '*' => '*' },
-                          hint: 'crsr: choose  return: open  *: art')
+      @lit  = menu(
+        items,
+        columns: 2,
+        height:  items.size / 2,
+        index:   index,
+        exits:   { 'x' => 'x', '*' => '*' },
+        hint:    'crsr: choose  return: open  *: art'
+      )
     end
 
     # The cells of the menu, down the left column, then down the right: a

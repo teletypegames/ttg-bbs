@@ -9,8 +9,7 @@ module UI
 
       def self.show(runner, bbs)
         context = runner.context
-        summary = bbs.logon_summary(context[:username], registered: context[:authenticated],
-                                                        session_id: context[:session_id])
+        summary = bbs.logon_summary(context[:username], registered: context[:authenticated], session_id: context[:session_id])
         context[:caller_number] = summary[:caller_number]
         Formatters::Logon.screen(runner, **summary)
         runner.session.readkey(timeout: WAIT)

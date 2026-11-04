@@ -44,10 +44,15 @@ class GiteaRepository
 
     content = a['content'].to_s
     payload = parse_payload(content)
-    ActivityModel.new(kind: kind, user: a.dig('act_user', 'login').to_s, repo: a.dig('repo', 'full_name').to_s,
-                      ref: a['ref_name'].to_s.sub(%r{\Arefs/(heads|tags)/}, ''),
-                      created_at: Time.parse(a['created'].to_s), commits: commits(payload),
-                      title: payload.empty? ? content : '')
+    ActivityModel.new(
+      kind:       kind,
+      user:       a.dig('act_user', 'login').to_s,
+      repo:       a.dig('repo', 'full_name').to_s,
+      ref:        a['ref_name'].to_s.sub(%r{\Arefs/(heads|tags)/}, ''),
+      created_at: Time.parse(a['created'].to_s),
+      commits:    commits(payload),
+      title:      payload.empty? ? content : ''
+    )
   rescue ArgumentError
     nil
   end

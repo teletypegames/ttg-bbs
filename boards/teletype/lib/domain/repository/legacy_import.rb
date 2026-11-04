@@ -143,8 +143,14 @@ class LegacyImport
     name = row['name'].to_s
     return unless !name.empty? && row['salt'].to_s.match?(/\A\h{32}\z/) && row['digest'].to_s.match?(/\A\h{64}\z/)
 
-    { name_key: Names.key(name), name: name, skeleton: Names.skeleton(name), salt: row['salt'],
-      digest: row['digest'], created_at: row['created_at'] || Time.now.iso8601 }
+    {
+      name_key:   Names.key(name),
+      name:       name,
+      skeleton:   Names.skeleton(name),
+      salt:       row['salt'],
+      digest:     row['digest'],
+      created_at: row['created_at'] || Time.now.iso8601
+    }
   end
 
   def post(row, board)
@@ -166,8 +172,13 @@ class LegacyImport
     return unless row.size.between?(3, 4) && timestamp.to_s.match?(ISO_TIME) && username
     return if seconds && !seconds.match?(/\A\d+\z/)
 
-    { timestamp: timestamp, username: username, user_key: Names.key(username), session_id: session_id,
-      seconds: seconds&.to_i }
+    {
+      timestamp:  timestamp,
+      username:   username,
+      user_key:   Names.key(username),
+      session_id: session_id,
+      seconds:    seconds&.to_i
+    }
   end
 
   def oneliner(row, _file)
@@ -181,9 +192,16 @@ class LegacyImport
     name = row['username'].to_s
     return if name.empty?
 
-    { user_key: Names.key(name), username: name, signature: row['signature'], location: row['location'],
-      homepage: row['homepage'], notes: row['notes'], art: row['art'],
-      updated_at: row['timestamp'] || Time.now.utc.iso8601 }
+    {
+      user_key:   Names.key(name),
+      username:   name,
+      signature:  row['signature'],
+      location:   row['location'],
+      homepage:   row['homepage'],
+      notes:      row['notes'],
+      art:        row['art'],
+      updated_at: row['timestamp'] || Time.now.utc.iso8601
+    }
   end
 
   def trivia_score(row, _file)
@@ -191,8 +209,13 @@ class LegacyImport
     return unless row.size == 4 && timestamp.to_s.match?(ISO_TIME) && username
     return unless points.to_s.match?(/\A-?\d+\z/) && correct.to_s.match?(/\A\d+\z/)
 
-    { timestamp: timestamp, username: username, user_key: Names.key(username), points: points.to_i,
-      correct: correct.to_i }
+    {
+      timestamp: timestamp,
+      username:  username,
+      user_key:  Names.key(username),
+      points:    points.to_i,
+      correct:   correct.to_i
+    }
   end
 
   def vote(row, _file)
@@ -205,8 +228,15 @@ class LegacyImport
   def letter(row, _file)
     return unless row['id'] && row['from'] && row['to'] && row['timestamp'].to_s.match?(ISO_TIME)
 
-    { id: row['id'], timestamp: row['timestamp'], sender: row['from'], recipient: row['to'],
-      recipient_key: Names.key(row['to']), subject: row['subject'].to_s, body: row['body'].to_s,
-      read: row['read'] == '1' ? 1 : 0 }
+    {
+      id:            row['id'],
+      timestamp:     row['timestamp'],
+      sender:        row['from'],
+      recipient:     row['to'],
+      recipient_key: Names.key(row['to']),
+      subject:       row['subject'].to_s,
+      body:          row['body'].to_s,
+      read:          row['read'] == '1' ? 1 : 0
+    }
   end
 end

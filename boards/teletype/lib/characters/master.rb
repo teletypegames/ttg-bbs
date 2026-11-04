@@ -19,8 +19,10 @@ class TtgMaster
   PERSONA   = BBS::AI::Persona.load(File.join(__dir__, 'master.yml'))
   KNOWLEDGE = knowledge('master_knowledge.yml')
   # The same sysop on the C64 board, where the way around is single keys.
-  C64 = { persona:   BBS::AI::Persona.load(File.join(__dir__, 'master_c64.yml')),
-          knowledge: knowledge('master_knowledge_c64.yml') }.freeze
+  C64 = {
+    persona:   BBS::AI::Persona.load(File.join(__dir__, 'master_c64.yml')),
+    knowledge: knowledge('master_knowledge_c64.yml')
+  }.freeze
   MAX_FACTS = 2
 
   # Words that sit in many questions weigh half: "board" in "who made this
@@ -34,8 +36,14 @@ class TtgMaster
   # +client+ is the model (Characters.client). +catalog+ is where the games
   # are, for the catalog fact: another board of the network, as this one
   # keeps no catalog of its own.
-  def initialize(games:, site:, client:, persona: PERSONA, knowledge: KNOWLEDGE,
-                 catalog: 'The WarpEngine BBS at teletypegames.org:2329')
+  def initialize(
+    games:,
+    site:,
+    client:,
+    persona: PERSONA,
+    knowledge: KNOWLEDGE,
+    catalog: 'The WarpEngine BBS at teletypegames.org:2329'
+  )
     @games     = games
     @site      = site
     @persona   = persona
@@ -60,8 +68,11 @@ class TtgMaster
     facts = facts_for(question)
     return @persona.fallback(question) if facts.empty?
 
-    reply = @chat.reply("Facts:\n#{facts.map { |f| "- #{f.text}" }.join("\n")}\nQuestion: #{question}", ctx,
-                        fallback: facts.first.text)
+    reply = @chat.reply(
+      "Facts:\n#{facts.map { |f| "- #{f.text}" }.join("\n")}\nQuestion: #{question}",
+      ctx,
+      fallback: facts.first.text
+    )
     faithful?(reply, facts) ? reply : facts.first.text
   end
 
@@ -76,9 +87,9 @@ class TtgMaster
   def known_facts(words)
     phrase = " #{words.join(' ')} "
     @knowledge.map { |keys, text| [score(keys, words, phrase), text] }
-              .select { |score, _| score.positive? }
-              .sort_by { |score, _| -score }.first(MAX_FACTS)
-              .map { |_, text| Fact.new(text, text.scan(MENU_PATH)) }
+      .select { |score, _| score.positive? }
+      .sort_by { |score, _| -score }.first(MAX_FACTS)
+      .map { |_, text| Fact.new(text, text.scan(MENU_PATH)) }
   end
 
   # The facts read from the site now: the news, the events, the catalog.
@@ -123,8 +134,10 @@ class TtgMaster
     coming = @site.upcoming_events(3)
     return Fact.new('No events are scheduled right now.', []) if coming.empty?
 
-    Fact.new("Coming up: #{coming.map { |e| "#{e.name} on #{e.date.strftime('%Y-%m-%d')}" }.join('; ')}.",
-             coming.map(&:name) + coming.map { |e| e.date.strftime('%Y-%m-%d') })
+    Fact.new(
+      "Coming up: #{coming.map { |e| "#{e.name} on #{e.date.strftime('%Y-%m-%d')}" }.join('; ')}.",
+      coming.map(&:name) + coming.map { |e| e.date.strftime('%Y-%m-%d') }
+    )
   end
 
   def catalog
@@ -132,7 +145,9 @@ class TtgMaster
     return nil if by_platform.empty?
 
     list = by_platform.sort.map { |p, gs| "#{p}: #{gs.map(&:title).uniq.join(', ')}" }
-    Fact.new("The games by platform: #{list.join('; ')}. #{@catalog} has them all.",
-             by_platform.values.flatten.map(&:title) + [@catalog])
+    Fact.new(
+      "The games by platform: #{list.join('; ')}. #{@catalog} has them all.",
+      by_platform.values.flatten.map(&:title) + [@catalog]
+    )
   end
 end

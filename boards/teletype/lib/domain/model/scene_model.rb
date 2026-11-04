@@ -7,8 +7,19 @@
 # in each door (the lamps of the games room) and on the sofa (the live
 # chat), the last names in the guestbook, what is coming up, the wall, and
 # the time of day and season (BBS::Season) the pictures are drawn for.
-SceneModel = Struct.new(:nodes, :smoking, :mail, :notes, :doors, :sofa, :guestbook, :events, :oneliners,
-                        :season, keyword_init: true) do
+SceneModel = Struct.new(
+  :nodes,
+  :smoking,
+  :mail,
+  :notes,
+  :doors,
+  :sofa,
+  :guestbook,
+  :events,
+  :oneliners,
+  :season,
+  keyword_init: true
+) do
   def inside = nodes.size
 
   # Whether node +number+ is taken: a lit window.

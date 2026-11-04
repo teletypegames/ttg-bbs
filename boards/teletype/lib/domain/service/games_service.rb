@@ -28,9 +28,7 @@ class GamesService
 
   # Latest proper releases first; development builds stay out of them.
   def latest_releases(n = 3)
-    all.select { |g| g.released? && !g.dev_build? && g.released_at }
-       .sort_by { |g| -g.released_at.to_i }
-       .first(n)
+    all.select { |g| g.released? && !g.dev_build? && g.released_at }.sort_by { |g| -g.released_at.to_i }.first(n)
   end
 
   def catalog_url(game) = @repo.catalog_url(game)

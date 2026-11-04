@@ -7,14 +7,25 @@ module Commodore
     module Expressions
       # Each function's method; it gets the arguments as an Array.
       FUNCTIONS = {
-        'RND' => :fn_rnd, 'INT' => :fn_int, 'ABS' => :fn_abs, 'SGN' => :fn_sgn, 'SQR' => :fn_sqr,
-        'SIN' => :fn_sin, 'COS' => :fn_cos, 'TAN' => :fn_tan, 'LEN' => :fn_len, 'STR$' => :fn_str,
-        'VAL' => :fn_val, 'CHR$' => :fn_chr, 'ASC' => :fn_asc, 'LEFT$' => :fn_left, 'RIGHT$' => :fn_right,
-        'MID$' => :fn_mid, 'PEEK' => :fn_peek
+        'RND'    => :fn_rnd,
+        'INT'    => :fn_int,
+        'ABS'    => :fn_abs,
+        'SGN'    => :fn_sgn,
+        'SQR'    => :fn_sqr,
+        'SIN'    => :fn_sin,
+        'COS'    => :fn_cos,
+        'TAN'    => :fn_tan,
+        'LEN'    => :fn_len,
+        'STR$'   => :fn_str,
+        'VAL'    => :fn_val,
+        'CHR$'   => :fn_chr,
+        'ASC'    => :fn_asc,
+        'LEFT$'  => :fn_left,
+        'RIGHT$' => :fn_right,
+        'MID$'   => :fn_mid,
+        'PEEK'   => :fn_peek
       }.freeze
-      RELATIONS = {
-        '=' => :==, '<>' => :!=, '<' => :<, '>' => :>, '<=' => :<=, '>=' => :>=
-      }.freeze
+      RELATIONS = { '=' => :==, '<>' => :!=, '<' => :<, '>' => :>, '<=' => :<=, '>=' => :>= }.freeze
       WORD = -32_768..32_767
 
       private

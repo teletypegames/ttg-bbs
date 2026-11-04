@@ -36,8 +36,11 @@ module UI
         return if wide.empty?
 
         title('DOORS')
-        say("#{wide.map(&:title).join(', ')} need 80 columns: call with a PC " \
-            'terminal and choose 1 to open them.', color: GR)
+        say(
+          "#{wide.map(&:title).join(', ')} need 80 columns: call with a PC " \
+          'terminal and choose 1 to open them.',
+          color: GR
+        )
         return pause
       end
 
@@ -52,8 +55,11 @@ module UI
     def ask_master
       doing('Asking the TTG Master')
       title('ASK THE TTG MASTER')
-      say('Hey, caller! I am the sysop of this board. Ask me where things are, what is new, what is ' \
-          'coming up. An empty line takes you back.', color: YE)
+      say(
+        'Hey, caller! I am the sysop of this board. Ask me where things are, what is new, what is ' \
+        'coming up. An empty line takes you back.',
+        color: YE
+      )
       loop do
         question = ask("\r\n#{CY}you:#{LG} ")
         return if question.empty?

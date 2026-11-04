@@ -10,8 +10,16 @@ class LetterModel < BBS::Model
   unrestrict_primary_key
 
   def self.append(from, to, subject, body)
-    create(id: SecureRandom.hex(6), timestamp: Time.now.iso8601, sender: from, recipient: to,
-           recipient_key: Names.key(to), subject: subject, body: body, read: 0)
+    create(
+      id:            SecureRandom.hex(6),
+      timestamp:     Time.now.iso8601,
+      sender:        from,
+      recipient:     to,
+      recipient_key: Names.key(to),
+      subject:       subject,
+      body:          body,
+      read:          0
+    )
   end
 
   # Letters to any of the names, newest first.

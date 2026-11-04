@@ -17,8 +17,13 @@ module Password
 
   def digest(password, salt)
     GATE.synchronize do
-      OpenSSL::KDF.pbkdf2_hmac(password.to_s, salt: [salt].pack('H*'), iterations: ITERATIONS,
-                                               length: 32, hash: 'sha256').unpack1('H*')
+      OpenSSL::KDF.pbkdf2_hmac(
+        password.to_s,
+        salt:       [salt].pack('H*'),
+        iterations: ITERATIONS,
+        length:     32,
+        hash:       'sha256'
+      ).unpack1('H*')
     end
   end
 

@@ -28,8 +28,12 @@ module Ra
     BBS::FakeOS.define do
       name   'CHAT OF RA'
       prompt '☼ '
-      colors text: :yellow, bright: { fg: :yellow, bold: true }, accent: { fg: :yellow, bold: true },
-             dim: :white, error: :red, prompt: { fg: :yellow, bold: true }
+      colors text:   :yellow,
+             bright: { fg: :yellow, bold: true },
+             accent: { fg: :yellow, bold: true },
+             dim:    :white,
+             error:  :red,
+             prompt: { fg: :yellow, bold: true }
 
       boot { Ra.boot(self) }
       Ra.riddle_commands(self)

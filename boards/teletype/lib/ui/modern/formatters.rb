@@ -8,8 +8,16 @@ module UI
       module Bulletin
         BANNER = Logo.half_blocks.map { |l| "  #{l}" }.freeze
 
-        def self.body(username:, registered:, online_count:, total_messages:,
-                      recent_callers:, posts:, events:, oneliners:)
+        def self.body(
+          username:,
+          registered:,
+          online_count:,
+          total_messages:,
+          recent_callers:,
+          posts:,
+          events:,
+          oneliners:
+        )
           [
             *BANNER,
             :spacer,
@@ -17,8 +25,7 @@ module UI
             "Online now: #{online_count}   Messages: #{total_messages}",
             :spacer,
             { text: 'Lost? Press F1: the TTG Master, the sysop, answers your questions.', style: :accent },
-            *section('New on the boards:', posts.map { |b, m| Posts.line(b, m) },
-                     '  (nothing posted yet — Messages > Boards)'),
+            *section('New on the boards:', posts.map { |b, m| Posts.line(b, m) }, '  (nothing posted yet — Messages > Boards)'),
             *section('Coming up:', events.map { |e| Events.line(e) }, '  (nothing scheduled)'),
             *section('Last callers:', recent_callers.map { |c| caller_line(c) }, '  (none yet)'),
             *section('Oneliners:', Oneliners.lines(oneliners), '  (the wall is empty — Messages > Oneliners)')
@@ -184,6 +191,7 @@ module UI
       module SystemInfo
         def self.format_uptime(start)
           return '–' unless start
+
           seconds = (Time.now - start).to_i
           h = seconds / 3600
           m = (seconds % 3600) / 60
@@ -267,6 +275,7 @@ module UI
       module Users
         def self.last_callers_list(callers)
           return ['  (no callers recorded yet)'] if callers.empty?
+
           callers.map do |c|
             ts = c.timestamp.to_s[0, 19].sub('T', ' ')
             "  \e[2;37m#{ts}\e[0m  \e[1;33m#{c.username}\e[0m"
@@ -275,8 +284,14 @@ module UI
       end
 
       module Sysop
-        def self.console_body(username:, online_count:, total_messages:,
-                              chat_subscribers:, online_users:, recent_callers:)
+        def self.console_body(
+          username:,
+          online_count:,
+          total_messages:,
+          chat_subscribers:,
+          online_users:,
+          recent_callers:
+        )
           body = []
           body << "  Sysop: \e[1;33m#{username}\e[0m"
           body << :spacer

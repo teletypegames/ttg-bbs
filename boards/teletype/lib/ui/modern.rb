@@ -38,8 +38,7 @@ module UI
         button(Formatters::Master::DESKTOP_LABEL, bottom: 1, align: :right, margin: 2) { open_master }
       end
 
-      parts Menus, Windows::Board, Windows::Messages, Windows::Mail, Windows::Chat, Windows::People, Windows::You,
-            Windows::Doors
+      parts Menus, Windows::Board, Windows::Messages, Windows::Mail, Windows::Chat, Windows::People, Windows::You, Windows::Doors
     end
   end
 end

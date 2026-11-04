@@ -74,9 +74,13 @@ module UI
           end
 
           def dev_log_detail(activity, width)
-            Formatters::DevLog.detail(activity, width, commit_url:  ->(sha) { dev_log.commit_url(activity, sha) },
-                                                       release_url: dev_log.release_url(activity),
-                                                       repo_url:    dev_log.repo_url(activity))
+            Formatters::DevLog.detail(
+              activity,
+              width,
+              commit_url:  ->(sha) { dev_log.commit_url(activity, sha) },
+              release_url: dev_log.release_url(activity),
+              repo_url:    dev_log.repo_url(activity)
+            )
           end
         end
       end

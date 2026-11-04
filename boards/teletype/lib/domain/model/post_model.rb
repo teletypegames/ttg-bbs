@@ -15,8 +15,13 @@ class PostModel < BBS::Model
   SQL
 
   def self.append(board_id, username, text)
-    create(board: board_id, timestamp: Time.now.strftime(STAMP), username: username, user_key: Names.key(username),
-           text: text)
+    create(
+      board:     board_id,
+      timestamp: Time.now.strftime(STAMP),
+      username:  username,
+      user_key:  Names.key(username),
+      text:      text
+    )
   end
 
   # The newest +n+ posts of a board, oldest first.

@@ -25,16 +25,21 @@ module UI
         end
         return if s[:registered]
 
-        face.say(s[:name] == AccountService::ANONYMOUS ? 'Call with a name to keep one.' : 'A guest: S, then R keeps your name.',
-                 color: GR)
+        face.say(
+          s[:name] == AccountService::ANONYMOUS ? 'Call with a name to keep one.' : 'A guest: S, then R keeps your name.',
+          color: GR
+        )
       end
 
       def self.scans(face, s)
         face.puts
         scan(face, 'mailbox', s[:mail].nil? ? "#{DG}register for mail" : "#{s[:mail]} new letter#{'s' if s[:mail] != 1}")
         scan(face, 'message bases', new_posts(s[:new_scan]))
-        scan(face, 'voting booth',
-             s[:polls_open].zero? ? 'all voted' : "#{s[:polls_open]} poll#{'s' if s[:polls_open] != 1} open")
+        scan(
+          face,
+          'voting booth',
+          s[:polls_open].zero? ? 'all voted' : "#{s[:polls_open]} poll#{'s' if s[:polls_open] != 1} open"
+        )
       end
 
       def self.new_posts(new_scan)

@@ -40,8 +40,12 @@ module UI
       def open_mail
         return show(:mail) if registered? || sysop?
 
-        message('Mail belongs to registered names (You > Register…). ' \
-                'Anyone with a name can write to the sysop: Messages > Feedback to the Sysop.', title: 'Mail', width: 60)
+        message(
+          'Mail belongs to registered names (You > Register…). ' \
+          'Anyone with a name can write to the sysop: Messages > Feedback to the Sysop.',
+          title: 'Mail',
+          width: 60
+        )
       end
 
       def write_mail(to: '', subject: '', on_sent: nil)
@@ -81,10 +85,16 @@ module UI
       end
 
       def write_oneliner(window)
-        ask("Your line on the wall (#{OnelinerService::MAX_LENGTH} characters at most):", title: 'Oneliner',
-                                                                                         width: 74) do |text|
-          next unless report(oneliners.add(context[:username], text, caller_key: caller_key), Wording::ONELINER,
-                             title: 'Oneliners') == :ok
+        ask(
+          "Your line on the wall (#{OnelinerService::MAX_LENGTH} characters at most):",
+          title: 'Oneliner',
+          width: 74
+        ) do |text|
+          next unless report(
+            oneliners.add(context[:username], text, caller_key: caller_key),
+            Wording::ONELINER,
+            title: 'Oneliners'
+          ) == :ok
 
           close_window(window)
           show(:oneliners)
@@ -101,8 +111,11 @@ module UI
       def open_profile
         return show(:profile) if registered?
 
-        message('Register your name first (You > Register…): a profile belongs to a registered name.',
-                title: 'Profile', width: 60)
+        message(
+          'Register your name first (You > Register…): a profile belongs to a registered name.',
+          title: 'Profile',
+          width: 60
+        )
       end
 
       def open_register
@@ -123,16 +136,24 @@ module UI
       def open_town_map
         return show(:bulletins) if cols < 80
 
-        PictureWindow.open(self, TownMap.new(network: network, rows: rows - TOWN_CHROME),
-                           title: 'Town Map — the BBS Network', section: :board)
+        PictureWindow.open(
+          self,
+          TownMap.new(network: network, rows: rows - TOWN_CHROME),
+          title:   'Town Map — the BBS Network',
+          section: :board
+        )
       end
 
       # The trophy case; the Hall of Fame as lists under 80 columns.
       def open_trophies
         return show(:hall_of_fame) if cols < 80
 
-        PictureWindow.open(self, Clubhouse::Trophies.new(fame: board.hall_of_fame),
-                           title: 'Trophy Case — the Hall of Fame', section: :people)
+        PictureWindow.open(
+          self,
+          Clubhouse::Trophies.new(fame: board.hall_of_fame),
+          title:   'Trophy Case — the Hall of Fame',
+          section: :people
+        )
       end
 
       # The games room (the doors as stations); the Door Lobby under 80 columns.
@@ -156,8 +177,11 @@ module UI
         @scene = scene.scene(caller_name, registered: registered?, sysop: sysop?)
         @games_room&.scene = @scene
         dashboard.data = Dashboard::Data.new(
-          name: caller_name, registered: registered?, caller_number: context[:caller_number],
-          node: online.node(session_id)&.number, scene: @scene
+          name:          caller_name,
+          registered:    registered?,
+          caller_number: context[:caller_number],
+          node:          online.node(session_id)&.number,
+          scene:         @scene
         )
       rescue StandardError => e
         BBS.log('dashboard', e)

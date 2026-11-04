@@ -11,7 +11,6 @@ class ProfileService
   def update(username, **fields)
     return if username.to_s.strip.empty?
 
-    ProfileModel.upsert(username: username,
-                 **fields.transform_values { |v| BBS::Text.line(v)[0, MAX_LENGTH] })
+    ProfileModel.upsert(username: username, **fields.transform_values { |v| BBS::Text.line(v)[0, MAX_LENGTH] })
   end
 end

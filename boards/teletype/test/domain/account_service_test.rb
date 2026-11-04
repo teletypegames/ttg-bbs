@@ -8,9 +8,11 @@ class AccountServiceTest < Minitest::Test
   def setup
     super
     @pauses   = []
-    @accounts = AccountService.new(reserved: ['Tasi'],
-                                   guard: LoginGuard.new(per_name: 4, per_caller: 3),
-                                   pause: ->(seconds) { @pauses << seconds })
+    @accounts = AccountService.new(
+      reserved: ['Tasi'],
+      guard:    LoginGuard.new(per_name: 4, per_caller: 3),
+      pause:    ->(seconds) { @pauses << seconds }
+    )
   end
 
   def register(name) = @accounts.register(name, 'password', 'password')

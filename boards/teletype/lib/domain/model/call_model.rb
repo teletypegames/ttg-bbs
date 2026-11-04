@@ -28,8 +28,13 @@ class CallModel < BBS::Model
   SQL
 
   def self.record(username, session_id, seconds = nil)
-    create(timestamp: Time.now.iso8601, username: username, user_key: Names.key(username), session_id: session_id,
-           seconds: seconds&.to_i)
+    create(
+      timestamp:  Time.now.iso8601,
+      username:   username,
+      user_key:   Names.key(username),
+      session_id: session_id,
+      seconds:    seconds&.to_i
+    )
   end
 
   # The newest +n+ calls, newest first.
@@ -51,8 +56,12 @@ class CallModel < BBS::Model
   def self.top(n, except:) = db.fetch(TOP, Names.key(except), n).map { |row| [row[:username], row[:calls]] }
 
   def self.stats_of(row)
-    Stats.new(calls: row[:calls], first_call: Time.parse(row[:first]), last_call: Time.parse(row[:last]),
-              seconds: row[:seconds])
+    Stats.new(
+      calls:      row[:calls],
+      first_call: Time.parse(row[:first]),
+      last_call:  Time.parse(row[:last]),
+      seconds:    row[:seconds]
+    )
   end
   private_class_method :stats_of
 

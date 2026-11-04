@@ -18,9 +18,11 @@ class ProfileModel < BBS::Model
     key    = Names.key(username)
     values = fields.slice(*FIELDS).compact
     db.transaction do
-      dataset.insert_conflict(target: :user_key, update: { username: Sequel[:excluded][:username],
-                                                           updated_at: Sequel[:excluded][:updated_at] })
-             .insert(user_key: key, username: username, updated_at: Time.now.utc.iso8601)
+      dataset.insert_conflict(target: :user_key, update: {
+        username:   Sequel[:excluded][:username],
+        updated_at: Sequel[:excluded][:updated_at]
+      })
+        .insert(user_key: key, username: username, updated_at: Time.now.utc.iso8601)
       where(user_key: key).update(values) unless values.empty?
     end
   end

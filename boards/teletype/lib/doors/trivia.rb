@@ -136,8 +136,14 @@ module Trivia
         out "  #{D}(empty: the first name here is yours to take)#{O}\r\n"
       else
         best.each_with_index do |s, i|
-          out format("  #{Y}%2d.#{O} #{W}%-20s#{O} %5d pts  #{D}%2s/#{ROUNDS}  %s#{O}\r\n",
-                     i + 1, s.username.to_s[0, 20], s.points.to_i, s.correct, s.timestamp.to_s[0, 10])
+          out format(
+            "  #{Y}%2d.#{O} #{W}%-20s#{O} %5d pts  #{D}%2s/#{ROUNDS}  %s#{O}\r\n",
+            i + 1,
+            s.username.to_s[0, 20],
+            s.points.to_i,
+            s.correct,
+            s.timestamp.to_s[0, 10]
+          )
         end
       end
     end

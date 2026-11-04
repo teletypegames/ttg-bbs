@@ -83,8 +83,7 @@ module UI
 
     def guest_mail
       title('E-MAIL')
-      say('Mail belongs to registered names (S, then R registers yours). Anyone with a name can ' \
-          'leave feedback for the sysop.')
+      say('Mail belongs to registered names (S, then R registers yours). Anyone with a name can leave feedback for the sysop.')
       k = actions(['f', 'feedback to the sysop'], %w[q back])
       write_letter(to: MailService::SYSOP) if k == 'f'
     end
@@ -200,8 +199,7 @@ module UI
         say('The sysop is on line and heard the bell: look for an answer in the live chat (L).', color: GN)
         pause
       else
-        say('The sysop is not at the keyboard. The page went to the team, but the surest way is a ' \
-            'letter.')
+        say('The sysop is not at the keyboard. The page went to the team, but the surest way is a letter.')
         write_letter(to: MailService::SYSOP, subject: 'Page') if
           choose("#{WH}leave a letter now? (y/n)#{LG} ", %w[y n], back: 'n') == 'y'
       end

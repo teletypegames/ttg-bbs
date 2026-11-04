@@ -37,12 +37,18 @@ class AccountModel < BBS::Model
   # (bin/account, sysops included).
   def self.set_password(name, salt, digest)
     dataset.insert_conflict(target: :name_key, update: { salt: Sequel[:excluded][:salt], digest: Sequel[:excluded][:digest] })
-           .insert(row(name, salt, digest))
+      .insert(row(name, salt, digest))
   end
 
   def self.row(name, salt, digest)
-    { name_key: Names.key(name), name: name, skeleton: Names.skeleton(name), salt: salt, digest: digest,
-      created_at: Time.now.iso8601 }
+    {
+      name_key:   Names.key(name),
+      name:       name,
+      skeleton:   Names.skeleton(name),
+      salt:       salt,
+      digest:     digest,
+      created_at: Time.now.iso8601
+    }
   end
   private_class_method :row
 end

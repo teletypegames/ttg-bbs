@@ -7,10 +7,24 @@ module Commodore
     # its line, sets @moved: the cursor is then where no ':' has to follow.
     module Statements
       STATEMENTS = {
-        'PRINT' => :st_print, 'GOTO' => :st_goto, 'GOSUB' => :st_gosub, 'RETURN' => :st_return,
-        'IF' => :st_if, 'FOR' => :st_for, 'NEXT' => :st_next, 'END' => :st_end, 'STOP' => :st_stop,
-        'REM' => :st_rem, 'LET' => :st_let_keyword, 'INPUT' => :st_input, 'POKE' => :st_poke,
-        'CLR' => :clear_variables, 'LIST' => :st_list, 'RUN' => :st_run, 'NEW' => :st_new, 'SYS' => :st_sys
+        'PRINT'  => :st_print,
+        'GOTO'   => :st_goto,
+        'GOSUB'  => :st_gosub,
+        'RETURN' => :st_return,
+        'IF'     => :st_if,
+        'FOR'    => :st_for,
+        'NEXT'   => :st_next,
+        'END'    => :st_end,
+        'STOP'   => :st_stop,
+        'REM'    => :st_rem,
+        'LET'    => :st_let_keyword,
+        'INPUT'  => :st_input,
+        'POKE'   => :st_poke,
+        'CLR'    => :clear_variables,
+        'LIST'   => :st_list,
+        'RUN'    => :st_run,
+        'NEW'    => :st_new,
+        'SYS'    => :st_sys
       }.freeze
 
       private

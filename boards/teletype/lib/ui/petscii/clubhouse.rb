@@ -12,8 +12,14 @@ module UI
 
       # The colour of each part of the board on the C64, the one most like
       # its accent on the modern face (UI::Modern::Accent).
-      COLORS = { board: :cyan, messages: :light_green, people: :purple, doors: :orange, you: :light_blue,
-                 help: :yellow }.freeze
+      COLORS = {
+        board:    :cyan,
+        messages: :light_green,
+        people:   :purple,
+        doors:    :orange,
+        you:      :light_blue,
+        help:     :yellow
+      }.freeze
 
       # The rooms of the main menu, down the left column, then the right:
       # the key (the old menu's, so Board's actions stay), the name of the
@@ -145,8 +151,12 @@ module UI
         def run(lit: nil, unread: 0)
           scene  = @scene
           canvas = C.new
-          art    = Clubhouse.house(canvas, scene, node: @node,
-                                               status: "#{"NODE #{@node}  " if @node}#{Time.now.strftime('%H:%M')}")
+          art    = Clubhouse.house(
+            canvas,
+            scene,
+            node:   @node,
+            status: "#{"NODE #{@node}  " if @node}#{Time.now.strftime('%H:%M')}"
+          )
           live(canvas, scene, unread)
           Clubhouse.box(canvas, MENU_ROW - 1, 1, 38, 11, C::DARK_GREY)
           canvas.text(MENU_ROW + 10, 2, HINT, :dark_grey)
@@ -181,8 +191,19 @@ module UI
           end
           index = items.index { |i| i.value == lit }
           puffs = 0
-          BBS::Petscii::CanvasMenu.new(@session, items, canvas: canvas, row: MENU_ROW, col: 2, width: 36, columns: 2,
-                                                        height: 8, index: index, exits: EXITS, idle: IDLE) do
+          BBS::Petscii::CanvasMenu.new(
+            @session,
+            items,
+            canvas:  canvas,
+            row:     MENU_ROW,
+            col:     2,
+            width:   36,
+            columns: 2,
+            height:  8,
+            index:   index,
+            exits:   EXITS,
+            idle:    IDLE
+          ) do
             next nil unless smoking
 
             before = canvas.dup
@@ -244,7 +265,7 @@ module UI
         def move(dr, dc)
           from = at(chosen)
           best = places.each_index.select { |i| ahead?(at(places[i]), from, dr, dc) }
-                       .min_by { |i| distance(at(places[i]), from, dr) }
+            .min_by { |i| distance(at(places[i]), from, dr) }
           return unless best && best != @index
 
           show_move(best)
@@ -320,9 +341,13 @@ module UI
         LABELS = { sermo: 'SERMO', c64: 'C64', plus4: 'PLUS/4', ra: 'RA', trivia: 'TRIVIA' }.freeze
         # What a station's screen shows when it is chosen, and when not:
         # [text, colour] each.
-        SCREENS = { sermo: [['SERMO', :green], ['', :green]], c64: [['READY', :light_blue], ['', :blue]],
-                    plus4: [['READY', :white], ['', :grey]], ra: [['●', :yellow], ['●', :brown]],
-                    trivia: [['ABCD?', :yellow], ['?????', :purple]] }.freeze
+        SCREENS = {
+          sermo:  [['SERMO', :green], ['', :green]],
+          c64:    [['READY', :light_blue], ['', :blue]],
+          plus4:  [['READY', :white], ['', :grey]],
+          ra:     [['●', :yellow], ['●', :brown]],
+          trivia: [['ABCD?', :yellow], ['?????', :purple]]
+        }.freeze
 
         def initialize(session, doors, scene)
           super(session)
@@ -438,8 +463,11 @@ module UI
 
         def guests
           @bbs.last_callers.recent(3).each_with_index do |c, i|
-            put(:"guest_#{i + 1}", "#{BBS::Petscii.plain(c.username).upcase[0, 15].ljust(16)}#{c.timestamp.to_s[11, 5]}",
-                :light_grey)
+            put(
+              :"guest_#{i + 1}",
+              "#{BBS::Petscii.plain(c.username).upcase[0, 15].ljust(16)}#{c.timestamp.to_s[11, 5]}",
+              :light_grey
+            )
           end
         end
 
@@ -507,8 +535,15 @@ module UI
           guestbook: 'WHO IS INSIDE, WHO CALLED, WHO YOU ARE'
         }.freeze
         # The card of each key of the main menu that opens a reading room.
-        KEYS = { 'm' => :cork, 'e' => :mailbox, 'l' => :sofa, 'u' => :notice, 'd' => :workshop,
-                 'c' => :guestbook, 's' => :guestbook }.freeze
+        KEYS = {
+          'm' => :cork,
+          'e' => :mailbox,
+          'l' => :sofa,
+          'u' => :notice,
+          'd' => :workshop,
+          'c' => :guestbook,
+          's' => :guestbook
+        }.freeze
         TOP = 8
 
         # Shows the card of +room+ unless +seen+ (a Set) has it, and adds it.

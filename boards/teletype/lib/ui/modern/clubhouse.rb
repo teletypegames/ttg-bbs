@@ -47,8 +47,12 @@ module UI
           guests
           put(:entry, Formatters.number(number), PEN)
           coats(@bbs.online.count)
-          put(:status, "  Teletype BBS · telnet teletypegames.org 2323 · caller ##{Formatters.number(number)} · " \
-                       "#{@bbs.online.count} online", "\e[0;38;5;66;48;5;234m")
+          put(
+            :status,
+            "  Teletype BBS · telnet teletypegames.org 2323 · caller ##{Formatters.number(number)} · " \
+            "#{@bbs.online.count} online",
+            "\e[0;38;5;66;48;5;234m"
+          )
         end
 
         # The name, written into the guestbook; nil when the line drops.
@@ -152,9 +156,12 @@ module UI
         end
 
         def self.plain(session, seconds, caller_number)
-          BBS::Goodbye.modern(session, title: 'the Teletype BBS',
-                                       note: "Caller ##{Formatters.number(caller_number)}, " \
-                                             "on line for #{Formatters.duration(seconds)}.")
+          BBS::Goodbye.modern(
+            session,
+            title: 'the Teletype BBS',
+            note:  "Caller ##{Formatters.number(caller_number)}, " \
+                   "on line for #{Formatters.duration(seconds)}."
+          )
         end
 
         # The thanks, the quote and where to find us, under the picture.
@@ -182,12 +189,19 @@ module UI
       # window of that room is open, by the window's title.
       module Cards
         ROOMS = {
-          'Message Boards' => :cork, 'Post to' => :cork, 'Compose' => :cork,
-          'Mail' => :mailbox, 'Write a Letter' => :mailbox,
-          'Live Chat' => :sofa, 'IRC' => :sofa,
-          'Bulletins' => :notice, 'Dev Log' => :workshop,
-          'Who is Online' => :guestbook, 'Last Callers' => :guestbook, 'User Listing' => :guestbook,
-          'The Team' => :guestbook
+          'Message Boards' => :cork,
+          'Post to'        => :cork,
+          'Compose'        => :cork,
+          'Mail'           => :mailbox,
+          'Write a Letter' => :mailbox,
+          'Live Chat'      => :sofa,
+          'IRC'            => :sofa,
+          'Bulletins'      => :notice,
+          'Dev Log'        => :workshop,
+          'Who is Online'  => :guestbook,
+          'Last Callers'   => :guestbook,
+          'User Listing'   => :guestbook,
+          'The Team'       => :guestbook
         }.freeze
         ABOUT = {
           cork:      'the message boards: General, Tech, Off-Topic, Sysop. Pin a note.',

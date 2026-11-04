@@ -88,8 +88,13 @@ module UI
           end
 
           def poll_detail(poll, width)
-            Formatters::Voting.detail(poll, voting.results(poll), voting.total(poll),
-                                      voting.ballot(poll, context[:username]), width)
+            Formatters::Voting.detail(
+              poll,
+              voting.results(poll),
+              voting.total(poll),
+              voting.ballot(poll, context[:username]),
+              width
+            )
           end
         end
       end

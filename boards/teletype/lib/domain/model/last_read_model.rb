@@ -11,6 +11,6 @@ class LastReadModel < BBS::Model
 
   def self.mark(username, board_id, count)
     dataset.insert_conflict(target: %i[user_key board], update: { count: Sequel[:excluded][:count] })
-           .insert(user_key: Names.key(username), board: board_id, count: count)
+      .insert(user_key: Names.key(username), board: board_id, count: count)
   end
 end

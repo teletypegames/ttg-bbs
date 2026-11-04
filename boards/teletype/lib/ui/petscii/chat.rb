@@ -14,9 +14,11 @@ module UI
       title('LIVE CHAT')
       show_lines(chat.history(12).map { |l| chat_line(l) })
       puts " #{DG}empty line or <-: back#{LG}"
-      chat_input("#{CY}>#{LG} ",
-                   poll:    -> { chat.drain(session_id).map { |l| chat_line(l) } },
-                   on_line: ->(text) { chat.say(name, text, caller_key: caller_key) })
+      chat_input(
+        "#{CY}>#{LG} ",
+        poll:    -> { chat.drain(session_id).map { |l| chat_line(l) } },
+        on_line: ->(text) { chat.say(name, text, caller_key: caller_key) }
+      )
     end
 
     def show_lines(lines) = lines.each { |line| fit([line]).each { |w| puts w } }
@@ -86,8 +88,11 @@ module UI
 
     def irc_intro(irc)
       title("IRC #{irc.channel}")
-      say("Read only: the board listens on #{irc.channel} at Libera.Chat as #{irc.nick}. To talk, " \
-          'join from an IRC client: irc.libera.chat 6697.', color: GR)
+      say(
+        "Read only: the board listens on #{irc.channel} at Libera.Chat as #{irc.nick}. To talk, " \
+        'join from an IRC client: irc.libera.chat 6697.',
+        color: GR
+      )
       status = irc.joined? ? "#{irc.member_count} on the channel" : 'not connected, reconnecting'
       say(status, color: irc.joined? ? GR : RD)
       puts

@@ -61,8 +61,18 @@ module UI
         def self.dots(label, width = DOTS) = "  #{D}#{label} #{K}#{'.' * [width - label.length, 2].max}#{O} "
 
         # The logon sequence after the name: who you are, then the scans.
-        def self.screen(runner, name:, node:, caller_number:, stats:, registered:, mail:, new_scan:,
-                        polls_open:, quote:)
+        def self.screen(
+          runner,
+          name:,
+          node:,
+          caller_number:,
+          stats:,
+          registered:,
+          mail:,
+          new_scan:,
+          polls_open:,
+          quote:
+        )
           out = ->(text) { runner.write(text) }
           head(out, node)
           caller(out, name, caller_number, stats, registered)

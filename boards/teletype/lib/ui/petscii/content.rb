@@ -59,8 +59,7 @@ module UI
     def network_lines
       lines = wrap('Each kind of thing has a board of its own; TTG Gate BBS dials them all.', 37).map { |l| " #{l}" }
       network.all.each do |board|
-        lines += ['', " #{YE}#{board.name}#{LG}", "   #{CY}#{board.address}#{LG}",
-                  *wrap(board.about, 35).map { |l| "   #{l}" }]
+        lines += ['', " #{YE}#{board.name}#{LG}", "   #{CY}#{board.address}#{LG}", *wrap(board.about, 35).map { |l| "   #{l}" }]
       end
       lines + ['', " #{GR}in a browser:#{LG}", " #{CY}bbsweb.teletypegames.org#{LG}",
                " #{GR}every file on plain http:#{LG}", " #{CY}archive.teletypegames.org#{LG}"]
@@ -87,8 +86,7 @@ module UI
     def dev_log_lines(activity)
       lines = [" #{WH}#{activity.repo}#{LG}", " #{CY}#{what_happened(activity)}#{LG}",
                " #{GR}#{activity.created_at.localtime.strftime('%Y-%m-%d %H:%M')}#{LG}", '']
-      lines + activity.commits.flat_map { |sha, message| commit_lines(sha, message) } +
-        urls(dev_log.repo_url(activity))
+      lines + activity.commits.flat_map { |sha, message| commit_lines(sha, message) } + urls(dev_log.repo_url(activity))
     end
 
     def what_happened(activity)

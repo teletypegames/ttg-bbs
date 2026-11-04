@@ -63,8 +63,16 @@ class TeletypeBBS
   service(:c64_master) { TtgMaster.new(games: games, site: site, client: llm, **TtgMaster::C64) }
   service(:taglines)   { TaglineService.new(site) }
   service(:scene) do
-    SceneService.new(online: online, chat: chat, boards: boards, mail: mail, last_callers: last_callers, site: site,
-                     oneliners: oneliners, door_titles: DOOR_NAMES)
+    SceneService.new(
+      online:       online,
+      chat:         chat,
+      boards:       boards,
+      mail:         mail,
+      last_callers: last_callers,
+      site:         site,
+      oneliners:    oneliners,
+      door_titles:  DOOR_NAMES
+    )
   end
 
   # The databases, opened and migrated, the models bound to them; on the

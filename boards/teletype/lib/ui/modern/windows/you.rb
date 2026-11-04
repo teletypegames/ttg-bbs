@@ -56,10 +56,13 @@ module UI
             width  60
             height 16
             body do
-              Formatters::MyStats.body(**board.my_stats(caller_name, registered: context[:authenticated],
-                                                                   session_id: session_id,
-                                                                   caller_number: context[:caller_number],
-                                                                   sysop: sysop?))
+              Formatters::MyStats.body(**board.my_stats(
+                caller_name,
+                registered:    context[:authenticated],
+                session_id:    session_id,
+                caller_number: context[:caller_number],
+                sysop:         sysop?
+              ))
             end
           end
 
@@ -70,10 +73,14 @@ module UI
             height 18
             scroll true
             body do
-              Formatters::Sysop.console_body(username: context[:username], online_count: online.count,
-                                             total_messages: boards.total_count,
-                                             chat_subscribers: chat.subscriber_count,
-                                             online_users: online.user_list, recent_callers: last_callers.recent(5))
+              Formatters::Sysop.console_body(
+                username:         context[:username],
+                online_count:     online.count,
+                total_messages:   boards.total_count,
+                chat_subscribers: chat.subscriber_count,
+                online_users:     online.user_list,
+                recent_callers:   last_callers.recent(5)
+              )
             end
             button('Broadcast', align: :left) do
               sysop_broadcast

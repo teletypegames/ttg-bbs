@@ -13,14 +13,24 @@ module UI
 
       extend BBS::Part
 
-      command(:master, '&Ask the TTG Master…', key: 'F1', hint: 'Ask',
-                                                about: 'The sysop answers your questions about the board') { open_master }
+      command(
+        :master,
+        '&Ask the TTG Master…',
+        key:   'F1',
+        hint:  'Ask',
+        about: 'The sysop answers your questions about the board'
+      ) { open_master }
       command(:boards, '&Boards…', key: 'F2', about: 'The message boards: General, Tech, Off-Topic, Sysop') do
         show(:messages)
       end
       command(:post, '&New Post…', key: 'F3', hint: false, about: 'Write a post on the first board') { open_new_post }
-      command(:chat, '&Live Chat', key: 'F4', hint: 'Chat',
-                                   about: 'Talk with everyone on the lines now, C64 callers too') { show(:chat) }
+      command(
+        :chat,
+        '&Live Chat',
+        key:   'F4',
+        hint:  'Chat',
+        about: 'Talk with everyone on the lines now, C64 callers too'
+      ) { show(:chat) }
       command(:mail, '&Mail…', key: 'F7', about: 'Private letters between registered names') { open_mail }
       command(:log_off, 'Log &off', key: 'Alt-X', hint: 'Bye', about: 'Hang up: +++ ATH0 NO CARRIER') { log_off }
 

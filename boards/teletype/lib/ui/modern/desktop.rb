@@ -6,15 +6,17 @@ module UI
     # menu on its frame and on its focused title, the dashboard's panels the
     # colour of what they show, so a caller sees where a window belongs.
     module Accent
-      COLORS = { board: 116, messages: 78, people: 176, doors: 209, you: 146,
-                 help: 220 }.freeze
+      COLORS = { board: 116, messages: 78, people: 176, doors: 209, you: 146, help: 220 }.freeze
 
       def self.fg(section) = "\e[0;38;5;#{COLORS.fetch(section)};48;5;16m"
 
       def self.styles(section)
         c = COLORS.fetch(section)
-        { window_border: "\e[0;38;5;#{c};48;5;16m", window_title: "\e[0;38;5;#{c};48;5;234m",
-          window_title_focused: "\e[0;38;5;16;48;5;#{c}m" }.freeze
+        {
+          window_border:        "\e[0;38;5;#{c};48;5;16m",
+          window_title:         "\e[0;38;5;#{c};48;5;234m",
+          window_title_focused: "\e[0;38;5;16;48;5;#{c}m"
+        }.freeze
       end
 
       STYLES = COLORS.keys.to_h { |section| [section, styles(section)] }.freeze
@@ -211,8 +213,16 @@ module UI
       end
 
       def panel(frame, box, section, title, lines)
-        frame.box(x: box.x, y: box.y, width: box.width, height: box.height, sgr: Accent.fg(section), style: :single,
-                  title: " #{title} ", title_sgr: Accent.styles(section)[:window_title_focused])
+        frame.box(
+          x:         box.x,
+          y:         box.y,
+          width:     box.width,
+          height:    box.height,
+          sgr:       Accent.fg(section),
+          style:     :single,
+          title:     " #{title} ",
+          title_sgr: Accent.styles(section)[:window_title_focused]
+        )
         lines.first(box.height - 2).each_with_index do |line, i|
           frame.move(box.x + 2, box.y + 1 + i)
           frame.write_ansi(BBS::FrameBuffer.clip_ansi(line, box.width - 4), base_sgr: T)

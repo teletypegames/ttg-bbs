@@ -16,8 +16,12 @@ module UI
         items = [['w', 'who is online', 'the nodes and who is on them'], ['l', 'last callers', 'who called lately'],
                  ['u', 'user listing', 'every registered name'], ['t', 'the team', 'the people of teletype games'],
                  ['q', 'back', 'to the main menu']]
-        @people = menu(items.map { |k, label, about| BBS::Selector.item(label, key: k, value: k, about: about) },
-                               index: items.index { |k, _| k == @people }, back: 'q', hint: 'crsr: choose  return: open')
+        @people = menu(
+          items.map { |k, label, about| BBS::Selector.item(label, key: k, value: k, about: about) },
+          index: items.index { |k, _| k == @people },
+          back:  'q',
+          hint:  'crsr: choose  return: open'
+        )
         case @people
         when 'w' then page('WHO IS ONLINE', who_is_online)
         when 'l' then page('LAST CALLERS', last_callers_lines)
@@ -68,7 +72,7 @@ module UI
       best = board.hall_of_fame
       lines = [['top callers', best[:callers]],
                ['top posters', best[:posters]], ['ttg trivia high scores', best[:trivia]]]
-              .flat_map do |heading, rows|
+        .flat_map do |heading, rows|
         [" #{WH}#{heading}#{LG}", *(rows.empty? ? [" #{GR}(nobody yet)#{LG}"] : fame_rows(rows)), '']
       end
       page('HALL OF FAME', lines)
@@ -149,8 +153,13 @@ module UI
     end
 
     def my_stats
-      s = board.my_stats(name, registered: registered?, session_id: session_id, caller_number: context[:caller_number],
-                              sysop: sysop?)
+      s = board.my_stats(
+        name,
+        registered:    registered?,
+        session_id:    session_id,
+        caller_number: context[:caller_number],
+        sysop:         sysop?
+      )
       rows = stat_rows(s) + profile_rows
       rows.flat_map { |k, v| wrap("#{GR}#{k.ljust(13)}#{LG}#{v}", 38).map { |l| " #{l}" } }
     end
