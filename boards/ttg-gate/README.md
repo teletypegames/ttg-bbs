@@ -459,7 +459,7 @@ from the list.
 bin/discovery-import            # fetch every list into data/discovery.sqlite3
 bin/discovery-report            # boards a source and their overlap, states, PETSCII measured vs claimed, tags
 bin/discovery-prober --limit 20 # 20 calls, then stop (without --limit: a daemon)
-bin/discovery-test              # the tests (minitest, no network)
+rake test              # the tests (minitest, no network)
 ```
 
 On the server the prober runs as the `ttg-gate-bbs-prober` service of
@@ -485,7 +485,7 @@ bbs.rb                                 entry point: the terminal question, then 
 bin/discovery-import                   Discovery: the daily import of the source lists
 bin/discovery-prober                   Discovery: the prober daemon
 bin/discovery-report                   Discovery: the catalog in numbers
-bin/discovery-test                     Discovery: the tests (test/discovery/)
+rake test                     Discovery: the tests (test/discovery/)
 config/boards.yml                      the boards of the menu
 config/discovery/                      Discovery: sources, software signatures, source-to-tag rules
 config/discovery-optout.yml            Discovery: the sysops who asked to be left out
