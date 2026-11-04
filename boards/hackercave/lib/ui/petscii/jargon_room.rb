@@ -19,7 +19,7 @@ module UI
     private
 
     def jargon_room
-      return message('The Jargon File is being prepared. Try again in a moment.') unless jargon.ready?
+      return alert('The Jargon File is being prepared. Try again in a moment.', color: YE) unless jargon.ready?
 
       loop do
         title('THE JARGON FILE', '4.4.7 ')
@@ -41,8 +41,8 @@ module UI
       query = prompt('search', max: 60) or return
 
       case (found = jargon.search(query))
-      when :too_short then message('A word of two letters or more, please.')
-      when [] then message('No entry has these words.')
+      when :too_short then alert('A word of two letters or more, please.', color: YE)
+      when [] then alert('No entry has these words.', color: YE)
       else jargon_entries("JARGON: #{query.strip.upcase}"[0, 26], found)
       end
     end
@@ -73,7 +73,7 @@ module UI
     def jargon_links(entry)
       list = jargon.links(entry)
       if list.empty?
-        message("#{entry.headword} links to no other entry.")
+        alert("#{entry.headword} links to no other entry.", color: YE)
         return nil
       end
 

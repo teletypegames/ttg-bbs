@@ -35,7 +35,7 @@ module UI
       rule
     end
 
-    main_menu do
+    main_menu(above: -> { " #{GR}#{index_line}#{LG}" }) do
       item('1', 'classics', 'the rfcs the internet is built on') { shelf(library.own_shelves[0]) }
       item('2', 'telnet', 'the protocol of this board') { shelf(library.own_shelves[1]) }
       item('3', 'april 1st', 'the rfcs of april fools\' day') { shelf(library.own_shelves[2]) }
@@ -48,24 +48,12 @@ module UI
       log_off 'hang up. see you!'
     end
 
-    # The masthead, then the main menu with the size of the index above it.
-    def run
-      show_masthead
-      @under_masthead = true
-      main_menu_loop
-    end
-
-    # The home title bar (or the masthead still up) and the size of the
-    # index.
-    def home
-      @under_masthead ? @under_masthead = false : super
-      puts " #{GR}#{library.ready? ? "#{library.count} rfcs in the index" : 'the index is being prepared'}#{LG}"
-    end
-
     private
 
+    def index_line = library.ready? ? "#{library.count} rfcs in the index" : 'the index is being prepared'
+
     def shelves
-      return message(NOT_READY) unless library.ready?
+      return alert(NOT_READY, color: YE) unless library.ready?
 
       list = library.shelves
       each_pick('SHELVES', list, right: "#{list.size} shelves",
@@ -73,13 +61,13 @@ module UI
     end
 
     def shelf(shelf)
-      return message(NOT_READY) unless shelf
+      return alert(NOT_READY, color: YE) unless shelf
 
       entries(shelf.name.upcase[0, 26], library.entries_on(shelf))
     end
 
     def search
-      return message(NOT_READY) unless library.ready?
+      return alert(NOT_READY, color: YE) unless library.ready?
 
       title('SEARCH')
       query = prompt('search', hint: 'An rfc number (854), ien 137, a series (std 7), or words. status:standard and ' \
@@ -88,7 +76,7 @@ module UI
     end
 
     def search_text
-      return message('The text of every RFC is being mirrored and indexed. Try again later.') unless library.text_search?
+      return alert('The text of every RFC is being mirrored and indexed. Try again later.', color: YE) unless library.text_search?
 
       title('SEARCH THE TEXT')
       query = prompt('search', hint: 'Words anywhere in the text of the RFCs.', max: 60)
@@ -97,11 +85,11 @@ module UI
 
     def found(query, result)
       case result
-      when :too_short then message('A word of two letters or more, please.')
-      when :preparing then message(NOT_READY)
-      when [] then message('Nothing found. Fewer or other words?')
+      when :too_short then alert('A word of two letters or more, please.', color: YE)
+      when :preparing then alert(NOT_READY, color: YE)
+      when [] then alert('Nothing found. Fewer or other words?', color: YE)
       when Array
-        return message(refused(*result)) if result.first.is_a?(Symbol)
+        return alert(refused(*result), color: YE) if result.first.is_a?(Symbol)
 
         entries("SEARCH: #{query.strip.upcase}"[0, 26], result)
       end
@@ -114,15 +102,9 @@ module UI
 
     def most_read
       list = library.most_read
-      return message('Nothing has been read here yet. Be the first!') if list.empty?
+      return alert('Nothing has been read here yet. Be the first!', color: YE) if list.empty?
 
       entries('MOST READ HERE', list)
-    end
-
-    def message(text)
-      puts
-      say(text, color: YE)
-      pause
     end
   end
 end

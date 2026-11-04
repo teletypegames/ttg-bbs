@@ -60,7 +60,7 @@ module UI
         item('&Random entry') { jargon_random }
         item('&Folklore and chapters') { jargon_chapters }
       end
-      help about: ABOUT, reading: READING, search: SEARCH, jargon_file: JARGON_FILE, keys: KEYS
+      help({ 'Reading' => READING, 'Search' => SEARCH, 'Jargon File' => JARGON_FILE }, about: ABOUT, keys: KEYS)
 
       status { index_status }
 

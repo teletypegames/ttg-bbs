@@ -84,7 +84,7 @@ module UI
 
     def links(rfc)
       list = library.links(rfc)
-      return message("#{rfc.name} does not obsolete or update any other.") if list.empty?
+      return alert("#{rfc.name} does not obsolete or update any other.", color: YE) if list.empty?
 
       entries("LINKS OF #{rfc.name}", list)
     end
@@ -92,7 +92,7 @@ module UI
     # The errata, a page each: what the RFC says and what it should say.
     def errata(rfc)
       list = library.errata(rfc)
-      return message("#{rfc.name} has no errata.") if list.empty?
+      return alert("#{rfc.name} has no errata.", color: YE) if list.empty?
 
       page("ERRATA #{rfc.name}", list.flat_map { |e| erratum(e) }, right: "#{list.size} ", numbers: true)
     end
@@ -110,8 +110,8 @@ module UI
     def open_rfc(rfc)
       doc = loading("opening #{rfc.name.downcase}...") { reading.open(rfc, seen: context[:seen] ||= Set.new) }
       if doc.is_a?(Symbol)
-        return message(doc == :no_text ? "The RFC Editor has no plain text of #{rfc.name}." : 'The RFC Editor ' \
-          'did not answer. Try again in a minute.')
+        return alert(doc == :no_text ? "The RFC Editor has no plain text of #{rfc.name}." : 'The RFC Editor ' \
+          'did not answer. Try again in a minute.', color: YE)
       end
 
       Reader.new(self, rfc, doc, on_named: ->(list) { named(rfc, list) }).read
@@ -120,7 +120,7 @@ module UI
     # The RFCs the reader's RFC names, to open any of them.
     def named(rfc, mentions)
       list = library.mentioned(mentions)
-      return message("#{rfc.name} names no other RFC.") if list.empty?
+      return alert("#{rfc.name} names no other RFC.", color: YE) if list.empty?
 
       entries("NAMED IN #{rfc.name}", list)
     end
