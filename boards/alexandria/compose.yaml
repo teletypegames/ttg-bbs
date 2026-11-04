@@ -13,3 +13,5 @@ services:
       - BBS_MAX_SESSIONS=50
       - ALEXANDRIA_BBS_LANGUAGES=${ALEXANDRIA_BBS_LANGUAGES:-en,hu}
     restart: unless-stopped
+    # rubbs tells the callers and gives them BBS_SHUTDOWN_SECONDS (20 s, Dockerfile) to leave.
+    stop_grace_period: 30s
