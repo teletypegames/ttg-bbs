@@ -3,7 +3,6 @@
 require_relative 'wording'
 require_relative 'modern/helpers'
 require_relative 'modern/browser_window'
-require_relative 'modern/supervisor_window'
 
 module UI
   # The wiki on an ANSI terminal: a Norton Commander-style two-pane browser
@@ -14,7 +13,7 @@ module UI
   module Modern
     ABOUT = 'TTG Wiki BBS — the Teletype Games wiki over telnet, from Teletype Games, powered by rubbs and Grav. ' \
             'Pick a page on the left, read it on the right. Pages marked * are private: ' \
-            'Wiki > Supervisor login unlocks them for the call.'
+            'Wiki > Log in with a Teletype Games account of the wiki-supervisor role reads them.'
     KEYS  = ['Up/Down      pick a page', 'Tab          focus the reader', 'PgUp/PgDn    scroll',
              '*            supervisor only'].freeze
 
@@ -22,18 +21,19 @@ module UI
       theme :nortoncommander
       helpers { include Helpers }
 
-      command(:supervisor, '&Supervisor login…') { supervisor_login }
       command(:browse,  '&Browse pages',  key: 'F2', hint: 'Browse')  { open_browser }
       command(:qr,      'Page &QR code',  key: 'F3', hint: 'QR')      { show_qr }
       command(:refresh, '&Refresh index', key: 'F8', hint: 'Refresh') { refresh_pages }
-      menu 'Wiki', :supervisor, :separator, :browse, :qr, :refresh, :separator, :log_off
+      menu 'Wiki', :log_in, :log_out, :separator, :browse, :qr, :refresh, :separator, :log_off
       help about: -> { "#{ABOUT}\n\nSource: #{wiki.base_url}\nPages:  #{wiki.pages.size}" }, keys: KEYS
 
-      status { "#{wiki.pages.size} pages" }
+      status { "#{'supervisor  ' if supervisor?}#{wiki.pages.size} pages" }
+      init { @who = who }
+      on_tick { follow_identity }
 
       desktop { on_show { open_browser } }
 
-      parts BrowserWindow, SupervisorWindow
+      parts BrowserWindow
     end
   end
 end

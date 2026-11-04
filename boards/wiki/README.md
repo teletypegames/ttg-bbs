@@ -36,9 +36,9 @@ window and back.
 | F10 | Menubar |
 | Alt-X / Esc | Log off / close window |
 
-Pages marked `*` in the list are private (login-protected on the wiki).
-Unlock them with **Wiki > Supervisor login** — the password comes from the
-`WIKI_BBS_SUPERVISOR_PASSWORD` env var. Locking back: same menu item, confirm.
+Pages marked `*` in the list are private (login-protected on the wiki), for
+the supervisors (see [Supervisors](#supervisors)): **Wiki > Log in** with a
+Teletype Games account, **Wiki > Log out** to read as a guest again.
 
 The QR code (rubbs' `BBS::QR`, half blocks) is the page's address on the
 web, `https://wiki.teletypegames.org<route>`, for a phone to open it with its
@@ -60,7 +60,7 @@ down a level, where line 1 is the page itself; `Q` (or ←) goes back up. Pages 
 (RETURN: more, `Q`: back), with their public address at the end; under the
 last screenful `C` (qr code) shows that address as a QR code (rubbs'
 `BBS::QR`, quadrant blocks) for a phone to open the page on the web. On the top
-level `S` is the supervisor login (again: lock back) and `R` re-reads the
+level `L` logs in with a Teletype Games account (`O` logs out once in), and `R` re-reads the
 index. A call ends with rubbs' goodbye screen: the time on line, the wiki's web address, the
 Teletype Games address and its QR code.
 
@@ -96,19 +96,33 @@ text from the wiki (titles, routes, tags, markdown) is cleaned of control charac
 (`BBS::Text.clean`) before it reaches a screen.
 
 Resizing the terminal mid-session re-lays-out the whole UI (rubbs re-runs
-each open window's `relayout` on NAWS updates — rubbs rev `db8a97b`+). Pages flagged `private` (or
-sitting under a private ancestor) are locked in the BBS until the caller
-enters the supervisor password. Ten wrong passwords within ten minutes, from
-any caller, lock the supervisor login for everyone until the window has passed;
-the board has no database, so that count lives in memory and a restart
-forgets it.
+each open window's `relayout` on NAWS updates — rubbs rev `db8a97b`+).
 
-The lock is enforced server-side: the Grav entrypoint injects
+### Supervisors
+
+Pages flagged `private` (or sitting under a private ancestor) are for the
+supervisors: the accounts of the network (rubbs' `BBS::Auth`, kept on TTG Gate
+BBS, `auth TTG::AUTH, login: :menu`) with the `wiki-supervisor` role. A
+supervisor logs in from the menu, or comes in logged in when dialled from TTG
+Gate BBS; an account without the role is told it is not a supervisor, and the
+private pages stay locked. The gate counts the wrong passwords. A sysop gives
+the role on the gate:
+
+```bash
+docker exec -it ttg-gate-bbs bin/account grant NAME wiki-supervisor
+```
+
+The board asks the gate on the `interstack` network, signed with
+`RUBBS_AUTH_SECRET`, the secret every board shares.
+
+The lock is also enforced server-side: the Grav entrypoint injects
 `SUPERVISOR_PASSWORD` into `config.site.supervisor_password`, and the JSON
 API refuses private page bodies without a matching token (the `X-Wiki-Token`
-header, or `?token=`). The BBS sends its own `WIKI_BBS_SUPERVISOR_PASSWORD` in the
-header, for private pages only, so it stays out of the wiki's access log, so **the two services must share
-the same value** (the compose file wires both from one variable). The older
+header, or `?token=`). The BBS sends its own `WIKI_BBS_SUPERVISOR_PASSWORD` as
+that token, for a supervisor's private pages only, in the header, so it stays
+out of the wiki's access log. No caller types it: it is the board's API
+credential, and **the two services must share the same value** (the compose
+file wires both from one variable). The older
 `updates.json` / `pages.json` endpoints hide private bodies the same way
 (`body=1` only includes them with a valid token).
 
@@ -142,11 +156,12 @@ telnet localhost 2323
 | `BBS_MAX_SESSIONS` | `100` | Callers at once (the compose file sets 50) |
 | `WIKI_BBS_IDLE` | `900` | Idle disconnect (seconds; the compose file sets 600) |
 | `WIKI_BBS_URL` | `http://localhost:9120` | Grav wiki base URL |
-| `WIKI_BBS_SUPERVISOR_PASSWORD` | — | Unlocks private pages (Wiki > Supervisor login) and is sent to the wiki as the API token — must match the grav service's `SUPERVISOR_PASSWORD`; empty = private pages stay locked |
+| `WIKI_BBS_SUPERVISOR_PASSWORD` | — | The board's API token for the private pages (the `X-Wiki-Token` header), not a caller password — must match the grav service's `SUPERVISOR_PASSWORD`; empty = private pages stay locked |
+| `RUBBS_AUTH_SECRET` | — | The secret every board of the network shares, for the accounts on TTG Gate BBS (in `.env` on the server) |
 
 `env-example` lists them all with their defaults. `WikiBBS`
 (`lib/domain/wiki_bbs.rb`) declares the `WIKI_BBS_` ones as `BBS::Domain`
-settings; rubbs reads `BBS_PORT` and `BBS_MAX_SESSIONS` itself.
+settings; rubbs reads `BBS_PORT`, `BBS_MAX_SESSIONS` and `RUBBS_AUTH_SECRET` itself.
 
 Every log line (the board's and rubbs') starts with `wiki-bbs:` (rubbs'
 `BBS.log`, `log_tag`).
@@ -171,14 +186,12 @@ lib/
     model/page_model.rb       PageModel: one entry of the page index
     repository/wiki_repository.rb   WikiRepository: the JSON API over BBS::HTTP, the page cache
     service/wiki_service.rb   WikiService: the shared index, private flags, pages as markdown, refreshes
-    service/supervisor_service.rb   SupervisorService: the supervisor password
     wiki_bbs.rb               WikiBBS (BBS::Domain): settings, services, the index loaded in the background
   ui/
-    wording.rb                UI::Wording: what both faces tell the caller
+    wording.rb                UI::Wording: what both faces tell the caller, who is a supervisor
     modern.rb                 UI::Modern::APP: the commands, menus and help of the ANSI face
-    modern/helpers.rb         UI::Modern::Helpers: the lock, the browser, refresh, the QR code
+    modern/helpers.rb         UI::Modern::Helpers: the browser, refresh, the QR code, logging in and out
     modern/browser_window.rb  UI::Modern::BrowserWindow: the page tree and the reader
-    modern/supervisor_window.rb  UI::Modern::SupervisorWindow: the supervisor login form
     petscii.rb                UI::Petscii (BBS::Petscii::Face): the masthead, the page tree as cursor lists
 test/                         Minitest tests of the domain (no network: BBS::HTTP is stubbed)
 ```
@@ -190,7 +203,8 @@ bundle exec rake test
 ```
 
 The repository (cleaning, the cache, the token only on private pages and never in an error),
-the index and its refresh limits, and the supervisor lock. CI runs them before a deploy.
+the index and its refresh limits, and the C64 face: the private pages for the
+`wiki-supervisor` role (`BBS::Test.accounts`), logging in with and without it. CI runs them before a deploy.
 
 ## Licence
 

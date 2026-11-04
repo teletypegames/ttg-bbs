@@ -14,9 +14,11 @@ services:
       - BBS_MAX_SESSIONS=50
       # The wiki's Grav, reached on the interstack network (wiki-pages gives it this alias).
       - WIKI_BBS_URL=http://wiki-grav
-      # Unlocks the private wiki pages (Wiki > Supervisor login); the same value as the wiki's
-      # SUPERVISOR_PASSWORD, kept in .env on the server.
+      # The board's token for the private wiki pages (the X-Wiki-Token header); the same value
+      # as the wiki's SUPERVISOR_PASSWORD, kept in .env on the server. No caller types it.
       - WIKI_BBS_SUPERVISOR_PASSWORD=${WIKI_BBS_SUPERVISOR_PASSWORD:-}
+      # The accounts of the network (on TTG Gate BBS, over interstack); kept in .env on the server.
+      - RUBBS_AUTH_SECRET=${RUBBS_AUTH_SECRET:-}
     networks:
       - default
       - interstack

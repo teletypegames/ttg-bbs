@@ -12,13 +12,15 @@ require_relative 'lib/ui/petscii'
 # the page rendered as ANSI markdown on the right), a Commodore 64 a PETSCII
 # tree of numbered lists. Content comes live from the Grav wiki's
 # /custom/sitemap.json and /custom/page.json endpoints.
-# Pages flagged private on the wiki (access: site.login) stay locked until the
-# caller unlocks the session with the supervisor password (Wiki menu >
-# Supervisor login, S on the C64). The wiki holds the same secret and only
-# serves private page bodies to requests carrying it (the X-Wiki-Token header), which the
-# board sends for private pages only (WikiRepository#page).
+# Pages flagged private on the wiki (access: site.login) are for the
+# supervisors: the accounts of the network with the wiki-supervisor role, who
+# log in from the menu (Wiki > Log in, L on the C64) or come in logged in from
+# TTG Gate BBS. The board asks the wiki for a private page body with its own
+# token (the X-Wiki-Token header, WIKI_BBS_SUPERVISOR_PASSWORD), only for a
+# supervisor and only for private pages (WikiRepository#page).
 BBS.board 'TTG Wiki BBS', WikiBBS, slug: 'wiki-bbs' do
   preset TTG::PRESET
+  auth TTG::AUTH, login: :menu
   modern do |bbs|
     big_banner 'TTG WIKI', style: :success
     text(style: :muted) { "Teletype Games wiki over telnet — #{bbs.wiki.pages.size} pages indexed." }

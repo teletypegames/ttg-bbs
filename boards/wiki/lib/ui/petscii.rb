@@ -13,7 +13,6 @@ module UI
     include Wording
 
     LOGO_COLORS = [CY, CY, LB, LB, BL].freeze
-    TOP         = { 's' => 'login', 'r' => 'refresh' }.freeze
 
     title('TTG WIKI BBS') { right }
 
@@ -35,16 +34,13 @@ module UI
 
     private
 
-    def unlocked? = context[:unlocked] == true
-
-    def locked?(page) = page.private? && !unlocked?
-
     # One level of the tree under +parent+ (nil: the top), until q.
     def level(parent)
       loop do
         case (choice = pick_on(parent))
         when nil then return
-        when 's' then supervisor_login
+        when 'l' then sign_in
+        when 'o' then sign_out
         when 'r' then refresh
         else enter(choice, parent)
         end
@@ -55,12 +51,15 @@ module UI
 
     # The page picked on the level of +parent+, a top-level command, or nil.
     def pick_on(parent)
-      return pick('TTG WIKI BBS', tree[nil] || [], commands: TOP, right: right) { |page| label(page) } unless parent
+      return pick('TTG WIKI BBS', tree[nil] || [], commands: top, right: right) { |page| label(page) } unless parent
 
       pick(parent.title.upcase, [parent, *tree[parent.route]]) { |page| label(page, own: page.equal?(parent)) }
     end
 
-    def right = "#{'sv ' if unlocked?}#{wiki.pages.size} pages "
+    # The commands of the top level: log in or out, and the refresh.
+    def top = { **(signed_in? ? { 'o' => 'log out' } : { 'l' => 'log in' }), 'r' => 'refresh' }
+
+    def right = "#{'sv ' if supervisor?}#{wiki.pages.size} pages "
 
     # Reads +page+, or goes down to its level when it has pages under it.
     def enter(page, parent)
@@ -95,7 +94,7 @@ module UI
     def read(wiki_page)
       heading = wiki_page.title.upcase[0, 30]
       title(heading)
-      fail_with('Supervisor only. This page is private: S on the top level unlocks it.') if locked?(wiki_page)
+      fail_with(locked_text('L on the top level logs in.')) if locked?(wiki_page)
 
       lines = markdown(loading('loading...') { wiki.page_markdown(wiki_page) })
       page(
@@ -115,20 +114,18 @@ module UI
       pause if qr(wiki_page.public_url)
     end
 
-    def supervisor_login
-      title('SUPERVISOR')
-      puts
-      if unlocked?
-        context[:unlocked] = false if confirm?('supervisor access is on. lock it?')
-        return
-      end
-      fail_with(UNLOCK[:unconfigured]) unless supervisor.configured?
+    # Logs in with the Teletype Games account (BBS::Auth); one without the
+    # wiki-supervisor role is told the private pages stay locked.
+    def sign_in
+      title('LOG IN')
+      say('Your Teletype Games account: the same on every board. Return alone: back.', color: GR)
+      found = log_in
+      alert(not_supervisor(found.name)) if found.is_a?(BBS::Auth::Identity) && !found.role?(SUPERVISOR)
+    end
 
-      result = supervisor.unlock(prompt('password', mask: '*').to_s)
-      return report(result, UNLOCK) unless result == :granted
-
-      context[:unlocked] = true
-      notice(GRANTED)
+    def sign_out
+      log_out
+      notice('You are logged out.')
     end
 
     # Re-reads the shared index: every session sees the new one.
