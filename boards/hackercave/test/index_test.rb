@@ -21,7 +21,8 @@ class IndexTest < Minitest::Test
     assert_equal 15, rfc.pages
     assert_equal 'Internet Standard', rfc.status_label
     assert_equal "This RFC specifies a standard for the ARPA Internet community.\n\nHosts on the ARPA Internet " \
-                 'are expected to adopt and implement this standard.', rfc.abstract
+                 'are expected to adopt and implement this standard.',
+                 rfc.abstract
   end
 
   def test_entities_and_days_are_read

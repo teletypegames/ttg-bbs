@@ -53,9 +53,9 @@ class JargonEntryModel < BBS::Model
     terms = words.map { |w| %("#{w.delete('"')}"*) }.join(' ')
     guard([]) do
       select_all(:entries).join(:entries_fts, rowid: :id).where(Sequel.lit('entries_fts MATCH ?', terms))
-                          .order(Sequel.desc(Sequel.expr(Sequel[:entries][:key] => key(words.join(' ')))),
-                                 Sequel.function(:bm25, :entries_fts, 20.0, 1.0))
-                          .limit(limit).all
+        .order(Sequel.desc(Sequel.expr(Sequel[:entries][:key] => key(words.join(' ')))),
+               Sequel.function(:bm25, :entries_fts, 20.0, 1.0))
+        .limit(limit).all
     end
   end
 

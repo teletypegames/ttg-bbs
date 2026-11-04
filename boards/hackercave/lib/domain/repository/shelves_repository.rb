@@ -15,8 +15,11 @@ class ShelvesRepository
 
   def initialize(path)
     @shelves = YAML.safe_load_file(path).map do |s|
-      Shelf.new(name: s.fetch('name').to_s, about: s['about'].to_s,
-                entries: s.fetch('rfcs').map { |e| [Integer(e.fetch('rfc')), e['title'].to_s, e['note']&.to_s] })
+      Shelf.new(
+        name:    s.fetch('name').to_s,
+        about:   s['about'].to_s,
+        entries: s.fetch('rfcs').map { |e| [Integer(e.fetch('rfc')), e['title'].to_s, e['note']&.to_s] }
+      )
     end.freeze
   rescue SystemCallError, Psych::Exception, KeyError, ArgumentError, NoMethodError, TypeError => e
     BBS.log('shelves', "#{path}: #{e.class}: #{e.message}")

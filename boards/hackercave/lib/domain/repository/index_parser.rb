@@ -16,12 +16,27 @@ require 'rexml/sax2listener'
 class IndexParser
   ENTRIES = %w[rfc-entry rfc-not-issued-entry std-entry bcp-entry fyi-entry].freeze
   # The lists of document ids in an entry, by element.
-  LISTS = { 'obsoletes' => :obsoletes, 'obsoleted-by' => :obsoleted_by, 'updates' => :updates,
-            'updated-by' => :updated_by, 'see-also' => :see_also, 'is-also' => :is_also }.freeze
+  LISTS = {
+    'obsoletes'    => :obsoletes,
+    'obsoleted-by' => :obsoleted_by,
+    'updates'      => :updates,
+    'updated-by'   => :updated_by,
+    'see-also'     => :see_also,
+    'is-also'      => :is_also
+  }.freeze
   # The single values of an entry (or of its date), by element.
-  FIELDS = { 'title' => :title, 'page-count' => :pages, 'current-status' => :status,
-             'publication-status' => :pub_status, 'stream' => :stream, 'area' => :area, 'wg_acronym' => :wg,
-             'month' => :month, 'day' => :day, 'year' => :year }.freeze
+  FIELDS = {
+    'title'              => :title,
+    'page-count'         => :pages,
+    'current-status'     => :status,
+    'publication-status' => :pub_status,
+    'stream'             => :stream,
+    'area'               => :area,
+    'wg_acronym'         => :wg,
+    'month'              => :month,
+    'day'                => :day,
+    'year'               => :year
+  }.freeze
 
   # Yields every entry of the index read from +io+.
   def self.each(io, &) = new.parse(io, &)

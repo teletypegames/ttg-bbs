@@ -34,8 +34,7 @@ module UI
     JARGON_FILE = 'The Jargon File 4.4.7 (29 Dec 2003), the lexicon of hacker slang, public domain: its entries by ' \
                   'letter, a search, the word of the day, a random entry, and the introduction, Hacker Folklore and ' \
                   'the portrait of J. Random Hacker to read. Alt-L in an entry lists the entries it links to.'
-    KEYS = ['Enter        read the RFC or the entry picked',
-            'Alt+letter   a button of the window'].freeze
+    KEYS = ['Enter        read the RFC or the entry picked', 'Alt+letter   a button of the window'].freeze
     TAGLINE = '─── the hacker\'s reading room · every RFC, as it was published ───'
 
     APP = BBS::Application.define do
@@ -51,8 +50,18 @@ module UI
       command(:iens, '&IENs') { iens }
       command(:most_read, '&Most read', key: 'F7') { most_read }
       command(:newest, '&Newest', key: 'F8', hint: false) { newest }
-      menu 'RFC', :classics, :telnet, :search, :search_text, :shelves, :this_month, :iens, :most_read, :newest,
-           :separator, :log_off
+      menu 'RFC',
+           :classics,
+           :telnet,
+           :search,
+           :search_text,
+           :shelves,
+           :this_month,
+           :iens,
+           :most_read,
+           :newest,
+           :separator,
+           :log_off
       menu 'Jargon' do
         item('&Word of the day') { jargon_today }
         item('&Lexicon A-Z') { jargon_letters }

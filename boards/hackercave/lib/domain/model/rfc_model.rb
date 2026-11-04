@@ -20,8 +20,7 @@ class RfcModel < BBS::Model
   # The columns an RfcModel is read with.
   COLUMNS = %i[number title authors date pages status pub_status stream area wg abstract keywords formats issued].freeze
   # The columns a row is written with (IndexBuilder), in the table's order.
-  ROW = %i[number title authors date year pages status pub_status stream area wg abstract keywords formats issued
-           search].freeze
+  ROW = %i[number title authors date year pages status pub_status stream area wg abstract keywords formats issued search].freeze
   TEXTS = %i[title authors date status pub_status stream area wg abstract keywords formats].freeze
 
   TEXTS.each { |column| define_method(column) { self[column].to_s } }
@@ -33,8 +32,22 @@ class RfcModel < BBS::Model
   # An RFC known only by its number and title (config/shelves.yml), while
   # the index is not there yet.
   def self.stub(number, title = '')
-    load(number: number, title: title, authors: '', date: '', pages: 0, status: '', pub_status: '', stream: '',
-         area: '', wg: '', abstract: '', keywords: '', formats: 'TXT', issued: 1)
+    load(
+      number:     number,
+      title:      title,
+      authors:    '',
+      date:       '',
+      pages:      0,
+      status:     '',
+      pub_status: '',
+      stream:     '',
+      area:       '',
+      wg:         '',
+      abstract:   '',
+      keywords:   '',
+      formats:    'TXT',
+      issued:     1
+    )
   end
 
   # The status as it is read: "Internet Standard", "Best Current Practice".
@@ -128,13 +141,13 @@ class RfcModel < BBS::Model
   def self.match(found, words)
     terms = words.map { |w| %("#{w.delete('"')}"*) }.join(' ')
     found.join(:rfcs_fts, rowid: :number).where(Sequel.lit('rfcs_fts MATCH ?', terms))
-         .order(Sequel.function(:bm25, :rfcs_fts, 10.0, 4.0, 6.0, 1.0), Sequel.desc(Sequel[:rfcs][:number]))
+      .order(Sequel.function(:bm25, :rfcs_fts, 10.0, 4.0, 6.0, 1.0), Sequel.desc(Sequel[:rfcs][:number]))
   end
 
   # The search of an SQLite without FTS5: every word somewhere.
   def self.like(found, words)
     words.reduce(found) { |ds, w| ds.where(Sequel.like(Sequel[:rfcs][:search], "%#{w.downcase}%")) }
-         .reverse(Sequel[:rfcs][:number])
+      .reverse(Sequel[:rfcs][:number])
   end
 
   private_class_method :match, :like

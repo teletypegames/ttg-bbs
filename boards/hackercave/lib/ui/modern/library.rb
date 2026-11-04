@@ -70,8 +70,12 @@ module UI
       def search_text
         return message(NO_MIRROR, title: 'Search text', width: 60) unless library.text_search?
 
-        ask('Words anywhere in the text of the RFCs:', title: 'Search text', value: context[:text_query].to_s,
-                                                       width: 64) { |query| find_text(query) }
+        ask(
+          'Words anywhere in the text of the RFCs:',
+          title: 'Search text',
+          value: context[:text_query].to_s,
+          width: 64
+        ) { |query| find_text(query) }
       end
 
       def find_text(query)
@@ -97,8 +101,12 @@ module UI
         list = library.errata(rfc)
         return message("#{rfc.name} has no errata.", title: 'Errata') if list.empty?
 
-        show(:text, heading: "Errata of #{rfc.name} (#{list.size})", paragraphs: list.flat_map { |e| erratum(e) },
-                    credit: "rfc-editor.org/errata/rfc#{rfc.number}")
+        show(
+          :text,
+          heading:    "Errata of #{rfc.name} (#{list.size})",
+          paragraphs: list.flat_map { |e| erratum(e) },
+          credit:     "rfc-editor.org/errata/rfc#{rfc.number}"
+        )
       end
 
       # The RFCs and IENs the text of +rfc+ names, to open any of them.

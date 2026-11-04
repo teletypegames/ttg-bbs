@@ -16,13 +16,24 @@ class LibraryService
   MIN_WORD     = 2
   MAX_WORDS    = 6
   # The words of a search that pick a status (status:standard).
-  STATUSES = { 'standard' => 'INTERNET STANDARD', 'std' => 'INTERNET STANDARD', 'proposed' => 'PROPOSED STANDARD',
-               'draft' => 'DRAFT STANDARD', 'bcp' => 'BEST CURRENT PRACTICE', 'info' => 'INFORMATIONAL',
-               'informational' => 'INFORMATIONAL', 'experimental' => 'EXPERIMENTAL', 'exp' => 'EXPERIMENTAL',
-               'historic' => 'HISTORIC', 'unknown' => 'UNKNOWN' }.freeze
-  SERIES = { 'STD' => 'Internet Standards: the protocols that are the Internet, each a number that stays',
-             'BCP' => 'Best Current Practices: how the Internet is run',
-             'FYI' => 'For Your Information: the guides of the 1990s for newcomers' }.freeze
+  STATUSES = {
+    'standard'      => 'INTERNET STANDARD',
+    'std'           => 'INTERNET STANDARD',
+    'proposed'      => 'PROPOSED STANDARD',
+    'draft'         => 'DRAFT STANDARD',
+    'bcp'           => 'BEST CURRENT PRACTICE',
+    'info'          => 'INFORMATIONAL',
+    'informational' => 'INFORMATIONAL',
+    'experimental'  => 'EXPERIMENTAL',
+    'exp'           => 'EXPERIMENTAL',
+    'historic'      => 'HISTORIC',
+    'unknown'       => 'UNKNOWN'
+  }.freeze
+  SERIES = {
+    'STD' => 'Internet Standards: the protocols that are the Internet, each a number that stays',
+    'BCP' => 'Best Current Practices: how the Internet is run',
+    'FYI' => 'For Your Information: the guides of the 1990s for newcomers'
+  }.freeze
 
   # [shelves] the ShelvesRepository of the board's own shelves
   # [mirror]  the MirrorService of the full-text search, or nil
@@ -50,8 +61,13 @@ class LibraryService
     return own_shelves unless ready?
 
     [*own_shelves, *series_shelves, *status_shelves, *decade_shelves, month_shelf,
-     ShelfModel.new(kind: :newest, key: nil, name: 'Newest', about: "The #{NEWEST} RFCs of the highest numbers.",
-                    count: NEWEST), ien_shelf]
+     ShelfModel.new(
+       kind:  :newest,
+       key:   nil,
+       name:  'Newest',
+       about: "The #{NEWEST} RFCs of the highest numbers.",
+       count: NEWEST
+     ), ien_shelf]
   end
 
   # The RFCs of +shelf+ as EntryModels.
@@ -162,8 +178,13 @@ class LibraryService
 
   def status_shelves
     RfcModel.statuses.map do |status, n|
-      ShelfModel.new(kind: :status, key: status, name: RfcModel.status_label(status), about: "Status: #{status.downcase}.",
-                     count: n)
+      ShelfModel.new(
+        kind:  :status,
+        key:   status,
+        name:  RfcModel.status_label(status),
+        about: "Status: #{status.downcase}.",
+        count: n
+      )
     end
   end
 
@@ -176,13 +197,23 @@ class LibraryService
   def month_shelf
     month = @clock.call.month
     name = Date::MONTHNAMES[month]
-    ShelfModel.new(kind: :month, key: month, name: "This month: #{name}",
-                   about: "The RFCs published in a #{name}, from the first one on.", count: RfcModel.month_count(month))
+    ShelfModel.new(
+      kind:  :month,
+      key:   month,
+      name:  "This month: #{name}",
+      about: "The RFCs published in a #{name}, from the first one on.",
+      count: RfcModel.month_count(month)
+    )
   end
 
   def ien_shelf
-    ShelfModel.new(kind: :ien, key: nil, name: 'IENs', count: RfcModel.iens.size,
-                   about: 'The Internet Experiment Notes of 1977-1982, the working papers of TCP/IP before the RFCs took over.')
+    ShelfModel.new(
+      kind:  :ien,
+      key:   nil,
+      name:  'IENs',
+      count: RfcModel.iens.size,
+      about: 'The Internet Experiment Notes of 1977-1982, the working papers of TCP/IP before the RFCs took over.'
+    )
   end
 
   def by_number(number)

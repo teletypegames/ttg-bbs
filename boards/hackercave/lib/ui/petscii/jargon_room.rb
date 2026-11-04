@@ -6,8 +6,13 @@ module UI
   # entry is a page with L for the entries it links to and R for a random
   # one.
   class Petscii
-    sub_menu(:jargon, title: 'THE JARGON FILE', right: '4.4.7 ',
-                      above: -> { " #{GR}The lexicon of hacker slang, public domain.#{LG}" }, gap: :after) do
+    sub_menu(
+      :jargon,
+      title: 'THE JARGON FILE',
+      right: '4.4.7 ',
+      above: -> { " #{GR}The lexicon of hacker slang, public domain.#{LG}" },
+      gap:   :after
+    ) do
       item('1', 'word of the day', 'the same for everyone today') { jargon_today }
       item('2', 'search', 'a headword or words of the text') { jargon_search }
       item('3', 'a to z', 'the entries by letter') { jargon_letters }

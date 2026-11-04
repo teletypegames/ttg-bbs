@@ -6,8 +6,7 @@ class JargonTest < Minitest::Test
   include TempDir
 
   def jargon(clock: -> { Time.new(2026, 11, 3) })
-    JargonService.new(file: JargonFileRepository.new(fixture('jargon.txt')), clock: clock, random: Random.new(1))
-                 .tap(&:prepare)
+    JargonService.new(file: JargonFileRepository.new(fixture('jargon.txt')), clock: clock, random: Random.new(1)).tap(&:prepare)
   end
 
   def test_the_entries_by_letter
@@ -23,7 +22,8 @@ class JargonTest < Minitest::Test
   def test_links_to_the_entries_that_exist
     hack = jargon.letter('H').first
     assert_equal '1. n. Originally, a quick job that produces what is needed, but not well. See kluge, hacker and ' \
-                 'nowhere.', hack.summary
+                 'nowhere.',
+                 hack.summary
     assert_equal %w[kluge hacker], jargon.links(hack).map(&:headword)
   end
 
@@ -35,7 +35,7 @@ class JargonTest < Minitest::Test
     assert_equal :too_short, j.search('a')
     titles = j.sections.map(&:title)
     assert_equal ['Welcome to the Jargon File', 'Chapter 1. Hacker Slang and Hacker Culture', 'Appendix A. Hacker Folklore'],
-titles
+                 titles
     assert_equal [:heading, 'The Story of Mel'], j.sections.last.paragraphs.first
   end
 

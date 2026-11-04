@@ -25,8 +25,12 @@ module UI
       def jargon_search
         return jargon_preparing unless jargon.ready?
 
-        ask('Words of a headword or of the text:', title: 'Search the lexicon', value: context[:jargon_query].to_s,
-                                                   width: 64) { |query| jargon_find(query) }
+        ask(
+          'Words of a headword or of the text:',
+          title: 'Search the lexicon',
+          value: context[:jargon_query].to_s,
+          width: 64
+        ) { |query| jargon_find(query) }
       end
 
       def jargon_find(query)

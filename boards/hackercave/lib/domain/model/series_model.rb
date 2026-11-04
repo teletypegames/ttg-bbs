@@ -18,7 +18,7 @@ class SeriesModel < BBS::Model
   def self.rfcs(kind)
     rows = RfcModel.guard([]) do
       members.select_append(Sequel[:series][:number].as(:series_number)).where(Sequel[:series][:series] => kind)
-             .order(Sequel[:series][:number], Sequel[:rfcs][:number]).all
+        .order(Sequel[:series][:number], Sequel[:rfcs][:number]).all
     end
     rows.map { |rfc| ["#{kind} #{rfc.values.delete(:series_number)}", rfc] }
   end
@@ -27,7 +27,7 @@ class SeriesModel < BBS::Model
   def self.members_of(kind, number)
     RfcModel.guard([]) do
       members.where(Sequel[:series][:series] => kind, Sequel[:series][:number] => Integer(number))
-             .order(Sequel[:rfcs][:number]).all
+        .order(Sequel[:rfcs][:number]).all
     end
   end
 

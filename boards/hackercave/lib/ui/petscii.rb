@@ -56,8 +56,12 @@ module UI
       return alert(NOT_READY, color: YE) unless library.ready?
 
       list = library.shelves
-      each_pick('SHELVES', list, right: "#{list.size} shelves",
-                                 label: ->(s) { "#{s.name.downcase} #{GR}#{s.count}#{LG}" }) { |s| shelf(s) }
+      each_pick(
+        'SHELVES',
+        list,
+        right: "#{list.size} shelves",
+        label: ->(s) { "#{s.name.downcase} #{GR}#{s.count}#{LG}" }
+      ) { |s| shelf(s) }
     end
 
     def shelf(shelf)
@@ -70,8 +74,12 @@ module UI
       return alert(NOT_READY, color: YE) unless library.ready?
 
       title('SEARCH')
-      query = prompt('search', hint: 'An rfc number (854), ien 137, a series (std 7), or words. status:standard and ' \
-                                     'year:1983 narrow it.', max: 60)
+      query = prompt(
+        'search',
+        hint: 'An rfc number (854), ien 137, a series (std 7), or words. status:standard and ' \
+              'year:1983 narrow it.',
+        max:  60
+      )
       found(query, library.search(query)) if query
     end
 

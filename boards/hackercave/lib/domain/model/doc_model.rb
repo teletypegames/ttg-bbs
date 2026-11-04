@@ -32,7 +32,7 @@ class DocModel < BBS::Model
     terms = words.map { |w| %("#{w.delete('"')}"*) }.join(' ')
     guard([]) do
       db[:text_fts].where(Sequel.lit('text_fts MATCH ?', terms)).order(Sequel.function(:bm25, :text_fts))
-                   .limit(limit).select_map(:rowid)
+        .limit(limit).select_map(:rowid)
     end
   end
 

@@ -110,8 +110,11 @@ module UI
     def open_rfc(rfc)
       doc = loading("opening #{rfc.name.downcase}...") { reading.open(rfc, seen: context[:seen] ||= Set.new) }
       if doc.is_a?(Symbol)
-        return alert(doc == :no_text ? "The RFC Editor has no plain text of #{rfc.name}." : 'The RFC Editor ' \
-          'did not answer. Try again in a minute.', color: YE)
+        return alert(
+          doc == :no_text ? "The RFC Editor has no plain text of #{rfc.name}." : 'The RFC Editor ' \
+            'did not answer. Try again in a minute.',
+          color: YE
+        )
       end
 
       Reader.new(self, rfc, doc, on_named: ->(list) { named(rfc, list) }).read

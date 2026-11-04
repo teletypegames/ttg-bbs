@@ -15,8 +15,11 @@ class LibraryServiceTest < Minitest::Test
   end
 
   def library(mirror: nil)
-    LibraryService.new(shelves: ShelvesRepository.new(File.expand_path('../config/shelves.yml', __dir__)), mirror: mirror,
-                       clock: -> { Time.new(2026, 4, 1) })
+    LibraryService.new(
+      shelves: ShelvesRepository.new(File.expand_path('../config/shelves.yml', __dir__)),
+      mirror:  mirror,
+      clock:   -> { Time.new(2026, 4, 1) }
+    )
   end
 
   def test_before_the_index_only_the_own_shelves_stand
@@ -24,8 +27,7 @@ class LibraryServiceTest < Minitest::Test
     assert_equal ['Classics', 'Telnet', 'April 1st'], lib.shelves.map(&:name)
     assert_equal :preparing, lib.search('telnet')
     telnet = lib.entries_on(lib.own_shelves[1]).first
-    assert_equal [854, 'Telnet Protocol Specification', 'the line you are on now'],
-                 [telnet.number, telnet.rfc.title, telnet.note]
+    assert_equal [854, 'Telnet Protocol Specification', 'the line you are on now'], [telnet.number, telnet.rfc.title, telnet.note]
   end
 
   def test_the_shelves_of_the_index

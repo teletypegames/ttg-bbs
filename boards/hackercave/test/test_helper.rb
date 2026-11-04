@@ -10,8 +10,12 @@ FIXTURES = File.expand_path('fixtures', __dir__)
 # A temporary data folder for each test, removed after it, with the
 # board's four databases in it, the models bound to them.
 module TempDir
-  DATABASES = { main: ['hackercave.sqlite3', MIGRATIONS], index: ['index.sqlite3', INDEX_MIGRATIONS],
-                fulltext: ['fulltext.sqlite3', FULLTEXT_MIGRATIONS], jargon: ['jargon.sqlite3', JARGON_MIGRATIONS] }.freeze
+  DATABASES = {
+    main:     ['hackercave.sqlite3', MIGRATIONS],
+    index:    ['index.sqlite3', INDEX_MIGRATIONS],
+    fulltext: ['fulltext.sqlite3', FULLTEXT_MIGRATIONS],
+    jargon:   ['jargon.sqlite3', JARGON_MIGRATIONS]
+  }.freeze
 
   def setup
     super
