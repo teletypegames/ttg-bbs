@@ -26,8 +26,8 @@ module TTG
     def self.files(root)
       board = BBS::Check::Board.new(root)
       {
-        'Dockerfile' => dockerfile(board.read('Dockerfile')),
-        '.dockerignore' => DOCKERIGNORE,
+        'Dockerfile'       => dockerfile(board.read('Dockerfile')),
+        '.dockerignore'    => DOCKERIGNORE,
         '.woodpecker.yaml' => woodpecker(board.slug, port(board))
       }
     end

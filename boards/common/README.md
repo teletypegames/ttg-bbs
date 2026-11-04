@@ -25,7 +25,7 @@ moves every board to the latest rubbs and ttg-common together.
 | Module | What | Used by |
 |--------|------|---------|
 | `TTG::PRESET` | The `BBS::Preset` of every board: the logo splash, teletypegames.org and its QR code on the goodbye, the User-Agent | every board (`preset TTG::PRESET`) |
-| `ttg/rake` | `rake ttg:sync` (`TTG::Sync`) writes the shared Dockerfile, .dockerignore and .woodpecker.yaml from `lib/ttg/board/`; the house rules of `rake bbs:check` (`TTG::Check`): `<slug>-bbs`, those files as synced, `.rubocop.yml` inheriting `lib/ttg/board/rubocop.yml`, compose limits, `stop_grace_period` and one 23xx port, the preset, every setting in `env-example` | every board's Rakefile |
+| `ttg/rake` | `rake ttg:sync` (`TTG::Sync`) writes the shared Dockerfile, .dockerignore and .woodpecker.yaml from `lib/ttg/board/`; `rake ttg:format` formats the code by the shared RuboCop rules (`rubocop -a`); the house rules of `rake bbs:check` (`TTG::Check`): `<slug>-bbs`, those files as synced, `.rubocop.yml` inheriting `lib/ttg/board/rubocop.yml`, compose limits, `stop_grace_period` and one 23xx port, the preset, every setting in `env-example` | every board's Rakefile |
 | `TTG::Logo` | The Teletype Games logo as two `BBS::Art` drawings (modern: 66×23 half blocks, 256 colours; C64: 33×23 quarter blocks) and as a `BBS::Splash` | every board (all twelve) |
 
 ### `TTG::Logo`
@@ -74,6 +74,11 @@ writes it into the board:
 | `dockerignore` | `.dockerignore` | — |
 | `woodpecker.yaml.erb` | `.woodpecker.yaml` | the name and the port (from `bbs.rb` and `compose.yaml`) |
 | `rubocop.yml` | inherited, not copied | the board's `.rubocop.yml`: `inherit_gem: { ttg-common: lib/ttg/board/rubocop.yml }` and its own exceptions after it |
+
+The shared RuboCop rules are also the formatter: what fits on a line (130) stays on one, a call, definition or hash that
+does not gets one argument, parameter or key a line with the closing bracket on its own line, the keys lined up as a
+table (the same layout rules as rubbs'). `rake ttg:format` applies them; ruby-lsp in the editor formats on save with
+the same rules.
 
 The Dockerfile runs the board with JSON logs (`BBS_LOG_FORMAT=json`), 20
 seconds for its callers when it stops (`BBS_SHUTDOWN_SECONDS=20`; the compose

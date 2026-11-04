@@ -23,10 +23,16 @@ class TTGCheckTest < Minitest::Test
   RUBOCOP = "inherit_gem:\n  ttg-common: lib/ttg/board/rubocop.yml\n"
 
   def files
-    { 'bbs.rb' => "require 'ttg/common'\nBBS.board 'Shop BBS' do\n  preset TTG::PRESET\nend\n",
-      'Dockerfile' => TTG::Sync::DOCKERFILE, '.dockerignore' => TTG::Sync::DOCKERIGNORE,
-      'compose.yaml' => COMPOSE, '.woodpecker.yaml' => TTG::Sync.woodpecker('shop-bbs', 2390),
-      '.rubocop.yml' => RUBOCOP, 'LICENSE' => '', 'env-example' => '' }
+    {
+      'bbs.rb'           => "require 'ttg/common'\nBBS.board 'Shop BBS' do\n  preset TTG::PRESET\nend\n",
+      'Dockerfile'       => TTG::Sync::DOCKERFILE,
+      '.dockerignore'    => TTG::Sync::DOCKERIGNORE,
+      'compose.yaml'     => COMPOSE,
+      '.woodpecker.yaml' => TTG::Sync.woodpecker('shop-bbs', 2390),
+      '.rubocop.yml'     => RUBOCOP,
+      'LICENSE'          => '',
+      'env-example'      => ''
+    }
   end
 
   def with_board(changes = {})
@@ -55,10 +61,13 @@ class TTGCheckTest < Minitest::Test
   end
 
   def test_what_breaks_the_house_rules
-    changes = { 'compose.yaml' => COMPOSE.sub('restart: unless-stopped', 'restart: always'),
-                '.woodpecker.yaml' => TTG::Sync.woodpecker('shop-bbs', 2390).sub('bundle exec rake', 'bundle exec rake test'),
-                '.rubocop.yml' => "AllCops:\n  NewCops: enable\n",
-                'bbs.rb' => "BBS.board 'Shop BBS' do\nend\n", 'LICENSE' => nil }
+    changes = {
+      'compose.yaml'     => COMPOSE.sub('restart: unless-stopped', 'restart: always'),
+      '.woodpecker.yaml' => TTG::Sync.woodpecker('shop-bbs', 2390).sub('bundle exec rake', 'bundle exec rake test'),
+      '.rubocop.yml'     => "AllCops:\n  NewCops: enable\n",
+      'bbs.rb'           => "BBS.board 'Shop BBS' do\nend\n",
+      'LICENSE'          => nil
+    }
     with_board(changes) do |dir|
       assert_equal %i[ttg_ci ttg_compose ttg_files ttg_preset ttg_rubocop], ttg_findings(dir).map(&:rule).uniq.sort
     end

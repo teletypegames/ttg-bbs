@@ -11,9 +11,9 @@ module TTG
   #     …
   #   end
   PRESET = BBS::Preset.new(
-    splash: Logo.splash,
-    url: 'teletypegames.org',
-    qr: 'HTTPS://TELETYPEGAMES.ORG',
+    splash:     Logo.splash,
+    url:        'teletypegames.org',
+    qr:         'HTTPS://TELETYPEGAMES.ORG',
     user_agent: '(+https://teletypegames.org)'
   )
 end

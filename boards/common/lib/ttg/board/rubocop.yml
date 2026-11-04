@@ -10,24 +10,42 @@ AllCops:
     - "vendor/**/*"
     - "tmp/**/*"
 
-# The house style aligns hashes and keyword arguments as tables.
-Layout/HashAlignment:
-  Enabled: false
-Layout/ExtraSpacing:
-  AllowForAlignment: true
+# The layout is the formatter's: `rake ttg:format` (rubocop -a) puts every
+# file in this shape. What fits on a line (130) goes on one line; a call, a
+# definition or a hash that does not gets one argument (key, parameter) a
+# line, the closing bracket on a line of its own, and its keys lined up as a
+# table. The same rules as rubbs'.
 Layout/LineLength:
   Max: 130
-# Continuation lines line up with what they continue, not with the call.
-Layout/FirstArgumentIndentation:
-  Enabled: false
-Layout/ArgumentAlignment:
-  Enabled: false
-Layout/MultilineMethodCallBraceLayout:
-  Enabled: false
-Layout/ClosingParenthesisIndentation:
-  Enabled: false
-Layout/EmptyLineAfterGuardClause:
-  Enabled: false
+Layout/RedundantLineBreak:
+  Enabled: true
+Layout/FirstMethodArgumentLineBreak:
+  Enabled: true
+  AllowMultilineFinalElement: true
+Layout/MultilineMethodArgumentLineBreaks:
+  Enabled: true
+  AllowMultilineFinalElement: true
+Layout/FirstMethodParameterLineBreak:
+  Enabled: true
+Layout/MultilineMethodParameterLineBreaks:
+  Enabled: true
+Layout/FirstHashElementLineBreak:
+  Enabled: true
+  AllowMultilineFinalElement: true
+Layout/MultilineHashKeyLineBreaks:
+  Enabled: true
+  AllowMultilineFinalElement: true
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent
+Layout/FirstArrayElementIndentation:
+  EnforcedStyle: consistent
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+Layout/HashAlignment:
+  EnforcedColonStyle: table
+  EnforcedHashRocketStyle: table
+Layout/ExtraSpacing:
+  AllowForAlignment: true
 
 # Menu items and window callbacks are one-line do…end blocks, and a
 # `when … then form.error(…); :keep` table reads best on one line.
@@ -44,9 +62,11 @@ Style/FetchEnvVar:
 
 # Small methods, one thing each: the haiku rule. The DSL blocks of a face
 # (Application.define, a window spec) are configuration, not logic, so only
-# their length is free; what they call must still be small.
+# their length is free; what they call must still be small. A call, a hash
+# or an array the formatter spreads over lines counts as one line.
 Metrics/MethodLength:
   Max: 20
+  CountAsOne: [array, hash, heredoc, method_call]
 Metrics/AbcSize:
   Max: 25
 Metrics/CyclomaticComplexity:
@@ -58,10 +78,13 @@ Metrics/ParameterLists:
   CountKeywordArgs: false
 Metrics/ClassLength:
   Max: 200
+  CountAsOne: [array, hash, heredoc, method_call]
 Metrics/ModuleLength:
   Max: 200
+  CountAsOne: [array, hash, heredoc, method_call]
 Metrics/BlockLength:
   Max: 30
+  CountAsOne: [array, hash, heredoc, method_call]
   AllowedMethods: [define, flow, window, app, describe, it]
   Exclude:
     - "test/**/*"

@@ -4,8 +4,9 @@ require 'bbs/rake'
 require_relative 'check'
 require_relative 'sync'
 
-# The house rules of the Teletype Games boards join BBS::Check, and
-# <tt>rake ttg:sync</tt> writes the files every board shares (TTG::Sync): a
+# The house rules of the Teletype Games boards join BBS::Check,
+# <tt>rake ttg:sync</tt> writes the files every board shares (TTG::Sync) and
+# <tt>rake ttg:format</tt> formats the code by the shared RuboCop rules: a
 # board's Rakefile loads them after rubbs' tasks.
 #
 #   require 'bbs/rake'
@@ -21,6 +22,13 @@ module TTG
       task :sync do
         written = TTG::Sync.run(Dir.pwd)
         puts written.empty? ? 'ttg:sync: the shared files are as in ttg-common' : "ttg:sync: wrote #{written.join(', ')}"
+      end
+
+      desc 'Formats the code by the shared RuboCop rules (rubocop -a): the layout of every Ruby file'
+      task :format do
+        sh 'bundle', 'exec', 'rubocop', '--autocorrect', '--format', 'quiet' do |ok, _|
+          puts ok ? 'ttg:format: in shape' : 'ttg:format: formatted; what RuboCop cannot fix is listed by bundle exec rubocop'
+        end
       end
     end
   end
