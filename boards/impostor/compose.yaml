@@ -14,3 +14,5 @@ services:
       # Callers at once: each costs up to ~1.7 MB on top of ~25 MB, sized to mem_limit.
       - BBS_MAX_SESSIONS=40
     restart: unless-stopped
+    # rubbs tells the callers and gives them BBS_SHUTDOWN_SECONDS (20 s, Dockerfile) to leave.
+    stop_grace_period: 30s
