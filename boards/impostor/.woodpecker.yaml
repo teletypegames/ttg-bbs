@@ -24,7 +24,7 @@ steps:
     commands:
       - apk add --no-cache git build-base
       - bundle install --jobs 4 --quiet
-      - bundle exec rake test
+      - bundle exec rake
 
   - name: check
     image: docker:cli
