@@ -37,6 +37,7 @@ class PostService
     problem = check(**draft)
     return problem if problem
 
+    UserModel.remember(author)
     saved { find(PostModel.add(**draft, face: PostModel::FACES.include?(face) ? face : 'modern', author_id: author.id)) }
   end
 
@@ -78,6 +79,7 @@ class PostService
   # nil for a new post. The id of the draft; nil, logged, when it could not
   # be kept: the editing goes on.
   def autosave(id, author:, face:, original: nil, **fields)
+    UserModel.remember(author)
     kept = PostModel.save_draft(
       id,
       clean(**fields),

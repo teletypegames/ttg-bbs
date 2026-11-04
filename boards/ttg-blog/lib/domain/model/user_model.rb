@@ -2,30 +2,24 @@
 
 require 'time'
 
-# An editor of the blog, a row of the users table: one who may log in and
-# write, with the digest of their password (EditorService). A name is the
-# same whatever its case (COLLATE NOCASE). Removing an editor keeps their
+# An author of the blog, a row of the users table: the account of the network
+# (BBS::Auth, its id and name) that wrote a post, kept here so a post knows
+# its author's name. An editor is remembered the first time they write. The
+# password_digest column is of the blog's own logins before the accounts of
+# the network: empty for an author since. Removing an author keeps their
 # posts, without an author (ON DELETE SET NULL).
 class UserModel < BBS::Model
   table :users
 
-  # The editors by name, without their digests.
-  def self.by_name = select(:id, :name).order(:name).all
-
-  def self.exists?(name) = !where(name: name).empty?
-
-  # The UserModel of +name+ (case does not matter) and its digest, or nil.
-  def self.credentials(name)
-    user = where(name: name).first
-    user && [user, user.password_digest]
+  # Keeps +identity+ (a BBS::Auth::Identity) as an author: its id and its
+  # name as it is now. Another author row of that name (an editor of the
+  # blog's own logins whose account is another) keeps its posts under the
+  # name with its number after it.
+  def self.remember(identity)
+    db.transaction do
+      where(name: identity.name).exclude(id: identity.id).each { |other| other.update(name: "#{other.name} ##{other.id}") }
+      dataset.insert_conflict(target: :id, update: { name: Sequel[:excluded][:name] })
+        .insert(id: identity.id, name: identity.name, password_digest: '', created_at: Time.now.utc.iso8601)
+    end
   end
-
-  # The id of the new editor.
-  def self.add(name, digest) = insert(name: name, password_digest: digest, created_at: Time.now.utc.iso8601)
-
-  # The number of editors changed: 0 when there was no such editor.
-  def self.set_digest(name, digest) = where(name: name).update(password_digest: digest)
-
-  # The number of editors removed: 0 when there was no such editor.
-  def self.remove(name) = where(name: name).delete
 end

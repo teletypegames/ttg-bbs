@@ -20,14 +20,12 @@ are cursor menus of rubbs (`BBS::Selector`), and the front page is its own.
 
 ```bash
 docker compose up --build
-docker exec -it ttg-blog-bbs bin/user add NAME    # the first editor
 ```
 
 **Directly (Ruby 3.x):**
 
 ```bash
 bundle install
-bin/user add NAME
 ruby bbs.rb
 ```
 
@@ -77,8 +75,9 @@ One SQLite file (`data/ttgblog.sqlite3`, the board's database: `database :db,
 MIGRATIONS`, rubbs' `BBS::Model` on Sequel), two tables, each a model, its schema
 in `lib/domain/migrations.rb` (`BlogSchema`) as `migrate` steps (`PRAGMA user_version`):
 
-- `users` — the editors: `name` (unique, case does not matter) and a
-  PBKDF2-SHA256 password digest.
+- `users` — the authors of the posts: the id and name of their account of the
+  network, remembered when they first write (the password digests are of the
+  blog's own logins before the accounts of the network, empty since).
 - `posts` — `slug`, `title`, `summary`, `body` (Markdown), `category` (an id
   from the config), `face` (`modern` or `petscii`: the terminal it was written
   on), `status` (`draft`, `unpublished` or `published`), `published_at`
@@ -117,23 +116,19 @@ production file comes out at version 1 as it was. Step 2 turns the
 `published` flag into the `status` and adds the draft columns. What an editor types is
 cleaned of control characters (`BBS::Text.clean`) before it is kept.
 
-Readers need no account. The editors are managed from the server's shell:
+Readers need no account. The editors are the accounts of the network
+(rubbs `BBS::Auth`, kept on TTG Gate BBS) with the **blogger** role: they log
+in from the menu (`E`), or come in logged in when they dialled the blog from the
+gate. The accounts and their roles are managed on the gate's shell:
 
 ```bash
-docker exec -it ttg-blog-bbs bin/user list
-docker exec -it ttg-blog-bbs bin/user add NAME       # asks the password twice
-docker exec -it ttg-blog-bbs bin/user passwd NAME
-docker exec -it ttg-blog-bbs bin/user remove NAME    # their posts stay, without an author
+docker exec -it ttg-gate-bbs bin/account grant NAME blogger
+docker exec -it ttg-gate-bbs bin/account password NAME
 ```
 
-A logged-in editor can change their own password from the menu too. Wrong
-logins are counted by the name (10 in 15 minutes) and by the caller's address
-(5 in 15 minutes; `BBS::RateLimit.caller_key`), so a new call does not start
-over: past either limit the login is locked until the window lets it go.
-The counts are kept in the database (rubbs' `rate_limit_events` table), so a
-restart does not start them over either.
-Each wrong one costs a second, and the password derivations (PBKDF2) run at
-most two at a time, so a flood of tries cannot take the CPU.
+A logged-in editor can change their own password from the menu too (`P`, through
+the gate). The limits on wrong passwords are the gate's (by name and by line).
+The board needs `RUBBS_AUTH_SECRET`, the secret every board shares, in its `.env`.
 
 ## Interface
 
@@ -153,7 +148,7 @@ the modern face.
 | `C` | Categories, with their post counts, then that category's posts |
 | `G` | Go to a post by its number (the web shows it beside the post) |
 | `U` | Unpublished posts (logged in) |
-| `E` | Editor login |
+| `E` | Log in (an account with the blogger role is an editor) |
 | `W` | Write a post (logged in) |
 | `P` | Change your password (logged in) |
 | `O` | Log out (logged in) |

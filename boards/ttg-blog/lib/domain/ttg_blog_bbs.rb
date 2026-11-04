@@ -2,8 +2,9 @@
 
 # The blog itself, whatever terminal a caller has: its services on the
 # SQLite file (MIGRATIONS, the models) and the category list, and Discord rung when a
-# post is first published. Both faces (lib/ui/modern, lib/ui/petscii), the
-# read API (lib/web) and bin/user work on one instance of it.
+# post is first published. Both faces (lib/ui/modern, lib/ui/petscii) and the
+# read API (lib/web) work on one instance of it. The editors are the accounts
+# of the network with the blogger role (BBS::Auth, kept on TTG Gate BBS).
 class TTGBlogBBS
   include BBS::Domain
 
@@ -16,7 +17,6 @@ class TTGBlogBBS
   database :db, MIGRATIONS
 
   service(:categories) { CategoryService.new(CategoryRepository.new(categories_file)) }
-  service(:editors)    { EditorService.new(guard: LoginGuard.new(store: databases[:main])) }
   service(:posts)      { PostService.new(categories: categories).tap { |posts| announce(posts) } }
 
   # Where a published post is on the web.

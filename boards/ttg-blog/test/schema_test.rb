@@ -92,7 +92,8 @@ class SchemaTest < Minitest::Test
 
   def test_a_new_post_after_the_migration_gets_a_free_slug
     legacy(FIRST_SHAPE)
-    post = blog.posts.create(author: UserModel.credentials('tasi').first, **draft)
+    tasi = BBS::Auth::Identity.new(id: 1, name: 'tasi', roles: %w[blogger])
+    post = blog.posts.create(author: tasi, **draft)
     assert_match(/\A\d{4}-\d\d-\d\d-hello-world\z/, post.slug)
     refute post.published?
   end

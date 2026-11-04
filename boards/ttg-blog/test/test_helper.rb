@@ -7,7 +7,7 @@ require 'bbs/test'
 
 # What the tests share: a blog on a throwaway database (BBS::Test.database,
 # the models bound to it and TTG_BLOG_BBS_DB its file), a temporary
-# folder, and the editors' digests cheap to derive.
+# folder, and the editors as accounts of the network (BBS::Auth).
 module TestHelper
   CATEGORIES = File.expand_path('../config/categories.yml', __dir__)
 
@@ -20,6 +20,7 @@ module TestHelper
   end
 
   def teardown
+    BBS.config.auth = nil
     ENV_NAMES.each { |name| ENV.delete(name) }
     FileUtils.remove_entry(@dir)
   end
@@ -34,9 +35,19 @@ module TestHelper
 
   def category = blog.categories.all.first.id
 
+  # The accounts of the network for the test (BBS::Test.accounts), the
+  # board's login (BBS.config.auth) on them.
+  def accounts
+    @accounts ||= BBS::Test.accounts(roles: %w[member]).tap do |directory|
+      BBS.config.auth = BBS::Auth::Setup.new(directory: directory, login: :menu, guests: true)
+    end
+  end
+
+  # An editor: an account of the network with the blogger role, its Identity.
   def editor(name = 'tasi', password = 'secret-pass')
-    blog.editors.add(name, password)
-    blog.editors.login(name, password, caller: 'test')
+    accounts.register(name, password)
+    accounts.grant(name, :blogger)
+    accounts.find(name)
   end
 
   def draft(**fields) = { title: 'Hello world', summary: 'A first post', body: "# Hi\n\nthere", category: category }.merge(fields)

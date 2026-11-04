@@ -53,4 +53,12 @@ class PostServiceTest < Minitest::Test
     edited = blog.posts.update(post.id, **draft(title: 'Another title'))
     assert_equal ['Another title', post.slug], [edited.title, edited.slug]
   end
+
+  def test_an_author_is_remembered_by_account_and_a_namesake_keeps_their_posts
+    first = editor('tasi')
+    blog.posts.create(author: first, **draft)
+    other = BBS::Auth::Identity.new(id: first.id + 100, name: 'Tasi', roles: %w[blogger])
+    blog.posts.create(author: other, **draft(title: 'Second'))
+    assert_equal ["tasi ##{first.id}", 'Tasi'], UserModel.order(:id).select_map(:name)
+  end
 end

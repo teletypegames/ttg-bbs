@@ -7,7 +7,7 @@ require_relative 'board/composer'
 module UI
   # One call of the blog, line by line on either face: the readers' menu (the
   # latest posts, the categories, a post paged a screenful at a time) and,
-  # after an editor logs in, writing, editing and deleting posts. The body is
+  # after an editor (the blogger role) logs in, writing, editing and deleting posts. The body is
   # Markdown, typed in a line editor with slash commands, which a C64 can
   # type as well as a modern terminal. A face (UI::Modern, UI::Petscii) gives
   # it its masthead and the shape of its menus.
@@ -28,13 +28,13 @@ module UI
       item('l', 'latest posts', 'every post, newest first') { latest }
       item('c', 'categories', -> { categories.all.map(&:name).join(', ') }) { browse_categories }
       item('g', 'go to post #', 'by the number the web shows') { go_to }
-      item('e', 'editor login', 'for the editors of the blog', if: -> { !user }) { login }
+      item('e', 'log in', 'for the editors of the blog', if: -> { !signed_in? }) { editor_login }
       item('u', -> { unpublished_label }, 'waiting to be published', if: -> { user }) { unpublished }
       item('w', -> { "write a post#{drafts_note}" }, 'it waits unpublished until you publish it', if: -> { user }) do
         compose
       end
       item('p', 'change your password', -> { "#{user.name}'s password" }, if: -> { user }) { password }
-      item('o', -> { log_out_label }, -> { "back to a reader, #{user.name}" }, if: -> { user }) { log_out }
+      item('o', -> { log_out_label }, -> { "back to a reader, #{identity.name}" }, if: -> { signed_in? }) { log_out }
       log_off
     end
 
@@ -44,7 +44,7 @@ module UI
 
     def unpublished_label = "unpublished posts #{GR}(#{posts.total(published: false)})#{LG}"
 
-    def log_out_label = "log out #{GR}(#{user.name})#{LG}"
+    def log_out_label = "log out #{GR}(#{identity.name})#{LG}"
 
     # What an editor does with a post after its last page: e, p, d, c
     # (a published post's QR code) or q.
@@ -68,9 +68,9 @@ module UI
 
     def unpublished = browse('UNPUBLISHED POSTS') { posts.all(published: false) }
 
-    def log_out = context.delete(:user)
-
-    def user = context[:user]
+    # The editor on the line: the caller's BBS::Auth::Identity when it has
+    # the blogger role, else +nil+ (a reader).
+    def user = role?(:blogger) ? identity : nil
 
     # What the caller may read: everything for an editor, the published
     # posts for a reader (nil and true, as PostService#all takes them).

@@ -44,6 +44,13 @@ class FaceTest < Minitest::Test
     published('On the C64')
     screen = call(UI::Petscii, 'q', petscii: true)
     assert_includes screen, 'On the C64'
-    assert_includes screen, 'editor login'
+    assert_includes screen, 'log in'
+  end
+
+  def test_an_account_without_the_blogger_role_is_told
+    accounts.register('reader', 'secret-pass')
+    screen = call(UI::Modern, 'e', *'reader'.chars, :enter, *'secret-pass'.chars, :enter, ' ', ' ', 'q')
+    assert_includes screen, 'reader is not an editor of the blog.'
+    refute_includes screen, 'write a post'
   end
 end
