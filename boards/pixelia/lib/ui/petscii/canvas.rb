@@ -159,8 +159,7 @@ module UI
         @face.say('The canvas as it is now goes on the wall under a title and your handle.', color: GR)
         @face.puts
         title  = BBS::Field.ask(@face.session, " #{WH}title#{LG}  ", max: WallService::MAX_TITLE)
-        handle = title && BBS::Field.ask(@face.session, " #{WH}handle#{LG} ", text: @handle.to_s,
-                                                                                max: WallService::MAX_HANDLE)
+        handle = title && BBS::Field.ask(@face.session, " #{WH}handle#{LG} ", text: @handle.to_s, max: WallService::MAX_HANDLE)
         return unless title && handle
 
         @handle = handle

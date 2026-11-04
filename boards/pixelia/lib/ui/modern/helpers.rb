@@ -33,8 +33,12 @@ module UI
       def view_work(work)
         picture = work.canvas
         with_line do |session|
-          Viewer.run(session, width: CanvasModel::COLS, height: CanvasModel::ROWS,
-                              title: "#{work.title} · #{work.handle} · #{work.date}") do |y, x, w|
+          Viewer.run(
+            session,
+            width:  CanvasModel::COLS,
+            height: CanvasModel::ROWS,
+            title:  "#{work.title} · #{work.handle} · #{work.date}"
+          ) do |y, x, w|
             ArtLines.canvas(picture, y, x, w)
           end
         end

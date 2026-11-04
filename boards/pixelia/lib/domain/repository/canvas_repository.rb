@@ -75,8 +75,12 @@ class CanvasRepository
   # Starts the thread that writes the file and answers the clear flag every
   # +flush_seconds+; an error is logged and the next round comes as usual.
   def start
-    BBS.background('canvas writer', every: @flush_seconds, retry_after: @flush_seconds,
-                                    max_retry: @flush_seconds) { tick }
+    BBS.background(
+      'canvas writer',
+      every:       @flush_seconds,
+      retry_after: @flush_seconds,
+      max_retry:   @flush_seconds
+    ) { tick }
     at_exit { flush }
     self
   end

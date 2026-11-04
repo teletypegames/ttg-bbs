@@ -12,8 +12,19 @@ class ArtFileModel
 
   attr_reader :name, :pack, :artists, :title, :author, :group, :datatype, :filetype, :width, :date
 
-  def initialize(name:, pack:, artists: [], title: '', author: '', group: '', datatype: nil, filetype: nil,
-                 width: nil, ice: false, date: '')
+  def initialize(
+    name:,
+    pack:,
+    artists: [],
+    title: '',
+    author: '',
+    group: '',
+    datatype: nil,
+    filetype: nil,
+    width: nil,
+    ice: false,
+    date: ''
+  )
     @name     = name
     @pack     = pack
     @artists  = artists
@@ -54,17 +65,27 @@ class ArtFileModel
     return nil unless name.is_a?(String) && hash.is_a?(Hash)
 
     sauce = hash['sauce'].is_a?(Hash) ? hash['sauce'] : {}
-    new(name: clean(name), pack: pack, artists: Array(hash['artists']).map { |a| clean(a) },
-        title: clean(sauce['Title']), author: clean(sauce['Author']), group: clean(sauce['Group']),
-        **sauce_facts(sauce))
+    new(
+      name:    clean(name),
+      pack:    pack,
+      artists: Array(hash['artists']).map { |a| clean(a) },
+      title:   clean(sauce['Title']),
+      author:  clean(sauce['Author']),
+      group:   clean(sauce['Group']),
+      **sauce_facts(sauce)
+    )
   end
 
   # The numbers of a SAUCE record in the API: types, width, iCE, date.
   def self.sauce_facts(sauce)
     flags = sauce['ansiflags'].is_a?(Hash) ? sauce['ansiflags'] : {}
-    { datatype: sauce['Datatype']&.to_i, filetype: sauce['Filetype']&.to_i,
-      width: sauce['Tinfo1'].to_i.positive? ? sauce['Tinfo1'].to_i : nil,
-      ice: flags['ice'].to_i == 1, date: date(sauce['Date']) }
+    {
+      datatype: sauce['Datatype']&.to_i,
+      filetype: sauce['Filetype']&.to_i,
+      width:    sauce['Tinfo1'].to_i.positive? ? sauce['Tinfo1'].to_i : nil,
+      ice:      flags['ice'].to_i == 1,
+      date:     date(sauce['Date'])
+    }
   end
 
   def self.clean(text) = BBS::Text.clean(text, keep_newlines: false).strip

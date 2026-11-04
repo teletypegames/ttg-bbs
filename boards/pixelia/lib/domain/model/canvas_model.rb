@@ -39,10 +39,13 @@ class CanvasModel
   def visible?(index) = @bg[index].positive? || (@chars[index] != BLANK && @fg[index].positive?)
 
   def to_h
-    { 'cols' => COLS, 'rows' => ROWS,
+    {
+      'cols'  => COLS,
+      'rows'  => ROWS,
       'chars' => ROWS.times.map { |y| @chars[y * COLS, COLS].join },
-      'fg' => ROWS.times.map { |y| @fg[y * COLS, COLS].map { |c| c.to_s(16) }.join },
-      'bg' => ROWS.times.map { |y| @bg[y * COLS, COLS].map { |c| c.to_s(16) }.join } }
+      'fg'    => ROWS.times.map { |y| @fg[y * COLS, COLS].map { |c| c.to_s(16) }.join },
+      'bg'    => ROWS.times.map { |y| @bg[y * COLS, COLS].map { |c| c.to_s(16) }.join }
+    }
   end
 
   # A canvas from its JSON Hash; nil when it is not one.

@@ -13,8 +13,11 @@ class FacesTest < Minitest::Test
 
   def setup
     super
-    canvas = CanvasService.new(CanvasRepository.new(File.join(@dir, 'canvas.json'), archive_dir: File.join(@dir, 'a'),
-                                                                                     clear_flag: File.join(@dir, 'c')))
+    canvas = CanvasService.new(CanvasRepository.new(
+                                 File.join(@dir, 'canvas.json'),
+                                 archive_dir: File.join(@dir, 'a'),
+                                 clear_flag:  File.join(@dir, 'c')
+                               ))
     wall   = WallService.new(WorkRepository.new(File.join(@dir, 'works')), canvas: canvas, cooldown: 0, per_hour: 10)
     @board = Board.new({ gallery: nil, canvas: canvas, wall: wall })
   end

@@ -40,16 +40,23 @@ class SauceModel
     record = bytes.byteslice(-SIZE, SIZE)
     return nil unless record.start_with?(ID)
 
-    new(title: text(record, 7, 35), author: text(record, 42, 20), group: text(record, 62, 20),
-        date: date(record.byteslice(82, 8)), datatype: record.getbyte(94), filetype: record.getbyte(95),
-        tinfo1: record.byteslice(96, 2).unpack1('v'), tinfo2: record.byteslice(98, 2).unpack1('v'),
-        tflags: record.getbyte(105))
+    new(
+      title:    text(record, 7, 35),
+      author:   text(record, 42, 20),
+      group:    text(record, 62, 20),
+      date:     date(record.byteslice(82, 8)),
+      datatype: record.getbyte(94),
+      filetype: record.getbyte(95),
+      tinfo1:   record.byteslice(96, 2).unpack1('v'),
+      tinfo2:   record.byteslice(98, 2).unpack1('v'),
+      tflags:   record.getbyte(105)
+    )
   end
 
   def self.text(record, from, length)
     record.byteslice(from, length).force_encoding('IBM437')
-          .encode('UTF-8', invalid: :replace, undef: :replace, replace: ' ')
-          .then { |t| BBS::Text.clean(t, keep_newlines: false) }.strip
+      .encode('UTF-8', invalid: :replace, undef: :replace, replace: ' ')
+      .then { |t| BBS::Text.clean(t, keep_newlines: false) }.strip
   end
 
   def self.date(raw)

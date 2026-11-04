@@ -40,7 +40,7 @@ class SixteenColorsRepository
       raise Unavailable, 'no year list' unless json.is_a?(Hash)
 
       json.filter_map { |year, counts| YearModel.new(year.to_i, counts['packs'].to_i) if counts.is_a?(Hash) }
-          .select { |y| y.packs.positive? }.sort_by { |y| -y.year }
+        .select { |y| y.packs.positive? }.sort_by { |y| -y.year }
     end
   end
 

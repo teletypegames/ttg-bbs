@@ -19,22 +19,35 @@ class PixeliaBBS
   setting :wall_per_hour, 30
 
   service(:gallery) do
-    GalleryService.new(remote: SixteenColorsRepository.new(api_url: api_url, site_url: site_url, ttl: api_ttl,
-                                                           max_bytes: max_file_kb * 1024),
-                       cache: ArtCacheRepository.new(File.join(data, 'cache'), max_bytes: cache_mb * 1024 * 1024),
-                       renderer: AnsiRenderService.new(max_rows: max_rows))
+    GalleryService.new(
+      remote:   SixteenColorsRepository.new(
+        api_url:   api_url,
+        site_url:  site_url,
+        ttl:       api_ttl,
+        max_bytes: max_file_kb * 1024
+      ),
+      cache:    ArtCacheRepository.new(File.join(data, 'cache'), max_bytes: cache_mb * 1024 * 1024),
+      renderer: AnsiRenderService.new(max_rows: max_rows)
+    )
   end
   service(:canvas) { CanvasService.new(canvas_repository, rate: paint_rate) }
   service(:wall) do
-    WallService.new(WorkRepository.new(File.join(data, 'works')), canvas: canvas, cooldown: wall_cooldown,
-                                                                  per_hour: wall_per_hour)
+    WallService.new(
+      WorkRepository.new(File.join(data, 'works')),
+      canvas:   canvas,
+      cooldown: wall_cooldown,
+      per_hour: wall_per_hour
+    )
   end
 
   # The canvas on disk; the admin scripts (bin/canvas) read it without a
   # running board.
   def canvas_repository
-    @canvas_repository ||= CanvasRepository.new(File.join(data, 'canvas.json'), archive_dir: File.join(data, 'archive'),
-                                                                                 clear_flag: File.join(data, 'canvas.clear'))
+    @canvas_repository ||= CanvasRepository.new(
+      File.join(data, 'canvas.json'),
+      archive_dir: File.join(data, 'archive'),
+      clear_flag:  File.join(data, 'canvas.clear')
+    )
   end
 
   def start

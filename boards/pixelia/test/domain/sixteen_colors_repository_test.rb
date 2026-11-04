@@ -5,8 +5,12 @@ require 'minitest/mock'
 
 class SixteenColorsRepositoryTest < Minitest::Test
   def repo(ttl: 3600, max_bytes: 1024)
-    SixteenColorsRepository.new(api_url: 'https://api.test', site_url: 'https://site.test', ttl: ttl,
-                                max_bytes: max_bytes)
+    SixteenColorsRepository.new(
+      api_url:   'https://api.test',
+      site_url:  'https://site.test',
+      ttl:       ttl,
+      max_bytes: max_bytes
+    )
   end
 
   def ok(body) = BBS::HTTP::Response.new(status: 200, body: body.b, headers: {})
@@ -100,8 +104,11 @@ class SixteenColorsRepositoryTest < Minitest::Test
   end
 
   def gallery
-    GalleryService.new(remote: repo, cache: ArtCacheRepository.new(File.join(Dir.mktmpdir, 'c'), max_bytes: 1 << 20),
-                       renderer: AnsiRenderService.new(max_rows: 10))
+    GalleryService.new(
+      remote:   repo,
+      cache:    ArtCacheRepository.new(File.join(Dir.mktmpdir, 'c'), max_bytes: 1 << 20),
+      renderer: AnsiRenderService.new(max_rows: 10)
+    )
   end
 
   ArtFile = Struct.new(:pack, :name)

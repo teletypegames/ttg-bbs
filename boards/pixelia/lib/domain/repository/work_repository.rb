@@ -28,8 +28,13 @@ class WorkRepository
 
   # Saves a new work and returns it, or nil when it could not be written.
   def add(title:, handle:, canvas:, at: Time.now)
-    work = WorkModel.new(id: "#{at.strftime('%Y%m%d-%H%M%S')}-#{SecureRandom.hex(2)}", title: title, handle: handle,
-                         created_at: at, canvas: canvas)
+    work = WorkModel.new(
+      id:         "#{at.strftime('%Y%m%d-%H%M%S')}-#{SecureRandom.hex(2)}",
+      title:      title,
+      handle:     handle,
+      created_at: at,
+      canvas:     canvas
+    )
     @lock.synchronize do
       write(work)
       remember(work)

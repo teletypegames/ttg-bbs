@@ -9,9 +9,13 @@ module UI
       private
 
       def wall_list
-        each_pick('THE WALL', -> { wall.all }, empty: 'nothing on the wall yet: paint on the canvas and save it.',
-                                               right: -> { "#{wall.all.size} works" },
-                                               label: ->(w) { "#{w.title} #{GR}#{w.handle}#{LG}" }) { |work| show_work(work) }
+        each_pick(
+          'THE WALL',
+          -> { wall.all },
+          empty: 'nothing on the wall yet: paint on the canvas and save it.',
+          right: -> { "#{wall.all.size} works" },
+          label: ->(w) { "#{w.title} #{GR}#{w.handle}#{LG}" }
+        ) { |work| show_work(work) }
       end
 
       def show_work(work)

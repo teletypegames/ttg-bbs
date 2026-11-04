@@ -23,8 +23,13 @@ class WorkModel
   def date = @created_at.strftime('%Y-%m-%d')
 
   def to_h
-    { 'id' => @id, 'title' => @title, 'handle' => @handle, 'created_at' => @created_at.iso8601,
-      'canvas' => @rows }
+    {
+      'id'         => @id,
+      'title'      => @title,
+      'handle'     => @handle,
+      'created_at' => @created_at.iso8601,
+      'canvas'     => @rows
+    }
   end
 
   # A work from its JSON Hash; nil when it is not one.
@@ -34,8 +39,13 @@ class WorkModel
     canvas = CanvasModel.from_h(hash['canvas'])
     return nil unless canvas && hash['id'].is_a?(String)
 
-    new(id: hash['id'], title: hash['title'].to_s, handle: hash['handle'].to_s,
-        created_at: Time.iso8601(hash['created_at'].to_s), canvas: canvas)
+    new(
+      id:         hash['id'],
+      title:      hash['title'].to_s,
+      handle:     hash['handle'].to_s,
+      created_at: Time.iso8601(hash['created_at'].to_s),
+      canvas:     canvas
+    )
   rescue ArgumentError
     nil
   end

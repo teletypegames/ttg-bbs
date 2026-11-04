@@ -6,8 +6,12 @@ class CanvasRepositoryTest < Minitest::Test
   include TmpDir
 
   def repo(flush_seconds: 2)
-    CanvasRepository.new(path('canvas.json'), archive_dir: path('archive'), clear_flag: path('canvas.clear'),
-                                              flush_seconds: flush_seconds)
+    CanvasRepository.new(
+      path('canvas.json'),
+      archive_dir:   path('archive'),
+      clear_flag:    path('canvas.clear'),
+      flush_seconds: flush_seconds
+    )
   end
 
   def path(name) = File.join(@dir, name)

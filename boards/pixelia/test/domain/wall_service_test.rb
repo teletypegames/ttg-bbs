@@ -8,8 +8,12 @@ class WallServiceTest < Minitest::Test
   Canvas = Struct.new(:snapshot)
 
   def wall(canvas: painted_canvas, cooldown: 300, per_hour: 30)
-    WallService.new(WorkRepository.new(File.join(@dir, 'works')), canvas: Canvas.new(canvas),
-                                                                  cooldown: cooldown, per_hour: per_hour)
+    WallService.new(
+      WorkRepository.new(File.join(@dir, 'works')),
+      canvas:   Canvas.new(canvas),
+      cooldown: cooldown,
+      per_hour: per_hour
+    )
   end
 
   def test_saves_a_work_with_clean_title_and_handle
