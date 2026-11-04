@@ -150,7 +150,7 @@ module UI
       def save
         @face.title('SAVE TO THE WALL')
         wait = @wall.wait(@caller)
-        wait.positive? ? @face.alert(WallText.wait(wait)) : ask_and_save
+        wait.positive? ? @face.alert(Wording.wait(wait)) : ask_and_save
         @view.forget!
       end
 
@@ -165,7 +165,7 @@ module UI
 
         @handle = handle
         @face.puts
-        @face.say(WallText.result(@wall.save(@caller, title: title, handle: handle)), color: WH)
+        @face.say(Wording.result(@wall.save(@caller, title: title, handle: handle)), color: WH)
         @face.pause
       end
     end

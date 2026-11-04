@@ -16,9 +16,9 @@ module UI
         submit_label '&Save'
         on_submit do |values|
           work = wall.save(caller_key, title: values[:title], handle: values[:handle])
-          error!(WallText.result(work)) unless work.is_a?(WorkModel)
+          error!(Wording.result(work)) unless work.is_a?(WorkModel)
           context[:handle] = work.handle
-          message(WallText.result(work), title: 'The Wall')
+          message(Wording.result(work), title: 'The Wall')
         end
       end
     end

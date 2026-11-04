@@ -49,8 +49,8 @@ module UI
 
       def save_to_wall
         wait = wall.wait(caller_key)
-        return message(WallText.wait(wait), title: 'The Wall') if wait.positive?
-        return message(WallText.result(:blank_canvas), title: 'The Wall') if canvas.snapshot.empty?
+        return message(Wording.wait(wait), title: 'The Wall') if wait.positive?
+        return message(Wording.result(:blank_canvas), title: 'The Wall') if canvas.snapshot.empty?
 
         show(:save_work, handle: context[:handle].to_s)
       end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'logo'
-require_relative 'wall_text'
+require_relative 'wording'
 require_relative 'modern/art_lines'
 require_relative 'modern/viewer'
 require_relative 'modern/canvas_widget'

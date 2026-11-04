@@ -2,7 +2,7 @@
 
 module UI
   # What a caller is told after saving the canvas to the Wall, on either face.
-  module WallText
+  module Wording
     def self.result(result)
       case result
       when WorkModel then "Saved to the Wall: \"#{result.title}\" by #{result.handle}."

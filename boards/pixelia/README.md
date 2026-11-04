@@ -155,8 +155,8 @@ say why the piece does not show.
 ## Tests
 
 ```bash
-bundle exec bin/test            # all of them
-bundle exec bin/test wall       # the files whose name has the word
+bundle exec rake test            # all of them
+bundle exec rake test wall       # the files whose name has the word
 ```
 
 Minitest, in `test/domain/`: the Wall's rules and limits, the works folder,
@@ -169,7 +169,7 @@ renderer. CI runs them with RuboCop before a deploy.
 ```
 bbs.rb                      entry point: BBS.board (the title, the domain, both faces)
 bin/works, bin/canvas       admin scripts, run with docker exec
-bin/test                    the tests (test/domain/*_test.rb)
+rake test                    the tests (test/domain/*_test.rb)
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
   model/color_model.rb      the sixteen C64 colours (ANSI and xterm-256 too)
@@ -191,7 +191,7 @@ lib/domain/
 lib/ui/
   logo.rb                   PIXELIA in blocks (BBS::BlockFont), a colour a letter, both faces
   glyph_keys.rb             glyph mode's keyboard, both faces
-  wall_text.rb              what a caller is told about a save, both faces
+  wording.rb              what a caller is told about a save, both faces
   modern.rb                 UI::Modern::APP: commands, menus, help, statusbar and desktop
   modern/helpers.rb         what the caller does: opening windows, a piece, the canvas, saving
   modern/years_window.rb, packs_window.rb, files_window.rb, wall_window.rb   one window each

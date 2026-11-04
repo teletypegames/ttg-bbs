@@ -33,6 +33,7 @@ GEM
     prism (1.9.0)
     racc (1.8.1)
     rainbow (3.1.1)
+    rake (13.4.2)
     regexp_parser (2.13.1)
     rqrcode_core (2.1.0)
     rubocop (1.92.2)
@@ -68,6 +69,7 @@ PLATFORMS
 DEPENDENCIES
   bbs!
   minitest (~> 5.25)
+  rake (~> 13.0)
   rubocop
   ttg-common!
 

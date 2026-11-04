@@ -2,7 +2,7 @@
 
 require_relative 'logo'
 require_relative 'glyph_keys'
-require_relative 'wall_text'
+require_relative 'wording'
 
 require_relative 'petscii/pen'
 require_relative 'petscii/canvas_view'
