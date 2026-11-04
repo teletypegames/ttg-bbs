@@ -96,6 +96,13 @@ module TTG
       board.fail('.woodpecker.yaml', 'differs from the ttg-common template: rake ttg:sync') unless text == wanted
     end
 
+    BBS::Check.rule(:ttg_auth, 'a board with accounts lists RUBBS_AUTH_SECRET in env-example') do |board|
+      next unless board.read('bbs.rb').to_s.match?(/^\s*auth\b/)
+
+      example = board.read('env-example').to_s
+      board.fail('env-example', 'no RUBBS_AUTH_SECRET (the board has auth)') unless example.match?(/^#?\s*RUBBS_AUTH_SECRET=/)
+    end
+
     BBS::Check.rule(:ttg_env, 'env-example lists every setting of the domain') do |board|
       example = board.read('env-example')
       domain  = board.declaration[:domain]

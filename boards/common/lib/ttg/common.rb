@@ -13,3 +13,4 @@ end
 
 require_relative 'logo'
 require_relative 'preset'
+require_relative 'auth'

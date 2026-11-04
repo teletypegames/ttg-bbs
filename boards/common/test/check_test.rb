@@ -83,6 +83,12 @@ class TTGCheckTest < Minitest::Test
     with_board('compose.yaml' => COMPOSE + quiet) { |dir| assert_empty ttg_findings(dir) }
   end
 
+  def test_a_board_with_accounts_lists_the_secret
+    bbs = "require 'ttg/common'\nBBS.board 'Shop BBS' do\n  preset TTG::PRESET\n  auth TTG::AUTH, login: :menu\nend\n"
+    with_board('bbs.rb' => bbs) { |dir| assert_equal [:ttg_auth], ttg_findings(dir).map(&:rule) }
+    with_board('bbs.rb' => bbs, 'env-example' => "RUBBS_AUTH_SECRET=\n") { |dir| assert_empty ttg_findings(dir) }
+  end
+
   def test_the_board_service_gets_time_to_stop
     with_board('compose.yaml' => COMPOSE.sub("    stop_grace_period: 30s\n", '')) do |dir|
       assert_equal ['shop-bbs: no stop_grace_period'], ttg_findings(dir).map(&:message)
