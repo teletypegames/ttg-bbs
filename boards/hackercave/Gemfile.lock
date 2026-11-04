@@ -1,20 +1,21 @@
 GIT
   remote: https://git.teletypegames.org/bbs/common.git
-  revision: 8b0a19ce6736571837b74089ee586bb0a6728c1d
+  revision: 58e4724c20f7935e7a71ec79e644eee257be19d4
   specs:
-    ttg-common (0.5.1)
+    ttg-common (0.6.0)
       bbs (>= 2.2)
 
 GIT
   remote: https://git.teletypegames.org/engines/rubbs.git
-  revision: 46a598f7409868e305fbe7a6d459f1989d6c8683
+  revision: 8163ee513d23c4d1235ea4020236ebd84186fced
   specs:
-    bbs (2.4.0)
+    bbs (2.5.0)
       artii (~> 2.1)
       csv (~> 3.3)
       rqrcode_core (~> 2.1)
       sequel (~> 5.0)
       sqlite3 (~> 2.1)
+      webrick (~> 1.9)
 
 GEM
   remote: https://rubygems.org/
@@ -68,6 +69,7 @@ GEM
     unicode-display_width (3.3.0)
       unicode-emoji (~> 4.3)
     unicode-emoji (4.3.0)
+    webrick (1.9.2)
 
 PLATFORMS
   aarch64-linux-gnu
