@@ -12,8 +12,7 @@ module UI
       # flashes white.
       class OwnView < Picker
         PER_PAGE = 10
-        HINT = [['CRSR', true], [' Move ', false], ['RETURN', true], [' Dial ', false], ['D', true],
-                [' Disc  ', false], ['A', true], [' You', false]].freeze
+        HINT = [['CRSR', true], [' Move  ', false], ['RETURN', true], [' Dial', false]].freeze
 
         attr_writer :flash
 

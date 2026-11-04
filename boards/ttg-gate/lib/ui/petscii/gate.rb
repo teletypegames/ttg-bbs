@@ -31,8 +31,6 @@ module UI
       include Dialing
       include Input
 
-      # Seconds a key is waited for before the clock is looked at.
-      TICK = 0.5
       # Seconds between two steps of the dialling.
       STEP = 0.12
       INPUT_LABEL = 'Find:'
@@ -66,23 +64,17 @@ module UI
 
       attr_reader :focus, :tab
 
-      every(TICK) { tick }
-
       # [session] the C64 line
       # [boards] our boards with a C64 face (BoardModel)
       # [browse] Discovery::BrowseService, nil without a catalog
       # [dials]  Discovery::DialService
       # [accounts] the accounts of the network (BBS::Auth::Directory), for A
-      # [node]   the node number in the header
-      # [clock]  the time, for the header
-      def initialize(session, boards:, browse:, dials:, accounts: nil, node: 1, clock: -> { Time.now })
+      def initialize(session, boards:, browse:, dials:, accounts: nil)
         super(session, face: :petscii, charset: :lower)
         @boards = boards
         @browse = browse
         @dials  = dials
         @accounts = accounts
-        @node   = node
-        @clock  = clock
         @focus  = :main
         @tab    = :own
         @menu   = 0
@@ -95,7 +87,6 @@ module UI
 
       # The first screen: our own boards.
       def start(page = own)
-        @stats = stats
         @section = :own
         @tab = :own
         super
@@ -116,10 +107,7 @@ module UI
       # The screen as it is now: the frame around the view, the search line
       # or the hint bar, the cursor resting at the end of the hint row.
       def draw(canvas)
-        time = @clock.call
-        @minute = time.strftime('%H:%M')
-        Chrome.header(canvas, node: @node, time: time)
-        Chrome.tabs(canvas, active: @tab, stats: @stats)
+        Chrome.bar(canvas, active: @tab == :own ? :own : :discover)
         if @tab == :own
           Chrome.own_line(canvas, @boards.size)
         else
@@ -163,12 +151,6 @@ module UI
         Chrome::UNDER.fetch(section, section)
       end
 
-      def stats
-        @browse&.stats
-      rescue StandardError
-        nil
-      end
-
       # CRSR up goes to the sub-menu on Global Discovery from the top of a
       # list, or from a screen without one.
       def to_menu?
@@ -188,11 +170,6 @@ module UI
         when :down then @focus = :main
         when :enter then go(Chrome::MENU[@menu].key)
         end
-      end
-
-      # The clock: a new minute repaints its cells.
-      def tick
-        redraw unless @clock.call.strftime('%H:%M') == @minute
       end
 
       # A hotkey opens its place from anywhere.

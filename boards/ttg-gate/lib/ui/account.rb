@@ -48,7 +48,7 @@ module UI
 
     def show
       write BBS::Ansi::CLEAR
-      line '', 'YOUR ACCOUNT', ''
+      line '', 'PROFILE', ''
       if identity.signed_in?
         line "Logged in as #{identity.name} (#{identity.roles.join(', ')}).",
              'The boards you dial from here know you.',

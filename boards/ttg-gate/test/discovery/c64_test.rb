@@ -39,14 +39,7 @@ module Discovery
       listings ||= Array.new(20) { |i| listing(format('Board %02d', i), %w[online flaky down unknown][i % 4]) }
       @line = BBS::Test::Session.new(keys: keys, petscii: true)
       browse = Browse.new(listings, listings.to_h { |l| [l.id, page_of(l)] })
-      UI::Petscii::Gate.new(
-        @line,
-        boards: own_boards,
-        browse: browse,
-        dials:  nil,
-        node:   2,
-        clock:  -> { Time.new(2026, 11, 1, 14, 52) }
-      )
+      UI::Petscii::Gate.new(@line, boards: own_boards, browse: browse, dials: nil)
     end
 
     # What the C64 shows after everything sent so far.
@@ -56,30 +49,34 @@ module Discovery
 
     def text_at(canvas, row, col, length) = canvas.to_s.lines[row].to_s.chomp.ljust(col + length)[col, length]
 
-    def test_the_frame_has_the_logo_the_tabs_the_own_line_and_the_hint_bar
+    def test_the_frame_has_the_menu_bar_the_own_line_and_the_hint_bar
       g = gate
       g.start
       first = @line.writes.first
       assert_operator first.bytesize, :<=, 1300
       assert_equal Canvas::LOWERCASE, first.getbyte(0)
       screen = shown
-      logo = (1..8).map { |c| screen.cell(0, c) }
-      assert_equal 'TTG GATE', text_at(screen, 0, 1, 8)
-      assert_equal [Canvas::RED, Canvas::ORANGE, Canvas::YELLOW], logo.first(3).map(&:color)
-      assert(logo.first(3).all?(&:rvs))
-      assert_equal 'Node 2 14:52', text_at(screen, 0, 27, 12)
-      assert_equal [Chrome::HEADER], [10, 27, 34, 38].map { |c| screen.cell(0, c).color }.uniq
-      own = screen.cell(1, 1)
-      assert_equal ['O'.ord + 0x80, Chrome::TAB, true], [own.code, own.color, own.rvs]
-      assert_equal 'GLOBAL DISCOVERY', text_at(screen, 1, 15, 16)
-      assert_equal [[Chrome::TAB, false]], (15..30).map { |c| [screen.cell(1, c).color, screen.cell(1, c).rvs] }.uniq
-      assert_equal [Chrome::TAB], (34..38).map { |c| screen.cell(1, c).color }.uniq
-      assert_equal '1090', text_at(screen, 1, 35, 4)
-      assert_equal '10 boards', text_at(screen, 2, 1, 9)
+      assert_equal 'TTG GATE   OWN   GLOBAL   PROFILE', text_at(screen, 0, 1, 33)
+      assert((0..38).all? { |c| screen.cell(0, c).rvs })
+      assert_equal Chrome::BAR, screen.cell(0, 1).color
+      keys = Chrome::PLACES_BAR.map { |place| screen.cell(0, place.col) }
+      assert_equal [Chrome::KEY], keys.map(&:color).uniq
+      assert_equal([Chrome::LIT, Chrome::BAR, Chrome::BAR], Chrome::PLACES_BAR.map { |place|
+        screen.cell(0, place.col + 1).color
+      })
+      assert_equal '10 boards', text_at(screen, 1, 1, 9)
       assert_equal 'OWN SERVERS', text_at(screen, 3, 1, 11)
       assert_equal Canvas::YELLOW, screen.cell(3, 1).color
       assert_equal 'CRSR', text_at(screen, 24, 1, 4)
       assert_equal Canvas::YELLOW, screen.cell(24, 1).color
+    end
+
+    def test_global_lights_its_place_and_p_opens_the_profile
+      g = gate
+      g.start
+      g.press('g')
+      assert_equal([Chrome::BAR, Chrome::LIT], Chrome::PLACES_BAR.first(2).map { |place| shown.cell(0, place.col + 1).color })
+      assert_equal :account, Chrome::HOTKEYS['p']
     end
 
     def test_own_servers_lights_a_row_and_a_step_is_a_patch
@@ -118,27 +115,27 @@ module Discovery
       assert_equal :discover, g.tab
       assert_instance_of UI::Petscii::Views::MenuView, g.view
       screen = shown
-      assert_equal '/Find Browse New Random Sources         ', text_at(screen, 2, 0, 40)
-      assert_equal [Canvas::LIGHT_GREEN, true], [screen.cell(2, 6).color, screen.cell(2, 6).rvs]
-      assert_equal [Chrome::TAB, true], [screen.cell(1, 15).color, screen.cell(1, 15).rvs]
+      assert_equal '/Find Browse New Random Sources         ', text_at(screen, 1, 0, 40)
+      assert_equal [Canvas::LIGHT_GREEN, true], [screen.cell(1, 6).color, screen.cell(1, 6).rvs]
+      assert_equal Chrome::LIT, screen.cell(0, Chrome::PLACES_BAR[1].col + 1).color
       g.press(:down)
       g.press(:up)
       assert_equal :main, g.focus
       g.press(:up)
       assert_equal :menu, g.focus
       screen = shown
-      assert_equal [Canvas::CYAN, true], [screen.cell(2, 6).color, screen.cell(2, 6).rvs]
+      assert_equal [Canvas::CYAN, true], [screen.cell(1, 6).color, screen.cell(1, 6).rvs]
       g.press(:down)
       assert_equal :main, g.focus
       g.press(:up)
       screen = shown
-      assert screen.cell(2, 6).rvs
-      refute screen.cell(2, 1).rvs
+      assert screen.cell(1, 6).rvs
+      refute screen.cell(1, 1).rvs
       g.press(:enter)
       assert_equal :main, g.focus
       assert_equal 'BROWSE', g.view.title
       screen = shown
-      assert_equal [Canvas::LIGHT_GREEN, true], [screen.cell(2, 6).color, screen.cell(2, 6).rvs]
+      assert_equal [Canvas::LIGHT_GREEN, true], [screen.cell(1, 6).color, screen.cell(1, 6).rvs]
       g.press(:enter)
       assert_equal 2, g.stack.size
       g.press(:escape)
@@ -156,7 +153,7 @@ module Discovery
       assert_equal :discover, g.tab
       g.press('o')
       assert_equal :own, g.tab
-      assert_equal '10 boards', text_at(shown, 2, 1, 9)
+      assert_equal '10 boards', text_at(shown, 1, 1, 9)
       assert g.press('q')
       assert_predicate g, :done?
     end
@@ -287,24 +284,6 @@ module Discovery
       screens = @line.writes.each_with_object([Canvas.new]) { |w, all| all << all.last.dup.feed(w) }
       assert(screens.any? { |screen| text_at(screen, 24, 0, 9) == 'Find: syn' })
       assert(screens.any? { |screen| text_at(screen, 24, 0, 8) == 'Find: sy' && screen.cell(24, 8).rvs })
-    end
-
-    def test_the_clock_ticks_and_idle_ends_the_call
-      minute = 52
-      @line = BBS::Test::Session.new(keys: %i[idle idle idle], petscii: true)
-      g = UI::Petscii::Gate.new(
-        @line,
-        boards: own_boards,
-        browse: nil,
-        dials:  nil,
-        clock:  -> { Time.new(2026, 11, 1, 14, minute) }
-      )
-      g.start
-      @line.take
-      minute = 53
-      @line.idle_seconds = 1.5
-      assert_nil g.run
-      assert_equal '14:53', text_at(shown, 0, 34, 5)
     end
   end
 end

@@ -17,13 +17,6 @@ module UI
           'Q'     => false
         }.freeze
 
-        # The line to a board and back; the numbers of the tabs read anew.
-        def hand_over(&)
-          super
-        ensure
-          @stats = stats
-        end
-
         private
 
         # Our own board: its row flashes, the handshake fills the hint bar, the

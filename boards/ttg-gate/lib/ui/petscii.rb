@@ -11,22 +11,15 @@ module UI
   # around our own boards, Global Discovery's lists and pages and the
   # Sources.
   module Petscii
-    # The node numbers of the C64 callers, for the header.
-    NODES = BBS::Nodes.new
-
-    # The call on a C64: a node of its own while the gate runs, then the
-    # gate's own goodbye.
+    # The call on a C64: the gate, then its own goodbye.
     def self.call(session, bbs)
-      NODES.take do |node|
-        Gate.new(
-          session,
-          boards:   bbs.directory.boards(petscii: true),
-          browse:   bbs.browse,
-          dials:    bbs.dials,
-          accounts: bbs.accounts,
-          node:     node
-        ).run
-      end
+      Gate.new(
+        session,
+        boards:   bbs.directory.boards(petscii: true),
+        browse:   bbs.browse,
+        dials:    bbs.dials,
+        accounts: bbs.accounts
+      ).run
       goodbye(session)
     end
 

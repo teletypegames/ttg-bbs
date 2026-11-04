@@ -7,15 +7,15 @@ module UI
     # its case.
     Canvas = BBS::Petscii::Canvas
 
-    # The grid every screen of the C64 face shares (40×25): the header on
-    # row 0, the two tabs on row 1, the sub-menu on row 2, the content on
-    # rows 3 to 23 across all 40 columns, the hint bar on row 24. And the
+    # The grid every screen of the C64 face shares (40×25): the menu bar on
+    # row 0, the line or sub-menu of the place under it on row 1, a row of
+    # air, the content on rows 3 to 23 across all 40 columns, the hint bar
+    # on row 24. And the
     # small drawing helpers of the views: runs of coloured text, the title
     # row, chips, rules.
     module Layout
-      HEADER_ROW = 0
-      TABS_ROW   = 1
-      MENU_ROW   = 2
+      BAR_ROW    = 0
+      MENU_ROW   = 1
       TOP        = 3
       ROWS       = 21
       BOTTOM     = TOP + ROWS - 1

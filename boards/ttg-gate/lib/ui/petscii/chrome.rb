@@ -4,24 +4,30 @@ require_relative 'layout'
 
 module UI
   module Petscii
-    # The frame around every screen of the C64 face: the header (the colour
-    # logo, the rest of the row in HEADER), the two tabs in one colour (TAB) (Own Servers, Global
-    # Discovery), the active tab's sub-menu under them and the hint bar at
-    # the bottom. The sub-menu is a cursor menu: Item is one of its places,
-    # each with a hotkey that works from anywhere.
+    # The frame around every screen of the C64 face: the menu bar (TTG
+    # GATE, then OWN, GLOBAL and PROFILE, the active one lit), the active
+    # place's line or sub-menu under it, and the hint bar at the bottom. The
+    # sub-menu is a cursor menu: Item is one of its places, each with a
+    # hotkey that works from anywhere.
     module Chrome
-      LOGO = [['T', Canvas::RED], ['T', Canvas::ORANGE], ['G', Canvas::YELLOW], [' ', nil],
-              ['G', Canvas::LIGHT_GREEN], ['A', Canvas::CYAN], ['T', Canvas::LIGHT_BLUE], ['E', Canvas::PURPLE]].freeze
+      # The menu bar's name of the board.
+      TITLE = 'TTG GATE'
+      # The colour of the menu bar (reversed cells).
+      BAR = Canvas::CYAN
+      # The colour of the active place on the bar.
+      LIT = Canvas::PURPLE
+      # The colour of the cell of a place's key on the bar.
+      KEY = Canvas::YELLOW
 
-      # The colour of the header row but the logo: BBS, the node, the clock.
-      HEADER = Canvas::LIGHT_GREY
-      # The one colour of the tab switch: the active tab a band in it, the
-      # other its plain letters, and the boards online on the right.
-      TAB = Canvas::CYAN
-
-      # A tab: its +key+, +label+ and the column it starts at.
-      Tab = Data.define(:key, :label, :col)
-      TABS = [Tab.new(:own, 'OWN SERVERS', 1), Tab.new(:discover, 'GLOBAL DISCOVERY', 15)].freeze
+      # A place of the menu bar: its +key+, +label+, the index of the letter
+      # that opens it, and the column it starts at.
+      Place = Data.define(:key, :label, :hotkey, :col) do
+        def letter = label[hotkey].downcase
+      end
+      PLACES_BAR = [[:own, 'OWN'], [:discover, 'GLOBAL'], [:account, 'PROFILE']].each_with_object([]) do |(key, label), places|
+        col = places.empty? ? TITLE.length + 4 : places.last.col + places.last.label.length + 3
+        places << Place.new(key, label, 0, col)
+      end.freeze
 
       # A place of the sub-menu of Global Discovery: +key+ the section it
       # opens, +label+, the index of its +hotkey+ sign in the label, and the
@@ -38,10 +44,10 @@ module UI
       end.freeze
       # The sections that light a place of the sub-menu other than their own.
       UNDER = { all: :browse, software: :browse, country: :browse, network: :browse }.freeze
-      # The keys that open a place from anywhere: the tabs (G as in Global
-      # Discovery too), the sub-menu's yellow signs, the axes of Browse
-      # (soft_w_are, _c_ountry, networ_k_), U for the Sources as before, the
-      # caller's Account, Help and Quit.
+      # The keys that open a place from anywhere: the places of the bar (O,
+      # G, P; D for Discovery and A for the account as before), the
+      # sub-menu's yellow signs, the axes of Browse (soft_w_are, _c_ountry,
+      # networ_k_), U for the Sources as before, Help and Quit.
       HOTKEYS = {
         'o' => :own,
         'd' => :discover,
@@ -52,41 +58,22 @@ module UI
         'u' => :sources,
         'h' => :help,
         'a' => :account,
+        'p' => :account,
         'q' => :quit
       }.merge(MENU.to_h { |i| [i.letter, i.key] }).freeze
 
       module_function
 
-      # The header: the logo, the node and the clock.
-      def header(canvas, node:, time:)
-        LOGO.each_with_index do |(ch, color), i|
-          canvas.text(Layout::HEADER_ROW, 1 + i, ch, color, rvs: true) if color
+      # The menu bar on its row: cyan, TTG GATE, then each place with the
+      # cell of its key in KEY; +active+ (a Place's key) in LIT.
+      def bar(canvas, active:)
+        canvas.text(Layout::BAR_ROW, 0, ' ' * Layout::WIDTH, BAR, rvs: true)
+        canvas.text(Layout::BAR_ROW, 1, TITLE, BAR, rvs: true)
+        PLACES_BAR.each do |place|
+          color = place.key == active ? LIT : BAR
+          canvas.text(Layout::BAR_ROW, place.col - 1, " #{place.label} ", color, rvs: true)
+          canvas.text(Layout::BAR_ROW, place.col + place.hotkey, place.label[place.hotkey], KEY, rvs: true)
         end
-        canvas.text(Layout::HEADER_ROW, 9, ' BBS', HEADER)
-        clock(canvas, node: node, time: time)
-      end
-
-      def clock(canvas, node:, time:)
-        node = "Node #{node}"
-        canvas.text(Layout::HEADER_ROW, 33 - node.length, node, HEADER)
-        canvas.text(Layout::HEADER_ROW, 34, time.strftime('%H:%M'), HEADER)
-      end
-
-      # The tabs in TAB, +active+ a band, and the boards online of +stats+
-      # on the right.
-      def tabs(canvas, active:, stats:)
-        TABS.each do |tab|
-          if tab.key == active
-            canvas.text(Layout::TABS_ROW, tab.col - 1, " #{tab.label} ", TAB, rvs: true)
-          else
-            canvas.text(Layout::TABS_ROW, tab.col, tab.label, TAB)
-          end
-        end
-        online = stats && stats[:online]
-        return unless online
-
-        count = "▌#{online}"
-        canvas.text(Layout::TABS_ROW, Layout::EDGE - count.length, count, TAB)
       end
 
       # The sub-menu of Global Discovery: +lit+ (an Item's key) a reversed
