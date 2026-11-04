@@ -13,10 +13,8 @@ class LibraryService
   MIN_WORD     = 2
   MAX_WORDS    = 6
 
-  def initialize(catalog:, classics:, reads:, gutenberg:, catalog_file:, ttl:)
-    @catalog      = catalog
+  def initialize(classics:, gutenberg:, catalog_file:, ttl:)
     @classics     = classics
-    @reads        = reads
     @gutenberg    = gutenberg
     @catalog_file = catalog_file
     @ttl          = ttl
@@ -24,24 +22,24 @@ class LibraryService
     @lock         = Mutex.new
   end
 
-  def ready? = @catalog.ready?
+  def ready? = BookModel.ready?
 
   def importing? = @lock.synchronize { @importing }
 
   # The number of books in the catalog (0 before the first import).
-  def count = @catalog.count
+  def count = BookModel.total
 
   def classics_shelf = ShelfModel.new(id: 0, kind: :classics, name: 'Classics', count: @classics.all.size)
 
   # The Classics shelf, then the bookshelves of the catalog.
-  def shelves = [classics_shelf, *@catalog.shelves]
+  def shelves = [classics_shelf, *BookshelfModel.all_shelves]
 
   # The books of +shelf+: the curated ones in their order (the catalog's
   # records where it has them), or the first SHELF_LIMIT of a bookshelf.
   def books_on(shelf)
-    return @catalog.shelf_books(shelf.id, limit: SHELF_LIMIT) unless shelf.classics?
+    return ShelfBookModel.books_on(shelf.id, limit: SHELF_LIMIT) unless shelf.classics?
 
-    known = @catalog.books(@classics.all.map(&:id)).to_h { |b| [b.id, b] }
+    known = BookModel.books(@classics.all.map(&:id)).to_h { |b| [b.id, b] }
     @classics.all.map { |b| known[b.id] || b }
   end
 
@@ -55,31 +53,31 @@ class LibraryService
     words = query.sub(/(?:\A|\s)lang:\S*/i, ' ').scan(/[\p{L}\p{N}]+/).select { |w| w.length >= MIN_WORD }
     return :too_short if words.empty?
 
-    @catalog.search(words.first(MAX_WORDS), language: language, limit: SEARCH_LIMIT)
+    BookModel.search(words.first(MAX_WORDS), language: language, limit: SEARCH_LIMIT)
   end
 
   # The catalog's record of book +id+, the Classics entry when the catalog
   # does not have it, or nil.
-  def book(id) = @catalog.book(id) || @classics.find(id.to_i)
+  def book(id) = BookModel.book(id) || @classics.find(id.to_i)
 
-  def reads(book) = @reads.count(book.id)
+  def reads(book) = ReadModel.count_of(book.id)
 
   # The +n+ books most read on this board as [book, reads].
   def most_read(n = 15)
-    top = @reads.top(n)
-    by_id = @catalog.books(top.map(&:first)).to_h { |b| [b.id, b] }
+    top = ReadModel.top(n)
+    by_id = BookModel.books(top.map(&:first)).to_h { |b| [b.id, b] }
     top.filter_map { |id, count| (b = by_id[id] || @classics.find(id)) && [b, count] }
   end
 
   def stale?
-    at = @catalog.imported_at
+    at = BookModel.imported_at
     at.nil? || Time.now - at > @ttl
   end
 
   # Downloads and imports the catalog when it is stale (or when +force+).
   # Returns :fresh, :busy (an import is running) or :updated. Raises when
   # the mirror or the import fails (BBS::HTTP::Error, SystemCallError,
-  # CSV or SQLite errors); the old catalog stays then.
+  # CSV or database errors); the old catalog stays then.
   def refresh(force: false)
     return :fresh unless force || stale?
     return :busy unless @lock.synchronize { !@importing && (@importing = true) }
@@ -96,7 +94,7 @@ class LibraryService
   def import
     started = Time.now
     @gutenberg.download_catalog(@catalog_file)
-    n = @catalog.import(@catalog_file)
+    n = CatalogBuilder.new.build(@catalog_file)
     BBS.log('catalog', format('imported, %<n>d books in %<s>.1f s', n: n, s: Time.now - started))
     GC.start
     :updated

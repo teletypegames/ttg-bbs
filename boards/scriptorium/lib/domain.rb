@@ -1,13 +1,16 @@
 # frozen_string_literal: true
 
+require_relative 'domain/migrations'
 require_relative 'domain/model/book_model'
+require_relative 'domain/model/bookshelf_model'
+require_relative 'domain/model/shelf_book_model'
+require_relative 'domain/model/read_model'
 require_relative 'domain/model/shelf_model'
 require_relative 'domain/model/chapter_model'
 require_relative 'domain/model/text_model'
 require_relative 'domain/repository/gutenberg_repository'
-require_relative 'domain/repository/catalog_repository'
+require_relative 'domain/repository/catalog_builder'
 require_relative 'domain/repository/classics_repository'
-require_relative 'domain/repository/read_repository'
 require_relative 'domain/repository/legacy_reads'
 require_relative 'domain/repository/text_cache_repository'
 require_relative 'domain/service/chapter_service'

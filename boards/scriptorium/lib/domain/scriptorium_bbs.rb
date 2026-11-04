@@ -22,13 +22,17 @@ class ScriptoriumBBS
   path    :texts, 'data/texts'
   path    :classics, 'config/classics.yml'
 
+  database :db, MIGRATIONS
+  database :catalog_db, CATALOG_MIGRATIONS, name: :catalog
+
   service(:library) do
-    LibraryService.new(catalog: CatalogRepository.new(catalog_db), classics: ClassicsRepository.new(classics),
-                       reads: reads, gutenberg: gutenberg, catalog_file: catalog_file, ttl: catalog_ttl * 86_400)
+    import_legacy_reads
+    LibraryService.new(classics: ClassicsRepository.new(classics), gutenberg: gutenberg, catalog_file: catalog_file,
+                       ttl: catalog_ttl * 86_400)
   end
   service(:reading) do
     ReadingService.new(gutenberg: gutenberg, cache: TextCacheRepository.new(texts, max_bytes: cache_mb * 1024 * 1024),
-                       reads: reads, chapters: ChapterService.new, max_bytes: book_max)
+                       chapters: ChapterService.new, max_bytes: book_max)
   end
 
   background('catalog refresh', every: CHECK_EVERY, retry_after: RETRY_AFTER, max_retry: CHECK_EVERY) { library.refresh }
@@ -41,14 +45,6 @@ class ScriptoriumBBS
     )
   end
 
-  # The reads in the board's database, with the reads.jsonl of an older
-  # board next to it imported once.
-  def reads
-    @reads ||= begin
-      database = database(db, *ReadRepository::MIGRATIONS)
-      ReadRepository.new(database).tap do |reads|
-        LegacyReads.import(File.join(File.dirname(db), 'reads.jsonl'), db: database, reads: reads)
-      end
-    end
-  end
+  # The reads.jsonl of an older board next to the database, imported once.
+  def import_legacy_reads = LegacyReads.import(File.join(File.dirname(db), 'reads.jsonl'))
 end

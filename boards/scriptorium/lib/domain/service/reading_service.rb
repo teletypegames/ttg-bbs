@@ -14,10 +14,9 @@ class ReadingService
   # by every caller.
   REMEMBER = 30
 
-  def initialize(gutenberg:, cache:, reads:, chapters:, max_bytes:)
+  def initialize(gutenberg:, cache:, chapters:, max_bytes:)
     @gutenberg = gutenberg
     @cache     = cache
-    @reads     = reads
     @chapters  = chapters
     @max_bytes = max_bytes
     @opening   = BBS::Cache.new(ttl: REMEMBER, max_entries: 64)
@@ -61,7 +60,7 @@ class ReadingService
     return unless seen && !seen.include?(id)
 
     seen << id
-    @reads.add(id)
+    ReadModel.add(id)
   end
 
   # Runs the block in one of the FETCHES turns; :unavailable when none

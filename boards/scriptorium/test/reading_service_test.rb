@@ -33,9 +33,8 @@ class ReadingServiceTest < Minitest::Test
 
   def service(answer = TEXT)
     @gutenberg = FakeGutenberg.new(answer)
-    @reads     = ReadRepository.new(database)
     ReadingService.new(gutenberg: @gutenberg, cache: TextCacheRepository.new(path('texts'), max_bytes: 1 << 20),
-                       reads: @reads, chapters: ChapterService.new, max_bytes: 1000)
+                       chapters: ChapterService.new, max_bytes: 1000)
   end
 
   def book(id = 2701) = BookModel.stub(id: id, title: 'Moby Dick')
@@ -58,7 +57,7 @@ class ReadingServiceTest < Minitest::Test
     reading.open(book, seen: Set.new)
     reading.open(book)
 
-    assert_equal 2, @reads.count(2701)
+    assert_equal 2, ReadModel.count_of(2701)
   end
 
   def test_tells_why_a_book_does_not_open
@@ -66,7 +65,7 @@ class ReadingServiceTest < Minitest::Test
     _, err = capture_io { assert_equal :unavailable, service(BBS::HTTP::Error.new('GET https://m/x: answered 404')).open(book) }
     assert_match(%r{: gutenberg: book 2701: GET https://m/x: answered 404}, err)
     assert_equal :empty, service('').open(book)
-    assert_equal 0, @reads.count(2701)
+    assert_equal 0, ReadModel.count_of(2701)
   end
 
   def test_callers_of_one_book_share_one_fetch

@@ -49,9 +49,9 @@ in memory) and its `Text` rows imported into SQLite
 background thread (rubbs' `BBS.background`) at start when there is no catalog or it is older than
 `SCRIPTORIUM_BBS_CATALOG_TTL` days, and the thread looks again every hour; a
 failed import is logged and tried again after five minutes, then less and less
-often, at most hourly. It builds
-a new database next to the old one and swaps it in, so callers keep reading
-meanwhile. Until the first import is done the Classics shelf is open and the
+often, at most hourly. It builds the tables anew in one transaction
+(`BookModel.rebuild`), so callers keep reading the old catalog meanwhile (WAL),
+and a failed import leaves it as it was. Until the first import is done the Classics shelf is open and the
 rest says the catalog is being prepared. No list is held in Ruby: every shelf
 and search is a query.
 
@@ -143,14 +143,17 @@ bbs.rb                      entry point: BBS.configure + BBS::Terminal.flow
 config/classics.yml         the Classics shelf: ebook numbers, titles, authors
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
-  model/book_model.rb       a book of the catalog: title, authors, language, shelves
+  migrations.rb             the schemas of the two SQLite files (BBS::Database), the catalog's
+  model/book_model.rb       a book of the catalog (books): search, rebuild
+  model/bookshelf_model.rb  a Project Gutenberg bookshelf (shelves)
+  model/shelf_book_model.rb a book on a bookshelf (shelf_books)
+  model/read_model.rb       a read (reads of data/scriptorium.sqlite3) and the counts
   model/shelf_model.rb      a bookshelf, or the Classics shelf
   model/chapter_model.rb    a chapter: its title and byte range in the cached text
   model/text_model.rb       a book ready to read: its chapter index
   repository/gutenberg_repository.rb    Project Gutenberg over BBS::HTTP: the catalog file, a plain text
-  repository/catalog_repository.rb      the catalog in SQLite: import, search, shelves
+  repository/catalog_builder.rb         the catalog built anew from pg_catalog.csv.gz, through the models
   repository/classics_repository.rb     config/classics.yml
-  repository/read_repository.rb         the reads table of data/scriptorium.sqlite3 and the counts
   repository/legacy_reads.rb            the one-time import of an older data/reads.jsonl
   repository/text_cache_repository.rb   data/texts: cleaned texts, chapter indexes, eviction
   service/chapter_service.rb            cleaning a text and cutting it into chapters
