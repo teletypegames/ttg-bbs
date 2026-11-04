@@ -39,8 +39,7 @@ module UI
       loop do
         case (choice = pick_on(parent))
         when nil then return
-        when 'l' then sign_in
-        when 'o' then sign_out
+        when 'p' then own_profile
         when 'r' then refresh
         else enter(choice, parent)
         end
@@ -56,8 +55,8 @@ module UI
       pick(parent.title.upcase, [parent, *tree[parent.route]]) { |page| label(page, own: page.equal?(parent)) }
     end
 
-    # The commands of the top level: log in or out, and the refresh.
-    def top = { **(signed_in? ? { 'o' => 'log out' } : { 'l' => 'log in' }), 'r' => 'refresh' }
+    # The commands of the top level: the profile and the refresh.
+    def top = { 'p' => 'profile', 'r' => 'refresh' }
 
     def right = "#{'sv ' if supervisor?}#{wiki.pages.size} pages "
 
@@ -94,7 +93,7 @@ module UI
     def read(wiki_page)
       heading = wiki_page.title.upcase[0, 30]
       title(heading)
-      fail_with(locked_text('L on the top level logs in.')) if locked?(wiki_page)
+      fail_with(locked_text('P on the top level: the profile, to log in.')) if locked?(wiki_page)
 
       lines = markdown(loading('loading...') { wiki.page_markdown(wiki_page) })
       page(
@@ -114,18 +113,12 @@ module UI
       pause if qr(wiki_page.public_url)
     end
 
-    # Logs in with the Teletype Games account (BBS::Auth); one without the
-    # wiki-supervisor role is told the private pages stay locked.
-    def sign_in
-      title('LOG IN')
-      say('Your Teletype Games account: the same on every board. Return alone: back.', color: GR)
-      found = log_in
-      alert(not_supervisor(found.name)) if found.is_a?(BBS::Auth::Identity) && !found.role?(SUPERVISOR)
-    end
-
-    def sign_out
-      log_out
-      notice('You are logged out.')
+    # The caller's profile (BBS::Auth::Profile: log in, a new account, the
+    # password, log out); an account without the wiki-supervisor role is
+    # told the private pages stay locked.
+    def own_profile
+      profile
+      alert(not_supervisor(identity.name)) if signed_in? && !supervisor?
     end
 
     # Re-reads the shared index: every session sees the new one.

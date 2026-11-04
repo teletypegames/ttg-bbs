@@ -37,8 +37,8 @@ window and back.
 | Alt-X / Esc | Log off / close window |
 
 Pages marked `*` in the list are private (login-protected on the wiki), for
-the supervisors (see [Supervisors](#supervisors)): **Wiki > Log in** with a
-Teletype Games account, **Wiki > Log out** to read as a guest again.
+the supervisors (see [Supervisors](#supervisors)): **Wiki > Profile** (on a
+C64: P on the top level) to log in with a Teletype Games account, or out again.
 
 The QR code (rubbs' `BBS::QR`, half blocks) is the page's address on the
 web, `https://wiki.teletypegames.org<route>`, for a phone to open it with its

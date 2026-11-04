@@ -63,7 +63,7 @@ class PetsciiFaceTest < Minitest::Test
     assert_includes screen, 'ttg wiki bbs'
     assert_match(/DOS >/, screen)
     assert_includes screen, '3 pages'
-    assert_includes screen, 'log in'
+    assert_includes screen, 'profile'
   end
 
   def test_a_private_page_stays_locked
@@ -75,7 +75,7 @@ class PetsciiFaceTest < Minitest::Test
   def test_a_supervisor_reads_a_private_page
     screen = call(*READ_PRIVATE, identity: account('tasi', role: 'wiki-supervisor'))
     assert_includes screen, 'Text of /dos/gmenu.'
-    assert_includes screen, 'log out'
+    assert_includes screen, 'profile'
   end
 
   def test_an_account_without_the_role_reads_no_private_page
@@ -86,19 +86,19 @@ class PetsciiFaceTest < Minitest::Test
 
   def test_a_supervisor_logs_in_from_the_top_level
     account('tasi', role: 'wiki-supervisor')
-    screen = call('l', *'tasi'.chars, :enter, *'secret-pass'.chars, :enter, ' ', *READ_PRIVATE)
+    screen = call('p', 'l', *'tasi'.chars, :enter, *'secret-pass'.chars, :enter, ' ', 'b', *READ_PRIVATE)
     assert_includes screen, 'Welcome, tasi.'
     assert_includes screen, 'Text of /dos/gmenu.'
   end
 
   def test_logging_in_without_the_role_is_told
     account('reader')
-    screen = call('l', *'reader'.chars, :enter, *'secret-pass'.chars, :enter, ' ', ' ', 'q')
+    screen = call('p', 'l', *'reader'.chars, :enter, *'secret-pass'.chars, :enter, ' ', 'b', ' ', 'q')
     assert_includes screen, 'reader is not a supervisor'
   end
 
   def test_without_a_login_on_the_board_it_says_so
-    assert_includes call('l', ' ', 'q'), 'Nobody logs in on this board.'
+    assert_includes call('p', ' ', 'q'), 'Nobody logs in on this board.'
   end
 
   def test_a_refresh_too_soon_is_refused
