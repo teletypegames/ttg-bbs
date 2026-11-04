@@ -8,6 +8,7 @@ TELETYPE_BBS_SYSOPS=
 TELETYPE_BBS_DISCORD_WEBHOOK=
 # The read-only IRC window: one connection, a fixed nick, it never speaks. Empty server = off.
 TELETYPE_BBS_IRC_SERVER=irc.libera.chat
+TELETYPE_BBS_IRC_PORT=6697
 TELETYPE_BBS_IRC_CHANNEL=#teletypegames
 TELETYPE_BBS_IRC_NICK=ttgbbs
 # NickServ password of the nick (SASL); empty = no login.

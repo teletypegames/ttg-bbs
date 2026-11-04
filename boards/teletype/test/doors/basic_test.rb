@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'minitest/autorun'
+require 'test_helper'
 require_relative '../../lib/doors/commodore/basic'
 
 # The BASIC V2 of the Commodore doors, driven through its Screen callables.
