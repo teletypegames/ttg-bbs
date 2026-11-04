@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-# BlogSchema: a new file, and the files the board wrote before it had
+# MIGRATIONS (BlogSchema): a new file, and the files the board wrote before it had
 # versions, which must keep every row.
 class SchemaTest < Minitest::Test
   include TestHelper
@@ -34,17 +34,22 @@ class SchemaTest < Minitest::Test
     UPDATE posts SET slug = 'draft-slug', published = 0, face = 'petscii' WHERE id = 2;
   SQL
 
+  # A file at +legacy_path+ written by +sql+, and the blog on it.
   def legacy(sql)
-    SQLite3::Database.new(db_path) { |raw| raw.execute_batch(sql) }
+    SQLite3::Database.new(legacy_path) { |raw| raw.execute_batch(sql) }
+    with_env(legacy_path, CATEGORIES)
+    @blog = nil
   end
 
+  def legacy_path = File.join(@dir, 'legacy.sqlite3')
+
+  def columns(db) = db.fetch('PRAGMA table_info(posts)').map { |c| c[:name] }
+
   def test_a_new_file_gets_every_table_at_version_two
-    db = BBS::SQLite.new(db_path)
-    assert_equal 2, BlogSchema.migrate(db)
-    columns = db.query('PRAGMA table_info(posts)').map { |c| c['name'] }
-    assert_equal [], %w[published_at status original_id base_updated_at] - columns
-    refute_includes columns, 'published'
-    assert_equal 0, db.get('SELECT COUNT(*) AS n FROM posts')['n']
+    assert_equal 2, BBS::Database.version(@db)
+    assert_equal [], %w[published_at status original_id base_updated_at] - columns(@db)
+    refute_includes columns(@db), 'published'
+    assert_equal 0, PostModel.count
   end
 
   def test_the_last_shape_keeps_every_row_as_it_was
@@ -54,20 +59,19 @@ class SchemaTest < Minitest::Test
     assert_equal ['kept-slug', true, 'modern', 'tasi'], [first.slug, first.published?, first.face, first.author]
     assert_equal ['draft-slug', false, 'petscii'], [second.slug, second.published?, second.face]
     assert_equal Time.utc(2026, 10, 29, 9), first.published_at
-    assert_equal 2, BBS::SQLite.new(db_path).version
+    assert_equal 2, BBS::Database.version(blog.databases[:main])
   end
 
   # Version 1, as the board left it before the drafts: the flag becomes
   # the status, and the flag goes.
   def test_version_one_turns_the_flag_into_the_status
     legacy(LAST_SHAPE)
-    db = BBS::SQLite.new(db_path)
-    db.migrate(BlogSchema::BEFORE_VERSIONS)
-    assert_equal 1, db.version
-    assert_equal 2, BlogSchema.migrate(db)
-    rows = db.query('SELECT id, slug, status, original_id FROM posts ORDER BY id').map(&:values)
+    db = Sequel.sqlite(legacy_path)
+    assert_equal 1, BBS::Database.migrate(db, [BlogSchema::BEFORE_VERSIONS])
+    assert_equal 2, BBS::Database.migrate(db, MIGRATIONS)
+    rows = db.fetch('SELECT id, slug, status, original_id FROM posts ORDER BY id').map(&:values)
     assert_equal [[1, 'kept-slug', 'published', nil], [2, 'draft-slug', 'unpublished', nil]], rows
-    refute_includes db.query('PRAGMA table_info(posts)').map { |c| c['name'] }, 'published'
+    refute_includes columns(db), 'published'
   end
 
   def test_the_first_shape_gets_the_new_columns_and_slugs
@@ -80,15 +84,15 @@ class SchemaTest < Minitest::Test
 
   def test_a_second_start_changes_nothing
     legacy(LAST_SHAPE)
-    BlogSchema.migrate(BBS::SQLite.new(db_path))
-    before = SQLite3::Database.new(db_path).execute('SELECT * FROM posts ORDER BY id')
-    BlogSchema.migrate(BBS::SQLite.new(db_path))
-    assert_equal before, SQLite3::Database.new(db_path).execute('SELECT * FROM posts ORDER BY id')
+    BBS::Database.open(legacy_path, MIGRATIONS).disconnect
+    before = SQLite3::Database.new(legacy_path).execute('SELECT * FROM posts ORDER BY id')
+    assert_equal 2, BBS::Database.version(BBS::Database.open(legacy_path, MIGRATIONS))
+    assert_equal before, SQLite3::Database.new(legacy_path).execute('SELECT * FROM posts ORDER BY id')
   end
 
   def test_a_new_post_after_the_migration_gets_a_free_slug
     legacy(FIRST_SHAPE)
-    post = blog.posts.create(author: UserModel.new(id: 1, name: 'tasi'), **draft)
+    post = blog.posts.create(author: UserModel.credentials('tasi').first, **draft)
     assert_match(/\A\d{4}-\d\d-\d\d-hello-world\z/, post.slug)
     refute post.published?
   end

@@ -20,7 +20,9 @@ def password
   first
 end
 
-editors = TTGBlogBBS.new.editors
+blog = TTGBlogBBS.new
+blog.databases
+editors = blog.editors
 command, name = ARGV
 result = case command
          when 'list'   then editors.all.each { |u| puts u.name } && :ok

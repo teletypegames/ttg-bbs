@@ -27,7 +27,7 @@ class DraftTest < Minitest::Test
 
   def test_a_draft_is_kept_unchecked
     id = autosave(title: '', category: '')
-    assert_equal ['', ''], blog.posts.find_draft(id).to_h.values_at(:title, :category)
+    assert_equal ['', ''], blog.posts.find_draft(id).fields.values_at(:title, :category)
   end
 
   def test_the_lists_and_counts_leave_the_drafts_out

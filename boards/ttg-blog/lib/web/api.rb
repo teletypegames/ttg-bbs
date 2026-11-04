@@ -47,7 +47,7 @@ module Web
       res.body = JSON.generate(error: 'internal error')
     end
 
-    # WEBrick reads the path as bytes; SQLite would bind them as a BLOB,
+    # WEBrick reads the path as bytes; Sequel would give them as a BLOB,
     # which never equals the TEXT of a slug.
     def route(req)
       case String.new(req.path, encoding: Encoding::UTF_8)

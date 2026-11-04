@@ -8,9 +8,7 @@ class EditorServiceTest < Minitest::Test
   include TestHelper
 
   def editors(guard = LoginGuard.new(per_name: 3, per_caller: 2))
-    db = BBS::SQLite.new(db_path)
-    BlogSchema.migrate(db)
-    service = EditorService.new(UserRepository.new(db), guard: guard, fail_delay: 0)
+    service = EditorService.new(guard: guard, fail_delay: 0)
     service.add('tasi', 'secret-pass')
     service
   end
@@ -45,7 +43,7 @@ class EditorServiceTest < Minitest::Test
   end
 
   def test_a_lockout_outlasts_a_restart
-    stored = -> { LoginGuard.new(store: BBS::SQLite.new(db_path), per_name: 3, per_caller: 2) }
+    stored = -> { LoginGuard.new(store: BBS::Database.open(db_path, MIGRATIONS), per_name: 3, per_caller: 2) }
     quietly { 2.times { |i| editors(stored.call).login("guess#{i}", 'x', caller: '1.2.3.4') } }
     assert_equal :locked, editors(stored.call).login('tasi', 'secret-pass', caller: '1.2.3.4')
   end

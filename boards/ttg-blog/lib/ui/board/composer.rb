@@ -192,9 +192,7 @@ module UI
       end
 
       def preview(draft)
-        post = PostModel.new(id: 0, slug: '', **draft, author: user.name, face: face_name, status: 'published',
-                             original_id: nil, base_updated_at: nil, published_at: nil, created_at: Time.now,
-                             updated_at: Time.now)
+        post = PostModel.preview(draft, author: user.name, face: face_name)
         page('PREVIEW', post_lines(post), right: right)
       end
 

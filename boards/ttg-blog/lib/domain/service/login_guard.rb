@@ -4,14 +4,14 @@
 # are counted by the name tried and by the caller (BBS::RateLimit.caller_key,
 # so hanging up and calling again does not start over), and either one
 # locks for a while after too many. The counts are kept in the board's
-# SQLite file (BBS::RateLimit +store+), so a restart does not start them
+# database (BBS::RateLimit +store+), so a restart does not start them
 # over either. The key derivations run at most +slots+
 # at a time, so a flood of tries cannot take the one CPU from the readers.
 class LoginGuard
   WINDOW = 15 * 60
 
-  # +store+ is the BBS::SQLite the failed tries are kept in; nil keeps
-  # them in memory.
+  # +store+ is the Sequel::Database the failed tries are kept in; nil
+  # keeps them in memory.
   def initialize(store: nil, per_name: 10, per_caller: 5, window: WINDOW, slots: 2, slot_wait: 5)
     @by_name   = BBS::RateLimit.new(limit: per_name, per: window, store: store, name: store && 'login by name')
     @by_caller = BBS::RateLimit.new(limit: per_caller, per: window, store: store, name: store && 'login by caller')

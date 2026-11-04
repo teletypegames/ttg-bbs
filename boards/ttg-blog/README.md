@@ -73,8 +73,9 @@ the read API, whose server runs as the `BBS.background` thread `web`).
 
 ## Data
 
-One SQLite file (`data/ttgblog.sqlite3`, through rubbs' `BBS::SQLite`), two
-tables, its schema in `BlogSchema` as `migrate` steps (`PRAGMA user_version`):
+One SQLite file (`data/ttgblog.sqlite3`, the board's database: `database :db,
+MIGRATIONS`, rubbs' `BBS::Model` on Sequel), two tables, each a model, its schema
+in `lib/domain/migrations.rb` (`BlogSchema`) as `migrate` steps (`PRAGMA user_version`):
 
 - `users` — the editors: `name` (unique, case does not matter) and a
   PBKDF2-SHA256 password digest.
@@ -249,9 +250,10 @@ env-example                    every environment variable, with its default
 lib/
   domain.rb                    requires the domain in dependency order
   domain/
-    model/                     CategoryModel, UserModel, PostModel (and its slug)
-    repository/                BlogSchema (the migrations), PostRepository,
-                               UserRepository, CategoryRepository (the YAML file)
+    migrations.rb              MIGRATIONS: the schema, one step per version (BlogSchema)
+    model/                     UserModel and PostModel (the tables, BBS::Model: their
+                               queries, the drafts, the slugs), CategoryModel
+    repository/                CategoryRepository (the YAML file)
     service/                   PostService (limits, cleaning, publishing), EditorService
                                (names, passwords, login), LoginGuard (failed tries
                                by name and caller, two derivations at a time),

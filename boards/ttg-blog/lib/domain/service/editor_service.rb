@@ -14,13 +14,12 @@ class EditorService
   # The pause after a wrong password, on top of the guard's lock.
   FAIL_DELAY = 1
 
-  def initialize(repo, guard: LoginGuard.new, fail_delay: FAIL_DELAY)
-    @repo       = repo
+  def initialize(guard: LoginGuard.new, fail_delay: FAIL_DELAY)
     @guard      = guard
     @fail_delay = fail_delay
   end
 
-  def all = @repo.all
+  def all = UserModel.by_name
 
   # The UserModel whose name and password these are, or a Symbol: :locked
   # after too many failed tries of the name or by the caller (a
@@ -45,9 +44,9 @@ class EditorService
     name = name.to_s.strip
     return :bad_name unless name.match?(/\A[A-Za-z0-9_.-]{2,#{MAX_NAME}}\z/o)
     return :short_password if password.to_s.length < MIN_PASS
-    return :taken if @repo.exists?(name)
+    return :taken if UserModel.exists?(name)
 
-    @repo.insert(name, EditorService.digest(password))
+    UserModel.add(name, EditorService.digest(password))
     :ok
   end
 
@@ -66,11 +65,11 @@ class EditorService
   def set_password(name, password)
     return :short_password if password.to_s.length < MIN_PASS
 
-    @repo.set_digest(name.to_s.strip, EditorService.digest(password)).positive? ? :ok : :no_user
+    UserModel.set_digest(name.to_s.strip, EditorService.digest(password)).positive? ? :ok : :no_user
   end
 
   # The posts of a removed editor stay, without an author.
-  def remove(name) = @repo.delete(name.to_s.strip).positive? ? :ok : :no_user
+  def remove(name) = UserModel.remove(name.to_s.strip).positive? ? :ok : :no_user
 
   # PBKDF2-SHA256 with a random salt, as "pbkdf2-sha256$iterations$salt$hash".
   def self.digest(password, salt: SecureRandom.bytes(16), iterations: ITERATIONS)
@@ -96,7 +95,7 @@ class EditorService
   # The UserModel, or nil. A name nobody has still costs a key derivation,
   # so the time taken does not tell it apart.
   def authenticate(name, password)
-    user, digest = @repo.credentials(name)
+    user, digest = UserModel.credentials(name)
     EditorService.password?(digest || EditorService.nobody, password.to_s) && user ? user : nil
   end
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# The blog itself, whatever terminal a caller has: its services wired to the
-# SQLite file (BlogSchema) and the category list, and Discord rung when a
+# The blog itself, whatever terminal a caller has: its services on the
+# SQLite file (MIGRATIONS, the models) and the category list, and Discord rung when a
 # post is first published. Both faces (lib/ui/modern, lib/ui/petscii), the
 # read API (lib/web) and bin/user work on one instance of it.
 class TTGBlogBBS
@@ -13,17 +13,16 @@ class TTGBlogBBS
   setting :discord_webhook, ''
   path    :db, 'data/ttgblog.sqlite3'
   path    :categories_file, 'config/categories.yml', env: 'CATEGORIES'
+  database :db, MIGRATIONS
 
   service(:categories) { CategoryService.new(CategoryRepository.new(categories_file)) }
-  service(:editors)    { EditorService.new(UserRepository.new(store), guard: LoginGuard.new(store: store)) }
-  service(:posts)      { PostService.new(PostRepository.new(store), categories: categories).tap { |posts| announce(posts) } }
+  service(:editors)    { EditorService.new(guard: LoginGuard.new(store: databases[:main])) }
+  service(:posts)      { PostService.new(categories: categories).tap { |posts| announce(posts) } }
 
   # Where a published post is on the web.
   def post_url(post) = "#{site_url.chomp('/')}/blog/#{post.slug}"
 
   private
-
-  def store = @store ||= database(db, BlogSchema)
 
   def announce(posts)
     return if discord_webhook.empty?

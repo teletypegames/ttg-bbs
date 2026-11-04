@@ -2,7 +2,7 @@
 
 require 'time'
 
-# The tables of the blog, as BBS::SQLite#migrate steps. Step 1 is the
+# The tables of the blog, as BBS::Database.migrate steps. Step 1 is the
 # schema the board grew before it had versions: it creates what a new file
 # lacks and adds what an older one lacks, so a file the board wrote before
 # (user_version 0, in any of its shapes) keeps every row and comes out at
@@ -30,7 +30,7 @@ module BlogSchema
 
   # The columns the posts got after the first ones. The posts from before
   # the publishing flag stay published; a new post starts unpublished
-  # (PostRepository#insert says so).
+  # (PostModel.add says so).
   COLUMNS = {
     'slug'         => 'TEXT',
     'face'         => "TEXT NOT NULL DEFAULT 'modern'",
@@ -45,12 +45,12 @@ module BlogSchema
   ].freeze
 
   BEFORE_VERSIONS = lambda do |db|
-    TABLES.each { |sql| db.query(sql) }
-    have = db.query('PRAGMA table_info(posts)').map { |c| c['name'] }
-    COLUMNS.each { |name, type| db.query("ALTER TABLE posts ADD COLUMN #{name} #{type}") unless have.include?(name) }
-    INDEXES.each { |sql| db.query(sql) }
-    db.query('UPDATE posts SET published_at = created_at WHERE published = 1 AND published_at IS NULL')
-    BlogSchema.give_slugs(db)
+    TABLES.each { |sql| db.run(sql) }
+    have = db.fetch('PRAGMA table_info(posts)').map { |c| c[:name] }
+    COLUMNS.each { |name, type| db.run("ALTER TABLE posts ADD COLUMN #{name} #{type}") unless have.include?(name) }
+    INDEXES.each { |sql| db.run(sql) }
+    db.run('UPDATE posts SET published_at = created_at WHERE published = 1 AND published_at IS NULL')
+    BlogSchema.give_slugs(db[:posts])
   end
 
   # Step 2: a status in place of the publishing flag, and the drafts. A
@@ -68,22 +68,15 @@ module BlogSchema
     CREATE INDEX posts_drafts ON posts (original_id) WHERE status = 'draft';
   SQL
 
-  # Brings the file of +db+ (a BBS::SQLite) up to date; the version reached.
-  def self.migrate(db) = db.migrate(BEFORE_VERSIONS, STATUS)
-
-  # A slug for each post without one, from its title and date.
-  def self.give_slugs(db)
-    db.query('SELECT id, title, created_at FROM posts WHERE slug IS NULL ORDER BY id').each do |row|
-      base = PostModel.slug_base(row['title'], Time.iso8601(row['created_at']))
-      db.change('UPDATE posts SET slug = ? WHERE id = ?', free_slug(db, base), row['id'])
+  # A slug for each post of the dataset +posts+ without one, from its title
+  # and date (PostModel.slug_base, PostModel.free_slug).
+  def self.give_slugs(posts)
+    posts.where(slug: nil).order(:id).select(:id, :title, :created_at).all.each do |row|
+      base = PostModel.slug_base(row[:title], Time.iso8601(row[:created_at]))
+      posts.where(id: row[:id]).update(slug: PostModel.free_slug(base, posts))
     end
   end
-
-  # +base+, or base-2, base-3… when a post has it already. A post keeps its
-  # slug when its title changes, so a link to it keeps working.
-  def self.free_slug(db, base)
-    base = 'post' if base.empty?
-    (1..).lazy.map { |n| n == 1 ? base : "#{base}-#{n}" }
-         .find { |slug| db.get('SELECT 1 FROM posts WHERE slug = ?', slug).nil? }
-  end
 end
+
+# The steps in order; step N takes a file to version N (PRAGMA user_version).
+MIGRATIONS = [BlogSchema::BEFORE_VERSIONS, BlogSchema::STATUS].freeze
