@@ -31,8 +31,12 @@ module UI
       end
 
       def search
-        ask('Title or author words (lang:fr for one language):', title: 'Search', value: context[:query].to_s,
-                                                                  width: 64) { |query| find(query) }
+        ask(
+          'Title or author words (lang:fr for one language):',
+          title: 'Search',
+          value: context[:query].to_s,
+          width: 64
+        ) { |query| find(query) }
       end
 
       def find(query)

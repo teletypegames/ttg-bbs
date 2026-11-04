@@ -52,8 +52,12 @@ module UI
       return alert(PREPARING, color: YE) unless library.ready?
 
       list = library.shelves.drop(1)
-      each_pick('BOOKSHELVES', list, right: "#{list.size} shelves",
-                                     label: ->(s) { "#{s.label.downcase} #{GR}#{s.count}#{LG}" }) do |shelf|
+      each_pick(
+        'BOOKSHELVES',
+        list,
+        right: "#{list.size} shelves",
+        label: ->(s) { "#{s.label.downcase} #{GR}#{s.count}#{LG}" }
+      ) do |shelf|
         books(shelf.label.upcase, library.books_on(shelf))
       end
     end
@@ -62,8 +66,7 @@ module UI
       return alert(PREPARING, color: YE) unless library.ready?
 
       title('SEARCH')
-      query = prompt('search', hint: 'Words of the title or the author. Add lang:fr (de, es, ...) for one language.',
-                               max: 60)
+      query = prompt('search', hint: 'Words of the title or the author. Add lang:fr (de, es, ...) for one language.', max: 60)
       return unless query
 
       case (found = library.search(query))

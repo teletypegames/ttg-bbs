@@ -27,12 +27,20 @@ class ScriptoriumBBS
 
   service(:library) do
     import_legacy_reads
-    LibraryService.new(classics: ClassicsRepository.new(classics), gutenberg: gutenberg, catalog_file: catalog_file,
-                       ttl: catalog_ttl * 86_400)
+    LibraryService.new(
+      classics:     ClassicsRepository.new(classics),
+      gutenberg:    gutenberg,
+      catalog_file: catalog_file,
+      ttl:          catalog_ttl * 86_400
+    )
   end
   service(:reading) do
-    ReadingService.new(gutenberg: gutenberg, cache: TextCacheRepository.new(texts, max_bytes: cache_mb * 1024 * 1024),
-                       chapters: ChapterService.new, max_bytes: book_max)
+    ReadingService.new(
+      gutenberg: gutenberg,
+      cache:     TextCacheRepository.new(texts, max_bytes: cache_mb * 1024 * 1024),
+      chapters:  ChapterService.new,
+      max_bytes: book_max
+    )
   end
 
   background('catalog refresh', every: CHECK_EVERY, retry_after: RETRY_AFTER, max_retry: CHECK_EVERY) { library.refresh }

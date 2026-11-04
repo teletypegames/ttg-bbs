@@ -7,9 +7,11 @@ module UI
     module ShelvesWindow
       extend BBS::Part
 
-      KINDS = { classics: "The board's own shelf of well-known books.",
-                category: 'A category of Project Gutenberg.',
-                bookshelf: 'A bookshelf of Project Gutenberg, gathered by its volunteers.' }.freeze
+      KINDS = {
+        classics:  "The board's own shelf of well-known books.",
+        category:  'A category of Project Gutenberg.',
+        bookshelf: 'A bookshelf of Project Gutenberg, gathered by its volunteers.'
+      }.freeze
       LISTED = "The first #{LibraryService::SHELF_LIMIT} by ebook number are listed: " \
                'the oldest ebooks are the best known ones.'.freeze
 

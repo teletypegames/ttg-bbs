@@ -8,8 +8,10 @@ class GutenbergRepositoryTest < Minitest::Test
 
   def setup
     super
-    @gutenberg = GutenbergRepository.new(mirror: 'https://mirror.example/',
-                                         catalog_url: 'https://mirror.example/pg_catalog.csv.gz')
+    @gutenberg = GutenbergRepository.new(
+      mirror:      'https://mirror.example/',
+      catalog_url: 'https://mirror.example/pg_catalog.csv.gz'
+    )
   end
 
   def answer(status, body = '') = BBS::HTTP::Response.new(status: status, body: body.b, headers: {})

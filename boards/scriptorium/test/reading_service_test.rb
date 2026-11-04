@@ -33,8 +33,12 @@ class ReadingServiceTest < Minitest::Test
 
   def service(answer = TEXT)
     @gutenberg = FakeGutenberg.new(answer)
-    ReadingService.new(gutenberg: @gutenberg, cache: TextCacheRepository.new(path('texts'), max_bytes: 1 << 20),
-                       chapters: ChapterService.new, max_bytes: 1000)
+    ReadingService.new(
+      gutenberg: @gutenberg,
+      cache:     TextCacheRepository.new(path('texts'), max_bytes: 1 << 20),
+      chapters:  ChapterService.new,
+      max_bytes: 1000
+    )
   end
 
   def book(id = 2701) = BookModel.stub(id: id, title: 'Moby Dick')

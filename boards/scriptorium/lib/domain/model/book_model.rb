@@ -111,7 +111,7 @@ class BookModel < BBS::Model
   def self.match(found, words)
     terms = words.map { |w| %("#{w.delete('"')}"*) }.join(' ')
     found.join(:books_fts, rowid: :id).where(Sequel.lit('books_fts MATCH ?', terms))
-         .order(Sequel.function(:bm25, :books_fts, 10.0, 5.0), Sequel[:books][:id])
+      .order(Sequel.function(:bm25, :books_fts, 10.0, 5.0), Sequel[:books][:id])
   end
 
   # The search of an SQLite without FTS5: every word somewhere.

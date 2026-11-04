@@ -10,7 +10,7 @@ class ShelfBookModel < BBS::Model
   def self.books_on(shelf_id, limit: 200)
     BookModel.guard([]) do
       BookModel.select(*BookModel::COLUMNS.map { |c| Sequel[:books][c] }).join(:shelf_books, book_id: :id)
-               .where(Sequel[:shelf_books][:shelf_id] => shelf_id).order(Sequel[:books][:id]).limit(limit).all
+        .where(Sequel[:shelf_books][:shelf_id] => shelf_id).order(Sequel[:books][:id]).limit(limit).all
     end
   end
 end

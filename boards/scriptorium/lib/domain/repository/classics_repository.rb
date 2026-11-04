@@ -8,8 +8,12 @@ require 'yaml'
 class ClassicsRepository
   def initialize(path)
     @books = YAML.safe_load_file(path).map do |e|
-      BookModel.stub(id: Integer(e.fetch('id')), title: e.fetch('title').to_s, author: e['author'].to_s,
-                     language: e.fetch('language', 'en').to_s)
+      BookModel.stub(
+        id:       Integer(e.fetch('id')),
+        title:    e.fetch('title').to_s,
+        author:   e['author'].to_s,
+        language: e.fetch('language', 'en').to_s
+      )
     end.freeze
   rescue SystemCallError, Psych::Exception, KeyError, ArgumentError, NoMethodError => e
     BBS.log('classics', "#{path}: #{e.class}: #{e.message}")
