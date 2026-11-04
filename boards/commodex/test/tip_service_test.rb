@@ -3,7 +3,7 @@
 require 'test_helper'
 
 class TipServiceTest < Minitest::Test
-  include TmpData
+  def setup = BBS::Test.database(MIGRATIONS)
 
   # A catalog of two games.
   class Catalog
@@ -13,8 +13,7 @@ class TipServiceTest < Minitest::Test
   end
 
   def service(seeds: [], notifier: nil)
-    @repository = TipRepository.new(BBS::SQLite.new(path('tips.sqlite3')))
-    TipService.new(@repository, catalog: Catalog.new, seeds: seeds, notifier: notifier)
+    TipService.new(catalog: Catalog.new, seeds: seeds, notifier: notifier)
   end
 
   def zork = Catalog::GAMES['Q1']

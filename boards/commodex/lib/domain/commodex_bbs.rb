@@ -14,6 +14,7 @@ class CommodexBBS
   path    :tips_db, 'data/tips.sqlite3'
   path    :tips_seed, 'config/tips.yml'
   setting :discord_webhook, ''
+  database :tips_db, MIGRATIONS
 
   service(:catalog) do
     CatalogService.new(CatalogService.snapshot(seed: catalog_seed, path: catalog_file),
@@ -21,8 +22,7 @@ class CommodexBBS
   end
   service(:about) { AboutService.new(WikipediaRepository.new(cache_size: wikipedia_cache)) }
   service(:tips) do
-    TipService.new(TipRepository.new(database(tips_db)), catalog: catalog, seeds: TipSeedRepository.new(tips_seed).all,
-                                                         notifier: notifier)
+    TipService.new(catalog: catalog, seeds: TipSeedRepository.new(tips_seed).all, notifier: notifier)
   end
 
   # Wikidata read again when the catalog is CATALOG_TTL old; never for a TTL of 0.

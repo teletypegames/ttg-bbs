@@ -13,22 +13,21 @@ class TipService
   BOARD_MAX  = 30
   WINDOW     = 3600
 
-  def initialize(repository, catalog:, notifier: nil, seeds: [])
-    @repository = repository
+  def initialize(catalog:, notifier: nil, seeds: [])
     @catalog    = catalog
     @notifier   = notifier
     @gap        = BBS::RateLimit.new(limit: 1, per: GAP)
     @per_caller = BBS::RateLimit.new(limit: PER_CALLER, per: WINDOW)
     @board      = BBS::RateLimit.new(limit: BOARD_MAX, per: WINDOW)
-    seeds.each { |s| @repository.insert(**s, status: 'approved') }
+    seeds.each { |s| TipModel.add(**s, status: 'approved') }
   end
 
-  def tips(game) = @repository.approved(game.id)
+  def tips(game) = TipModel.approved(game.id)
 
-  def count(game) = @repository.count_approved(game.id)
+  def count(game) = TipModel.count_approved(game.id)
 
   # The games that have an approved tip, by title.
-  def games_with_tips = @repository.approved_counts.keys.filter_map { |id| @catalog.find(id) }.sort_by { |g| g.title.downcase }
+  def games_with_tips = TipModel.approved_counts.keys.filter_map { |id| @catalog.find(id) }.sort_by { |g| g.title.downcase }
 
   # Sends a tip for +game+ from +caller+ (BBS::RateLimit.caller_key): :ok,
   # or why not: :empty, :too_long, :rate_limited, :failed.
@@ -41,11 +40,11 @@ class TipService
     save(game, text, clean(handle)[0, MAX_HANDLE])
   end
 
-  def pending(limit = 100) = @repository.with_status('pending', limit: limit)
+  def pending(limit = 100) = TipModel.with_status('pending', limit: limit)
 
-  def approved_list(limit = 100) = @repository.with_status('approved', limit: limit)
+  def approved_list(limit = 100) = TipModel.with_status('approved', limit: limit)
 
-  def find(id) = @repository.find(id)
+  def find(id) = TipModel[id.to_i]
 
   def game_of(tip) = @catalog.find(tip.game_id)
 
@@ -56,7 +55,7 @@ class TipService
 
   private
 
-  def status(id, value) = @repository.change_status(id.to_i, value).positive? ? :ok : :no_tip
+  def status(id, value) = TipModel.change_status(id.to_i, value).positive? ? :ok : :no_tip
 
   # One line of text: no control or bidirectional character, one space
   # between words.
@@ -67,8 +66,8 @@ class TipService
   def allowed?(caller) = BBS::RateLimit.allow_all?([[@gap, caller], [@per_caller, caller], [@board, :board]])
 
   def save(game, text, handle)
-    id = @repository.insert(game_id: game.id, handle: handle, text: text)
-    @notifier&.call(@repository.find(id), game)
+    id = TipModel.add(game_id: game.id, handle: handle, text: text)
+    @notifier&.call(TipModel[id], game)
     :ok
   rescue StandardError => e
     BBS.log('tips', "saving a tip: #{e.class}: #{e.message}")

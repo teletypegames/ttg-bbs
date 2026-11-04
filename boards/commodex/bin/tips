@@ -22,7 +22,9 @@ def show(tips, list)
 end
 
 CommodexBBS.root = File.expand_path('..', __dir__)
-tips = CommodexBBS.new.tips
+bbs = CommodexBBS.new
+bbs.databases
+tips = bbs.tips
 command, id = ARGV
 result = case command
          when 'list', nil then show(tips, tips.pending); :listed

@@ -6,6 +6,7 @@ require 'minitest/mock'
 require 'json'
 require 'tmpdir'
 require 'bbs'
+require 'bbs/test'
 require_relative '../lib/domain'
 
 # Answers BBS::HTTP.get with the JSON the block gives for the request's

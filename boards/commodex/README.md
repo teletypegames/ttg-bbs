@@ -80,8 +80,9 @@ with its default.
 | `COMMODEX_BBS_TIPS_SEED` | `config/tips.yml` | tips shipped with the board, approved from the start |
 | `COMMODEX_BBS_DISCORD_WEBHOOK` | *(empty: off)* | rung for every new tip; a secret, in `.env` on the server |
 
-`data/` is a volume. `data/tips.sqlite3` is opened with rubbs' `BBS::SQLite` and its
-schema migrated by version (`PRAGMA user_version`): version 1 is the schema the board
+`data/` is a volume. `data/tips.sqlite3` is the board's database (`database :tips_db,
+MIGRATIONS`, rubbs' `BBS::Model` on Sequel), its schema migrated by version
+(`PRAGMA user_version`, `lib/domain/migrations.rb`): version 1 is the schema the board
 created before it had versions, so an older file only gets its version and keeps its tips.
 
 ## Tests
@@ -122,12 +123,12 @@ config/catalog.json.gz      the seed catalog (Wikidata, CC0)
 config/tips.yml             verified tips shipped with the board (empty)
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
+  migrations.rb             the schema of the tips database, one step per version
   model/game_model.rb       a game: QID, title, year, article, the name lists
-  model/tip_model.rb        a tip and its status
+  model/tip_model.rb        the tips table (BBS::Model): a tip, its status, the queries
   model/summary_model.rb    a Wikipedia lead
   repository/wikidata_repository.rb   the SPARQL queries (BBS::Wikidata)
   repository/wikipedia_repository.rb  article leads over BBS::Wikipedia, cached (BBS::Cache)
-  repository/tip_repository.rb        the tips table (BBS::SQLite), its migrations
   repository/tip_seed_repository.rb   config/tips.yml
   service/catalog_service.rb          search, years, genres, companies, the refresh
                                       (the catalog file is a BBS::Snapshot)
