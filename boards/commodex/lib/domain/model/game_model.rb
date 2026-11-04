@@ -5,8 +5,19 @@
 # the names of its publishers, developers, designers, composers, genres, game
 # modes and series. The lists are frozen arrays of frozen strings, shared
 # between games where the names are equal, so 3,000 games stay small.
-GameModel = Data.define(:id, :title, :year, :article, :publishers, :developers, :designers, :composers,
-                        :genres, :modes, :series) do
+GameModel = Data.define(
+  :id,
+  :title,
+  :year,
+  :article,
+  :publishers,
+  :developers,
+  :designers,
+  :composers,
+  :genres,
+  :modes,
+  :series
+) do
   # The game of a catalog record; nil without an id or a title. +names+ is
   # a Hash that interns the strings shared between games. Every text is
   # cleaned of control characters: the catalog is Wikidata's, edited by
@@ -16,8 +27,13 @@ GameModel = Data.define(:id, :title, :year, :article, :publishers, :developers, 
     title = clean(record['t'])
     return nil unless id.match?(/\AQ\d+\z/) && !title.empty?
 
-    new(id: -id, title: -title, year: record['y']&.to_i, article: record['w']&.then { |w| -clean(w) },
-        **lists(record, names))
+    new(
+      id:      -id,
+      title:   -title,
+      year:    record['y']&.to_i,
+      article: record['w']&.then { |w| -clean(w) },
+      **lists(record, names)
+    )
   end
 
   def self.lists(record, names)
@@ -45,5 +61,16 @@ end
 
 GameModel::LISTS = %i[publishers developers designers composers genres modes series].freeze
 # The short keys of a record in the catalog file.
-GameModel::KEYS = { id: 'id', title: 't', year: 'y', article: 'w', publishers: 'pub', developers: 'dev',
-                    designers: 'des', composers: 'mus', genres: 'gen', modes: 'mod', series: 'ser' }.freeze
+GameModel::KEYS = {
+  id:         'id',
+  title:      't',
+  year:       'y',
+  article:    'w',
+  publishers: 'pub',
+  developers: 'dev',
+  designers:  'des',
+  composers:  'mus',
+  genres:     'gen',
+  modes:      'mod',
+  series:     'ser'
+}.freeze

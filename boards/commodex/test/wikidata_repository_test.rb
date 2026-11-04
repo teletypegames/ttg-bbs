@@ -7,8 +7,11 @@ class WikidataRepositoryTest < Minitest::Test
 
   def bindings(query)
     if query.include?('?itemLabel ?article')
-      [{ 'item' => item('Q1'), 'itemLabel' => { 'value' => "Zork\e[2J" },
-         'article' => { 'value' => 'https://en.wikipedia.org/wiki/Zork_I' } }]
+      [{
+        'item'      => item('Q1'),
+        'itemLabel' => { 'value' => "Zork\e[2J" },
+        'article'   => { 'value' => 'https://en.wikipedia.org/wiki/Zork_I' }
+      }]
     elsif query.include?('?date')
       [{ 'item' => item('Q1'), 'date' => { 'value' => '1983-01-01' }, 'platform' => item('Q99775') },
        { 'item' => item('Q1'), 'date' => { 'value' => '1980-01-01' } }]

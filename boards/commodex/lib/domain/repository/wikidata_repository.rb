@@ -22,8 +22,15 @@ class WikidataRepository
   LABELS       = "SERVICE wikibase:label { bd:serviceParam wikibase:language \"#{LANGUAGES}\". }".freeze
 
   # The list fields of a record and the Wikidata properties they come from.
-  PROPERTIES = { 'pub' => 'P123', 'dev' => 'P178', 'des' => 'P287', 'mus' => 'P86', 'gen' => 'P136',
-                 'mod' => 'P404', 'ser' => 'P179' }.freeze
+  PROPERTIES = {
+    'pub' => 'P123',
+    'dev' => 'P178',
+    'des' => 'P287',
+    'mus' => 'P86',
+    'gen' => 'P136',
+    'mod' => 'P404',
+    'ser' => 'P179'
+  }.freeze
 
   ITEMS = <<~SPARQL.freeze
     SELECT ?item ?itemLabel ?article WHERE {

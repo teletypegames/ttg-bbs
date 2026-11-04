@@ -3,8 +3,11 @@
 require 'test_helper'
 
 class WikipediaRepositoryTest < Minitest::Test
-  LEAD = { 'query' => { 'pages' => [{ 'title' => "Elite\e]0;x\a", 'fullurl' => 'https://en.wikipedia.org/wiki/Elite',
-                                      'extract' => "First \e[31mpara.\n\nSecond  para." }] } }.freeze
+  LEAD = { 'query' => { 'pages' => [{
+    'title'   => "Elite\e]0;x\a",
+    'fullurl' => 'https://en.wikipedia.org/wiki/Elite',
+    'extract' => "First \e[31mpara.\n\nSecond  para."
+  }] } }.freeze
 
   def repository = @repository ||= WikipediaRepository.new
 

@@ -18,12 +18,12 @@ module UI
 
     # What becomes of a tip a caller sends (TipService#submit).
     TIP = {
-      ok: 'Thanks! Your tip waits for an admin, and shows once approved.',
-      empty: 'Write the tip first.',
-      too_long: "A tip is at most #{TipService::MAX_TEXT} characters.",
+      ok:           'Thanks! Your tip waits for an admin, and shows once approved.',
+      empty:        'Write the tip first.',
+      too_long:     "A tip is at most #{TipService::MAX_TEXT} characters.",
       rate_limited: "That is enough tips for now: #{TipService::PER_CALLER} an hour, one every " \
                     "#{TipService::GAP} seconds.",
-      failed: 'The tip could not be saved. Try again later.'
+      failed:       'The tip could not be saved. Try again later.'
     }.freeze
 
     TIP_RULES = "One cheat, POKE or tip, up to #{TipService::MAX_TEXT} characters. An admin reads it before it " \

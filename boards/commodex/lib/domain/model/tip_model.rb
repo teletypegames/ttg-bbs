@@ -10,8 +10,14 @@ class TipModel < BBS::Model
 
   # The id of the new tip; a seed already in goes in no second time.
   def self.add(game_id:, handle:, text:, status: 'pending', seed: nil)
-    dataset.insert_ignore.insert(game_id: game_id, handle: handle, text: text, status: status,
-                                 created_at: Time.now.utc.iso8601, seed: seed)
+    dataset.insert_ignore.insert(
+      game_id:    game_id,
+      handle:     handle,
+      text:       text,
+      status:     status,
+      created_at: Time.now.utc.iso8601,
+      seed:       seed
+    )
   end
 
   def self.approved(game_id) = where(game_id: game_id, status: 'approved').order(:id).all

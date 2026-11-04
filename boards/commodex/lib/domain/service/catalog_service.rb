@@ -110,10 +110,14 @@ class CatalogService
   end
 
   def build(games)
-    Index.new(games: games, by_id: games.to_h { |g| [g.id, g] }, folded: games.map { |g| GameModel.fold(g.title) },
-              years: sorted(group(games) { |g| [g.year].compact }) { |y, _| y },
-              genres: sorted(group(games, &:genres)) { |n, _| n.downcase },
-              companies: sorted(group(games, &:companies)) { |n, _| GameModel.fold(n) })
+    Index.new(
+      games:     games,
+      by_id:     games.to_h { |g| [g.id, g] },
+      folded:    games.map { |g| GameModel.fold(g.title) },
+      years:     sorted(group(games) { |g| [g.year].compact }) { |y, _| y },
+      genres:    sorted(group(games, &:genres)) { |n, _| n.downcase },
+      companies: sorted(group(games, &:companies)) { |n, _| GameModel.fold(n) }
+    )
   end
 
   # The games under each of the keys the block gives for a game.

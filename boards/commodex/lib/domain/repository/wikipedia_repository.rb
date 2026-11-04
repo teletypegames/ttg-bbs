@@ -18,8 +18,12 @@ class WikipediaRepository
 
   def initialize(cache_size: 200, client: BBS::Wikipedia.new(user_agent: USER_AGENT, rate: RATE))
     @client  = client
-    @answers = BBS::Cache.new(ttl: TTL, max_entries: cache_size, max_bytes: CACHE_BYTES,
-                              size: ->(data) { JSON.generate(data).bytesize })
+    @answers = BBS::Cache.new(
+      ttl:         TTL,
+      max_entries: cache_size,
+      max_bytes:   CACHE_BYTES,
+      size:        ->(data) { JSON.generate(data).bytesize }
+    )
   end
 
   # The SummaryModel of the article +title+ (redirects followed); :missing
@@ -29,8 +33,16 @@ class WikipediaRepository
   private
 
   def lead(title)
-    @client.get('en', action: 'query', prop: 'extracts|info', exintro: 1, explaintext: 1, redirects: 1,
-                      inprop: 'url', titles: title)
+    @client.get(
+      'en',
+      action:      'query',
+      prop:        'extracts|info',
+      exintro:     1,
+      explaintext: 1,
+      redirects:   1,
+      inprop:      'url',
+      titles:      title
+    )
   end
 
   def summary_of(data)

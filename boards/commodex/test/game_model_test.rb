@@ -4,8 +4,12 @@ require 'test_helper'
 
 class GameModelTest < Minitest::Test
   def test_a_record_is_cleaned
-    g = GameModel.from_record({ 'id' => 'Q1', 't' => " Zork\e[2J ", 'w' => "Zork\u202e",
-                                'pub' => ["Info\ecom", "\e", 'Infocom'] })
+    g = GameModel.from_record({
+      'id'  => 'Q1',
+      't'   => " Zork\e[2J ",
+      'w'   => "Zork\u202e",
+      'pub' => ["Info\ecom", "\e", 'Infocom']
+    })
     assert_equal ['Zork[2J', 'Zork', ['Infocom']], [g.title, g.article, g.publishers]
   end
 

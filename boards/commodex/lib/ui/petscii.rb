@@ -71,8 +71,11 @@ module UI
         title('PUBLISHERS & DEVELOPERS')
         say('The first letter of the name:')
         puts
-        k = menu(letters.map { |l, count| BBS::Selector.item(count.to_s, key: l, value: l) },
-                 columns: LETTER_COLUMNS, hint: 'crsr or letter, return  stop: back')
+        k = menu(
+          letters.map { |l, count| BBS::Selector.item(count.to_s, key: l, value: l) },
+          columns: LETTER_COLUMNS,
+          hint:    'crsr or letter, return  stop: back'
+        )
         return unless k
 
         groups("COMPANIES: #{k.upcase}", catalog.companies(k)) { |name| catalog.of_company(name) }
