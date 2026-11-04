@@ -9,8 +9,11 @@ module Discovery
     # The dials since +from+: [how many, their seconds on the line, the
     # bytes relayed].
     def self.traffic_since(from)
-      row = where { at >= from }.select(Sequel.function(:count).*.as(:n), Sequel.function(:sum, :seconds).as(:s),
-                                        Sequel.function(:sum, :bytes).as(:b)).naked.first
+      row = where { at >= from }.select(
+        Sequel.function(:count).*.as(:n),
+        Sequel.function(:sum, :seconds).as(:s),
+        Sequel.function(:sum, :bytes).as(:b)
+      ).naked.first
       [row[:n].to_i, row[:s].to_i, row[:b].to_i]
     end
 

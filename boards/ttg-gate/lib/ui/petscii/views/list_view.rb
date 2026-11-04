@@ -16,25 +16,53 @@ module UI
         NAME = 20
         # The state marks: a block in the state's colour.
         MARKS = {
-          'online' => ['▌', Canvas::LIGHT_GREEN], 'flaky' => ['▌', Canvas::YELLOW], 'down' => ['▌', Canvas::RED],
-          'dead' => ['▌', Canvas::GREY], 'unknown' => ['▌', Canvas::DARK_GREY]
+          'online'  => ['▌', Canvas::LIGHT_GREEN],
+          'flaky'   => ['▌', Canvas::YELLOW],
+          'down'    => ['▌', Canvas::RED],
+          'dead'    => ['▌', Canvas::GREY],
+          'unknown' => ['▌', Canvas::DARK_GREY]
         }.freeze
         # The F filter steps through these; nil is every board the list has.
         FILTERS = [nil, 'online', 'flaky', 'down', 'unknown'].freeze
         # The steps of F on the list of every board.
         ALL_FILTERS = [nil, 'online', 'flaky', 'down', 'unknown', 'dead'].freeze
-        STATE_COLORS = { 'online' => Canvas::LIGHT_GREEN, 'flaky' => Canvas::YELLOW, 'down' => Canvas::LIGHT_RED,
-                         'dead' => Canvas::GREY, 'unknown' => Canvas::LIGHT_GREY }.freeze
+        STATE_COLORS = {
+          'online'  => Canvas::LIGHT_GREEN,
+          'flaky'   => Canvas::YELLOW,
+          'down'    => Canvas::LIGHT_RED,
+          'dead'    => Canvas::GREY,
+          'unknown' => Canvas::LIGHT_GREY
+        }.freeze
         # The software of a sw: tag in at most ten letters.
         SOFT = 10
-        SOFTWARE = { 'synchronet' => 'Synchronet', 'color64' => 'Color 64', 'cbase' => 'C*Base', 'cnet' => 'C-Net',
-                     'image' => 'Image BBS', 'mystic' => 'Mystic', 'enigma' => 'Enigma', 'renegade' => 'Renegade',
-                     'iniquity' => 'Iniquity', 'wwiv' => 'WWIV', 'maximus' => 'Maximus', 'searchlight' => 'Searchlite',
-                     'magicka' => 'Magicka', 'spitfire' => 'Spitfire', 'x84' => 'x/84', 'wildcat' => 'Wildcat!',
-                     'pcboard' => 'PCBoard', 'telegard' => 'Telegard', 'citadel' => 'Citadel',
-                     'ftn-mailer' => 'FTN mailer' }.freeze
-        TERMINALS = { 'petscii' => Canvas::PURPLE, 'ansi' => Canvas::LIGHT_BLUE, 'ascii' => Canvas::LIGHT_GREY,
-                      'atascii' => Canvas::ORANGE }.freeze
+        SOFTWARE = {
+          'synchronet'  => 'Synchronet',
+          'color64'     => 'Color 64',
+          'cbase'       => 'C*Base',
+          'cnet'        => 'C-Net',
+          'image'       => 'Image BBS',
+          'mystic'      => 'Mystic',
+          'enigma'      => 'Enigma',
+          'renegade'    => 'Renegade',
+          'iniquity'    => 'Iniquity',
+          'wwiv'        => 'WWIV',
+          'maximus'     => 'Maximus',
+          'searchlight' => 'Searchlite',
+          'magicka'     => 'Magicka',
+          'spitfire'    => 'Spitfire',
+          'x84'         => 'x/84',
+          'wildcat'     => 'Wildcat!',
+          'pcboard'     => 'PCBoard',
+          'telegard'    => 'Telegard',
+          'citadel'     => 'Citadel',
+          'ftn-mailer'  => 'FTN mailer'
+        }.freeze
+        TERMINALS = {
+          'petscii' => Canvas::PURPLE,
+          'ansi'    => Canvas::LIGHT_BLUE,
+          'ascii'   => Canvas::LIGHT_GREY,
+          'atascii' => Canvas::ORANGE
+        }.freeze
 
         attr_reader :title, :state, :section
 
@@ -49,9 +77,21 @@ module UI
         # [all_states]   F starts from all and steps to dead too
         # [any_terminal] every encoding: no PETSCII chip, a board without
         #                PETSCII dimmed
-        def initialize(title:, color:, loader:, on_open:, filter: true, chips: [], details: nil, section: :discover,
-                       empty: 'Nothing here.', all_states: false, any_terminal: false, terminal: 'PETSCII',
-                       now: -> { Time.now.to_i })
+        def initialize(
+          title:,
+          color:,
+          loader:,
+          on_open:,
+          filter: true,
+          chips: [],
+          details: nil,
+          section: :discover,
+          empty: 'Nothing here.',
+          all_states: false,
+          any_terminal: false,
+          terminal: 'PETSCII',
+          now: -> { Time.now.to_i }
+        )
           @all_states   = all_states
           @any_terminal = any_terminal
           @terminal     = terminal
@@ -146,8 +186,14 @@ module UI
           number = format('%02d', ((@page * PER_PAGE) + slot + 1) % 100)
           cc = (listing.country || '--').upcase
           if slot == @index
-            canvas.text(row, 0, "#{number} #{mark} #{name(listing).ljust(NAME + 1)}#{cc} #{software(listing)}"
-                                .ljust(Layout::WIDTH), Canvas::LIGHT_BLUE, rvs: true)
+            canvas.text(
+              row,
+              0,
+              "#{number} #{mark} #{name(listing).ljust(NAME + 1)}#{cc} #{software(listing)}"
+                                              .ljust(Layout::WIDTH),
+              Canvas::LIGHT_BLUE,
+              rvs: true
+            )
           else
             Layout.runs(canvas, row, 0, [[number, Canvas::YELLOW], [' ', nil], [mark, color], [' ', nil],
                                          [name(listing), listing.c64? ? Canvas::WHITE : Canvas::DARK_GREY]])

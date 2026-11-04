@@ -14,7 +14,7 @@ module Discovery
       crc = Zlib.crc32(data)
       local = ['PK', 3, 4, 20, 0, 8, 0, 0, crc, deflated.bytesize, data.bytesize, name.bytesize, 0].pack('a2CCvvvvvVVVvv')
       central = ['PK', 1, 2, 20, 20, 0, 8, 0, 0, crc, deflated.bytesize, data.bytesize, name.bytesize, 0, 0, 0, 0, 0, 0]
-                .pack('a2CCvvvvvvVVVvvvvvVV')
+        .pack('a2CCvvvvvvVVVvvvvvVV')
       dir_offset = local.bytesize + name.bytesize + deflated.bytesize
       central_dir = central + name
       eocd = ['PK', 5, 6, 0, 0, 1, 1, central_dir.bytesize, dir_offset, 0].pack('a2CCvvvvVVv')

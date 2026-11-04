@@ -19,9 +19,19 @@ module Discovery
 
     def own_boards(count = 10)
       Array.new(count) do |i|
-        ::BoardModel.new({ 'id' => "b#{i}", 'name' => "Board #{i}", 'summary' => 'A board of the network, drawn in PETSCII.',
-                         'tags' => %w[chat doors], 'port' => 2323 + i, 'accent' => '#3cff7a', 'petscii' => true },
-                       host: 'gw', public_host: 'teletypegames.org')
+        ::BoardModel.new(
+          {
+            'id'      => "b#{i}",
+            'name'    => "Board #{i}",
+            'summary' => 'A board of the network, drawn in PETSCII.',
+            'tags'    => %w[chat doors],
+            'port'    => 2323 + i,
+            'accent'  => '#3cff7a',
+            'petscii' => true
+          },
+          host:        'gw',
+          public_host: 'teletypegames.org'
+        )
       end
     end
 
@@ -29,8 +39,14 @@ module Discovery
       listings ||= Array.new(20) { |i| listing(format('Board %02d', i), %w[online flaky down unknown][i % 4]) }
       @line = BBS::Test::Session.new(keys: keys, petscii: true)
       browse = Browse.new(listings, listings.to_h { |l| [l.id, page_of(l)] })
-      UI::Petscii::Gate.new(@line, boards: own_boards, browse: browse, dials: nil, node: 2,
-                                   clock: -> { Time.new(2026, 11, 1, 14, 52) })
+      UI::Petscii::Gate.new(
+        @line,
+        boards: own_boards,
+        browse: browse,
+        dials:  nil,
+        node:   2,
+        clock:  -> { Time.new(2026, 11, 1, 14, 52) }
+      )
     end
 
     # What the C64 shows after everything sent so far.
@@ -200,9 +216,21 @@ module Discovery
 
     def test_a_long_address_wraps_whole_and_pushes_the_page_down
       host = 'a-very-long-hostname-of-a-board.bbs.example.org'
-      l = ListingModel.new(id: 'x', host: host, port: 6400, name: 'Long', state: 'online', software: 'Synchronet',
-                           country: 'us', last_success_at: 1_000, first_probe_at: 1, first_seen_at: 0, state_since: nil,
-                           tags: %w[petscii], optout: nil)
+      l = ListingModel.new(
+        id:              'x',
+        host:            host,
+        port:            6400,
+        name:            'Long',
+        state:           'online',
+        software:        'Synchronet',
+        country:         'us',
+        last_success_at: 1_000,
+        first_probe_at:  1,
+        first_seen_at:   0,
+        state_since:     nil,
+        tags:            %w[petscii],
+        optout:          nil
+      )
       view = UI::Petscii::Views::PageView.new(page_of(l), section: :discover, on_dial: nil, on_banner: nil, now: -> { NOW })
       canvas = self.canvas
       view.draw(canvas)
@@ -219,8 +247,13 @@ module Discovery
 
     def test_only_petscii_banners_show_on_the_c64
       l = listing('Pub', 'online')
-      ansi = UI::Petscii::Views::PageView.new(page_of(l, banner: "\e[2JHI".b, encoding: 'ansi'), section: :discover,
-                                              on_dial: nil, on_banner: nil, now: -> { NOW })
+      ansi = UI::Petscii::Views::PageView.new(
+        page_of(l, banner: "\e[2JHI".b, encoding: 'ansi'),
+        section:   :discover,
+        on_dial:   nil,
+        on_banner: nil,
+        now:       -> { NOW }
+      )
       refute ansi.banner?
       canvas = self.canvas
       ansi.draw(canvas)
@@ -259,8 +292,13 @@ module Discovery
     def test_the_clock_ticks_and_idle_ends_the_call
       minute = 52
       @line = BBS::Test::Session.new(keys: %i[idle idle idle], petscii: true)
-      g = UI::Petscii::Gate.new(@line, boards: own_boards, browse: nil, dials: nil,
-                                       clock: -> { Time.new(2026, 11, 1, 14, minute) })
+      g = UI::Petscii::Gate.new(
+        @line,
+        boards: own_boards,
+        browse: nil,
+        dials:  nil,
+        clock:  -> { Time.new(2026, 11, 1, 14, minute) }
+      )
       g.start
       @line.take
       minute = 53

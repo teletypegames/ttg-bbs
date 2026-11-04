@@ -51,9 +51,15 @@ module Discovery
       endpoint = telnet(fields[2], flags)
       return unless endpoint
 
-      RecordModel.new(source_id: source.id, host: endpoint[0], port: endpoint[1],
-                      name: words(fields[2]), location: words(fields[3]), sysop: words(fields[4]),
-                      ftn_address: address)
+      RecordModel.new(
+        source_id:   source.id,
+        host:        endpoint[0],
+        port:        endpoint[1],
+        name:        words(fields[2]),
+        location:    words(fields[3]),
+        sysop:       words(fields[4]),
+        ftn_address: address
+      )
     end
 
     # [host, port] of a node's ITN flag, or nil.

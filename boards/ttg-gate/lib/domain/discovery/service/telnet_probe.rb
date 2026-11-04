@@ -26,10 +26,16 @@ module Discovery
     C64_FIRST       = 20
     C64_TOTAL       = 25
 
-    def initialize(connect_timeout: CONNECT_TIMEOUT, read_timeout: READ_TIMEOUT, nudge_after: NUDGE_AFTER,
-                   c64_first: C64_FIRST, c64_total: C64_TOTAL,
-                   resolver: method(:resolve), callable: Address.method(:callable?),
-                   clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
+    def initialize(
+      connect_timeout: CONNECT_TIMEOUT,
+      read_timeout: READ_TIMEOUT,
+      nudge_after: NUDGE_AFTER,
+      c64_first: C64_FIRST,
+      c64_total: C64_TOTAL,
+      resolver: method(:resolve),
+      callable: Address.method(:callable?),
+      clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }
+    )
       @callable        = callable
       @connect_timeout = connect_timeout
       @read_timeout    = read_timeout
@@ -75,8 +81,15 @@ module Discovery
       latency = since(started)
       result, banner, options = converse(socket, c64)
       latency = nil if result == 'refused'
-      ProbeResultModel.new(result: result, at: at, latency_ms: latency, ip: ip, banner: banner, options: options,
-                           duration_ms: since(begun))
+      ProbeResultModel.new(
+        result:      result,
+        at:          at,
+        latency_ms:  latency,
+        ip:          ip,
+        banner:      banner,
+        options:     options,
+        duration_ms: since(begun)
+      )
     ensure
       socket.close if socket.is_a?(Socket) && !socket.closed?
     end
@@ -93,8 +106,14 @@ module Discovery
     # [result, banner, options] of the conversation on +socket+.
     def converse(socket, c64)
       first, total = c64 ? [@c64_first, @c64_total] : [@read_timeout, @read_timeout]
-      Conversation.new(socket, TelnetNegotiator.new(c64: c64), first: first, total: total, nudge_after: @nudge_after,
-                                                               clock: @clock).run
+      Conversation.new(
+        socket,
+        TelnetNegotiator.new(c64: c64),
+        first:       first,
+        total:       total,
+        nudge_after: @nudge_after,
+        clock:       @clock
+      ).run
     end
 
     # The reading of a board's line: until +total+ seconds, or +first+

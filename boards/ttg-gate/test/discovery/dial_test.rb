@@ -28,14 +28,32 @@ module Discovery
       @recorder = Recorder.new
       @live = File.join(@tmp, 'gate-dials.json')
       @history = DialHistoryService.new
-      @dials = DialService.new(recorder: @recorder, history: @history, live_path: @live, clock: -> { @now }, log: ->(_) {},
-                               resolver: ->(host) { [ADDRESSES.fetch(host)] })
+      @dials = DialService.new(
+        recorder:  @recorder,
+        history:   @history,
+        live_path: @live,
+        clock:     -> { @now },
+        log:       ->(_) {},
+        resolver:  ->(host) { [ADDRESSES.fetch(host)] }
+      )
     end
 
     def board(host = 'bbs.example.org', state: 'online', tags: %w[ansi online])
-      ListingModel.new(id: 7, host: host, port: 23, name: 'Example', state: state, software: nil, country: nil,
-                       last_success_at: nil, first_probe_at: nil, first_seen_at: 0, state_since: nil, tags: tags,
-                       optout: nil)
+      ListingModel.new(
+        id:              7,
+        host:            host,
+        port:            23,
+        name:            'Example',
+        state:           state,
+        software:        nil,
+        country:         nil,
+        last_success_at: nil,
+        first_probe_at:  nil,
+        first_seen_at:   0,
+        state_since:     nil,
+        tags:            tags,
+        optout:          nil
+      )
     end
 
     def dial(caller = '203.0.113.5', board = self.board, face: :modern, report: Report.new(connected: true, received: 9))
@@ -116,8 +134,13 @@ module Discovery
     end
 
     def test_a_board_inside_the_network_is_not_dialled
-      dials = DialService.new(recorder: @recorder, history: @history, clock: -> { @now }, log: ->(_) {},
-                              resolver: ->(_) { ['172.17.0.1'] })
+      dials = DialService.new(
+        recorder: @recorder,
+        history:  @history,
+        clock:    -> { @now },
+        log:      ->(_) {},
+        resolver: ->(_) { ['172.17.0.1'] }
+      )
       refusal = dials.dial('203.0.113.5', board, face: :modern) { flunk 'dialled' }
       assert_equal :not_public, refusal.reason
       assert_equal 1, @history.refusals_since(0)['not_public']
@@ -138,8 +161,13 @@ module Discovery
 
     def test_a_catalog_dial_goes_to_the_address_and_ends_when_idle
       gateway = nil
-      dials = DialService.new(recorder: @recorder, clock: -> { @now }, log: ->(_) {}, idle: 90,
-                              resolver: ->(_) { [PUBLIC] })
+      dials = DialService.new(
+        recorder: @recorder,
+        clock:    -> { @now },
+        log:      ->(_) {},
+        idle:     90,
+        resolver: ->(_) { [PUBLIC] }
+      )
       BBS::Gateway.stub(:new, ->(**options) { gateway = Gateway.new(**options) }) do
         UI.dial_catalog(Object.new, dials, 'a', board, face: :modern)
       end
@@ -182,8 +210,14 @@ module Discovery
 
     def test_the_metrics_of_the_prober
       ids = %w[a b c].map { |h| BoardModel.id_for("#{h}.example.org", 23, 1) }
-      result = ProbeResultModel.new(result: 'ok', at: 5_000, latency_ms: 10, ip: '192.0.2.1', banner: 'x' * 40,
-                                    duration_ms: 1500)
+      result = ProbeResultModel.new(
+        result:      'ok',
+        at:          5_000,
+        latency_ms:  10,
+        ip:          '192.0.2.1',
+        banner:      'x' * 40,
+        duration_ms: 1500
+      )
       ProbeModel.add(ids[0], result, kind: 'scheduled', banner_hash: 'h')
       BoardStateModel.save(ids[0], state: 'online', next_probe_at: 9_000)
       BoardStateModel.save(ids[1], state: 'online', next_probe_at: 4_000)
@@ -191,9 +225,12 @@ module Discovery
       TagModel.replace(ids[1], %w[sw:ftn-mailer cc:us])
       optout = File.join(@tmp, 'optout.yml')
       File.write(optout, "hide: [x.example.org, 192.0.2.9]\nno_preview: []\n")
-      text = MetricsService.new(File.join(@tmp, 'm.prom'), db_path: @db.opts[:database],
-                                                            optout: OptoutRepository.new(optout))
-                           .text(5_100, in_flight: 3)
+      text = MetricsService.new(
+        File.join(@tmp, 'm.prom'),
+        db_path: @db.opts[:database],
+        optout:  OptoutRepository.new(optout)
+      )
+        .text(5_100, in_flight: 3)
       ['probes_in_flight 3', 'probes_due 2', 'next_probe_due_seconds 0', 'oldest_overdue_seconds 5099',
        'probes_total{result="ok",kind="scheduled"} 1', 'probe_duration_seconds_avg_last_hour{result="ok"} 1.5',
        'probe_duration_seconds_max_last_hour 1.5', 'banner_bytes_avg_last_hour 40.0',
@@ -215,15 +252,22 @@ module Discovery
     end
 
     def test_the_limits_come_from_the_environment
-      env = { 'TTG_GATE_BBS_DATA' => @tmp, 'TTG_GATE_BBS_DISCOVERY_DB' => File.join(@tmp, 'root.sqlite3'),
-              'TTG_GATE_BBS_DIAL_WINDOW' => '300', 'TTG_GATE_BBS_DIAL_PER_CALLER' => '4', 'TTG_GATE_BBS_DIAL_PER_HOST' => '2',
-              'TTG_GATE_BBS_DIAL_IDLE' => '120' }
+      env = {
+        'TTG_GATE_BBS_DATA'            => @tmp,
+        'TTG_GATE_BBS_DISCOVERY_DB'    => File.join(@tmp, 'root.sqlite3'),
+        'TTG_GATE_BBS_DIAL_WINDOW'     => '300',
+        'TTG_GATE_BBS_DIAL_PER_CALLER' => '4',
+        'TTG_GATE_BBS_DIAL_PER_HOST'   => '2',
+        'TTG_GATE_BBS_DIAL_IDLE'       => '120'
+      }
       root = Root.new(env)
       assert_equal({ window: 300, per_caller: 4, per_host: 2, idle: 120 }, root.dial_limits)
       dials = root.dials(log: ->(_) {})
       assert_equal [300, 4, 2, 120], [dials.window, dials.per_caller, dials.per_host, dials.idle]
-      assert_equal({ 'window_seconds' => 300, 'per_caller' => 4, 'per_host' => 2, 'idle_seconds' => 120 },
-                   JSON.parse(File.read(root.dials_path))['limits'])
+      assert_equal(
+        { 'window_seconds' => 300, 'per_caller' => 4, 'per_host' => 2, 'idle_seconds' => 120 },
+        JSON.parse(File.read(root.dials_path))['limits']
+      )
       root.db.disconnect
       _, err = capture_io do
         bad = Root.new(env.merge('TTG_GATE_BBS_DIAL_WINDOW' => 'soon', 'TTG_GATE_BBS_DIAL_PER_HOST' => '0'))
@@ -235,8 +279,15 @@ module Discovery
     end
 
     def test_the_limits_given_hold
-      dials = DialService.new(recorder: @recorder, clock: -> { @now }, log: ->(_) {}, window: 60, per_caller: 2, per_host: 1,
-                              resolver: ->(_) { [PUBLIC] })
+      dials = DialService.new(
+        recorder:   @recorder,
+        clock:      -> { @now },
+        log:        ->(_) {},
+        window:     60,
+        per_caller: 2,
+        per_host:   1,
+        resolver:   ->(_) { [PUBLIC] }
+      )
       2.times { dials.dial('a', board, face: :modern) { |c| c.report = Report.new(connected: true, received: 1) } }
       assert_equal [:rate, 60], dials.check('a', board, face: :modern).deconstruct
       dials.dial('b', board, face: :modern) { assert_equal :busy, dials.check('c', board, face: :modern).reason }
@@ -259,8 +310,11 @@ module Discovery
       assert_equal :unknown, @dials.check('a', nil, face: :petscii).reason
       rows = DialRefusalModel.order(:id).naked.all
       assert_equal %i[id at reason board_id face], rows.first.keys
-      assert_equal([%w[rate modern], %w[rate c64], %w[busy modern], %w[busy c64], %w[not_petscii c64], %w[unknown modern],
-                    %w[unknown c64]], rows.map { |r| [r[:reason], r[:face]] })
+      assert_equal(
+        [%w[rate modern], %w[rate c64], %w[busy modern], %w[busy c64], %w[not_petscii c64], %w[unknown modern],
+         %w[unknown c64]],
+        rows.map { |r| [r[:reason], r[:face]] }
+      )
       assert_equal [7, nil], [rows.first[:board_id], rows.last[:board_id]]
       refute(rows.any? { |r| r.values.any? { |v| v.to_s.include?('203.0.113') || %w[a b c d e].include?(v) } })
       totals = @history.refusal_totals
@@ -301,8 +355,7 @@ module Discovery
       @dials.dial('x', board, face: :modern) do
         @dials.dial('y', board, face: :modern) do
           refute_includes File.read(@live), '203.0.113.5'
-          text = MetricsService.new(File.join(@tmp, 'm.prom'), dials_path: @live,
-                                                                history: @history).text(@now.to_i + 10)
+          text = MetricsService.new(File.join(@tmp, 'm.prom'), dials_path: @live, history: @history).text(@now.to_i + 10)
         end
       end
       ['dial_limit{kind="window_seconds"} 600', 'dial_limit{kind="per_caller"} 10', 'dial_limit{kind="per_host"} 3',
@@ -314,8 +367,7 @@ module Discovery
         assert_includes text, "ttg_gate_bbs_discovery_#{line}\n"
       end
       assert_match(/dial_seconds_last_hour 0\n/, text)
-      later = MetricsService.new(File.join(@tmp, 'm.prom'), dials_path: @live,
-                                                             history: @history).text(@now.to_i + 601)
+      later = MetricsService.new(File.join(@tmp, 'm.prom'), dials_path: @live, history: @history).text(@now.to_i + 601)
       assert_includes later, "ttg_gate_bbs_discovery_dial_caller_max_in_window 0\n"
     end
 

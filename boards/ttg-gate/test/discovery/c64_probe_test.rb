@@ -38,9 +38,16 @@ module Discovery
     def prober(probe = probe_of)
       optout = File.join(@tmp, 'optout.yml')
       File.write(optout, "{}\n")
-      ProberService.new(probe: probe, tags: TagService.new(config),
-                        aliases: AliasService.new, optout: OptoutRepository.new(optout), geoip: Geoip.new,
-                        config: config, c64_gap: 0, log: ->(_) {})
+      ProberService.new(
+        probe:   probe,
+        tags:    TagService.new(config),
+        aliases: AliasService.new,
+        optout:  OptoutRepository.new(optout),
+        geoip:   Geoip.new,
+        config:  config,
+        c64_gap: 0,
+        log:     ->(_) {}
+      )
     end
 
     # A board on a local port that asks for the terminal type, and answers
@@ -84,8 +91,13 @@ module Discovery
     def catalog_board(port, claimed:)
       id = BoardModel.id_for('127.0.0.1', port, 0)
       if claimed
-        record = RecordModel.new(source_id: 'cbbs', host: '127.0.0.1', port: port, name: 'Corner',
-                                 hints: { 'platform' => 'Commodore' })
+        record = RecordModel.new(
+          source_id: 'cbbs',
+          host:      '127.0.0.1',
+          port:      port,
+          name:      'Corner',
+          hints:     { 'platform' => 'Commodore' }
+        )
         BoardSourceModel.apply('cbbs', [record], 0)
       end
       TagService.new(config).refresh(id, now: 0)
@@ -136,8 +148,7 @@ module Discovery
 
     def test_the_normal_call_keeps_its_8_second_window
       port = slow_board(15)
-      result = probe_of(c64_first: 20, c64_total: 25)
-               .call('127.0.0.1', port)
+      result = probe_of(c64_first: 20, c64_total: 25).call('127.0.0.1', port)
       assert_operator result.duration_ms, :<, 2500
     end
 
@@ -191,8 +202,23 @@ module Discovery
 
     def test_the_c64_negotiator_refuses_every_option
       telnet = N.new(c64: true)
-      _, reply = telnet.feed(bytes(N::IAC, N::DO, N::TTYPE, N::IAC, N::DO, N::NAWS, N::IAC, N::WILL, 1,
-                                   N::IAC, N::SB, N::TTYPE, 1, N::IAC, N::SE))
+      _, reply = telnet.feed(bytes(
+                               N::IAC,
+                               N::DO,
+                               N::TTYPE,
+                               N::IAC,
+                               N::DO,
+                               N::NAWS,
+                               N::IAC,
+                               N::WILL,
+                               1,
+                               N::IAC,
+                               N::SB,
+                               N::TTYPE,
+                               1,
+                               N::IAC,
+                               N::SE
+                             ))
       assert_equal bytes(N::IAC, N::WONT, N::TTYPE, N::IAC, N::WONT, N::NAWS, N::IAC, N::DONT, 1), reply
       assert_equal ['DO TTYPE', 'DO NAWS', 'WILL ECHO'], telnet.options
     end
@@ -299,8 +325,7 @@ module Discovery
       board = { first_seen_at: 0, since: nil, software: nil }
       claim = [{ source_id: 'syncterm', fields: { 'screen_mode' => 'C64' } }]
       assert_equal %w[claims:petscii src:syncterm], tags.tags(board, claim, nil, 0)
-      assert_equal %w[ansi claims:petscii src:syncterm],
-                   tags.tags(board, claim, { encoding: 'ansi', c64_encoding: 'ansi' }, 0)
+      assert_equal %w[ansi claims:petscii src:syncterm], tags.tags(board, claim, { encoding: 'ansi', c64_encoding: 'ansi' }, 0)
       assert_equal %w[ansi claims:petscii petscii src:syncterm],
                    tags.tags(board, claim, { encoding: 'ansi', c64_encoding: 'petscii' }, 0)
       assert_equal %w[petscii], tags.tags(board, [], { encoding: 'petscii', c64_encoding: 'unknown' }, 0)

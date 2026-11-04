@@ -30,8 +30,12 @@ module Discovery
     # +now+ when it turns delisted, and cleared when it is listed again).
     def self.resolve(id, fields, provenance, delisted, now)
       columns = RecordModel::FIELDS.to_h { |field| [field, fields[field.to_s]] }
-      where(id: id).update(**columns, provenance: JSON.generate(provenance), delisted: delisted ? 1 : 0,
-                           delisted_at: delisted ? Sequel.function(:coalesce, :delisted_at, now) : nil)
+      where(id: id).update(
+        **columns,
+        provenance:  JSON.generate(provenance),
+        delisted:    delisted ? 1 : 0,
+        delisted_at: delisted ? Sequel.function(:coalesce, :delisted_at, now) : nil
+      )
     end
 
     # Sets the opt-out level of board +id+ (nil, no_preview or hide).
@@ -70,8 +74,12 @@ module Discovery
     # The boards of the catalog for bin/discovery-report: all of them, the
     # aliases, the delisted and the hidden ones.
     def self.totals
-      { total: count, aliases: exclude(alias_of: nil).count, delisted: where(delisted: 1).count,
-        hidden: where(optout: 'hide').count }
+      {
+        total:    count,
+        aliases:  exclude(alias_of: nil).count,
+        delisted: where(delisted: 1).count,
+        hidden:   where(optout: 'hide').count
+      }
     end
   end
 end

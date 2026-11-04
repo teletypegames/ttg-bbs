@@ -16,8 +16,9 @@ module Discovery
 
     def initialize(tags: [], match: nil, dead: false, state: nil, petscii: false, mailers: nil)
       mailers = tags.include?(MAILER) if mailers.nil?
-      super(tags: tags.freeze, match: match, dead: dead || state == 'dead' || tags.include?('dead'),
-            state: state, petscii: petscii, mailers: mailers)
+      super(
+        tags: tags.freeze, match: match, dead: dead || state == 'dead' || tags.include?('dead'),
+                    state: state, petscii: petscii, mailers: mailers)
     end
 
     # The filter of a SearchQuery.

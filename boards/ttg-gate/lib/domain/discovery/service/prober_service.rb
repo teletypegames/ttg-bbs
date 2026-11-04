@@ -45,8 +45,18 @@ module Discovery
     # [tags]    TagService         [aliases] AliasService
     # [optout]  OptoutRepository   [geoip]   GeoipRepository
     # [config]  ConfigRepository   [metrics] MetricsService, or nil
-    def initialize(probe:, tags:, aliases:, optout:, geoip:, config:, metrics: nil, concurrency: CONCURRENCY,
-                   c64_gap: C64_GAP, log: LOG)
+    def initialize(
+      probe:,
+      tags:,
+      aliases:,
+      optout:,
+      geoip:,
+      config:,
+      metrics: nil,
+      concurrency: CONCURRENCY,
+      c64_gap: C64_GAP,
+      log: LOG
+    )
       @recorder    = ProbeRecorder.new(tags: tags, geoip: geoip, config: config)
       @probe       = probe
       @aliases     = aliases

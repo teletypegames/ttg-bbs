@@ -32,13 +32,21 @@ module Discovery
       @syncterm = source('syncterm', format: 'syncterm_lst')
       @config   = Config.new([@nodelist, @sbl, @syncterm], %w[fido sbl syncterm])
       @alerts   = []
-      @fetcher  = Fetcher.new('fido' => fixture('nodelist.txt'), 'sbl' => fixture('sbl.html'),
-                              'syncterm' => fixture('syncterm.lst'))
+      @fetcher  = Fetcher.new(
+        'fido'     => fixture('nodelist.txt'),
+        'sbl'      => fixture('sbl.html'),
+        'syncterm' => fixture('syncterm.lst')
+      )
       optout = File.join(@tmp, 'optout.yml')
       File.write(optout, "hide: [three.example.org]\nno_preview: [192.0.2.99]\n")
-      @import = ImportService.new(config: @config, fetcher: @fetcher,
-                                  tags: TagService.new(@config), aliases: AliasService.new,
-                                  optout: OptoutRepository.new(optout), alert: ->(m) { @alerts << m })
+      @import = ImportService.new(
+        config:  @config,
+        fetcher: @fetcher,
+        tags:    TagService.new(@config),
+        aliases: AliasService.new,
+        optout:  OptoutRepository.new(optout),
+        alert:   ->(m) { @alerts << m }
+      )
     end
 
     def board(host, port) = BoardModel.where(host: host, port: port).naked.first
@@ -56,8 +64,17 @@ module Discovery
       @import.call(now: 1_000)
       one = board('one.example.org', 23)
       assert_equal 'Example & One', one[:name]
-      assert_equal({ 'name' => 'sbl', 'sysop' => 'sbl', 'location' => 'sbl', 'software' => 'sbl', 'since' => 'sbl',
-                     'ftn_address' => 'sbl' }, JSON.parse(one[:provenance]))
+      assert_equal(
+        {
+          'name'        => 'sbl',
+          'sysop'       => 'sbl',
+          'location'    => 'sbl',
+          'software'    => 'sbl',
+          'since'       => 'sbl',
+          'ftn_address' => 'sbl'
+        },
+        JSON.parse(one[:provenance])
+      )
       fields = BoardSourceModel.of(one[:id]).find { |r| r[:source_id] == 'syncterm' }[:fields]
       assert_equal 'Example One', fields['name']
 

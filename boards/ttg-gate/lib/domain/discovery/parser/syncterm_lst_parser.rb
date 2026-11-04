@@ -43,8 +43,11 @@ module Discovery
       return unless host && port
 
       name, service = title.strip.split(/\s{2,}/, 2)
-      hints = { 'screen_mode' => keys['screenmode'], 'service' => Address.text(service),
-                'comment' => Address.text(keys['comment']) }.compact
+      hints = {
+        'screen_mode' => keys['screenmode'],
+        'service'     => Address.text(service),
+        'comment'     => Address.text(keys['comment'])
+      }.compact
       RecordModel.new(source_id: source.id, host: host, port: port, name: Address.text(name), hints: hints)
     end
   end

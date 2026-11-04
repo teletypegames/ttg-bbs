@@ -47,19 +47,38 @@ module Discovery
     end
 
     def listing(name, state, country: 'us', tags: %w[petscii sw:synchronet])
-      ListingModel.new(id: name, host: "#{name.downcase.tr(' ', '-')}.example.org", port: 64, name: name, state: state,
-                       software: 'Synchronet', country: country, last_success_at: 1_000, first_probe_at: 1,
-                       first_seen_at: 0, state_since: nil, tags: tags, optout: nil)
+      ListingModel.new(
+        id:              name,
+        host:            "#{name.downcase.tr(' ', '-')}.example.org",
+        port:            64,
+        name:            name,
+        state:           state,
+        software:        'Synchronet',
+        country:         country,
+        last_success_at: 1_000,
+        first_probe_at:  1,
+        first_seen_at:   0,
+        state_since:     nil,
+        tags:            tags,
+        optout:          nil
+      )
     end
 
     def page_of(listing, banner: "\x93HI".b, encoding: 'petscii')
-      BoardPageModel.new(listing: listing,
-                         board: { name: listing.name, provenance: '{}', sysop: 'Runstop' },
-                         state: { last_success_at: NOW - 600, banner: banner, encoding: encoding,
-                                  latency_ms: 87, country: listing.country },
-                         sources: [{ source_id: 'cbbs', active: 1, name: 'CBBS Outpost' },
-                                   { source_id: 'tbg', active: 1, name: 'Telnet BBS Guide' }],
-                         probes: [{ at: NOW - 86_400, result: 'ok' }, { at: NOW, result: 'timeout' }])
+      BoardPageModel.new(
+        listing: listing,
+        board:   { name: listing.name, provenance: '{}', sysop: 'Runstop' },
+        state:   {
+          last_success_at: NOW - 600,
+          banner:          banner,
+          encoding:        encoding,
+          latency_ms:      87,
+          country:         listing.country
+        },
+        sources: [{ source_id: 'cbbs', active: 1, name: 'CBBS Outpost' },
+                  { source_id: 'tbg', active: 1, name: 'Telnet BBS Guide' }],
+        probes:  [{ at: NOW - 86_400, result: 'ok' }, { at: NOW, result: 'timeout' }]
+      )
     end
 
     # What a modern terminal shows after the bytes it got: the characters

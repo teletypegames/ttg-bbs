@@ -14,8 +14,21 @@ module Discovery
   # [state_since]     when it turned its state
   # [tags]            its tags (TagService), sorted
   # [optout]          nil, or no_preview (hidden boards never get here)
-  class ListingModel < Data.define(:id, :host, :port, :name, :state, :software, :country, :last_success_at,
-                                   :first_probe_at, :first_seen_at, :state_since, :tags, :optout)
+  class ListingModel < Data.define(
+    :id,
+    :host,
+    :port,
+    :name,
+    :state,
+    :software,
+    :country,
+    :last_success_at,
+    :first_probe_at,
+    :first_seen_at,
+    :state_since,
+    :tags,
+    :optout
+  )
     # The mark of a state on the modern face (TTG_DISCOVERY.md §5.3); the C64
     # draws its own glyphs (UI::Petscii::Marks).
     MARKS = { 'online' => '●', 'flaky' => '◐', 'down' => '✗', 'dead' => '†', 'unknown' => '?' }.freeze
@@ -36,11 +49,21 @@ module Discovery
     SQL
 
     def self.from(row)
-      new(id: row[:id], host: row[:host], port: row[:port], name: row[:name],
-          state: row[:state] || 'unknown', software: row[:software], country: row[:country],
-          last_success_at: row[:last_success_at], first_probe_at: row[:first_probe_at],
-          first_seen_at: row[:first_seen_at], state_since: row[:state_since],
-          tags: row[:tags].to_s.split.sort.freeze, optout: row[:optout])
+      new(
+        id:              row[:id],
+        host:            row[:host],
+        port:            row[:port],
+        name:            row[:name],
+        state:           row[:state] || 'unknown',
+        software:        row[:software],
+        country:         row[:country],
+        last_success_at: row[:last_success_at],
+        first_probe_at:  row[:first_probe_at],
+        first_seen_at:   row[:first_seen_at],
+        state_since:     row[:state_since],
+        tags:            row[:tags].to_s.split.sort.freeze,
+        optout:          row[:optout]
+      )
     end
 
     # The listings a ListingFilter lets through, unsorted. An FTS query the

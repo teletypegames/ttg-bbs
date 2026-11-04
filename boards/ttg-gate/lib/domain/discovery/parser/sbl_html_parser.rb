@@ -28,18 +28,26 @@ module Discovery
       fields = system_fields(cells)
       ftn, names = networks(cells[5])
       services(cells[4]).map do |host, port, comment|
-        RecordModel.new(source_id: source.id, host: host, port: port, ftn_address: ftn, **fields,
-                        hints: { 'comment' => comment, 'networks' => names }.reject { |_, v| v.nil? || v.empty? })
+        RecordModel.new(
+          source_id:   source.id,
+          host:        host,
+          port:        port,
+          ftn_address: ftn,
+          **fields,
+          hints:       { 'comment' => comment, 'networks' => names }.reject { |_, v| v.nil? || v.empty? }
+        )
       end
     end
 
     # The fields of a system that hold for each of its services.
     def system_fields(cells)
-      { name:     name(cells[0]),
+      {
+        name:     name(cells[0]),
         since:    cells[1][/\b(?:19|20)\d\d\b/]&.to_i,
         sysop:    Address.text(rows(cells[2]).join(', ')),
         location: rows(cells[3]).first,
-        software: software(cells[6]) }
+        software: software(cells[6])
+      }
     end
 
     # [the first FTN address, the network names] of the networks cell.

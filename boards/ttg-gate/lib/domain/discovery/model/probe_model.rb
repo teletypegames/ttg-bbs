@@ -21,17 +21,26 @@ module Discovery
     def self.add(board_id, probe, kind:, banner_hash:)
       last = BoardStateModel.where(board_id: board_id).get(kind == C64 ? :c64_banner_hash : :banner_hash)
       banner = probe.banner.empty? || banner_hash == last ? nil : Sequel.blob(probe.banner)
-      insert(board_id: board_id, at: probe.at, kind: kind, result: probe.result, latency_ms: probe.latency_ms,
-             ip: probe.ip, banner: banner, banner_hash: banner_hash, options: JSON.generate(probe.options),
-             duration_ms: probe.duration_ms, banner_bytes: probe.banner.bytesize)
+      insert(
+        board_id:     board_id,
+        at:           probe.at,
+        kind:         kind,
+        result:       probe.result,
+        latency_ms:   probe.latency_ms,
+        ip:           probe.ip,
+        banner:       banner,
+        banner_hash:  banner_hash,
+        options:      JSON.generate(probe.options),
+        duration_ms:  probe.duration_ms,
+        banner_bytes: probe.banner.bytesize
+      )
     end
 
     # The probes of a board since +from+ (epoch seconds), oldest first: at,
     # kind and result. The C64-style calls are left out: the state is of the
     # scheduled calls and the dials, one a round.
     def self.since(board_id, from)
-      where(board_id: board_id).where { at >= from }.exclude(kind: C64).order(:at, :id).select(:at, :kind, :result)
-                               .naked.all
+      where(board_id: board_id).where { at >= from }.exclude(kind: C64).order(:at, :id).select(:at, :kind, :result).naked.all
     end
 
     # Every probe of a board since +from+, oldest first: at, kind and result
@@ -64,7 +73,7 @@ module Discovery
     def self.durations(from)
       calls = where { at >= from }.where(kind: 'scheduled').exclude(duration_ms: nil).group(:result)
       rows = calls.select(:result, Sequel.function(:avg, :duration_ms).as(:avg), Sequel.function(:max, :duration_ms).as(:max))
-                  .naked.all
+        .naked.all
       [rows.to_h { |r| [r[:result], r[:avg]] }, rows.map { |r| r[:max] }.max]
     end
 

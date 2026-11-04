@@ -11,14 +11,17 @@ module UI
       # shows its PETSCII banner (+on_banner+).
       class PageView < View
         WHY = {
-          'dns_fail' => 'Name does not resolve', 'timeout' => 'No answer (firewall?)',
-          'refused' => 'Port closed', 'closed' => 'Hung up at once'
+          'dns_fail' => 'Name does not resolve',
+          'timeout'  => 'No answer (firewall?)',
+          'refused'  => 'Port closed',
+          'closed'   => 'Hung up at once'
         }.freeze
-        STRIP = { ::Discovery::BoardPageModel::UP => ['█', Canvas::GREEN],
-                  ::Discovery::BoardPageModel::DOWN => ['█', Canvas::RED] }.freeze
+        STRIP = {
+          ::Discovery::BoardPageModel::UP   => ['█', Canvas::GREEN],
+          ::Discovery::BoardPageModel::DOWN => ['█', Canvas::RED]
+        }.freeze
         NO_DAY = ['▒', Canvas::DARK_GREY].freeze
-        HINT = [['RETURN', true], [' Dial  ', false], ['B', true], [' Banner  ', false], ['←', true],
-                [' Back', false]].freeze
+        HINT = [['RETURN', true], [' Dial  ', false], ['B', true], [' Banner  ', false], ['←', true], [' Back', false]].freeze
         FIELDS = 8
         # The column of a field's value, and the rows a long one wraps to.
         VALUE = 10

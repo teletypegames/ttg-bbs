@@ -7,13 +7,37 @@ module Discovery
   # config/discovery/source-map.yml may turn into a tag (a SyncTERM ScreenMode,
   # an SBL service comment, the SBL networks, the platform of the CBBS
   # list).
-  class RecordModel < Data.define(:source_id, :host, :port, :name, :sysop, :location, :software, :since, :ftn_address,
-                                  :hardware, :website, :hints)
+  class RecordModel < Data.define(
+    :source_id,
+    :host,
+    :port,
+    :name,
+    :sysop,
+    :location,
+    :software,
+    :since,
+    :ftn_address,
+    :hardware,
+    :website,
+    :hints
+  )
     # The fields a board takes from its sources, in the order of the board's page.
     FIELDS = %i[name sysop location software since ftn_address hardware website].freeze
 
-    def initialize(source_id:, host:, port:, name: nil, sysop: nil, location: nil, software: nil, since: nil,
-                   ftn_address: nil, hardware: nil, website: nil, hints: {})
+    def initialize(
+      source_id:,
+      host:,
+      port:,
+      name: nil,
+      sysop: nil,
+      location: nil,
+      software: nil,
+      since: nil,
+      ftn_address: nil,
+      hardware: nil,
+      website: nil,
+      hints: {}
+    )
       super
     end
 

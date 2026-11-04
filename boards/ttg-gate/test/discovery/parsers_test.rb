@@ -11,7 +11,8 @@ module Discovery
     def test_nodelist_takes_the_itn_nodes
       keys = nodelist.map(&:key)
       assert_equal %w[zone1.example.org:23 plain.example.org:23 port.example.org:2323 bbs.example.org:23
-                      full.example.org:6400 named.example.org:2300 cafe.example.org:23 region.example.org:23], keys
+                      full.example.org:6400 named.example.org:2300 cafe.example.org:23 region.example.org:23],
+                   keys
     end
 
     def test_nodelist_fields_and_addresses
@@ -70,8 +71,7 @@ module Discovery
     def syncterm = SynctermLstParser.parse(fixture('syncterm.lst'), source('syncterm', format: 'syncterm_lst'))
 
     def test_syncterm_takes_the_telnet_entries
-      assert_equal %w[one.example.org:23 one.example.org:64 two.example.org:6502 three.example.org:23],
-                   syncterm.map(&:key)
+      assert_equal %w[one.example.org:23 one.example.org:64 two.example.org:6502 three.example.org:23], syncterm.map(&:key)
     end
 
     def test_syncterm_names_and_hints
@@ -84,8 +84,7 @@ module Discovery
     def cbbs = CbbsJsonParser.parse(fixture('cbbs.json'), source('cbbs', format: 'cbbs_json'))
 
     def test_cbbs_takes_the_telnet_addresses
-      assert_equal %w[corner.example.org:6400 two.example.org:23 url.example.org:64128 bracket.example.org:23],
-                   cbbs.map(&:key)
+      assert_equal %w[corner.example.org:6400 two.example.org:23 url.example.org:64128 bracket.example.org:23], cbbs.map(&:key)
     end
 
     def test_cbbs_facts

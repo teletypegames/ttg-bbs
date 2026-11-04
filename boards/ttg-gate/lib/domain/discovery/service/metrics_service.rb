@@ -61,11 +61,19 @@ module Discovery
     # in progress.
     def catalog(lines, now)
       states = BoardStateModel.counts
-      gauge(lines, 'boards', 'Boards of the catalog by state (aliases and hidden boards apart).',
-            (BoardStateModel::STATES + ['archived']).to_h { |s| [{ state: s }, states.fetch(s, 0)] })
+      gauge(
+        lines,
+        'boards',
+        'Boards of the catalog by state (aliases and hidden boards apart).',
+        (BoardStateModel::STATES + ['archived']).to_h { |s| [{ state: s }, states.fetch(s, 0)] }
+      )
       gauge(lines, 'probes_last_hour', 'Probes of the last hour by result.', by_result(ProbeModel.result_counts(now - 3600)))
-      gauge(lines, 'dials_last_hour', "The Gate's dials of the last hour by result.",
-            by_result(ProbeModel.result_counts(now - 3600, kind: 'dial')))
+      gauge(
+        lines,
+        'dials_last_hour',
+        "The Gate's dials of the last hour by result.",
+        by_result(ProbeModel.result_counts(now - 3600, kind: 'dial'))
+      )
       gauge(lines, 'dials_live', "The Gate's dials in progress.", { {} => live_dials })
     end
 
@@ -74,22 +82,38 @@ module Discovery
 
     def sources(lines)
       sources = SourceModel.ordered
-      gauge(lines, 'source_records', 'Records of the last applied import a source.',
-            sources.to_h { |s| [{ source: s[:id] }, s[:record_count].to_i] })
-      gauge(lines, 'source_last_import_timestamp_seconds', 'When a source was last applied.',
-            sources.to_h { |s| [{ source: s[:id] }, s[:last_parse_at].to_i] })
-      gauge(lines, 'source_failing', '1 when the last import of a source failed or was refused.',
-            sources.to_h { |s| [{ source: s[:id] }, s[:last_error] ? 1 : 0] })
+      gauge(
+        lines,
+        'source_records',
+        'Records of the last applied import a source.',
+        sources.to_h { |s| [{ source: s[:id] }, s[:record_count].to_i] }
+      )
+      gauge(
+        lines,
+        'source_last_import_timestamp_seconds',
+        'When a source was last applied.',
+        sources.to_h { |s| [{ source: s[:id] }, s[:last_parse_at].to_i] }
+      )
+      gauge(
+        lines,
+        'source_failing',
+        '1 when the last import of a source failed or was refused.',
+        sources.to_h { |s| [{ source: s[:id] }, s[:last_error] ? 1 : 0] }
+      )
     end
 
     def prober(lines, now, in_flight)
       gauge(lines, 'probes_in_flight', 'Probes running right now.', { {} => in_flight })
       schedule(lines, now)
       totals = ProbeModel.totals
-      gauge(lines, 'probes_total', 'Every stored probe by result and kind (scheduled, c64, dial; counted in the catalog).',
-            ProbeResultModel::RESULTS.product(%w[scheduled c64 dial]).to_h do |r, k|
-              [{ result: r, kind: k }, totals.fetch([r, k], 0)]
-            end)
+      gauge(
+        lines,
+        'probes_total',
+        'Every stored probe by result and kind (scheduled, c64, dial; counted in the catalog).',
+        ProbeResultModel::RESULTS.product(%w[scheduled c64 dial]).to_h do |r, k|
+          [{ result: r, kind: k }, totals.fetch([r, k], 0)]
+        end
+      )
       durations(lines, now)
     end
 
@@ -97,35 +121,66 @@ module Discovery
       schedule = BoardStateModel.schedule(now)
       gauge(lines, 'probes_due', 'Boards whose next probe time has passed (the backlog).', { {} => schedule[:due].to_i })
       next_at = schedule[:next_at]
-      gauge(lines, 'next_probe_due_seconds', 'Seconds until the earliest next probe, 0 when one is overdue.',
-            { {} => next_at ? [next_at - now, 0].max : 0 })
+      gauge(
+        lines,
+        'next_probe_due_seconds',
+        'Seconds until the earliest next probe, 0 when one is overdue.',
+        { {} => next_at ? [next_at - now, 0].max : 0 }
+      )
       oldest = schedule[:oldest_due_at]
-      gauge(lines, 'oldest_overdue_seconds',
-            'How long the longest-waiting due board has been due, 0 when none is (a stuck prober makes it grow).',
-            { {} => oldest ? [now - oldest, 0].max : 0 })
+      gauge(
+        lines,
+        'oldest_overdue_seconds',
+        'How long the longest-waiting due board has been due, 0 when none is (a stuck prober makes it grow).',
+        { {} => oldest ? [now - oldest, 0].max : 0 }
+      )
     end
 
     def durations(lines, now)
       avg, max = ProbeModel.durations(now - 3600)
-      gauge(lines, 'probe_duration_seconds_avg_last_hour', 'The average whole call (DNS to hang-up) of the last hour.',
-            ProbeResultModel::RESULTS.to_h { |r| [{ result: r }, seconds(avg[r])] })
+      gauge(
+        lines,
+        'probe_duration_seconds_avg_last_hour',
+        'The average whole call (DNS to hang-up) of the last hour.',
+        ProbeResultModel::RESULTS.to_h { |r| [{ result: r }, seconds(avg[r])] }
+      )
       gauge(lines, 'probe_duration_seconds_max_last_hour', 'The longest call of the last hour.', { {} => seconds(max) })
-      gauge(lines, 'banner_bytes_avg_last_hour', 'The average banner read in the last hour.',
-            { {} => ProbeModel.banner_bytes(now - 3600).to_f.round(1) })
+      gauge(
+        lines,
+        'banner_bytes_avg_last_hour',
+        'The average banner read in the last hour.',
+        { {} => ProbeModel.banner_bytes(now - 3600).to_f.round(1) }
+      )
     end
 
     def boards_by(lines)
       tags, boards = BoardStateModel.answering_tags
       encodings = ENCODINGS.to_h { |e| [e, tags.fetch(e, 0)] }
       encodings['unknown'] = [boards - encodings.values.sum, 0].max
-      gauge(lines, 'boards_by_encoding', 'Answering boards (online, flaky) by the encoding of their banner.',
-            encodings.transform_keys { |e| { encoding: e } })
-      gauge(lines, 'boards_by_network', 'Answering boards by network (a board can be in several).',
-            prefixed(tags, 'net:').transform_keys { |n| { network: n } })
-      gauge(lines, 'boards_by_country', "Answering boards by country, the top #{TOP} and other.",
-            top(prefixed(tags, 'cc:'), boards).transform_keys { |c| { country: c } })
-      gauge(lines, 'boards_by_software', "Answering boards by software, the top #{TOP}, other, and FTN mailers.",
-            by_software(tags, boards).transform_keys { |s| { software: s } })
+      gauge(
+        lines,
+        'boards_by_encoding',
+        'Answering boards (online, flaky) by the encoding of their banner.',
+        encodings.transform_keys { |e| { encoding: e } }
+      )
+      gauge(
+        lines,
+        'boards_by_network',
+        'Answering boards by network (a board can be in several).',
+        prefixed(tags, 'net:').transform_keys { |n| { network: n } }
+      )
+      gauge(
+        lines,
+        'boards_by_country',
+        "Answering boards by country, the top #{TOP} and other.",
+        top(prefixed(tags, 'cc:'), boards).transform_keys { |c| { country: c } }
+      )
+      gauge(
+        lines,
+        'boards_by_software',
+        "Answering boards by software, the top #{TOP}, other, and FTN mailers.",
+        by_software(tags, boards).transform_keys { |s| { software: s } }
+      )
     end
 
     # The top software of +boards+, other, and the FTN mailers apart.
@@ -173,11 +228,19 @@ module Discovery
     def dial_limits(lines, now)
       state  = live
       limits = LIMITS.to_h { |k| [k, state.dig('limits', k).to_i] }
-      gauge(lines, 'dial_limit', "The Gate's dial limits (window_seconds, per_caller, per_host, idle_seconds).",
-            limits.transform_keys { |k| { kind: k } })
+      gauge(
+        lines,
+        'dial_limit',
+        "The Gate's dial limits (window_seconds, per_caller, per_host, idle_seconds).",
+        limits.transform_keys { |k| { kind: k } }
+      )
       callers(lines, state, limits, now)
-      gauge(lines, 'dial_host_lines_max', 'The most lines in use to one host now.',
-            { {} => state.fetch('host_lines_max', 0).to_i })
+      gauge(
+        lines,
+        'dial_host_lines_max',
+        'The most lines in use to one host now.',
+        { {} => state.fetch('host_lines_max', 0).to_i }
+      )
       refusals(lines, now)
       traffic(lines, now)
     end
@@ -186,32 +249,55 @@ module Discovery
     def callers(lines, state, limits, now)
       window = limits['window_seconds']
       counts = Array(state['caller_dials']).map { |times| Array(times).count { |t| t.to_i > now - window } }
-      gauge(lines, 'dial_caller_max_in_window', 'The most dials one caller has in the current window.',
-            { {} => counts.max.to_i })
+      gauge(
+        lines,
+        'dial_caller_max_in_window',
+        'The most dials one caller has in the current window.',
+        { {} => counts.max.to_i }
+      )
       at_limit = limits['per_caller'].positive? ? counts.count { |n| n >= limits['per_caller'] } : 0
       gauge(lines, 'dial_callers_at_limit', 'Callers at the per-caller dial limit now.', { {} => at_limit })
     end
 
     def refusals(lines, now)
       totals = @history ? @history.refusal_totals : DialHistoryService::REASONS.product(DialHistoryService::FACES).to_h { |p| [p, 0] }
-      gauge(lines, 'dial_refusals_total', 'Dials the Gate refused, by reason and face (kept as a running total).',
-            totals.to_h { |(reason, face), n| [{ reason: reason, face: face }, n] })
+      gauge(
+        lines,
+        'dial_refusals_total',
+        'Dials the Gate refused, by reason and face (kept as a running total).',
+        totals.to_h { |(reason, face), n| [{ reason: reason, face: face }, n] }
+      )
       hour = @history ? @history.refusals_since(now - 3600) : DialHistoryService::REASONS.to_h { |r| [r, 0] }
-      gauge(lines, 'dial_refusals_last_hour', 'Dials the Gate refused in the last hour, by reason.',
-            hour.transform_keys { |r| { reason: r } })
+      gauge(
+        lines,
+        'dial_refusals_last_hour',
+        'Dials the Gate refused in the last hour, by reason.',
+        hour.transform_keys { |r| { reason: r } }
+      )
     end
 
     def traffic(lines, now)
       count, seconds, bytes = @history ? @history.traffic_since(now - 3600) : [0, 0, 0]
-      gauge(lines, 'dial_seconds_last_hour', 'Seconds on the line of the dials that ended in the last hour.',
-            { {} => seconds })
-      gauge(lines, 'dial_seconds_avg_last_hour', 'The average seconds on the line of those dials.',
-            { {} => count.positive? ? (seconds.to_f / count).round(1) : 0 })
-      gauge(lines, 'dial_bytes_last_hour', 'Bytes the boards sent through the Gate in the dials of the last hour.',
-            { {} => bytes })
+      gauge(lines, 'dial_seconds_last_hour', 'Seconds on the line of the dials that ended in the last hour.', { {} => seconds })
+      gauge(
+        lines,
+        'dial_seconds_avg_last_hour',
+        'The average seconds on the line of those dials.',
+        { {} => count.positive? ? (seconds.to_f / count).round(1) : 0 }
+      )
+      gauge(
+        lines,
+        'dial_bytes_last_hour',
+        'Bytes the boards sent through the Gate in the dials of the last hour.',
+        { {} => bytes }
+      )
       totals = ProbeModel.totals
-      gauge(lines, 'dials_total', 'Every dial of the Gate by result (its probes of kind dial).',
-            ProbeResultModel::RESULTS.to_h { |r| [{ result: r }, totals.fetch([r, 'dial'], 0)] })
+      gauge(
+        lines,
+        'dials_total',
+        'Every dial of the Gate by result (its probes of kind dial).',
+        ProbeResultModel::RESULTS.to_h { |r| [{ result: r }, totals.fetch([r, 'dial'], 0)] }
+      )
     end
 
     def gauge(lines, name, help, values)

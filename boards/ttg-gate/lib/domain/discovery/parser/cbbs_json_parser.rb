@@ -35,10 +35,17 @@ module Discovery
       host, port = endpoint(entry['address'].to_s, entry['port'])
       return unless host && port
 
-      RecordModel.new(source_id: source.id, host: host, port: port, name: text(entry['name']),
-                      location: text(entry['location']), software: text(entry['software']),
-                      hardware: text(entry['hardware']), website: website(entry['website']),
-                      hints: { 'platform' => 'Commodore', 'updated_at' => text(entry['updated_at']) }.compact)
+      RecordModel.new(
+        source_id: source.id,
+        host:      host,
+        port:      port,
+        name:      text(entry['name']),
+        location:  text(entry['location']),
+        software:  text(entry['software']),
+        hardware:  text(entry['hardware']),
+        website:   website(entry['website']),
+        hints:     { 'platform' => 'Commodore', 'updated_at' => text(entry['updated_at']) }.compact
+      )
     end
 
     # [host, port] of an entry, or nil when it is no telnet address.

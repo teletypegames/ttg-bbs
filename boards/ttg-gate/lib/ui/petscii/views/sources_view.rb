@@ -14,19 +14,44 @@ module UI
         BAR = 21
         BAR_COL = 11
         # The name of a list on this screen.
-        NAMES = { 'fidonet' => 'FidoNet', 'fsxnet' => 'fsxNet', 'micronet' => 'MicroNet', 'sbl' => 'SBL',
-                  'syncterm' => 'SyncTERM', 'tbg' => 'TBG', 'cbbs' => 'CBBS' }.freeze
+        NAMES = {
+          'fidonet'  => 'FidoNet',
+          'fsxnet'   => 'fsxNet',
+          'micronet' => 'MicroNet',
+          'sbl'      => 'SBL',
+          'syncterm' => 'SyncTERM',
+          'tbg'      => 'TBG',
+          'cbbs'     => 'CBBS'
+        }.freeze
         # The name of a list beside a field of a board's page.
-        SHORT = { 'fidonet' => 'FIDO', 'fsxnet' => 'FSX', 'micronet' => 'MICRO', 'sbl' => 'SBL',
-                  'syncterm' => 'STERM', 'tbg' => 'TBG', 'cbbs' => 'CBBS' }.freeze
+        SHORT = {
+          'fidonet'  => 'FIDO',
+          'fsxnet'   => 'FSX',
+          'micronet' => 'MICRO',
+          'sbl'      => 'SBL',
+          'syncterm' => 'STERM',
+          'tbg'      => 'TBG',
+          'cbbs'     => 'CBBS'
+        }.freeze
         # Its format and what we may do with it.
-        TERMS = { 'fidonet' => 'daily nodelist/facts', 'fsxnet' => 'weekly nodelist/facts',
-                  'micronet' => 'weekly nodelist/facts', 'sbl' => 'HTML export/credit',
-                  'syncterm' => 'syncterm.lst/credit', 'tbg' => 'monthly ZIP/permission',
-                  'cbbs' => 'JSON/facts only' }.freeze
-        COLORS = { 'cbbs' => Canvas::LIGHT_RED, 'tbg' => Canvas::YELLOW, 'sbl' => Canvas::LIGHT_GREEN,
-                   'syncterm' => Canvas::CYAN, 'fidonet' => Canvas::LIGHT_BLUE, 'fsxnet' => Canvas::ORANGE,
-                   'micronet' => Canvas::PURPLE }.freeze
+        TERMS = {
+          'fidonet'  => 'daily nodelist/facts',
+          'fsxnet'   => 'weekly nodelist/facts',
+          'micronet' => 'weekly nodelist/facts',
+          'sbl'      => 'HTML export/credit',
+          'syncterm' => 'syncterm.lst/credit',
+          'tbg'      => 'monthly ZIP/permission',
+          'cbbs'     => 'JSON/facts only'
+        }.freeze
+        COLORS = {
+          'cbbs'     => Canvas::LIGHT_RED,
+          'tbg'      => Canvas::YELLOW,
+          'sbl'      => Canvas::LIGHT_GREEN,
+          'syncterm' => Canvas::CYAN,
+          'fidonet'  => Canvas::LIGHT_BLUE,
+          'fsxnet'   => Canvas::ORANGE,
+          'micronet' => Canvas::PURPLE
+        }.freeze
         HINT = [['←', true], [' Back  ', false], ['O', true], [' Own  ', false], ['D', true], [' Discover', false]].freeze
 
         def self.color(id) = COLORS.fetch(id, Canvas::LIGHT_GREY)

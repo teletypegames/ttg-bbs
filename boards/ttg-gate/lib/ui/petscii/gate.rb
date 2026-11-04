@@ -39,25 +39,30 @@ module UI
       INPUT_MAX   = Layout::HINT_WIDTH - INPUT_LABEL.length - 2
       MENU_HINT   = [['CRSR', true], [' Move  ', false], ['RETURN', true], [' Open  ', false], ['CRSR down', true],
                      [' List', false]].freeze
-      WARNINGS = {
-        dead: ['This board has not answered', 'our calls for 30 days.', 'It may be gone. Dial anyway?']
-      }.freeze
+      WARNINGS = { dead: ['This board has not answered', 'our calls for 30 days.', 'It may be gone. Dial anyway?'] }.freeze
       REFUSALS = {
-        rate: ['You dialled 10 boards in', '10 minutes. Try again later.'],
-        busy: ['3 callers are on this board', 'already. Try again soon.'],
+        rate:        ['You dialled 10 boards in', '10 minutes. Try again later.'],
+        busy:        ['3 callers are on this board', 'already. Try again soon.'],
         not_petscii: ['This board speaks neither', 'PETSCII nor plain ASCII.'],
-        not_public: ['This board is not on the', 'public internet.'],
-        unknown: ['This board is gone from the list.']
+        not_public:  ['This board is not on the', 'public internet.'],
+        unknown:     ['This board is gone from the list.']
       }.freeze
       # The lists of their own: the title, the chip, its colour, the words of
       # an empty one, the BrowseService method.
       FIXED = {
-        new: ['NEW THIS WEEK', '7 days', Canvas::LIGHT_GREY, 'No new board this week.', :new_this_week],
-        died: ['RECENTLY DIED', '30 days', Canvas::LIGHT_RED, 'None died in 30 days.', :recently_died],
+        new:    ['NEW THIS WEEK', '7 days', Canvas::LIGHT_GREY, 'No new board this week.', :new_this_week],
+        died:   ['RECENTLY DIED', '30 days', Canvas::LIGHT_RED, 'None died in 30 days.', :recently_died],
         graves: ['GRAVEYARD', 'dead', Canvas::GREY, 'No graves yet.', :graveyard]
       }.freeze
-      BANDS = { discover: Canvas::LIGHT_GREEN, all: Canvas::LIGHT_GREEN, search: Canvas::WHITE, browse: Canvas::ORANGE, new: Canvas::PURPLE,
-                died: Canvas::LIGHT_RED, graves: Canvas::GREY }.freeze
+      BANDS = {
+        discover: Canvas::LIGHT_GREEN,
+        all:      Canvas::LIGHT_GREEN,
+        search:   Canvas::WHITE,
+        browse:   Canvas::ORANGE,
+        new:      Canvas::PURPLE,
+        died:     Canvas::LIGHT_RED,
+        graves:   Canvas::GREY
+      }.freeze
 
       attr_reader :focus, :tab
 

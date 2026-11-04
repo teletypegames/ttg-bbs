@@ -11,12 +11,54 @@ module Discovery
 
     def test_fixed_answers
       telnet = N.new
-      data, reply = telnet.feed(bytes(N::IAC, N::DO, N::TTYPE, N::IAC, N::DO, N::NAWS, N::IAC, N::WILL, 1,
-                                      N::IAC, N::DO, 0, N::IAC, N::WILL, 3, 'Hi', N::IAC, N::IAC))
+      data, reply = telnet.feed(bytes(
+                                  N::IAC,
+                                  N::DO,
+                                  N::TTYPE,
+                                  N::IAC,
+                                  N::DO,
+                                  N::NAWS,
+                                  N::IAC,
+                                  N::WILL,
+                                  1,
+                                  N::IAC,
+                                  N::DO,
+                                  0,
+                                  N::IAC,
+                                  N::WILL,
+                                  3,
+                                  'Hi',
+                                  N::IAC,
+                                  N::IAC
+                                ))
       assert_equal bytes('Hi', 255), data
-      assert_equal bytes(N::IAC, N::WILL, N::TTYPE,
-                         N::IAC, N::WILL, N::NAWS, N::IAC, N::SB, N::NAWS, 0, 80, 0, 25, N::IAC, N::SE,
-                         N::IAC, N::DONT, 1, N::IAC, N::WONT, 0, N::IAC, N::DONT, 3), reply
+      assert_equal bytes(
+        N::IAC,
+        N::WILL,
+        N::TTYPE,
+        N::IAC,
+        N::WILL,
+        N::NAWS,
+        N::IAC,
+        N::SB,
+        N::NAWS,
+        0,
+        80,
+        0,
+        25,
+        N::IAC,
+        N::SE,
+        N::IAC,
+        N::DONT,
+        1,
+        N::IAC,
+        N::WONT,
+        0,
+        N::IAC,
+        N::DONT,
+        3
+      ),
+                   reply
       assert_equal ['DO TTYPE', 'DO NAWS', 'WILL ECHO', 'DO BINARY', 'WILL SGA'], telnet.options
     end
 
@@ -54,7 +96,7 @@ module Discovery
 
     def call(port, **)
       TelnetProbe.new(connect_timeout: 2, read_timeout: 1.5, nudge_after: 0.5, callable: ->(*) { true }, **)
-                 .call('127.0.0.1', port)
+        .call('127.0.0.1', port)
     end
 
     def test_a_banner

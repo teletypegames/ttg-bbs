@@ -27,8 +27,13 @@ module Discovery
       listing = ListingModel.find(id)
       return unless listing
 
-      new(listing: listing, board: BoardModel.where(id: id).naked.first, state: BoardStateModel.of(id) || {},
-          sources: BoardSourceModel.listed(id), probes: ProbeModel.strip(id, now - ((STRIP_DAYS + 1) * 86_400)))
+      new(
+        listing: listing,
+        board:   BoardModel.where(id: id).naked.first,
+        state:   BoardStateModel.of(id) || {},
+        sources: BoardSourceModel.listed(id),
+        probes:  ProbeModel.strip(id, now - ((STRIP_DAYS + 1) * 86_400))
+      )
     end
 
     # The shown fields that have a value, each with the name of its source:
@@ -51,8 +56,16 @@ module Discovery
       end
     end
 
-    LABELS = { name: 'Name', sysop: 'Sysop', location: 'Location', since: 'Since', ftn_address: 'FTN address',
-               software: 'Software', hardware: 'Hardware', website: 'Website' }.freeze
+    LABELS = {
+      name:        'Name',
+      sysop:       'Sysop',
+      location:    'Location',
+      since:       'Since',
+      ftn_address: 'FTN address',
+      software:    'Software',
+      hardware:    'Hardware',
+      website:     'Website'
+    }.freeze
     ENCODINGS = %w[ansi petscii atascii ascii].freeze
 
     def ftn_address = board[:ftn_address]

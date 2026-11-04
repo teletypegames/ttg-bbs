@@ -41,8 +41,17 @@ module UI
       # The keys that open a place from anywhere: the tabs (G as in Global
       # Discovery too), the sub-menu's yellow signs, the axes of Browse
       # (soft_w_are, _c_ountry, networ_k_), U for the Sources as before, Help and Quit.
-      HOTKEYS = { 'o' => :own, 'd' => :discover, 'g' => :discover, 'w' => :software, 'c' => :country, 'k' => :network,
-                  'u' => :sources, 'h' => :help, 'q' => :quit }.merge(MENU.to_h { |i| [i.letter, i.key] }).freeze
+      HOTKEYS = {
+        'o' => :own,
+        'd' => :discover,
+        'g' => :discover,
+        'w' => :software,
+        'c' => :country,
+        'k' => :network,
+        'u' => :sources,
+        'h' => :help,
+        'q' => :quit
+      }.merge(MENU.to_h { |i| [i.letter, i.key] }).freeze
 
       module_function
 
@@ -102,8 +111,13 @@ module UI
       # The hint bar: +parts+ of [text, key?], the keys yellow, the words
       # white.
       def hint(canvas, parts)
-        Layout.runs(canvas, Layout::HINT_ROW, 1, parts.map { |t, k| [t, k ? Canvas::YELLOW : Canvas::WHITE] },
-                    limit: Layout::HINT_WIDTH)
+        Layout.runs(
+          canvas,
+          Layout::HINT_ROW,
+          1,
+          parts.map { |t, k| [t, k ? Canvas::YELLOW : Canvas::WHITE] },
+          limit: Layout::HINT_WIDTH
+        )
       end
     end
   end

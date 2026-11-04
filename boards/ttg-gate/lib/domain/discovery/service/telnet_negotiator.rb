@@ -26,10 +26,29 @@ module Discovery
     COLUMNS  = 80
     ROWS     = 25
     VERBS = { DO => 'DO', DONT => 'DONT', WILL => 'WILL', WONT => 'WONT' }.freeze
-    NAMES = { 0 => 'BINARY', 1 => 'ECHO', 3 => 'SGA', 5 => 'STATUS', 6 => 'TM', 24 => 'TTYPE', 31 => 'NAWS',
-              32 => 'TSPEED', 33 => 'LFLOW', 34 => 'LINEMODE', 35 => 'XDISPLOC', 36 => 'ENVIRON',
-              39 => 'NEW-ENVIRON', 42 => 'CHARSET', 44 => 'COM-PORT', 46 => 'STARTTLS', 69 => 'MSDP',
-              70 => 'MSSP', 85 => 'COMPRESS', 86 => 'COMPRESS2', 201 => 'GMCP' }.freeze
+    NAMES = {
+      0   => 'BINARY',
+      1   => 'ECHO',
+      3   => 'SGA',
+      5   => 'STATUS',
+      6   => 'TM',
+      24  => 'TTYPE',
+      31  => 'NAWS',
+      32  => 'TSPEED',
+      33  => 'LFLOW',
+      34  => 'LINEMODE',
+      35  => 'XDISPLOC',
+      36  => 'ENVIRON',
+      39  => 'NEW-ENVIRON',
+      42  => 'CHARSET',
+      44  => 'COM-PORT',
+      46  => 'STARTTLS',
+      69  => 'MSDP',
+      70  => 'MSSP',
+      85  => 'COMPRESS',
+      86  => 'COMPRESS2',
+      201 => 'GMCP'
+    }.freeze
 
     attr_reader :options
 

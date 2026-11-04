@@ -14,27 +14,34 @@ module UI
         # Why a call failed, from our server: the words of a probe's result.
         FAILURES = {
           'dns_fail' => 'the name does not resolve (the domain may be gone)',
-          'timeout' => 'no answer in time (it may be a firewall, or the machine is off)',
-          'refused' => 'the port is closed (the board is not running)',
-          'closed' => 'it hung up at once'
+          'timeout'  => 'no answer in time (it may be a firewall, or the machine is off)',
+          'refused'  => 'the port is closed (the board is not running)',
+          'closed'   => 'it hung up at once'
         }.freeze
         REFUSALS = {
-          rate: 'You have dialled %<limit>d boards in 10 minutes. The next line is free in %<wait>s.',
-          busy: '%<limit>d callers of the gate are on this board already. Try again in a minute.',
+          rate:        'You have dialled %<limit>d boards in 10 minutes. The next line is free in %<wait>s.',
+          busy:        '%<limit>d callers of the gate are on this board already. Try again in a minute.',
           not_petscii: 'This board has no PETSCII face.',
-          not_public: 'This board is not on the public internet; the gate does not call it.',
-          unknown: 'This board is not in the catalog any more.'
+          not_public:  'This board is not on the public internet; the gate does not call it.',
+          unknown:     'This board is not in the catalog any more.'
         }.freeze
 
         # The keys of a warning's question: Y dials, N goes back.
-        ANSWERS = { 'y' => true, 'Y' => true, 'n' => false, 'N' => false, :escape => false, 'q' => false,
-                    'Q' => false }.freeze
+        ANSWERS = {
+          'y'     => true,
+          'Y'     => true,
+          'n'     => false,
+          'N'     => false,
+          :escape => false,
+          'q'     => false,
+          'Q'     => false
+        }.freeze
 
         WARNINGS = {
           petscii_only: ['This board is made for a Commodore 64.',
                          'It speaks PETSCII, which a modern terminal shows as noise. Dial anyway?'],
-          dead: ['This board has not answered our calls for 30 days or more.',
-                 'It may be gone for good. Dial anyway? Your call is recorded as one of ours.']
+          dead:         ['This board has not answered our calls for 30 days or more.',
+                         'It may be gone for good. Dial anyway? Your call is recorded as one of ours.']
         }.freeze
 
         key(:enter, 'd', 'D') { dial }

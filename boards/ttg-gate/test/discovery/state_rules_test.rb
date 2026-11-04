@@ -75,7 +75,10 @@ module Discovery
       jitters = Array.new(200) { StateRules.next_probe_at(online, now: NOW) - NOW - DAY }
       assert(jitters.all? { |j| j.between?(-7200, 7200) })
       assert_equal NOW,
-StateRules.next_probe_at(StateRules::Verdict.new(state: 'unknown', success_rate_7d: nil, failures: 0), now: NOW)
+                   StateRules.next_probe_at(
+                     StateRules::Verdict.new(state: 'unknown', success_rate_7d: nil, failures: 0),
+                     now: NOW
+                   )
       [[1, 3600], [2, 6 * 3600], [3, DAY], [9, DAY]].each do |failures, wait|
         down = StateRules::Verdict.new(state: 'down', success_rate_7d: 0.0, failures: failures)
         assert_equal NOW + wait, StateRules.next_probe_at(down, now: NOW)

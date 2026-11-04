@@ -82,8 +82,16 @@ module Discovery
     # [live_path] the JSON file of the live dials, or nil
     # [resolver]  host → its IP addresses (TelnetProbe#resolve)
     # [limits]    window:, per_caller:, per_host:, idle: (LIMITS by default)
-    def initialize(recorder:, history: nil, live_path: nil, clock: -> { Time.now.to_f }, log: LOG,
-                   resolver: TelnetProbe.new.method(:resolve), callable: Address.method(:callable?), **limits)
+    def initialize(
+      recorder:,
+      history: nil,
+      live_path: nil,
+      clock: -> { Time.now.to_f },
+      log: LOG,
+      resolver: TelnetProbe.new.method(:resolve),
+      callable: Address.method(:callable?),
+      **limits
+    )
       @recorder  = recorder
       @history   = history
       @live_path = live_path
@@ -241,16 +249,25 @@ module Discovery
 
     # The time and traffic of +call+ into the history.
     def remember(call, result)
-      @history&.dialled(at: call.ended_at || call.at, board_id: call.board.id, face: DialService.face(call.face),
-                        result: result, seconds: call.seconds, bytes: call.report.received)
+      @history&.dialled(
+        at:       call.ended_at || call.at,
+        board_id: call.board.id,
+        face:     DialService.face(call.face),
+        result:   result,
+        seconds:  call.seconds,
+        bytes:    call.report.received
+      )
     end
 
     # The dial of +call+ as a probe of its board.
     def probe_result(call)
       report = call.report
-      ProbeResultModel.new(result: DialService.result(report), at: call.at,
-                           latency_ms: report.connect_seconds && (report.connect_seconds * 1000).round,
-                           ip: report.address)
+      ProbeResultModel.new(
+        result:     DialService.result(report),
+        at:         call.at,
+        latency_ms: report.connect_seconds && (report.connect_seconds * 1000).round,
+        ip:         report.address
+      )
     end
 
     # What the live file says: the dials in progress, the limits, the lines
@@ -260,8 +277,13 @@ module Discovery
       now = @clock.call
       @mutex.synchronize do
         windows = @dials.keys.map { |caller| recent(caller, now) }.reject(&:empty?)
-        { 'live' => @lines.values.sum, 'at' => now.to_i, 'limits' => limits,
-          'host_lines_max' => @lines.values.max.to_i, 'caller_dials' => windows.map { |times| times.map(&:to_i) } }
+        {
+          'live'           => @lines.values.sum,
+          'at'             => now.to_i,
+          'limits'         => limits,
+          'host_lines_max' => @lines.values.max.to_i,
+          'caller_dials'   => windows.map { |times| times.map(&:to_i) }
+        }
       end
     end
 

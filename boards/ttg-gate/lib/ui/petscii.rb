@@ -17,8 +17,7 @@ module UI
     # gate's own goodbye.
     def self.call(session, bbs)
       NODES.take do |node|
-        Gate.new(session, boards: bbs.directory.boards(petscii: true), browse: bbs.browse, dials: bbs.dials,
-                          node: node).run
+        Gate.new(session, boards: bbs.directory.boards(petscii: true), browse: bbs.browse, dials: bbs.dials, node: node).run
       end
       goodbye(session)
     end

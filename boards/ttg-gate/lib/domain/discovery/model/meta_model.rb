@@ -12,8 +12,7 @@ module Discovery
 
     # Sets +key+ to +value+ (as text).
     def self.store(key, value)
-      dataset.insert_conflict(target: :key, update: { value: Sequel[:excluded][:value] })
-             .insert(key: key, value: value.to_s)
+      dataset.insert_conflict(target: :key, update: { value: Sequel[:excluded][:value] }).insert(key: key, value: value.to_s)
     end
 
     # Adds +amount+ to the number kept under +key+ (made when missing).

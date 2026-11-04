@@ -41,8 +41,16 @@ module Discovery
     # list of up to MAX_BYTES never sits in the memory whole as it comes in.
     def download(uri)
       Tempfile.create('ttg-gate-bbs-source', binmode: true) do |file|
-        response = BBS::HTTP.get(uri.to_s, open_timeout: TIMEOUT, read_timeout: TIMEOUT, deadline: DEADLINE, to: file,
-                                           max_bytes: MAX_BYTES, redirects: REDIRECTS, user_agent: USER_AGENT)
+        response = BBS::HTTP.get(
+          uri.to_s,
+          open_timeout: TIMEOUT,
+          read_timeout: TIMEOUT,
+          deadline:     DEADLINE,
+          to:           file,
+          max_bytes:    MAX_BYTES,
+          redirects:    REDIRECTS,
+          user_agent:   USER_AGENT
+        )
         raise FetchError, "#{uri}: HTTP #{response.status}" unless response.ok?
 
         file.rewind

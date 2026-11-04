@@ -68,10 +68,16 @@ module Discovery
       host, port = endpoint(fields['telnet'])
       return unless host && port
 
-      RecordModel.new(source_id: source.id, host: host, port: port,
-                      name: names["#{host}:#{port}"] || title(lines),
-                      location: location(fields['location']), software: software(fields['software']),
-                      website: website(fields['web']), hints: hints(fields, lines[(last + 1)..].join("\n")))
+      RecordModel.new(
+        source_id: source.id,
+        host:      host,
+        port:      port,
+        name:      names["#{host}:#{port}"] || title(lines),
+        location:  location(fields['location']),
+        software:  software(fields['software']),
+        website:   website(fields['web']),
+        hints:     hints(fields, lines[(last + 1)..].join("\n"))
+      )
     end
 
     # The "Label: value" fields of a block by their lowercase label, and the

@@ -49,8 +49,11 @@ module Discovery
       week = probes.select { |p| p[:at] >= now - (7 * DAY) }
       rate = week.empty? ? nil : week.count { |p| success?(p) }.fdiv(week.size)
       failures = probes.reverse.take_while { |p| !success?(p) }.size
-      Verdict.new(state: name(probes, failures, rate, last_success_at, first_probe_at, now),
-                          success_rate_7d: rate, failures: failures)
+      Verdict.new(
+        state:           name(probes, failures, rate, last_success_at, first_probe_at, now),
+        success_rate_7d: rate,
+        failures:        failures
+      )
     end
 
     def name(probes, failures, rate, last_success_at, first_probe_at, now)

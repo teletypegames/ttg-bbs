@@ -129,9 +129,15 @@ SQL
 DISCOVERY_ADDED = {
   'probes'      => { 'duration_ms' => 'INTEGER', 'banner_bytes' => 'INTEGER' },
   'boards'      => { 'hardware' => 'TEXT', 'website' => 'TEXT' },
-  'board_state' => { 'c64_probe_at' => 'INTEGER', 'c64_result' => 'TEXT', 'c64_encoding' => 'TEXT',
-                    'c64_banner' => 'BLOB', 'c64_banner_hash' => 'TEXT', 'c64_banner_at' => 'INTEGER',
-                    'c64_window' => 'INTEGER' }
+  'board_state' => {
+    'c64_probe_at'    => 'INTEGER',
+    'c64_result'      => 'TEXT',
+    'c64_encoding'    => 'TEXT',
+    'c64_banner'      => 'BLOB',
+    'c64_banner_hash' => 'TEXT',
+    'c64_banner_at'   => 'INTEGER',
+    'c64_window'      => 'INTEGER'
+  }
 }.freeze
 
 DISCOVERY_MIGRATIONS = [

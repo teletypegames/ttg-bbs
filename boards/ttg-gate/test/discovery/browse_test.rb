@@ -26,12 +26,27 @@ module Discovery
       @browse = BrowseService.new(config, random: Random.new(1))
     end
 
-    def board(host, name, state, tags, software: nil, last_success_at: NOW, state_since: NOW - DAY,
-              first_seen_at: NOW - (60 * DAY), optout: nil)
+    def board(
+      host,
+      name,
+      state,
+      tags,
+      software: nil,
+      last_success_at: NOW,
+      state_since: NOW - DAY,
+      first_seen_at: NOW - (60 * DAY),
+      optout: nil
+    )
       id = BoardModel.id_for(host, 23, first_seen_at)
       BoardModel.where(id: id).update(name: name, optout: optout, first_seen_at: first_seen_at)
-      BoardStateModel.save(id, state: state, software: software, last_success_at: last_success_at,
-                             state_since: state_since, first_probe_at: NOW - (60 * DAY))
+      BoardStateModel.save(
+        id,
+        state:           state,
+        software:        software,
+        last_success_at: last_success_at,
+        state_since:     state_since,
+        first_probe_at:  NOW - (60 * DAY)
+      )
       TagModel.replace(id, tags + (state == 'unknown' ? [] : [state]))
       BoardsFtsModel.index(id)
       @ids[host] = id
@@ -84,8 +99,10 @@ module Discovery
 
     def test_marks_and_status
       list = @browse.search('all').to_h { |l| [l.title, l] }
-      assert_equal({ 'Alpha BBS' => '●', 'Gamma Lounge' => '✗', 'Delta Tomb' => '†', 'Fresh BBS' => '?' },
-                   list.slice('Alpha BBS', 'Gamma Lounge', 'Delta Tomb', 'Fresh BBS').transform_values(&:mark))
+      assert_equal(
+        { 'Alpha BBS' => '●', 'Gamma Lounge' => '✗', 'Delta Tomb' => '†', 'Fresh BBS' => '?' },
+        list.slice('Alpha BBS', 'Gamma Lounge', 'Delta Tomb', 'Fresh BBS').transform_values(&:mark)
+      )
       assert_equal 'down for 3 days', list['Gamma Lounge'].status(NOW)
       assert_equal 'no answer for 5 hours', list['Delta Tomb'].status(NOW + (5 * 3600))
       assert_equal 'not called yet', list['Fresh BBS'].status(NOW)
@@ -102,8 +119,10 @@ module Discovery
       page = @browse.page(id, now: NOW)
       assert_equal "·#{' ' * 26}█ ·", page.strip(NOW, utc_offset: 0)
       assert_equal "\x93HELLO".b, page.banner
-      assert_equal([['Name', 'Beta Commodore'], ['Software', 'Color 64'], %w[Country HU], %w[Encoding petscii]],
-                   page.fields.map { |f| [f.label, f.value] })
+      assert_equal(
+        [['Name', 'Beta Commodore'], ['Software', 'Color 64'], %w[Country HU], %w[Encoding petscii]],
+        page.fields.map { |f| [f.label, f.value] }
+      )
       assert_equal 'DB-IP', page.fields.find { |f| f.label == 'Country' }.source
       BoardModel.set_optout(id, 'no_preview')
       assert_nil @browse.page(id, now: NOW).banner

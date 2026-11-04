@@ -26,8 +26,14 @@ module Discovery
     # A dial that went: its +result+ (a probe result), the +seconds+ it was
     # connected and the +bytes+ the board sent through the Gate.
     def dialled(at:, board_id:, face:, result:, seconds:, bytes:)
-      DialModel.insert(at: at.to_i, board_id: board_id, face: face.to_s, result: result.to_s, seconds: seconds.to_i,
-                       bytes: bytes.to_i)
+      DialModel.insert(
+        at:       at.to_i,
+        board_id: board_id,
+        face:     face.to_s,
+        result:   result.to_s,
+        seconds:  seconds.to_i,
+        bytes:    bytes.to_i
+      )
       prune(at.to_i)
     end
 

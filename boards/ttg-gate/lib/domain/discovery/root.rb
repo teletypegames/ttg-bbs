@@ -28,8 +28,10 @@ module Discovery
       @db_path = env.fetch('TTG_GATE_BBS_DISCOVERY_DB', File.join(@data, 'discovery.sqlite3'))
       @db      = Root.open(@db_path)
       @config  = ConfigRepository.new(File.join(ROOT, 'config/discovery'))
-      @optout  = OptoutRepository.new(env.fetch('TTG_GATE_BBS_DISCOVERY_OPTOUT',
-                                                File.join(ROOT, 'config/discovery-optout.yml')))
+      @optout  = OptoutRepository.new(env.fetch(
+                                        'TTG_GATE_BBS_DISCOVERY_OPTOUT',
+                                        File.join(ROOT, 'config/discovery-optout.yml')
+                                      ))
       @webhook = env['TTG_GATE_BBS_DISCORD_WEBHOOK'].to_s
       @dial_limits = DialService::LIMITS.to_h { |key, default| [key, limit(env, "TTG_GATE_BBS_DIAL_#{key.upcase}", default)] }
       build
@@ -50,18 +52,38 @@ module Discovery
     end
 
     def importer
-      ImportService.new(config: @config, fetcher: @fetcher, tags: @tags, aliases: @aliases,
-                        optout: @optout, alert: method(:alert))
+      ImportService.new(
+        config:  @config,
+        fetcher: @fetcher,
+        tags:    @tags,
+        aliases: @aliases,
+        optout:  @optout,
+        alert:   method(:alert)
+      )
     end
 
     def prober(concurrency: ProberService::CONCURRENCY)
-      ProberService.new(probe: TelnetProbe.new, tags: @tags, aliases: @aliases,
-                        optout: @optout, geoip: @geoip, config: @config, metrics: metrics, concurrency: concurrency)
+      ProberService.new(
+        probe:       TelnetProbe.new,
+        tags:        @tags,
+        aliases:     @aliases,
+        optout:      @optout,
+        geoip:       @geoip,
+        config:      @config,
+        metrics:     metrics,
+        concurrency: concurrency
+      )
     end
 
     def metrics
-      MetricsService.new(File.join(@data, 'discovery-metrics.prom'), dials_path: dials_path, db_path: @db_path,
-                         history: history, geoip_path: @geoip.path, optout: @optout)
+      MetricsService.new(
+        File.join(@data, 'discovery-metrics.prom'),
+        dials_path: dials_path,
+        db_path:    @db_path,
+        history:    history,
+        geoip_path: @geoip.path,
+        optout:     @optout
+      )
     end
 
     # The Gate's side: the lists and pages it shows.

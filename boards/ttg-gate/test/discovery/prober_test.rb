@@ -39,9 +39,16 @@ module Discovery
 
     def prober(results = {}, **)
       @probe = Probe.new(results)
-      ProberService.new(probe: @probe, tags: TagService.new(config),
-                        aliases: AliasService.new, optout: @optout, geoip: Geoip.new, config: config,
-                        log: ->(_) {}, **)
+      ProberService.new(
+        probe:   @probe,
+        tags:    TagService.new(config),
+        aliases: AliasService.new,
+        optout:  @optout,
+        geoip:   Geoip.new,
+        config:  config,
+        log:     ->(_) {},
+        **
+      )
     end
 
     def test_record_an_ok_probe

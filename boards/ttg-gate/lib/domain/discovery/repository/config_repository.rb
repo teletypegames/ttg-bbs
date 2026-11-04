@@ -30,8 +30,11 @@ module Discovery
 
     def signatures
       @signatures ||= load('software.yml').fetch('signatures').map do |r|
-        Signature.new(id: r.fetch('id').to_s, name: r.fetch('name').to_s,
-                      pattern: Regexp.new(r.fetch('pattern'), Regexp::IGNORECASE))
+        Signature.new(
+          id:      r.fetch('id').to_s,
+          name:    r.fetch('name').to_s,
+          pattern: Regexp.new(r.fetch('pattern'), Regexp::IGNORECASE)
+        )
       end.freeze
     end
 
@@ -39,8 +42,12 @@ module Discovery
     def rules(axis)
       @rules ||= {}
       @rules[axis] ||= Array(load('source-map.yml')[axis.to_s]).map do |r|
-        Rule.new(source: r.fetch('source').to_s, field: r.fetch('field').to_s,
-                 pattern: Regexp.new(r.fetch('pattern'), Regexp::IGNORECASE), tag: r.fetch('tag').to_s)
+        Rule.new(
+          source:  r.fetch('source').to_s,
+          field:   r.fetch('field').to_s,
+          pattern: Regexp.new(r.fetch('pattern'), Regexp::IGNORECASE),
+          tag:     r.fetch('tag').to_s
+        )
       end.freeze
     end
 

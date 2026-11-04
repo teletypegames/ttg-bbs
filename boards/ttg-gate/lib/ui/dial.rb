@@ -10,8 +10,7 @@ module UI
   # who is calling (the face picked here, the caller's address): our board
   # skips its terminal question and logo, and counts the real caller.
   def self.dial(session, board)
-    BBS::Gateway.new(host: board.host, port: board.port, name: board.name, public_only: false, forward: true)
-                .call(session)
+    BBS::Gateway.new(host: board.host, port: board.port, name: board.name, public_only: false, forward: true).call(session)
   end
 
   # Dials +board+ of Global Discovery (a Discovery::ListingModel) by the rules
@@ -22,9 +21,14 @@ module UI
   # else the dial's Call. Raises IOError when the caller hangs up meanwhile.
   def self.dial_catalog(session, dials, caller, board, face:)
     dials.dial(caller, board, face: face) do |call|
-      gateway = BBS::Gateway.new(host: call.ip, port: board.port, name: board.title,
-                                 connect_timeout: ::Discovery::DialService::CONNECT_TIMEOUT, idle: dials.idle,
-                                 translate: face == :petscii && board.translated_for_c64?)
+      gateway = BBS::Gateway.new(
+        host:            call.ip,
+        port:            board.port,
+        name:            board.title,
+        connect_timeout: ::Discovery::DialService::CONNECT_TIMEOUT,
+        idle:            dials.idle,
+        translate:       face == :petscii && board.translated_for_c64?
+      )
       gateway.call(session) { |report| call.report = report }
     end
   end

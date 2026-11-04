@@ -15,8 +15,18 @@ module Discovery
     def fixture(name) = File.binread(File.join(FIXTURES, name))
 
     def source(id = 'test', format: 'nodelist', network: nil, member: nil)
-      SourceConfigModel.new(id: id, name: id.capitalize, url: "https://#{id}.example.org/list", format: format,
-                      link: nil, member: member, network: network, licence: '', attribution: '', enabled: true)
+      SourceConfigModel.new(
+        id:          id,
+        name:        id.capitalize,
+        url:         "https://#{id}.example.org/list",
+        format:      format,
+        link:        nil,
+        member:      member,
+        network:     network,
+        licence:     '',
+        attribution: '',
+        enabled:     true
+      )
     end
 
     def config = @config ||= ConfigRepository.new(CONFIG)
@@ -41,8 +51,14 @@ module Discovery
 
     def probe(result, at:, banner: '', **rest)
       latency = %w[ok silent closed].include?(result) ? 12 : nil
-      ProbeResultModel.new(result: result, at: at, latency_ms: latency, ip: rest.fetch(:ip, '192.0.2.10'),
-                           banner: banner.b, options: rest.fetch(:options, []))
+      ProbeResultModel.new(
+        result:     result,
+        at:         at,
+        latency_ms: latency,
+        ip:         rest.fetch(:ip, '192.0.2.10'),
+        banner:     banner.b,
+        options:    rest.fetch(:options, [])
+      )
     end
   end
 end

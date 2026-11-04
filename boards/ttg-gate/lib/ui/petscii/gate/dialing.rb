@@ -7,8 +7,15 @@ module UI
       # catalog's by the dial rules, and a stored PETSCII banner.
       module Dialing
         # The keys of a warning's question: Y dials, N goes back.
-        ANSWERS = { 'y' => true, 'Y' => true, 'n' => false, 'N' => false, :escape => false, 'q' => false,
-                    'Q' => false }.freeze
+        ANSWERS = {
+          'y'     => true,
+          'Y'     => true,
+          'n'     => false,
+          'N'     => false,
+          :escape => false,
+          'q'     => false,
+          'Q'     => false
+        }.freeze
 
         # The line to a board and back; the numbers of the tabs read anew.
         def hand_over(&)
@@ -60,8 +67,12 @@ module UI
         end
 
         def confirm(listing, warning)
-          question = Views::TextView.new(Layout.plain(listing.title), WARNINGS.fetch(warning, []).map { |l| [l, Canvas::YELLOW] },
-                                         color: Canvas::YELLOW, keys: [%w[Y Dial], %w[N Back]])
+          question = Views::TextView.new(
+            Layout.plain(listing.title),
+            WARNINGS.fetch(warning, []).map { |l| [l, Canvas::YELLOW] },
+            color: Canvas::YELLOW,
+            keys:  [%w[Y Dial], %w[N Back]]
+          )
           pop_up(question, hint: [['Y', true], [' Dial  ', false], ['N', true], [' Back', false]]) { |key| ANSWERS[key] }
         end
 

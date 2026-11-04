@@ -17,7 +17,7 @@ module Discovery
     def self.save_config(source, **changes)
       config = CONFIG.to_h { |column| [column, source.public_send(column)] }
       dataset.insert_conflict(target: :id, update: CONFIG.to_h { |column| [column, Sequel[:excluded][column]] })
-             .insert(id: source.id, **config)
+        .insert(id: source.id, **config)
       where(id: source.id).update(changes) unless changes.empty?
     end
 

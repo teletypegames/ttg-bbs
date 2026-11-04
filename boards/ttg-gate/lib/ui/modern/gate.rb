@@ -11,9 +11,10 @@ module UI
 
       def initialize(session, bbs)
         super(session, face: :modern)
-        @sides = { own: OwnServers.new(bbs.directory.boards),
-                   discovery: Discovery::Home.new(Discovery::Context.new(session: session, browse: bbs.browse,
-                                                                         dials: bbs.dials)) }
+        @sides = {
+          own:       OwnServers.new(bbs.directory.boards),
+          discovery: Discovery::Home.new(Discovery::Context.new(session: session, browse: bbs.browse, dials: bbs.dials))
+        }
         @side = :own
       end
 
@@ -39,8 +40,13 @@ module UI
       def prompt(frame)
         label = line.label.to_s
         shown = line.tail(width - label.length - 3)
-        print_lines(frame, [hint_line, "#{GREEN}#{BOLD}#{label}#{RESET} #{TEXT}#{shown}#{RESET}"],
-                    x: MARGIN + 1, y: rows - 2, clear: true)
+        print_lines(
+          frame,
+          [hint_line, "#{GREEN}#{BOLD}#{label}#{RESET} #{TEXT}#{shown}#{RESET}"],
+          x:     MARGIN + 1,
+          y:     rows - 2,
+          clear: true
+        )
         cursor(rows - 1, MARGIN + label.length + shown.length + 2)
       end
 

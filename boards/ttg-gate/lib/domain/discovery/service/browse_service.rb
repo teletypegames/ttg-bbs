@@ -60,7 +60,7 @@ module Discovery
         listing.tags.each { |t| counts[t] += 1 if spec[:tags] ? spec[:tags].include?(t) : t.start_with?(spec[:prefix]) }
       end
       counts.map { |tag, n| Facet.new(tag: tag, label: label(tag), count: n) }
-            .sort_by { |f| [-f.count, f.label.downcase] }
+        .sort_by { |f| [-f.count, f.label.downcase] }
     end
 
     # The boards first seen in the last NEW_DAYS days (not those of the first
@@ -68,7 +68,7 @@ module Discovery
     def new_this_week(petscii: false, now: Time.now.to_i)
       after = [now - (NEW_DAYS * DAY), MetaModel.value('started_at').to_i + DAY].max
       ListingModel.matching(ListingFilter.new(petscii: petscii)).select { |l| l.first_seen_at > after }
-                  .sort_by { |l| [-l.first_seen_at, l.title.downcase] }
+        .sort_by { |l| [-l.first_seen_at, l.title.downcase] }
     end
 
     # An online board at random, nil when there is none.
@@ -79,7 +79,7 @@ module Discovery
     # The boards that turned dead in the last RECENT_DEAD, the freshest first.
     def recently_died(petscii: false, now: Time.now.to_i)
       graveyard(petscii: petscii).select { |l| l.state_since.to_i >= now - RECENT_DEAD }
-                                 .sort_by { |l| [-l.state_since.to_i, l.title.downcase] }
+        .sort_by { |l| [-l.state_since.to_i, l.title.downcase] }
     end
 
     # Every dead board: they are never deleted, their history stays.
@@ -108,9 +108,17 @@ module Discovery
       end
     end
 
-    NETWORKS = { 'fidonet' => 'FidoNet', 'fsxnet' => 'fsxNet', 'dovenet' => 'DOVE-Net', 'micronet' => 'Micronet',
-                 'amiganet' => 'AmigaNet', 'agoranet' => 'AgoraNet', 'hobbynet' => 'HobbyNet', 'tqwnet' => 'tqwNet',
-                 'retronet' => 'RetroNet' }.freeze
+    NETWORKS = {
+      'fidonet'  => 'FidoNet',
+      'fsxnet'   => 'fsxNet',
+      'dovenet'  => 'DOVE-Net',
+      'micronet' => 'Micronet',
+      'amiganet' => 'AmigaNet',
+      'agoranet' => 'AgoraNet',
+      'hobbynet' => 'HobbyNet',
+      'tqwnet'   => 'tqwNet',
+      'retronet' => 'RetroNet'
+    }.freeze
 
     private
 

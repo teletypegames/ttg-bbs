@@ -31,11 +31,20 @@ module Discovery
     # Writes the row of board +board_id+ in +source_id+: made active with
     # +fields+ (JSON), first seen at +now+ when new.
     def self.upsert(board_id, source_id, fields, now)
-      dataset.insert_conflict(target: %i[board_id source_id],
-                              update: { fields: Sequel[:excluded][:fields], active: 1,
-                                        last_seen_at: Sequel[:excluded][:last_seen_at] })
-             .insert(board_id: board_id, source_id: source_id, fields: fields, active: 1, first_seen_at: now,
-                     last_seen_at: now)
+      dataset.insert_conflict(
+        target: %i[board_id source_id],
+        update: {
+          fields:       Sequel[:excluded][:fields],
+          active:       1,
+          last_seen_at: Sequel[:excluded][:last_seen_at]
+        }
+      )
+        .insert(board_id:      board_id,
+                source_id:     source_id,
+                fields:        fields,
+                active:        1,
+                first_seen_at: now,
+                last_seen_at:  now)
     end
 
     # Turns the rows of the sources not in +ids+ inactive (a source switched

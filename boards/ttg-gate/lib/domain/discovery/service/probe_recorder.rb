@@ -65,8 +65,11 @@ module Discovery
 
       encoding = BannerAnalyzer.encoding(result.banner)
       text = BannerAnalyzer.text(result.banner, petscii: encoding == 'petscii')
-      { encoding: encoding, signature: BannerAnalyzer.software(text, @config.signatures),
-        banner_hash: BannerAnalyzer.digest(result.banner) }
+      {
+        encoding:    encoding,
+        signature:   BannerAnalyzer.software(text, @config.signatures),
+        banner_hash: BannerAnalyzer.digest(result.banner)
+      }
     end
 
     # The state, schedule and address columns of +board+ after +result+.
@@ -75,13 +78,26 @@ module Discovery
       first = before[:first_probe_at] || at
       success = result.success? ? at : before[:last_success_at]
       state = state_of(board, result, first, success)
-      archived = StateRules.archived?(state, delisted: board[:delisted] == 1, last_success_at: success,
-                                             first_probe_at: first, now: at)
-      { state: state.state, success_rate_7d: state.success_rate_7d, failures: state.failures,
-        state_since: before[:state] == state.state ? before[:state_since] || at : at,
-        first_probe_at: first, last_probe_at: at, last_result: result.result, last_success_at: success,
-        next_probe_at: next_probe(board, before, state, result, kind, archived), archived: archived ? 1 : 0,
-        **address_columns(before, result) }
+      archived = StateRules.archived?(
+        state,
+        delisted:        board[:delisted] == 1,
+        last_success_at: success,
+        first_probe_at:  first,
+        now:             at
+      )
+      {
+        state:           state.state,
+        success_rate_7d: state.success_rate_7d,
+        failures:        state.failures,
+        state_since:     before[:state] == state.state ? before[:state_since] || at : at,
+        first_probe_at:  first,
+        last_probe_at:   at,
+        last_result:     result.result,
+        last_success_at: success,
+        next_probe_at:   next_probe(board, before, state, result, kind, archived),
+        archived:        archived ? 1 : 0,
+        **address_columns(before, result)
+      }
     end
 
     # The StateRules::Verdict of +board+ by its calls of the last DEAD_AFTER.
@@ -93,8 +109,11 @@ module Discovery
     # Where the board answered: its IP, the IP's country and the latency,
     # the last known ones when +result+ has none.
     def address_columns(before, result)
-      { ip: result.ip || before[:ip], country: (result.ip && @geoip.country(result.ip)) || before[:country],
-        latency_ms: result.latency_ms || before[:latency_ms] }
+      {
+        ip:         result.ip || before[:ip],
+        country:    (result.ip && @geoip.country(result.ip)) || before[:country],
+        latency_ms: result.latency_ms || before[:latency_ms]
+      }
     end
 
     # A successful dial keeps the schedule; a failed one asks for a probe now.
@@ -109,14 +128,24 @@ module Discovery
 
     def banner_columns(before, result, analysis)
       changed = before[:banner_hash] && before[:banner_hash] != analysis[:banner_hash]
-      { encoding: analysis[:encoding], software_id: analysis[:signature]&.id, software: analysis[:signature]&.name,
-        banner: result.banner, banner_hash: analysis[:banner_hash], banner_at: result.at,
-        banner_changed_at: changed ? result.at : before[:banner_changed_at] }
+      {
+        encoding:          analysis[:encoding],
+        software_id:       analysis[:signature]&.id,
+        software:          analysis[:signature]&.name,
+        banner:            result.banner,
+        banner_hash:       analysis[:banner_hash],
+        banner_at:         result.at,
+        banner_changed_at: changed ? result.at : before[:banner_changed_at]
+      }
     end
 
     def c64_banner_columns(result, analysis)
-      { c64_encoding: analysis[:encoding], c64_banner: result.banner, c64_banner_hash: analysis[:banner_hash],
-        c64_banner_at: result.at }
+      {
+        c64_encoding:    analysis[:encoding],
+        c64_banner:      result.banner,
+        c64_banner_hash: analysis[:banner_hash],
+        c64_banner_at:   result.at
+      }
     end
   end
 end
