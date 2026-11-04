@@ -15,3 +15,5 @@ services:
       - BBS_MAX_SESSIONS=50
       - FEEDIA_BBS_DISCORD_WEBHOOK=${FEEDIA_BBS_DISCORD_WEBHOOK:-}
     restart: unless-stopped
+    # rubbs tells the callers and gives them BBS_SHUTDOWN_SECONDS (20 s, Dockerfile) to leave.
+    stop_grace_period: 30s
