@@ -9,14 +9,11 @@ class ScriptoriumBBSTest < Minitest::Test
 
   def setup
     super
-    @prefix = BBS.config.env_prefix
-    BBS.config.env_prefix = 'SCRIPTORIUM_BBS_'
     ENV_NAMES.each { |name, file| ENV["SCRIPTORIUM_BBS_#{name}"] = path(file) }
   end
 
   def teardown
     ENV_NAMES.each_key { |name| ENV.delete("SCRIPTORIUM_BBS_#{name}") }
-    BBS.config.env_prefix = @prefix
     super
   end
 
