@@ -136,7 +136,7 @@ lib/domain/
   service/discord_notifier.rb         a new tip on Discord (BBS::DiscordWebhook)
   commodex_bbs.rb           the composition root (CommodexBBS, a BBS::Domain)
 lib/ui/
-  words.rb                  a game's facts and the messages, both faces
+  wording.rb                a game's facts and the messages, both faces
   modern.rb                 UI::Modern::APP: commands, menus, help, desktop
   modern/helpers.rb         search, the lists, a game's card, about, tips
   modern/games_window.rb, groups_window.rb, letters_window.rb, about_window.rb,

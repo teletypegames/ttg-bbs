@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'words'
+require_relative 'wording'
 require_relative 'modern/helpers'
 require_relative 'modern/games_window'
 require_relative 'modern/groups_window'
@@ -28,12 +28,12 @@ module UI
       command(:companies, 'By &company') { show(:letters) }
       command(:with_tips, 'With &tips')  { with_tips }
       menu 'Games', :search, :random, :separator, :years, :genres, :companies, :with_tips, :separator, :log_off
-      help about: Words::ABOUT, sources: Words::SOURCES, keys: ['Enter        about the game']
+      help about: Wording::ABOUT, sources: Wording::SOURCES, keys: ['Enter        about the game']
       status { "#{catalog.count} games" }
 
       desktop do
         art  BBS::BlockFont.half_blocks('COMMODEX'), top: 0
-        line "─── #{Words::TAGLINE} ───", top: 4
+        line "─── #{Wording::TAGLINE} ───", top: 4
         line HELP, bottom: 0
         on_show { search }
       end

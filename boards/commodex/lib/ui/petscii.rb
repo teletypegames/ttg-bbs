@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'words'
+require_relative 'wording'
 
 module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor main
@@ -21,7 +21,7 @@ module UI
       logo 'COMMODEX', colors: LOGO_COLORS, indent: 4
       gap
       rule
-      line " #{Words::TAGLINE.downcase}", color: WH
+      line " #{Wording::TAGLINE.downcase}", color: WH
       line(color: GR) { " #{catalog.count} games, cheats and tips" }
       rule
     end
@@ -38,7 +38,7 @@ module UI
         games('GAMES WITH TIPS', tips.games_with_tips, empty: 'no game has a tip yet. be the first!')
       end
       item('i', 'about commodex bbs', 'where the games come from') do
-        page('ABOUT COMMODEX BBS', [Words::ABOUT, '', Words::SOURCES])
+        page('ABOUT COMMODEX BBS', [Wording::ABOUT, '', Wording::SOURCES])
       end
       log_off
     end
@@ -55,7 +55,7 @@ module UI
       found = catalog.search(query)
       return games("SEARCH: #{query.upcase}", found) if found.is_a?(Array) && found.any?
 
-      alert(Words.search(found, query))
+      alert(Wording.search(found, query))
     end
 
     # A list of [name, count] groups, then the games of the one picked.
@@ -93,8 +93,8 @@ module UI
       loop do
         count = tips.count(game)
         lines = [*wrap(game.title).map { |l| " #{WH}#{l}#{LG}" }, '',
-                 *Words.facts(game).map { |label, text| " #{CY}#{label.downcase}:#{LG} #{text}" },
-                 " #{CY}tips:#{LG} #{Words.tips(count)}"]
+                 *Wording.facts(game).map { |label, text| " #{CY}#{label.downcase}:#{LG} #{text}" },
+                 " #{CY}tips:#{LG} #{Wording.tips(count)}"]
         page('GAME', lines, right: game.id, wait: false)
         case actions(%w[w wiki], %w[t tips], ['a', 'add a tip'], %w[q back])
         when 'w' then read_about(game)
@@ -109,7 +109,7 @@ module UI
       say('asking wikipedia…', color: GR)
       found = about.summary(game)
       if found.is_a?(Symbol)
-        say(Words.about(found), color: RD)
+        say(Wording.about(found), color: RD)
         return pause
       end
 
@@ -120,12 +120,12 @@ module UI
     def show_tips(game, count)
       lines = tips.tips(game).flat_map { |t| [" #{CY}#{t.author}#{GR} #{t.date}#{LG}", " #{t.text}", ''] }
       lines = [" #{GR}no tips yet. press a on the game page to add one.#{LG}"] if lines.empty?
-      page("TIPS: #{game.title.upcase}", lines, right: Words.tips(count))
+      page("TIPS: #{game.title.upcase}", lines, right: Wording.tips(count))
     end
 
     def add_tip(game)
       title("A TIP: #{game.title.upcase}")
-      say(Words::TIP_RULES, color: GR)
+      say(Wording::TIP_RULES, color: GR)
       say('An empty tip goes back.', color: GR)
       puts
       handle = ask(" #{WH}handle#{LG} (optional)? ", max: TipService::MAX_HANDLE)
@@ -133,7 +133,7 @@ module UI
       title("A TIP: #{game.title.upcase}")
       return alert_nothing_sent if text.to_s.strip.empty?
 
-      report(tips.submit(game, text: text, handle: handle, caller: caller_key), Words::TIP)
+      report(tips.submit(game, text: text, handle: handle, caller: caller_key), Wording::TIP)
     end
 
     def alert_nothing_sent

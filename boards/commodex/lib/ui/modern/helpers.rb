@@ -14,7 +14,7 @@ module UI
 
       def find(query)
         found = catalog.search(query)
-        return note(Words.search(found, query), 'Search') unless found.is_a?(Array) && found.any?
+        return note(Wording.search(found, query), 'Search') unless found.is_a?(Array) && found.any?
 
         show(:games, caption: "Search: #{query.strip}", games: found)
       end
@@ -45,7 +45,7 @@ module UI
 
       def read_about(game)
         found = loading('Asking Wikipedia…') { about.summary(game) }
-        return note(Words.about(found), 'About') if found.is_a?(Symbol)
+        return note(Wording.about(found), 'About') if found.is_a?(Symbol)
 
         show(:about, game: game, summary: found)
       end
@@ -86,10 +86,10 @@ module UI
 
       # The facts and the tips, the labels padded to one column.
       def facts(game, width)
-        facts = Words.facts(game)
+        facts = Wording.facts(game)
         pad   = facts.map { |label, _| label.size }.max.to_i + 2
         facts.flat_map { |label, text| fact(label, text, pad, width) } +
-          ["#{paint(:label, 'Tips'.ljust(pad))}#{accent(Words.tips(tips.count(game)))}"]
+          ["#{paint(:label, 'Tips'.ljust(pad))}#{accent(Wording.tips(tips.count(game)))}"]
       end
 
       def fact(label, text, pad, width)

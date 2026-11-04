@@ -3,7 +3,7 @@
 module UI
   # What both faces tell the caller: a game's facts, and the words for the
   # answers of the services.
-  module Words
+  module Wording
     TAGLINE = 'the Commodore 64 game compendium'
 
     ABOUT = 'Commodex BBS — the Commodore 64 game compendium of Teletype Games: search titles, read about ' \

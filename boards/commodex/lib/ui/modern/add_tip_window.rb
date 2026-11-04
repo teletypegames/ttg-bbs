@@ -14,10 +14,10 @@ module UI
         field :handle, label: 'Your handle', max_length: TipService::MAX_HANDLE, placeholder: 'optional'
         field :text, type: :textarea, rows: 6, max_length: TipService::MAX_TEXT
         submit_label '&Send'
-        errors Words::TIP.except(:ok)
+        errors Wording::TIP.except(:ok)
         on_submit do |values|
           result = tips.submit(game, text: values[:text], handle: values[:handle], caller: caller_key)
-          note(Words::TIP[:ok], 'Thanks') if result == :ok
+          note(Wording::TIP[:ok], 'Thanks') if result == :ok
           result
         end
       end
