@@ -14,8 +14,11 @@ class WarpEngineBBS
 
   service(:catalog) do
     import_legacy_log
-    CatalogService.new(shelves: ShelfRepository.new(shelves), archive: ArchiveRepository.new(archive_url, ttl: index_ttl),
-                       max_bytes: download_max)
+    CatalogService.new(
+      shelves:   ShelfRepository.new(shelves),
+      archive:   ArchiveRepository.new(archive_url, ttl: index_ttl),
+      max_bytes: download_max
+    )
   end
 
   private

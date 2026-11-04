@@ -40,8 +40,10 @@ module UI
       end
 
       def transfer(session, title, protocol, data)
-        text = BBS::FrameBuffer.wrap_ansi(BBS::Transfer.start(protocol, title.file, title.size, save_as: title.disk_name),
-                                          cols - 4)
+        text = BBS::FrameBuffer.wrap_ansi(
+          BBS::Transfer.start(protocol, title.file, title.size, save_as: title.disk_name),
+          cols - 4
+        )
         session.write("\r\n#{text.map { |l| "  #{l}\r\n" }.join}\r\n")
         BBS::Transfer.send(session, protocol, title.file, data)
       end

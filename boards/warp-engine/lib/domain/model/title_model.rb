@@ -12,8 +12,16 @@ TitleModel = Data.define(:shelf, :file, :version, :size, :crc32, :title, :author
     file, version, size, crc32, title, author, description = line.chomp.split('|', members.size - 1)
     return nil if description.nil? || file.empty? || !size.match?(/\A\d+\z/) || !crc32.match?(/\A\h{8}\z/)
 
-    new(shelf: shelf, file: file, version: version, size: size.to_i, crc32: crc32.downcase.to_i(16),
-        title: title.empty? ? file : title, author: author, description: description)
+    new(
+      shelf:       shelf,
+      file:        file,
+      version:     version,
+      size:        size.to_i,
+      crc32:       crc32.downcase.to_i(16),
+      title:       title.empty? ? file : title,
+      author:      author,
+      description: description
+    )
   end
 
   # The file's address on the archive; the name is encoded, so a space,
