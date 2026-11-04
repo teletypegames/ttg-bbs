@@ -7,10 +7,10 @@ GIT
 
 GIT
   remote: https://git.teletypegames.org/bbs/sermo-bbs.git
-  revision: 0fb9ae58043c8e6222e136f8145cc91865bf9361
+  revision: 6ae4f4dc94fca548f482d95fb3c6efbf477fbcad
   specs:
-    sermo (0.4.1)
-      bbs (>= 0.5)
+    sermo (0.5.0)
+      bbs (>= 2.0)
 
 GIT
   remote: https://git.teletypegames.org/engines/rubbs.git
