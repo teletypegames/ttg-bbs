@@ -35,7 +35,7 @@ class FaceTest < Minitest::Test
 
   def test_an_editor_logs_in_and_gets_the_editors_menu
     editor('ed', 'secret-pass')
-    screen = call(UI::Modern, 'e', *'ed'.chars, :enter, *'secret-pass'.chars, :enter, ' ', 'q')
+    screen = call(UI::Modern, 'p', 'l', *'ed'.chars, :enter, *'secret-pass'.chars, :enter, ' ', 'b', 'q')
     assert_includes screen, 'Welcome, ed.'
     assert_includes screen, 'write a post'
   end
@@ -44,13 +44,13 @@ class FaceTest < Minitest::Test
     published('On the C64')
     screen = call(UI::Petscii, 'q', petscii: true)
     assert_includes screen, 'On the C64'
-    assert_includes screen, 'log in'
+    assert_includes screen, 'profile'
   end
 
   def test_an_account_without_the_blogger_role_is_told
     accounts.register('reader', 'secret-pass')
-    screen = call(UI::Modern, 'e', *'reader'.chars, :enter, *'secret-pass'.chars, :enter, ' ', ' ', 'q')
-    assert_includes screen, 'reader is not an editor of the blog.'
+    screen = call(UI::Modern, 'p', 'l', *'reader'.chars, :enter, *'secret-pass'.chars, :enter, ' ', 'b', 'q')
+    assert_includes screen, 'Welcome, reader.'
     refute_includes screen, 'write a post'
   end
 end

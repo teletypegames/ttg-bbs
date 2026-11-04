@@ -118,7 +118,7 @@ cleaned of control characters (`BBS::Text.clean`) before it is kept.
 
 Readers need no account. The editors are the accounts of the network
 (rubbs `BBS::Auth`, kept on TTG Gate BBS) with the **blogger** role: they log
-in from the menu (`E`), or come in logged in when they dialled the blog from the
+in from the menu (`P`, the profile), or come in logged in when they dialled the blog from the
 gate. The accounts and their roles are managed on the gate's shell:
 
 ```bash
@@ -126,8 +126,7 @@ docker exec -it ttg-gate-bbs bin/account grant NAME blogger
 docker exec -it ttg-gate-bbs bin/account password NAME
 ```
 
-A logged-in editor can change their own password from the menu too (`P`, through
-the gate). The limits on wrong passwords are the gate's (by name and by line).
+A logged-in editor changes their own password on the profile too (through the gate). The limits on wrong passwords are the gate's (by name and by line).
 The board needs `RUBBS_AUTH_SECRET`, the secret every board shares, in its `.env`.
 
 ## Interface
@@ -148,10 +147,8 @@ the modern face.
 | `C` | Categories, with their post counts, then that category's posts |
 | `G` | Go to a post by its number (the web shows it beside the post) |
 | `U` | Unpublished posts (logged in) |
-| `E` | Log in (an account with the blogger role is an editor) |
+| `P` | Profile: log in (an account with the blogger role is an editor), a new account, the password, log out |
 | `W` | Write a post (logged in) |
-| `P` | Change your password (logged in) |
-| `O` | Log out (logged in) |
 | `Q` | Log off |
 
 Lists are numbered cursor lists on both faces: the number lights the post,

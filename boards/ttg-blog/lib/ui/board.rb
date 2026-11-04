@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative 'post_page'
-require_relative 'board/account'
 require_relative 'board/composer'
 
 module UI
@@ -12,7 +11,6 @@ module UI
   # type as well as a modern terminal. A face (UI::Modern, UI::Petscii) gives
   # it its masthead and the shape of its menus.
   class Board < BBS::Petscii::Face
-    include Account
     include Composer
 
     MOTTO = 'news from teletype games'
@@ -28,13 +26,11 @@ module UI
       item('l', 'latest posts', 'every post, newest first') { latest }
       item('c', 'categories', -> { categories.all.map(&:name).join(', ') }) { browse_categories }
       item('g', 'go to post #', 'by the number the web shows') { go_to }
-      item('e', 'log in', 'for the editors of the blog', if: -> { !signed_in? }) { editor_login }
       item('u', -> { unpublished_label }, 'waiting to be published', if: -> { user }) { unpublished }
       item('w', -> { "write a post#{drafts_note}" }, 'it waits unpublished until you publish it', if: -> { user }) do
         compose
       end
-      item('p', 'change your password', -> { "#{user.name}'s password" }, if: -> { user }) { password }
-      item('o', -> { log_out_label }, -> { "back to a reader, #{identity.name}" }, if: -> { signed_in? }) { log_out }
+      item('p', 'profile', -> { signed_in? ? identity.name : 'log in: the editors of the blog' }) { profile }
       log_off
     end
 
@@ -43,8 +39,6 @@ module UI
     private
 
     def unpublished_label = "unpublished posts #{GR}(#{posts.total(published: false)})#{LG}"
-
-    def log_out_label = "log out #{GR}(#{identity.name})#{LG}"
 
     # What an editor does with a post after its last page: e, p, d, c
     # (a published post's QR code) or q.
