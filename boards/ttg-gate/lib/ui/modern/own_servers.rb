@@ -16,7 +16,7 @@ module UI
       key(:enter) { dial(@boards[@index]) }
       key(:tab, :right, :left, 'g', 'G') { pages.switch }
       key(:escape, 'q', 'Q') { quit }
-      key('p', 'P', 'a', 'A') { hand_over { UI::Account.run(session, @accounts) } if @accounts }
+      key('p', 'P', 'a', 'A') { hand_over { BBS::Auth::Profile.run(session) } }
       key(/\A[1-9]\z/) do |k|
         board = @boards[k.to_i - 1]
         next unless board
@@ -25,10 +25,9 @@ module UI
         dial(board)
       end
 
-      def initialize(boards, accounts: nil)
+      def initialize(boards)
         super()
-        @boards   = boards
-        @accounts = accounts
+        @boards = boards
         @index = 0
       end
 

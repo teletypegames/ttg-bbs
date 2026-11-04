@@ -2,7 +2,6 @@
 
 require_relative 'colors'
 require_relative 'dial'
-require_relative 'account'
 require_relative 'modern/style'
 require_relative 'modern/own_servers'
 %w[context menu_view list_view board_page sources home].each { |f| require_relative "modern/discovery/#{f}" }

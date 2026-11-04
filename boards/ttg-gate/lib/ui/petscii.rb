@@ -2,7 +2,6 @@
 
 require_relative 'colors'
 require_relative 'dial'
-require_relative 'account'
 require_relative 'petscii/gate'
 
 module UI
@@ -13,13 +12,7 @@ module UI
   module Petscii
     # The call on a C64: the gate, then its own goodbye.
     def self.call(session, bbs)
-      Gate.new(
-        session,
-        boards:   bbs.directory.boards(petscii: true),
-        browse:   bbs.browse,
-        dials:    bbs.dials,
-        accounts: bbs.accounts
-      ).run
+      Gate.new(session, boards: bbs.directory.boards(petscii: true), browse: bbs.browse, dials: bbs.dials).run
       goodbye(session)
     end
 

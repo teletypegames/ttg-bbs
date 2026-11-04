@@ -9,12 +9,9 @@ module UI
         private
 
         # The search: the input line in place of the hint bar, then its list.
-        # The caller's account (UI::Account) on the bare line, then back.
-        def account
-          return unless @accounts
-
-          hand_over { UI::Account.run(session, @accounts) }
-        end
+        # The caller's profile (BBS::Auth::Profile, the look of TTG::PRESET)
+        # on the bare line, then back.
+        def account = hand_over { BBS::Auth::Profile.run(session) }
 
         def search
           text = input

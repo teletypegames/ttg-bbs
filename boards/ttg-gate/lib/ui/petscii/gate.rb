@@ -68,13 +68,11 @@ module UI
       # [boards] our boards with a C64 face (BoardModel)
       # [browse] Discovery::BrowseService, nil without a catalog
       # [dials]  Discovery::DialService
-      # [accounts] the accounts of the network (BBS::Auth::Directory), for A
-      def initialize(session, boards:, browse:, dials:, accounts: nil)
+      def initialize(session, boards:, browse:, dials:)
         super(session, face: :petscii, charset: :lower)
         @boards = boards
         @browse = browse
         @dials  = dials
-        @accounts = accounts
         @focus  = :main
         @tab    = :own
         @menu   = 0

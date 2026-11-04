@@ -42,7 +42,7 @@ module Discovery
     end
 
     # The parts of TTGGateBBS the modern face reads; no catalog.
-    Bbs = Struct.new(:directory, :browse, :dials, :accounts)
+    Bbs = Struct.new(:directory, :browse, :dials)
     Directory = Struct.new(:boards)
 
     def gate(keys) = UI::Modern::Gate.new(@line = session(keys), Bbs.new(Directory.new(boards), nil, nil))
