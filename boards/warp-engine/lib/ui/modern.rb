@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'words'
+require_relative 'wording'
 require_relative 'modern/helpers'
 require_relative 'modern/shelves_window'
 require_relative 'modern/titles_window'

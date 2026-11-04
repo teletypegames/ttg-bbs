@@ -88,7 +88,7 @@ lib/domain/
   service/catalog_service.rb         shelves, titles, a checked fetch, the log
   warp_engine_bbs.rb        the composition root (WarpEngineBBS, a BBS::Domain)
 lib/ui/
-  words.rb                  why a download cannot go, both faces
+  wording.rb                why a download cannot go, both faces
   modern.rb                 UI::Modern::APP: commands, menus, help, desktop
   modern/helpers.rb         its helpers: open a shelf, a download, a title's card
   modern/shelves_window.rb  the shelves window
@@ -103,8 +103,8 @@ cache, the index lines, the checked fetch) has minitest tests under `test/`;
 they need no network. CI runs them before a deploy.
 
 ```bash
-bundle exec bin/test            # all
-bundle exec bin/test archive    # the files whose name has the word
+bundle exec rake test            # all
+bundle exec rake test archive    # the files whose name has the word
 ```
 
 The downloads are rubbs' `BBS::Transfer` (`BBS::Zmodem` and `BBS::Xmodem`).

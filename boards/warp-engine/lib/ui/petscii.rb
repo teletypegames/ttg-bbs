@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'words'
+require_relative 'wording'
 
 module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor menu of
@@ -49,7 +49,7 @@ module UI
     def open_shelf(shelf)
       say('reading the shelf…', color: GR)
       loop do
-        titles = catalog.titles(shelf) || fail_with(Words::NO_ANSWER)
+        titles = catalog.titles(shelf) || fail_with(Wording::NO_ANSWER)
         picked = pick(shelf.name.upcase, titles, empty: 'this shelf is empty right now.', right: "#{titles.size} titles") do |t|
           "#{t.title} #{GR}#{t.version}#{LG}"
         end
@@ -75,7 +75,7 @@ module UI
       title("DOWNLOAD #{file.disk_name}")
       say("fetching #{file.file.downcase}…", color: GR)
       data = catalog.fetch(file)
-      return alert(Words.refusal(data, file)) if data.is_a?(Symbol)
+      return alert(Wording.refusal(data, file)) if data.is_a?(Symbol)
 
       result = transfer(file, protocol, data)
       catalog.downloaded(file, protocol) if result == :ok

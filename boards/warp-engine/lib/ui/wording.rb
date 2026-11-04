@@ -2,7 +2,7 @@
 
 module UI
   # What both faces tell the caller about a download that cannot go.
-  module Words
+  module Wording
     NO_ANSWER = 'The archive did not answer. Try again later.'
 
     # Why a fetch gave no bytes (CatalogService#fetch).

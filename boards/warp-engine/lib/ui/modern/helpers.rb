@@ -15,7 +15,7 @@ module UI
 
       def download(title, protocol)
         data = loading("Fetching #{title.file}…") { catalog.fetch(title) }
-        return tell(Words.refusal(data, title)) if data.is_a?(Symbol)
+        return tell(Wording.refusal(data, title)) if data.is_a?(Symbol)
 
         result = with_line { |session| transfer(session, title, protocol, data) }
         catalog.downloaded(title, protocol) if result == :ok
@@ -36,7 +36,7 @@ module UI
       private
 
       def read_shelf(shelf, fresh: false)
-        loading("Reading the #{shelf.name} shelf…", failed: Words::NO_ANSWER) { catalog.titles(shelf, fresh: fresh) }
+        loading("Reading the #{shelf.name} shelf…", failed: Wording::NO_ANSWER) { catalog.titles(shelf, fresh: fresh) }
       end
 
       def transfer(session, title, protocol, data)
