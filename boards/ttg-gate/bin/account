@@ -32,21 +32,29 @@ end
 def accounts = @accounts ||= TTGGateBBS.new.tap(&:databases).accounts
 
 def import(options)
-  blog = Sequel.sqlite(options.fetch(:blog), readonly: true)
+  bloggers = import_blog(Sequel.sqlite(options.fetch(:blog), readonly: true))
+  sysops   = options[:sysops].to_s.split(',').map { |name| BBS::Auth::Names.key(name) }
+  Sequel.sqlite(options.fetch(:teletype), readonly: true)[:accounts].order(:created_at).each do |row|
+    import_member(row, sysops, bloggers)
+  end
+end
+
+# The blog's editors, their ids kept; returns their name keys.
+def import_blog(blog)
   blog[:users].order(:id).each do |user|
     accounts.import(user[:name], user[:password_digest], roles: %w[blogger member], id: user[:id], created_at: user[:created_at])
     puts "blog      #{user[:name]} (#{user[:id]})"
   end
-  bloggers = blog[:users].select_map(:name).map { |name| BBS::Auth::Names.key(name) }
-  sysops   = options[:sysops].to_s.split(',').map { |name| BBS::Auth::Names.key(name) }
-  teletype = Sequel.sqlite(options.fetch(:teletype), readonly: true)
-  teletype[:accounts].order(:created_at).each do |row|
-    roles  = sysops.include?(row[:name_key]) ? %w[member sysop] : %w[member]
-    digest = BBS::Auth::Password.from_hex(row[:salt], row[:digest], iterations: 100_000)
-    found  = accounts.import(row[:name], digest, roles: roles, created_at: row[:created_at])
-    note   = bloggers.include?(row[:name_key]) ? '  (both: the blog account and password stay)' : ''
-    puts "teletype  #{found.name} #{roles.join(',')}#{note}"
-  end
+  blog[:users].select_map(:name).map { |name| BBS::Auth::Names.key(name) }
+end
+
+# One account of Teletype BBS.
+def import_member(row, sysops, bloggers)
+  roles  = sysops.include?(row[:name_key]) ? %w[member sysop] : %w[member]
+  digest = BBS::Auth::Password.from_hex(row[:salt], row[:digest], iterations: 100_000)
+  found  = accounts.import(row[:name], digest, roles: roles, created_at: row[:created_at])
+  note   = bloggers.include?(row[:name_key]) ? '  (both: the blog account and password stay)' : ''
+  puts "teletype  #{found.name} #{roles.join(',')}#{note}"
 end
 
 command = ARGV.shift
