@@ -18,6 +18,8 @@ services:
       # The boards are dialled on their ports on the host.
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    # rubbs tells the callers and gives them BBS_SHUTDOWN_SECONDS (20 s, Dockerfile) to leave.
+    stop_grace_period: 30s
 
   # Global Discovery's prober: calls the boards of data/discovery.sqlite3 as they fall due (at
   # most 8 at once, one a host) and writes data/discovery-metrics.prom. The daily import runs in
