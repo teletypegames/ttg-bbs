@@ -4,36 +4,24 @@ module Discovery
   # The text of bin/discovery-report: the boards a source and their overlap,
   # the states, and the commonest tags.
   class ReportService
-    def initialize(db)
-      @db = db
-    end
-
     def text
-      lines = []
-      total = @db.value('SELECT COUNT(*) FROM boards')
-      aliases = @db.value('SELECT COUNT(*) FROM boards WHERE alias_of IS NOT NULL')
-      delisted = @db.value('SELECT COUNT(*) FROM boards WHERE delisted = 1')
-      hidden = @db.value("SELECT COUNT(*) FROM boards WHERE optout = 'hide'")
-      lines << "Boards: #{total} (#{total - aliases} after aliases; #{aliases} aliases, #{delisted} delisted, #{hidden} hidden)"
+      lines = [boards]
       lines << '' << sources_table << '' << overlap_table << '' << states << '' << petscii << '' << tags
       lines.join("\n")
     end
 
     private
 
-    def source_ids = @db.query('SELECT id FROM sources ORDER BY id').map { |r| r['id'] }
+    def boards
+      n = BoardModel.totals
+      "Boards: #{n[:total]} (#{n[:total] - n[:aliases]} after aliases; #{n[:aliases]} aliases, #{n[:delisted]} delisted, " \
+        "#{n[:hidden]} hidden)"
+    end
 
     def sources_table
-      rows = @db.query(<<~SQL)
-        SELECT s.id, s.record_count, s.last_error,
-          (SELECT COUNT(*) FROM board_sources bs WHERE bs.source_id = s.id AND bs.active = 1) AS active,
-          (SELECT COUNT(*) FROM board_sources bs WHERE bs.source_id = s.id AND bs.active = 1 AND NOT EXISTS
-             (SELECT 1 FROM board_sources o WHERE o.board_id = bs.board_id AND o.source_id != s.id AND o.active = 1)) AS only
-        FROM sources s ORDER BY s.id
-      SQL
       out = [row('Source', 'Records', 'Boards', 'Only', 'Last error')]
-      rows.each do |r|
-        out << row(r['id'], r['record_count'].to_i, r['active'], r['only'], r['last_error'] || '-')
+      SourceModel.coverage.each do |r|
+        out << row(r[:id], r[:record_count].to_i, r[:active], r[:only], r[:last_error] || '-')
       end
       out.join("\n")
     end
@@ -41,57 +29,30 @@ module Discovery
     def row(name, *numbers, note) = [name.to_s.ljust(10), *numbers.map { |n| n.to_s.rjust(8) }, " #{note}"].join(' ')
 
     def overlap_table
-      ids = source_ids
-      pairs = @db.query(<<~SQL).to_h { |r| [[r['a'], r['b']], r['n']] }
-        SELECT a.source_id AS a, b.source_id AS b, COUNT(*) AS n
-        FROM board_sources a JOIN board_sources b ON a.board_id = b.board_id
-        WHERE a.active = 1 AND b.active = 1 GROUP BY 1, 2
-      SQL
+      ids = SourceModel.ids
+      pairs = BoardSourceModel.overlap
       out = ['Overlap (boards in both)', cells('', ids)]
       ids.each { |a| out << cells(a, ids.map { |b| pairs.fetch([a, b], 0) }) }
-      multi = @db.value(<<~SQL)
-        SELECT COUNT(*) FROM (SELECT board_id FROM board_sources WHERE active = 1 GROUP BY board_id HAVING COUNT(*) > 1)
-      SQL
-      out << "In more than one source: #{multi}"
+      out << "In more than one source: #{BoardSourceModel.shared}"
       out.join("\n")
     end
 
     def cells(name, values) = [name.ljust(10), *values.map { |v| v.to_s.rjust(9) }].join(' ')
 
     def states
-      rows = @db.query(<<~SQL)
-        SELECT CASE WHEN COALESCE(s.archived, 0) = 1 THEN 'archived' ELSE COALESCE(s.state, 'unknown') END AS state,
-               COUNT(*) AS n
-        FROM boards b LEFT JOIN board_state s ON s.board_id = b.id WHERE b.alias_of IS NULL GROUP BY 1 ORDER BY 2 DESC
-      SQL
-      results = @db.query('SELECT result, COUNT(*) AS n FROM probes GROUP BY 1 ORDER BY 2 DESC')
-      ["States: #{rows.map { |r| "#{r['state']} #{r['n']}" }.join(', ')}",
-       "Probes: #{results.map { |r| "#{r['result']} #{r['n']}" }.join(', ')}"].join("\n")
+      ["States: #{BoardStateModel.report.map { |state, n| "#{state} #{n}" }.join(', ')}",
+       "Probes: #{ProbeModel.results.map { |result, n| "#{result} #{n}" }.join(', ')}"].join("\n")
     end
 
     # PETSCII measured against claimed: the boards a source calls PETSCII,
     # how many of them had a C64-style call, how many showed PETSCII, and the
     # boards with PETSCII no source claims.
     def petscii
-      row = @db.first(<<~SQL)
-        SELECT COUNT(*) AS claimed,
-          COUNT(*) FILTER (WHERE s.c64_probe_at IS NOT NULL) AS called,
-          COUNT(*) FILTER (WHERE b.id IN (SELECT board_id FROM tags WHERE tag = 'petscii')) AS measured,
-          COUNT(*) FILTER (WHERE s.c64_encoding IN ('ansi', 'ascii')) AS other
-        FROM boards b JOIN tags t ON t.board_id = b.id AND t.tag = 'claims:petscii'
-        LEFT JOIN board_state s ON s.board_id = b.id WHERE b.alias_of IS NULL
-      SQL
-      unclaimed = @db.value(<<~SQL)
-        SELECT COUNT(*) FROM tags t JOIN boards b ON b.id = t.board_id WHERE t.tag = 'petscii' AND b.alias_of IS NULL
-          AND b.id NOT IN (SELECT board_id FROM tags WHERE tag = 'claims:petscii')
-      SQL
-      "PETSCII: #{row['claimed']} claimed by a source, #{row['called']} called as a C64, #{row['measured']} of them " \
-        "PETSCII, #{row['other']} ANSI/ASCII to a C64; #{unclaimed} PETSCII without a claim"
+      row = TagModel.petscii
+      "PETSCII: #{row[:claimed]} claimed by a source, #{row[:called]} called as a C64, #{row[:measured]} of them " \
+        "PETSCII, #{row[:other]} ANSI/ASCII to a C64; #{row[:unclaimed]} PETSCII without a claim"
     end
 
-    def tags
-      rows = @db.query('SELECT tag, COUNT(*) AS n FROM tags GROUP BY tag ORDER BY n DESC, tag LIMIT 40')
-      "Tags: #{rows.map { |r| "#{r['tag']} #{r['n']}" }.join(', ')}"
-    end
+    def tags = "Tags: #{TagModel.commonest(40).map { |tag, n| "#{tag} #{n}" }.join(', ')}"
   end
 end

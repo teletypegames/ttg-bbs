@@ -12,7 +12,7 @@ module Discovery
 
     module_function
 
-    # The telnet nodes of +bytes+ as RecordModels of +source+ (a SourceModel),
+    # The telnet nodes of +bytes+ as RecordModels of +source+ (a SourceConfigModel),
     # one an endpoint (the first node wins).
     def parse(bytes, source)
       place = { zone: nil, net: nil }

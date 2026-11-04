@@ -35,7 +35,7 @@ module UI
         # [stats]   BrowseService#stats
         def initialize(sources, stats, now: -> { Time.now.to_i })
           super()
-          @sources = sources.sort_by { |s| [-s['record_count'].to_i, s['id']] }.first(7)
+          @sources = sources.sort_by { |s| [-s[:record_count].to_i, s[:id]] }.first(7)
           @stats   = stats
           @now     = now
         end
@@ -46,7 +46,7 @@ module UI
 
         def draw(canvas)
           Layout.band(canvas, 'SOURCES', "#{@sources.size} LISTS", Canvas::CYAN)
-          largest = @sources.map { |s| s['record_count'].to_i }.max.to_i
+          largest = @sources.map { |s| s[:record_count].to_i }.max.to_i
           @sources.each_with_index { |s, i| source(canvas, Layout.row(1 + (2 * i)), s, largest) }
           Layout.rule(canvas, Layout.row(15))
           totals(canvas, Layout.row(16))
@@ -58,8 +58,8 @@ module UI
         private
 
         def source(canvas, row, source, largest)
-          id    = source['id']
-          count = source['record_count'].to_i
+          id    = source[:id]
+          count = source[:record_count].to_i
           canvas.text(row, 1, NAMES.fetch(id) { Layout.plain(id)[0, 9] }, SourcesView.color(id))
           canvas.text(row, BAR_COL, bar(count, largest), SourcesView.color(id))
           canvas.text(row, Layout::EDGE - count.to_s.length, count.to_s, Canvas::WHITE)
@@ -76,10 +76,10 @@ module UI
         end
 
         def status(canvas, row, source)
-          if source['last_error']
+          if source[:last_error]
             canvas.text(row, 1, 'ERR', Canvas::RED, rvs: true)
-            canvas.text(row, 5, Layout.plain(source['last_error'])[0, Layout::EDGE - 5], Canvas::LIGHT_RED)
-          elsif source['last_parse_at'] then read(canvas, row, source)
+            canvas.text(row, 5, Layout.plain(source[:last_error])[0, Layout::EDGE - 5], Canvas::LIGHT_RED)
+          elsif source[:last_parse_at] then read(canvas, row, source)
           else
             canvas.text(row, 1, 'Not read yet', Canvas::GREY)
           end
@@ -88,8 +88,8 @@ module UI
         # OK, the terminals the list names, and how long ago it was read.
         def read(canvas, row, source)
           canvas.text(row, 1, 'OK', Canvas::GREEN, rvs: true)
-          age = "read #{Layout.age(source['last_parse_at'], @now.call)} ago"
-          terms = TERMS.fetch(source['id']) { Layout.plain(source['format']) }
+          age = "read #{Layout.age(source[:last_parse_at], @now.call)} ago"
+          terms = TERMS.fetch(source[:id]) { Layout.plain(source[:format]) }
           terms[0, Layout::EDGE - 4 - age.length - 1].split('/').each_with_index.reduce(4) do |col, (part, i)|
             col = Layout.runs(canvas, row, col, [['/', Canvas::DARK_GREY]]) if i.positive?
             Layout.runs(canvas, row, col, [[part, Canvas::LIGHT_GREY]])

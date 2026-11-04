@@ -491,6 +491,7 @@ config/discovery/                      Discovery: sources, software signatures, 
 config/discovery-optout.yml            Discovery: the sysops who asked to be left out
 lib/
   domain.rb                            requires the domain
+  domain/migrations.rb                 the schemas: DISCOVERY_MIGRATIONS (the catalog), GEOIP_MIGRATIONS
   domain/model/board_model.rb          one board of the list
   domain/repository/board_repository.rb  config/boards.yml, read once
   domain/service/directory_service.rb  the boards a caller can dial
@@ -512,9 +513,11 @@ lib/
   ui/dial.rb                           hands the line to a board (BBS::Gateway), by the dial rules for the catalog
   domain/discovery.rb                  requires Global Discovery
   domain/discovery/root.rb             its composition root (Discovery::Root)
-  domain/discovery/model/              a source record, a probe result, a board state, a source; a listing, a board page, a search
+  domain/discovery/model/              a BBS::Model a table of the catalog (boards, sources, board_sources, probes,
+                                       board_state, tags, boards_fts, meta, dials, dial_refusals) and of the DB-IP file,
+                                       their queries; a source record, a probe result, a listing, a board page, a search
   domain/discovery/parser/             one parser a list format
-  domain/discovery/repository/         the SQLite catalog, the config, the opt-outs, HTTP, zip, DB-IP; the gate's reads
+  domain/discovery/repository/         the config, the opt-outs, HTTP, zip, the DB-IP file
   domain/discovery/service/            import, prober, probe recorder, telnet probe, state rules, banner rules, tags, report;
                                        the gate's browse, banner preview and dial rules
 ```

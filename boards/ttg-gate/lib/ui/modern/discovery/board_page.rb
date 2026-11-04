@@ -135,7 +135,7 @@ module UI
         def dial_line
           warn = ' C64 board' if listing.petscii_only?
           warn = ' no answer for 30 days' if listing.dead?
-          "#{SELECT}#{GREEN}#{BOLD} DIAL > #{RESET}#{DIM}  RETURN dials#{"  ·#{warn}" if warn}   B banner   Q back#{RESET}"
+          "#{SELECTED}#{GREEN}#{BOLD} DIAL > #{RESET}#{DIM}  RETURN dials#{"  ·#{warn}" if warn}   B banner   Q back#{RESET}"
         end
 
         def dial
@@ -176,7 +176,7 @@ module UI
 
           hand_over do
             session.write(::Discovery::BannerPreview.ansi(bytes))
-            session.write("#{RESET}\e[#{rows};1H\e[K#{SELECT}#{DIM} The banner of #{plain(listing.title)}, " \
+            session.write("#{RESET}\e[#{rows};1H\e[K#{SELECTED}#{DIM} The banner of #{plain(listing.title)}, " \
                           "#{date(@page.banner_at)}. Press a key. #{RESET}")
             pages.wait_key
           end

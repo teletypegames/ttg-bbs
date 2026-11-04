@@ -19,7 +19,7 @@ module Discovery
   # the same claim of its host, as a Commodore 64 would call it (no telnet).
   # Only a PETSCII banner of a call gives it the tag petscii. A board never
   # called so, or called with a shorter window without PETSCII, gets one on
-  # its own (+c64_only+ of ProbeRepository#due); a silent one is tried again
+  # its own (+c64_only+ of BoardStateModel.due); a silent one is tried again
   # with every daily round.
   #
   # A C64-style call may take TelnetProbe::C64_TOTAL seconds (slow real C64
@@ -41,16 +41,13 @@ module Discovery
     # Where a call's line goes by default: the prober's log.
     LOG = ->(line) { BBS.log('probe', line) }
 
-    # [catalog] CatalogRepository  [probes] ProbeRepository
     # [probe]   TelnetProbe (anything with #call(host, port, c64:))
     # [tags]    TagService         [aliases] AliasService
     # [optout]  OptoutRepository   [geoip]   GeoipRepository
     # [config]  ConfigRepository   [metrics] MetricsService, or nil
-    def initialize(catalog:, probes:, probe:, tags:, aliases:, optout:, geoip:, config:, metrics: nil,
-                   concurrency: CONCURRENCY, c64_gap: C64_GAP, log: LOG)
-      @recorder    = ProbeRecorder.new(catalog: catalog, probes: probes, tags: tags, geoip: geoip, config: config)
-      @catalog     = catalog
-      @probes      = probes
+    def initialize(probe:, tags:, aliases:, optout:, geoip:, config:, metrics: nil, concurrency: CONCURRENCY,
+                   c64_gap: C64_GAP, log: LOG)
+      @recorder    = ProbeRecorder.new(tags: tags, geoip: geoip, config: config)
       @probe       = probe
       @aliases     = aliases
       @optout      = optout
@@ -128,10 +125,10 @@ module Discovery
     def tidy(now)
       @geoip.refresh(Time.at(now).utc)
       @aliases.rebuild
-      @catalog.transaction do
-        @catalog.addresses.each { |r| @catalog.set_optout(r['id'], @optout.level(r['host'], r['ip'])) }
+      BoardModel.db.transaction do
+        BoardModel.addresses.each { |r| BoardModel.set_optout(r[:id], @optout.level(r[:host], r[:ip])) }
       end
-      @probes.prune_banners(now)
+      ProbeModel.prune_banners(now)
     end
 
     # Puts due boards on +queue+ while a worker is free, one a host and IP.
@@ -143,12 +140,12 @@ module Discovery
 
       sent = 0
       now = Time.now.to_i
-      @probes.due(now, limit: (free + @concurrency) * 4).each do |row|
+      BoardStateModel.due(now, limit: (free + @concurrency) * 4).each do |row|
         break if sent >= free
-        next if row['c64_only'] == 1 && @mutex.synchronize { @c64_stage.size } >= C64_BACKLOG
+        next if row[:c64_only] == 1 && @mutex.synchronize { @c64_stage.size } >= C64_BACKLOG
         next unless claim(row)
 
-        row['c64_only'] == 1 ? hand_over(row, now) : queue << row
+        row[:c64_only] == 1 ? hand_over(row, now) : queue << row
         sent += 1
       end
       sent
@@ -156,7 +153,7 @@ module Discovery
 
     # Gives +row+ (claimed) to the C64-style workers, for a call at +at+.
     def hand_over(row, at)
-      @mutex.synchronize { @c64_stage[row['id']] = true }
+      @mutex.synchronize { @c64_stage[row[:id]] = true }
       @c64_queue << [row, at]
     end
 
@@ -168,11 +165,11 @@ module Discovery
     end
 
     def claim(row)
-      keys = ["h:#{row['host']}", row['ip'] && "i:#{row['ip']}"].compact
+      keys = ["h:#{row[:host]}", row[:ip] && "i:#{row[:ip]}"].compact
       @mutex.synchronize do
-        next false if @busy.key?(row['id']) || @busy.values.flatten.intersect?(keys)
+        next false if @busy.key?(row[:id]) || @busy.values.flatten.intersect?(keys)
 
-        @busy[row['id']] = keys
+        @busy[row[:id]] = keys
         true
       end
     end
@@ -183,14 +180,14 @@ module Discovery
       while (row = queue.pop)
         handed = false
         begin
-          result = @probe.call(row['host'], row['port'])
-          columns = record(row['id'], result)
+          result = @probe.call(row[:host], row[:port])
+          columns = record(row[:id], result)
           @log.call(line(row, result, columns))
-          handed = result.success? && c64?(row['id']) && hand_over(row, Time.now.to_i + @c64_gap)
+          handed = result.success? && c64?(row[:id]) && hand_over(row, Time.now.to_i + @c64_gap)
         rescue StandardError => e
           log_error(row, e)
         ensure
-          release(row['id']) unless handed
+          release(row[:id]) unless handed
         end
       end
     end
@@ -206,23 +203,23 @@ module Discovery
         rescue StandardError => e
           log_error(row, e)
         ensure
-          release(row['id'])
+          release(row[:id])
         end
       end
     end
 
     def call_c64(row)
-      result = @probe.call(row['host'], row['port'], c64: true)
-      columns = record_c64(row['id'], result)
+      result = @probe.call(row[:host], row[:port], c64: true)
+      columns = record_c64(row[:id], result)
       @log.call(line(row, result, columns && { encoding: columns[:c64_encoding] }, kind: 'c64'))
     end
 
     def log_error(row, error)
-      @log.call("#{row['host']}:#{row['port']}: #{error.class}: #{error.message}")
+      @log.call("#{row[:host]}:#{row[:port]}: #{error.class}: #{error.message}")
     end
 
     def line(row, result, columns, kind: nil)
-      parts = ["#{row['host']}:#{row['port']}#{" #{kind}" if kind}", result.result]
+      parts = ["#{row[:host]}:#{row[:port]}#{" #{kind}" if kind}", result.result]
       parts << "#{result.latency_ms}ms" if result.latency_ms
       parts << columns[:encoding] if columns&.dig(:encoding)
       parts << "sw:#{columns[:software_id]}" if columns&.dig(:software_id)

@@ -19,9 +19,7 @@ module Discovery
 
     def setup
       database
-      @catalog = CatalogRepository.new(@db)
-      @probes  = ProbeRepository.new(@db)
-      @catalog.set_meta('started_at', 0)
+      MetaModel.store('started_at', 0)
       @servers = []
       @threads = []
     end
@@ -40,8 +38,8 @@ module Discovery
     def prober(probe = probe_of)
       optout = File.join(@tmp, 'optout.yml')
       File.write(optout, "{}\n")
-      ProberService.new(catalog: @catalog, probes: @probes, probe: probe, tags: TagService.new(@catalog, @probes, config),
-                        aliases: AliasService.new(@catalog), optout: OptoutRepository.new(optout), geoip: Geoip.new,
+      ProberService.new(probe: probe, tags: TagService.new(config),
+                        aliases: AliasService.new, optout: OptoutRepository.new(optout), geoip: Geoip.new,
                         config: config, c64_gap: 0, log: ->(_) {})
     end
 
@@ -84,13 +82,13 @@ module Discovery
     # A catalog board on +port+ of localhost, listed by the CBBS Outpost
     # when +claimed+.
     def catalog_board(port, claimed:)
-      id = @catalog.board_id('127.0.0.1', port, 0)
+      id = BoardModel.id_for('127.0.0.1', port, 0)
       if claimed
         record = RecordModel.new(source_id: 'cbbs', host: '127.0.0.1', port: port, name: 'Corner',
                                  hints: { 'platform' => 'Commodore' })
-        @catalog.apply('cbbs', [record], 0)
+        BoardSourceModel.apply('cbbs', [record], 0)
       end
-      TagService.new(@catalog, @probes, config).refresh(id, now: 0)
+      TagService.new(config).refresh(id, now: 0)
       id
     end
 
@@ -148,12 +146,12 @@ module Discovery
       now = Time.now.to_i
       p = prober
       p.record(id, probe('ok', at: now - 60, banner: ANSI))
-      @probes.save_state(id, c64_probe_at: now - 50, c64_result: 'silent', c64_window: 8)
-      assert_equal([[id, 1]], @probes.due(now, limit: 10).map { |r| [r['id'], r['c64_only']] })
+      BoardStateModel.save(id, c64_probe_at: now - 50, c64_result: 'silent', c64_window: 8)
+      assert_equal([[id, 1]], BoardStateModel.due(now, limit: 10).map { |r| [r[:id], r[:c64_only]] })
       p.record_c64(id, probe('silent', at: now))
-      assert_empty @probes.due(now, limit: 10)
-      @probes.save_state(id, c64_window: 8, c64_encoding: 'petscii')
-      assert_empty @probes.due(now, limit: 10)
+      assert_empty BoardStateModel.due(now, limit: 10)
+      BoardStateModel.save(id, c64_window: 8, c64_encoding: 'petscii')
+      assert_empty BoardStateModel.due(now, limit: 10)
     end
 
     # A probe whose C64-style calls take +seconds+; counts them at once.
@@ -179,15 +177,15 @@ module Discovery
 
     def test_slow_c64_calls_run_two_at_once_and_leave_the_pool_free
       record = RecordModel.new(source_id: 'cbbs', host: 'x', port: 1, hints: { 'platform' => 'Commodore' })
-      ids = Array.new(6) { |i| @catalog.board_id("c#{i}.example.org", 64, 0) }
-      @catalog.apply('cbbs', ids.each_index.map { |i| record.with(host: "c#{i}.example.org", port: 64) }, 0)
-      ids.each { |id| TagService.new(@catalog, @probes, config).refresh(id, now: 0) }
+      ids = Array.new(6) { |i| BoardModel.id_for("c#{i}.example.org", 64, 0) }
+      BoardSourceModel.apply('cbbs', ids.each_index.map { |i| record.with(host: "c#{i}.example.org", port: 64) }, 0)
+      ids.each { |id| TagService.new(config).refresh(id, now: 0) }
       slow = Slow.new(1.5)
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       prober(slow).run(limit: 6)
       assert_equal 2, slow.most
-      assert_equal 6, @db.value("SELECT COUNT(*) FROM probes WHERE kind = 'c64'")
-      assert_equal 6, @db.value("SELECT COUNT(*) FROM probes WHERE kind = 'scheduled'")
+      assert_equal 6, ProbeModel.where(kind: 'c64').count
+      assert_equal 6, ProbeModel.where(kind: 'scheduled').count
       assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 12
     end
 
@@ -204,15 +202,15 @@ module Discovery
       id = catalog_board(board(ansi: ANSI, petscii: PETSCII, calls: calls), claimed: true)
       prober.run(limit: 1)
       assert_equal %w[ansi c64], [calls.pop, calls.pop]
-      tags = @catalog.tags(id)
+      tags = TagModel.of(id)
       assert_includes tags, 'ansi'
       assert_includes tags, 'petscii'
       assert_includes tags, 'claims:petscii'
-      state = @probes.state(id)
+      state = BoardStateModel.of(id)
       assert_equal [ANSI, 'ansi', PETSCII, 'petscii'],
-                   [state['banner'], state['encoding'], state['c64_banner'], state['c64_encoding']]
-      assert_equal(%w[scheduled c64], @db.query('SELECT kind FROM probes ORDER BY id').map { |r| r['kind'] })
-      page = BrowseService.new(DirectoryRepository.new(@db), config).page(id)
+                   [state[:banner], state[:encoding], state[:c64_banner], state[:c64_encoding]]
+      assert_equal(%w[scheduled c64], ProbeModel.order(:id).select_map(:kind))
+      page = BrowseService.new(config).page(id)
       assert_equal ANSI, page.banner
       assert_equal PETSCII, page.c64_banner
       assert_equal 'ansi, petscii to a C64', page.fields.find { |f| f.label == 'Encoding' }.value
@@ -222,29 +220,29 @@ module Discovery
     def test_an_ansi_only_board_claimed_by_a_source_is_no_petscii_board
       id = catalog_board(board(ansi: ANSI, petscii: ANSI), claimed: true)
       prober.run(limit: 1)
-      tags = @catalog.tags(id)
+      tags = TagModel.of(id)
       assert_includes tags, 'claims:petscii'
       assert_includes tags, 'ansi'
       refute_includes tags, 'petscii'
-      assert_equal 'ansi', @probes.state(id)['c64_encoding']
-      assert_empty BrowseService.new(DirectoryRepository.new(@db), config).search('', petscii: true)
+      assert_equal 'ansi', BoardStateModel.of(id)[:c64_encoding]
+      assert_empty BrowseService.new(config).search('', petscii: true)
     end
 
     def test_a_petscii_only_board_is_petscii_without_a_claim
       id = catalog_board(board(ansi: PETSCII, petscii: PETSCII), claimed: false)
       prober.run(limit: 1)
-      assert_equal 2, @db.value('SELECT COUNT(*) FROM probes')
-      tags = @catalog.tags(id)
+      assert_equal 2, ProbeModel.count
+      tags = TagModel.of(id)
       assert_includes tags, 'petscii'
       refute_includes tags, 'claims:petscii'
-      assert BrowseService.new(DirectoryRepository.new(@db), config).search('', petscii: true).first.petscii_only?
+      assert BrowseService.new(config).search('', petscii: true).first.petscii_only?
     end
 
     def test_an_unclaimed_ansi_board_gets_no_c64_call
       id = catalog_board(board(ansi: ANSI, petscii: PETSCII), claimed: false)
       prober.run(limit: 1)
-      assert_equal 1, @db.value('SELECT COUNT(*) FROM probes')
-      refute_includes @catalog.tags(id), 'petscii'
+      assert_equal 1, ProbeModel.count
+      refute_includes TagModel.of(id), 'petscii'
     end
 
     # A probe that answers from a table: c64 => result.
@@ -268,16 +266,16 @@ module Discovery
       script = Scripted.new(false => ProbeResultModel.new(result: 'timeout', at: now))
       prober(script).run(limit: 1)
       assert_equal [['127.0.0.1', 2364, false]], script.calls
-      assert_nil @probes.state(id)['c64_probe_at']
+      assert_nil BoardStateModel.of(id)[:c64_probe_at]
 
       other = catalog_board(2366, claimed: true)
       p = prober
       p.record(other, probe('ok', at: now - 10, banner: ANSI))
       p.record_c64(other, probe('timeout', at: now - 5))
       p.record_c64(other, probe('refused', at: now - 4))
-      state = @probes.state(other)
-      assert_equal %w[online ok refused], [state['state'], state['last_result'], state['c64_result']]
-      assert_equal 1.0, state['success_rate_7d']
+      state = BoardStateModel.of(other)
+      assert_equal %w[online ok refused], [state[:state], state[:last_result], state[:c64_result]]
+      assert_equal 1.0, state[:success_rate_7d]
     end
 
     def test_a_claimed_board_answering_before_the_c64_call_gets_its_first_one_alone
@@ -285,34 +283,34 @@ module Discovery
       other = catalog_board(2365, claimed: false)
       now = Time.now.to_i
       [id, other].each { |b| prober.record(b, probe('ok', at: now - 60, banner: ANSI)) }
-      due = @probes.due(now, limit: 10)
-      assert_equal([[id, 1]], due.map { |r| [r['id'], r['c64_only']] })
+      due = BoardStateModel.due(now, limit: 10)
+      assert_equal([[id, 1]], due.map { |r| [r[:id], r[:c64_only]] })
 
       script = Scripted.new(true => probe('ok', at: now, banner: PETSCII))
       prober(script).run(limit: 1)
       assert_equal [['127.0.0.1', 2364, true]], script.calls
-      assert_equal 'petscii', @probes.state(id)['c64_encoding']
-      assert_includes @catalog.tags(id), 'petscii'
-      assert_empty @probes.due(now, limit: 10)
+      assert_equal 'petscii', BoardStateModel.of(id)[:c64_encoding]
+      assert_includes TagModel.of(id), 'petscii'
+      assert_empty BoardStateModel.due(now, limit: 10)
     end
 
     def test_tagging_rules
-      tags = TagService.new(@catalog, @probes, config)
-      board = { 'first_seen_at' => 0, 'since' => nil, 'software' => nil }
-      claim = [{ 'source_id' => 'syncterm', 'fields' => { 'screen_mode' => 'C64' } }]
+      tags = TagService.new(config)
+      board = { first_seen_at: 0, since: nil, software: nil }
+      claim = [{ source_id: 'syncterm', fields: { 'screen_mode' => 'C64' } }]
       assert_equal %w[claims:petscii src:syncterm], tags.tags(board, claim, nil, 0)
       assert_equal %w[ansi claims:petscii src:syncterm],
-                   tags.tags(board, claim, { 'encoding' => 'ansi', 'c64_encoding' => 'ansi' }, 0)
+                   tags.tags(board, claim, { encoding: 'ansi', c64_encoding: 'ansi' }, 0)
       assert_equal %w[ansi claims:petscii petscii src:syncterm],
-                   tags.tags(board, claim, { 'encoding' => 'ansi', 'c64_encoding' => 'petscii' }, 0)
-      assert_equal %w[petscii], tags.tags(board, [], { 'encoding' => 'petscii', 'c64_encoding' => 'unknown' }, 0)
+                   tags.tags(board, claim, { encoding: 'ansi', c64_encoding: 'petscii' }, 0)
+      assert_equal %w[petscii], tags.tags(board, [], { encoding: 'petscii', c64_encoding: 'unknown' }, 0)
       assert_equal %w[claims:petscii], SearchQuery.parse('claims:petscii').tags
     end
 
     def test_the_metrics_count_the_c64_calls
       id = catalog_board(2364, claimed: true)
       prober.record_c64(id, probe('ok', at: Time.now.to_i, banner: PETSCII))
-      text = MetricsService.new(File.join(@tmp, 'm.prom'), catalog: @catalog, probes: @probes).text(Time.now.to_i)
+      text = MetricsService.new(File.join(@tmp, 'm.prom')).text(Time.now.to_i)
       assert_includes text, 'ttg_gate_bbs_discovery_probes_total{result="ok",kind="c64"} 1'
     end
   end

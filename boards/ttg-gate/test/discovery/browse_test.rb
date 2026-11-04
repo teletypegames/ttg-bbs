@@ -11,9 +11,7 @@ module Discovery
 
     def setup
       database
-      @catalog = CatalogRepository.new(@db)
-      @probes  = ProbeRepository.new(@db)
-      @catalog.set_meta('started_at', NOW - (60 * DAY))
+      MetaModel.store('started_at', NOW - (60 * DAY))
       @ids = {}
       board('alpha.example.org', 'Alpha BBS', 'online', %w[ansi sw:synchronet cc:us net:fidonet])
       board('beta.example.org', 'Beta Commodore', 'online', %w[petscii cc:hu], software: 'Color 64')
@@ -24,25 +22,25 @@ module Discovery
       board('fresh.example.org', 'Fresh BBS', 'unknown', %w[ansi], first_seen_at: NOW - (2 * DAY))
       board('hidden.example.org', 'Hidden BBS', 'online', %w[ansi], optout: 'hide')
       alias_id = board('alias.example.org', 'Alpha BBS', 'online', %w[ansi])
-      @db.change('UPDATE boards SET alias_of = ? WHERE id = ?', @ids['alpha.example.org'], alias_id)
-      @browse = BrowseService.new(DirectoryRepository.new(@db), config, random: Random.new(1))
+      BoardModel.set_alias(alias_id, @ids['alpha.example.org'])
+      @browse = BrowseService.new(config, random: Random.new(1))
     end
 
     def board(host, name, state, tags, software: nil, last_success_at: NOW, state_since: NOW - DAY,
               first_seen_at: NOW - (60 * DAY), optout: nil)
-      id = @catalog.board_id(host, 23, first_seen_at)
-      @db.change('UPDATE boards SET name = ?, optout = ?, first_seen_at = ? WHERE id = ?', name, optout, first_seen_at, id)
-      @probes.save_state(id, state: state, software: software, last_success_at: last_success_at,
+      id = BoardModel.id_for(host, 23, first_seen_at)
+      BoardModel.where(id: id).update(name: name, optout: optout, first_seen_at: first_seen_at)
+      BoardStateModel.save(id, state: state, software: software, last_success_at: last_success_at,
                              state_since: state_since, first_probe_at: NOW - (60 * DAY))
-      @catalog.replace_tags(id, tags + (state == 'unknown' ? [] : [state]))
-      @catalog.index(id)
+      TagModel.replace(id, tags + (state == 'unknown' ? [] : [state]))
+      BoardsFtsModel.index(id)
       @ids[host] = id
     end
 
     def names(list) = list.map(&:title)
 
     def test_the_counts_of_the_c64_sidebar_and_sources
-      @catalog.replace_tags(@ids['beta.example.org'], %w[petscii claims:petscii online cc:hu])
+      TagModel.replace(@ids['beta.example.org'], %w[petscii claims:petscii online cc:hu])
       assert_equal({ boards: 7, online: 3, petscii: 2, claimed: 1, shared: 0 }, @browse.stats)
     end
 
@@ -93,21 +91,21 @@ module Discovery
       assert_equal 'not called yet', list['Fresh BBS'].status(NOW)
       assert list['Beta Commodore'].petscii_only?
       refute list['Gamma Lounge'].petscii_only?
-      assert_equal '◐', ListingModel.from('id' => 1, 'state' => 'flaky').mark
+      assert_equal '◐', ListingModel.from(id: 1, state: 'flaky').mark
     end
 
     def test_a_page_has_the_fields_the_strip_and_hides_an_opted_out_banner
       id = @ids['beta.example.org']
-      @probes.save_state(id, banner: "\x93HELLO".b, encoding: 'petscii', country: 'hu')
+      BoardStateModel.save(id, banner: "\x93HELLO".b, encoding: 'petscii', country: 'hu')
       [[NOW - (29 * DAY), 'timeout'], [NOW - (2 * DAY), 'ok'], [NOW - (2 * DAY) + 60, 'refused'], [NOW, 'refused']]
-        .each { |at, r| @probes.add(id, probe(r, at: at), kind: 'scheduled', banner_hash: nil) }
+        .each { |at, r| ProbeModel.add(id, probe(r, at: at), kind: 'scheduled', banner_hash: nil) }
       page = @browse.page(id, now: NOW)
       assert_equal "·#{' ' * 26}█ ·", page.strip(NOW, utc_offset: 0)
       assert_equal "\x93HELLO".b, page.banner
       assert_equal([['Name', 'Beta Commodore'], ['Software', 'Color 64'], %w[Country HU], %w[Encoding petscii]],
                    page.fields.map { |f| [f.label, f.value] })
       assert_equal 'DB-IP', page.fields.find { |f| f.label == 'Country' }.source
-      @db.change("UPDATE boards SET optout = 'no_preview' WHERE id = ?", id)
+      BoardModel.set_optout(id, 'no_preview')
       assert_nil @browse.page(id, now: NOW).banner
       assert_nil @browse.page(@ids['hidden.example.org'])
     end

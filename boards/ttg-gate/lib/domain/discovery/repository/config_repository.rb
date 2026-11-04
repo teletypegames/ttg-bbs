@@ -17,7 +17,7 @@ module Discovery
     end
 
     def sources
-      @sources ||= load('sources.yml').fetch('sources').map { |r| SourceModel.from(r) }.freeze
+      @sources ||= load('sources.yml').fetch('sources').map { |r| SourceConfigModel.from(r) }.freeze
     end
 
     def source(id) = sources.find { |s| s.id == id }

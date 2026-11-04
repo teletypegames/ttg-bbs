@@ -7,16 +7,12 @@ module Discovery
   # get alias_of; a board whose IP moved away loses it. The IPs are those of
   # the last probes (the importer resolves nothing).
   class AliasService
-    def initialize(catalog)
-      @catalog = catalog
-    end
-
     # Returns the number of aliases.
     def rebuild
-      rows = @catalog.addresses
+      rows = BoardModel.addresses
       wanted = aliases(rows)
-      @catalog.transaction do
-        rows.each { |r| @catalog.set_alias(r['id'], wanted[r['id']]) if r['alias_of'] != wanted[r['id']] }
+      BoardModel.db.transaction do
+        rows.each { |r| BoardModel.set_alias(r[:id], wanted[r[:id]]) if r[:alias_of] != wanted[r[:id]] }
       end
       wanted.size
     end
@@ -25,10 +21,10 @@ module Discovery
 
     # The canonical board's id by the id of each alias among +rows+.
     def aliases(rows)
-      groups = rows.select { |r| r['ip'] }.group_by { |r| [r['ip'], r['port']] }.values.select { |g| g.size > 1 }
+      groups = rows.select { |r| r[:ip] }.group_by { |r| [r[:ip], r[:port]] }.values.select { |g| g.size > 1 }
       groups.each_with_object({}) do |group, wanted|
-        canonical = group.min_by { |r| [-r['sources'], r['host']] }
-        (group - [canonical]).each { |r| wanted[r['id']] = canonical['id'] }
+        canonical = group.min_by { |r| [-r[:sources], r[:host]] }
+        (group - [canonical]).each { |r| wanted[r[:id]] = canonical[:id] }
       end
     end
   end

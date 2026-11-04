@@ -172,8 +172,8 @@ module UI
         end
 
         def lists
-          @lists ||= @page.sources.select { |s| s['active'] == 1 }.each_with_index.flat_map do |s, i|
-            id = s['source_id']
+          @lists ||= @page.sources.select { |s| s[:active] == 1 }.each_with_index.flat_map do |s, i|
+            id = s[:source_id]
             [(['/', Canvas::DARK_GREY] if i.positive?), [SourcesView::SHORT.fetch(id, id.upcase), SourcesView.color(id)]].compact
           end
         end
@@ -185,7 +185,7 @@ module UI
           when 'our call' then field.label == 'Software' ? 'BANNER' : 'CALL'
           when 'DB-IP' then 'DB-IP'
           else
-            id = @page.sources.find { |s| s['name'].to_s.sub(/\s*\([^)]*\)\z/, '') == field.source }&.dig('source_id')
+            id = @page.sources.find { |s| s[:name].to_s.sub(/\s*\([^)]*\)\z/, '') == field.source }&.dig(:source_id)
             id ? SourcesView::SHORT.fetch(id, id.upcase) : Layout.plain(field.source)[0, 6]
           end
         end

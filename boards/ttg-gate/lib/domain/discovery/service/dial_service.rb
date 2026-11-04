@@ -26,7 +26,7 @@ module Discovery
   # - the outcome is recorded as a probe of kind dial (ProbeRecorder#record),
   #   and a failed one asks the prober for a probe at once; its time on the
   #   line and the bytes relayed, and every refused dial, go to +history+
-  #   (DialRepository).
+  #   (DialHistoryService).
   #
   # The dials in progress go to +live_path+ (JSON, rewritten on each change)
   # with the limits, the lines to the busiest host and each caller's dial
@@ -78,7 +78,7 @@ module Discovery
     attr_reader :window, :per_caller, :per_host, :idle
 
     # [recorder]  ProbeRecorder (anything with #record(id, result, kind:))
-    # [history]   DialRepository, or nil
+    # [history]   DialHistoryService, or nil
     # [live_path] the JSON file of the live dials, or nil
     # [resolver]  host → its IP addresses (TelnetProbe#resolve)
     # [limits]    window:, per_caller:, per_host:, idle: (LIMITS by default)

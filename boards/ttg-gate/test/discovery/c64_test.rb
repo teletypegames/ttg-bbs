@@ -19,7 +19,7 @@ module Discovery
 
     def own_boards(count = 10)
       Array.new(count) do |i|
-        BoardModel.new({ 'id' => "b#{i}", 'name' => "Board #{i}", 'summary' => 'A board of the network, drawn in PETSCII.',
+        ::BoardModel.new({ 'id' => "b#{i}", 'name' => "Board #{i}", 'summary' => 'A board of the network, drawn in PETSCII.',
                          'tags' => %w[chat doors], 'port' => 2323 + i, 'accent' => '#3cff7a', 'petscii' => true },
                        host: 'gw', public_host: 'teletypegames.org')
       end

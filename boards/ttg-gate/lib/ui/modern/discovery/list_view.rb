@@ -121,7 +121,7 @@ module UI
 
         def row(board, lit, now)
           status = board.status(now)
-          bg = lit ? SELECT : ''
+          bg = lit ? SELECTED : ''
           name, soft = columns
           "#{bg}#{mark(board)}#{bg} #{lit ? GREEN + BOLD : TEXT}#{fit(title(board), name)}#{RESET}#{bg} " \
             "#{DIM}#{fit(board.software.to_s, soft)} #{TEXT}#{board.country.to_s.upcase.ljust(2)}#{RESET}#{bg}  " \

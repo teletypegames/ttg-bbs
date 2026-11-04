@@ -30,25 +30,24 @@ module Discovery
     STATES = %w[online flaky down dead].freeze
     CLAIMS = 'claims:'
 
-    def initialize(catalog, probes, config)
-      @catalog = catalog
-      @probes  = probes
-      @config  = config
+    # [config] ConfigRepository: the sources, signatures and source-map rules
+    def initialize(config)
+      @config = config
     end
 
     # Writes the tags (and the search index row) of board +id+.
     def refresh(id, now: Time.now.to_i)
-      board = @catalog.board(id)
+      board = BoardModel.where(id: id).naked.first
       return unless board
 
-      @catalog.replace_tags(id, tags(board, @catalog.board_sources(id), @probes.state(id), now))
-      @catalog.index(id)
+      TagModel.replace(id, tags(board, BoardSourceModel.of(id), BoardStateModel.of(id), now))
+      BoardsFtsModel.index(id)
     end
 
-    def refresh_all(now: Time.now.to_i) = @catalog.board_ids.each { |id| refresh(id, now: now) }
+    def refresh_all(now: Time.now.to_i) = BoardModel.ids.each { |id| refresh(id, now: now) }
 
     # The tags of +board+ (a boards row) with its board_sources rows and its
-    # board_state row (or nil).
+    # board_state row (or nil), all Hashes.
     def tags(board, sources, state, now)
       (listed_tags(board, sources, state) + called_tags(board, state || {}, now)).uniq.sort
     end
@@ -59,7 +58,7 @@ module Discovery
     # software and the networks.
     def listed_tags(board, sources, state)
       software = software(board, state)
-      [*sources.map { |s| "src:#{s['source_id']}" }, *encodings(sources, state), software && "sw:#{software}",
+      [*sources.map { |s| "src:#{s[:source_id]}" }, *encodings(sources, state), software && "sw:#{software}",
        *networks(sources).map { |n| "net:#{n}" }].compact
     end
 
@@ -67,40 +66,40 @@ module Discovery
     # telnet options.
     def called_tags(board, state, now)
       tags = []
-      tags << "cc:#{state['country']}" if state['country']
-      tags << state['state'] if STATES.include?(state['state'])
+      tags << "cc:#{state[:country]}" if state[:country]
+      tags << state[:state] if STATES.include?(state[:state])
       tags << 'new' if new?(board, now)
-      tags << 'veteran' if board['since'] && board['since'] < VETERAN_BEFORE
-      tags + JSON.parse(state['options'] || '[]').filter_map { |o| OPTIONS[o.split.last] }
+      tags << 'veteran' if board[:since] && board[:since] < VETERAN_BEFORE
+      tags + JSON.parse(state[:options] || '[]').filter_map { |o| OPTIONS[o.split.last] }
     end
 
     def encodings(sources, state)
-      measured = [state&.dig('encoding'), state&.dig('c64_encoding')] & ENCODINGS
+      measured = [state&.dig(:encoding), state&.dig(:c64_encoding)] & ENCODINGS
       measured + mapped(:encoding, sources).map { |e| "#{CLAIMS}#{e}" }
     end
 
     def networks(sources)
-      own = sources.filter_map { |s| @config.source(s['source_id'])&.network }
+      own = sources.filter_map { |s| @config.source(s[:source_id])&.network }
       own + mapped(:network, sources)
     end
 
     # The tags the source-map rules of +axis+ give the fields of +sources+.
     def mapped(axis, sources)
       @config.rules(axis).filter_map do |rule|
-        values = sources.select { |s| s['source_id'] == rule.source }.flat_map { |s| Array(s['fields'][rule.field]) }
+        values = sources.select { |s| s[:source_id] == rule.source }.flat_map { |s| Array(s[:fields][rule.field]) }
         rule.tag if values.any? { |v| v.to_s.match?(rule.pattern) }
       end
     end
 
     def software(board, state)
-      return state['software_id'] if state&.dig('software_id')
+      return state[:software_id] if state&.dig(:software_id)
 
-      BannerAnalyzer.software(board['software'], @config.signatures)&.id
+      BannerAnalyzer.software(board[:software], @config.signatures)&.id
     end
 
     def new?(board, now)
-      started = @catalog.meta('started_at').to_i
-      board['first_seen_at'] > started + DAY && now - board['first_seen_at'] < NEW_DAYS * DAY
+      started = MetaModel.value('started_at').to_i
+      board[:first_seen_at] > started + DAY && now - board[:first_seen_at] < NEW_DAYS * DAY
     end
   end
 end

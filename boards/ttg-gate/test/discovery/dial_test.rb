@@ -27,7 +27,7 @@ module Discovery
       @now = 1_000.0
       @recorder = Recorder.new
       @live = File.join(@tmp, 'gate-dials.json')
-      @history = DialRepository.new(@db)
+      @history = DialHistoryService.new
       @dials = DialService.new(recorder: @recorder, history: @history, live_path: @live, clock: -> { @now }, log: ->(_) {},
                                resolver: ->(host) { [ADDRESSES.fetch(host)] })
     end
@@ -172,30 +172,26 @@ module Discovery
     end
 
     def test_the_metrics_read_the_live_dials
-      catalog = CatalogRepository.new(@db)
-      probes = ProbeRepository.new(@db)
-      id = catalog.board_id('bbs.example.org', 23, 1)
-      probes.add(id, probe('refused', at: 5_000), kind: 'dial', banner_hash: nil)
+      id = BoardModel.id_for('bbs.example.org', 23, 1)
+      ProbeModel.add(id, probe('refused', at: 5_000), kind: 'dial', banner_hash: nil)
       File.write(@live, '{"live":2,"at":1}')
-      text = MetricsService.new(File.join(@tmp, 'm.prom'), catalog: catalog, probes: probes, dials_path: @live).text(5_100)
+      text = MetricsService.new(File.join(@tmp, 'm.prom'), dials_path: @live).text(5_100)
       assert_includes text, "ttg_gate_bbs_discovery_dials_live 2\n"
       assert_includes text, %(ttg_gate_bbs_discovery_dials_last_hour{result="refused"} 1\n)
     end
 
     def test_the_metrics_of_the_prober
-      catalog = CatalogRepository.new(@db)
-      probes = ProbeRepository.new(@db)
-      ids = %w[a b c].map { |h| catalog.board_id("#{h}.example.org", 23, 1) }
+      ids = %w[a b c].map { |h| BoardModel.id_for("#{h}.example.org", 23, 1) }
       result = ProbeResultModel.new(result: 'ok', at: 5_000, latency_ms: 10, ip: '192.0.2.1', banner: 'x' * 40,
                                     duration_ms: 1500)
-      probes.add(ids[0], result, kind: 'scheduled', banner_hash: 'h')
-      probes.save_state(ids[0], state: 'online', next_probe_at: 9_000)
-      probes.save_state(ids[1], state: 'online', next_probe_at: 4_000)
-      catalog.replace_tags(ids[0], %w[ansi cc:hu sw:synchronet net:fidonet])
-      catalog.replace_tags(ids[1], %w[sw:ftn-mailer cc:us])
+      ProbeModel.add(ids[0], result, kind: 'scheduled', banner_hash: 'h')
+      BoardStateModel.save(ids[0], state: 'online', next_probe_at: 9_000)
+      BoardStateModel.save(ids[1], state: 'online', next_probe_at: 4_000)
+      TagModel.replace(ids[0], %w[ansi cc:hu sw:synchronet net:fidonet])
+      TagModel.replace(ids[1], %w[sw:ftn-mailer cc:us])
       optout = File.join(@tmp, 'optout.yml')
       File.write(optout, "hide: [x.example.org, 192.0.2.9]\nno_preview: []\n")
-      text = MetricsService.new(File.join(@tmp, 'm.prom'), catalog: catalog, probes: probes, db_path: @db.path,
+      text = MetricsService.new(File.join(@tmp, 'm.prom'), db_path: @db.opts[:database],
                                                             optout: OptoutRepository.new(optout))
                            .text(5_100, in_flight: 3)
       ['probes_in_flight 3', 'probes_due 2', 'next_probe_due_seconds 0', 'oldest_overdue_seconds 5099',
@@ -211,11 +207,9 @@ module Discovery
     end
 
     def test_oldest_overdue_is_zero_when_nothing_is_due
-      catalog = CatalogRepository.new(@db)
-      probes = ProbeRepository.new(@db)
-      id = catalog.board_id('a.example.org', 23, 1)
-      probes.save_state(id, state: 'online', next_probe_at: 9_000)
-      text = MetricsService.new(File.join(@tmp, 'm.prom'), catalog: catalog, probes: probes, dials_path: @live).text(5_100)
+      id = BoardModel.id_for('a.example.org', 23, 1)
+      BoardStateModel.save(id, state: 'online', next_probe_at: 9_000)
+      text = MetricsService.new(File.join(@tmp, 'm.prom'), dials_path: @live).text(5_100)
       assert_includes text, "ttg_gate_bbs_discovery_probes_due 0\n"
       assert_includes text, "ttg_gate_bbs_discovery_oldest_overdue_seconds 0\n"
     end
@@ -230,11 +224,11 @@ module Discovery
       assert_equal [300, 4, 2, 120], [dials.window, dials.per_caller, dials.per_host, dials.idle]
       assert_equal({ 'window_seconds' => 300, 'per_caller' => 4, 'per_host' => 2, 'idle_seconds' => 120 },
                    JSON.parse(File.read(root.dials_path))['limits'])
-      root.db.close
+      root.db.disconnect
       _, err = capture_io do
         bad = Root.new(env.merge('TTG_GATE_BBS_DIAL_WINDOW' => 'soon', 'TTG_GATE_BBS_DIAL_PER_HOST' => '0'))
         assert_equal({ window: 600, per_caller: 4, per_host: 3, idle: 120 }, bad.dial_limits)
-        bad.db.close
+        bad.db.disconnect
       end
       assert_includes err, 'TTG_GATE_BBS_DIAL_WINDOW=soon'
       assert_equal({ window: 600, per_caller: 10, per_host: 3, idle: 600 }, Root.new(env.slice('TTG_GATE_BBS_DATA')).dial_limits)
@@ -263,11 +257,11 @@ module Discovery
       assert_equal :not_petscii, @dials.check('a', board, face: :petscii).reason
       assert_equal :unknown, @dials.check('a', nil, face: :modern).reason
       assert_equal :unknown, @dials.check('a', nil, face: :petscii).reason
-      rows = @db.query('SELECT * FROM dial_refusals ORDER BY id')
-      assert_equal %w[id at reason board_id face], rows.first.keys
+      rows = DialRefusalModel.order(:id).naked.all
+      assert_equal %i[id at reason board_id face], rows.first.keys
       assert_equal([%w[rate modern], %w[rate c64], %w[busy modern], %w[busy c64], %w[not_petscii c64], %w[unknown modern],
-                    %w[unknown c64]], rows.map { |r| [r['reason'], r['face']] })
-      assert_equal [7, nil], [rows.first['board_id'], rows.last['board_id']]
+                    %w[unknown c64]], rows.map { |r| [r[:reason], r[:face]] })
+      assert_equal [7, nil], [rows.first[:board_id], rows.last[:board_id]]
       refute(rows.any? { |r| r.values.any? { |v| v.to_s.include?('203.0.113') || %w[a b c d e].include?(v) } })
       totals = @history.refusal_totals
       assert_equal 1, totals[%w[rate c64]]
@@ -278,9 +272,9 @@ module Discovery
     def test_old_refusals_are_pruned_into_the_running_total
       @history.refused(at: 1_000, reason: :rate, board_id: 7, face: 'modern')
       @history.dialled(at: 1_000, board_id: 7, face: 'c64', result: 'ok', seconds: 5, bytes: 10)
-      @history.prune(1_000 + DialRepository::KEEP + 1, force: true)
-      assert_equal 0, @db.value('SELECT COUNT(*) FROM dial_refusals')
-      assert_equal 0, @db.value('SELECT COUNT(*) FROM dials')
+      @history.prune(1_000 + DialHistoryService::KEEP + 1, force: true)
+      assert_equal 0, DialRefusalModel.count
+      assert_equal 0, DialModel.count
       @history.refused(at: 2_000_000_000, reason: :rate, board_id: 7, face: 'modern')
       assert_equal 2, @history.refusal_totals[%w[rate modern]]
     end
@@ -290,17 +284,15 @@ module Discovery
         @now += 30
         call.report = Report.new(connected: true, received: 4096, connect_seconds: 0.2)
       end
-      row = @db.first('SELECT * FROM dials')
-      assert_equal [7, 'c64', 'ok', 30, 4096, 1_030], row.values_at('board_id', 'face', 'result', 'seconds', 'bytes', 'at')
+      row = DialModel.naked.first
+      assert_equal [7, 'c64', 'ok', 30, 4096, 1_030], row.values_at(:board_id, :face, :result, :seconds, :bytes, :at)
       @dials.dial('a', board, face: :modern) { |call| call.report = Report.new(connected: false, error: SocketError.new) }
       assert_equal [2, 30, 4096], @history.traffic_since(0)
     end
 
     def test_the_metrics_of_the_dial_limits
-      catalog = CatalogRepository.new(@db)
-      probes = ProbeRepository.new(@db)
-      id = catalog.board_id('bbs.example.org', 23, 1)
-      probes.add(id, probe('ok', at: 900), kind: 'dial', banner_hash: nil)
+      id = BoardModel.id_for('bbs.example.org', 23, 1)
+      ProbeModel.add(id, probe('ok', at: 900), kind: 'dial', banner_hash: nil)
       9.times { dial }
       2.times { dial('198.51.100.9') }
       dial(report: Report.new(connected: true, received: 500, connect_seconds: 0.1))
@@ -309,7 +301,7 @@ module Discovery
       @dials.dial('x', board, face: :modern) do
         @dials.dial('y', board, face: :modern) do
           refute_includes File.read(@live), '203.0.113.5'
-          text = MetricsService.new(File.join(@tmp, 'm.prom'), catalog: catalog, probes: probes, dials_path: @live,
+          text = MetricsService.new(File.join(@tmp, 'm.prom'), dials_path: @live,
                                                                 history: @history).text(@now.to_i + 10)
         end
       end
@@ -322,7 +314,7 @@ module Discovery
         assert_includes text, "ttg_gate_bbs_discovery_#{line}\n"
       end
       assert_match(/dial_seconds_last_hour 0\n/, text)
-      later = MetricsService.new(File.join(@tmp, 'm.prom'), catalog: catalog, probes: probes, dials_path: @live,
+      later = MetricsService.new(File.join(@tmp, 'm.prom'), dials_path: @live,
                                                              history: @history).text(@now.to_i + 601)
       assert_includes later, "ttg_gate_bbs_discovery_dial_caller_max_in_window 0\n"
     end

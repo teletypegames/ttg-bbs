@@ -21,7 +21,7 @@ module Discovery
     REDIRECTS  = 5
     USER_AGENT = 'TTG-Gate-BBS-Discovery/1.0 (+https://wiki.teletypegames.org/services/ttg-gate-bbs)'
 
-    # The bytes of +source+ (a SourceModel). From a .zip only its member is
+    # The bytes of +source+ (a SourceConfigModel). From a .zip only its member is
     # read into the memory, not the archive.
     def fetch(source)
       download(source.link ? linked(source) : URI(source.url)) do |file|

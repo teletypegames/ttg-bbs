@@ -27,9 +27,9 @@ module UI
 
         # Each list applied once: its name, records and credit.
         def lists
-          @browse.sources.select { |s| s['last_parse_at'] }.flat_map do |s|
-            ["#{GREEN}#{BOLD}#{s['name']}#{RESET}#{DIM}  #{s['record_count'].to_i} telnet boards#{RESET}",
-             "#{TEXT}#{fit(s['attribution'], width)}#{RESET}"]
+          @browse.sources.select { |s| s[:last_parse_at] }.flat_map do |s|
+            ["#{GREEN}#{BOLD}#{s[:name]}#{RESET}#{DIM}  #{s[:record_count].to_i} telnet boards#{RESET}",
+             "#{TEXT}#{fit(s[:attribution], width)}#{RESET}"]
           end
         end
 

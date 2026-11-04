@@ -2,6 +2,7 @@
 
 require 'minitest/autorun'
 require 'tmpdir'
+require 'bbs/test'
 require_relative '../../lib/domain/discovery'
 
 module Discovery
@@ -14,20 +15,26 @@ module Discovery
     def fixture(name) = File.binread(File.join(FIXTURES, name))
 
     def source(id = 'test', format: 'nodelist', network: nil, member: nil)
-      SourceModel.new(id: id, name: id.capitalize, url: "https://#{id}.example.org/list", format: format,
+      SourceConfigModel.new(id: id, name: id.capitalize, url: "https://#{id}.example.org/list", format: format,
                       link: nil, member: member, network: network, licence: '', attribution: '', enabled: true)
     end
 
     def config = @config ||= ConfigRepository.new(CONFIG)
 
-    # A catalog in a temporary folder, removed after the test.
+    # A catalog of its own (BBS::Test.database, the models bound to it), and
+    # a temporary folder for the other files, removed after the test.
     def database
       @tmp = Dir.mktmpdir('discovery-test')
-      @db  = Database.new(File.join(@tmp, 'discovery.sqlite3'))
+      @db  = BBS::Test.database(DISCOVERY_MIGRATIONS, name: Root::DATABASE)
+      @db.transaction_mode = :immediate
+      @db
     end
 
     def teardown
-      @db&.close
+      if @db
+        @db.disconnect
+        Sequel.synchronize { Sequel::DATABASES.delete(@db) }
+      end
       FileUtils.rm_rf(@tmp) if @tmp
       super
     end

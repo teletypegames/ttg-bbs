@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Discovery
-  # Which boards a list of the Gate shows (DirectoryRepository#listings).
+  # Which boards a list of the Gate shows (ListingModel.matching).
   #
   # [tags]     every one must be on the board
   # [match]    an FTS5 query the board must match, or nil

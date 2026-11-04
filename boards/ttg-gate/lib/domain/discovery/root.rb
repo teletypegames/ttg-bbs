@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 module Discovery
-  # The composition root of Global Discovery: reads the environment and builds
-  # the repositories and services once, for the bin/discovery-* commands and
-  # the Gate.
+  # The composition root of Global Discovery: reads the environment, opens
+  # the catalog (migrated by DISCOVERY_MIGRATIONS, its models bound) and
+  # builds the repositories and services once, for the bin/discovery-*
+  # commands and the Gate, which do not share a BBS::Domain.
   #
   # [TTG_GATE_BBS_DATA]              the data folder (data/)
   # [TTG_GATE_BBS_DISCOVERY_DB]      the catalog (data/discovery.sqlite3)
@@ -16,11 +17,16 @@ module Discovery
   class Root
     ROOT = File.expand_path('../../..', __dir__)
 
-    attr_reader :db, :config, :catalog, :probes, :optout, :geoip, :tags, :aliases
+    # The name of the catalog's database: its models say
+    # <tt>table :x, database: :discovery</tt>.
+    DATABASE = :discovery
+
+    attr_reader :db, :db_path, :config, :optout, :geoip, :tags, :aliases
 
     def initialize(env = ENV)
       @data    = env.fetch('TTG_GATE_BBS_DATA', File.join(ROOT, 'data'))
-      @db      = Database.new(env.fetch('TTG_GATE_BBS_DISCOVERY_DB', File.join(@data, 'discovery.sqlite3')))
+      @db_path = env.fetch('TTG_GATE_BBS_DISCOVERY_DB', File.join(@data, 'discovery.sqlite3'))
+      @db      = Root.open(@db_path)
       @config  = ConfigRepository.new(File.join(ROOT, 'config/discovery'))
       @optout  = OptoutRepository.new(env.fetch('TTG_GATE_BBS_DISCOVERY_OPTOUT',
                                                 File.join(ROOT, 'config/discovery-optout.yml')))
@@ -32,38 +38,48 @@ module Discovery
     # The Gate's dial limits: window, per_caller, per_host, idle.
     attr_reader :dial_limits
 
+    # The catalog at +path+, made or migrated (DISCOVERY_MIGRATIONS), the
+    # models of DATABASE bound to it. A write transaction takes the write
+    # lock at once (BEGIN IMMEDIATE): the importer, the prober and the Gate
+    # write the one file.
+    def self.open(path)
+      db = BBS::Database.open(path, DISCOVERY_MIGRATIONS)
+      db.transaction_mode = :immediate
+      BBS::Model.bind(DATABASE => db)
+      db
+    end
+
     def importer
-      ImportService.new(catalog: @catalog, config: @config, fetcher: @fetcher, tags: @tags, aliases: @aliases,
+      ImportService.new(config: @config, fetcher: @fetcher, tags: @tags, aliases: @aliases,
                         optout: @optout, alert: method(:alert))
     end
 
     def prober(concurrency: ProberService::CONCURRENCY)
-      ProberService.new(catalog: @catalog, probes: @probes, probe: TelnetProbe.new, tags: @tags, aliases: @aliases,
+      ProberService.new(probe: TelnetProbe.new, tags: @tags, aliases: @aliases,
                         optout: @optout, geoip: @geoip, config: @config, metrics: metrics, concurrency: concurrency)
     end
 
     def metrics
-      MetricsService.new(File.join(@data, 'discovery-metrics.prom'), catalog: @catalog, probes: @probes,
-                                                                     dials_path: dials_path, db_path: @db.path, history: history,
-                                                                     geoip_path: @geoip.path, optout: @optout)
+      MetricsService.new(File.join(@data, 'discovery-metrics.prom'), dials_path: dials_path, db_path: @db_path,
+                         history: history, geoip_path: @geoip.path, optout: @optout)
     end
 
     # The Gate's side: the lists and pages it shows.
-    def browse = BrowseService.new(DirectoryRepository.new(@db), @config)
+    def browse = BrowseService.new(@config)
 
     # The Gate's side: the dial rules, recording each dial as a probe.
     def dials(log: DialService::LOG)
-      recorder = ProbeRecorder.new(catalog: @catalog, probes: @probes, tags: @tags, geoip: @geoip, config: @config)
+      recorder = ProbeRecorder.new(tags: @tags, geoip: @geoip, config: @config)
       DialService.new(recorder: recorder, history: history, live_path: dials_path, log: log, **@dial_limits)
     end
 
     # The Gate's refused dials and its dials' time and traffic.
-    def history = @history ||= DialRepository.new(@db)
+    def history = @history ||= DialHistoryService.new
 
     # The Gate's dials in progress (JSON), for the metrics of the prober.
     def dials_path = File.join(@data, 'gate-dials.json')
 
-    def report = ReportService.new(@db)
+    def report = ReportService.new
 
     # Logs +message+ and posts it to the Discord webhook, when there is one.
     def alert(message)
@@ -79,12 +95,10 @@ module Discovery
 
     # The repositories and services on the catalog.
     def build
-      @catalog = CatalogRepository.new(@db)
-      @probes  = ProbeRepository.new(@db)
       @fetcher = SourceFetcher.new
       @geoip   = GeoipRepository.new(File.join(@data, 'geoip'), fetcher: @fetcher)
-      @tags    = TagService.new(@catalog, @probes, @config)
-      @aliases = AliasService.new(@catalog)
+      @tags    = TagService.new(@config)
+      @aliases = AliasService.new
     end
 
     # A positive whole number of the environment, else +default+.

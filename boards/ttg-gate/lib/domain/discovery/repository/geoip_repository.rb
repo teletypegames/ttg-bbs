@@ -3,7 +3,6 @@
 require 'date'
 require 'fileutils'
 require 'ipaddr'
-require 'sqlite3'
 require 'zlib'
 
 module Discovery
@@ -18,6 +17,8 @@ module Discovery
     FILE = 'dbip-country-lite.sqlite3'
     # The wait after a failed download before the next try.
     RETRY = 6 * 3600
+    # The ranges written at once while the file is made.
+    BATCH = 1000
 
     def initialize(dir, fetcher: SourceFetcher.new)
       @dir     = dir
@@ -35,24 +36,20 @@ module Discovery
       return unless ip
 
       addr = IPAddr.new(ip)
-      table, key = addr.ipv4? ? ['v4', addr.to_i] : ['v6', SQLite3::Blob.new(addr.hton)]
-      @mutex.synchronize do
-        db = open
-        return unless db
+      cc = @mutex.synchronize do
+        next unless open
 
-        row = db.get_first_row("SELECT stop, cc FROM #{table} WHERE start <= ? ORDER BY start DESC LIMIT 1", [key])
-        return unless row && (addr.ipv4? ? row[0] >= key : row[0].b >= key.b)
-
-        row[1] == 'ZZ' ? nil : row[1].downcase
+        addr.ipv4? ? GeoipV4Model.country(addr.to_i) : GeoipV6Model.country(addr.hton)
       end
-    rescue IPAddr::Error, SQLite3::Exception
+      cc == 'ZZ' ? nil : cc&.downcase
+    rescue IPAddr::Error, Sequel::Error
       nil
     end
 
     # The month of the database in use ("2026-11"), or nil.
     def month
-      @mutex.synchronize { open&.get_first_value("SELECT value FROM meta WHERE key = 'month'") }
-    rescue SQLite3::Exception
+      @mutex.synchronize { open && GeoipMetaModel.month }
+    rescue Sequel::Error
       nil
     end
 
@@ -84,8 +81,7 @@ module Discovery
       FileUtils.rm_f(tmp)
       build(tmp, month, gzip)
       @mutex.synchronize do
-        @db&.close
-        @db = nil
+        close
         File.rename(tmp, File.join(@dir, FILE))
       end
       month
@@ -93,48 +89,66 @@ module Discovery
 
     private
 
+    # The lookup file in use, read only, its models (GeoipV4Model,
+    # GeoipV6Model, GeoipMetaModel) bound to it; nil without one.
     def open
       return @db if @db
+      return unless File.exist?(path)
 
-      path = File.join(@dir, FILE)
-      @db = SQLite3::Database.new(path, readonly: true) if File.exist?(path)
+      @db = Sequel.sqlite(path, readonly: true)
+      BBS::Model.bind(geoip: @db)
+      @db
+    end
+
+    def close
+      return unless @db
+
+      @db.disconnect
+      Sequel.synchronize { Sequel::DATABASES.delete(@db) }
+      @db = nil
     end
 
     def build(path, month, gzip)
-      db = SQLite3::Database.new(path)
-      db.execute_batch(<<~SQL)
-        CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
-        CREATE TABLE v4 (start INTEGER PRIMARY KEY, stop INTEGER NOT NULL, cc TEXT NOT NULL);
-        CREATE TABLE v6 (start BLOB PRIMARY KEY, stop BLOB NOT NULL, cc TEXT NOT NULL) WITHOUT ROWID;
-      SQL
+      db = Sequel.sqlite(path)
+      BBS::Database.migrate(db, GEOIP_MIGRATIONS)
       db.transaction do
         insert_ranges(db, gzip)
-        db.execute('INSERT INTO meta VALUES (?, ?)', ['month', month])
+        GeoipMetaModel.made_of(db, month)
       end
-      db.close
+    ensure
+      db&.disconnect
+      Sequel.synchronize { Sequel::DATABASES.delete(db) } if db
     end
 
     # The ranges of the gzipped CSV +gzip+ (an IO, read as it is inflated)
-    # into the v4 and v6 tables.
+    # into the v4 and v6 tables, BATCH at a time.
     def insert_ranges(db, gzip)
-      tables = { v4: db.prepare('INSERT OR REPLACE INTO v4 VALUES (?, ?, ?)'),
-                 v6: db.prepare('INSERT OR REPLACE INTO v6 VALUES (?, ?, ?)') }
-      Zlib::GzipReader.new(gzip).each_line { |line| insert_range(tables, line) }
-    ensure
-      tables&.each_value(&:close)
+      ranges = { v4: [], v6: [] }
+      Zlib::GzipReader.new(gzip).each_line do |line|
+        family, range = range(line)
+        next unless family
+
+        ranges[family] << range
+        flush(db, ranges) if ranges[family].size >= BATCH
+      end
+      flush(db, ranges)
     end
 
-    # One "start,stop,cc" line into its table; a line without a country or
-    # with a broken address is left out.
-    def insert_range(tables, line)
+    def flush(db, ranges)
+      GeoipV4Model.add(db, ranges[:v4]) if ranges[:v4].any?
+      GeoipV6Model.add(db, ranges[:v6]) if ranges[:v6].any?
+      ranges.each_value(&:clear)
+    end
+
+    # The family (:v4 or :v6) and [start, stop, cc] of a "start,stop,cc"
+    # line; nil for a line without a country or with a broken address.
+    def range(line)
       start, stop, cc = line.chomp.split(',', 3)
       return unless cc&.match?(/\A[A-Z]{2}\z/)
 
       from = IPAddr.new(start)
       to   = IPAddr.new(stop)
-      if from.ipv4? then tables[:v4].execute(from.to_i, to.to_i, cc)
-      else tables[:v6].execute(SQLite3::Blob.new(from.hton), SQLite3::Blob.new(to.hton), cc)
-      end
+      from.ipv4? ? [:v4, [from.to_i, to.to_i, cc]] : [:v6, [from.hton, to.hton, cc]]
     rescue IPAddr::Error
       nil
     end

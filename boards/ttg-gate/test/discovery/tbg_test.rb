@@ -47,13 +47,12 @@ module Discovery
 
     def test_a_petscii_claim_from_the_description_or_a_commodore_program
       database
-      catalog = CatalogRepository.new(@db)
-      catalog.set_meta('started_at', 0)
-      tags = TagService.new(catalog, ProbeRepository.new(@db), config)
-      board = { 'first_seen_at' => 0, 'since' => nil, 'software' => nil }
-      claims = tbg.map { |r| tags.tags(board, [{ 'source_id' => 'tbg', 'fields' => r.stored_fields }], nil, 0) }
+      MetaModel.store('started_at', 0)
+      tags = TagService.new(config)
+      board = { first_seen_at: 0, since: nil, software: nil }
+      claims = tbg.map { |r| tags.tags(board, [{ source_id: 'tbg', fields: r.stored_fields }], nil, 0) }
       assert_equal [%w[claims:petscii src:tbg], %w[src:tbg], %w[src:tbg]], claims
-      color64 = [{ 'source_id' => 'tbg', 'fields' => { 'software' => 'Color 64' } }]
+      color64 = [{ source_id: 'tbg', fields: { 'software' => 'Color 64' } }]
       assert_includes tags.tags(board, color64, nil, 0), 'claims:petscii'
     end
 

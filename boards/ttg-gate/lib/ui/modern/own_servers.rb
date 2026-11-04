@@ -44,7 +44,7 @@ module UI
       # chosen one on a lit background with DIAL at its end.
       def row(board, index)
         color   = Colors.ansi256(board.rgb)
-        lit     = index == @index ? SELECT : ''
+        lit     = index == @index ? SELECTED : ''
         address = "  #{width >= 90 ? board.address : board.port}"
         "#{color}▌#{RESET}#{lit} #{DIM}#{index + 1}  #{color}#{BOLD}#{fit(board.name, NAME)}#{RESET}#{lit}  " \
           "#{DIM}#{fit(board.tags.join(' · '), tags_width(address))}#{address}  " \

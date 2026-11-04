@@ -12,7 +12,7 @@ module UI
       LINE   = BBS::Style[fg: 238]
       YELLOW = BBS::Style[fg: 221]
       RED    = BBS::Style[fg: 203]
-      SELECT = BBS::Style[bg: 235]
+      SELECTED = BBS::Style[bg: 235]
       BOLD   = BBS::Style[bold: true]
       RESET  = BBS::Style::RESET
 
@@ -54,8 +54,8 @@ module UI
       # A row of a menu: +label+ in +size+ columns and +note+, lit with an
       # arrow when chosen.
       def menu_row(label, note, size, lit:)
-        "#{lit ? "#{SELECT}#{GREEN}▸ " : '  '}#{BOLD}#{fit(label, size)}#{RESET}" \
-          "#{SELECT if lit}#{DIM}#{fit(note, width - size - 2)}#{RESET}"
+        "#{lit ? "#{SELECTED}#{GREEN}▸ " : '  '}#{BOLD}#{fit(label, size)}#{RESET}" \
+          "#{SELECTED if lit}#{DIM}#{fit(note, width - size - 2)}#{RESET}"
       end
 
       def mark(listing) = "#{STATE_COLORS.fetch(listing.state, TEXT)}#{listing.mark}#{RESET}"
@@ -63,7 +63,7 @@ module UI
       # The logo and the two-way chooser of the gate, +tab+ lit.
       def masthead(tab)
         tabs = TABS.map do |key, label|
-          key == tab ? "#{SELECT}#{GREEN}#{BOLD} #{label} #{RESET}" : "#{DIM} #{label} #{RESET}"
+          key == tab ? "#{SELECTED}#{GREEN}#{BOLD} #{label} #{RESET}" : "#{DIM} #{label} #{RESET}"
         end.join("#{LINE}│#{RESET}")
         right = 'TAB switches'
         room  = width - TABS.values.sum { |l| l.length + 2 } - 1 - right.length

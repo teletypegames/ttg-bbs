@@ -19,11 +19,11 @@ module Discovery
     NEW_DAYS    = 7
     Facet = Data.define(:tag, :label, :count)
 
-    # [directory] DirectoryRepository  [config] ConfigRepository
-    def initialize(directory, config, random: Random.new)
-      @directory = directory
-      @config    = config
-      @random    = random
+    # [config] ConfigRepository (the software signatures)
+    # [random] the Random of Random board
+    def initialize(config, random: Random.new)
+      @config = config
+      @random = random
     end
 
     # The axes of Browse a face shows: the C64 has no "by Terminal" (it only
@@ -36,19 +36,19 @@ module Discovery
     # The boards of +query+ (a SearchQuery or text); +state+ is the F filter.
     def search(query, petscii: false, state: nil)
       query = query(query) unless query.is_a?(SearchQuery)
-      sorted(@directory.listings(ListingFilter.search(query, petscii: petscii, state: state)))
+      sorted(ListingModel.matching(ListingFilter.search(query, petscii: petscii, state: state)))
     end
 
     # Every board of the catalog, the dead and every encoding too (no
     # mailers), or with +petscii+ every PETSCII one, with +tags+ the boards
     # of every one of them; +state+ is the F filter.
     def all(petscii: false, state: nil, tags: [])
-      sorted(@directory.listings(ListingFilter.new(dead: true, state: state, petscii: petscii, tags: tags)))
+      sorted(ListingModel.matching(ListingFilter.new(dead: true, state: state, petscii: petscii, tags: tags)))
     end
 
     # The boards of one tag (a Facet of Browse).
     def tagged(tag, petscii: false, state: nil)
-      sorted(@directory.listings(ListingFilter.new(tags: [tag], petscii: petscii, state: state)))
+      sorted(ListingModel.matching(ListingFilter.new(tags: [tag], petscii: petscii, state: state)))
     end
 
     # The Facets of +axis+ (a key of AXES) over the boards a list shows by
@@ -56,7 +56,7 @@ module Discovery
     def facets(axis, petscii: false)
       spec = AXES.fetch(axis)
       counts = Hash.new(0)
-      @directory.listings(ListingFilter.new(petscii: petscii)).each do |listing|
+      ListingModel.matching(ListingFilter.new(petscii: petscii)).each do |listing|
         listing.tags.each { |t| counts[t] += 1 if spec[:tags] ? spec[:tags].include?(t) : t.start_with?(spec[:prefix]) }
       end
       counts.map { |tag, n| Facet.new(tag: tag, label: label(tag), count: n) }
@@ -66,14 +66,14 @@ module Discovery
     # The boards first seen in the last NEW_DAYS days (not those of the first
     # import), the newest first.
     def new_this_week(petscii: false, now: Time.now.to_i)
-      after = [now - (NEW_DAYS * DAY), @directory.started_at + DAY].max
-      @directory.listings(ListingFilter.new(petscii: petscii)).select { |l| l.first_seen_at > after }
-                .sort_by { |l| [-l.first_seen_at, l.title.downcase] }
+      after = [now - (NEW_DAYS * DAY), MetaModel.value('started_at').to_i + DAY].max
+      ListingModel.matching(ListingFilter.new(petscii: petscii)).select { |l| l.first_seen_at > after }
+                  .sort_by { |l| [-l.first_seen_at, l.title.downcase] }
     end
 
     # An online board at random, nil when there is none.
     def random(petscii: false)
-      @directory.listings(ListingFilter.new(petscii: petscii, state: 'online')).sample(random: @random)
+      ListingModel.matching(ListingFilter.new(petscii: petscii, state: 'online')).sample(random: @random)
     end
 
     # The boards that turned dead in the last RECENT_DEAD, the freshest first.
@@ -84,18 +84,18 @@ module Discovery
 
     # Every dead board: they are never deleted, their history stays.
     def graveyard(petscii: false)
-      sorted(@directory.listings(ListingFilter.new(petscii: petscii, state: 'dead')))
+      sorted(ListingModel.matching(ListingFilter.new(petscii: petscii, state: 'dead')))
     end
 
-    def page(id, now: Time.now.to_i) = @directory.page(id, now: now)
+    def page(id, now: Time.now.to_i) = BoardPageModel.of(id, now: now)
 
     # The ListingModel of board +id+ as it is now, nil when it is not shown.
-    def listing(id) = @directory.listing(id)
+    def listing(id) = ListingModel.find(id)
 
-    def sources = @directory.sources
+    def sources = SourceModel.ordered
 
-    # The counts of the catalog (DirectoryRepository#stats).
-    def stats = @directory.stats
+    # The counts of the catalog (BoardModel.stats).
+    def stats = BoardModel.stats
 
     # The shown name of a tag: the software's name, the country code in
     # capitals, the network, the encoding in capitals.
@@ -119,7 +119,7 @@ module Discovery
       return @vocabulary if @vocabulary && now - @vocabulary_at < 300
 
       @vocabulary_at = now
-      @vocabulary = @directory.vocabulary.to_set
+      @vocabulary = TagModel.vocabulary.to_set
     end
 
     def sorted(listings) = listings.sort_by(&:sort_key)

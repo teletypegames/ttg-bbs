@@ -2,7 +2,8 @@
 
 module Discovery
   # One board as a list of the Gate shows it: a row of the catalog with its
-  # state and tags (DirectoryRepository#listings).
+  # state and tags (::matching). Aliases and hidden boards (opt-out) are
+  # never one.
   #
   # [state]           online, flaky, down, dead or unknown
   # [software]        the banner's software, else the source's text
@@ -24,13 +25,62 @@ module Discovery
     DAY  = 86_400
     HOUR = 3600
 
+    # The columns of a listing, of the boards a list may show.
+    COLUMNS = <<~SQL
+      SELECT b.id, b.host, b.port, b.name, b.first_seen_at, b.optout,
+             COALESCE(s.state, 'unknown') AS state, s.state_since, s.last_success_at, s.first_probe_at,
+             COALESCE(s.software, b.software) AS software, s.country,
+             (SELECT group_concat(t.tag, ' ') FROM tags t WHERE t.board_id = b.id) AS tags
+      FROM boards b LEFT JOIN board_state s ON s.board_id = b.id
+      WHERE b.alias_of IS NULL AND (b.optout IS NULL OR b.optout != 'hide')
+    SQL
+
     def self.from(row)
-      new(id: row['id'], host: row['host'], port: row['port'], name: row['name'],
-          state: row['state'] || 'unknown', software: row['software'], country: row['country'],
-          last_success_at: row['last_success_at'], first_probe_at: row['first_probe_at'],
-          first_seen_at: row['first_seen_at'], state_since: row['state_since'],
-          tags: row['tags'].to_s.split.sort.freeze, optout: row['optout'])
+      new(id: row[:id], host: row[:host], port: row[:port], name: row[:name],
+          state: row[:state] || 'unknown', software: row[:software], country: row[:country],
+          last_success_at: row[:last_success_at], first_probe_at: row[:first_probe_at],
+          first_seen_at: row[:first_seen_at], state_since: row[:state_since],
+          tags: row[:tags].to_s.split.sort.freeze, optout: row[:optout])
     end
+
+    # The listings a ListingFilter lets through, unsorted. An FTS query the
+    # index cannot read gives none.
+    def self.matching(filter)
+      where = conditions(filter)
+      sql = COLUMNS + where.map { |condition| " AND #{condition.first}" }.join
+      BoardModel.db.fetch(sql, *where.flat_map { |condition| condition.drop(1) }).map { |row| from(row) }
+    rescue Sequel::DatabaseError => e
+      raise unless filter.match && e.message.match?(/fts5|syntax|MATCH/i)
+
+      []
+    end
+
+    # The listing of board +id+, nil when it is not shown.
+    def self.find(id)
+      row = BoardModel.db.fetch("#{COLUMNS} AND b.id = ?", id).first
+      row && from(row)
+    end
+
+    # The conditions of +filter+, each [SQL, its arguments…].
+    def self.conditions(filter)
+      list = []
+      list << ["COALESCE(s.state, 'unknown') != 'dead'"] unless filter.dead
+      list << ["COALESCE(s.state, 'unknown') = ?", filter.state] if filter.state
+      list << ["b.id NOT IN (SELECT board_id FROM tags WHERE tag = '#{ListingFilter::MAILER}')"] unless filter.mailers
+      list << tags_condition(filter)
+      list << ['b.id IN (SELECT rowid FROM boards_fts WHERE boards_fts MATCH ?)', filter.match] if filter.match
+      list.compact
+    end
+
+    # Every tag of +filter+ (petscii too, when asked), or nil.
+    def self.tags_condition(filter)
+      tags = (filter.tags + (filter.petscii ? ['petscii'] : [])).uniq
+      return if tags.empty?
+
+      ["b.id IN (SELECT board_id FROM tags WHERE tag IN (#{(['?'] * tags.size).join(', ')}) " \
+       'GROUP BY board_id HAVING COUNT(*) = ?)', *tags, tags.size]
+    end
+    private_class_method :conditions, :tags_condition
 
     # The name, or the host when no source gave one.
     def title = name.to_s.empty? ? host : name
