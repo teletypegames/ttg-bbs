@@ -20,6 +20,8 @@ module TTG
     # What only the board's own service sets: the time it gets to stop in
     # order (rubbs tells its callers and waits BBS_SHUTDOWN_SECONDS).
     BOARD_KEYS = %w[stop_grace_period].freeze
+    # The label docker-autoheal restarts an unhealthy container by.
+    AUTOHEAL = 'org.teletypegames.autoheal'
     # The shared RuboCop rules a board's .rubocop.yml inherits.
     RUBOCOP = %r{^inherit_gem:\s*\n\s+ttg-common:\s+lib/ttg/board/rubocop\.yml\s*$}
 
@@ -77,6 +79,12 @@ module TTG
       board.fail('compose.yaml', "#{board.slug}: one port, 23xx:2323") unless ok
       services.except(board.slug).each do |name, service|
         board.fail('compose.yaml', "#{name}: only the board service has a port") if service['ports']
+        next unless service['build']
+
+        board.fail('compose.yaml', "#{name}: healthcheck: { disable: true } (the image's asks the board's port)") unless
+          service.dig('healthcheck', 'disable') == true
+        board.fail('compose.yaml', "#{name}: label org.teletypegames.autoheal: \"false\"") unless
+          service.dig('labels', AUTOHEAL).to_s == 'false'
       end
     end
 

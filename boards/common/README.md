@@ -25,7 +25,7 @@ moves every board to the latest rubbs and ttg-common together.
 | Module | What | Used by |
 |--------|------|---------|
 | `TTG::PRESET` | The `BBS::Preset` of every board: the logo splash, teletypegames.org and its QR code on the goodbye, the User-Agent | every board (`preset TTG::PRESET`) |
-| `ttg/rake` | `rake ttg:sync` (`TTG::Sync`) writes the shared Dockerfile, .dockerignore and .woodpecker.yaml from `lib/ttg/board/`; `rake ttg:format` formats the code by the shared RuboCop rules (`rubocop -a`); the house rules of `rake bbs:check` (`TTG::Check`): `<slug>-bbs`, those files as synced, `.rubocop.yml` inheriting `lib/ttg/board/rubocop.yml`, compose limits, `stop_grace_period` and one 23xx port, the preset, every setting in `env-example` | every board's Rakefile |
+| `ttg/rake` | `rake ttg:sync` (`TTG::Sync`) writes the shared Dockerfile, .dockerignore and .woodpecker.yaml from `lib/ttg/board/`; `rake ttg:format` formats the code by the shared RuboCop rules (`rubocop -a`); the house rules of `rake bbs:check` (`TTG::Check`): `<slug>-bbs`, those files as synced, `.rubocop.yml` inheriting `lib/ttg/board/rubocop.yml`, compose limits, `stop_grace_period` and one 23xx port (another service built from the board's image, like the gate's prober, turns the image's healthcheck and autoheal label off), the preset, every setting in `env-example` | every board's Rakefile |
 | `TTG::Logo` | The Teletype Games logo as two `BBS::Art` drawings (modern: 66×23 half blocks, 256 colours; C64: 33×23 quarter blocks) and as a `BBS::Splash` | every board (all twelve) |
 
 ### `TTG::Logo`

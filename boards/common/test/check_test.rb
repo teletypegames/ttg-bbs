@@ -73,6 +73,16 @@ class TTGCheckTest < Minitest::Test
     end
   end
 
+  def test_another_service_of_the_image_has_no_health_check
+    worker = "  shop-bbs-worker:\n    mem_limit: 64m\n    cpus: 0.5\n    pids_limit: 64\n    build: .\n    " \
+             "container_name: shop-bbs-worker\n    restart: unless-stopped\n"
+    with_board('compose.yaml' => COMPOSE + worker) do |dir|
+      assert_equal(2, ttg_findings(dir).count { |f| f.message.start_with?('shop-bbs-worker:') })
+    end
+    quiet = "#{worker}    healthcheck:\n      disable: true\n    labels:\n      org.teletypegames.autoheal: \"false\"\n"
+    with_board('compose.yaml' => COMPOSE + quiet) { |dir| assert_empty ttg_findings(dir) }
+  end
+
   def test_the_board_service_gets_time_to_stop
     with_board('compose.yaml' => COMPOSE.sub("    stop_grace_period: 30s\n", '')) do |dir|
       assert_equal ['shop-bbs: no stop_grace_period'], ttg_findings(dir).map(&:message)
