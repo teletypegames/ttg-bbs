@@ -14,9 +14,15 @@ services:
       - BBS_MAX_SESSIONS=50
       - TTG_GATE_BBS_GATEWAY_HOST=host.docker.internal
       - TTG_GATE_BBS_PUBLIC_HOST=teletypegames.org
+      - RUBBS_AUTH_SECRET=${RUBBS_AUTH_SECRET:-}
     extra_hosts:
       # The boards are dialled on their ports on the host.
       - "host.docker.internal:host-gateway"
+    # The accounts API (port 8090) is not published: the other boards ask it on the interstack
+    # network as http://ttg-gate-bbs:8090/auth.
+    networks:
+      - default
+      - interstack
     restart: unless-stopped
     # rubbs tells the callers and gives them BBS_SHUTDOWN_SECONDS (20 s, Dockerfile) to leave.
     stop_grace_period: 30s
@@ -43,3 +49,8 @@ services:
       - TZ=Europe/Budapest
       - TTG_GATE_BBS_DISCORD_WEBHOOK=${TTG_GATE_BBS_DISCORD_WEBHOOK:-}
     restart: unless-stopped
+
+networks:
+  interstack:
+    name: interstack
+    external: true

@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# The accounts of the network from the server shell (they live here; see
+# BBS::Auth and TTG::Auth::ROLES):
+#
+#   docker exec -it ttg-gate-bbs bin/account list
+#   docker exec -it ttg-gate-bbs bin/account password NAME     # sets it, makes the account when there is none
+#   docker exec -it ttg-gate-bbs bin/account grant NAME ROLE
+#   docker exec -it ttg-gate-bbs bin/account revoke NAME ROLE
+#   docker exec ttg-gate-bbs bin/account import --blog data/import/ttgblog.sqlite3 \
+#     --teletype data/import/teletype.sqlite3 --sysops Tasi,Zero
+#
+# The import takes the blog's editors first, their ids kept (so the blog's
+# posts.author_id stays good) and with the roles blogger and member, then
+# Teletype BBS's accounts as members (sysops: sysop too). A name in both keeps
+# the blog's account and password and gets the Teletype roles; the script
+# lists those names. It may run again: what is there is not made twice.
+
+require 'io/console'
+require 'optparse'
+require 'bundler/setup'
+require 'sequel'
+require_relative '../lib/domain'
+
+def ask(prompt)
+  return $stdin.getpass(prompt) if $stdin.tty?
+
+  $stdin.gets.to_s.chomp
+end
+
+def accounts = @accounts ||= TTGGateBBS.new.tap(&:databases).accounts
+
+def import(options)
+  blog = Sequel.sqlite(options.fetch(:blog), readonly: true)
+  blog[:users].order(:id).each do |user|
+    accounts.import(user[:name], user[:password_digest], roles: %w[blogger member], id: user[:id], created_at: user[:created_at])
+    puts "blog      #{user[:name]} (#{user[:id]})"
+  end
+  bloggers = blog[:users].select_map(:name).map { |name| BBS::Auth::Names.key(name) }
+  sysops   = options[:sysops].to_s.split(',').map { |name| BBS::Auth::Names.key(name) }
+  teletype = Sequel.sqlite(options.fetch(:teletype), readonly: true)
+  teletype[:accounts].order(:created_at).each do |row|
+    roles  = sysops.include?(row[:name_key]) ? %w[member sysop] : %w[member]
+    digest = BBS::Auth::Password.from_hex(row[:salt], row[:digest], iterations: 100_000)
+    found  = accounts.import(row[:name], digest, roles: roles, created_at: row[:created_at])
+    note   = bloggers.include?(row[:name_key]) ? '  (both: the blog account and password stay)' : ''
+    puts "teletype  #{found.name} #{roles.join(',')}#{note}"
+  end
+end
+
+command = ARGV.shift
+case command
+when 'list'
+  accounts.names.each { |name| puts "#{name.ljust(22)}#{accounts.find(name).roles.join(', ')}" }
+when 'password'
+  name = ARGV.first or abort 'usage: bin/account password NAME'
+  password = ask('Password: ')
+  abort 'the two passwords differ' unless password == ask('Again: ')
+  result = accounts.set_password(name, password)
+  result == :ok ? puts("#{name}: password set") : abort(result.to_s)
+when 'grant', 'revoke'
+  name, role = ARGV
+  abort "usage: bin/account #{command} NAME ROLE" unless role
+  warn "#{role} is none of #{TTG::Auth::ROLES.keys.join(', ')}" unless TTG::Auth::ROLES.key?(role)
+  result = command == 'grant' ? accounts.grant(name, role, by: 'bin/account') : accounts.revoke(name, role)
+  result == :ok ? puts("#{name}: #{accounts.find(name).roles.join(', ')}") : abort(result.to_s)
+when 'import'
+  options = {}
+  OptionParser.new do |o|
+    o.on('--blog PATH') { |v| options[:blog] = v }
+    o.on('--teletype PATH') { |v| options[:teletype] = v }
+    o.on('--sysops NAMES') { |v| options[:sysops] = v }
+  end.parse!(ARGV)
+  abort 'usage: bin/account import --blog PATH --teletype PATH [--sysops A,B]' unless options[:blog] && options[:teletype]
+  import(options)
+else
+  abort 'usage: bin/account list | password NAME | grant NAME ROLE | revoke NAME ROLE | import …'
+end

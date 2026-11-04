@@ -2,6 +2,7 @@
 
 require_relative 'colors'
 require_relative 'dial'
+require_relative 'account'
 require_relative 'petscii/gate'
 
 module UI
@@ -17,7 +18,14 @@ module UI
     # gate's own goodbye.
     def self.call(session, bbs)
       NODES.take do |node|
-        Gate.new(session, boards: bbs.directory.boards(petscii: true), browse: bbs.browse, dials: bbs.dials, node: node).run
+        Gate.new(
+          session,
+          boards:   bbs.directory.boards(petscii: true),
+          browse:   bbs.browse,
+          dials:    bbs.dials,
+          accounts: bbs.accounts,
+          node:     node
+        ).run
       end
       goodbye(session)
     end

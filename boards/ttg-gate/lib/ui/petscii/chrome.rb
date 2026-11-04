@@ -40,7 +40,8 @@ module UI
       UNDER = { all: :browse, software: :browse, country: :browse, network: :browse }.freeze
       # The keys that open a place from anywhere: the tabs (G as in Global
       # Discovery too), the sub-menu's yellow signs, the axes of Browse
-      # (soft_w_are, _c_ountry, networ_k_), U for the Sources as before, Help and Quit.
+      # (soft_w_are, _c_ountry, networ_k_), U for the Sources as before, the
+      # caller's Account, Help and Quit.
       HOTKEYS = {
         'o' => :own,
         'd' => :discover,
@@ -50,6 +51,7 @@ module UI
         'k' => :network,
         'u' => :sources,
         'h' => :help,
+        'a' => :account,
         'q' => :quit
       }.merge(MENU.to_h { |i| [i.letter, i.key] }).freeze
 

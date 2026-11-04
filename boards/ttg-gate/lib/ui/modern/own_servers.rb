@@ -6,7 +6,7 @@ module UI
     # of bbsweb: the logo and the chooser, one row a board with its colour
     # bar, and under the list the chosen board's description. The arrows
     # choose, RETURN or the board's number dials, TAB turns to Global
-    # Discovery, Q or Esc hangs up.
+    # Discovery, A opens the caller's account, Q or Esc hangs up.
     class OwnServers < Screen
       NAME = 18
 
@@ -15,6 +15,7 @@ module UI
       key(:enter) { dial(@boards[@index]) }
       key(:tab, :right, :left, 'g', 'G') { pages.switch }
       key(:escape, 'q', 'Q') { quit }
+      key('a', 'A') { hand_over { UI::Account.run(session, @accounts) } if @accounts }
       key(/\A[1-9]\z/) do |k|
         board = @boards[k.to_i - 1]
         next unless board
@@ -23,10 +24,11 @@ module UI
         dial(board)
       end
 
-      def initialize(boards)
+      def initialize(boards, accounts: nil)
         super()
-        @boards = boards
-        @index  = 0
+        @boards   = boards
+        @accounts = accounts
+        @index = 0
       end
 
       def lines
@@ -60,7 +62,7 @@ module UI
         ["#{color}#{BOLD}#{board.name}#{RESET}  #{DIM}#{board.address}#{RESET}", *body.map { |l| "#{TEXT}#{l}#{RESET}" }]
       end
 
-      def hints = "#{DIM}↑↓ choose   RETURN or 1-#{@boards.size} dial   TAB Global Discovery   Q hang up#{RESET}"
+      def hints = "#{DIM}↑↓ choose   RETURN or 1-#{@boards.size} dial   TAB Global Discovery   A you   Q hang up#{RESET}"
     end
   end
 end

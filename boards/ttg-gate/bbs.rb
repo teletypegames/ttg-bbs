@@ -11,6 +11,8 @@ require_relative 'lib/ui/petscii'
 BBS.board 'TTG Gate BBS', TTGGateBBS do
   preset  TTG::PRESET
   mouse   false
-  modern  { |bbs| call { UI::Modern::Gate.new(session, bbs).run } }
+  auth(login: :menu, &:accounts)
+  on_start(&:serve_accounts)
+  modern { |bbs| call { UI::Modern::Gate.new(session, bbs).run } }
   petscii(goodbye: false) { |bbs| call { UI::Petscii.call(session, bbs) } }
 end

@@ -9,6 +9,13 @@ module UI
         private
 
         # The search: the input line in place of the hint bar, then its list.
+        # The caller's account (UI::Account) on the bare line, then back.
+        def account
+          return unless @accounts
+
+          hand_over { UI::Account.run(session, @accounts) }
+        end
+
         def search
           text = input
           return if text.nil? || text.empty?

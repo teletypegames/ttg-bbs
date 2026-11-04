@@ -19,3 +19,9 @@ TTG_GATE_BBS_DIAL_WINDOW=600
 TTG_GATE_BBS_DIAL_PER_CALLER=10
 TTG_GATE_BBS_DIAL_PER_HOST=3
 TTG_GATE_BBS_DIAL_IDLE=600
+# The accounts of the network (BBS::Auth): the gate keeps them and serves them to the other
+# boards on the interstack network; 0 turns the API off. The secret is the same on every board
+# (openssl rand -hex 32), in .env on the server, never here.
+TTG_GATE_BBS_ACCOUNTS_DB=data/accounts.sqlite3
+TTG_GATE_BBS_AUTH_PORT=8090
+RUBBS_AUTH_SECRET=
