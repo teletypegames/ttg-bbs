@@ -17,6 +17,6 @@ BBS.board 'TTG Blog BBS', TTGBlogBBS do
   petscii UI::Petscii
   idle 900
   mouse false
-  goodbye bar: 'thanks for reading ttg blog bbs', color: BBS::Petscii::Colors::YE
+  goodbye greeting: 'Thanks for reading', color: BBS::Petscii::Colors::YE
   on_start { |bbs| Web::Api.new(bbs, port: bbs.http_port).start if bbs.http_port.positive? }
 end

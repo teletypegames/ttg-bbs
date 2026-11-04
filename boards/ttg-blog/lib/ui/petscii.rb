@@ -33,7 +33,7 @@ module UI
        *screen.fit(PostPage.lines(bbs.categories, post, screen))]
     end
 
-    main_menu(home: :masthead, hint: 'crsr: move  return: open  q: log off') do
+    main_menu(home: :masthead, gap: false, hint: 'crsr: move  return: open  q: log off') do
       heading "latest #{'─' * (COLS - 4 - 6)}"
       each_of(-> { latest_posts }) do |post, i|
         next heading("#{GR}no posts yet") unless post
