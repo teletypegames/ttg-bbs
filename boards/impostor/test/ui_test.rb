@@ -12,8 +12,8 @@ class UITest < Minitest::Test
   def face
     sessions = SessionService.new(SessionRepository.new(path('sessions.sqlite3')))
     BBS::Flow.define do
-      call(&UI.debrief(Impostor::Modern.flow(sessions: sessions)))
-      call { UI.goodbye(session) }
+      flow Impostor::Modern.flow(sessions: sessions)
+      goodbye(**UI::GOODBYE)
     end
   end
 
@@ -29,9 +29,9 @@ class UITest < Minitest::Test
 
   def test_the_c64_goodbye_has_the_logo
     session = BBS::Test::Session.new(petscii: true)
-    UI::Petscii.goodbye(session)
+    BBS::Goodbye.show(session, **UI::GOODBYE)
 
     assert_includes session.output, 'Thanks for calling Impostor BBS'
-    assert_includes session.output, UI::Petscii::LOGO.first
+    assert_includes session.output, UI::LOGO.first
   end
 end
