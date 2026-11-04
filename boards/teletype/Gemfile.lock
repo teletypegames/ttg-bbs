@@ -1,9 +1,9 @@
 GIT
   remote: https://git.teletypegames.org/bbs/common.git
-  revision: 4034a0cd81d6ad905b9e3fe7d4f0d3947bc1ed3b
+  revision: 7101ba19a33337c239c9ec5235e654a7fd23a6b0
   specs:
-    ttg-common (0.2.0)
-      bbs (>= 2.0)
+    ttg-common (0.3.0)
+      bbs (>= 2.2)
 
 GIT
   remote: https://git.teletypegames.org/bbs/sermo-bbs.git
@@ -14,9 +14,9 @@ GIT
 
 GIT
   remote: https://git.teletypegames.org/engines/rubbs.git
-  revision: 6609e08d84a6754d550fd9c072f9100f24c670d9
+  revision: 1f1df1d4edc3e6c54bbf1a7c2e5e8b683c7fabd2
   specs:
-    bbs (2.1.0)
+    bbs (2.2.0)
       artii (~> 2.1)
       csv (~> 3.3)
       rqrcode_core (~> 2.1)
