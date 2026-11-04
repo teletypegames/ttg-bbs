@@ -7,8 +7,7 @@ require 'cgi'
 SearchResultModel = Data.define(:title, :snippet, :words) do
   # A hit of the Action API's list=search.
   def self.from_api(hit)
-    new(title: BBS::Text.line(hit['title']), snippet: plain(hit['snippet']),
-        words: hit['wordcount'].to_i)
+    new(title: BBS::Text.line(hit['title']), snippet: plain(hit['snippet']), words: hit['wordcount'].to_i)
   end
 
   def self.plain(html)

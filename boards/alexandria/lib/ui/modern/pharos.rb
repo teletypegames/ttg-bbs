@@ -12,9 +12,14 @@ module UI
       TOWER_WIDTH = 27
 
       FONT = {
-        'A' => ['▄▀▀▄', '█▄▄█', '▀  ▀'], 'L' => ['█   ', '█   ', '▀▀▀▀'], 'E' => ['█▀▀▀', '█▀▀ ', '▀▀▀▀'],
-        'X' => ['▀▄▄▀', '▄▀▀▄', '▀  ▀'], 'N' => ['█▄ █', '█ ▀█', '▀  ▀'], 'D' => ['█▀▀▄', '█  █', '▀▀▀ '],
-        'R' => ['█▀▀▄', '█▀█ ', '▀  ▀'], 'I' => ['█', '█', '▀']
+        'A' => ['▄▀▀▄', '█▄▄█', '▀  ▀'],
+        'L' => ['█   ', '█   ', '▀▀▀▀'],
+        'E' => ['█▀▀▀', '█▀▀ ', '▀▀▀▀'],
+        'X' => ['▀▄▄▀', '▄▀▀▄', '▀  ▀'],
+        'N' => ['█▄ █', '█ ▀█', '▀  ▀'],
+        'D' => ['█▀▀▄', '█  █', '▀▀▀ '],
+        'R' => ['█▀▀▄', '█▀█ ', '▀  ▀'],
+        'I' => ['█', '█', '▀']
       }.freeze
       NAME = 3.times.map { |row| 'ALEXANDRIA'.chars.map { |c| FONT[c][row] }.join(' ') }.freeze
       TAGLINE = 'Wikipedia on a telnet line'
@@ -42,6 +47,7 @@ module UI
       def render(frame)
         x = bounds.x + ([bounds.width - width, 0].max / 2)
         return render_name(frame, x) unless tower?
+
         render_tower(frame, x)
         render_name(frame, x + TOWER_WIDTH + 2)
       end

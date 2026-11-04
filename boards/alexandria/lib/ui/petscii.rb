@@ -67,6 +67,7 @@ module UI
     def look_up(query)
       article, results = loading('searching…') { articles.look_up(query, lang: lang) }
       return show(article) if article
+
       fail_with(NO_ANSWER) if results.nil?
       fail_with("Nothing found for \"#{query}\".") if results.empty?
 

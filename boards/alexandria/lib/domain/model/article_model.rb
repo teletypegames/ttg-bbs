@@ -12,10 +12,14 @@ ArticleModel = Data.define(:title, :url, :lang, :sections, :redirected_from, :pa
     return nil if page.nil? || page['missing'] || page['invalid'] || page['extract'].to_s.strip.empty?
 
     title = line(page['title'])
-    new(title: title, url: line(page['fullurl']), lang: lang,
-        sections: sections(title, BBS::Text.clean(page['extract'])),
-        redirected_from: data.dig('query', 'redirects', 0, 'from')&.then { |from| line(from) },
-        pageid: page['pageid'].is_a?(Integer) ? page['pageid'] : nil)
+    new(
+      title:           title,
+      url:             line(page['fullurl']),
+      lang:            lang,
+      sections:        sections(title, BBS::Text.clean(page['extract'])),
+      redirected_from: data.dig('query', 'redirects', 0, 'from')&.then { |from| line(from) },
+      pageid:          page['pageid'].is_a?(Integer) ? page['pageid'] : nil
+    )
   end
 
   # The shortest address of the article, for a QR code: by its page id

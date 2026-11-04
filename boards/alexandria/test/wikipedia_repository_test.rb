@@ -3,10 +3,16 @@
 require 'test_helper'
 
 class WikipediaRepositoryTest < Minitest::Test
-  ARTICLE = { 'query' => { 'redirects' => [{ 'from' => "Old\e[5m" }],
-                           'pages' => [{ 'pageid' => 1208, 'title' => "Ada\e]0;x\a", 'fullurl' => 'https://en.wikipedia.org/wiki/Ada',
-                                         'extract' => "Lead \e[31mtext.\n\n== History ==\nBorn.\n\n== References ==\nx" }] } }
-            .freeze
+  ARTICLE = { 'query' => {
+    'redirects' => [{ 'from' => "Old\e[5m" }],
+    'pages'     => [{
+      'pageid'  => 1208,
+      'title'   => "Ada\e]0;x\a",
+      'fullurl' => 'https://en.wikipedia.org/wiki/Ada',
+      'extract' => "Lead \e[31mtext.\n\n== History ==\nBorn.\n\n== References ==\nx"
+    }]
+  } }
+    .freeze
 
   HIT = { 'title' => "T\u202e", 'snippet' => 'a <b>b</b> &#27;', 'wordcount' => 9 }.freeze
 
