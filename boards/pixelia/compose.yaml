@@ -13,3 +13,5 @@ services:
       - TZ=Europe/Budapest
       - BBS_MAX_SESSIONS=50
     restart: unless-stopped
+    # rubbs tells the callers and gives them BBS_SHUTDOWN_SECONDS (20 s, Dockerfile) to leave.
+    stop_grace_period: 30s
