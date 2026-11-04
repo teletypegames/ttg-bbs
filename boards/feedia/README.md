@@ -143,7 +143,7 @@ docker exec feedia-bbs bin/inbox 100
 ```
 bbs.rb                          entry point: the board, the terminal question, then a face
 bin/inbox                       the admins' look at the inbox
-bin/test                        the domain's tests (minitest, no network)
+rake test                        the domain's tests (minitest, no network)
 config/feeds.yml                the feed list
 lib/
   domain.rb                     requires the domain in dependency order
@@ -180,8 +180,8 @@ failure go up; the services log it once and the faces say "did not answer".
 ## Tests
 
 ```bash
-bundle exec bin/test              # all of them
-bundle exec bin/test inbox        # the files whose name has the word
+bundle exec rake test              # all of them
+bundle exec rake test inbox        # the files whose name has the word
 ```
 
 ## Deploy
