@@ -4,23 +4,25 @@ module UI
   module Modern
     # What the caller does on the modern face: the browser, the refresh, the
     # QR code of a page, and the private pages following who is on the line
-    # (Wiki > Log in, the built-in BBS::Auth login).
+    # (Wiki > Log in and Log out, BBS::Auth).
     module Helpers
       include Wording
 
-      # Once a second while the caller is idle: after a log in or out the
-      # browser shows the pages anew, and an account without the
-      # wiki-supervisor role is told the private pages stay locked.
-      def follow_identity
-        return if who == @who
-
-        @who = who
+      # After a good login (+who+, the BBS::Auth::Identity): the browser shows
+      # the pages anew, and an account without the wiki-supervisor role is
+      # told the private pages stay locked.
+      def logged_in(who)
         reload_details
-        message(not_supervisor(identity.name), title: 'Log in') if signed_in? && !supervisor?
+        return message("Welcome, #{who.name}. The private pages are open.", title: 'Log in') if supervisor?
+
+        message(not_supervisor(who.name), title: 'Log in')
       end
 
-      # Who is on the line, as #follow_identity compares it.
-      def who = [identity.name, identity.roles]
+      # Logs out, says so, and the browser locks the private pages again.
+      def logged_out
+        log_out_now
+        reload_details
+      end
 
       def page_text(page)
         locked?(page) ? "# Supervisor only\n\n#{locked_text('**Wiki > Log in** to read it.')}" : wiki.page_markdown(page)

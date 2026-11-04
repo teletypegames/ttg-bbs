@@ -24,12 +24,12 @@ module UI
       command(:browse,  '&Browse pages',  key: 'F2', hint: 'Browse')  { open_browser }
       command(:qr,      'Page &QR code',  key: 'F3', hint: 'QR')      { show_qr }
       command(:refresh, '&Refresh index', key: 'F8', hint: 'Refresh') { refresh_pages }
+      command(:log_in,  'Log &in…', if: -> { !signed_in? }) { log_in { |who| logged_in(who) } }
+      command(:log_out, 'Log &out', if: -> { signed_in? }) { logged_out }
       menu 'Wiki', :log_in, :log_out, :separator, :browse, :qr, :refresh, :separator, :log_off
       help about: -> { "#{ABOUT}\n\nSource: #{wiki.base_url}\nPages:  #{wiki.pages.size}" }, keys: KEYS
 
       status { "#{'supervisor  ' if supervisor?}#{wiki.pages.size} pages" }
-      init { @who = who }
-      on_tick { follow_identity }
 
       desktop { on_show { open_browser } }
 
