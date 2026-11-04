@@ -126,8 +126,8 @@ once.
 ## Tests
 
 ```bash
-bundle exec bin/test            # all of them (minitest, no network)
-bundle exec bin/test reading    # the files whose name has the word
+bundle exec rake test            # all of them (minitest, no network)
+bundle exec rake test reading    # the files whose name has the word
 bundle exec rubocop
 ```
 
@@ -171,7 +171,7 @@ lib/ui/
   petscii.rb                UI::Petscii: the C64 board
   petscii/reader.rb         the C64 reader: 38-column pages
   petscii/screen.rb         the 40×25 screen: rubbs' BBS::Petscii::Screen
-bin/test                    runs the tests
+rake test                    runs the tests
 test/                       the domain tests (minitest)
 ```
 
