@@ -43,7 +43,7 @@ module UI
             title   { "Profile — #{caller_name}" }
             width   64
             height  14
-            prefill { PROFILE.to_h { |key| [key, (profile.find(caller_name) || {})[key.to_s].to_s] } }
+            prefill { PROFILE.to_h { |key| [key, (profile.find(caller_name) || {})[key].to_s] } }
             PROFILE.each { |key| field key, label: key.to_s.capitalize }
             on_submit do |values|
               profile.update(context[:username], **values)

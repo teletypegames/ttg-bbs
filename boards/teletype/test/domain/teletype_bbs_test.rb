@@ -28,8 +28,8 @@ class TeletypeBBSTest < Minitest::Test
   end
 
   def board_with_history
-    calls = LastCallersRepository.new(@bbs.store)
-    [%w[Kali a], %w[kali b], %w[Zed c], %w[Anonymous d]].each { |name, id| calls.record(name, id, 30) }
+    @bbs.databases
+    [%w[Kali a], %w[kali b], %w[Zed c], %w[Anonymous d]].each { |name, id| CallModel.record(name, id, 30) }
     @bbs.accounts.register('Kali', 'password', 'password')
     @bbs.boards.post('general', 'Kali', 'hi', caller_key: 'a')
     @bbs.trivia.add('Zed', 500, 7)

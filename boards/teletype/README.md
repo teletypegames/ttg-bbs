@@ -389,24 +389,28 @@ lib/
                                        posting, mail, paging, statistics); the only
                                        reader of the environment
   domain/teletype_doors.rb             the doors (DoorModel), in menu order
+  domain/migrations.rb                 the schema of the SQLite file (MIGRATIONS)
+  domain/model/                        a BBS::Model (Sequel) for each table, its
+                                       queries as class methods:
+    account_model.rb                   registered names, PBKDF2 hashes, look-alikes
+    post_model.rb                      the boards' posts
+    last_read_model.rb                 how far each name has read each board
+    call_model.rb                      finished calls and their statistics (SQL)
+    oneliner_model.rb                  the oneliners wall
+    profile_model.rb                   per-user persistent profile
+    trivia_score_model.rb              TTG Trivia's hall of fame
+    vote_model.rb                      the voting booth's ballots
+    letter_model.rb                    private mail and feedback (the mail table)
+                                       and value objects (BoardModel, GameModel, …),
+                                       Names (keys, skeletons), Password (PBKDF2)
   domain/repository/
-    database.rb                        the SQLite file and its schema (Database)
     legacy_import.rb                   the CSV files of earlier versions, imported once
     online_users_repository.rb         the nodes: who, since when, doing what
-    board_repository.rb                the boards' posts
     catalog_repository.rb              games API client (the doors, the Master)
-    last_callers_repository.rb         finished calls and their statistics (SQL)
-    profile_repository.rb              per-user persistent profile
-    account_repository.rb              registered names, PBKDF2 hashes, look-alikes
-    trivia_score_repository.rb         TTG Trivia's hall of fame
     bulletin_repository.rb             the Markdown bulletins
     site_repository.rb                 teletypegames.org events + members
-    oneliner_repository.rb             the oneliners wall
     ftp_repository.rb                  anonymous FTP: the file sizes of a folder
     gitea_repository.rb                public activity of the Gitea organisations
-    mail_repository.rb                 private mail and feedback
-    last_read_repository.rb            how far each name has read each board
-    vote_repository.rb                 the voting booth's ballots
     network_repository.rb              the town map's boards (content/network.yml)
     http_json.rb                       JSON GET (BBS::HTTP) + BBS::Cache
   domain/service/
@@ -423,8 +427,6 @@ lib/
     tls_connect.rb                     TLS with a deadline (the IRC relay)
     scene_service.rb                   what the clubhouse pictures show, for both
                                        faces (SceneModel)
-  domain/model/                        value objects (MessageModel, GameModel, …),
-                                       Names (keys, skeletons), Password (PBKDF2)
   doors/commodore.rb                   the C64 and Plus/4 doors
   doors/commodore/basic.rb, basic/     their BASIC V2 interpreter (tokenizer,
                                        expressions, statements)
@@ -607,7 +609,10 @@ so it survives container restarts.
 
 Everything the callers leave is in one SQLite file, `data/teletype.sqlite3`
 (WAL mode; `bin/account` and the board use it at the same time). Its schema is
-`lib/domain/repository/database.rb`, and each repository answers with SQL: the
+`lib/domain/migrations.rb` (the steps are counted in `PRAGMA user_version`, so
+a step is never changed, only added), declared in `TeletypeBBS` with rubbs'
+`database` and read and written through a `BBS::Model` (Sequel) for each
+table in `lib/domain/model`, whose class methods are the queries: the
 caller numbers, a name's calls, the top callers and posters and the trivia
 hall of fame are aggregates, not loops over the whole history. The server's
 nightly backup copies every `data/*.sqlite3`.

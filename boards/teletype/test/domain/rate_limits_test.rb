@@ -6,13 +6,13 @@ class RateLimitsTest < Minitest::Test
   include DatabaseCase
 
   def accounts
-    AccountService.new(AccountRepository.new(@db), pause: ->(_) {}).tap do |a|
+    AccountService.new(pause: ->(_) {}).tap do |a|
       a.register('Kali', 'password', 'password')
     end
   end
 
   def test_a_post_every_cooldown_by_name_and_by_line
-    boards = BoardService.new(BoardRepository.new(@db), last_read: LastReadRepository.new(@db))
+    boards = BoardService.new
     assert_equal :ok, boards.post('general', 'Kali', 'hi', caller_key: 'a')
     assert_equal :too_fast, boards.post('general', 'Kali', 'again', caller_key: 'b')
     assert_equal :too_fast, boards.post('general', 'Zed', 'me too', caller_key: 'a')
@@ -22,16 +22,15 @@ class RateLimitsTest < Minitest::Test
   end
 
   def test_anonymous_callers_are_counted_by_line_only
-    boards = BoardService.new(BoardRepository.new(@db), last_read: LastReadRepository.new(@db))
+    boards = BoardService.new
     assert_equal :ok, boards.post('general', 'Anonymous', 'one', caller_key: 'a')
     assert_equal :ok, boards.post('general', 'Anonymous', 'two', caller_key: 'b')
   end
 
   def test_posts_are_cleaned_and_capped
-    repo   = BoardRepository.new(@db)
-    boards = BoardService.new(repo, last_read: LastReadRepository.new(@db))
+    boards = BoardService.new
     boards.post('general', 'Kali', "hi\e[2J‮#{'x' * 2000}", caller_key: 'a')
-    text = repo.last('general').last.text
+    text = boards.messages('general').last.text
     assert text.start_with?('hi[2Jx')
     assert_equal BoardService::MAX_LENGTH, text.length
   end
@@ -47,7 +46,7 @@ class RateLimitsTest < Minitest::Test
   end
 
   def test_guest_feedback_has_a_daily_cap
-    mail = MailService.new(MailRepository.new(@db), accounts: accounts, sysops: [])
+    mail = MailService.new(accounts: accounts, sysops: [])
     stub_cooldown(mail)
     results = (1..(MailService::GUEST_DAILY + 1)).map do |i|
       mail.send_letter('Guest', 'Sysop', "s#{i}", 'body', registered: false, caller_key: 'a')
@@ -58,7 +57,7 @@ class RateLimitsTest < Minitest::Test
   end
 
   def test_mail_cooldown
-    mail = MailService.new(MailRepository.new(@db), accounts: accounts, sysops: [])
+    mail = MailService.new(accounts: accounts, sysops: [])
     assert_equal :ok, mail.send_letter('Kali', 'kali', 'hi', 'body', registered: true, caller_key: 'a')
     assert_equal :too_fast, mail.send_letter('Kali', 'kali', 'hi', 'body', registered: true, caller_key: 'b')
     letter = mail.inbox('Kali').first
@@ -66,7 +65,7 @@ class RateLimitsTest < Minitest::Test
   end
 
   def test_oneliner_cooldown
-    wall = OnelinerService.new(OnelinerRepository.new(@db))
+    wall = OnelinerService.new
     assert_equal :ok, wall.add('Kali', 'hello', caller_key: 'a')
     assert_equal :too_fast, wall.add('Kali', 'again', caller_key: 'b')
     assert_equal :too_long, wall.add('Zed', 'x' * 65, caller_key: 'c')

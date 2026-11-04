@@ -8,8 +8,7 @@
 class LastCallersService
   MIN_SECONDS = 10
 
-  def initialize(repo)
-    @repo    = repo
+  def initialize
     @pending = {}
     @mu      = Mutex.new
   end
@@ -25,25 +24,25 @@ class LastCallersService
     seconds = Time.now - started
     return if seconds < MIN_SECONDS
 
-    @repo.record(username, session_id, seconds)
+    CallModel.record(username, session_id, seconds)
   end
 
-  def recent(n = 10) = @repo.recent(n)
+  def recent(n = 10) = CallModel.recent(n)
 
   # The number this call gets: every logged call before it, plus one.
-  def caller_number = @repo.count + 1
+  def caller_number = CallModel.count + 1
 
-  def total_calls = @repo.count
+  def total_calls = CallModel.count
 
-  def calls_today = @repo.count_since(Time.now.strftime('%Y-%m-%d'))
+  def calls_today = CallModel.count_since(Time.now.strftime('%Y-%m-%d'))
 
   # The logged calls of a name (calls, first_call, last_call, seconds);
   # nil before its first one.
-  def user_stats(username) = @repo.stats(username)
+  def user_stats(username) = CallModel.stats(username)
 
   # {name key => stats} of every name that called.
-  def all_stats = @repo.all_stats
+  def all_stats = CallModel.all_stats
 
   # [[name, calls], ...] most calls first, Anonymous left out.
-  def top_callers(n = 10) = @repo.top(n, except: AccountService::ANONYMOUS)
+  def top_callers(n = 10) = CallModel.top(n, except: AccountService::ANONYMOUS)
 end

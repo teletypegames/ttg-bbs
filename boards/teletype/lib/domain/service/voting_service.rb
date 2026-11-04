@@ -7,8 +7,7 @@ require 'yaml'
 class VotingService
   Poll = Struct.new(:id, :title, :question, :options)
 
-  def initialize(repo, path:, games:, doors: [])
-    @repo  = repo
+  def initialize(path:, games:, doors: [])
     @path  = path
     @games = games
     @doors = doors
@@ -23,22 +22,22 @@ class VotingService
     []
   end
 
-  def ballot(poll, username) = @repo.ballot(poll.id, username)
+  def ballot(poll, username) = VoteModel.ballot(poll.id, username)
 
   # [[option, votes], ...] in the poll's order, plus any option that has
   # votes but left the list (a game renamed).
   def results(poll)
-    tally = @repo.tally(poll.id)
+    tally = VoteModel.tally(poll.id)
     (poll.options | tally.keys).map { |o| [o, tally[o] || 0] }
   end
 
-  def total(poll) = @repo.tally(poll.id).values.sum
+  def total(poll) = VoteModel.tally(poll.id).values.sum
 
   def vote(poll, username, option)
     return :anonymous if username.to_s.casecmp?(AccountService::ANONYMOUS)
     return :unknown unless poll.options.include?(option)
 
-    @repo.cast(poll.id, username, option)
+    VoteModel.cast(poll.id, username, option)
     :ok
   end
 

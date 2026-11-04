@@ -8,7 +8,7 @@ class AccountServiceTest < Minitest::Test
   def setup
     super
     @pauses   = []
-    @accounts = AccountService.new(AccountRepository.new(@db), reserved: ['Tasi'],
+    @accounts = AccountService.new(reserved: ['Tasi'],
                                    guard: LoginGuard.new(per_name: 4, per_caller: 3),
                                    pause: ->(seconds) { @pauses << seconds })
   end
@@ -33,10 +33,9 @@ class AccountServiceTest < Minitest::Test
   end
 
   def test_create_is_atomic_against_a_race
-    repo = AccountRepository.new(@db)
-    assert_equal :ok, repo.create('Zed', 'aa' * 16, 'bb' * 32)
-    assert_equal :taken, repo.create('ZED', 'cc' * 16, 'dd' * 32)
-    assert_equal 'bb' * 32, repo.find('zed').digest
+    assert_equal :ok, AccountModel.register('Zed', 'aa' * 16, 'bb' * 32)
+    assert_equal :taken, AccountModel.register('ZED', 'cc' * 16, 'dd' * 32)
+    assert_equal 'bb' * 32, AccountModel.named('zed').digest
   end
 
   def test_a_look_alike_guest_is_turned_away

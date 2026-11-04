@@ -168,10 +168,10 @@ module UI
     def letters(count) = count.nil? ? 'register to get mail' : "#{count} letter#{'s' if count != 1}"
 
     def profile_rows
-      profile = registered? ? profile.find(name) : nil
-      return [] unless profile
+      found = registered? ? profile.find(name) : nil
+      return [] unless found
 
-      %w[location homepage signature].map { |f| [f, profile[f].to_s] }.reject { |_, v| v.empty? }
+      %i[location homepage signature].map { |f| [f.to_s, found[f].to_s] }.reject { |_, v| v.empty? }
     end
 
     def edit_profile
@@ -183,7 +183,7 @@ module UI
       title("PROFILE - #{name.upcase}")
       say('Return keeps a field as it is.', color: GR)
       existing = profile.find(name) || {}
-      values = %w[signature location homepage notes].to_h { |field| [field.to_sym, ask_field(field, existing[field])] }
+      values = %i[signature location homepage notes].to_h { |field| [field, ask_field(field.to_s, existing[field])] }
       profile.update(name, **values)
       say('Profile saved.', color: GN)
       pause('return')

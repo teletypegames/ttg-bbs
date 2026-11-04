@@ -5,14 +5,13 @@
 class ProfileService
   MAX_LENGTH = 200
 
-  def initialize(repo) = @repo = repo
-
-  def find(username) = @repo.find(username)
+  # The ProfileModel of +username+, or nil.
+  def find(username) = ProfileModel.of(username)
 
   def update(username, **fields)
     return if username.to_s.strip.empty?
 
-    @repo.upsert(username: username,
+    ProfileModel.upsert(username: username,
                  **fields.transform_values { |v| BBS::Text.line(v)[0, MAX_LENGTH] })
   end
 end

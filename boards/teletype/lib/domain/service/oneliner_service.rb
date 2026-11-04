@@ -6,14 +6,13 @@ class OnelinerService
   MAX_LENGTH = 64
   COOLDOWN   = 30
 
-  # +store+ is the BBS::SQLite the cooldown is kept in; nil keeps it in
-  # memory.
-  def initialize(repo, store: nil)
-    @repo     = repo
+  # +store+ is the Sequel::Database the cooldown is kept in; nil keeps it
+  # in memory.
+  def initialize(store: nil)
     @throttle = Throttle.new(limit: 1, per: COOLDOWN, store: store, name: 'oneliner')
   end
 
-  def recent(n = 5) = @repo.recent(n)
+  def recent(n = 5) = OnelinerModel.recent(n)
 
   # :ok, :anonymous, :empty, :too_long or :too_fast.
   def add(username, text, caller_key:)
@@ -24,7 +23,7 @@ class OnelinerService
     return :too_long if line.length > MAX_LENGTH
     return :too_fast unless @throttle.allow?(username, caller_key)
 
-    @repo.append(username, line)
+    OnelinerModel.append(username, line)
     :ok
   end
 end

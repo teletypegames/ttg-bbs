@@ -30,6 +30,7 @@ class LegacyImport
   ISO_TIME  = /\A\d{4}-\d\d-\d\dT\d\d:\d\d/
   POST_TIME = /\A\d\d-\d\d \d\d:\d\d\z/
 
+  # +db+ is the board's Sequel::Database, +dir+ the folder of the files.
   def initialize(db, dir, log: ->(line) { BBS.log('import', line) })
     @db  = db
     @dir = dir
@@ -41,7 +42,7 @@ class LegacyImport
     counts = SOURCES.to_h { |source| [source.table, import(source)] }
     counts['profiles'] ||= import_profile_store
     counts.compact!
-    @log.call("imported into #{@db.path}: #{summary(counts)}") unless counts.empty?
+    @log.call("imported into #{@db.opts[:database]}: #{summary(counts)}") unless counts.empty?
     counts
   end
 
@@ -110,15 +111,15 @@ class LegacyImport
   end
 
   def store_rows(path)
-    store = BBS::SQLite.new(path)
-    return [] unless store.get("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'store'")
+    store = BBS::Database.open(path)
+    return [] unless store.table_exists?(:store)
 
-    store.query('SELECT * FROM store ORDER BY rowid')
+    store[:store].order(Sequel.lit('rowid')).map { |row| row.transform_keys(&:to_s) }
   ensure
-    store&.close
+    store&.disconnect
   end
 
-  def empty?(table) = @db.get("SELECT 1 FROM #{table} LIMIT 1").nil?
+  def empty?(table) = @db[table.to_sym].empty?
 
   def warn_kept(paths, table)
     @log.call("#{paths.join(', ')} not imported: the #{table} table has rows already")
@@ -126,9 +127,8 @@ class LegacyImport
   end
 
   def insert(table, record)
-    values = record.values.map { |v| v.is_a?(String) ? BBS::Text.clean(v) : v }
-    marks  = (['?'] * record.size).join(', ')
-    @db.query("INSERT OR REPLACE INTO #{table} (#{record.keys.join(', ')}) VALUES (#{marks})", *values)
+    values = record.transform_values { |v| v.is_a?(String) ? BBS::Text.clean(v) : v }
+    @db[table.to_sym].insert_conflict(:replace).insert(values)
   end
 
   def summary(counts)

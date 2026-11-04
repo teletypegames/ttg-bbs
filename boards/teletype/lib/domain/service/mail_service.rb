@@ -14,10 +14,9 @@ class MailService
   GUESTS_DAILY = 30
   DAY          = 86_400
 
-  # +store+ is the BBS::SQLite the limits are kept in; nil keeps them in
-  # memory.
-  def initialize(repo, accounts:, sysops:, store: nil)
-    @repo     = repo
+  # +store+ is the Sequel::Database the limits are kept in; nil keeps
+  # them in memory.
+  def initialize(accounts:, sysops:, store: nil)
     @accounts = accounts
     @sysops   = sysops
     @throttle = Throttle.new(limit: 1, per: COOLDOWN, store: store, name: 'letter')
@@ -27,12 +26,12 @@ class MailService
 
   def boxes(username, sysop: false) = sysop ? [username, SYSOP] : [username]
 
-  def inbox(username, sysop: false) = @repo.to(boxes(username, sysop: sysop))
+  def inbox(username, sysop: false) = LetterModel.to(boxes(username, sysop: sysop))
 
   def unread_count(username, sysop: false) = inbox(username, sysop: sysop).count { |l| !l.read? }
 
-  def mark_read(letter) = @repo.mark_read(letter.id)
-  def delete(letter)    = @repo.delete(letter.id)
+  def mark_read(letter) = LetterModel.mark_read(letter.id)
+  def delete(letter)    = LetterModel.remove(letter.id)
 
   # The registered spelling of a recipient, SYSOP for the sysop, nil when
   # nobody by that name can receive mail.
@@ -52,7 +51,7 @@ class MailService
     return :too_fast unless @throttle.allow?(from, caller_key)
     return :daily_limit unless registered || guest_may_write?(from, caller_key)
 
-    @repo.append(from, target, title(subject), text[0, BODY_MAX])
+    LetterModel.append(from, target, title(subject), text[0, BODY_MAX])
     :ok
   end
 

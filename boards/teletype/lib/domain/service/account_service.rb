@@ -13,8 +13,7 @@ class AccountService
   TRIES        = 3
   WRONG_PAUSE  = 2
 
-  def initialize(repo, reserved: [], guard: LoginGuard.new, pause: ->(seconds) { sleep seconds })
-    @repo     = repo
+  def initialize(reserved: [], guard: LoginGuard.new, pause: ->(seconds) { sleep seconds })
     @reserved = reserved.map { |name| Names.skeleton(name) }
     @guard    = guard
     @pause    = pause
@@ -25,12 +24,12 @@ class AccountService
     name.match?(NAME_PATTERN) ? name : ANONYMOUS
   end
 
-  def registered?(name)   = @repo.exists?(name)
-  def names               = @repo.names
-  def created_at(name)    = @repo.created_at(name)
+  def registered?(name)   = !AccountModel.named(name).nil?
+  def names               = AccountModel.names
+  def created_at(name)    = AccountModel.named(name)&.created_at
 
   # The registered spelling of a name typed in any case, nil when unknown.
-  def canonical(name) = @repo.find(name)&.name
+  def canonical(name) = AccountModel.named(name)&.name
 
   # The logon of +name+ from the line +caller_key+. The block is asked
   # for the password (given true when the one before was wrong) and
@@ -38,7 +37,7 @@ class AccountService
   # nobody registered), :look_alike (too like a registered one), :locked
   # (too many wrong passwords of late), :wrong (TRIES of them) or :dropped.
   def log_on(name, caller_key:, &ask)
-    return @repo.look_alike(name) ? :look_alike : :guest unless registered?(name)
+    return AccountModel.look_alike(name) ? :look_alike : :guest unless registered?(name)
 
     TRIES.times do |attempt|
       result = try_password(name, caller_key, attempt, &ask)
@@ -52,7 +51,7 @@ class AccountService
     return problem if problem
 
     salt = Password.salt
-    @repo.create(name, salt, Password.digest(password, salt))
+    AccountModel.register(name, salt, Password.digest(password, salt))
   end
 
   # Server-side: create or reset any account, sysops included.
@@ -60,7 +59,7 @@ class AccountService
     return :too_short if password.to_s.length < MIN_PASSWORD
 
     salt = Password.salt
-    @repo.save(name, salt, Password.digest(password, salt))
+    AccountModel.set_password(name, salt, Password.digest(password, salt))
     :ok
   end
 
@@ -79,7 +78,7 @@ class AccountService
   end
 
   def authentic?(name, password)
-    account = @repo.find(name)
+    account = AccountModel.named(name)
     !account.nil? && Password.match?(password, account.salt, account.digest)
   end
 
@@ -87,7 +86,7 @@ class AccountService
     return :anonymous  if name.to_s.casecmp?(ANONYMOUS)
     return :reserved   if @reserved.include?(Names.skeleton(name))
     return :taken      if registered?(name)
-    return :look_alike if @repo.look_alike(name)
+    return :look_alike if AccountModel.look_alike(name)
     return :too_short  if password.to_s.length < MIN_PASSWORD
 
     :mismatch unless password == confirm

@@ -8,8 +8,7 @@ class PersistenceTest < Minitest::Test
   include DatabaseCase
 
   def accounts
-    service = AccountService.new(AccountRepository.new(@db), guard: LoginGuard.new(store: @db, per_name: 3),
-                                                             pause: ->(_) {})
+    service = AccountService.new(guard: LoginGuard.new(store: @db, per_name: 3), pause: ->(_) {})
     service.register('Kali', 'password', 'password')
     service
   end
@@ -20,7 +19,7 @@ class PersistenceTest < Minitest::Test
   end
 
   def test_a_post_cooldown_outlasts_a_restart
-    boards = -> { BoardService.new(BoardRepository.new(@db), last_read: LastReadRepository.new(@db), store: @db) }
+    boards = -> { BoardService.new(store: @db) }
     assert_equal :ok, boards.call.post('general', 'Kali', 'hi', caller_key: 'a')
     assert_equal :too_fast, boards.call.post('general', 'Kali', 'again', caller_key: 'b')
   end

@@ -3,18 +3,17 @@
 require 'minitest/autorun'
 require 'tmpdir'
 require_relative '../lib/domain'
+require 'bbs/test'
 
-# A fresh database in a temporary directory for each test.
+# A fresh database for each test, the models bound to it.
 module DatabaseCase
   def setup
     super
-    @dir = Dir.mktmpdir('teletype-test')
-    @db  = Database.open(File.join(@dir, 'teletype.sqlite3'))
+    @db = BBS::Test.database(MIGRATIONS)
   end
 
   def teardown
-    @db&.close
-    FileUtils.rm_rf(@dir)
+    @db&.disconnect
     super
   end
 end

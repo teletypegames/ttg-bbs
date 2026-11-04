@@ -11,13 +11,13 @@ class LegacyImportTest < Minitest::Test
   end
 
   def teardown
-    @db&.close
+    @db&.disconnect
     FileUtils.rm_rf(@dir)
   end
 
   def open_db
-    @db = BBS::SQLite.new(File.join(@dir, 'teletype.sqlite3'))
-    @db.migrate(*Database::SCHEMA)
+    @db = BBS::Database.open(File.join(@dir, 'teletype.sqlite3'), MIGRATIONS)
+    BBS::Model.bind(main: @db)
     LegacyImport.new(@db, @dir, log: ->(line) { @log << line }).run
   end
 
@@ -51,24 +51,24 @@ class LegacyImportTest < Minitest::Test
 
   def test_imported_passwords_still_log_on
     open_db
-    accounts = AccountService.new(AccountRepository.new(@db), pause: ->(_) {})
+    accounts = AccountService.new(pause: ->(_) {})
     assert_equal :ok, accounts.log_on('tasi', caller_key: '1.2.3.4') { LegacyFixtures::PASSWORD }
     assert_equal 'Tasi', accounts.canonical('TASI')
   end
 
   def test_posts_keep_their_content
     open_db
-    boards = BoardRepository.new(@db)
-    assert_equal ['hello', 'with, a comma', 'guest post'], boards.last('general').map(&:text)
-    assert_equal "a post\nof two lines", boards.last('tech').first.text
+    boards = BoardService.new
+    assert_equal ['hello', 'with, a comma', 'guest post'], boards.messages('general').map(&:text)
+    assert_equal "a post\nof two lines", boards.messages('tech').first.text
   end
 
   def test_rows_keep_their_content
     open_db
-    assert_equal 'TTG Trivia', VoteRepository.new(@db).ballot('favourite', 'Tasi')
-    assert_equal "two\nlines", MailRepository.new(@db).to(['tasi']).first.body
-    assert_equal 'Budapest', ProfileRepository.new(@db).find('tasi')['location']
-    assert_equal 120 + 0, LastCallersRepository.new(@db).stats('tasi').seconds
+    assert_equal 'TTG Trivia', VoteModel.ballot('favourite', 'Tasi')
+    assert_equal "two\nlines", LetterModel.to(['tasi']).first.body
+    assert_equal 'Budapest', ProfileModel.of('tasi').location
+    assert_equal 120 + 0, CallModel.stats('tasi').seconds
   end
 
   def test_profiles_from_the_rubbs_store
@@ -76,7 +76,7 @@ class LegacyImportTest < Minitest::Test
     store = BBS::Store.new(path: File.join(@dir, 'profiles.sqlite3'), headers: %w[session_id timestamp username location])
     store.upsert(session_id: 'user-kali', username: 'Kali', location: 'Szeged')
     open_db
-    assert_equal 'Szeged', ProfileRepository.new(@db).find('kali')['location']
+    assert_equal 'Szeged', ProfileModel.of('kali').location
     assert File.exist?(File.join(@dir, 'profiles.sqlite3.imported'))
   end
 

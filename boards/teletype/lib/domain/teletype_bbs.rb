@@ -18,6 +18,7 @@ class TeletypeBBS
 
   setting :sysops, []
   path    :db, 'data/teletype.sqlite3'
+  database :db, MIGRATIONS
   setting :ftp_host, 'ftp.teletypegames.org'
   setting :discord_webhook, ''
   setting :irc_server, 'irc.libera.chat', blank: true
@@ -27,18 +28,19 @@ class TeletypeBBS
   setting :irc_password, ''
 
   # What the callers make: boards, mail, the wall, the chat, the people.
-  service(:store)        { Database.open(db) }
+  # Each service that keeps something opens the database first (#store),
+  # so its models are bound however the board is started.
   service(:online)       { OnlineService.new(OnlineUsersRepository.new) }
-  service(:boards)       { BoardService.new(BoardRepository.new(store), last_read: LastReadRepository.new(store), store: store) }
+  service(:boards)       { BoardService.new(store: store) }
   service(:chat)         { ChatService.new }
-  service(:last_callers) { LastCallersService.new(LastCallersRepository.new(store)) }
-  service(:profile)      { ProfileService.new(ProfileRepository.new(store)) }
-  service(:oneliners)    { OnelinerService.new(OnelinerRepository.new(store), store: store) }
+  service(:last_callers) { store && LastCallersService.new }
+  service(:profile)      { store && ProfileService.new }
+  service(:oneliners)    { OnelinerService.new(store: store) }
   service(:accounts) do
-    AccountService.new(AccountRepository.new(store), reserved: sysop_names, guard: LoginGuard.new(store: store))
+    AccountService.new(reserved: sysop_names, guard: LoginGuard.new(store: store))
   end
-  service(:mail)      { MailService.new(MailRepository.new(store), accounts: accounts, sysops: sysop_names, store: store) }
-  service(:trivia)    { TriviaScoreRepository.new(store) }
+  service(:mail)      { MailService.new(accounts: accounts, sysops: sysop_names, store: store) }
+  service(:trivia)    { store && TriviaScoreModel }
   service(:bulletins) { BulletinRepository.new(BULLETINS_DIR) }
 
   # What comes from elsewhere: the catalog, the site, Gitea, the FTP
@@ -53,8 +55,7 @@ class TeletypeBBS
   end
   service(:network) { NetworkService.new(NetworkRepository.new(File.join(CONTENT_DIR, 'network.yml'))) }
   service(:voting) do
-    VotingService.new(VoteRepository.new(store), path: File.join(CONTENT_DIR, 'polls.yml'), games: games,
-                                                 doors: DOOR_NAMES)
+    store && VotingService.new(path: File.join(CONTENT_DIR, 'polls.yml'), games: games, doors: DOOR_NAMES)
   end
 
   # The board's own characters and what the desktop draws from.
@@ -64,6 +65,15 @@ class TeletypeBBS
   service(:scene) do
     SceneService.new(online: online, chat: chat, boards: boards, mail: mail, last_callers: last_callers, site: site,
                      oneliners: oneliners, door_titles: DOOR_NAMES)
+  end
+
+  # The databases, opened and migrated, the models bound to them; on the
+  # first open the CSV files of earlier versions beside the database are
+  # brought in (LegacyImport).
+  def databases
+    return super if @databases
+
+    super.tap { |opened| LegacyImport.new(opened[:main], File.dirname(db)).run }
   end
 
   # Every service made, and the IRC channel joined.
@@ -206,7 +216,7 @@ class TeletypeBBS
   def user_rows
     stats = last_callers.all_stats
     rows = accounts.names.map do |name|
-      [name, stats[Names.key(name)], profile.find(name)&.fetch('location', nil), online.online?(name)]
+      [name, stats[Names.key(name)], profile.find(name)&.location, online.online?(name)]
     end
     rows.sort_by { |_, st, _, _| -(st&.calls || 0) }
   end
@@ -237,6 +247,10 @@ class TeletypeBBS
   private
 
   def sysop_names = sysops.map(&:downcase)
+
+  # The board's database (a Sequel::Database): the rate limits are kept in
+  # it, and opening it binds the models.
+  def store = databases[:main]
 
   def polls_open(name)
     return 0 if name == AccountService::ANONYMOUS

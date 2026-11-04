@@ -2,7 +2,7 @@
 
 # Wrong passwords counted by the name tried and by the line they came
 # from: past either limit the name (or the line) waits out the window
-# before PBKDF2 runs for it again. With a +store+ (the board's BBS::SQLite)
+# before PBKDF2 runs for it again. With a +store+ (the board's Sequel::Database)
 # the count is kept there, so a restart does not lift a lockout.
 class LoginGuard
   WINDOW = 900

@@ -4,7 +4,7 @@
 # line it calls from (BBS::RateLimit.caller_key): redialling does not reset
 # the line's count, and another line does not reset the name's.
 # Anonymous is everyone's name, so only its line is counted. With a
-# +store+ (the board's BBS::SQLite) the counts are kept there under +name+,
+# +store+ (the board's Sequel::Database) the counts are kept there under +name+,
 # so a restart does not reset them either.
 class Throttle
   def initialize(limit:, per:, store: nil, name: nil)
