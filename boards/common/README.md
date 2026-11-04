@@ -25,7 +25,7 @@ moves every board to the latest rubbs and ttg-common together.
 | Module | What | Used by |
 |--------|------|---------|
 | `TTG::PRESET` | The `BBS::Preset` of every board: the logo splash, teletypegames.org and its QR code on the goodbye, the User-Agent | every board (`preset TTG::PRESET`) |
-| `ttg/rake` | The house rules of `rake bbs:check` (`TTG::Check`): `<slug>-bbs`, the same Dockerfile and .dockerignore (`lib/ttg/board/`), compose limits and one 23xx port, the four CI steps, the preset, every setting in `env-example` | every board's Rakefile |
+| `ttg/rake` | `rake ttg:sync` (`TTG::Sync`) writes the shared Dockerfile, .dockerignore and .woodpecker.yaml from `lib/ttg/board/`; the house rules of `rake bbs:check` (`TTG::Check`): `<slug>-bbs`, those files as synced, `.rubocop.yml` inheriting `lib/ttg/board/rubocop.yml`, compose limits, `stop_grace_period` and one 23xx port, the preset, every setting in `env-example` | every board's Rakefile |
 | `TTG::Logo` | The Teletype Games logo as two `BBS::Art` drawings (modern: 66×23 half blocks, 256 colours; C64: 33×23 quarter blocks) and as a `BBS::Splash` | every board (all twelve) |
 
 ### `TTG::Logo`
@@ -61,6 +61,27 @@ BBS::Rake.board
 ```
 
 `rake bbs:check` (and `rake`, in CI) then also checks the TTG house rules
-(`lib/ttg/check.rb`). The canonical `Dockerfile` and `.dockerignore` live in
-`lib/ttg/board/`: changing them there and bumping every board's lock is how the
-boards change together.
+(`lib/ttg/check.rb`).
+
+### The shared files: `rake ttg:sync`
+
+What every board has the same lives in `lib/ttg/board/`, and `rake ttg:sync`
+writes it into the board:
+
+| Template | In the board | Board's own part |
+|---|---|---|
+| `Dockerfile` | `Dockerfile` | packages added to the `apk add` line (kept) |
+| `dockerignore` | `.dockerignore` | — |
+| `woodpecker.yaml.erb` | `.woodpecker.yaml` | the name and the port (from `bbs.rb` and `compose.yaml`) |
+| `rubocop.yml` | inherited, not copied | the board's `.rubocop.yml`: `inherit_gem: { ttg-common: lib/ttg/board/rubocop.yml }` and its own exceptions after it |
+
+The Dockerfile runs the board with JSON logs (`BBS_LOG_FORMAT=json`), 20
+seconds for its callers when it stops (`BBS_SHUTDOWN_SECONDS=20`; the compose
+service sets `stop_grace_period: 30s`), a `HEALTHCHECK` on rubbs' health probe
+and the `org.teletypegames.autoheal=true` label: the server's `docker-autoheal`
+cron restarts a board that stays unhealthy, and `ci-deploy` waits until a new
+one is healthy (infra/host-config).
+
+A change for every board: edit the template, release ttg-common, then in each
+board bump the lock, `rake ttg:sync`, commit. `rake bbs:check` fails in a board
+whose files differ from its ttg-common's.

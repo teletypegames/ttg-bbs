@@ -2,29 +2,26 @@
 
 require 'yaml'
 require 'bbs/check'
+require_relative 'sync'
 
 module TTG
   # The house rules of the Teletype Games boards, added to BBS::Check: the
-  # names, the files every board has, the same Dockerfile and .dockerignore,
-  # the limits of the compose service, the CI steps, the preset, and every
-  # setting of the domain in env-example.
+  # names, the files every board has, the Dockerfile, .dockerignore and
+  # pipeline of TTG::Sync, the shared RuboCop rules, the limits and stop time
+  # of the compose service, the preset, and every setting of the domain in
+  # env-example.
   module Check
     # The files of a TTG board beside rubbs' own.
     FILES = %w[Dockerfile compose.yaml .dockerignore .rubocop.yml .woodpecker.yaml LICENSE env-example].freeze
-    # The folder of the canonical Dockerfile and .dockerignore.
-    BOARD = File.join(__dir__, 'board')
-    # The canonical Dockerfile; a board may add packages to its +apk add+ line.
-    DOCKERFILE = File.read(File.join(BOARD, 'Dockerfile')).freeze
-    # The canonical .dockerignore.
-    DOCKERIGNORE = File.read(File.join(BOARD, 'dockerignore')).freeze
-    # The +apk add+ line of the canonical Dockerfile.
-    APK = DOCKERFILE[/^RUN apk add .*$/]
     # What a compose service sets for itself.
     COMPOSE_KEYS = %w[container_name mem_limit cpus pids_limit restart].freeze
     # The telnet ports of the boards.
     PORTS = 2300..2399
-    # The steps of a board's pipeline.
-    STEPS = %w[rubocop test check deploy].freeze
+    # What only the board's own service sets: the time it gets to stop in
+    # order (rubbs tells its callers and waits BBS_SHUTDOWN_SECONDS).
+    BOARD_KEYS = %w[stop_grace_period].freeze
+    # The shared RuboCop rules a board's .rubocop.yml inherits.
+    RUBOCOP = %r{^inherit_gem:\s*\n\s+ttg-common:\s+lib/ttg/board/rubocop\.yml\s*$}
 
     BBS::Check.rule(:ttg_name, 'the technical name is <slug>-bbs, the folder too') do |board|
       slug = board.slug
@@ -45,15 +42,20 @@ module TTG
       board.fail('bbs.rb', 'no preset TTG::PRESET') unless text.match?(/^\s*preset\s+TTG::PRESET\b/)
     end
 
-    BBS::Check.rule(:ttg_docker, 'the Dockerfile and .dockerignore of every TTG board') do |board|
+    BBS::Check.rule(:ttg_docker, 'the Dockerfile and .dockerignore of every TTG board (rake ttg:sync)') do |board|
       dockerfile = board.read('Dockerfile')
-      if dockerfile
-        apk  = dockerfile[/^RUN apk add .*$/].to_s
-        same = dockerfile.sub(apk, APK) == DOCKERFILE && apk.start_with?(APK)
-        board.fail('Dockerfile', 'differs from ttg-common lib/ttg/board/Dockerfile (only packages may be added)') unless same
+      if dockerfile && dockerfile != Sync.dockerfile(dockerfile)
+        board.fail('Dockerfile', 'differs from ttg-common lib/ttg/board/Dockerfile (only packages may be added): rake ttg:sync')
       end
       ignore = board.read('.dockerignore')
-      board.fail('.dockerignore', 'differs from ttg-common lib/ttg/board/dockerignore') if ignore && ignore != DOCKERIGNORE
+      if ignore && ignore != Sync::DOCKERIGNORE
+        board.fail('.dockerignore', 'differs from ttg-common lib/ttg/board/dockerignore: rake ttg:sync')
+      end
+    end
+
+    BBS::Check.rule(:ttg_rubocop, '.rubocop.yml inherits the shared rules of ttg-common') do |board|
+      text = board.read('.rubocop.yml')
+      board.fail('.rubocop.yml', 'no inherit_gem: ttg-common: lib/ttg/board/rubocop.yml') if text && !text.match?(RUBOCOP)
     end
 
     BBS::Check.rule(:ttg_compose, 'compose.yaml: the board service with its limits and one telnet port') do |board|
@@ -69,6 +71,7 @@ module TTG
         board.fail('compose.yaml', "#{name}: container_name is not #{name}") unless service['container_name'] == name
         board.fail('compose.yaml', "#{name}: restart is not unless-stopped") unless service['restart'] == 'unless-stopped'
       end
+      BOARD_KEYS.each { |key| board.fail('compose.yaml', "#{board.slug}: no #{key}") unless main.key?(key) }
       ports = Array(main['ports']).map { |p| p.to_s.split(':') }
       ok = ports.size == 1 && PORTS.cover?(ports[0][0].to_i) && ports[0][1] == '2323'
       board.fail('compose.yaml', "#{board.slug}: one port, 23xx:2323") unless ok
@@ -77,16 +80,12 @@ module TTG
       end
     end
 
-    BBS::Check.rule(:ttg_ci, 'the pipeline: rubocop, rake (tests and this check), compose check, deploy') do |board|
+    BBS::Check.rule(:ttg_ci, 'the pipeline of ttg-common lib/ttg/board/woodpecker.yaml.erb (rake ttg:sync)') do |board|
       text = board.read('.woodpecker.yaml')
-      next unless text
+      next unless text && board.slug
 
-      steps = Array(YAML.safe_load(text)['steps'])
-      names = steps.map { |s| s['name'] }
-      board.fail('.woodpecker.yaml', "steps are #{names.join(', ')}, not #{STEPS.join(', ')}") unless names == STEPS
-      test = steps.find { |s| s['name'] == 'test' }
-      runs = Array(test && test['commands'])
-      board.fail('.woodpecker.yaml', 'the test step runs bundle exec rake') unless runs.include?('bundle exec rake')
+      wanted = Sync.woodpecker(board.slug, Sync.port(board))
+      board.fail('.woodpecker.yaml', 'differs from the ttg-common template: rake ttg:sync') unless text == wanted
     end
 
     BBS::Check.rule(:ttg_env, 'env-example lists every setting of the domain') do |board|
