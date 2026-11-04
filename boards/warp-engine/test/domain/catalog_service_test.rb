@@ -13,8 +13,7 @@ class CatalogServiceTest < Minitest::Test
   end
 
   def catalog(data, max_bytes: 100)
-    @downloads = DownloadRepository.new(database)
-    CatalogService.new(shelves: nil, archive: FakeArchive.new(data), downloads: @downloads, max_bytes: max_bytes)
+    CatalogService.new(shelves: nil, archive: FakeArchive.new(data), max_bytes: max_bytes)
   end
 
   def title = TitleModel.parse(BoardTest.line, SHELF)

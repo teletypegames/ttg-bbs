@@ -10,19 +10,17 @@ class WarpEngineBBS
   setting :download_max, 1024 * 1024
   path    :shelves, 'config/shelves.yml'
   path    :db, 'data/warp-engine.sqlite3'
+  database :db, MIGRATIONS
 
   service(:catalog) do
+    import_legacy_log
     CatalogService.new(shelves: ShelfRepository.new(shelves), archive: ArchiveRepository.new(archive_url, ttl: index_ttl),
-                       downloads: downloads, max_bytes: download_max)
+                       max_bytes: download_max)
   end
 
   private
 
-  # The download log, with the JSONL log of the board before it imported on
-  # the first start.
-  def downloads
-    DownloadRepository.new(database(db)).tap do |repository|
-      LegacyDownloadLog.new(File.join(File.dirname(db), 'downloads.jsonl'), repository).import
-    end
-  end
+  # The JSONL download log of the board before SQLite, imported on the
+  # first start.
+  def import_legacy_log = LegacyDownloadLog.new(File.join(File.dirname(db), 'downloads.jsonl')).import
 end

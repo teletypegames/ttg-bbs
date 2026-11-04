@@ -79,11 +79,12 @@ bbs.rb                      entry point: BBS.board (rubbs 2.0 DSL)
 config/shelves.yml          the shelves of the archive
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
+  migrations.rb             the schema of the database, one step per version
+  model/download_model.rb   the downloads table (BBS::Model) and the counts
   model/shelf_model.rb      a shelf: id, name, folder, about
   model/title_model.rb      a line of INDEX.TXT
   repository/shelf_repository.rb     config/shelves.yml
   repository/archive_repository.rb   INDEX.TXT (cached) and the files, over HTTP
-  repository/download_repository.rb  the downloads table and the counts
   repository/legacy_download_log.rb  the one-time import of data/downloads.jsonl
   service/catalog_service.rb         shelves, titles, a checked fetch, the log
   warp_engine_bbs.rb        the composition root (WarpEngineBBS, a BBS::Domain)

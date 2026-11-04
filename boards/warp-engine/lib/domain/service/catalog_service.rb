@@ -5,10 +5,9 @@ require 'zlib'
 # The board's file area: the shelves, their titles, and a title's bytes for
 # a download, but only when they are the ones its index line promises.
 class CatalogService
-  def initialize(shelves:, archive:, downloads:, max_bytes:)
+  def initialize(shelves:, archive:, max_bytes:)
     @shelves   = shelves
     @archive   = archive
-    @downloads = downloads
     @max_bytes = max_bytes
   end
 
@@ -25,7 +24,7 @@ class CatalogService
   # The archive's address of a shelf or a title.
   def url(item) = @archive.url(item.path)
 
-  def downloads(title) = @downloads.count(title.key)
+  def downloads(title) = DownloadModel.of(title.key)
 
   # The bytes of +title+, or why not: :too_big, :unavailable (the archive
   # did not give them), :changed (not the size or CRC-32 of the index line:
@@ -43,8 +42,8 @@ class CatalogService
   # Counts a download that went through; a log that cannot be written does
   # not spoil it for the caller.
   def downloaded(title, protocol)
-    @downloads.add(title.key, version: title.version, protocol: protocol)
-  rescue SQLite3::Exception => e
+    DownloadModel.add(title.key, version: title.version, protocol: protocol)
+  rescue Sequel::DatabaseError => e
     BBS.log('downloads', "the download of #{title.key} is not counted: #{e.class}: #{e.message}")
   end
 

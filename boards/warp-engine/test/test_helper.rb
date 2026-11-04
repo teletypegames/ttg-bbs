@@ -2,6 +2,7 @@
 
 require 'minitest/autorun'
 require 'bbs'
+require 'bbs/test'
 require 'domain'
 require 'minitest/mock'
 require 'tmpdir'
@@ -17,6 +18,7 @@ module BoardTest
 
   def setup
     @dir = Dir.mktmpdir
+    BBS::Test.database(MIGRATIONS)
     super
   end
 
@@ -24,8 +26,6 @@ module BoardTest
     super
     FileUtils.remove_entry(@dir)
   end
-
-  def database = BBS::SQLite.new(File.join(@dir, 'warp-engine.sqlite3'))
 
   def response(body, status: 200) = BBS::HTTP::Response.new(status: status, body: body.b, headers: {})
 end
