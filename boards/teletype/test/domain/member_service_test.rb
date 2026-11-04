@@ -58,4 +58,17 @@ class MemberServiceTest < Minitest::Test
     assert_equal 'ada', @members.canonical('ada')
     assert_nil @members.canonical('Nobody')
   end
+
+  # The accounts when the gate does not answer.
+  class Away
+    def account_state(_) = :unavailable
+    def log_in(*, **) = :unavailable
+  end
+
+  def test_when_the_gate_is_away_nobody_comes_in_under_a_name
+    away = MemberService.new(directory: -> { Away.new }, pause: ->(_) {})
+    assert_equal 'Anonymous', away.log_on('Kali', caller_key: 'a') { flunk }.name
+    MemberModel.remember(BBS::Auth::Identity.new(id: 7, name: 'Kali'))
+    assert_equal :unavailable, away.log_on('Kali', caller_key: 'a') { 'password' }
+  end
 end

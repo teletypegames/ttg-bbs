@@ -44,11 +44,17 @@ class MemberService
   # BBS::Auth::Identity the caller comes in as (a named guest for a name
   # without an account), or :look_alike (too like an account's name),
   # :wrong (TRIES wrong passwords), :locked, :busy, :unavailable or
-  # :dropped.
+  # :dropped. When the accounts cannot be asked (the gate is away), a name
+  # a member called with before still asks its password (and is turned
+  # away as :unavailable), any other comes in as Anonymous: nobody gets in
+  # under a name they cannot prove.
   def log_on(name, caller_key:, &ask)
     accounts = directory
     return BBS::Auth::Identity.guest(name) if name == ANONYMOUS || accounts.nil?
-    return accounts.look_alike?(name) ? :look_alike : BBS::Auth::Identity.guest(name) unless accounts.known?(name)
+
+    state = account_state(accounts, name)
+    return BBS::Auth::Identity.guest(ANONYMOUS) if state == :unavailable
+    return accounts.look_alike?(name) ? :look_alike : BBS::Auth::Identity.guest(name) if state == :unknown
 
     TRIES.times do |attempt|
       result = try_password(accounts, name, caller_key, attempt, &ask)
@@ -71,6 +77,11 @@ class MemberService
   private
 
   def directory = @directory.call
+
+  def account_state(accounts, name)
+    state = accounts.account_state(name)
+    state == :unavailable && MemberModel.named(name) ? :known : state
+  end
 
   def try_password(accounts, name, caller_key, attempt)
     password = yield(attempt.positive?)
