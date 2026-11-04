@@ -12,7 +12,7 @@ module UI
       # browser shows the pages anew, and an account without the
       # wiki-supervisor role is told the private pages stay locked.
       def own_profile
-        profile
+        open_profile
         reload_details
         message(not_supervisor(identity.name), title: 'Profile') if signed_in? && !supervisor?
       end

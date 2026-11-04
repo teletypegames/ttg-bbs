@@ -117,7 +117,7 @@ module UI
     # password, log out); an account without the wiki-supervisor role is
     # told the private pages stay locked.
     def own_profile
-      profile
+      open_profile
       alert(not_supervisor(identity.name)) if signed_in? && !supervisor?
     end
 
