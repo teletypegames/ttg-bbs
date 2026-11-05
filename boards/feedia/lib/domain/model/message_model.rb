@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 require 'json'
-require 'bbs/text'
+require 'rubbs/common/text'
 
 # A message a caller sent the admins, a row of the messages table: kind
 # ('suggestion' or 'feedback'), time (ISO 8601), the caller's name
 # (+sender+, #from), and the suggested feed's name and url or the text. The
 # fields a kind does not use are nil. The inbox keeps the newest KEEP; an
 # older one goes when a new one comes.
-class MessageModel < BBS::Model
+class MessageModel < Rubbs::Common::Storage::Model
   table :messages
 
   KEEP = 1000
@@ -26,7 +26,7 @@ class MessageModel < BBS::Model
     hash = JSON.parse(line)
     return unless hash.is_a?(Hash) && %w[suggestion feedback].include?(hash['kind']) && hash['at'].is_a?(String)
 
-    from_h(hash.transform_keys(&:to_sym).transform_values { |v| v.nil? ? nil : BBS::Text.clean(v) })
+    from_h(hash.transform_keys(&:to_sym).transform_values { |v| v.nil? ? nil : Rubbs::Common::Text.clean(v) })
   rescue JSON::ParserError
     nil
   end

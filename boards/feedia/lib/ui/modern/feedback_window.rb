@@ -4,7 +4,7 @@ module UI
   module Modern
     # The form that writes to the admins.
     module FeedbackWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :feedback, :form do
         title 'Feedback to the admins'

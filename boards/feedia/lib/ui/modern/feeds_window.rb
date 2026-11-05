@@ -4,7 +4,7 @@ module UI
   module Modern
     # The feed list: the feeds on the left, the one picked on the right.
     module FeedsWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :feeds, :master_detail do
         title 'Feeds'

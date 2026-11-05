@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
 require 'time'
-require 'bbs/rate_limit'
-require 'bbs/text'
+require 'rubbs/common/line/rate_limit'
+require 'rubbs/common/text'
 
 # What callers send the admins: a feed to add, or feedback. Every message
 # is kept in the inbox and rings the admins' Discord channel. The board
 # never fetches a suggested address: that is the admins' call, from their
-# own machine. A caller (BBS::RateLimit.caller_key) may send PER_CALLER
+# own machine. A caller (Rubbs::Common::Line::RateLimit.caller_key) may send PER_CALLER
 # messages an hour, all callers together GLOBAL; a message counts in both
 # or, when one says no, in neither. Results are symbols for the faces to
 # word.
@@ -23,8 +23,8 @@ class InboxService
 
   def initialize(
     discord:,
-    per_caller: BBS::RateLimit.new(limit: PER_CALLER, per: HOUR),
-    global: BBS::RateLimit.new(limit: GLOBAL, per: HOUR)
+    per_caller: Rubbs::Common::Line::RateLimit.new(limit: PER_CALLER, per: HOUR),
+    global: Rubbs::Common::Line::RateLimit.new(limit: GLOBAL, per: HOUR)
   )
     @discord    = discord
     @per_caller = per_caller
@@ -65,19 +65,19 @@ class InboxService
   private
 
   def deliver(caller, message)
-    return :limited unless BBS::RateLimit.allow_all?([[@per_caller, caller], [@global, :all]])
+    return :limited unless Rubbs::Common::Line::RateLimit.allow_all?([[@per_caller, caller], [@global, :all]])
 
     MessageModel.append(message)
     @discord.post(discord_text(message))
     :ok
   rescue Sequel::DatabaseError => e
-    BBS.log('inbox', "#{e.class}: #{e.message}")
+    Rubbs.log('inbox', "#{e.class}: #{e.message}")
     :failed
   end
 
-  def field(value) = BBS::Text.line(value)[0, MAX_FIELD]
+  def field(value) = Rubbs::Common::Text.line(value)[0, MAX_FIELD]
 
-  def text(value) = BBS::Text.clean(value).gsub(/[ \t]+/, ' ').gsub(/\n{3,}/, "\n\n").strip[0, MAX_TEXT]
+  def text(value) = Rubbs::Common::Text.clean(value).gsub(/[ \t]+/, ' ').gsub(/\n{3,}/, "\n\n").strip[0, MAX_TEXT]
 
   def discord_text(message)
     head = message.kind == 'suggestion' ? suggestion_head(message) : "💬 Feedia BBS: feedback from #{who(message)}"
@@ -91,5 +91,5 @@ class InboxService
   def who(message) = message.from.to_s.empty? ? 'a caller' : "**#{escape(message.from)}**"
 
   # Discord markdown off, links included: a caller's [text](url) stays text.
-  def escape(text) = BBS::DiscordWebhook.escape(text)
+  def escape(text) = Rubbs::Common::Web::DiscordWebhook.escape(text)
 end

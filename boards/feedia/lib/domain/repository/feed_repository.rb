@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require 'bbs/http'
-require 'bbs/cache'
+require 'rubbs/common/web/http'
+require 'rubbs/common/storage/cache'
 
-# The feeds themselves, over HTTP(S) (BBS::HTTP: public addresses only, a
+# The feeds themselves, over HTTP(S) (Rubbs::Common::Web::HTTP: public addresses only, a
 # deadline, at most MAX_BYTES), read by FeedXml and kept for TTL seconds in
-# a BBS::Cache: callers opening the same feed at once share one fetch and
+# a Rubbs::Common::Storage::Cache: callers opening the same feed at once share one fetch and
 # one parse, so a crowd cannot build a crowd of XML trees. A network error
-# (BBS::HTTP::Error, BBS::HTTP::TooLarge for a body over MAX_BYTES) or a
+# (Rubbs::Common::Web::HTTP::Error, Rubbs::Common::Web::HTTP::TooLarge for a body over MAX_BYTES) or a
 # body that is no feed (FeedXml::Unreadable) goes up, unless an older copy
 # of the feed is kept: that one is served instead.
 class FeedRepository
@@ -20,9 +20,9 @@ class FeedRepository
   CACHE_ENTRIES = 200
   CACHE_BYTES   = 16 * 1024 * 1024
 
-  def initialize(http: BBS::HTTP)
+  def initialize(http: Rubbs::Common::Web::HTTP)
     @http  = http
-    @cache = BBS::Cache.new(
+    @cache = Rubbs::Common::Storage::Cache.new(
       ttl:         TTL,
       max_entries: CACHE_ENTRIES,
       max_bytes:   CACHE_BYTES,
@@ -54,7 +54,7 @@ class FeedRepository
       redirects:  REDIRECTS,
       user_agent: USER_AGENT
     )
-    raise BBS::HTTP::Error, "HTTP #{response.status}" unless response.ok?
+    raise Rubbs::Common::Web::HTTP::Error, "HTTP #{response.status}" unless response.ok?
 
     response.body
   end

@@ -14,8 +14,8 @@ class InboxServiceTest < Minitest::Test
   def service(per_caller: 5, global: 30)
     InboxService.new(
       discord:    @discord,
-      per_caller: BBS::RateLimit.new(limit: per_caller, per: 3600),
-      global:     BBS::RateLimit.new(limit: global, per: 3600)
+      per_caller: Rubbs::Common::Line::RateLimit.new(limit: per_caller, per: 3600),
+      global:     Rubbs::Common::Line::RateLimit.new(limit: global, per: 3600)
     )
   end
 
@@ -61,8 +61,12 @@ class InboxServiceTest < Minitest::Test
   end
 
   def test_a_message_the_board_refuses_costs_the_caller_nothing
-    per_caller = BBS::RateLimit.new(limit: 1, per: 3600)
-    inbox = InboxService.new(discord: @discord, per_caller: per_caller, global: BBS::RateLimit.new(limit: 1, per: 3600))
+    per_caller = Rubbs::Common::Line::RateLimit.new(limit: 1, per: 3600)
+    inbox = InboxService.new(
+      discord:    @discord,
+      per_caller: per_caller,
+      global:     Rubbs::Common::Line::RateLimit.new(limit: 1, per: 3600)
+    )
     assert_equal :ok, inbox.feedback(caller: 'a', text: 'hi')
     assert_equal :limited, inbox.feedback(caller: 'b', text: 'hi')
     assert per_caller.room?('b')

@@ -5,7 +5,7 @@ module UI
     # One feed: its items on the left, the text of the one picked on the
     # right, its address under it.
     module ChannelWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :channel, :master_detail do
         title      { channel.title }

@@ -4,7 +4,7 @@ module UI
   # The reader on a Commodore 64: PETSCII on a 40×25 screen. A one-key menu,
   # the feeds and their items as numbered lists, an item paged a screenful at
   # a time, and the messages to the admins typed line by line.
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     LOGO_COLORS = [YE, YE, OR, OR, DR].freeze
     ISSUE       = 'vol. i  no. 2327'
     NO_TEXT     = '*(no text in the feed)*'

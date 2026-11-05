@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # The schema of the board's database, one step per version
-# (BBS::Database.migrate): the admins' inbox.
+# (Rubbs::Common::Storage::Database.migrate): the admins' inbox.
 MIGRATIONS = [<<~SQL].freeze
   CREATE TABLE messages (
     id     INTEGER PRIMARY KEY,

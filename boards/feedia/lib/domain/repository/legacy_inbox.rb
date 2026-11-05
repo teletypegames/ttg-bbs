@@ -17,7 +17,7 @@ class LegacyInbox
     messages = lines.filter_map { |line| MessageModel.from_json(line) }
     MessageModel.append(*messages)
     File.rename(@path, "#{@path}.imported")
-    BBS.log('inbox', "imported #{messages.size} messages from #{File.basename(@path)} (#{lines.size - messages.size} skipped)")
+    Rubbs.log('inbox', "imported #{messages.size} messages from #{File.basename(@path)} (#{lines.size - messages.size} skipped)")
     [messages.size, lines.size - messages.size]
   end
 end

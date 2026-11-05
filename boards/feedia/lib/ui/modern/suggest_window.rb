@@ -4,7 +4,7 @@ module UI
   module Modern
     # The form that suggests a feed to the admins.
     module SuggestWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :suggest, :form do
         title 'Suggest a feed'

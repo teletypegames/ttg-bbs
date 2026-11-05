@@ -10,7 +10,7 @@ class FeedListRepository
   def initialize(path)
     @all = Array(YAML.safe_load_file(path)).filter_map { |entry| FeedModel.from_entry(entry) }.freeze
   rescue SystemCallError, Psych::Exception => e
-    BBS.log('feeds', "none from #{path}: #{e.class}: #{e.message}")
+    Rubbs.log('feeds', "none from #{path}: #{e.class}: #{e.message}")
     @all = [].freeze
   end
 end

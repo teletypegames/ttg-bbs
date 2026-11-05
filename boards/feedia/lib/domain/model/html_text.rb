@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
 require 'cgi'
-require 'bbs/text'
+require 'rubbs/common/text'
 
 # The model side's text helper, pure functions with no I/O: the HTML of a
 # feed item as Markdown a terminal can render, paragraphs, headings, lists
 # and quotes kept, everything else made plain text. A link keeps its text
 # and gets a number, its address listed under the text, the way lynx does
-# it; an image keeps its alt text. Control characters go (BBS::Text.clean),
+# it; an image keeps its alt text. Control characters go (Rubbs::Common::Text.clean),
 # so a feed cannot send escape sequences down the line.
 module HtmlText
   ENTITIES = {
@@ -117,7 +117,9 @@ module HtmlText
   end
 
   def link_list(links)
-    "### Links\n\n#{links.each_with_index.map { |l, i| "\\[#{i + 1}] #{BBS::Text.clean(l, keep_newlines: false)}" }.join("\n\n")}"
+    "### Links\n\n#{links.each_with_index.map { |l, i|
+      "\\[#{i + 1}] #{Rubbs::Common::Text.clean(l, keep_newlines: false)}"
+    }.join("\n\n")}"
   end
 
   def paragraphs(html) = html.gsub(BLOCK, "\n\n").split(/\n\s*\n/)
@@ -137,11 +139,11 @@ module HtmlText
     code = ref[1].casecmp?('x') ? ref[2..].to_i(16) : ref[1..].to_i
     return '' unless code.between?(1, 0x10FFFF) && !code.between?(0xD800, 0xDFFF)
 
-    BBS::Text.clean([code].pack('U'))
+    Rubbs::Common::Text.clean([code].pack('U'))
   end
 
   # Valid UTF-8 without control characters, a tab as a space.
-  def clean(text) = BBS::Text.clean(text).tr("\t", ' ')
+  def clean(text) = Rubbs::Common::Text.clean(text).tr("\t", ' ')
 
   def escape(line) = line.match?(/\A(?:#|```|>|[-*+] |\d+[.)] )/) ? "\\#{line}" : line
 end

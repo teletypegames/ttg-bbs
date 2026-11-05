@@ -15,8 +15,8 @@ class FeedService
   # or read. With +fresh+ the cache is skipped.
   def read(feed, fresh: false)
     @feeds.read(feed, fresh: fresh)
-  rescue BBS::HTTP::Error, FeedXml::Unreadable => e
-    BBS.log('feed', "#{feed.name}: #{e.class}: #{e.message}")
+  rescue Rubbs::Common::Web::HTTP::Error, FeedXml::Unreadable => e
+    Rubbs.log('feed', "#{feed.name}: #{e.class}: #{e.message}")
     nil
   end
 end

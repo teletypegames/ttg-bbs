@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'bbs'
+require 'rubbs'
 
 require_relative 'domain/migrations'
 require_relative 'domain/model/html_text'

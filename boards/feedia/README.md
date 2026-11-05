@@ -63,18 +63,18 @@ Copy `env-example` to `.env`:
 ## Interface
 
 A call starts with one question: which terminal is calling. It is rubbs'
-`BBS::Terminal`: the board guesses from the telnet answers (wider than 40
+`Rubbs::Common::Call::Terminal`: the board guesses from the telnet answers (wider than 40
 columns is a modern terminal; 40 columns or no answer is a Commodore), `1` (or
 `M`) picks the modern face, `2` (or `C`) the C64, and RETURN takes the pick or
 the guess.
 
-A feed is fetched when it is opened (rubbs' `BBS::HTTP`: public addresses
+A feed is fetched when it is opened (rubbs' `Rubbs::Common::Web::HTTP`: public addresses
 only, http(s) redirects only, at most 1 MB) and kept for 10 minutes
-(`BBS::Cache`): callers opening the same feed at once share one fetch. Up to 60
+(`Rubbs::Common::Storage::Cache`): callers opening the same feed at once share one fetch. Up to 60
 items of it are shown. The item's HTML becomes plain text: paragraphs, headings, lists
 and quotes are kept, a link keeps its text with a number (`Comments[1]`) and
 its address is listed under the text, an image keeps its alt text. Control
-characters are dropped (`BBS::Text.clean`, the item's address too), so a feed
+characters are dropped (`Rubbs::Common::Text.clean`, the item's address too), so a feed
 cannot send escape sequences to the terminal. Most feeds carry only a summary: the item's own address is under it.
 
 ### The modern face
@@ -82,7 +82,7 @@ cannot send escape sequences to the terminal. Most feeds carry only a summary: t
 A desktop under a menubar, the feed list open on it: the feeds on the left,
 the one picked on the right. Enter opens a feed in a window of its own: the
 items on the left, the text of the one picked on the right, its address under
-it. `QR code` shows the item's address as a QR code (rubbs' `BBS::QR`, half
+it. `QR code` shows the item's address as a QR code (rubbs' `Rubbs::Common::Text::QR`, half
 blocks) to read with a phone; `Reload` fetches the feed again, past the cache.
 The code takes the room the screen has: on 80×24 an address of up to about 55
 characters fits, on a taller screen a longer one; one that does not fit gets a
@@ -105,17 +105,17 @@ message, and the address stays under the text.
 
 The FEEDIA logo and a menu: `F` feeds, `S` suggest a feed, `W` write to the
 admins, `Q` log off. Feeds and items are numbered lists. The menu and the
-lists are cursor menus of rubbs (`BBS::Selector`): CRSR moves the bar, RETURN
+lists are cursor menus of rubbs (`Rubbs::Common::Screens::Selector`): CRSR moves the bar, RETURN
 takes the lit item, and the letters (or the number typed, in a list) work as
 well; CRSR left and right turn the pages of a list, `Q` or `←` (RUN/STOP too)
 goes back. An item stops at every screenful. Every line is typed in a field of
-rubbs (`BBS::Field`: the cursor keys move in it, DEL deletes, RETURN ends it,
+rubbs (`Rubbs::Common::Screens::Field`: the cursor keys move in it, DEL deletes, RETURN ends it,
 RUN/STOP or `←` goes back), the feedback in its full-screen editor
-(`BBS::Editor`): RUN/STOP or `←`, then `S` sends it. Accented letters come as their
+(`Rubbs::Common::Screens::Editor`): RUN/STOP or `←`, then `S` sends it. Accented letters come as their
 nearest ASCII (the PETSCII line of rubbs).
 
 Under the last page of an item with an address, `C` (qr code) shows the
-address as a QR code (rubbs' `BBS::QR`, quadrant blocks, up to about 100
+address as a QR code (rubbs' `Rubbs::Common::Text::QR`, quadrant blocks, up to about 100
 characters) in the middle of the screen, for a phone to open what the C64
 cannot.
 
@@ -126,7 +126,7 @@ who) is a row of the `messages` table in `data/feedia.sqlite3`, and a message
 on the Discord webhook when there is one (mentions off, links not unfurled).
 The newest 1000 are kept. A caller (by IP address) can send five messages an
 hour, all callers together thirty; both limits are checked at once
-(`BBS::RateLimit.allow_all?`), so a message the board refuses costs the caller
+(`Rubbs::Common::Line::RateLimit.allow_all?`), so a message the board refuses costs the caller
 nothing. The `data/inbox.jsonl` of earlier versions
 is taken in on the first start and renamed `inbox.jsonl.imported`. Feedia
 never fetches a suggested address itself: an admin looks at
@@ -153,11 +153,11 @@ lib/
     model/feed_model.rb         one feed of the list
     model/channel_model.rb      what a feed said: title, link, description, items
     model/item_model.rb         one item: title, link, date, author, Markdown
-    model/message_model.rb      the messages table (BBS::Model): a suggestion or feedback
+    model/message_model.rb      the messages table (Rubbs::Common::Storage::Model): a suggestion or feedback
     model/feed_xml.rb           RSS/RDF/Atom → a channel and its items
     model/html_text.rb          an item's HTML → Markdown, numbered links
     repository/feed_list_repository.rb  config/feeds.yml
-    repository/feed_repository.rb       fetching a feed (BBS::HTTP), the cache (BBS::Cache)
+    repository/feed_repository.rb       fetching a feed (Rubbs::Common::Web::HTTP), the cache (Rubbs::Common::Storage::Cache)
     repository/legacy_inbox.rb          the one-time import of inbox.jsonl
     repository/discord_repository.rb    the admins' Discord webhook, rate-limited
     service/feed_service.rb     the feed list, reading a feed
@@ -167,13 +167,13 @@ lib/
   ui/modern/                    one module a window (feeds, channel, suggest, feedback),
                                 the menubar, the masthead, the helpers
   ui/petscii.rb                 the PETSCII face: logo, menu, lists, pages, messages
-  ui/petscii/screen.rb          the 40×25 screen: rubbs' BBS::Petscii::Screen
+  ui/petscii/screen.rb          the 40×25 screen: rubbs' Rubbs::Petscii::Screen
 test/                           the domain's tests
 ```
 
 ## Logs
 
-Every line on stderr starts with the log tag `feedia-bbs:` (rubbs' `BBS.log`):
+Every line on stderr starts with the log tag `feedia-bbs:` (rubbs' `Rubbs.log`):
 `feedia-bbs: feed: <name>: …` for a feed that did not answer or sent no feed,
 `feedia-bbs: inbox: …`, `feedia-bbs: Inbox: Discord: …`. The repositories let a
 failure go up; the services log it once and the faces say "did not answer".

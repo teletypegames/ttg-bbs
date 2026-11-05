@@ -18,7 +18,7 @@ module UI
             'A feed missing from the list? Suggest it in the Admins menu.'
     TAGLINE = '─── All the news that fits in 80 columns ───'
 
-    APP = BBS::Application.define do
+    APP = Rubbs::Modern::Application.define do
       theme :synchronet
       helpers { include Helpers }
 

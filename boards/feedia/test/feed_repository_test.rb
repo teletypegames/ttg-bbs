@@ -31,18 +31,18 @@ class FeedRepositoryTest < Minitest::Test
   end
 
   def test_a_failure_goes_up
-    down = BBS::HTTP::Error.new('GET https://feed.example/rss: down')
-    assert_raises(BBS::HTTP::Error) { FeedRepository.new(http: FakeHTTP.new(error: down)).read(FEED) }
-    assert_raises(BBS::HTTP::Error) { FeedRepository.new(http: FakeHTTP.new(body: 'nope', status: 404)).read(FEED) }
+    down = Rubbs::Common::Web::HTTP::Error.new('GET https://feed.example/rss: down')
+    assert_raises(Rubbs::Common::Web::HTTP::Error) { FeedRepository.new(http: FakeHTTP.new(error: down)).read(FEED) }
+    assert_raises(Rubbs::Common::Web::HTTP::Error) { FeedRepository.new(http: FakeHTTP.new(body: 'nope', status: 404)).read(FEED) }
     assert_raises(FeedXml::Unreadable) { FeedRepository.new(http: FakeHTTP.new(body: '<html/>')).read(FEED) }
     assert_raises(FeedXml::Unreadable) { FeedRepository.new(http: FakeHTTP.new(body: '<rss><channel>')).read(FEED) }
   end
 
   def test_the_service_logs_a_failure_once_and_shows_none
-    big  = BBS::HTTP::TooLarge.new('GET https://feed.example/rss: the body is over 1048576 bytes')
+    big  = Rubbs::Common::Web::HTTP::TooLarge.new('GET https://feed.example/rss: the body is over 1048576 bytes')
     list = Struct.new(:all).new([FEED])
     _, err = capture_io { assert_nil FeedService.new(list, FeedRepository.new(http: FakeHTTP.new(error: big))).read(FEED) }
     assert_equal 1, err.lines.size
-    assert_match(/: feed: Test: BBS::HTTP::TooLarge: /, err)
+    assert_match(/: feed: Test: Rubbs::Common::Web::HTTP::TooLarge: /, err)
   end
 end

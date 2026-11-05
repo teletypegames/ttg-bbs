@@ -4,7 +4,7 @@ require 'minitest/autorun'
 require 'tmpdir'
 require 'fileutils'
 require 'domain'
-require 'bbs/test'
+require 'rubbs/test'
 
 # A test that works in a directory of its own, removed after it, and on a
 # fresh database.
@@ -12,7 +12,7 @@ module TmpDir
   def setup
     super
     @dir = Dir.mktmpdir('feedia-test')
-    BBS::Test.database(MIGRATIONS)
+    Rubbs::Test.database(MIGRATIONS)
   end
 
   def teardown
@@ -23,7 +23,7 @@ module TmpDir
   def path(name) = File.join(@dir, name)
 end
 
-# BBS::HTTP for a test: every GET answers +body+ (or raises +error+) and is
+# Rubbs::Common::Web::HTTP for a test: every GET answers +body+ (or raises +error+) and is
 # counted; +delay+ seconds make concurrent callers overlap.
 class FakeHTTP
   attr_reader :calls
@@ -42,7 +42,7 @@ class FakeHTTP
     sleep @delay
     raise @error if @error
 
-    BBS::HTTP::Response.new(status: @status, body: @body.dup.force_encoding(Encoding::BINARY), headers: {})
+    Rubbs::Common::Web::HTTP::Response.new(status: @status, body: @body.dup.force_encoding(Encoding::BINARY), headers: {})
   end
 end
 

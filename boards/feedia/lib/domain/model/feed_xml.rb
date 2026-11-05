@@ -2,7 +2,7 @@
 
 require 'time'
 require 'rexml/document'
-require 'bbs/text'
+require 'rubbs/common/text'
 
 # The model side's feed parser, pure functions with no I/O: the body of a
 # feed, RSS 0.9x/2.0, RSS 1.0 (RDF) or Atom, as a ChannelModel of at most
@@ -101,7 +101,7 @@ module FeedXml
   # An address as shown under an item: one line, no control characters;
   # nil when there is none.
   def link(raw)
-    address = BBS::Text.clean(raw, keep_newlines: false).strip
+    address = Rubbs::Common::Text.clean(raw, keep_newlines: false).strip
     address.empty? ? nil : address
   end
 

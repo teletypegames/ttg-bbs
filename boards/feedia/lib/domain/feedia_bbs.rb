@@ -5,7 +5,7 @@
 # and the Discord webhook. Both faces and bin/inbox work on one instance of
 # it.
 class FeediaBBS
-  include BBS::Domain
+  include Rubbs::Common::Board::Domain
 
   setting :discord_webhook, ''
   path    :db, 'data/feedia.sqlite3'
