@@ -15,11 +15,14 @@ require_relative 'gate/input'
 module UI
   module Petscii
     # One C64 call of the gate: the frame (Chrome) around a view of the
-    # content, two tabs and the active one's sub-menu above it. O and D
-    # switch the tabs from anywhere. On Global Discovery CRSR up from the
-    # top of a list (or from a page) moves the focus to the sub-menu: there
-    # CRSR left and right move its bar, RETURN opens, CRSR down goes back to
-    # the content. A yellow sign of the sub-menu opens its place from
+    # content, the tabs (OWN, GLOBAL, PROFILE) and the active one's
+    # sub-menu above it. O, D and P open them from anywhere. CRSR up from
+    # the top of a list (or from a page) moves the focus up: on Global
+    # Discovery to the sub-menu, and from there (or on Own Servers at once)
+    # to the tabs. On the tabs CRSR left and right switch between OWN and
+    # GLOBAL as the cursor goes, PROFILE opens on RETURN; on the sub-menu
+    # CRSR left and right move its bar and RETURN opens. CRSR down goes
+    # back to the content. A yellow sign of the sub-menu opens its place from
     # anywhere (a view's own keys first: B on a board's page is its banner).
     # ← or RUN/STOP goes back, Q hangs up.
     #
@@ -37,6 +40,10 @@ module UI
       INPUT_MAX   = Layout::HINT_WIDTH - INPUT_LABEL.length - 2
       MENU_HINT   = [['CRSR', true], [' Move  ', false], ['RETURN', true], [' Open  ', false], ['CRSR down', true],
                      [' List', false]].freeze
+      # The keys the tabs and the sub-menu take while they have the focus.
+      FOCUS_KEYS  = %i[left right up down enter].freeze
+      BAR_HINT    = [['CRSR', true], [' Tabs  ', false], ['RETURN', true], [' Open  ', false], ['CRSR down', true],
+                     [' Back', false]].freeze
       WARNINGS = { dead: ['This board has not answered', 'our calls for 30 days.', 'It may be gone. Dial anyway?'] }.freeze
       REFUSALS = {
         rate:        ['You dialled 10 boards in', '10 minutes. Try again later.'],
@@ -76,6 +83,7 @@ module UI
         @focus  = :main
         @tab    = :own
         @menu   = 0
+        @bar    = 0
         @status = nil
       end
 
@@ -95,8 +103,8 @@ module UI
       # Answers one key: the sub-menu while it has the focus, CRSR up to it,
       # RUN/STOP back, then the view's own keys, then the hotkeys.
       def handle(key)
-        return menu_key(key) || true if @focus == :menu && %i[left right up down enter].include?(key)
-        return to_menu || true if key == :up && to_menu?
+        return focus_key(key) || true if @focus != :main && FOCUS_KEYS.include?(key)
+        return climb || true if key == :up && climb?
         return back || true if key == :escape
 
         view.handle(key) || hotkey(key)
@@ -105,7 +113,7 @@ module UI
       # The screen as it is now: the frame around the view, the search line
       # or the hint bar, the cursor resting at the end of the hint row.
       def draw(canvas)
-        Chrome.bar(canvas, active: @tab == :own ? :own : :discover)
+        Chrome.bar(canvas, active: @tab == :own ? :own : :discover, cursor: (bar_place.key if @focus == :bar))
         if @tab == :own
           Chrome.own_line(canvas, @boards.size)
         else
@@ -115,7 +123,7 @@ module UI
         if line
           input_line(canvas)
         else
-          Chrome.hint(canvas, @status || (@focus == :menu ? MENU_HINT : view.hint))
+          Chrome.hint(canvas, hint)
         end
         cursor(Layout::HINT_ROW, Layout::HINT_WIDTH)
       end
@@ -138,7 +146,49 @@ module UI
 
       private
 
-      def hint = @status || (@focus == :menu ? MENU_HINT : view.hint)
+      def hint = @status || { menu: MENU_HINT, bar: BAR_HINT }.fetch(@focus) { view.hint }
+
+      def bar_place = Chrome::PLACES_BAR[@bar]
+
+      def focus_key(key) = @focus == :bar ? bar_key(key) : menu_key(key)
+
+      def climb? = to_menu? || to_bar?
+
+      # CRSR up from the content: the sub-menu, or the tabs.
+      def climb = to_menu? ? to_menu : to_bar
+
+      # CRSR up goes to the tabs on Own Servers from the top of the list (on
+      # Global Discovery the sub-menu is between, see #menu_key).
+      def to_bar?
+        return false unless @tab == :own && @focus == :main
+
+        !view.is_a?(Views::Picker) || view.at_top?
+      end
+
+      def to_bar
+        @bar = Chrome::PLACES_BAR.index { |p| p.key == (@tab == :own ? :own : :discover) } || 0
+        @focus = :bar
+      end
+
+      # The tabs: left and right switch OWN and GLOBAL as the cursor goes
+      # (PROFILE waits for RETURN), RETURN opens, down goes back.
+      def bar_key(key)
+        case key
+        when :left, :right
+          @bar = (@bar + (key == :left ? -1 : 1)) % Chrome::PLACES_BAR.size
+          follow_bar
+        when :down then @focus = :main
+        when :enter then go(bar_place.key)
+        end
+      end
+
+      def follow_bar
+        place = bar_place.key
+        return if [:account, (@tab == :own ? :own : :discover)].include?(place)
+
+        go(place)
+        @focus = :bar
+      end
 
       # The place of the sub-menu lit: the cursor's while the menu has the
       # focus, else the section's (Browse for its axes).
@@ -166,6 +216,7 @@ module UI
         case key
         when :left, :right then @menu = (@menu + (key == :left ? -1 : 1)) % Chrome::MENU.size
         when :down then @focus = :main
+        when :up then to_bar
         when :enter then go(Chrome::MENU[@menu].key)
         end
       end

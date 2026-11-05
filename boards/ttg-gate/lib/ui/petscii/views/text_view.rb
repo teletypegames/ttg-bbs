@@ -42,9 +42,9 @@ module UI
         # The help: the keys of the C64 face.
         def self.help
           lines = [
-            ['The tabs and the menu', Canvas::WHITE], 'O: Own servers  D, G: Global Discovery',
-            'CRSR up at the top of a list: the menu', 'CRSR left, right: move  RETURN: open',
-            'CRSR down: back to the list', 'A yellow sign opens its place from',
+            ['The tabs and the menu', Canvas::WHITE], 'O: Own  D, G: Discovery  P: Profile',
+            'CRSR up at the top of a list: the menu,', 'again: the tabs  CRSR left, right: move',
+            'RETURN: open  CRSR down: back', 'A yellow sign opens its place from',
             'anywhere: / Find, B Browse, N New,', 'R Random, S Sources;',
             'W Software, C Country, K Network.', '',
             ['The lists', Canvas::WHITE], '1-9, 0: that row  +/-: page', 'F: state filter  ←, RUN/STOP: back', '',

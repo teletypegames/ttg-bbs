@@ -152,14 +152,18 @@ false` keeps a board off the C64 menu, `enabled: false` off both.
 
 ## Interface
 
-**Modern:** under the logo a two-way chooser, **Own Servers** | **Global
-Discovery**; TAB (or the left and right arrows) turns from one to the other, and
-each keeps its place. On Own Servers the arrows choose a board, RETURN or its
+**Modern:** under the logo the tabs, **Own Servers** | **Global Discovery** |
+**Profile**; TAB or the right arrow goes to the next, the left arrow back, and
+each keeps its place. The profile takes the screen; from it the caller comes back
+to the tab they left. On Own Servers the arrows choose a board, RETURN or its
 number dials it, `Q` or Esc hangs up. The rows show the board's colour bar,
 name, tags and port; the description and the full address of the chosen one are
 under the list. Global Discovery is described [below](#the-gate-ui).
 
-**Commodore 64:** the frame and the tabs ([above](#the-c64-face)); `D`
+**Commodore 64:** the frame and the tabs ([above](#the-c64-face)); CRSR up
+from the top of the list reaches the tabs (on Global Discovery through its
+sub-menu), where CRSR left and right switch OWN and GLOBAL as the cursor goes and
+RETURN opens PROFILE; CRSR down goes back to the list. `D`
 turns to Global Discovery (Browse: All, All PETSCII, All ASCII and the axes), `O` back to our own boards, the number dials, `Q`
 hangs up.
 
@@ -172,12 +176,14 @@ which has none, is taken for a C64.
 The accounts of the network live here (`data/accounts.sqlite3`, rubbs
 `BBS::Auth`): the other boards ask the gate's accounts API on the `interstack`
 network (`http://ttg-gate-bbs:8090/auth`, signed with `RUBBS_AUTH_SECRET`), and a
-caller signed in here is signed in on the board the gate dials. `P` on Own
-Servers opens the caller's profile (log in, make an account, change the
+caller signed in here is signed in on the board the gate dials. The **PROFILE**
+tab (or `P`) opens the caller's profile (log in, make an account, change the
 password).
 
-A caller with the `sysop` role gets `S sysop` on Own Servers (modern face): the
-**console**.
+A caller with the `sysop` role finds **SysOp** in the profile, on either face:
+the **console**. It is the gate's own (`lib/ui/sysop.rb`, `lib/ui/modern/sysop/`,
+`lib/ui/petscii/sysop/`); rubbs only lends the place in the profile's menu
+(`BBS::Auth::Profile.extra`).
 
 - **Calls:** who is on the gate now (an account or a guest), their address,
   where the call came from (`telnet`, `bbs-web`), the face, how long, and where
@@ -193,6 +199,11 @@ A caller with the `sysop` role gets `S sysop` on Own Servers (modern face): the
 - **Log:** the gate's last 500 log lines, the newest at the bottom (logins,
   wrong passwords, bans, dials, errors); `F` keeps the warnings and errors, `/`
   the lines with a word.
+
+On a C64 the same three parts fit 40 columns: a row a call (who, how long) with
+the lit one's address, way in, face and place under it; a row an account (a red
+`*` for a banned one, its roles as letters: M member, S sysop, B blogger, W wiki);
+the log a line an entry, cut at the edge. `←` or RUN/STOP goes back.
 
 Every step of the console is a log line with the sysop's name (`sysop: hung up
 by=…`, `auth: ban … by=…`). Only the gate's own calls are listed: a caller who
@@ -528,7 +539,7 @@ bin/account                            the accounts from the server's shell (pas
 bin/discovery-import                   Discovery: the daily import of the source lists
 bin/discovery-prober                   Discovery: the prober daemon
 bin/discovery-report                   Discovery: the catalog in numbers
-rake test                              the tests (test/: the console; test/discovery/: Discovery)
+rake test                              the tests (test/: the console on both faces; test/discovery/: Discovery)
 config/boards.yml                      the boards of the menu
 config/discovery/                      Discovery: sources, software signatures, source-to-tag rules
 config/discovery-optout.yml            Discovery: the sysops who asked to be left out
@@ -543,7 +554,9 @@ lib/
   ui/modern/style.rb                   its palette, the logo and the chooser
   ui/modern/own_servers.rb             the dialing menu of our own boards on an ANSI terminal
   ui/modern/discovery/                 Global Discovery: home, menus, lists, the board page, search, sources
-  ui/modern/sysop/                     the sysop's console: home, calls, accounts, an account, the log
+  ui/sysop.rb                          the sysop's console: its place in the profile, the steps both faces share
+  ui/modern/sysop/                     the console on a modern terminal: home, calls, accounts, an account, the log
+  ui/petscii/sysop/                    the console on a C64, the same on 40×25
   ui/petscii.rb                        the PETSCII face: the call, its node number, goodbye
   ui/petscii/gate.rb                   one C64 call: the frame, the tabs, the sub-menu focus, the keys
   ui/petscii/gate/                     its places (Places), its calls (Dialing) and its find line (Input)

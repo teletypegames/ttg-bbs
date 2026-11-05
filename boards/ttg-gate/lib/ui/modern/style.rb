@@ -29,7 +29,7 @@ module UI
         '  |_|   |_| \\___|  \\___/_/ \\_\\_| |___|'
       ].freeze
 
-      TABS = { own: 'OWN SERVERS', discovery: 'GLOBAL DISCOVERY' }.freeze
+      TABS = { own: 'OWN SERVERS', discovery: 'GLOBAL DISCOVERY', profile: 'PROFILE' }.freeze
 
       def width = session.term_cols.clamp(40, MAX_WIDTH) - MARGIN
 
@@ -66,7 +66,7 @@ module UI
           key == tab ? "#{SELECTED}#{GREEN}#{BOLD} #{label} #{RESET}" : "#{DIM} #{label} #{RESET}"
         end.join("#{LINE}│#{RESET}")
         right = 'TAB switches'
-        room  = width - TABS.values.sum { |l| l.length + 2 } - 1 - right.length
+        room  = width - TABS.values.sum { |l| l.length + 2 } - (TABS.size - 1) - right.length
         ['', *LOGO.map { |l| "#{GREEN}#{l}#{RESET}" }, "#{tabs}#{' ' * [room, 1].max}#{DIM}#{right}#{RESET}", rule]
       end
 

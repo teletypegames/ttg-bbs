@@ -13,6 +13,7 @@ BBS.board 'TTG Gate BBS', TTGGateBBS do
   mouse   false
   auth(login: :menu, &:accounts)
   on_start(&:serve_accounts)
+  on_start { |gate| UI::Sysop.offer(gate.accounts) }
   modern { |bbs| call { UI::Modern::Gate.new(session, bbs).run } }
   petscii(goodbye: false) { |bbs| call { UI::Petscii.call(session, bbs) } }
 end

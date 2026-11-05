@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'securerandom'
-
 module UI
   module Modern
     module Sysop
@@ -41,7 +39,7 @@ module UI
         def fact(label, value) = "#{DIM}#{label.ljust(13)}#{RESET}#{TEXT}#{plain(value)}#{RESET}"
 
         def calls_line(name)
-          calls = Sysop.calls_of(name)
+          calls = UI::Sysop.calls_of(name)
           calls.empty? ? 'no call now' : calls.map { |c| "#{c.caller_ip} #{c.place}".strip }.join(' · ')
         end
 
@@ -57,7 +55,7 @@ module UI
           "G grant role   R revoke role   B #{entry&.banned? ? 'lift the ban' : 'ban'}   N new password   H hang up   Q back"
         end
 
-        def own? = BBS::Auth::Names.key(@name) == BBS::Auth::Names.key(sysop)
+        def own? = UI::Sysop.own?(@name, sysop)
 
         def roles_hint = "Roles: #{TTG::Auth::ROLES.keys.join(' ')}"
 
@@ -73,7 +71,7 @@ module UI
         def revoke
           role = read_line('Revoke role:', max: 30, hint: "Has: #{entry.roles.join(' ')}")&.strip&.downcase
           return if role.nil? || role.empty?
-          return (@notice = "#{RED}Your own sysop role stays.#{RESET}") if own? && role == ROLE
+          return (@notice = "#{RED}Your own sysop role stays.#{RESET}") if own? && role == UI::Sysop::ROLE
           return (@notice = "#{DIM}It has no #{plain(role)} role.#{RESET}") unless entry.roles.include?(role)
 
           @accounts.revoke(@name, role)
@@ -87,8 +85,7 @@ module UI
           reason = read_line('Ban reason:', max: 200, hint: 'Why, for the other sysops (RETURN: none, Esc: no ban)')
           return if reason.nil? || !yes?("Ban #{@name}? Its calls on the gate are hung up.")
 
-          @accounts.ban(@name, by: sysop, reason: reason)
-          hung = hang_up_calls
+          hung = UI::Sysop.ban(@accounts, @name, by: sysop, reason: reason)
           @notice = "#{GREEN}Banned#{", #{hung} call(s) hung up" if hung.positive?}.#{RESET}"
         end
 
@@ -102,27 +99,16 @@ module UI
         def new_password
           return unless yes?("A new password for #{@name}? The old one stops working.")
 
-          password = SecureRandom.alphanumeric(12)
-          @accounts.set_password(@name, password)
-          BBS.log('sysop', 'new password', by: sysop, user: @name)
+          password = UI::Sysop.new_password(@accounts, @name, by: sysop)
           tell("The new password of #{@name}:", '', password, '', 'Tell it to them; they change it in their profile (P).')
         end
 
         def hang_up
           return (@notice = "#{DIM}That is you.#{RESET}") if own?
-          return (@notice = "#{DIM}No call of #{plain(@name)} on the gate.#{RESET}") if Sysop.calls_of(@name).empty?
+          return (@notice = "#{DIM}No call of #{plain(@name)} on the gate.#{RESET}") if UI::Sysop.calls_of(@name).empty?
           return unless yes?("Hang up the calls of #{@name}?")
 
-          @notice = "#{GREEN}#{hang_up_calls} call(s) hung up.#{RESET}"
-        end
-
-        def hang_up_calls
-          calls = Sysop.calls_of(@name)
-          calls.each do |call|
-            call.hang_up
-            BBS.log('sysop', 'hung up', by: sysop, user: call.caller_name, ip: call.caller_ip.to_s)
-          end
-          calls.size
+          @notice = "#{GREEN}#{UI::Sysop.hang_up_calls(@name, by: sysop)} call(s) hung up.#{RESET}"
         end
       end
     end

@@ -35,7 +35,7 @@ module UI
            "#{stats[:seen_day]} logged in today  ·  #{stats[:new_week]} new this week#{RESET}"]
         end
 
-        def hints = '↑↓ choose   RETURN or 1-3 open   Q back to the gate'
+        def hints = '↑↓ choose   RETURN or 1-3 open   Q back to the profile'
 
         def open_part(part)
           guarded do

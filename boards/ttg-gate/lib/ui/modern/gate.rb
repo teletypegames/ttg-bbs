@@ -8,11 +8,15 @@ module UI
     # read.
     class Gate < BBS::Pages
       include Style
+      include Prompt
+
+      # The tabs of the chooser in order; TAB and the arrows go round them.
+      SIDES = %i[own discovery profile].freeze
 
       def initialize(session, bbs)
         super(session, face: :modern)
         @sides = {
-          own:       OwnServers.new(bbs.directory.boards, accounts: bbs.accounts),
+          own:       OwnServers.new(bbs.directory.boards),
           discovery: Discovery::Home.new(Discovery::Context.new(session: session, browse: bbs.browse, dials: bbs.dials))
         }
         @side = :own
@@ -22,9 +26,20 @@ module UI
       # the caller hangs up.
       def run(page = (@sides[:own] if stack.empty?)) = super
 
-      # Turns to the other side of the chooser.
-      def switch
-        @side = @side == :own ? :discovery : :own
+      # Turns to the next tab (+step+ 1) or the one before (-1). The profile
+      # (BBS::Auth::Profile, with SysOp for a sysop) takes the screen, and
+      # from it the caller comes back to the tab they left.
+      def switch(step = 1)
+        side = SIDES[(SIDES.index(@side) + step) % SIDES.size]
+        return profile if side == :profile
+
+        @side = side
+        reset(@sides[@side])
+      end
+
+      # The caller's profile, from any tab; back where they were after it.
+      def profile
+        hand_over { BBS::Auth::Profile.run(session) }
         reset(@sides[@side])
       end
 
@@ -32,25 +47,6 @@ module UI
         super
         prompt(frame) if line
       end
-
-      private
-
-      # The search line: its hint above it, the label, the words, the
-      # cursor after them.
-      def prompt(frame)
-        label = line.label.to_s
-        shown = line.tail(width - label.length - 3)
-        print_lines(
-          frame,
-          [hint_line, "#{GREEN}#{BOLD}#{label}#{RESET} #{TEXT}#{shown}#{RESET}"],
-          x:     MARGIN + 1,
-          y:     rows - 2,
-          clear: true
-        )
-        cursor(rows - 1, MARGIN + label.length + shown.length + 2)
-      end
-
-      def hint_line = "#{DIM}#{fit(line.hint.to_s, width)}#{RESET}"
     end
   end
 end

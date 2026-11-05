@@ -64,13 +64,21 @@ module UI
 
       module_function
 
+      # The colour of the place the cursor is on while the tabs have the
+      # focus.
+      CURSOR = Canvas::WHITE
+
       # The menu bar on its row: cyan, TTG GATE, then each place with the
-      # cell of its key in KEY; +active+ (a Place's key) in LIT.
-      def bar(canvas, active:)
+      # cell of its key in KEY; +active+ (a Place's key) in LIT, +cursor+
+      # (a Place's key, while the tabs have the focus) in CURSOR.
+      def bar(canvas, active:, cursor: nil)
         canvas.text(Layout::BAR_ROW, 0, ' ' * Layout::WIDTH, BAR, rvs: true)
         canvas.text(Layout::BAR_ROW, 1, TITLE, BAR, rvs: true)
         PLACES_BAR.each do |place|
-          color = place.key == active ? LIT : BAR
+          color = if place.key == cursor then CURSOR
+                  elsif place.key == active then LIT
+                  else BAR
+                  end
           canvas.text(Layout::BAR_ROW, place.col - 1, " #{place.label} ", color, rvs: true)
           canvas.text(Layout::BAR_ROW, place.col + place.hotkey, place.label[place.hotkey], KEY, rvs: true)
         end

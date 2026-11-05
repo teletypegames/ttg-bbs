@@ -58,8 +58,7 @@ module UI
           who = call.caller_name || 'a guest'
           return unless yes?("Hang up #{who} (#{call.caller_ip})?")
 
-          call.hang_up
-          BBS.log('sysop', 'hung up', by: sysop, user: call.caller_name, ip: call.caller_ip.to_s)
+          UI::Sysop.hang_up(call, by: sysop)
           @notice = "#{GREEN}#{plain(who)} hung up.#{RESET}"
         end
       end

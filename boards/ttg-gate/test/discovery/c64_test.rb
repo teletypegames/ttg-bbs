@@ -110,6 +110,17 @@ module Discovery
       g = gate
       g.start
       g.press(:up)
+      assert_equal :bar, g.focus
+      assert_equal Chrome::CURSOR, shown.cell(0, Chrome::PLACES_BAR[0].col + 1).color
+      g.press(:right)
+      assert_equal %i[discover bar], [g.tab, g.focus]
+      g.press(:right)
+      assert_equal :discover, g.tab
+      assert_equal Chrome::CURSOR, shown.cell(0, Chrome::PLACES_BAR[2].col + 1).color
+      g.press(:left)
+      g.press(:left)
+      assert_equal %i[own bar], [g.tab, g.focus]
+      g.press(:down)
       assert_equal :main, g.focus
       g.press('d')
       assert_equal :discover, g.tab

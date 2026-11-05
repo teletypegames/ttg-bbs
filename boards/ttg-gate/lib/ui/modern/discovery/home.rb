@@ -17,7 +17,8 @@ module UI
         key(:down) { open? ? @index = (@index + 1) % @items.size : pass }
         key(:enter) { open? ? @items[@index].action.call : pass }
         key('/') { open? ? search : pass }
-        key(:tab, :right, :left, 'g', 'G') { pages.switch }
+        key(:tab, :right, 'g', 'G') { pages.switch }
+        key(:left) { pages.switch(-1) }
         key(:escape, 'q', 'Q') { quit }
 
         def initialize(ctx)

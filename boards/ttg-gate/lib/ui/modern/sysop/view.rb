@@ -2,21 +2,26 @@
 
 module UI
   module Modern
-    # The sysop's console of the gate on a modern terminal: the calls on the
-    # gate (and hanging one up), the accounts of the network (roles, bans, a
-    # new password) and the gate's log, for a caller with the +sysop+ role.
-    # P opens the profile to log in; S on Own Servers opens the console.
+    # The sysop's console (UI::Sysop) on a modern terminal, opened from
+    # SysOp in the caller's profile: pages of its own runner (Console),
+    # until Q on its first screen goes back to the profile.
     module Sysop
-      # The role that opens the console.
-      ROLE = 'sysop'
+      # Runs the console for the caller on +session+ with +accounts+ (the
+      # gate's BBS::Auth::Directory). Returns +nil+.
+      def self.run(session, accounts) = Console.new(session).run(Home.new(accounts))
 
-      # Whether the caller on +session+ may use the console.
-      def self.allowed?(session) = session.identity.role?(ROLE)
+      # The runner of the console's pages, its line read at the bottom of
+      # the screen.
+      class Console < BBS::Pages
+        include Style
+        include Prompt
 
-      # The calls on the gate of the account +name+.
-      def self.calls_of(name)
-        key = BBS::Auth::Names.key(name)
-        BBS.calls.select { |call| call.caller_name && BBS::Auth::Names.key(call.caller_name) == key }
+        def initialize(session) = super(session, face: :modern)
+
+        def draw(frame)
+          super
+          prompt(frame) if line
+        end
       end
 
       # A screen of the console: the top line (SYSOP › where), the body,
@@ -29,7 +34,7 @@ module UI
         end
 
         def lines
-          return refused unless Sysop.allowed?(session)
+          return refused unless UI::Sysop.allowed?(session)
 
           body = self.body
           body.fill('', body.size...(rows - 3))
@@ -55,7 +60,7 @@ module UI
 
         # Runs the block when the caller is still a sysop.
         def guarded
-          return back unless Sysop.allowed?(session)
+          return back unless UI::Sysop.allowed?(session)
 
           yield
         end
