@@ -2,12 +2,12 @@
 
 require 'fileutils'
 
-# The RFC Editor over HTTP (BBS::HTTP: a deadline, a cap on the body,
+# The RFC Editor over HTTP (Rubbs::Common::Web::HTTP: a deadline, a cap on the body,
 # redirects to public http(s) addresses only, the board's User-Agent): the
 # index, rfc-index.xml, the errata, errata.json, the index and the listing
 # of the IENs, and the plain text of an RFC or an IEN as it was published. A
-# dead site raises BBS::HTTP::Error, a body over the cap its subclass
-# BBS::HTTP::TooLarge.
+# dead site raises Rubbs::Common::Web::HTTP::Error, a body over the cap its subclass
+# Rubbs::Common::Web::HTTP::TooLarge.
 class RfcEditorRepository
   # The index is about 14 MB.
   INDEX_MAX = 64 * 1024 * 1024
@@ -33,7 +33,7 @@ class RfcEditorRepository
   end
 
   # Saves the index at +path+, streamed into a temporary file next to it,
-  # so the download never sits in memory. Raises BBS::HTTP::Error or
+  # so the download never sits in memory. Raises Rubbs::Common::Web::HTTP::Error or
   # SystemCallError; +path+ is then left as it was.
   def download_index(path) = download(index_url, path)
 
@@ -60,10 +60,10 @@ class RfcEditorRepository
   end
 
   # The Response of a successful GET of +url+; an error status raises
-  # BBS::HTTP::Error.
+  # Rubbs::Common::Web::HTTP::Error.
   def get(url, **)
-    response = BBS::HTTP.get(url, read_timeout: READ_TIMEOUT, **)
-    raise BBS::HTTP::Error, "GET #{url}: answered #{response.status}" unless response.ok?
+    response = Rubbs::Common::Web::HTTP.get(url, read_timeout: READ_TIMEOUT, **)
+    raise Rubbs::Common::Web::HTTP::Error, "GET #{url}: answered #{response.status}" unless response.ok?
 
     response
   end

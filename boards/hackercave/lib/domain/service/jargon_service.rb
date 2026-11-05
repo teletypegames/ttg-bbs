@@ -27,7 +27,7 @@ class JargonService
 
     parsed = @file.parse
     JargonEntryModel.rebuild(parsed.entries, parsed.sections, digest)
-    BBS.log('jargon', "built: #{parsed.entries.size} entries, #{parsed.sections.size} sections")
+    Rubbs.log('jargon', "built: #{parsed.entries.size} entries, #{parsed.sections.size} sections")
     :built
   end
 

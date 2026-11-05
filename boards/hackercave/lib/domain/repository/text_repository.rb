@@ -27,7 +27,7 @@ class TextRepository
   rescue Errno::ENOENT
     nil
   rescue SystemCallError => e
-    BBS.log('texts', "#{path(number)}: #{e.class}: #{e.message}")
+    Rubbs.log('texts', "#{path(number)}: #{e.class}: #{e.message}")
     nil
   end
 
@@ -38,7 +38,7 @@ class TextRepository
     File.rename("#{path(number)}.tmp", path(number))
     true
   rescue SystemCallError => e
-    BBS.log('texts', "#{path(number)}: #{e.class}: #{e.message}")
+    Rubbs.log('texts', "#{path(number)}: #{e.class}: #{e.message}")
     false
   end
 

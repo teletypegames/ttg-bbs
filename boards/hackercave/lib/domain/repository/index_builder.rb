@@ -110,7 +110,7 @@ class IndexBuilder
 
   # A field of an erratum without control characters, its tabs as spaces.
   def errata_text(value)
-    BBS::Text.clean(value.to_s, keep_newlines: true).split("\n").map { |l| DocumentModel.expand(l) }.join("\n")
+    Rubbs::Common::Text.clean(value.to_s, keep_newlines: true).split("\n").map { |l| DocumentModel.expand(l) }.join("\n")
   end
 
   # "1981-09", or "1990-04-01" when the index has the day.

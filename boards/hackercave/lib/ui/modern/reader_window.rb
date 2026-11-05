@@ -10,7 +10,7 @@ module UI
     # heading, References lists the RFCs named, Links the ones it obsoletes
     # or updates.
     module ReaderWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :reader, :reader do
         title     { "#{rfc.name}: #{rfc.title[0, 50]}" }

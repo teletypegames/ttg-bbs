@@ -14,7 +14,7 @@ require 'date'
 # shelves (the statuses, the decades, the newest, the RFCs of a month and
 # the IENs; the IENs are on their own shelf only). Until the first import
 # the table is empty and they find nothing.
-class RfcModel < BBS::Model
+class RfcModel < Rubbs::Common::Storage::Model
   table :rfcs, database: :index
 
   # The columns an RfcModel is read with.
@@ -130,7 +130,7 @@ class RfcModel < BBS::Model
   def self.guard(fallback)
     yield
   rescue Sequel::DatabaseError => e
-    BBS.log('index', "#{e.class}: #{e.message}")
+    Rubbs.log('index', "#{e.class}: #{e.message}")
     fallback
   end
 

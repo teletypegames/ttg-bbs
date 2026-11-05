@@ -42,7 +42,7 @@ class ImportService
     started = Time.now
     @editor.download_index(@index_file)
     n = IndexBuilder.new.build(@index_file, errata: errata, iens: iens)
-    BBS.log('index', format('imported, %<n>d RFCs in %<s>.1f s', n: n, s: Time.now - started))
+    Rubbs.log('index', format('imported, %<n>d RFCs in %<s>.1f s', n: n, s: Time.now - started))
     GC.start
     :updated
   ensure
@@ -53,16 +53,16 @@ class ImportService
   def errata
     @editor.download_errata(@errata_file)
     @errata_file
-  rescue BBS::HTTP::Error, SystemCallError => e
-    BBS.log('index', "errata: #{e.message}")
+  rescue Rubbs::Common::Web::HTTP::Error, SystemCallError => e
+    Rubbs.log('index', "errata: #{e.message}")
     nil
   end
 
   # The IenIndex, or nil.
   def iens
     IenIndex.new(@editor.ien_index, texts: IenIndex.texts_in(@editor.ien_listing))
-  rescue BBS::HTTP::Error => e
-    BBS.log('index', "IENs: #{e.message}")
+  rescue Rubbs::Common::Web::HTTP::Error => e
+    Rubbs.log('index', "IENs: #{e.message}")
     nil
   end
 end

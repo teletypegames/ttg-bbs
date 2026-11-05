@@ -5,7 +5,7 @@ module UI
     # The table of contents of the RFC a reader shows: its headings on the
     # left; Enter takes the reader there.
     module ContentsWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :contents, :master_detail do
         title      { "Contents of #{rfc.name} (#{headings.size})" }

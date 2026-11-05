@@ -5,7 +5,7 @@
 # indexed, so a sync re-indexes only what changed. The words are in the
 # contentless FTS5 table text_fts, under the RFC's number. Written by the
 # mirror's thread, read by the callers'.
-class DocModel < BBS::Model
+class DocModel < Rubbs::Common::Storage::Model
   table :docs, database: :fulltext
 
   # How many texts are indexed.
@@ -40,7 +40,7 @@ class DocModel < BBS::Model
   def self.guard(fallback)
     yield
   rescue Sequel::DatabaseError => e
-    BBS.log('fulltext', "#{e.class}: #{e.message}")
+    Rubbs.log('fulltext', "#{e.class}: #{e.message}")
     fallback
   end
 

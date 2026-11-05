@@ -4,7 +4,7 @@ require 'time'
 
 # One time an RFC was opened on the board (a row of the reads table of
 # data/hackercave.sqlite3); the class counts them.
-class ReadModel < BBS::Model
+class ReadModel < Rubbs::Common::Storage::Model
   table :reads
 
   # Counts a read of RFC +number+ at +at+.

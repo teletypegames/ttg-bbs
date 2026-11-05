@@ -3,7 +3,7 @@
 # An RFC in a series (a row of the series table of data/index.sqlite3):
 # +series+ STD, BCP or FYI, its +number+ there, and the +rfc+ that stands
 # for it ("STD 7" is RFC 9293).
-class SeriesModel < BBS::Model
+class SeriesModel < Rubbs::Common::Storage::Model
   table :series, database: :index
 
   ROW = %i[series number rfc].freeze

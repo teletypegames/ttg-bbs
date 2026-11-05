@@ -5,7 +5,7 @@ module UI
     # The windows of the Jargon File: the letters, a list of entries (the
     # entry on the right; Enter opens it), the chapters, and an entry.
     module JargonWindows
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :jargon_letters, :master_detail do
         title      'The Jargon Lexicon'

@@ -6,7 +6,7 @@
 # disk), the mirror of every RFC's text with its full-text index, and the
 # Jargon File. The index and the mirror are kept fresh in the background.
 class HackerCaveBBS
-  include BBS::Domain
+  include Rubbs::Common::Board::Domain
 
   env_prefix 'HACKERCAVE_BBS_'
 

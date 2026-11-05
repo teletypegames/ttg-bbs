@@ -13,7 +13,7 @@ class ReadingServiceTest < Minitest::Test
 
     def text(number)
       @fetches += 1
-      raise BBS::HTTP::Error, "GET rfc#{number}.txt: answered 404" unless number == 854
+      raise Rubbs::Common::Web::HTTP::Error, "GET rfc#{number}.txt: answered 404" unless number == 854
 
       +"TELNET PROTOCOL SPECIFICATION\n\fpage two\n"
     end

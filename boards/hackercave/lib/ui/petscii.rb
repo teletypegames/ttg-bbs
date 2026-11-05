@@ -7,7 +7,7 @@ module UI
   # the shelves and their RFCs as numbered lists, an RFC's record on a page
   # with its links and errata (Records), the reader with the RFC reflowed to
   # 38 columns (Reader), and the Jargon File (JargonRoom).
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     LOGO_COLORS = [GN, GN, GN, GN, GN].freeze
 
     ABOUT = [

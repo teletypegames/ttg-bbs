@@ -7,7 +7,7 @@ require 'json'
 # introduction, an appendix (Hacker Folklore, A Portrait of J. Random
 # Hacker, …) or the bibliography. +paragraphs+ as in JargonEntryModel, plus
 # :heading for a heading inside it ("The Story of Mel").
-class JargonSectionModel < BBS::Model
+class JargonSectionModel < Rubbs::Common::Storage::Model
   table :sections, database: :jargon
 
   # The paragraphs of a body as stored: [[kind, text]], the kind a Symbol.

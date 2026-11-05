@@ -9,7 +9,7 @@ require 'json'
 # text]: :text (a paragraph on one line) or :pre (lines kept, an example or
 # a table). A {word} in the text is a link to the entry of that headword.
 # The words are in the FTS5 table entries_fts, under the entry's id.
-class JargonEntryModel < BBS::Model
+class JargonEntryModel < Rubbs::Common::Storage::Model
   table :entries, database: :jargon
 
   # A link in the text.
@@ -88,7 +88,7 @@ class JargonEntryModel < BBS::Model
   def self.guard(fallback)
     yield
   rescue Sequel::DatabaseError => e
-    BBS.log('jargon', "#{e.class}: #{e.message}")
+    Rubbs.log('jargon', "#{e.class}: #{e.message}")
     fallback
   end
 

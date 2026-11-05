@@ -131,7 +131,7 @@ class IndexTest < Minitest::Test
 
   def test_callers_read_the_old_index_while_the_new_one_is_built
     index
-    reader = BBS::Database.open(path('index.sqlite3'))
+    reader = Rubbs::Common::Storage::Database.open(path('index.sqlite3'))
     during = RfcModel.rebuild { |_fts| reader[:rfcs].where(number: 854).get(:title) }
     assert_equal 'Telnet Protocol Specification', during
     refute RfcModel.ready?
@@ -146,7 +146,7 @@ class IndexTest < Minitest::Test
     close_database(db)
     old = open_database('old-index.sqlite3', INDEX_MIGRATIONS, name: :index)
     refute RfcModel.ready?
-    assert_equal 1, BBS::Database.version(old)
+    assert_equal 1, Rubbs::Common::Storage::Database.version(old)
     assert_equal 7, index
   ensure
     close_database(old) if old

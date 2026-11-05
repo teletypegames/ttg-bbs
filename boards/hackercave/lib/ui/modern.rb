@@ -37,7 +37,7 @@ module UI
     KEYS = ['Enter        read the RFC or the entry picked', 'Alt+letter   a button of the window'].freeze
     TAGLINE = '─── the hacker\'s reading room · every RFC, as it was published ───'
 
-    APP = BBS::Application.define do
+    APP = Rubbs::Modern::Application.define do
       theme :synchronet
       helpers { include Library, RfcCard, Jargon }
 

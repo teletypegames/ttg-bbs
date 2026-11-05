@@ -6,7 +6,7 @@ module UI
     # the decades, the newest), what a shelf is on the right; Enter opens
     # its RFCs.
     module ShelvesWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :shelves, :master_detail do
         title 'Shelves'

@@ -3,7 +3,7 @@
 # How one RFC is related to another (a row of the relations table of
 # data/index.sqlite3): RFC +rfc+ +kind+ RFC +target+, as the index says
 # (both ways: RFC 793 is obsoleted by 9293, 9293 obsoletes 793).
-class RelationModel < BBS::Model
+class RelationModel < Rubbs::Common::Storage::Model
   table :relations, database: :index
 
   # The kinds of relations, and what each reads as, in the order shown.

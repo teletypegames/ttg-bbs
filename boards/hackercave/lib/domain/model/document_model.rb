@@ -19,7 +19,7 @@ DocumentModel = Data.define(:number, :lines, :breaks) do
 
   # +line+ without form feeds and control characters, its tabs as spaces,
   # no spaces at its end.
-  def self.clean(line) = expand(line.delete("\f")).rstrip.gsub(BBS::Text::CONTROLS, '')
+  def self.clean(line) = expand(line.delete("\f")).rstrip.gsub(Rubbs::Common::Text::CONTROLS, '')
 
   # +line+ with its tabs as spaces to the next multiple of 8.
   def self.expand(line)

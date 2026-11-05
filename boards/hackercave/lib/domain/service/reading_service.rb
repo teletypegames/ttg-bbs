@@ -3,7 +3,7 @@
 # Reading an RFC: its text from the disk (TextRepository), or fetched from
 # the RFC Editor the first time and kept there; then parsed into a
 # DocumentModel, which stays in memory for a while. Callers opening the same
-# RFC wait for one fetch (a BBS::Cache single flight), and at most FETCHES
+# RFC wait for one fetch (a Rubbs::Common::Storage::Cache single flight), and at most FETCHES
 # RFCs are fetched at once; a caller waits for a turn no longer than WAIT
 # seconds. The C64 face reads the RFC reflowed (ReflowService), kept the
 # same way.
@@ -19,8 +19,8 @@ class ReadingService
     @texts     = texts
     @editor    = editor
     @reflow    = reflow
-    @documents = BBS::Cache.new(ttl: KEEP, max_entries: 24)
-    @flowed    = BBS::Cache.new(ttl: KEEP, max_entries: 24)
+    @documents = Rubbs::Common::Storage::Cache.new(ttl: KEEP, max_entries: 24)
+    @flowed    = Rubbs::Common::Storage::Cache.new(ttl: KEEP, max_entries: 24)
     @turns     = SizedQueue.new(FETCHES)
     FETCHES.times { @turns << :turn }
   end
@@ -94,8 +94,8 @@ class ReadingService
       @texts.store(number, bytes)
       bytes.dup.force_encoding(Encoding::UTF_8).scrub('?')
     end
-  rescue BBS::HTTP::Error => e
-    BBS.log('rfc-editor', "RFC #{number}: #{e.message}")
+  rescue Rubbs::Common::Web::HTTP::Error => e
+    Rubbs.log('rfc-editor', "RFC #{number}: #{e.message}")
     e.message.include?('answered 404') ? :no_text : :unavailable
   end
 end

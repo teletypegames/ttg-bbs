@@ -25,7 +25,9 @@ class MirrorServiceTest < Minitest::Test
 
   # An RFC Editor with the text of IEN 137.
   class FakeEditor
-    def text(number) = number == -137 ? "ON HOLY WARS AND A PLEA FOR PEACE\nlittle-endians\n" : raise(BBS::HTTP::Error, '404')
+    def text(number)
+      number == -137 ? "ON HOLY WARS AND A PLEA FOR PEACE\nlittle-endians\n" : raise(Rubbs::Common::Web::HTTP::Error, '404')
+    end
   end
 
   def setup

@@ -6,7 +6,7 @@ module UI
     # on the left, the record of the one picked on the right; Enter reads
     # it.
     module RfcsWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :rfcs, :master_detail do
         title      { heading }

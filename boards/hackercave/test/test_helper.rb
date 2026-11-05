@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'bbs'
+require 'rubbs'
 require 'domain'
 require 'minitest/autorun'
 require 'tmpdir'
@@ -21,7 +21,7 @@ module TempDir
     super
     @dir = Dir.mktmpdir('hackercave-test')
     @databases = DATABASES.transform_values { |file, migrations| open_database(file, migrations) }
-    BBS::Model.bind(@databases)
+    Rubbs::Common::Storage::Model.bind(@databases)
   end
 
   def teardown
@@ -35,8 +35,8 @@ module TempDir
   # The database +file+ of the folder, migrated by +migrations+, and the
   # models of +name+ bound to it.
   def open_database(file, migrations, name: nil)
-    db = BBS::Database.open(path(file), migrations)
-    BBS::Model.bind(name => db) if name
+    db = Rubbs::Common::Storage::Database.open(path(file), migrations)
+    Rubbs::Common::Storage::Model.bind(name => db) if name
     db
   end
 

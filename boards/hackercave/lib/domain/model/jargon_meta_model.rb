@@ -2,7 +2,7 @@
 
 # What data/jargon.sqlite3 knows of itself (the meta table): +source+, the
 # SHA-256 of the file it was built from.
-class JargonMetaModel < BBS::Model
+class JargonMetaModel < Rubbs::Common::Storage::Model
   table :meta, database: :jargon
 
   # The digest of the file the database was built from, or nil.

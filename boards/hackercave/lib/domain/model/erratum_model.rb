@@ -5,7 +5,7 @@
 # ("Verified", "Reported", "Held for Document Update", "Rejected"), its type
 # ("Technical", "Editorial"), the section, the text as published and as it
 # should read, the notes, and the day it was reported.
-class ErratumModel < BBS::Model
+class ErratumModel < Rubbs::Common::Storage::Model
   table :errata, database: :index
 
   ROW = %i[id rfc status type section orig_text correct_text notes submitted].freeze

@@ -22,7 +22,7 @@ class ShelvesRepository
       )
     end.freeze
   rescue SystemCallError, Psych::Exception, KeyError, ArgumentError, NoMethodError, TypeError => e
-    BBS.log('shelves', "#{path}: #{e.class}: #{e.message}")
+    Rubbs.log('shelves', "#{path}: #{e.class}: #{e.message}")
     @shelves = [].freeze
   end
 

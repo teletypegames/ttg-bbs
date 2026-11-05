@@ -24,7 +24,7 @@ It has two faces on one port, like every board of the network:
   and `f` for the RFCs it names.
 
 Both faces show an RFC's page at the RFC Editor,
-`https://www.rfc-editor.org/rfc/rfc<N>`, as a QR code (rubbs' `BBS::QR`).
+`https://www.rfc-editor.org/rfc/rfc<N>`, as a QR code (rubbs' `Rubbs::Common::Text::QR`).
 
 ### The library
 
@@ -63,14 +63,14 @@ Both faces show an RFC's page at the RFC Editor,
 ### The index
 
 The RFC Editor's index, `https://www.rfc-editor.org/rfc-index.xml` (about
-14 MB), is streamed into `data/` (`BBS::HTTP.get(url, to: file)`) and read as
+14 MB), is streamed into `data/` (`Rubbs::Common::Web::HTTP.get(url, to: file)`) and read as
 a stream too (REXML's SAX2 parser, `IndexParser`), so it never sits in memory
 as a tree. It goes into SQLite (`data/index.sqlite3`, about 11 MB): the RFCs
 and the numbers never issued, how they are related (obsoletes, obsoleted by,
 updates, updated by, see also), the STD/BCP/FYI series, and an FTS5 index of
 the titles, authors, keywords and abstracts (an indexed `LIKE` where the
 SQLite has no FTS5). The import runs in a background thread (rubbs'
-`BBS.background`) at start when there is no index or it is older than
+`Rubbs.background`) at start when there is no index or it is older than
 `HACKERCAVE_BBS_INDEX_TTL` days (one), and the thread looks again every hour;
 a failed import is logged and tried again after five minutes, then less and
 less often. It builds the tables anew in one transaction (`RfcModel.rebuild`),
@@ -94,7 +94,7 @@ credited "Jargon File 4.4.7 (public domain)".
 ### The texts
 
 An RFC is fetched when someone first opens it,
-`https://www.rfc-editor.org/rfc/rfc<N>.txt`, through `BBS::HTTP` (a 60-second
+`https://www.rfc-editor.org/rfc/rfc<N>.txt`, through `Rubbs::Common::Web::HTTP` (a 60-second
 deadline, a 4 MB cap, redirects to public addresses only) with the
 User-Agent of the Teletype Games boards, and kept as it came in `data/rfc/rfc<N>.txt`. That is
 the layout of the RFC Editor's rsync module `rfcs-text-only`. An RFC never
@@ -110,7 +110,7 @@ text at a time and collects the garbage every 200, so the board stays under
 the first line with the word from the file. `HACKERCAVE_BBS_MIRROR=off` turns
 it off; without it texts are fetched on the first read as before. Callers
 opening the same RFC wait for one fetch, and at most two are fetched at once.
-An opened RFC stays parsed in memory for 15 minutes (`BBS::Cache`, 24 of them).
+An opened RFC stays parsed in memory for 15 minutes (`Rubbs::Common::Storage::Cache`, 24 of them).
 
 **Modern:** the lines as published, form feeds, tabs and control characters
 taken out. **Commodore 64:** `ReflowService` makes each paragraph fit 38
@@ -161,7 +161,7 @@ with its default. The board has no secrets.
 | `HACKERCAVE_BBS_JARGON_DB` | `data/jargon.sqlite3` | the Jargon File, built from `config/jargon` |
 
 `data/` is a volume. Every log line starts with the log tag `hackercave-bbs:`
-(rubbs' `BBS.log`): `index refresh`, `index`, `rfc-editor`, `texts`, `shelves`,
+(rubbs' `Rubbs.log`): `index refresh`, `index`, `rfc-editor`, `texts`, `shelves`,
 `mirror`, `fulltext`, `jargon`.
 
 ## Tests
@@ -186,12 +186,12 @@ day). CI runs both before a deploy.
 ## Project structure
 
 ```
-bbs.rb                      entry point: BBS.board (rubbs 2.0) with the two faces
+bbs.rb                      entry point: Rubbs.board (rubbs 2.0) with the two faces
 config/shelves.yml          the board's own shelves: Classics, Telnet, April 1st
 config/jargon/jarg447.txt   the Jargon File 4.4.7 (public domain)
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
-  migrations.rb             the schemas of the four SQLite files (BBS::Database), the index's and the Jargon File's
+  migrations.rb             the schemas of the four SQLite files (Rubbs::Common::Storage::Database), the index's and the Jargon File's
   model/rfc_model.rb        an RFC of the index (rfcs): search, shelves (status, decade, month, newest, IENs), rebuild
   model/relation_model.rb   how RFCs are related (relations): obsoletes, updates, see also
   model/series_model.rb     the STD, BCP and FYI series (series)
@@ -205,7 +205,7 @@ lib/domain/
   repository/index_parser.rb          rfc-index.xml read as a stream
   repository/index_builder.rb         the index built anew from rfc-index.xml, through the models
   repository/ien_index.rb             ien-index.txt: the IENs' numbers, authors, dates, titles
-  repository/rfc_editor_repository.rb the RFC Editor over BBS::HTTP: the index, a text
+  repository/rfc_editor_repository.rb the RFC Editor over Rubbs::Common::Web::HTTP: the index, a text
   repository/text_repository.rb       data/rfc: the texts as published
   repository/jargon_parser.rb         jarg447.txt read into entries and sections
   repository/jargon_file_repository.rb  config/jargon/jarg447.txt: its digest, parsed
@@ -216,9 +216,9 @@ lib/domain/
   service/jargon_service.rb           the Jargon File: letters, search, word of the day
   service/reading_service.rb          opening an RFC (fetch once, parse, keep a while)
   service/reflow_service.rb           an RFC made to fit 38 columns; what each line is
-  hackercave_bbs.rb         the board's BBS::Domain: settings, services, background work
+  hackercave_bbs.rb         the board's Rubbs::Common::Board::Domain: settings, services, background work
 lib/ui/
-  logo.rb                   HACKERCAVE in blocks (BBS::BlockFont), both faces
+  logo.rb                   HACKERCAVE in blocks (Rubbs::Common::Text::BlockFont), both faces
   modern.rb                 UI::Modern::APP: commands, menus, help, desktop, put together from:
   modern/library.rb         the helpers: shelves, search, opening an RFC, links, QR
   modern/rfc_card.rb        an RFC's record beside a list
@@ -229,7 +229,7 @@ lib/ui/
   modern/text_window.rb     a window of paragraphs: errata, a Jargon chapter
   modern/jargon.rb          the Jargon menu's helpers
   modern/jargon_windows.rb  the Jargon windows: letters, entries, chapters, an entry
-  petscii.rb                UI::Petscii: the C64 face (BBS::Petscii::Face)
+  petscii.rb                UI::Petscii: the C64 face (Rubbs::Petscii::Face)
   petscii/records.rb        the lists and an RFC's record: links, errata, QR code
   petscii/reader.rb         the C64 reader: the RFC reflowed, in pages, contents
   petscii/jargon_room.rb    the Jargon File on the C64

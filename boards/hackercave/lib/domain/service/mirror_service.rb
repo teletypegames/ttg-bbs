@@ -7,7 +7,7 @@ require 'open3'
 # reader finds the texts there too), fetches the IENs that are plain text,
 # and indexes whatever is new or changed (DocModel), one text at a
 # time so memory stays flat. #search finds the RFCs that have the words, and
-# the first line of each that has the first word. Runs in a BBS.background
+# the first line of each that has the first word. Runs in a Rubbs.background
 # thread once a day; the first run takes a while (about 540 MB).
 class MirrorService
   SOURCE  = 'rsync://rsync.rfc-editor.org/rfcs-text-only/'
@@ -42,11 +42,11 @@ class MirrorService
     return :fresh unless force || @synced.nil? || Time.now - @synced > @ttl
 
     started = Time.now
-    BBS.log('mirror', 'rsync failed; indexing what is there') unless @rsync.call(rsync_args)
+    Rubbs.log('mirror', 'rsync failed; indexing what is there') unless @rsync.call(rsync_args)
     fetch_iens
     n = index_changed
     @synced = Time.now
-    BBS.log('mirror', format('%<n>d texts indexed in %<s>.0f s, %<all>d in all', n: n, s: Time.now - started, all: count))
+    Rubbs.log('mirror', format('%<n>d texts indexed in %<s>.0f s, %<all>d in all', n: n, s: Time.now - started, all: count))
     n
   end
 
@@ -63,10 +63,10 @@ class MirrorService
   def run_rsync(args)
     FileUtils.mkdir_p(@texts.dir)
     out, status = Open3.capture2e('timeout', TIMEOUT.to_s, 'rsync', *args)
-    BBS.log('mirror', "rsync: #{out.lines.last(2).join.strip}") unless status.success?
+    Rubbs.log('mirror', "rsync: #{out.lines.last(2).join.strip}") unless status.success?
     status.success?
   rescue SystemCallError => e
-    BBS.log('mirror', "rsync: #{e.message}")
+    Rubbs.log('mirror', "rsync: #{e.message}")
     false
   end
 
@@ -74,8 +74,8 @@ class MirrorService
   def fetch_iens
     RfcModel.iens.select(&:text?).reject { |ien| @texts.exist?(ien.number) }.each do |ien|
       @texts.store(ien.number, @editor.text(ien.number))
-    rescue BBS::HTTP::Error => e
-      BBS.log('mirror', "#{ien.name}: #{e.message}")
+    rescue Rubbs::Common::Web::HTTP::Error => e
+      Rubbs.log('mirror', "#{ien.name}: #{e.message}")
     end
   end
 

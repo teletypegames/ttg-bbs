@@ -7,7 +7,7 @@ module UI
     # the Jargon File, with where it is from under it. A {word} of a Jargon
     # entry is coloured as a link.
     module TextWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       MAX_WIDTH = 84
       LINK = /\{([^{}]+)\}/
@@ -28,9 +28,9 @@ module UI
 
         def paragraph(kind, text, width)
           case kind
-          when :heading then BBS::FrameBuffer.wrap_ansi(bright(text), width)
+          when :heading then Rubbs::Modern::FrameBuffer.wrap_ansi(bright(text), width)
           when :pre then text.split("\n").map { |l| dim(l[0, width]) }
-          else BBS::FrameBuffer.wrap_ansi(text.gsub(TextWindow::LINK) { accent(::Regexp.last_match(1)) }, width)
+          else Rubbs::Modern::FrameBuffer.wrap_ansi(text.gsub(TextWindow::LINK) { accent(::Regexp.last_match(1)) }, width)
           end
         end
       end

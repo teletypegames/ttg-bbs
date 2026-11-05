@@ -21,7 +21,7 @@ class ImportServiceTest < Minitest::Test
     end
 
     def download_errata(path)
-      raise BBS::HTTP::Error, 'GET errata.json: answered 503' unless @errata
+      raise Rubbs::Common::Web::HTTP::Error, 'GET errata.json: answered 503' unless @errata
 
       FileUtils.cp(File.join(FIXTURES, 'errata.json'), path)
     end
