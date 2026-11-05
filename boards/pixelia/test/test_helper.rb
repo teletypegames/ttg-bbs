@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'minitest/autorun'
-require 'bbs'
+require 'rubbs'
 require 'tmpdir'
 require 'domain'
 

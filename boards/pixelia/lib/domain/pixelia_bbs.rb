@@ -5,7 +5,7 @@
 # (lib/ui/modern, lib/ui/petscii) work on one instance of it, so a C64 and an
 # ANSI terminal paint on the same canvas.
 class PixeliaBBS
-  include BBS::Domain
+  include Rubbs::Common::Board::Domain
 
   path    :data, 'data'
   setting :api_url, 'https://api.16colo.rs'

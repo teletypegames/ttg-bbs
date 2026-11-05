@@ -15,7 +15,7 @@ module UI
   # under the masthead, the 16colo.rs gallery in numbered cursor lists and
   # pages of 40 columns, the shared canvas, which is the C64's own screen
   # size, and the Wall.
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     HELP = [
       " #{WH}pixelia#{LG} is an art board of teletype games.", '',
       " #{YE}1#{LG} the ansi gallery: the 16colo.rs archive, year by year, pack by pack. A piece shows 40 " \
@@ -29,7 +29,7 @@ module UI
     # PIXELIA in reversed blocks, five rows, a colour a letter.
     LOGO = Logo.rows.map do |runs|
       line = runs.map do |text, color|
-        blocks = BBS::BlockFont.reversed(text)
+        blocks = Rubbs::Common::Text::BlockFont.reversed(text)
         color ? "#{Pen::CODES[color]}#{blocks}" : blocks
       end
       "      #{line.join}#{LG}"

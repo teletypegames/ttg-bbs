@@ -7,7 +7,7 @@ require 'time'
 
 # The shared canvas: the cells in memory behind a Mutex, a version that
 # grows with every change, and data/canvas.json on disk. Writes are
-# debounced: a BBS.background thread writes the file (to a temporary file,
+# debounced: a Rubbs.background thread writes the file (to a temporary file,
 # then renamed) at most every +flush_seconds+, when something changed.
 #
 # The admin script asks for a clear by creating +clear_flag+: the thread
@@ -75,7 +75,7 @@ class CanvasRepository
   # Starts the thread that writes the file and answers the clear flag every
   # +flush_seconds+; an error is logged and the next round comes as usual.
   def start
-    BBS.background(
+    Rubbs.background(
       'canvas writer',
       every:       @flush_seconds,
       retry_after: @flush_seconds,
@@ -104,10 +104,10 @@ class CanvasRepository
 
   def load
     canvas = File.exist?(@path) ? CanvasModel.from_h(JSON.parse(File.read(@path))) : nil
-    BBS.log('canvas', "#{@path} is not a canvas, starting blank") if canvas.nil? && File.exist?(@path)
+    Rubbs.log('canvas', "#{@path} is not a canvas, starting blank") if canvas.nil? && File.exist?(@path)
     assign(canvas || CanvasModel.blank)
   rescue SystemCallError, JSON::ParserError => e
-    BBS.log('canvas', "#{@path}: #{e.class}: #{e.message}")
+    Rubbs.log('canvas', "#{@path}: #{e.class}: #{e.message}")
     assign(CanvasModel.blank)
   end
 
@@ -121,14 +121,14 @@ class CanvasRepository
     save(@path)
     @dirty = false
   rescue SystemCallError => e
-    BBS.log('canvas', "#{@path}: #{e.class}: #{e.message}")
+    Rubbs.log('canvas', "#{@path}: #{e.class}: #{e.message}")
   end
 
   def archive
     FileUtils.mkdir_p(@archive_dir)
     save(File.join(@archive_dir, "canvas-#{Time.now.strftime('%Y%m%d-%H%M%S')}-#{SecureRandom.hex(2)}.json"))
   rescue SystemCallError => e
-    BBS.log('canvas', "#{@archive_dir}: #{e.class}: #{e.message}")
+    Rubbs.log('canvas', "#{@archive_dir}: #{e.class}: #{e.message}")
     nil
   end
 

@@ -5,7 +5,7 @@ module UI
     # The Wall: the saved works on the left, the picked one's picture on
     # the right.
     module WallWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :wall, :master_detail do
         title 'The Wall'

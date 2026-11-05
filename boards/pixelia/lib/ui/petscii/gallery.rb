@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     # The 16colo.rs gallery on a C64: the years, a year's packs and a pack's
     # files as numbered cursor lists, the credits of a piece, then the piece itself
     # in pages of 22 rows, 40 columns at a time (the left half of an 80
@@ -11,7 +11,7 @@ module UI
       PAGE_ROWS = 22
       HALF      = 40
       # A " this near the right edge would leave the C64 in quote mode (see
-      # BBS::Petscii::Encoder), so there it is an apostrophe.
+      # Rubbs::Petscii::Encoder), so there it is an apostrophe.
       QUOTE_FROM = HALF - 3
       NO_ANSWER  = '16colo.rs did not answer. Try again later.'
       PIECE      = { too_big: 'This piece is too large for the board.', unavailable: NO_ANSWER }.freeze
@@ -103,7 +103,7 @@ module UI
         pen = Pen.new
         write(PAGE_ROWS.times.map { |i| pen.row(page_row(art, top + i, left), HALF) }.join)
         right = art.width > HALF ? "  #{YE}R#{LG} right" : ''
-        write("#{BBS::Ansi::RESET}#{RO} #{YE}ret#{LG} next #{YE}P#{LG} back#{right}  #{YE}Q#{LG} quit")
+        write("#{Rubbs::Modern::Ansi::RESET}#{RO} #{YE}ret#{LG} next #{YE}P#{LG} back#{right}  #{YE}Q#{LG} quit")
       end
 
       # Row +y+ of +art+ from column +left+, 40 C64 cells.

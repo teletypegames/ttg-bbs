@@ -5,7 +5,7 @@ module UI
     # The canvas as it is now to the Wall, under a title and the caller's
     # handle (the last one they saved under).
     module SaveWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :save_work, :form do
         title        'Save to the Wall'

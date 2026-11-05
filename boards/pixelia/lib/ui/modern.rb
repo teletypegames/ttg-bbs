@@ -34,7 +34,7 @@ module UI
       runs.map { |text, color| "\e[0;38;5;#{ColorModel[color || 0].xterm};40m#{text}" }.join
     end.freeze
 
-    APP = BBS::Application.define do
+    APP = Rubbs::Modern::Application.define do
       theme :synchronet
       helpers { include Helpers }
 

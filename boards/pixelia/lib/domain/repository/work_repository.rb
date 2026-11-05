@@ -41,7 +41,7 @@ class WorkRepository
     end
     work
   rescue SystemCallError => e
-    BBS.log('wall', "#{@dir}: #{e.class}: #{e.message}")
+    Rubbs.log('wall', "#{@dir}: #{e.class}: #{e.message}")
     nil
   end
 
@@ -58,7 +58,7 @@ class WorkRepository
       true
     end
   rescue SystemCallError => e
-    BBS.log('wall', "#{path}: #{e.class}: #{e.message}")
+    Rubbs.log('wall', "#{path}: #{e.class}: #{e.message}")
     false
   end
 
@@ -105,7 +105,7 @@ class WorkRepository
 
   def broken(id, reason)
     @broken << id
-    BBS.log('wall', "#{path(id)}: #{reason}")
+    Rubbs.log('wall', "#{path(id)}: #{reason}")
   end
 
   def remember(work)

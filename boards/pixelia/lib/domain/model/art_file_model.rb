@@ -88,7 +88,7 @@ class ArtFileModel
     }
   end
 
-  def self.clean(text) = BBS::Text.clean(text, keep_newlines: false).strip
+  def self.clean(text) = Rubbs::Common::Text.clean(text, keep_newlines: false).strip
 
   def self.date(value)
     s = value.to_s

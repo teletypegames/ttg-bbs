@@ -80,7 +80,7 @@ module UI
         parts << "cols #{@left + 1}-#{[@left + @cols, @width].min}/#{@width} ←→" if @width > @cols
         parts << '↑↓ PgUp PgDn' if @height > @view_h
         parts << 'q back '
-        BBS::FrameBuffer.clip_ansi(parts.join(' · '), @cols).ljust(@cols)
+        Rubbs::Modern::FrameBuffer.clip_ansi(parts.join(' · '), @cols).ljust(@cols)
       end
     end
   end

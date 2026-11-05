@@ -17,7 +17,7 @@ module UI
     # Ctrl-Z or Ctrl-U undoes. Mouse: a click puts the cursor, dragging or a
     # right click paints the brush, a click in the panel picks an ink or a
     # brush.
-    class CanvasWidget < BBS::Widget
+    class CanvasWidget < Rubbs::Modern::Widgets::Widget
       include CanvasPanel
 
       ROWS  = CanvasModel::ROWS
@@ -164,7 +164,7 @@ module UI
 
     # The window of the canvas: as large as the desktop lets it be, at most
     # the whole canvas and its panel.
-    class CanvasWindow < BBS::Window
+    class CanvasWindow < Rubbs::Modern::Window
       attr_reader :widget
 
       def initialize(app, canvas:, who:, on_save:)

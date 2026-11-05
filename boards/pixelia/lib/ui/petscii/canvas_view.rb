@@ -3,7 +3,7 @@
 require_relative 'pen'
 
 module UI
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     # The 40×25 canvas on a C64 screen: 24 of its rows (the top 24 or the
     # bottom 24) and a status line on the last screen row, which is never
     # written to its last column, so the screen does not scroll.
@@ -49,7 +49,7 @@ module UI
 
       # Clears the screen and draws +canvas+ row by row.
       def redraw(canvas)
-        out = "#{BBS::Ansi::RESET}#{BBS::Petscii::CLEAR}#{BBS::Petscii::RVS_OFF}"
+        out = "#{Rubbs::Modern::Ansi::RESET}#{Rubbs::Petscii::CLEAR}#{Rubbs::Petscii::RVS_OFF}"
         @pen.reset
         @pen.rvs_off!
         @shown = Array.new(VIEW_ROWS * COLS)

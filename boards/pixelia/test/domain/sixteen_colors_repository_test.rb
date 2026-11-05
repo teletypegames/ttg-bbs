@@ -13,9 +13,9 @@ class SixteenColorsRepositoryTest < Minitest::Test
     )
   end
 
-  def ok(body) = BBS::HTTP::Response.new(status: 200, body: body.b, headers: {})
+  def ok(body) = Rubbs::Common::Web::HTTP::Response.new(status: 200, body: body.b, headers: {})
 
-  # Runs the block with BBS::HTTP.get answered by +answer+ (url, options);
+  # Runs the block with Rubbs::Common::Web::HTTP.get answered by +answer+ (url, options);
   # yields the calls made, [[url, options], …].
   def answering(answer)
     calls = []
@@ -23,7 +23,7 @@ class SixteenColorsRepositoryTest < Minitest::Test
       calls << [url, opts]
       answer.call(url, opts)
     end
-    BBS::HTTP.stub(:get, get) { yield calls }
+    Rubbs::Common::Web::HTTP.stub(:get, get) { yield calls }
   end
 
   def body(text) = ->(_url, _opts) { ok(text) }
@@ -37,8 +37,8 @@ class SixteenColorsRepositoryTest < Minitest::Test
 
   def test_a_dead_api_raises_then_gives_the_last_listing
     r = repo(ttl: 0)
-    answering(->(*) { raise BBS::HTTP::Error, 'GET https://api.test/v1/year: refused' }) do
-      assert_raises(BBS::HTTP::Error) { r.years }
+    answering(->(*) { raise Rubbs::Common::Web::HTTP::Error, 'GET https://api.test/v1/year: refused' }) do
+      assert_raises(Rubbs::Common::Web::HTTP::Error) { r.years }
     end
     answering(body('{"1996":{"packs":3}}')) { assert_equal [1996], r.years.map(&:year) }
     answering(body('not json')) { assert_equal [1996], r.years.map(&:year) }
@@ -85,22 +85,24 @@ class SixteenColorsRepositoryTest < Minitest::Test
   def test_a_file_over_the_cap_or_a_missing_one_raises
     r = repo
     answer = lambda do |url, opts|
-      raise BBS::HTTP::TooLarge, "GET #{url}: the body is over #{opts[:max_bytes]} bytes" if url.end_with?('big.ans')
+      if url.end_with?('big.ans')
+        raise Rubbs::Common::Web::HTTP::TooLarge, "GET #{url}: the body is over #{opts[:max_bytes]} bytes"
+      end
 
-      BBS::HTTP::Response.new(status: 404, body: ''.b, headers: {})
+      Rubbs::Common::Web::HTTP::Response.new(status: 404, body: ''.b, headers: {})
     end
     answering(answer) do
-      assert_raises(BBS::HTTP::TooLarge) { r.raw('pack', 'big.ans') }
+      assert_raises(Rubbs::Common::Web::HTTP::TooLarge) { r.raw('pack', 'big.ans') }
       assert_raises(SixteenColorsRepository::Unavailable) { r.raw('pack', 'gone.ans') }
     end
   end
 
   # An archive whose API is down, with big.ans too big and the rest missing.
   def broken_archive(url, opts)
-    raise BBS::HTTP::TooLarge, "GET #{url}: the body is over #{opts[:max_bytes]} bytes" if url.end_with?('big.ans')
-    raise BBS::HTTP::Error, 'GET https://api.test/v1/year: refused' if url.include?('/v1/')
+    raise Rubbs::Common::Web::HTTP::TooLarge, "GET #{url}: the body is over #{opts[:max_bytes]} bytes" if url.end_with?('big.ans')
+    raise Rubbs::Common::Web::HTTP::Error, 'GET https://api.test/v1/year: refused' if url.include?('/v1/')
 
-    BBS::HTTP::Response.new(status: 404, body: ''.b, headers: {})
+    Rubbs::Common::Web::HTTP::Response.new(status: 404, body: ''.b, headers: {})
   end
 
   def gallery

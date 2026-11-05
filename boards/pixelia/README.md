@@ -10,7 +10,7 @@ It has two faces on one port, like every board of the network:
 - a **modern** one for ANSI terminals: a desktop with windows, the mouse, the
   gallery in 80 columns and 16 colours, the canvas in a window with a palette;
 - a **Commodore 64** one in PETSCII, 40×25: cursor menus of rubbs
-  (`BBS::Selector`: CRSR and RETURN, or the key or number as before) for the
+  (`Rubbs::Common::Screens::Selector`: CRSR and RETURN, or the key or number as before) for the
   menu and the lists, the gallery 40 columns at a time and the canvas on the
   C64's own screen.
 
@@ -21,14 +21,14 @@ demand from its public API (`api.16colo.rs/v1`): the years, a year's packs, a
 pack's files, with the artists and groups and the 16colo.rs address of each.
 Nothing is mirrored into the repository and nothing is fetched ahead: a listing
 when it is opened, a file when it is shown. Every request goes through rubbs'
-`BBS::HTTP` (a deadline, a cap on the body, redirects to public http(s)
-addresses only) and a `BBS::Cache`, so callers opening the same listing or
+`Rubbs::Common::Web::HTTP` (a deadline, a cap on the body, redirects to public http(s)
+addresses only) and a `Rubbs::Common::Storage::Cache`, so callers opening the same listing or
 piece at once wait for one request. Listings stay in memory for
 `PIXELIA_BBS_API_TTL` seconds, and a dead API gives the last one it sent;
 files are cached in `data/cache/` up to `PIXELIA_BBS_CACHE_MB`, the least
 recently used going first. Requests carry a `User-Agent` naming the board and
 teletypegames.org. Names, credits and SAUCE texts lose their control
-characters (`BBS::Text.clean`) before they reach a screen.
+characters (`Rubbs::Common::Text.clean`) before they reach a screen.
 
 Only text art is listed: `.ans .asc .diz .nfo .txt .ice`, and any file whose
 SAUCE record (as the API reports it) says it is ASCII, ANSI or ANSiMation
@@ -68,7 +68,7 @@ tick, the C64 face sends only the cells that changed, after every key and
 every 3 seconds. A caller paints at most `PIXELIA_BBS_PAINT_RATE` cells a second.
 The canvas is written to `data/canvas.json` at most every 2 seconds, through a
 temporary file of its own and a rename, by a writer thread (rubbs'
-`BBS.background`, `canvas writer`) that also answers the admin's clear.
+`Rubbs.background`, `canvas writer`) that also answers the admin's clear.
 
 - **Modern:** arrows move, typing paints, Enter paints the brush, Backspace and
   Delete rub out, F7/F8 ink, F9 or Ctrl-R reverse, Insert or Ctrl-G glyph mode,
@@ -90,7 +90,7 @@ one JSON file each in `data/works/`. The board keeps the works it has read in
 memory and lists the folder only when it changed, reading just the files it
 does not know, so a save writes one file and reads none, and a work the admin
 script removes is gone at the next look. A broken file is skipped with one
-warning. A caller (counted by address, `BBS::RateLimit.caller_key`, so calling
+warning. A caller (counted by address, `Rubbs::Common::Line::RateLimit.caller_key`, so calling
 again does not help) saves at most once in `PIXELIA_BBS_WALL_COOLDOWN`
 seconds, and the board takes at most `PIXELIA_BBS_WALL_PER_HOUR` works an
 hour. Both limits are looked at together and a save counts in both only once
@@ -146,9 +146,9 @@ when no board answers, the script clears the file itself. An archive is
 
 ## Logs
 
-Every line on stderr starts with the log tag `pixelia-bbs:` (rubbs' `BBS.log`):
+Every line on stderr starts with the log tag `pixelia-bbs:` (rubbs' `Rubbs.log`):
 `16colors`, `canvas`, `canvas writer`, `art cache`, `wall`. The 16colo.rs
-repository lets a failure go up (`BBS::HTTP::Error`, `BBS::HTTP::TooLarge` for a
+repository lets a failure go up (`Rubbs::Common::Web::HTTP::Error`, `Rubbs::Common::Web::HTTP::TooLarge` for a
 file over `PIXELIA_BBS_MAX_FILE_KB`); the gallery service logs it once and the faces
 say why the piece does not show.
 
@@ -161,13 +161,13 @@ bundle exec rake test wall       # the files whose name has the word
 
 Minitest, in `test/domain/`: the Wall's rules and limits, the works folder,
 the canvas file and its archive, the art cache, the 16colo.rs listings and
-files (with `BBS::HTTP` stubbed: no network), the SAUCE record and the ANSI
+files (with `Rubbs::Common::Web::HTTP` stubbed: no network), the SAUCE record and the ANSI
 renderer. CI runs them with RuboCop before a deploy.
 
 ## Project structure
 
 ```
-bbs.rb                      entry point: BBS.board (the title, the domain, both faces)
+bbs.rb                      entry point: Rubbs.board (the title, the domain, both faces)
 bin/works, bin/canvas       admin scripts, run with docker exec
 rake test                    the tests (test/domain/*_test.rb)
 lib/domain.rb               requires the domain in dependency order
@@ -189,7 +189,7 @@ lib/domain/
   service/wall_service.rb                   saving to the Wall, its limits
   pixelia_bbs.rb            the board's domain (PixeliaBBS): settings and services
 lib/ui/
-  logo.rb                   PIXELIA in blocks (BBS::BlockFont), a colour a letter, both faces
+  logo.rb                   PIXELIA in blocks (Rubbs::Common::Text::BlockFont), a colour a letter, both faces
   glyph_keys.rb             glyph mode's keyboard, both faces
   wording.rb              what a caller is told about a save, both faces
   modern.rb                 UI::Modern::APP: commands, menus, help, statusbar and desktop

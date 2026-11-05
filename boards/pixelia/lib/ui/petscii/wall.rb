@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     # The Wall on a C64: the works newest first as a numbered cursor list, and a
     # work on the whole screen, as it was painted (CRSR down shows its last
     # row).

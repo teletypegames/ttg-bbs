@@ -30,7 +30,7 @@ class ArtCacheRepository
       data
     end
   rescue SystemCallError => e
-    BBS.log('art cache', "#{path}: #{e.class}: #{e.message}")
+    Rubbs.log('art cache', "#{path}: #{e.class}: #{e.message}")
     @lock.synchronize { @entries.delete(path) }
     nil
   end
@@ -49,7 +49,7 @@ class ArtCacheRepository
       @entries[path] = { size: data.bytesize, used: Time.now }
     end
   rescue SystemCallError => e
-    BBS.log('art cache', "#{path}: #{e.class}: #{e.message}")
+    Rubbs.log('art cache', "#{path}: #{e.class}: #{e.message}")
   end
 
   private
@@ -73,6 +73,6 @@ class ArtCacheRepository
       @entries[path] = { size: stat.size, used: stat.mtime }
     end
   rescue SystemCallError => e
-    BBS.log('art cache', "#{@dir}: #{e.class}: #{e.message}")
+    Rubbs.log('art cache', "#{@dir}: #{e.class}: #{e.message}")
   end
 end

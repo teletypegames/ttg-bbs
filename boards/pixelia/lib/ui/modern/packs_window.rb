@@ -4,7 +4,7 @@ module UI
   module Modern
     # The packs of a year on the left, the one picked on the right.
     module PacksWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :packs, :master_detail do
         title      { "16colo.rs #{year.year}" }

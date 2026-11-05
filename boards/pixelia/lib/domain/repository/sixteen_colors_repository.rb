@@ -4,17 +4,17 @@ require 'erb'
 require 'json'
 
 # The public API of 16colo.rs (api.16colo.rs/v1) and the raw files of its
-# packs (16colo.rs/pack/NAME/raw/FILE), read on demand through BBS::HTTP.
-# The listings are kept in a BBS::Cache for +ttl+ seconds; a dead API gives
-# the last listing it sent, or raises BBS::HTTP::Error (Unavailable for an
+# packs (16colo.rs/pack/NAME/raw/FILE), read on demand through Rubbs::Common::Web::HTTP.
+# The listings are kept in a Rubbs::Common::Storage::Cache for +ttl+ seconds; a dead API gives
+# the last listing it sent, or raises Rubbs::Common::Web::HTTP::Error (Unavailable for an
 # error status or an answer that is no listing). The raw files pass a small
 # cache too, so callers opening one piece at once fetch it once; a file
-# over +max_bytes+ raises BBS::HTTP::TooLarge. Nothing is fetched ahead: a
+# over +max_bytes+ raises Rubbs::Common::Web::HTTP::TooLarge. Nothing is fetched ahead: a
 # year's pack list when it is opened, a pack's file list when it is opened,
 # a file when it is shown.
 class SixteenColorsRepository
   # A listing or a file the archive did not give.
-  class Unavailable < BBS::HTTP::Error; end
+  class Unavailable < Rubbs::Common::Web::HTTP::Error; end
 
   PAGE_SIZE      = 200
   MAX_PAGES      = 10
@@ -29,8 +29,8 @@ class SixteenColorsRepository
     @api_url    = api_url.delete_suffix('/')
     @site_url   = site_url.delete_suffix('/')
     @max_bytes  = max_bytes
-    @listings   = BBS::Cache.new(ttl: ttl, max_entries: MAX_LISTINGS)
-    @raws       = BBS::Cache.new(ttl: RAW_TTL, max_entries: MAX_RAWS, max_bytes: MAX_RAWS * max_bytes)
+    @listings   = Rubbs::Common::Storage::Cache.new(ttl: ttl, max_entries: MAX_LISTINGS)
+    @raws       = Rubbs::Common::Storage::Cache.new(ttl: RAW_TTL, max_entries: MAX_RAWS, max_bytes: MAX_RAWS * max_bytes)
   end
 
   # The years of the archive that have packs, newest first.
@@ -52,7 +52,7 @@ class SixteenColorsRepository
       packs, pages = packs_page(year, 1)
       (2..[pages, MAX_PAGES].min).each { |page| packs.concat(packs_page(year, page).first) }
       packs
-    rescue BBS::HTTP::Error
+    rescue Rubbs::Common::Web::HTTP::Error
       raise if packs.nil? || packs.empty?
 
       packs
@@ -70,7 +70,7 @@ class SixteenColorsRepository
     end
   end
 
-  # The bytes of +file+ in the pack +pack+. Raises BBS::HTTP::TooLarge when
+  # The bytes of +file+ in the pack +pack+. Raises Rubbs::Common::Web::HTTP::TooLarge when
   # it is larger than +max_bytes+.
   def raw(pack, file) = @raws.fetch([pack, file]) { get("#{pack_url(pack)}/raw/#{escape(file)}", @max_bytes).freeze }
 
@@ -97,7 +97,7 @@ class SixteenColorsRepository
   end
 
   def get(url, max_bytes)
-    response = BBS::HTTP.get(url, headers: { 'Accept-Encoding' => 'identity' }, max_bytes: max_bytes)
+    response = Rubbs::Common::Web::HTTP.get(url, headers: { 'Accept-Encoding' => 'identity' }, max_bytes: max_bytes)
     raise Unavailable, "#{url.split('?').first} answered #{response.status}" unless response.ok?
 
     response.body

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     # Draws cells on a C64: a character, one of the sixteen colours and
     # reverse video, written as the C64's own colour and RVS control codes
     # (sent as they are through the PETSCII line) and the Unicode glyphs
@@ -12,7 +12,7 @@ module UI
     # on ink (reverse). The canvas keeps to that, so it shows 1:1. An ANSI
     # piece has two colours a cell; Pen.art picks the one that matters more.
     class Pen
-      P = BBS::Petscii
+      P = Rubbs::Petscii
       # The control code of each C64 colour, by its index (ColorModel).
       CODES = [P::BLACK, P::WHITE, P::RED, P::CYAN, P::PURPLE, P::GREEN, P::BLUE, P::YELLOW, P::ORANGE, P::BROWN,
                P::LIGHT_RED, P::DARK_GREY, P::GREY, P::LIGHT_GREEN, P::LIGHT_BLUE, P::LIGHT_GREY].freeze
@@ -160,14 +160,14 @@ module UI
         return on_black(char, fg) if bg.zero?
         return two_tone(char, fg, bg) if HALVES.include?(char) || SHADES.include?(char)
 
-        [BBS::Petscii.cell(char), FROM_CGA[bg], true]
+        [Rubbs::Petscii.cell(char), FROM_CGA[bg], true]
       end
 
       # A character on a black background: in its colour, a shade as ▒.
       def self.on_black(char, fg)
         return shade(char, fg) if SHADES.include?(char)
 
-        canvas(HALVES.include?(char) ? char : BBS::Petscii.cell(char), FROM_CGA[fg], 0)
+        canvas(HALVES.include?(char) ? char : Rubbs::Petscii.cell(char), FROM_CGA[fg], 0)
       end
 
       def self.shade(char, fg) = char == '▓' ? [' ', FROM_CGA[fg], true] : ['▒', FROM_CGA[fg], false]

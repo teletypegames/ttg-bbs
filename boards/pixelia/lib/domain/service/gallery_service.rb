@@ -47,18 +47,18 @@ class GalleryService
   # +key+; :too_big or :unavailable.
   def fetch(key, file)
     @remote.raw(file.pack, file.name).tap { |data| @cache.write(key, data) }
-  rescue BBS::HTTP::TooLarge
+  rescue Rubbs::Common::Web::HTTP::TooLarge
     :too_big
-  rescue BBS::HTTP::Error => e
-    BBS.log('16colors', "#{key}: #{e.message}")
+  rescue Rubbs::Common::Web::HTTP::Error => e
+    Rubbs.log('16colors', "#{key}: #{e.message}")
     :unavailable
   end
 
   # The block's value, or nil (logged) when the archive did not answer.
   def answer(what)
     yield
-  rescue BBS::HTTP::Error => e
-    BBS.log('16colors', "#{what}: #{e.class}: #{e.message}")
+  rescue Rubbs::Common::Web::HTTP::Error => e
+    Rubbs.log('16colors', "#{what}: #{e.class}: #{e.message}")
     nil
   end
 end

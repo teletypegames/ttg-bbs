@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     # The shared canvas on a C64. The cursor keys move, a typed character
     # paints itself in the ink (or its glyph in glyph mode), DEL rubs out
     # the cell on the left. F3 and F4 step the ink, F5 turns reverse on and
@@ -158,8 +158,8 @@ module UI
         @face.puts
         @face.say('The canvas as it is now goes on the wall under a title and your handle.', color: GR)
         @face.puts
-        title  = BBS::Field.ask(@face.session, " #{WH}title#{LG}  ", max: WallService::MAX_TITLE)
-        handle = title && BBS::Field.ask(@face.session, " #{WH}handle#{LG} ", text: @handle.to_s, max: WallService::MAX_HANDLE)
+        title  = Rubbs::Common::Screens::Field.ask(@face.session, " #{WH}title#{LG}  ", max: WallService::MAX_TITLE)
+        handle = title && Rubbs::Common::Screens::Field.ask(@face.session, " #{WH}handle#{LG} ", text: @handle.to_s, max: WallService::MAX_HANDLE)
         return unless title && handle
 
         @handle = handle

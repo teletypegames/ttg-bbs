@@ -25,5 +25,5 @@ class PackModel
     new(name: name, year: hash['year'].to_i, groups: Array(hash['groups']).map { |g| clean(g) })
   end
 
-  def self.clean(text) = BBS::Text.clean(text, keep_newlines: false).strip
+  def self.clean(text) = Rubbs::Common::Text.clean(text, keep_newlines: false).strip
 end

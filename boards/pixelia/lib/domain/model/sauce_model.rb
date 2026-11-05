@@ -56,7 +56,7 @@ class SauceModel
   def self.text(record, from, length)
     record.byteslice(from, length).force_encoding('IBM437')
       .encode('UTF-8', invalid: :replace, undef: :replace, replace: ' ')
-      .then { |t| BBS::Text.clean(t, keep_newlines: false) }.strip
+      .then { |t| Rubbs::Common::Text.clean(t, keep_newlines: false) }.strip
   end
 
   def self.date(raw)

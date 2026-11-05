@@ -4,7 +4,7 @@ module UI
   module Modern
     # The years of 16colo.rs on the left, the one picked on the right.
     module YearsWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       ABOUT = '16colo.rs keeps the art packs of the ANSI and ASCII scene, year by year, as the groups released ' \
               'them. Pixelia reads them from its public API and draws each piece here, in its 16 colours.'

@@ -2,7 +2,7 @@
 
 # The Wall: the canvas saved as a work under a title and a handle, the works
 # newest first, and their removal (the admin script's moderation). A caller
-# (BBS::RateLimit.caller_key: an address, not a session, so calling again
+# (Rubbs::Common::Line::RateLimit.caller_key: an address, not a session, so calling again
 # does not help) saves at most once in +cooldown+ seconds, and the whole
 # board at most +per_hour+ times an hour. Both limits are checked together
 # and a save counts in both only once it is on the wall, so a failed write
@@ -15,8 +15,8 @@ class WallService
   def initialize(works, canvas:, cooldown: 300, per_hour: 30)
     @works   = works
     @canvas  = canvas
-    @callers = BBS::RateLimit.new(limit: 1, per: cooldown)
-    @board   = BBS::RateLimit.new(limit: per_hour, per: 3600)
+    @callers = Rubbs::Common::Line::RateLimit.new(limit: 1, per: cooldown)
+    @board   = Rubbs::Common::Line::RateLimit.new(limit: per_hour, per: 3600)
     @lock    = Mutex.new
   end
 
@@ -45,7 +45,7 @@ class WallService
 
   # +text+ on one line without control or invisible format characters, its
   # spaces squeezed, at most +max+ characters long.
-  def clean(text, max) = BBS::Text.line(text).gsub(/\p{Cf}/, '').squeeze(' ').strip[0, max].strip
+  def clean(text, max) = Rubbs::Common::Text.line(text).gsub(/\p{Cf}/, '').squeeze(' ').strip[0, max].strip
 
   private
 

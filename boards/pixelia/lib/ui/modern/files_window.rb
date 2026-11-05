@@ -5,7 +5,7 @@ module UI
     # The text-art files of a pack on the left, the SAUCE facts of the one
     # picked on the right.
     module FilesWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :files, :master_detail do
         title      { pack.name }
