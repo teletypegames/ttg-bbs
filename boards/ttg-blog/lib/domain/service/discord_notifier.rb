@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 # A new post on the Discord channel of a webhook, with its link on the web,
-# through BBS::DiscordWebhook: in the background, so a slow webhook never
+# through Rubbs::Common::Web::DiscordWebhook: in the background, so a slow webhook never
 # stalls the editor's call; mentions are off, and the text goes in as plain
 # text.
 class DiscordNotifier
   def initialize(webhook:, site:)
-    @hook = BBS::DiscordWebhook.new(webhook, relay_max: nil, label: 'Discord')
+    @hook = Rubbs::Common::Web::DiscordWebhook.new(webhook, relay_max: nil, label: 'Discord')
     @site = site.chomp('/')
   end
 
@@ -20,5 +20,5 @@ class DiscordNotifier
 
   private
 
-  def escape(text) = BBS::DiscordWebhook.escape(text)
+  def escape(text) = Rubbs::Common::Web::DiscordWebhook.escape(text)
 end

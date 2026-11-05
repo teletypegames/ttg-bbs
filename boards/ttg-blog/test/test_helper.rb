@@ -3,11 +3,11 @@
 require 'minitest/autorun'
 require 'tmpdir'
 require_relative '../lib/domain'
-require 'bbs/test'
+require 'rubbs/test'
 
-# What the tests share: a blog on a throwaway database (BBS::Test.database,
+# What the tests share: a blog on a throwaway database (Rubbs::Test.database,
 # the models bound to it and TTG_BLOG_BBS_DB its file), a temporary
-# folder, and the editors as accounts of the network (BBS::Auth).
+# folder, and the editors as accounts of the network (Rubbs::Common::Auth).
 module TestHelper
   CATEGORIES = File.expand_path('../config/categories.yml', __dir__)
 
@@ -15,12 +15,12 @@ module TestHelper
 
   def setup
     @dir = Dir.mktmpdir('ttg-blog-bbs-test')
-    @db  = BBS::Test.database(MIGRATIONS)
+    @db  = Rubbs::Test.database(MIGRATIONS)
     with_env(db_path, CATEGORIES)
   end
 
   def teardown
-    BBS.config.auth = nil
+    Rubbs.config.auth = nil
     ENV_NAMES.each { |name| ENV.delete(name) }
     FileUtils.remove_entry(@dir)
   end
@@ -29,17 +29,17 @@ module TestHelper
 
   def db_path = @db.opts[:database]
 
-  # The blog as BBS.board starts it: its databases opened, the models
+  # The blog as Rubbs.board starts it: its databases opened, the models
   # bound to them.
   def blog = @blog ||= TTGBlogBBS.new.tap(&:databases)
 
   def category = blog.categories.all.first.id
 
-  # The accounts of the network for the test (BBS::Test.accounts), the
-  # board's login (BBS.config.auth) on them.
+  # The accounts of the network for the test (Rubbs::Test.accounts), the
+  # board's login (Rubbs.config.auth) on them.
   def accounts
-    @accounts ||= BBS::Test.accounts(roles: %w[member]).tap do |directory|
-      BBS.config.auth = BBS::Auth::Setup.new(directory: directory, login: :menu, guests: true)
+    @accounts ||= Rubbs::Test.accounts(roles: %w[member]).tap do |directory|
+      Rubbs.config.auth = Rubbs::Common::Auth::Setup.new(directory: directory, login: :menu, guests: true)
     end
   end
 

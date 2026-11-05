@@ -12,7 +12,7 @@ It has two faces on one port, and both are line by line, with no windows: a
 **modern** one for ANSI terminals (up to 80 columns, the caller's window
 height) and a **Commodore 64** one in PETSCII, 40×25. The lists and the
 full-screen editor are the same on both; on the C64 the menus and the lists
-are cursor menus of rubbs (`BBS::Selector`), and the front page is its own.
+are cursor menus of rubbs (`Rubbs::Common::Screens::Selector`), and the front page is its own.
 
 ## Running
 
@@ -64,15 +64,15 @@ and shows its bare id.
 ## Log
 
 Every line on stderr (`docker logs ttg-blog-bbs`) starts with the log tag
-`ttg-blog-bbs:` (rubbs' `BBS.log`) and what it is about: `login` (a failed
+`ttg-blog-bbs:` (rubbs' `Rubbs.log`) and what it is about: `login` (a failed
 login, with the name and the caller), `saving a post`, `on_publish`, `categories`
 (the list could not be read: no post can be written then), `web` (an error of
-the read API, whose server runs as the `BBS.background` thread `web`).
+the read API, whose server runs as the `Rubbs.background` thread `web`).
 
 ## Data
 
 One SQLite file (`data/ttgblog.sqlite3`, the board's database: `database :db,
-MIGRATIONS`, rubbs' `BBS::Model` on Sequel), two tables, each a model, its schema
+MIGRATIONS`, rubbs' `Rubbs::Common::Storage::Model` on Sequel), two tables, each a model, its schema
 in `lib/domain/migrations.rb` (`BlogSchema`) as `migrate` steps (`PRAGMA user_version`):
 
 - `users` — the authors of the posts: the id and name of their account of the
@@ -114,10 +114,10 @@ wrote before (version 0) it adds only what that file lacks (the slug, face
 and publishing columns, the slugs, the indexes) and keeps every row, so the
 production file comes out at version 1 as it was. Step 2 turns the
 `published` flag into the `status` and adds the draft columns. What an editor types is
-cleaned of control characters (`BBS::Text.clean`) before it is kept.
+cleaned of control characters (`Rubbs::Common::Text.clean`) before it is kept.
 
 Readers need no account. The editors are the accounts of the network
-(rubbs `BBS::Auth`, kept on TTG Gate BBS) with the **blogger** role: they log
+(rubbs `Rubbs::Common::Auth`, kept on TTG Gate BBS) with the **blogger** role: they log
 in from the menu (`P`, the profile), or come in logged in when they dialled the blog from the
 gate. The accounts and their roles are managed on the gate's shell:
 
@@ -131,7 +131,7 @@ The board needs `RUBBS_AUTH_SECRET`, the secret every board shares, in its `.env
 
 ## Interface
 
-A call starts with rubbs' `BBS::Terminal` question: which terminal is calling.
+A call starts with rubbs' `Rubbs::Common::Call::Terminal` question: which terminal is calling.
 Then the masthead and the menu. On a C64 every screen is the whole 40×25,
 with a reversed footer bar on its last but one row that tells its keys. The
 front page is the logo over one cursor menu: the newest posts, as many as the
@@ -167,7 +167,7 @@ editor sees all of them, the unpublished ones marked so.
 
 Under a published post `C` shows the QR code of its page on the web
 (`TTG_BLOG_BBS_SITE_URL/blog/SLUG`), for a phone to open it with its pictures
-and links: rubbs' `BBS::QR`, half blocks on a modern terminal, quadrant
+and links: rubbs' `Rubbs::Common::Text::QR`, half blocks on a modern terminal, quadrant
 blocks on a C64, in the middle of the screen until a key (a quiet zone of
 one module when two leave no room). A reader gets it after the last page
 (on a C64 on the row over the footer), an editor beside `E`/`P`/`D`; an
@@ -189,8 +189,8 @@ first; `D` discards one (on a modern terminal `D` then its number). Every
 editor sees every draft. The menu tells the drafts of new posts beside `W`.
 
 The name, the passwords and the title are typed in a field of rubbs
-(`BBS::Field`), the summary and the body in its full-screen editor
-(`BBS::Editor`); both start from the current text: the cursor keys move
+(`Rubbs::Common::Screens::Field`), the summary and the body in its full-screen editor
+(`Rubbs::Common::Screens::Editor`); both start from the current text: the cursor keys move
 anywhere in it, typing inserts at the cursor, DEL deletes before it, and the
 lines wrap as they are typed. A field and the summary end with RETURN, RUN/STOP
 or `←` leaves a field; the body is Markdown, RETURN starts a new line and an
@@ -235,7 +235,7 @@ here: the site does that.
 ## Project structure
 
 ```
-bbs.rb                         entry point: BBS.board, the two faces and the read API
+bbs.rb                         entry point: Rubbs.board, the two faces and the read API
 bin/user                       the editors, from the server's shell
 config/categories.yml          the categories
 env-example                    every environment variable, with its default
@@ -243,17 +243,17 @@ lib/
   domain.rb                    requires the domain in dependency order
   domain/
     migrations.rb              MIGRATIONS: the schema, one step per version (BlogSchema)
-    model/                     UserModel and PostModel (the tables, BBS::Model: their
+    model/                     UserModel and PostModel (the tables, Rubbs::Common::Storage::Model: their
                                queries, the drafts, the slugs), CategoryModel
     repository/                CategoryRepository (the YAML file)
     service/                   PostService (limits, cleaning, publishing), EditorService
                                (names, passwords, login), LoginGuard (failed tries
                                by name and caller, two derivations at a time),
                                CategoryService, DiscordNotifier (a new post on Discord)
-    ttg_blog_bbs.rb            TTGBlogBBS (BBS::Domain): its settings and services
+    ttg_blog_bbs.rb            TTGBlogBBS (Rubbs::Common::Board::Domain): its settings and services
   web/api.rb                   the read API for teletypegames.org
   ui/
-    board.rb                   UI::Board (BBS::Petscii::Face), one call shared by the
+    board.rb                   UI::Board (Rubbs::Petscii::Face), one call shared by the
                                faces: the menu's items, lists, a post
     board/account.rb           logging in and changing the password
     board/composer.rb          writing and editing a post

@@ -4,9 +4,9 @@
 # SQLite file (MIGRATIONS, the models) and the category list, and Discord rung when a
 # post is first published. Both faces (lib/ui/modern, lib/ui/petscii) and the
 # read API (lib/web) work on one instance of it. The editors are the accounts
-# of the network with the blogger role (BBS::Auth, kept on TTG Gate BBS).
+# of the network with the blogger role (Rubbs::Common::Auth, kept on TTG Gate BBS).
 class TTGBlogBBS
-  include BBS::Domain
+  include Rubbs::Common::Board::Domain
 
   setting :http_port, 8080
   setting :autosave_seconds, 15

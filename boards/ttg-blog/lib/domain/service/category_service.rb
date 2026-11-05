@@ -20,7 +20,7 @@ class CategoryService
   def load(repo)
     repo.all
   rescue SystemCallError, Psych::Exception, KeyError => e
-    BBS.log('categories', e)
+    Rubbs.log('categories', e)
     [].freeze
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  class Board < BBS::Petscii::Face
+  class Board < Rubbs::Petscii::Face
     # Writing a post: the fields one after the other for a new one, then a
     # menu of fields until it is saved or left. The body is Markdown, typed
     # in a line editor with slash commands, which a C64 can type as well as a
@@ -45,7 +45,7 @@ module UI
 
           change(work, choice)
         end
-      rescue *BBS::LINE_DROPPED
+      rescue *Rubbs::Common::Line::LINE_DROPPED
         keep(work) if work
         raise
       end

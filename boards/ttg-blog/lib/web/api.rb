@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'bbs'
+require 'rubbs'
 require 'json'
 require 'kramdown'
 require 'kramdown-parser-gfm'
@@ -34,7 +34,7 @@ module Web
       @server.mount_proc('/') { |req, res| serve(req, res) }
     end
 
-    def start = BBS.background('web') { @server.start }
+    def start = Rubbs.background('web') { @server.start }
 
     def self.html(markdown) = Kramdown::Document.new(markdown.to_s, input: 'GFM', hard_wrap: false).to_html
 
@@ -46,7 +46,7 @@ module Web
       res['Content-Type'] = 'application/json; charset=utf-8'
       res.body = JSON.generate(body)
     rescue StandardError => e
-      BBS.log('web', e)
+      Rubbs.log('web', e)
       res.status = 500
       res.body = JSON.generate(error: 'internal error')
     end

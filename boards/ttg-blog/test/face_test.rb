@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require 'bbs/test'
+require 'rubbs/test'
 require_relative '../lib/ui/modern'
 require_relative '../lib/ui/petscii'
 
@@ -16,9 +16,9 @@ class FaceTest < Minitest::Test
   end
 
   def call(face, *keys, petscii: false)
-    session = BBS::Test::Session.new(keys: keys, petscii: petscii)
+    session = Rubbs::Test::Session.new(keys: keys, petscii: petscii)
     face.new(session, {}, blog).run
-    BBS::FrameBuffer.plain(session.output)
+    Rubbs::Modern::FrameBuffer.plain(session.output)
   end
 
   def test_the_modern_menu_opens_a_post_by_its_number

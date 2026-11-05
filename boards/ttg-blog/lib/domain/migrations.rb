@@ -2,7 +2,7 @@
 
 require 'time'
 
-# The tables of the blog, as BBS::Database.migrate steps. Step 1 is the
+# The tables of the blog, as Rubbs::Common::Storage::Database.migrate steps. Step 1 is the
 # schema the board grew before it had versions: it creates what a new file
 # lacks and adds what an older one lacks, so a file the board wrote before
 # (user_version 0, in any of its shapes) keeps every row and comes out at

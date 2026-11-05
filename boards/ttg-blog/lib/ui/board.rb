@@ -10,12 +10,12 @@ module UI
   # Markdown, typed in a line editor with slash commands, which a C64 can
   # type as well as a modern terminal. A face (UI::Modern, UI::Petscii) gives
   # it its masthead and the shape of its menus.
-  class Board < BBS::Petscii::Face
+  class Board < Rubbs::Petscii::Face
     include Composer
 
     MOTTO = 'news from teletype games'
 
-    # The name on the masthead, in BBS::BlockFont.
+    # The name on the masthead, in Rubbs::Common::Text::BlockFont.
     LOGO = 'TTG BLOG'
 
     title('TTG BLOG BBS') { right }
@@ -62,7 +62,7 @@ module UI
 
     def unpublished = browse('UNPUBLISHED POSTS') { posts.all(published: false) }
 
-    # The editor on the line: the caller's BBS::Auth::Identity when it has
+    # The editor on the line: the caller's Rubbs::Common::Auth::Identity when it has
     # the blogger role, else +nil+ (a reader).
     def user = role?(:blogger) ? identity : nil
 

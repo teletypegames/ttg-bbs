@@ -5,7 +5,7 @@ module UI
   # date, author, state, summary) over a rule, then its Markdown. The web
   # shows the C64 screen of a post from the same lines.
   module PostPage
-    include BBS::Petscii::Colors
+    include Rubbs::Petscii::Colors
 
     def self.lines(categories, post, screen, long_dates: false)
       [*head(categories, post, screen, long_dates), screen.rule_line, *body(post, screen)]

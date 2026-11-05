@@ -46,7 +46,7 @@ class SchemaTest < Minitest::Test
   def columns(db) = db.fetch('PRAGMA table_info(posts)').map { |c| c[:name] }
 
   def test_a_new_file_gets_every_table_at_version_two
-    assert_equal 2, BBS::Database.version(@db)
+    assert_equal 2, Rubbs::Common::Storage::Database.version(@db)
     assert_equal [], %w[published_at status original_id base_updated_at] - columns(@db)
     refute_includes columns(@db), 'published'
     assert_equal 0, PostModel.count
@@ -59,7 +59,7 @@ class SchemaTest < Minitest::Test
     assert_equal ['kept-slug', true, 'modern', 'tasi'], [first.slug, first.published?, first.face, first.author]
     assert_equal ['draft-slug', false, 'petscii'], [second.slug, second.published?, second.face]
     assert_equal Time.utc(2026, 10, 29, 9), first.published_at
-    assert_equal 2, BBS::Database.version(blog.databases[:main])
+    assert_equal 2, Rubbs::Common::Storage::Database.version(blog.databases[:main])
   end
 
   # Version 1, as the board left it before the drafts: the flag becomes
@@ -67,8 +67,8 @@ class SchemaTest < Minitest::Test
   def test_version_one_turns_the_flag_into_the_status
     legacy(LAST_SHAPE)
     db = Sequel.sqlite(legacy_path)
-    assert_equal 1, BBS::Database.migrate(db, [BlogSchema::BEFORE_VERSIONS])
-    assert_equal 2, BBS::Database.migrate(db, MIGRATIONS)
+    assert_equal 1, Rubbs::Common::Storage::Database.migrate(db, [BlogSchema::BEFORE_VERSIONS])
+    assert_equal 2, Rubbs::Common::Storage::Database.migrate(db, MIGRATIONS)
     rows = db.fetch('SELECT id, slug, status, original_id FROM posts ORDER BY id').map(&:values)
     assert_equal [[1, 'kept-slug', 'published', nil], [2, 'draft-slug', 'unpublished', nil]], rows
     refute_includes columns(db), 'published'
@@ -84,15 +84,15 @@ class SchemaTest < Minitest::Test
 
   def test_a_second_start_changes_nothing
     legacy(LAST_SHAPE)
-    BBS::Database.open(legacy_path, MIGRATIONS).disconnect
+    Rubbs::Common::Storage::Database.open(legacy_path, MIGRATIONS).disconnect
     before = SQLite3::Database.new(legacy_path).execute('SELECT * FROM posts ORDER BY id')
-    assert_equal 2, BBS::Database.version(BBS::Database.open(legacy_path, MIGRATIONS))
+    assert_equal 2, Rubbs::Common::Storage::Database.version(Rubbs::Common::Storage::Database.open(legacy_path, MIGRATIONS))
     assert_equal before, SQLite3::Database.new(legacy_path).execute('SELECT * FROM posts ORDER BY id')
   end
 
   def test_a_new_post_after_the_migration_gets_a_free_slug
     legacy(FIRST_SHAPE)
-    tasi = BBS::Auth::Identity.new(id: 1, name: 'tasi', roles: %w[blogger])
+    tasi = Rubbs::Common::Auth::Identity.new(id: 1, name: 'tasi', roles: %w[blogger])
     post = blog.posts.create(author: tasi, **draft)
     assert_match(/\A\d{4}-\d\d-\d\d-hello-world\z/, post.slug)
     refute post.published?

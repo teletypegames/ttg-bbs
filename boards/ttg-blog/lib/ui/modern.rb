@@ -10,13 +10,13 @@ module UI
     masthead do
       gap
       rule
-      art(BBS::BlockFont.half_blocks(LOGO).map { |l| "  #{YE}#{l}#{LG}" })
+      art(Rubbs::Common::Text::BlockFont.half_blocks(LOGO).map { |l| "  #{YE}#{l}#{LG}" })
       rule
       art "  #{WH}#{MOTTO}#{LG}"
     end
 
     def make_screen(session)
-      BBS::Petscii::Screen.new(session, cols: session.term_cols.clamp(40, 80), rows: session.term_rows.clamp(16, 60))
+      Rubbs::Petscii::Screen.new(session, cols: session.term_cols.clamp(40, 80), rows: session.term_rows.clamp(16, 60))
     end
 
     # The main menu as a list of keys, one typed at the prompt.

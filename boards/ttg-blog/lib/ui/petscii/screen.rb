@@ -8,9 +8,9 @@ module UI
     # page, and the questions about it and what came of them are told in the
     # footer, over the post. The last row stays empty, so nothing scrolls the
     # screen.
-    class Screen < BBS::Petscii::Screen
+    class Screen < Rubbs::Petscii::Screen
       # The menus with their hint row as a footer bar, like the title bar.
-      FULL = BBS::Selector::COLORS.merge(hint: "#{CY}#{RV}").freeze
+      FULL = Rubbs::Common::Screens::Selector::COLORS.merge(hint: "#{CY}#{RV}").freeze
 
       # The row of the footer bar.
       def footer_row = rows - 1
@@ -25,7 +25,7 @@ module UI
       # stand at the bottom.
       def full_menu(items, top:, hint:, back: nil, index: nil)
         about  = items.any?(&:about) ? 1 : 0
-        choice = BBS::Selector.new(
+        choice = Rubbs::Common::Screens::Selector.new(
           session,
           items,
           width:  cols - 1,
@@ -48,7 +48,7 @@ module UI
         label ||= :to_s.to_proc
         title(heading, right)
         hint   = ['crsr/number  return: open', *item_commands.map { |k, v| "#{k}: #{v}" }, 'q: back'].join('  ')
-        choice = BBS::Selector.list(
+        choice = Rubbs::Common::Screens::Selector.list(
           session,
           items,
           width:      cols - 1,
@@ -107,8 +107,8 @@ module UI
       # RUN/STOP or ←.
       def footer_choice(question, choices, back:, index: 0)
         footer_text(question, YE)
-        items  = choices.map { |k, label| BBS::Selector.item(label, key: k, value: k) }
-        choice = BBS::Selector.new(session, items, width: cols - 1, across: true, index: index, back: back).run
+        items  = choices.map { |k, label| Rubbs::Common::Screens::Selector.item(label, key: k, value: k) }
+        choice = Rubbs::Common::Screens::Selector.new(session, items, width: cols - 1, across: true, index: index, back: back).run
         @at = [rows, 1]
         choice
       end
@@ -193,7 +193,7 @@ module UI
       # +text+ on the two rows over the footer bar, and the cursor
       # at the start of the footer bar.
       def footer_text(text, color)
-        cursor = BBS::Cursor.new(session, row: @at[0], col: @at[1])
+        cursor = Rubbs::Common::Screens::Cursor.new(session, row: @at[0], col: @at[1])
         out    = +''
         lines  = footer_lines(text)
         lines.each_with_index do |line, i|

@@ -19,6 +19,6 @@ TTG_BLOG_BBS_AUTOSAVE_SECONDS=15
 TTG_BLOG_BBS_DISCORD_WEBHOOK=
 TTG_BLOG_BBS_SITE_URL=https://teletypegames.org
 
-# The accounts of the network (BBS::Auth, on TTG Gate BBS): the secret every board shares
+# The accounts of the network (Rubbs::Common::Auth, on TTG Gate BBS): the secret every board shares
 # (in .env on the server, never here); editors are the accounts with the blogger role
 RUBBS_AUTH_SECRET=

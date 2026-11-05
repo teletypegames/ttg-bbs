@@ -11,7 +11,7 @@ require 'time'
 # times are kept as ISO 8601 text and read as Time.
 #
 # Every read but ::find_draft and ::drafts leaves the drafts out.
-class PostModel < BBS::Model
+class PostModel < Rubbs::Common::Storage::Model
   table :posts
 
   # The face a post was written on: a modern terminal or a Commodore 64.

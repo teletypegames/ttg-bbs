@@ -3,15 +3,15 @@
 require 'time'
 
 # An author of the blog, a row of the users table: the account of the network
-# (BBS::Auth, its id and name) that wrote a post, kept here so a post knows
+# (Rubbs::Common::Auth, its id and name) that wrote a post, kept here so a post knows
 # its author's name. An editor is remembered the first time they write. The
 # password_digest column is of the blog's own logins before the accounts of
 # the network: empty for an author since. Removing an author keeps their
 # posts, without an author (ON DELETE SET NULL).
-class UserModel < BBS::Model
+class UserModel < Rubbs::Common::Storage::Model
   table :users
 
-  # Keeps +identity+ (a BBS::Auth::Identity) as an author: its id and its
+  # Keeps +identity+ (a Rubbs::Common::Auth::Identity) as an author: its id and its
   # name as it is now. Another author row of that name (an editor of the
   # blog's own logins whose account is another) keeps its posts under the
   # name with its number after it.

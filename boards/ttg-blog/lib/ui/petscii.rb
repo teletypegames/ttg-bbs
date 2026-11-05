@@ -17,7 +17,7 @@ module UI
     # motto.
     MASTHEAD_ROWS = 1 + 5 + 1
 
-    S = BBS::Selector
+    S = Rubbs::Common::Screens::Selector
 
     masthead do
       gap

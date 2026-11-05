@@ -3,7 +3,7 @@
 # The rules of the posts: what a post may hold, who sees it, and what
 # happens when it is first published. Readers see the published posts; the
 # editors see all of them; the drafts only the composer does. What an
-# editor typed is cleaned of control characters (BBS::Text.clean) before it
+# editor typed is cleaned of control characters (Rubbs::Common::Text.clean) before it
 # is checked and kept; a draft is kept unchecked.
 class PostService
   MAX_TITLE   = 80
@@ -88,10 +88,10 @@ class PostService
       face:            PostModel::FACES.include?(face) ? face : 'modern',
       base_updated_at: original && original.updated_at.utc.iso8601
     )
-    BBS.log('autosave', "post #{original.id} is gone") unless kept
+    Rubbs.log('autosave', "post #{original.id} is gone") unless kept
     kept
   rescue Sequel::DatabaseError => e
-    BBS.log('autosave', e)
+    Rubbs.log('autosave', e)
     nil
   end
 
@@ -122,9 +122,9 @@ class PostService
   # summary on one line and trimmed.
   def clean(title:, summary:, body:, category:)
     {
-      title:    BBS::Text.line(title),
-      summary:  BBS::Text.line(summary),
-      body:     BBS::Text.clean(body),
+      title:    Rubbs::Common::Text.line(title),
+      summary:  Rubbs::Common::Text.line(summary),
+      body:     Rubbs::Common::Text.clean(body),
       category: category.to_s
     }
   end
@@ -143,7 +143,7 @@ class PostService
   def saved
     yield
   rescue Sequel::DatabaseError => e
-    BBS.log('saving a post', e)
+    Rubbs.log('saving a post', e)
     :not_saved
   end
 
@@ -152,7 +152,7 @@ class PostService
     @listeners.each do |listener|
       listener.call(post)
     rescue StandardError => e
-      BBS.log('on_publish', e)
+      Rubbs.log('on_publish', e)
     end
   end
 end
