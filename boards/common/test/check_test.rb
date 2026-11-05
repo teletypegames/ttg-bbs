@@ -24,7 +24,7 @@ class TTGCheckTest < Minitest::Test
 
   def files
     {
-      'bbs.rb'           => "require 'ttg/common'\nBBS.board 'Shop BBS' do\n  preset TTG::PRESET\nend\n",
+      'bbs.rb'           => "require 'ttg/common'\nRubbs.board 'Shop BBS' do\n  preset TTG::PRESET\nend\n",
       'Dockerfile'       => TTG::Sync::DOCKERFILE,
       '.dockerignore'    => TTG::Sync::DOCKERIGNORE,
       'compose.yaml'     => COMPOSE,
@@ -46,7 +46,7 @@ class TTGCheckTest < Minitest::Test
     end
   end
 
-  def ttg_findings(dir) = BBS::Check.run(dir).select { |f| f.rule.to_s.start_with?('ttg_') }
+  def ttg_findings(dir) = Rubbs::Common::Board::Check.run(dir).select { |f| f.rule.to_s.start_with?('ttg_') }
 
   def test_a_board_by_the_house_rules
     with_board { |dir| assert_empty ttg_findings(dir) }
@@ -65,7 +65,7 @@ class TTGCheckTest < Minitest::Test
       'compose.yaml'     => COMPOSE.sub('restart: unless-stopped', 'restart: always'),
       '.woodpecker.yaml' => TTG::Sync.woodpecker('shop-bbs', 2390).sub('bundle exec rake', 'bundle exec rake test'),
       '.rubocop.yml'     => "AllCops:\n  NewCops: enable\n",
-      'bbs.rb'           => "BBS.board 'Shop BBS' do\nend\n",
+      'bbs.rb'           => "Rubbs.board 'Shop BBS' do\nend\n",
       'LICENSE'          => nil
     }
     with_board(changes) do |dir|
@@ -84,7 +84,7 @@ class TTGCheckTest < Minitest::Test
   end
 
   def test_a_board_with_accounts_lists_the_secret
-    bbs = "require 'ttg/common'\nBBS.board 'Shop BBS' do\n  preset TTG::PRESET\n  auth TTG::AUTH, login: :menu\nend\n"
+    bbs = "require 'ttg/common'\nRubbs.board 'Shop BBS' do\n  preset TTG::PRESET\n  auth TTG::AUTH, login: :menu\nend\n"
     with_board('bbs.rb' => bbs) { |dir| assert_equal [:ttg_auth], ttg_findings(dir).map(&:rule) }
     with_board('bbs.rb' => bbs, 'env-example' => "RUBBS_AUTH_SECRET=\n") { |dir| assert_empty ttg_findings(dir) }
   end

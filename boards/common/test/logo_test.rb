@@ -11,9 +11,9 @@ class LogoTest < Minitest::Test
 
   def test_the_splash_shows_the_logo
     splash = TTG::Logo.splash
-    assert_instance_of BBS::Splash, splash
+    assert_instance_of Rubbs::Common::Call::Splash, splash
     assert_same TTG::Logo.art(:modern), splash.modern
-    assert_equal BBS::Splash::PROMPT, splash.prompt
+    assert_equal Rubbs::Common::Call::Splash::PROMPT, splash.prompt
   end
 
   def test_the_c64_drawing_fits_the_screen

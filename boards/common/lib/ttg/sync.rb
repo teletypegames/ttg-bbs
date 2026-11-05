@@ -2,7 +2,7 @@
 
 require 'erb'
 require 'yaml'
-require 'bbs/check'
+require 'rubbs/common/board/check'
 
 module TTG
   # The files every TTG board shares, written from the templates in
@@ -24,7 +24,7 @@ module TTG
 
     # The files of the board at +root+ as they should be: path => content.
     def self.files(root)
-      board = BBS::Check::Board.new(root)
+      board = Rubbs::Common::Board::Check::Board.new(root)
       {
         'Dockerfile'       => dockerfile(board.read('Dockerfile')),
         '.dockerignore'    => DOCKERIGNORE,
@@ -53,7 +53,7 @@ module TTG
     # The pipeline of the board +slug+ on the public +port+.
     def self.woodpecker(slug, port) = WOODPECKER.result_with_hash(slug: slug, port: port)
 
-    # The public telnet port of +board+ (a BBS::Check::Board) in its
+    # The public telnet port of +board+ (a Rubbs::Common::Board::Check::Board) in its
     # compose.yaml, or +nil+.
     def self.port(board)
       services = YAML.safe_load(board.read('compose.yaml').to_s)&.fetch('services', {}) || {}

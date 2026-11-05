@@ -4,7 +4,7 @@ source 'https://rubygems.org'
 
 gemspec
 
-gem 'bbs', git: 'https://git.teletypegames.org/engines/rubbs.git'
+gem 'rubbs', git: 'https://git.teletypegames.org/engines/rubbs.git'
 
 group :development do
   gem 'minitest', '~> 5.25'

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 module TTG
-  # The accounts of the Teletype Games boards (BBS::Auth): they live on TTG
+  # The accounts of the Teletype Games boards (Rubbs::Common::Auth): they live on TTG
   # Gate BBS, the way in, which hands a signed-in caller on to the board
   # they dial; every other board asks the gate's API on the +interstack+
   # network. Every board shares +RUBBS_AUTH_SECRET+.
   #
-  #   BBS.board 'TTG Blog BBS', TTGBlogBBS do
+  #   Rubbs.board 'TTG Blog BBS', TTGBlogBBS do
   #     auth TTG::AUTH, login: :menu
   #   end
   module Auth
@@ -25,7 +25,7 @@ module TTG
     NEW = %w[member].freeze
   end
 
-  # The accounts of the network for BBS.board's +auth+ on any board but the
-  # gate: a BBS::Auth::Remote on TTG::Auth::URL.
-  AUTH = BBS::Auth::Remote.new(Auth::URL)
+  # The accounts of the network for Rubbs.board's +auth+ on any board but the
+  # gate: a Rubbs::Common::Auth::Remote on TTG::Auth::URL.
+  AUTH = Rubbs::Common::Auth::Remote.new(Auth::URL)
 end

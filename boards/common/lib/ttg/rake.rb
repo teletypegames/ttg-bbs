@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-require 'bbs/rake'
+require 'rubbs/rake'
 require_relative 'check'
 require_relative 'sync'
 
-# The house rules of the Teletype Games boards join BBS::Check,
+# The house rules of the Teletype Games boards join Rubbs::Common::Board::Check,
 # <tt>rake ttg:sync</tt> writes the files every board shares (TTG::Sync) and
 # <tt>rake ttg:format</tt> formats the code by the shared RuboCop rules: a
 # board's Rakefile loads them after rubbs' tasks.
 #
-#   require 'bbs/rake'
+#   require 'rubbs/rake'
 #   require 'ttg/rake'
-#   BBS::Rake.board
+#   Rubbs::Rake.board
 module TTG
   # The rake side of ttg-common: loading this file is all it takes.
   module Rake
