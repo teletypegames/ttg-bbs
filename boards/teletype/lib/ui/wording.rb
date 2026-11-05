@@ -22,16 +22,5 @@ module UI
       busy:        'The board is busy. Try again in a moment.',
       unavailable: 'Registering is not possible right now. Try again later.'
     }.freeze
-
-    # Why MemberService#log_on did not let +name+ in.
-    def self.turned_away(name, result)
-      case result
-      when :look_alike  then "#{name} looks too much like a registered name. Call again with another one."
-      when :locked      then "Too many wrong passwords for #{name} of late. Call again later."
-      when :busy        then 'The board is busy checking passwords. Call again in a moment.'
-      when :unavailable then 'Logging in is not possible right now. Call again later, or use another name.'
-      else "#{name} is a registered name. Call again, or use another name."
-      end
-    end
   end
 end

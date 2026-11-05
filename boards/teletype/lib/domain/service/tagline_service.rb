@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'yaml'
-require 'date'
 
 # The board's quotes: the taglines of lib/content/taglines.yml and the
 # team's mottos, as [text, who] pairs (who is nil for a tagline).
@@ -14,13 +13,6 @@ class TaglineService
   # A tagline or one of the team's mottos.
   def pick
     (LIST.map { |t| [t, nil] } + mottos).sample
-  end
-
-  # The quote of the day: the same for every caller until midnight.
-  def of_the_day
-    known = mottos
-    pool  = known.empty? ? LIST.map { |t| [t, nil] } : known
-    pool[Date.today.yday % pool.size]
   end
 
   private

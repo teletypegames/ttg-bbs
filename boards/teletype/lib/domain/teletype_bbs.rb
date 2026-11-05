@@ -129,22 +129,6 @@ class TeletypeBBS
     online.activity(session_id, ["Door: #{door.label.delete('&')}", suffix].compact.join(' '))
   end
 
-  # What the logon sequence tells a caller: who they are, then the scans of
-  # the old boards (mail, message bases, voting booth).
-  def logon_summary(name, registered:, sysop:, session_id:)
-    {
-      name:          name,
-      node:          online.node(session_id)&.number,
-      caller_number: last_callers.caller_number,
-      stats:         last_callers.user_stats(name),
-      registered:    registered,
-      mail:          registered ? mail.unread_count(name, sysop: sysop) : nil,
-      new_scan:      registered ? boards.new_scan(name) : nil,
-      polls_open:    polls_open(name),
-      quote:         taglines.of_the_day
-    }
-  end
-
   # The welcome bulletin's news: the board in numbers, the newest posts,
   # what is coming up, who called last and the wall.
   def bulletin(name, registered:)
@@ -237,10 +221,4 @@ class TeletypeBBS
   # The board's database (a Sequel::Database): the rate limits are kept in
   # it, and opening it binds the models.
   def store = databases[:main]
-
-  def polls_open(name)
-    return 0 if name == MemberService::ANONYMOUS
-
-    voting.polls.count { |poll| voting.ballot(poll, name).nil? }
-  end
 end

@@ -3,13 +3,9 @@
 module UI
   module Modern
     # The clubhouse pictures of the modern face outside the desktop: the
-    # entrance with the guestbook (the logon), the lamps going out (the
-    # logoff), the trophy case and the room cards.
+    # lamps going out (the logoff), the trophy case and the room cards.
     module Clubhouse
       RESET = "\e[0m"
-      # The ink of the guestbook and the cream of its pages.
-      INK   = "\e[0;38;5;236;48;5;230m"
-      PEN   = "\e[0;1;38;5;18;48;5;230m"
 
       def self.at(row, col) = "\e[#{row};#{col}H"
 
@@ -19,112 +15,6 @@ module UI
       # Writes +art+ from the top row of the screen down.
       def self.draw(session, art, top: 1)
         session.write(art.ansi_lines.each_with_index.map { |l, i| "#{at(top + i, 1)}#{l}" }.join + RESET)
-      end
-
-      # The entrance of the clubhouse: the door under its lamp, the bell,
-      # the coats on the rack (the nodes in use) and the open guestbook, the
-      # last guests on its left page, this entry's number, the name and the
-      # password on the right. On a terminal under 80×24 the old plain
-      # prompt.
-      class Entrance
-        # The colours of the coats on the rack.
-        COATS = [124, 25, 28, 130, 90, 240, 30].freeze
-
-        def initialize(session, bbs)
-          @session = session
-          @bbs     = bbs
-          @art     = Arts.load(:modern, 'entrance')
-          @fits    = Clubhouse.fits?(session)
-        end
-
-        def show
-          Formatters::Logon.connect(@session)
-          number = @bbs.last_callers.caller_number
-          return plain(number) unless @fits
-
-          @session.write("\e[0m\e[2J")
-          Clubhouse.draw(@session, @art)
-          guests
-          put(:entry, Formatters.number(number), PEN)
-          coats(@bbs.online.count)
-          put(
-            :status,
-            "  Teletype BBS · telnet teletypegames.org 2323 · caller ##{Formatters.number(number)} · " \
-            "#{@bbs.online.count} online",
-            "\e[0;38;5;66;48;5;234m"
-          )
-        end
-
-        # The name, written into the guestbook; nil when the line drops.
-        def ask_name = ask(:name, 'Name (blank for Anonymous): ')
-
-        def ask_password = ask(:password, 'Password: ', mask: '*')
-
-        def wrong_password
-          text = 'Wrong password.'
-          return @session.write("  \e[1;31m#{text}\e[0m\r\n") unless @fits
-
-          put(:password, '', INK)
-          spot = @art.hotspot(:status)
-          @session.write("#{Clubhouse.at(spot.row + 1, 1)}\e[0;1;38;5;203;48;5;234m  #{text.ljust(spot.width - 2)}\e[0m")
-        end
-
-        # Why the caller does not get in, on a cleared screen.
-        def turn_away(text)
-          @session.write("\e[0m\e[2J\e[H\r\n  \e[1;31m#{text}\e[0m\r\n\r\n")
-        end
-
-        # A terminal that never reported its size is a scanner, not a
-        # caller: it may look around, but it is not listed anywhere.
-        def listed? = @session.naws_reported?
-
-        private
-
-        # The logo and one line, for a terminal under 80×24.
-        def plain(number)
-          @session.write("\e[0m\e[2J\e[H\r\n")
-          Logo.half_blocks.each { |l| @session.write("  #{l}\e[0m\r\n") }
-          @session.write("\r\n  Teletype BBS · caller ##{number} · #{@bbs.online.count} online\r\n\r\n")
-        end
-
-        # The last three callers on the left page of the guestbook.
-        def guests
-          @bbs.last_callers.recent(3).each_with_index do |c, i|
-            put(:"guest_#{i + 1}", "#{c.username.to_s[0, 10].ljust(11)}#{c.timestamp.to_s[11, 5]}", INK)
-          end
-        end
-
-        def ask(name, prompt, mask: nil)
-          unless @fits
-            @session.write("  \e[1;37m#{prompt}\e[0m")
-            return @session.readline(mask: mask)
-          end
-
-          put(name, '', PEN)
-          spot = @art.hotspot(name)
-          @session.write("#{Clubhouse.at(spot.row + 1, spot.col + 1)}#{PEN}")
-          line = @session.readline(mask: mask)
-          @session.write(RESET)
-          line
-        end
-
-        def put(name, text, sgr)
-          spot = @art.hotspot(name)
-          @session.write("#{Clubhouse.at(spot.row + 1, spot.col + 1)}#{sgr}#{text[0, spot.width].ljust(spot.width)}#{RESET}")
-        end
-
-        # A coat on a hook of the rack for each node in use.
-        def coats(count)
-          spot = @art.hotspot(:coats)
-          count.clamp(0, 7).times do |i|
-            col = spot.col + (i * 4)
-            sgr = "\e[0;38;5;#{COATS[i]};48;5;233m"
-            @session.write("#{Clubhouse.at(spot.row + 1, col + 1)}#{sgr}▐█▌#{Clubhouse.at(spot.row + 2, col + 1)}#{sgr}▀▀▀")
-          end
-          return unless count > 7
-
-          @session.write("#{Clubhouse.at(spot.row + 1, spot.col + 29)}\e[0;38;5;245;48;5;233m+#{count - 7}#{RESET}")
-        end
       end
 
       # Leaving: the clubhouse from the inside, the lamps going out one by

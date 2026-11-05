@@ -88,7 +88,7 @@ module UI
 
     def run
       context[:plain] = capitals?(name)
-      Logon.show(self)
+      Clubhouse.text_mode(session)
       loop do
         doing('At the main menu')
         k = text_menu? ? text_main_menu : clubhouse_menu
@@ -257,7 +257,7 @@ module UI
   end
 end
 
-require_relative 'petscii/logon'
+require_relative 'petscii/leaving'
 require_relative 'petscii/messages'
 require_relative 'petscii/chat'
 require_relative 'petscii/content'

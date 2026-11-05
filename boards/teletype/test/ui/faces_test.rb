@@ -10,8 +10,8 @@ require_relative '../../lib/ui/modern'
 require_relative '../../lib/ui/petscii'
 
 # Both faces on a board without the network: every window of the desktop
-# opens and draws, a C64 call goes from the logon to the goodbye, and the
-# entrance lets callers in on the accounts of the network.
+# opens and draws, a C64 call goes from the main menu to the goodbye, and a
+# call the splash let in is put on the board.
 class FacesTest < Minitest::Test
   include AccountsCase
 
@@ -84,55 +84,41 @@ class FacesTest < Minitest::Test
     assert_equal UI::Modern::Accent::STYLES[:messages][:window_border], window.accent[:window_border]
   end
 
-  def test_a_c64_call_runs_from_the_logon_to_the_goodbye
+  def test_a_c64_call_runs_from_the_menu_to_the_goodbye
     identity = BBS::Auth::Identity.guest('KALI')
-    session = BBS::Test::Session.new(keys: [:enter, 'y', :enter, 'q', 'y'], petscii: true, identity: identity)
+    session = BBS::Test::Session.new(keys: ['y', :enter, 'q', 'y'], petscii: true, identity: identity)
     UI::Petscii.new(session, @context, @bbs).run
     assert_match(/thanks for calling, kali/i, session.output.scrub)
   end
 
-  # The caller of +session+ through the modern entrance: UI::Login's answer.
-  def enter(session)
-    session.define_singleton_method(:naws_reported?) { true }
-    UI::Login.call(Runner.new(session, { session_id: 's2' }), @bbs, UI::Modern::Clubhouse::Entrance.new(session, @bbs))
+  # The start of a call the splash let in: UI::Login's answer.
+  def enter(session, listed: true)
+    UI::Login.call(Runner.new(session, { session_id: 's2' }), @bbs, listed: listed)
   end
 
-  def typed(*lines) = lines.flat_map { |line| [*line.chars, :enter] }
-
-  def test_a_caller_signed_in_at_the_gate_is_not_asked
-    identity = account('Tasi', :sysop).with(source: :token)
-    session = BBS::Test::Session.new(identity: identity)
+  def test_a_signed_in_caller_goes_on_the_node_list
+    session = BBS::Test::Session.new(identity: account('Tasi', :sysop).with(source: :token))
     assert_nil enter(session)
-    refute_includes session.output, 'Name (blank'
     assert_equal 'Tasi', @bbs.online.node('s2').name
     assert @bbs.online.node('s2').sysop
+    assert_empty session.output
   end
 
-  def test_an_account_logs_in_with_its_password
-    account('Ada', password: 'secret-1')
-    session = BBS::Test::Session.new(keys: typed('ada', 'secret-1'))
-    assert_nil enter(session)
-    assert session.identity.signed_in?
-    assert_equal 'Ada', session.identity.name
+  def test_a_guest_comes_in_as_anonymous
+    assert_nil enter(BBS::Test::Session.new(identity: BBS::Auth::Identity.guest))
+    assert_equal 'Anonymous', @bbs.online.node('s2').name
+    refute @bbs.online.node('s2').sysop
   end
 
-  def test_three_wrong_passwords_end_the_call
-    account('Ada', password: 'secret-1')
-    @bbs.members.instance_variable_set(:@pause, ->(_) {})
-    session = BBS::Test::Session.new(keys: typed('Ada', 'x', 'y', 'z'))
-    assert_equal :halt, enter(session)
-    assert session.identity.guest?
-    assert_includes session.output, 'Ada is a registered name.'
+  def test_a_scanner_is_not_listed
+    assert_nil enter(BBS::Test::Session.new(identity: BBS::Auth::Identity.guest), listed: false)
     assert_nil @bbs.online.node('s2')
   end
 
-  def test_an_unknown_name_comes_in_as_a_guest
-    accounts
-    session = BBS::Test::Session.new(keys: typed('Zed'))
-    assert_nil enter(session)
-    assert session.identity.guest?
-    assert_equal 'Zed', session.identity.name
-    refute @bbs.online.node('s2').sysop
+  def test_stepping_through_a_door_marks_the_node
+    door = @bbs.doors.first
+    UI::Modern::APP.instance_variable_get(:@door_block).call(door, { session_id: 's1' })
+    assert_equal 'Door: SERMO', @bbs.online.node('s1').activity
   end
 
   def test_the_sysop_items_are_for_the_sysop_role_only

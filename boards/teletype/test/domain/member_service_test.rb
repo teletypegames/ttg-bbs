@@ -2,8 +2,7 @@
 
 require_relative '../test_helper'
 
-# The logon on the accounts of the network: a guest, an account and its
-# password, a look-alike, and the members the board remembers.
+# The members the board remembers on the accounts of the network.
 class MemberServiceTest < Minitest::Test
   include DatabaseCase
   include AccountsCase
@@ -11,39 +10,11 @@ class MemberServiceTest < Minitest::Test
   def setup
     super
     accounts
-    @members = MemberService.new(directory: -> { BBS.config.auth&.directory }, pause: ->(_) {})
+    @members = MemberService.new(directory: -> { BBS.config.auth&.directory })
   end
 
-  def test_a_name_without_an_account_comes_in_as_a_guest
-    identity = @members.log_on('Nobody', caller_key: 'a') { flunk }
-    assert identity.guest?
-    assert_equal 'Nobody', identity.name
+  def test_a_blank_or_malformed_name_is_anonymous
     assert_equal 'Anonymous', MemberService.normalize_name("  \e[2J ")
-    assert_equal 'Anonymous', @members.log_on('Anonymous', caller_key: 'a') { flunk }.name
-  end
-
-  def test_an_account_with_the_right_password
-    account('Kali')
-    identity = @members.log_on('KALI', caller_key: 'a') { 'password' }
-    assert identity.signed_in?
-    assert_equal 'Kali', identity.name
-  end
-
-  def test_three_wrong_passwords
-    account('Kali')
-    agains = []
-    result = @members.log_on('Kali', caller_key: 'a') do |again|
-      agains << again
-      'wrong'
-    end
-    assert_equal :wrong, result
-    assert_equal [false, true, true], agains
-    assert_equal :dropped, @members.log_on('Kali', caller_key: 'a') { nil }
-  end
-
-  def test_a_look_alike_of_an_account_is_refused
-    account('Kali')
-    assert_equal :look_alike, @members.log_on('Kаli', caller_key: 'a') { flunk }
   end
 
   def test_a_registered_name_is_a_member
@@ -57,18 +28,5 @@ class MemberServiceTest < Minitest::Test
     account('Ada')
     assert_equal 'ada', @members.canonical('ada')
     assert_nil @members.canonical('Nobody')
-  end
-
-  # The accounts when the gate does not answer.
-  class Away
-    def account_state(_) = :unavailable
-    def log_in(*, **) = :unavailable
-  end
-
-  def test_when_the_gate_is_away_nobody_comes_in_under_a_name
-    away = MemberService.new(directory: -> { Away.new }, pause: ->(_) {})
-    assert_equal 'Anonymous', away.log_on('Kali', caller_key: 'a') { flunk }.name
-    MemberModel.remember(BBS::Auth::Identity.new(id: 7, name: 'Kali'))
-    assert_equal :unavailable, away.log_on('Kali', caller_key: 'a') { 'password' }
   end
 end
