@@ -16,7 +16,7 @@ module UI
   # (UI::Modern::Discovery::Home), pages of UI::Modern::Gate. TAB turns from
   # one to the other; each keeps its place. Q on either hangs up with the
   # goodbye of our boards. A sysop opens the console (UI::Modern::Sysop)
-  # with S on Own Servers.
+  # from SysOp in the profile.
   module Modern
   end
 end

@@ -13,8 +13,8 @@
 #   docker exec ttg-gate-bbs bin/account import --blog data/import/ttgblog.sqlite3 \
 #     --teletype data/import/teletype.sqlite3 --sysops Tasi,Zero
 #
-# Day to day a sysop does the same on the gate itself: S on Own Servers opens
-# the console (calls, accounts, log). This tool is for the first sysop and
+# Day to day a sysop does the same on the gate itself: SysOp in the profile
+# opens the console (calls, accounts, log). This tool is for the first sysop and
 # the import.
 #
 # The import takes the blog's editors first, their ids kept (so the blog's
