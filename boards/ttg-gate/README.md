@@ -167,6 +167,48 @@ Either way the board asks its own terminal question first: the gate reports the
 caller's window size to it, so a modern terminal is its default, and a C64,
 which has none, is taken for a C64.
 
+## Accounts and the sysop's console
+
+The accounts of the network live here (`data/accounts.sqlite3`, rubbs
+`BBS::Auth`): the other boards ask the gate's accounts API on the `interstack`
+network (`http://ttg-gate-bbs:8090/auth`, signed with `RUBBS_AUTH_SECRET`), and a
+caller signed in here is signed in on the board the gate dials. `P` on Own
+Servers opens the caller's profile (log in, make an account, change the
+password).
+
+A caller with the `sysop` role gets `S sysop` on Own Servers (modern face): the
+**console**.
+
+- **Calls:** who is on the gate now (an account or a guest), their address,
+  where the call came from (`telnet`, `bbs-web`), the face, how long, and where
+  they are (`› Feedia BBS` while the gate carries them there). Redrawn every two
+  seconds; RETURN or `H` hangs the chosen call up.
+- **Accounts:** every account of the network with its roles and last login, a
+  ✖ for a banned one; `/` searches names and roles (`blogger` lists the
+  bloggers). On an account: `G` grants a role, `R` revokes one, `B` bans it (with
+  a reason; its calls on the gate are hung up) or lifts the ban, `N` gives it a
+  new random password to pass on, `H` hangs up its calls. A banned account's
+  right password gets *This account is closed.* on every board. A sysop cannot
+  ban themselves or take their own sysop role.
+- **Log:** the gate's last 500 log lines, the newest at the bottom (logins,
+  wrong passwords, bans, dials, errors); `F` keeps the warnings and errors, `/`
+  the lines with a word.
+
+Every step of the console is a log line with the sysop's name (`sysop: hung up
+by=…`, `auth: ban … by=…`). Only the gate's own calls are listed: a caller who
+dialled another board directly is that board's.
+
+`bin/account` does the same from the server's shell, for the first sysop and the
+import:
+
+```sh
+docker exec -it ttg-gate-bbs bin/account password NAME     # sets it, makes the account when there is none
+docker exec -it ttg-gate-bbs bin/account grant NAME sysop
+docker exec -it ttg-gate-bbs bin/account ban NAME [REASON]
+docker exec -it ttg-gate-bbs bin/account unban NAME
+docker exec -it ttg-gate-bbs bin/account list
+```
+
 ## Global Discovery
 
 Besides the boards of our own network, the gate is a phone book of the
@@ -482,10 +524,11 @@ boards by `boards_by_encoding`, `boards_by_network`, `boards_by_country` and
 
 ```
 bbs.rb                                 entry point: the terminal question, then a face
+bin/account                            the accounts from the server's shell (password, roles, bans, import)
 bin/discovery-import                   Discovery: the daily import of the source lists
 bin/discovery-prober                   Discovery: the prober daemon
 bin/discovery-report                   Discovery: the catalog in numbers
-rake test                     Discovery: the tests (test/discovery/)
+rake test                              the tests (test/: the console; test/discovery/: Discovery)
 config/boards.yml                      the boards of the menu
 config/discovery/                      Discovery: sources, software signatures, source-to-tag rules
 config/discovery-optout.yml            Discovery: the sysops who asked to be left out
@@ -500,6 +543,7 @@ lib/
   ui/modern/style.rb                   its palette, the logo and the chooser
   ui/modern/own_servers.rb             the dialing menu of our own boards on an ANSI terminal
   ui/modern/discovery/                 Global Discovery: home, menus, lists, the board page, search, sources
+  ui/modern/sysop/                     the sysop's console: home, calls, accounts, an account, the log
   ui/petscii.rb                        the PETSCII face: the call, its node number, goodbye
   ui/petscii/gate.rb                   one C64 call: the frame, the tabs, the sub-menu focus, the keys
   ui/petscii/gate/                     its places (Places), its calls (Dialing) and its find line (Input)

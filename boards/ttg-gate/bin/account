@@ -8,8 +8,14 @@
 #   docker exec -it ttg-gate-bbs bin/account password NAME     # sets it, makes the account when there is none
 #   docker exec -it ttg-gate-bbs bin/account grant NAME ROLE
 #   docker exec -it ttg-gate-bbs bin/account revoke NAME ROLE
+#   docker exec -it ttg-gate-bbs bin/account ban NAME [REASON]
+#   docker exec -it ttg-gate-bbs bin/account unban NAME
 #   docker exec ttg-gate-bbs bin/account import --blog data/import/ttgblog.sqlite3 \
 #     --teletype data/import/teletype.sqlite3 --sysops Tasi,Zero
+#
+# Day to day a sysop does the same on the gate itself: S on Own Servers opens
+# the console (calls, accounts, log). This tool is for the first sysop and
+# the import.
 #
 # The import takes the blog's editors first, their ids kept (so the blog's
 # posts.author_id stays good) and with the roles blogger and member, then
@@ -60,7 +66,9 @@ end
 command = ARGV.shift
 case command
 when 'list'
-  accounts.names.each { |name| puts "#{name.ljust(22)}#{accounts.find(name).roles.join(', ')}" }
+  accounts.accounts.each do |entry|
+    puts "#{entry.name.ljust(22)}#{entry.roles.join(', ')}#{"  BANNED (#{entry.ban_reason})" if entry.banned?}"
+  end
 when 'password'
   name = ARGV.first or abort 'usage: bin/account password NAME'
   password = ask('Password: ')
@@ -73,6 +81,14 @@ when 'grant', 'revoke'
   warn "#{role} is none of #{TTG::Auth::ROLES.keys.join(', ')}" unless TTG::Auth::ROLES.key?(role)
   result = command == 'grant' ? accounts.grant(name, role, by: 'bin/account') : accounts.revoke(name, role)
   result == :ok ? puts("#{name}: #{accounts.find(name).roles.join(', ')}") : abort(result.to_s)
+when 'ban'
+  name = ARGV.shift or abort 'usage: bin/account ban NAME [REASON]'
+  result = accounts.ban(name, by: 'bin/account', reason: ARGV.join(' '))
+  result == :ok ? puts("#{name}: banned") : abort(result.to_s)
+when 'unban'
+  name = ARGV.first or abort 'usage: bin/account unban NAME'
+  result = accounts.unban(name, by: 'bin/account')
+  result == :ok ? puts("#{name}: the ban is lifted") : abort(result.to_s)
 when 'import'
   options = {}
   OptionParser.new do |o|
@@ -83,5 +99,5 @@ when 'import'
   abort 'usage: bin/account import --blog PATH --teletype PATH [--sysops A,B]' unless options[:blog] && options[:teletype]
   import(options)
 else
-  abort 'usage: bin/account list | password NAME | grant NAME ROLE | revoke NAME ROLE | import …'
+  abort 'usage: bin/account list | password NAME | grant NAME ROLE | revoke NAME ROLE | ban NAME [REASON] | unban NAME | import …'
 end

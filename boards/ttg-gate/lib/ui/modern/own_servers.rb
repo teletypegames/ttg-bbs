@@ -6,7 +6,8 @@ module UI
     # of bbsweb: the logo and the chooser, one row a board with its colour
     # bar, and under the list the chosen board's description. The arrows
     # choose, RETURN or the board's number dials, TAB turns to Global
-    # Discovery, P opens the caller's profile (their account), Q or Esc
+    # Discovery, P opens the caller's profile (their account), S the
+    # sysop's console (UI::Modern::Sysop, for the +sysop+ role), Q or Esc
     # hangs up.
     class OwnServers < Screen
       NAME = 18
@@ -17,6 +18,7 @@ module UI
       key(:tab, :right, :left, 'g', 'G') { pages.switch }
       key(:escape, 'q', 'Q') { quit }
       key('p', 'P', 'a', 'A') { hand_over { BBS::Auth::Profile.run(session) } }
+      key('s', 'S') { push(Sysop::Home.new(@accounts)) if @accounts && Sysop.allowed?(session) }
       key(/\A[1-9]\z/) do |k|
         board = @boards[k.to_i - 1]
         next unless board
@@ -25,9 +27,10 @@ module UI
         dial(board)
       end
 
-      def initialize(boards)
+      def initialize(boards, accounts: nil)
         super()
-        @boards = boards
+        @boards   = boards
+        @accounts = accounts
         @index = 0
       end
 
@@ -62,7 +65,10 @@ module UI
         ["#{color}#{BOLD}#{board.name}#{RESET}  #{DIM}#{board.address}#{RESET}", *body.map { |l| "#{TEXT}#{l}#{RESET}" }]
       end
 
-      def hints = "#{DIM}↑↓ choose   RETURN or 1-#{@boards.size} dial   TAB Global Discovery   P profile   Q hang up#{RESET}"
+      def hints
+        sysop = '   S sysop' if @accounts && Sysop.allowed?(session)
+        "#{DIM}↑↓ choose   RETURN or 1-#{@boards.size} dial   TAB Global Discovery   P profile#{sysop}   Q hang up#{RESET}"
+      end
     end
   end
 end

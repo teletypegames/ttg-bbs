@@ -12,7 +12,7 @@ module UI
       def initialize(session, bbs)
         super(session, face: :modern)
         @sides = {
-          own:       OwnServers.new(bbs.directory.boards),
+          own:       OwnServers.new(bbs.directory.boards, accounts: bbs.accounts),
           discovery: Discovery::Home.new(Discovery::Context.new(session: session, browse: bbs.browse, dials: bbs.dials))
         }
         @side = :own

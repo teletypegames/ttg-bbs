@@ -3,6 +3,7 @@
 require_relative 'colors'
 require_relative 'dial'
 require_relative 'modern/style'
+%w[view home calls accounts account log_view].each { |f| require_relative "modern/sysop/#{f}" }
 require_relative 'modern/own_servers'
 %w[context menu_view list_view board_page sources home].each { |f| require_relative "modern/discovery/#{f}" }
 require_relative 'modern/gate'
@@ -12,7 +13,8 @@ module UI
   # dialing menu of UI::Modern::OwnServers) and Global Discovery
   # (UI::Modern::Discovery::Home), pages of UI::Modern::Gate. TAB turns from
   # one to the other; each keeps its place. Q on either hangs up with the
-  # goodbye of our boards.
+  # goodbye of our boards. A sysop opens the console (UI::Modern::Sysop)
+  # with S on Own Servers.
   module Modern
   end
 end
