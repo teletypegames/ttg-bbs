@@ -5,7 +5,7 @@ module UI
     # The shelves: the shelf list, a shelf's about and address on the right;
     # Enter opens its titles.
     module ShelvesWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :shelves, :master_detail do
         title 'Shelves'

@@ -18,11 +18,11 @@ class DownloadModelTest < Minitest::Test
 
   def test_keeps_the_rows_across_a_restart
     path = File.join(@dir, 'warp-engine.sqlite3')
-    BBS::Model.bind(main: BBS::Database.open(path, MIGRATIONS))
+    Rubbs::Common::Storage::Model.bind(main: Rubbs::Common::Storage::Database.open(path, MIGRATIONS))
     DownloadModel.add('c64/GAME.PRG', version: '1.0', protocol: :xmodem_1k)
     DownloadModel.db.disconnect
 
-    BBS::Model.bind(main: BBS::Database.open(path, MIGRATIONS))
+    Rubbs::Common::Storage::Model.bind(main: Rubbs::Common::Storage::Database.open(path, MIGRATIONS))
     assert_equal 1, DownloadModel.of('c64/GAME.PRG')
   end
 end

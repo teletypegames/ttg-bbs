@@ -3,7 +3,7 @@
 # The board itself, whatever terminal a caller has: the catalog wired to the
 # shelf list, the archive and the download log.
 class WarpEngineBBS
-  include BBS::Domain
+  include Rubbs::Common::Board::Domain
 
   setting :archive_url, 'http://archive.teletypegames.org'
   setting :index_ttl, 300

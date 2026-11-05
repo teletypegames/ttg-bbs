@@ -60,41 +60,41 @@ into the empty table in one transaction (a line that does not parse is skipped
 and counted), then renamed to `downloads.jsonl.imported`; the log says how many
 rows came over.
 
-The archive is read through rubbs' `BBS::HTTP` (a deadline, a byte cap, the
+The archive is read through rubbs' `Rubbs::Common::Web::HTTP` (a deadline, a byte cap, the
 board's User-Agent, public addresses only); a shelf's index is kept in a
-`BBS::Cache` for `WARP_ENGINE_BBS_INDEX_TTL` seconds, so callers opening the
+`Rubbs::Common::Storage::Cache` for `WARP_ENGINE_BBS_INDEX_TTL` seconds, so callers opening the
 same shelf at once share one request, and a dead archive gives the last index
-it sent (Reload reads it anew with `BBS::Cache#refresh`, which keeps the old one
-when the archive fails). Its lines go through `BBS::Text.clean` before they are
-shown. The repository raises `BBS::HTTP::Error`; the catalog service logs it
+it sent (Reload reads it anew with `Rubbs::Common::Storage::Cache#refresh`, which keeps the old one
+when the archive fails). Its lines go through `Rubbs::Common::Text.clean` before they are
+shown. The repository raises `Rubbs::Common::Web::HTTP::Error`; the catalog service logs it
 and tells the face there is nothing (the rubbs error rule).
 
 Every log line (the board's and rubbs') starts with `warp-engine-bbs:`
-(rubbs' `BBS.log`, `log_tag`).
+(rubbs' `Rubbs.log`, `log_tag`).
 
 ## Project structure
 
 ```
-bbs.rb                      entry point: BBS.board (rubbs 2.0 DSL)
+bbs.rb                      entry point: Rubbs.board (rubbs 2.0 DSL)
 config/shelves.yml          the shelves of the archive
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
   migrations.rb             the schema of the database, one step per version
-  model/download_model.rb   the downloads table (BBS::Model) and the counts
+  model/download_model.rb   the downloads table (Rubbs::Common::Storage::Model) and the counts
   model/shelf_model.rb      a shelf: id, name, folder, about
   model/title_model.rb      a line of INDEX.TXT
   repository/shelf_repository.rb     config/shelves.yml
   repository/archive_repository.rb   INDEX.TXT (cached) and the files, over HTTP
   repository/legacy_download_log.rb  the one-time import of data/downloads.jsonl
   service/catalog_service.rb         shelves, titles, a checked fetch, the log
-  warp_engine_bbs.rb        the composition root (WarpEngineBBS, a BBS::Domain)
+  warp_engine_bbs.rb        the composition root (WarpEngineBBS, a Rubbs::Common::Board::Domain)
 lib/ui/
   wording.rb                why a download cannot go, both faces
   modern.rb                 UI::Modern::APP: commands, menus, help, desktop
   modern/helpers.rb         its helpers: open a shelf, a download, a title's card
   modern/shelves_window.rb  the shelves window
   modern/titles_window.rb   a shelf's titles window and its protocol buttons
-  petscii.rb                UI::Petscii: the C64 face (a BBS::Petscii::Face)
+  petscii.rb                UI::Petscii: the C64 face (a Rubbs::Petscii::Face)
 ```
 
 ## Tests
@@ -108,7 +108,7 @@ bundle exec rake test            # all
 bundle exec rake test archive    # the files whose name has the word
 ```
 
-The downloads are rubbs' `BBS::Transfer` (`BBS::Zmodem` and `BBS::Xmodem`).
+The downloads are rubbs' `Rubbs::Common::Files::Transfer` (`Rubbs::Common::Files::Zmodem` and `Rubbs::Common::Files::Xmodem`).
 
 ## License
 

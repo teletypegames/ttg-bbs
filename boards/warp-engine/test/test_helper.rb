@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require 'minitest/autorun'
-require 'bbs'
-require 'bbs/test'
+require 'rubbs'
+require 'rubbs/test'
 require 'domain'
 require 'minitest/mock'
 require 'tmpdir'
@@ -18,7 +18,7 @@ module BoardTest
 
   def setup
     @dir = Dir.mktmpdir
-    BBS::Test.database(MIGRATIONS)
+    Rubbs::Test.database(MIGRATIONS)
     super
   end
 
@@ -27,5 +27,5 @@ module BoardTest
     FileUtils.remove_entry(@dir)
   end
 
-  def response(body, status: 200) = BBS::HTTP::Response.new(status: status, body: body.b, headers: {})
+  def response(body, status: 200) = Rubbs::Common::Web::HTTP::Response.new(status: status, body: body.b, headers: {})
 end

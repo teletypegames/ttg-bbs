@@ -19,7 +19,7 @@ module UI
                 'against its shelf before it goes.'
     TAGLINE = '─── the file area of Teletype Games ───'
 
-    APP = BBS::Application.define do
+    APP = Rubbs::Modern::Application.define do
       theme :synchronet
       helpers { include Helpers }
 
@@ -29,7 +29,7 @@ module UI
       status { "#{catalog.shelves.size} shelves" }
 
       desktop do
-        art BBS::BlockFont.half_blocks('WARP'), top: 0
+        art Rubbs::Common::Text::BlockFont.half_blocks('WARP'), top: 0
         line TAGLINE, bottom: 0
         on_show { show(:shelves) }
       end

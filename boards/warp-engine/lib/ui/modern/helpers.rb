@@ -19,7 +19,7 @@ module UI
 
         result = with_line { |session| transfer(session, title, protocol, data) }
         catalog.downloaded(title, protocol) if result == :ok
-        tell(BBS::Transfer.result(result, protocol, title.file))
+        tell(Rubbs::Common::Files::Transfer.result(result, protocol, title.file))
       end
 
       # The name, the version and author, the file and its downloads, the
@@ -40,12 +40,12 @@ module UI
       end
 
       def transfer(session, title, protocol, data)
-        text = BBS::FrameBuffer.wrap_ansi(
-          BBS::Transfer.start(protocol, title.file, title.size, save_as: title.disk_name),
+        text = Rubbs::Modern::FrameBuffer.wrap_ansi(
+          Rubbs::Common::Files::Transfer.start(protocol, title.file, title.size, save_as: title.disk_name),
           cols - 4
         )
         session.write("\r\n#{text.map { |l| "  #{l}\r\n" }.join}\r\n")
-        BBS::Transfer.send(session, protocol, title.file, data)
+        Rubbs::Common::Files::Transfer.send(session, protocol, title.file, data)
       end
 
       def tell(text) = message(text, title: 'Download', width: 64)

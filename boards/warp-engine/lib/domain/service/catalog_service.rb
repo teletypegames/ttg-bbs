@@ -16,8 +16,8 @@ class CatalogService
   # The titles of +shelf+; nil when the archive does not answer.
   def titles(shelf, fresh: false)
     @archive.titles(shelf, fresh: fresh)
-  rescue BBS::HTTP::Error => e
-    BBS.log('archive', e.message)
+  rescue Rubbs::Common::Web::HTTP::Error => e
+    Rubbs.log('archive', e.message)
     nil
   end
 
@@ -44,7 +44,7 @@ class CatalogService
   def downloaded(title, protocol)
     DownloadModel.add(title.key, version: title.version, protocol: protocol)
   rescue Sequel::DatabaseError => e
-    BBS.log('downloads', "the download of #{title.key} is not counted: #{e.class}: #{e.message}")
+    Rubbs.log('downloads', "the download of #{title.key} is not counted: #{e.class}: #{e.message}")
   end
 
   private
@@ -52,8 +52,8 @@ class CatalogService
   # The bytes of +title+ from the archive; nil when they do not come.
   def file(title)
     @archive.file(title.path, max_bytes: @max_bytes)
-  rescue BBS::HTTP::Error => e
-    BBS.log('archive', e.message)
+  rescue Rubbs::Common::Web::HTTP::Error => e
+    Rubbs.log('archive', e.message)
     nil
   end
 end

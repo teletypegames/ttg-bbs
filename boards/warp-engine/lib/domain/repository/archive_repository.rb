@@ -3,7 +3,7 @@
 # The archive's plain HTTP (archive.teletypegames.org): the INDEX.TXT of a
 # shelf, kept for +ttl+ seconds, and the bytes of a file. A dead archive
 # gives the last index it sent; when there is none, or a file does not
-# come, it raises BBS::HTTP::Error.
+# come, it raises Rubbs::Common::Web::HTTP::Error.
 class ArchiveRepository
   INDEX = 'INDEX.TXT'
   # An INDEX.TXT is a line a title; a shelf of thousands fits in this.
@@ -15,7 +15,7 @@ class ArchiveRepository
 
   def initialize(base_url, ttl:)
     @base_url = base_url.delete_suffix('/')
-    @titles   = BBS::Cache.new(ttl: ttl, max_entries: SHELVES_KEPT)
+    @titles   = Rubbs::Common::Storage::Cache.new(ttl: ttl, max_entries: SHELVES_KEPT)
   end
 
   def url(path) = "#{@base_url}#{path}"
@@ -34,18 +34,18 @@ class ArchiveRepository
   # The index read now; when that fails, the one kept (an expired one too).
   def reread(shelf)
     @titles.refresh(shelf.id) { index(shelf) }
-  rescue BBS::HTTP::Error => e
+  rescue Rubbs::Common::Web::HTTP::Error => e
     @titles.fetch(shelf.id) { raise e }
   end
 
   def index(shelf)
-    body = BBS::Text.clean(get("#{shelf.path}/#{INDEX}", INDEX_MAX_BYTES))
+    body = Rubbs::Common::Text.clean(get("#{shelf.path}/#{INDEX}", INDEX_MAX_BYTES))
     body.each_line.filter_map { |line| TitleModel.parse(line, shelf) }.freeze
   end
 
   def get(path, max_bytes)
-    response = BBS::HTTP.get(url(path), max_bytes: max_bytes)
-    raise BBS::HTTP::Error, "GET #{url(path)}: answered #{response.status}" unless response.ok?
+    response = Rubbs::Common::Web::HTTP.get(url(path), max_bytes: max_bytes)
+    raise Rubbs::Common::Web::HTTP::Error, "GET #{url(path)}: answered #{response.status}" unless response.ok?
 
     response.body
   end

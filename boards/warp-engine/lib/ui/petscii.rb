@@ -7,7 +7,7 @@ module UI
   # the shelves, their titles as numbered lists, a title on a page of its own,
   # and its download by XMODEM-1K or XMODEM, the protocols a C64 terminal
   # knows.
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     LOGO_COLORS   = [LB, LB, CY, CY, WH].freeze
     PROTOCOL_KEYS = { '1' => :xmodem_1k, 'x' => :xmodem }.freeze
 
@@ -80,15 +80,15 @@ module UI
       result = transfer(file, protocol, data)
       catalog.downloaded(file, protocol) if result == :ok
       title("DOWNLOAD #{file.disk_name}")
-      text = BBS::Transfer.result(result, protocol, file.file)
+      text = Rubbs::Common::Files::Transfer.result(result, protocol, file.file)
       result == :ok ? notice(text) : alert(text)
     end
 
     def transfer(file, protocol, data)
       puts
-      say(BBS::Transfer.start(protocol, file.file, file.size, save_as: file.disk_name), color: WH)
+      say(Rubbs::Common::Files::Transfer.start(protocol, file.file, file.size, save_as: file.disk_name), color: WH)
       puts
-      BBS::Transfer.send(session, protocol, file.file, data)
+      Rubbs::Common::Files::Transfer.send(session, protocol, file.file, data)
     end
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # The schema of the board's database, one step per version
-# (BBS::Database.migrate): the downloads that went through.
+# (Rubbs::Common::Storage::Database.migrate): the downloads that went through.
 MIGRATIONS = [<<~SQL].freeze
   CREATE TABLE downloads (
     id       INTEGER PRIMARY KEY,

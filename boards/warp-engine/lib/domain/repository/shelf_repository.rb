@@ -9,7 +9,7 @@ class ShelfRepository
   def initialize(path)
     @all = Array(YAML.safe_load_file(path)).map { |entry| ShelfModel.from_entry(entry) }.freeze
   rescue SystemCallError, Psych::Exception, KeyError => e
-    BBS.log('shelves', "none from #{path}: #{e.class}: #{e.message}")
+    Rubbs.log('shelves', "none from #{path}: #{e.class}: #{e.message}")
     @all = [].freeze
   end
 end

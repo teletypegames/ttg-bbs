@@ -5,7 +5,7 @@ module UI
     # A shelf's titles, the one picked on the right, and the buttons of the
     # three protocols.
     module TitlesWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       PROTOCOLS = { 'ZMODEM' => :zmodem, 'XMODEM-1&K' => :xmodem_1k, 'X&MODEM' => :xmodem }.freeze
 

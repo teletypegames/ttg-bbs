@@ -7,9 +7,13 @@ class CatalogServiceTest < Minitest::Test
 
   # An archive that holds one file, or none (it raises then).
   FakeArchive = Struct.new(:data) do
-    def file(_path, max_bytes:) = data ? data[0, max_bytes + 1] : raise(BBS::HTTP::Error, 'GET /C64/GAME.PRG: answered 404')
+    def file(_path, max_bytes:)
+      data ? data[0, max_bytes + 1] : raise(Rubbs::Common::Web::HTTP::Error, 'GET /C64/GAME.PRG: answered 404')
+    end
 
-    def titles(_shelf, fresh:) = data ? [fresh] : raise(BBS::HTTP::Error, 'GET /C64/INDEX.TXT: the deadline passed')
+    def titles(_shelf, fresh:)
+      data ? [fresh] : raise(Rubbs::Common::Web::HTTP::Error, 'GET /C64/INDEX.TXT: the deadline passed')
+    end
   end
 
   def catalog(data, max_bytes: 100)

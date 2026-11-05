@@ -4,7 +4,7 @@ require 'time'
 
 # A download that went through: when, which title (its key, such as
 # <tt>c64/GAME.PRG</tt>), its version and the protocol it went by.
-class DownloadModel < BBS::Model
+class DownloadModel < Rubbs::Common::Storage::Model
   table :downloads
 
   # The number of downloads of the title +key+.

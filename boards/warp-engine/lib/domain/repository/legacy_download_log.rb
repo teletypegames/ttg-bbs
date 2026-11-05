@@ -19,7 +19,7 @@ class LegacyDownloadLog
 
     counts = DownloadModel.db.transaction { File.foreach(@path).partition { |line| add(line) }.map(&:size) }
     File.rename(@path, "#{@path}.imported")
-    BBS.log('downloads', "imported #{counts[0]} from #{File.basename(@path)} (#{counts[1]} skipped)")
+    Rubbs.log('downloads', "imported #{counts[0]} from #{File.basename(@path)} (#{counts[1]} skipped)")
     counts
   end
 
