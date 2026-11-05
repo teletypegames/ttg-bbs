@@ -38,14 +38,14 @@ module Sermo
     # ── Dual-architecture power-on → SERMO load ─────────────────────────────────
     boot do
       cls
-      print 'MARGITTAI WORKS — Neumatronic system firmware',            delay: 0.3
-      print 'ROM v7.7   (c) 1977-2026   Budapest',           newline: 2, delay: 0.3
+      print 'MARGITTAI WORKS — Neumatronic system firmware', delay: 0.3
+      print 'ROM v7.7   (c) 1977-2026   Budapest', newline: 2, delay: 0.3
 
       # First architecture: the digital, von Neumann side.
       print 'FIRST ARCHITECTURE   (digital)',                           delay: 0.25
       print '  Core unit ................ Neumann core, dual bus',      delay: 0.2
       memtest 16_384, step: 4096, delay: 0.05, label: '  Base memory ............. '
-      print '',                                                          delay: 0.2
+      print '', delay: 0.2
 
       # Second architecture: the ACP, hung off the ADI-76 bus.
       print 'SECOND ARCHITECTURE  (analog — ACP)',                      delay: 0.3
@@ -53,12 +53,12 @@ module Sermo
       print '  Lapis-ACP card ........... warming up',                  delay: 0.45
       print '  Sonus resonance .......... stable',                      delay: 0.3
       print '  Vox speech module ........ ready',                       delay: 0.25
-      print '  Netz link ................ terminal mode',    newline: 2, delay: 0.4
+      print '  Netz link ................ terminal mode', newline: 2, delay: 0.4
 
-      print 'Personal Tape: PERSONA//GUEST',                            delay: 0.3
+      print 'Personal Tape: PERSONA//GUEST', delay: 0.3
       print 'Local authentication cache loaded  (BVK: disconnected)', newline: 2, delay: 0.5
 
-      print 'Loading SERMO...',                              newline: 2, delay: 0.8
+      print 'Loading SERMO...', newline: 2, delay: 0.8
 
       cls
       big_banner 'SERMO', font: 'standard'

@@ -8,7 +8,6 @@ gem 'ttg-common', git: 'https://git.teletypegames.org/bbs/common.git'
 gem 'csv'
 gem 'net-ftp'
 
-
 group :development do
   gem 'minitest', '~> 5.25'
   gem 'rake', require: false

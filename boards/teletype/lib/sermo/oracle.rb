@@ -28,9 +28,11 @@ module Sermo
 
     CHAT = BBS::AI::Chat.new(
       persona: PERSONA,
-      client:  BBS::AI::Client.new(url:     ENV.fetch('SERMO_LLM_URL', ''),
-                                   model:   ENV['SERMO_LLM_MODEL'],
-                                   api_key: ENV['SERMO_LLM_API_KEY']),
+      client:  BBS::AI::Client.new(
+        url:     ENV.fetch('SERMO_LLM_URL', ''),
+        model:   ENV['SERMO_LLM_MODEL'],
+        api_key: ENV['SERMO_LLM_API_KEY']
+      ),
       key:     :acp_history,
       history: 2, # only the last exchange: a longer memory makes a model this small copy its own slips
       options: ENV['SERMO_LLM_MAX_TOKENS'] ? { max_tokens: ENV['SERMO_LLM_MAX_TOKENS'].to_i } : {}
@@ -38,8 +40,8 @@ module Sermo
 
     # Returns the reply. With a block, the reply is also yielded piece by
     # piece as it arrives, so the terminal can type it out live.
-    def self.answer(question, ctx = {}, &on_text)
-      CHAT.reply(question.to_s.dup.force_encoding(Encoding::UTF_8).scrub(''), ctx, &on_text)
+    def self.answer(question, ctx = {}, &)
+      CHAT.reply(question.to_s.dup.force_encoding(Encoding::UTF_8).scrub(''), ctx, &)
     end
   end
 end
