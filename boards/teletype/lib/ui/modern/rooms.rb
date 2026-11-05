@@ -199,7 +199,7 @@ module UI
       end
 
       def draw(frame, x, y)
-        @art.draw(frame, x: x, y: y)
+        Rubbs::Modern::Art.draw(@art, frame, x: x, y: y)
         @doors.each do |door|
           lamp(frame, x, y, door)
           label(frame, x, y, door)

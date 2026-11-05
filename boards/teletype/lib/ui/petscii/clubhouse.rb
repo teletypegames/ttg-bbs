@@ -71,7 +71,7 @@ module UI
       # the caller on node +node+, and +status+ in the top row.
       def self.house(canvas, scene, node:, status:)
         art = Arts.house(:c64, scene.season)
-        art.draw_canvas(canvas)
+        Rubbs::Petscii::Art.draw(art, canvas)
         (1..7).each { |n| at(canvas, art, :"node_#{n}", '', n == node ? :white : :yellow) if scene.lit?(n) }
         at(canvas, art, :door, '▒' * art.hotspot(:door).width, :yellow) if scene.inside.positive?
         mailbox(canvas, art, scene.mail) if scene.mail.positive?
@@ -313,8 +313,8 @@ module UI
         def paint
           @canvas.text(0, 1, 'TOWN MAP', :cyan)
           @canvas.text(0, 10, '- THE BBS NETWORK', :dark_grey)
-          Arts.load(:c64, 'town').draw_canvas(@canvas, row: TOP)
-          @boards.each { |b| Arts.load(:c64, "building_#{b.id}").draw_canvas(@canvas, row: TOP + at(b)[0], col: at(b)[1]) }
+          Rubbs::Petscii::Art.draw(Arts.load(:c64, 'town'), @canvas, row: TOP)
+          @boards.each { |b| Rubbs::Petscii::Art.draw(Arts.load(:c64, "building_#{b.id}"), @canvas, row: TOP + at(b)[0], col: at(b)[1]) }
           @canvas.text(24, 1, 'CRSR: WALK   RETURN OR <-: BACK', :dark_grey)
         end
 
@@ -380,7 +380,7 @@ module UI
         def paint
           @canvas.text(0, 1, 'GAMES ROOM', :orange)
           @canvas.text(0, 12, '- STEP UP TO A STATION', :dark_grey)
-          @art.draw_canvas(@canvas, row: TOP)
+          Rubbs::Petscii::Art.draw(@art, @canvas, row: TOP)
           @doors.each do |door|
             lamp(door)
             label = spot(:label, door)
@@ -429,7 +429,7 @@ module UI
           canvas = C.new
           canvas.text(0, 1, 'TROPHIES', :purple)
           canvas.text(0, 10, '- THE HALL OF FAME', :dark_grey)
-          art.draw_canvas(canvas, row: 2)
+          Rubbs::Petscii::Art.draw(art, canvas, row: 2)
           TITLES.each_with_index { |(list, title), i| compartment(canvas, art, list, title, fame.fetch(list), i) }
           canvas.text(23, 1, 'RETURN OR <-: BACK', :dark_grey)
           session.write_raw(canvas.frame + canvas.cursor(C::ROWS - 1, 0))
@@ -486,7 +486,7 @@ module UI
 
           seen << room
           art = Arts.load(:c64, "card_#{room}")
-          canvas = art.draw_canvas(C.new, row: TOP)
+          canvas = Rubbs::Petscii::Art.draw(art, C.new, row: TOP)
           about(canvas, art, room)
           hint = art.hotspot(:hint)
           canvas.text(TOP + hint.row, hint.col, 'RETURN: GO IN', :dark_grey)
@@ -542,7 +542,7 @@ module UI
 
         def self.room(canvas, layers, caller_number, seconds)
           art = Arts.load(:c64, 'leaving', layers)
-          art.draw_canvas(canvas, row: TOP)
+          Rubbs::Petscii::Art.draw(art, canvas, row: TOP)
           spot = art.hotspot(:ticket)
           minutes = (seconds / 60).to_i
           on = minutes.positive? ? "#{minutes}M" : "#{seconds.to_i}S"

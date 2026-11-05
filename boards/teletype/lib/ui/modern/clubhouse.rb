@@ -14,7 +14,7 @@ module UI
 
       # Writes +art+ from the top row of the screen down.
       def self.draw(session, art, top: 1)
-        session.write(art.ansi_lines.each_with_index.map { |l, i| "#{at(top + i, 1)}#{l}" }.join + RESET)
+        session.write(Rubbs::Modern::Art.lines(art).each_with_index.map { |l, i| "#{at(top + i, 1)}#{l}" }.join + RESET)
       end
 
       # Leaving: the clubhouse from the inside, the lamps going out one by
@@ -46,7 +46,7 @@ module UI
         end
 
         def self.plain(session, seconds, caller_number)
-          Rubbs::Common::Call::Goodbye.modern(
+          Rubbs::Modern::Goodbye.show(
             session,
             title: 'the Teletype BBS',
             note:  "Caller ##{Formatters.number(caller_number)}, " \
@@ -132,7 +132,7 @@ module UI
         private
 
         def draw(frame, x, y)
-          @art.draw(frame, x: x, y: y)
+          Rubbs::Modern::Art.draw(@art, frame, x: x, y: y)
           LISTS.each_with_index do |list, i|
             rows = @fame.fetch(list)
             compartment(frame, x, y, list, rows)

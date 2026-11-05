@@ -122,7 +122,7 @@ module UI
       # The card of the open room over the top of the house.
       def card(frame, x, y)
         art = Arts.load(:modern, "card_#{@room}")
-        art.draw(frame, x: x, y: y)
+        Rubbs::Modern::Art.draw(art, frame, x: x, y: y)
         spot = art.hotspot(:about)
         frame.move(x + spot.col, y + spot.row)
         frame.write(Clubhouse::Cards::ABOUT.fetch(@room)[0, spot.width], sgr: "\e[0;38;5;252;48;5;234m")

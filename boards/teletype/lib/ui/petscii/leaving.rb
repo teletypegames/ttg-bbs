@@ -18,7 +18,7 @@ module UI
       end
 
       def self.goodbye(screen, name, seconds, caller_number, quote)
-        Rubbs::Common::Call::Goodbye.petscii(screen, bar: "thanks for calling, #{name}") do |s|
+        Rubbs::Petscii::Goodbye.show(screen, bar: "thanks for calling, #{name}") do |s|
           minutes = (seconds / 60).to_i
           s.puts " #{GR}caller ##{caller_number}, on line #{minutes.positive? ? "#{minutes}m" : "#{seconds.to_i}s"}#{LG}"
           s.puts
