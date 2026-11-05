@@ -89,7 +89,7 @@ class PetsciiSysopTest < Minitest::Test
   def test_no_screen_reaches_the_last_column
     other = Call.new('x', 'Ada', '203.0.113.7', 'bbs-web', :modern, Time.now - 600, '› Feedia BBS')
     BBS.stub(:calls, [other]) do
-      [[:down, :down], ['1', :down], ['2', :down], ['2', :enter], ['3']].each do |keys|
+      [%i[down down], ['1', :down], ['2', :down], ['2', :enter], ['3']].each do |keys|
         capture_io { assert_raises(BBS::Hangup) { console(keys) } }
         screen = Canvas.new.feed(@line.raw)
         last = (0..23).map { |row| screen.cell(row, Canvas::COLS - 1) }
