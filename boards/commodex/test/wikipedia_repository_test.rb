@@ -21,7 +21,7 @@ class WikipediaRepositoryTest < Minitest::Test
   def test_a_missing_article_and_no_answer
     missing = FakeWikipedia.new { { 'query' => { 'pages' => [{ 'missing' => true }] } } }
     assert_equal(:missing, missing.serve { repository.summary('Nope') })
-    assert_raises(BBS::HTTP::Error) { FakeWikipedia.new(status: 503) { {} }.serve { repository.summary('Elite') } }
+    assert_raises(Rubbs::Common::Web::HTTP::Error) { FakeWikipedia.new(status: 503) { {} }.serve { repository.summary('Elite') } }
   end
 
   def test_the_about_service_says_why_not

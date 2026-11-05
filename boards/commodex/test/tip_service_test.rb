@@ -3,7 +3,7 @@
 require 'test_helper'
 
 class TipServiceTest < Minitest::Test
-  def setup = BBS::Test.database(MIGRATIONS)
+  def setup = Rubbs::Test.database(MIGRATIONS)
 
   # A catalog of two games.
   class Catalog

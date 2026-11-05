@@ -17,17 +17,19 @@ class TipModelTest < Minitest::Test
     db.close
   end
 
-  def open_file(name) = BBS::Database.open(path(name), MIGRATIONS).tap { |db| BBS::Model.bind(main: db) }
+  def open_file(name)
+    Rubbs::Common::Storage::Database.open(path(name), MIGRATIONS).tap { |db| Rubbs::Common::Storage::Model.bind(main: db) }
+  end
 
   def test_a_legacy_file_keeps_its_tips_and_gets_version_one
     legacy_file
-    assert_equal 1, BBS::Database.version(open_file('tips.sqlite3'))
+    assert_equal 1, Rubbs::Common::Storage::Database.version(open_file('tips.sqlite3'))
     assert_equal ['POKE 53280,0', 'seeded'], TipModel.approved('Q1').map(&:text)
     assert_equal 1, TipModel.with_status('pending').size
   end
 
   def test_a_new_file_gets_the_schema
-    assert_equal 1, BBS::Database.version(open_file('new.sqlite3'))
+    assert_equal 1, Rubbs::Common::Storage::Database.version(open_file('new.sqlite3'))
     id = TipModel.add(game_id: 'Q9', handle: 'x', text: 'tip')
     assert_equal %w[pending x x], [TipModel[id].status, TipModel[id].author, TipModel[id].handle]
   end

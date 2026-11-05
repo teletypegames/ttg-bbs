@@ -5,7 +5,7 @@ module UI
     # A list of games, the card of the one picked on the right; its buttons
     # open the about page, the tips, and the form for a tip.
     module GamesWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :games, :master_detail do
         empty 'No games here.'

@@ -5,7 +5,7 @@ module UI
     # The approved tips of a game: who and when on the left, the tip on the
     # right, and a button for a new one.
     module TipsWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :tips, :master_detail do
         empty 'No tips yet. Add the first one!'

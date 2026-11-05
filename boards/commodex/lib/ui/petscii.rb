@@ -7,7 +7,7 @@ module UI
   # menu, the games as numbered cursor lists, a game on a page of its own with
   # its actions on one row, the Wikipedia lead and the tips as pages that wait
   # for RETURN, and a line for a search and for a new tip.
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     LOGO_COLORS = [LB, LB, CY, CY, WH].freeze
     # The letters of the companies side by side, each with its count.
     LETTER_COLUMNS = 6
@@ -72,7 +72,7 @@ module UI
         say('The first letter of the name:')
         puts
         k = menu(
-          letters.map { |l, count| BBS::Selector.item(count.to_s, key: l, value: l) },
+          letters.map { |l, count| Rubbs::Common::Screens::Selector.item(count.to_s, key: l, value: l) },
           columns: LETTER_COLUMNS,
           hint:    'crsr or letter, return  stop: back'
         )

@@ -3,10 +3,10 @@
 require 'json'
 
 # The lead of an English Wikipedia article as plain text, through the Action
-# API's extracts (rubbs' BBS::Wikipedia, five requests a second). The
-# answers are kept for TTL seconds in a BBS::Cache bounded in entries and in
+# API's extracts (rubbs' Rubbs::Common::Web::Wikipedia, five requests a second). The
+# answers are kept for TTL seconds in a Rubbs::Common::Storage::Cache bounded in entries and in
 # bytes (of their JSON); the text is cleaned of control characters. A
-# failure goes up as BBS::HTTP::Error.
+# failure goes up as Rubbs::Common::Web::HTTP::Error.
 class WikipediaRepository
   USER_AGENT  = 'CommodexBBS/0.1 (Commodex BBS, Teletype Games telnet BBS; https://teletypegames.org; ' \
                 'https://git.teletypegames.org/bbs/commodex-bbs)'
@@ -16,9 +16,9 @@ class WikipediaRepository
   MAX_TEXT    = 6000
   RATE        = 5
 
-  def initialize(cache_size: 200, client: BBS::Wikipedia.new(user_agent: USER_AGENT, rate: RATE))
+  def initialize(cache_size: 200, client: Rubbs::Common::Web::Wikipedia.new(user_agent: USER_AGENT, rate: RATE))
     @client  = client
-    @answers = BBS::Cache.new(
+    @answers = Rubbs::Common::Storage::Cache.new(
       ttl:         TTL,
       max_entries: cache_size,
       max_bytes:   CACHE_BYTES,
@@ -47,7 +47,7 @@ class WikipediaRepository
 
   def summary_of(data)
     page = data.dig('query', 'pages', 0)
-    text = page && BBS::Text.clean(page['extract'].to_s).strip
+    text = page && Rubbs::Common::Text.clean(page['extract'].to_s).strip
     return :missing if page.nil? || page['missing'] || page['invalid'] || text.empty?
 
     SummaryModel.new(title: line(page['title']), url: line(page['fullurl']), paragraphs: paragraphs(text).freeze)
@@ -63,5 +63,5 @@ class WikipediaRepository
     out
   end
 
-  def line(text) = BBS::Text.line(text)
+  def line(text) = Rubbs::Common::Text.line(text)
 end

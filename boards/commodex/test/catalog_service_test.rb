@@ -18,7 +18,7 @@ class CatalogServiceTest < Minitest::Test
 
   # A catalog file of RECORDS written +at+, as the seed.
   def snapshot(at)
-    BBS::Snapshot.write(path('seed.json.gz'), { 'games' => RECORDS }, at)
+    Rubbs::Common::Storage::Snapshot.write(path('seed.json.gz'), { 'games' => RECORDS }, at)
     CatalogService.snapshot(seed: path('seed.json.gz'), path: path('catalog.json.gz'))
   end
 
@@ -55,7 +55,7 @@ class CatalogServiceTest < Minitest::Test
 
   def test_a_failed_refresh_raises_and_keeps_the_old_snapshot
     stale = Time.now - 3600
-    assert_raises(BBS::HTTP::Error) { service(wikidata: wikidata(error: BBS::HTTP::Error.new('timeout')), at: stale).refresh_if_stale }
+    assert_raises(Rubbs::Common::Web::HTTP::Error) { service(wikidata: wikidata(error: Rubbs::Common::Web::HTTP::Error.new('timeout')), at: stale).refresh_if_stale }
     s = service(wikidata: wikidata(records: []), at: stale)
     assert_raises(CatalogService::EmptyCatalog) { s.refresh_if_stale }
     assert_equal %w[Q1 Q2 Q3], s.games.map(&:id)
@@ -73,7 +73,7 @@ class CatalogServiceTest < Minitest::Test
     ENV['COMMODEX_BBS_CATALOG_TTL'] = ttl
     board = CommodexBBS.new
     board.define_singleton_method(:services) { {} }
-    BBS.stub(:background, ->(name, every:, **) { started << [name, every] }) { board.start }
+    Rubbs.stub(:background, ->(name, every:, **) { started << [name, every] }) { board.start }
     started
   ensure
     ENV.delete('COMMODEX_BBS_CATALOG_TTL')

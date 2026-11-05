@@ -5,7 +5,7 @@ module UI
     # The years, the genres or the companies of one letter, each with its
     # count; the right pane lists the first games of the one picked.
     module GroupsWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :groups, :master_detail do
         empty 'Nothing here.'

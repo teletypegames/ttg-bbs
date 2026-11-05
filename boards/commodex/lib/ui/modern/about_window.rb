@@ -5,7 +5,7 @@ module UI
     # The lead of a game's Wikipedia article, scrolling, with its licence and
     # address.
     module AboutWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :about, :info do
         maximizable true

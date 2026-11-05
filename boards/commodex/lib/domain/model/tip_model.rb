@@ -5,7 +5,7 @@ require 'time'
 # A cheat or a tip a caller sent for a game: pending until an admin approves
 # it with bin/tips, and only then shown. A seed tip (config/tips.yml)
 # carries its seed key, so it goes in once.
-class TipModel < BBS::Model
+class TipModel < Rubbs::Common::Storage::Model
   table :tips
 
   # The id of the new tip; a seed already in goes in no second time.

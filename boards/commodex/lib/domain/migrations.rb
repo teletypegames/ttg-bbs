@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# The schema of the tips, one step per version (BBS::Database.migrate).
+# The schema of the tips, one step per version (Rubbs::Common::Storage::Database.migrate).
 # Step 1 is the schema the board created before it had versions, written IF
 # NOT EXISTS: a file of that time (user_version 0, the table already there)
 # only gets its version, and keeps its rows.

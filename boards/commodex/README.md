@@ -11,7 +11,7 @@ It has two faces on one port, like every board of the network:
   Wikipedia lead in a scrolling window, the tips of a game, and a form for a
   new tip;
 - a **Commodore 64** one in PETSCII, 40×25: cursor menus of rubbs
-  (`BBS::Selector`: CRSR and RETURN, or the key or number as before) for the
+  (`Rubbs::Common::Screens::Selector`: CRSR and RETURN, or the key or number as before) for the
   main menu, the lists and a game's actions, a page a game, pages that wait
   for RETURN, a line for the search and an editor line for a tip.
 
@@ -27,27 +27,27 @@ It has two faces on one port, like every board of the network:
   A snapshot ships with the board (`config/catalog.json.gz`, written by
   `bin/refresh-catalog`). The running board reads Wikidata again when its
   copy is older than `COMMODEX_BBS_CATALOG_TTL` (a week) and keeps the result in
-  `data/catalog.json.gz`. The refresh runs in rubbs' `BBS.background` (the
+  `data/catalog.json.gz`. The refresh runs in rubbs' `Rubbs.background` (the
   thread `catalog refresh`), which looks at the snapshot's age every hour; a
   failed refresh (Wikidata down, no games, the file not written) is logged,
   keeps the previous snapshot and is tried again an hour later. The queries
   are POSTs through rubbs'
-  `BBS::HTTP` (a deadline, a body cap, the board's User-Agent).
+  `Rubbs::Common::Web::HTTP` (a deadline, a body cap, the board's User-Agent).
 - **About** is the lead of the game's English Wikipedia article, fetched on
-  demand through the Action API's extracts (rubbs' `BBS::Wikipedia`, at most
+  demand through the Action API's extracts (rubbs' `Rubbs::Common::Web::Wikipedia`, at most
   5 requests a second for all callers together, as on Alexandria BBS) and
-  kept in a `BBS::Cache` of 200 leads and 4 MiB.
+  kept in a `Rubbs::Common::Storage::Cache` of 200 leads and 4 MiB.
   It is shown with "Text from Wikipedia, CC BY-SA 4.0" and the article's
   address.
 - **Cheats and tips** are the callers'. A new tip is pending until an admin
   approves it; only approved tips are shown. A caller may send three tips an
   hour, one every 30 seconds, and the board takes at most 30 an hour; callers
-  are counted by address (`BBS::RateLimit.caller_key`), so calling again does
+  are counted by address (`Rubbs::Common::Line::RateLimit.caller_key`), so calling again does
   not reset it. The three limits are checked at once
-  (`BBS::RateLimit.allow_all?`): a refused tip counts in none of them.
+  (`Rubbs::Common::Line::RateLimit.allow_all?`): a refused tip counts in none of them.
 
 Everything from Wikidata and Wikipedia, and every tip, is cleaned of control
-characters (`BBS::Text.clean`) before it reaches a screen.
+characters (`Rubbs::Common::Text.clean`) before it reaches a screen.
 
 GameBase64 data is not used: its licence does not allow public use without
 the GB64 Team's permission.
@@ -81,7 +81,7 @@ with its default.
 | `COMMODEX_BBS_DISCORD_WEBHOOK` | *(empty: off)* | rung for every new tip; a secret, in `.env` on the server |
 
 `data/` is a volume. `data/tips.sqlite3` is the board's database (`database :tips_db,
-MIGRATIONS`, rubbs' `BBS::Model` on Sequel), its schema migrated by version
+MIGRATIONS`, rubbs' `Rubbs::Common::Storage::Model` on Sequel), its schema migrated by version
 (`PRAGMA user_version`, `lib/domain/migrations.rb`): version 1 is the schema the board
 created before it had versions, so an older file only gets its version and keeps its tips.
 
@@ -91,14 +91,14 @@ created before it had versions, so an older file only gets its version and keeps
 bundle exec rake test
 ```
 
-Minitest, no network (`BBS::HTTP` is stubbed): the tips table and its migration from a
+Minitest, no network (`Rubbs::Common::Web::HTTP` is stubbed): the tips table and its migration from a
 file without a version, the tip rules and limits, the catalog's search, browse and background
 refresh, the game records, the Wikipedia and Wikidata repositories. CI runs them before a
 deploy.
 
 ## Logs
 
-Every line on stderr starts with the log tag `commodex-bbs:` (rubbs' `BBS.log`):
+Every line on stderr starts with the log tag `commodex-bbs:` (rubbs' `Rubbs.log`):
 `commodex-bbs: catalog refresh: …`, `commodex-bbs: wikipedia: …`,
 `commodex-bbs: Discord: …`. The repositories let a failure go up; the services (and
 the refresh thread) log it once.
@@ -116,7 +116,7 @@ bin/refresh-catalog [path]                   # a new seed from Wikidata (in a de
 ## Project structure
 
 ```
-bbs.rb                      entry point: BBS.board (rubbs 2.0 DSL)
+bbs.rb                      entry point: Rubbs.board (rubbs 2.0 DSL)
 bin/tips                    the admins' tool for the tips
 bin/refresh-catalog         writes the seed catalog from Wikidata
 config/catalog.json.gz      the seed catalog (Wikidata, CC0)
@@ -125,24 +125,24 @@ lib/domain.rb               requires the domain in dependency order
 lib/domain/
   migrations.rb             the schema of the tips database, one step per version
   model/game_model.rb       a game: QID, title, year, article, the name lists
-  model/tip_model.rb        the tips table (BBS::Model): a tip, its status, the queries
+  model/tip_model.rb        the tips table (Rubbs::Common::Storage::Model): a tip, its status, the queries
   model/summary_model.rb    a Wikipedia lead
-  repository/wikidata_repository.rb   the SPARQL queries (BBS::Wikidata)
-  repository/wikipedia_repository.rb  article leads over BBS::Wikipedia, cached (BBS::Cache)
+  repository/wikidata_repository.rb   the SPARQL queries (Rubbs::Common::Web::Wikidata)
+  repository/wikipedia_repository.rb  article leads over Rubbs::Common::Web::Wikipedia, cached (Rubbs::Common::Storage::Cache)
   repository/tip_seed_repository.rb   config/tips.yml
   service/catalog_service.rb          search, years, genres, companies, the refresh
-                                      (the catalog file is a BBS::Snapshot)
+                                      (the catalog file is a Rubbs::Common::Storage::Snapshot)
   service/about_service.rb            a game's Wikipedia lead
   service/tip_service.rb              tips: submit, limits, approve, reject
-  service/discord_notifier.rb         a new tip on Discord (BBS::DiscordWebhook)
-  commodex_bbs.rb           the composition root (CommodexBBS, a BBS::Domain)
+  service/discord_notifier.rb         a new tip on Discord (Rubbs::Common::Web::DiscordWebhook)
+  commodex_bbs.rb           the composition root (CommodexBBS, a Rubbs::Common::Board::Domain)
 lib/ui/
   wording.rb                a game's facts and the messages, both faces
   modern.rb                 UI::Modern::APP: commands, menus, help, desktop
   modern/helpers.rb         search, the lists, a game's card, about, tips
   modern/games_window.rb, groups_window.rb, letters_window.rb, about_window.rb,
-  modern/tips_window.rb, add_tip_window.rb     one BBS::Part per window
-  petscii.rb                UI::Petscii: the C64 face (a BBS::Petscii::Face)
+  modern/tips_window.rb, add_tip_window.rb     one Rubbs::Modern::Part per window
+  petscii.rb                UI::Petscii: the C64 face (a Rubbs::Petscii::Face)
 test/                       minitest tests of the domain
 Rakefile                    rake test
 ```

@@ -42,7 +42,7 @@ GameModel = Data.define(
     end
   end
 
-  def self.clean(text) = BBS::Text.clean(text.to_s, keep_newlines: false).strip
+  def self.clean(text) = Rubbs::Common::Text.clean(text.to_s, keep_newlines: false).strip
 
   # The title folded for a search: lowercase, no accents, letters and
   # digits only.

@@ -5,7 +5,7 @@ module UI
     # The form for a new tip. TipService decides whether it goes in; the form
     # says what it decided.
     module AddTipWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :add_tip, :form do
         title { "A tip for #{game.title}" }

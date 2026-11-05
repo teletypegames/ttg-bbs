@@ -2,7 +2,7 @@
 
 # The cheats and tips of the games. A caller's tip waits as pending until an
 # admin approves it (bin/tips); only approved tips are shown. A caller (by
-# address: BBS::RateLimit.caller_key, so hanging up and calling again does
+# address: Rubbs::Common::Line::RateLimit.caller_key, so hanging up and calling again does
 # not help) may send PER_CALLER tips an hour, one every GAP seconds, and the
 # whole board at most BOARD_MAX an hour, so a crowd cannot flood the queue.
 class TipService
@@ -16,9 +16,9 @@ class TipService
   def initialize(catalog:, notifier: nil, seeds: [])
     @catalog    = catalog
     @notifier   = notifier
-    @gap        = BBS::RateLimit.new(limit: 1, per: GAP)
-    @per_caller = BBS::RateLimit.new(limit: PER_CALLER, per: WINDOW)
-    @board      = BBS::RateLimit.new(limit: BOARD_MAX, per: WINDOW)
+    @gap        = Rubbs::Common::Line::RateLimit.new(limit: 1, per: GAP)
+    @per_caller = Rubbs::Common::Line::RateLimit.new(limit: PER_CALLER, per: WINDOW)
+    @board      = Rubbs::Common::Line::RateLimit.new(limit: BOARD_MAX, per: WINDOW)
     seeds.each { |s| TipModel.add(**s, status: 'approved') }
   end
 
@@ -29,7 +29,7 @@ class TipService
   # The games that have an approved tip, by title.
   def games_with_tips = TipModel.approved_counts.keys.filter_map { |id| @catalog.find(id) }.sort_by { |g| g.title.downcase }
 
-  # Sends a tip for +game+ from +caller+ (BBS::RateLimit.caller_key): :ok,
+  # Sends a tip for +game+ from +caller+ (Rubbs::Common::Line::RateLimit.caller_key): :ok,
   # or why not: :empty, :too_long, :rate_limited, :failed.
   def submit(game, text:, caller:, handle: '')
     text = clean(text)
@@ -59,18 +59,18 @@ class TipService
 
   # One line of text: no control or bidirectional character, one space
   # between words.
-  def clean(text) = BBS::Text.clean(text.to_s).gsub(/[[:space:]]+/, ' ').strip
+  def clean(text) = Rubbs::Common::Text.clean(text.to_s).gsub(/[[:space:]]+/, ' ').strip
 
   # Whether +caller+ and the board may send one more; counts it in every
   # limit when they may, in none when they may not.
-  def allowed?(caller) = BBS::RateLimit.allow_all?([[@gap, caller], [@per_caller, caller], [@board, :board]])
+  def allowed?(caller) = Rubbs::Common::Line::RateLimit.allow_all?([[@gap, caller], [@per_caller, caller], [@board, :board]])
 
   def save(game, text, handle)
     id = TipModel.add(game_id: game.id, handle: handle, text: text)
     @notifier&.call(TipModel[id], game)
     :ok
   rescue StandardError => e
-    BBS.log('tips', "saving a tip: #{e.class}: #{e.message}")
+    Rubbs.log('tips', "saving a tip: #{e.class}: #{e.message}")
     :failed
   end
 end

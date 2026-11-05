@@ -4,7 +4,7 @@ module UI
   module Modern
     # The publishers and developers by their first letter.
     module LettersWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :letters, :master_detail do
         title 'Publishers & developers'

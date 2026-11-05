@@ -5,7 +5,7 @@
 # Discord rung for a new one. Both faces and the admin scripts (bin/) work on
 # one instance of it.
 class CommodexBBS
-  include BBS::Domain
+  include Rubbs::Common::Board::Domain
 
   path    :catalog_seed, 'config/catalog.json.gz'
   path    :catalog_file, 'data/catalog.json.gz', env: 'CATALOG'

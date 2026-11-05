@@ -56,7 +56,7 @@ module UI
 
       def note(text, title) = message(text, title: title, width: 64)
 
-      def wrap(text, width) = BBS::FrameBuffer.wrap_ansi(text.to_s, width)
+      def wrap(text, width) = Rubbs::Modern::FrameBuffer.wrap_ansi(text.to_s, width)
 
       def about_width = [cols - 4, 78].min
 
@@ -71,7 +71,7 @@ module UI
       def group_card(kind, name, count, width)
         games = games_of(kind, name)
         [bright(name), accent("#{count} game#{'s' unless count == 1}"), '',
-         *games.first(SHOWN).map { |g| BBS::FrameBuffer.clip_ansi(g.label, width - 1) },
+         *games.first(SHOWN).map { |g| Rubbs::Modern::FrameBuffer.clip_ansi(g.label, width - 1) },
          *(games.size > SHOWN ? [dim("… and #{games.size - SHOWN} more")] : [])]
       end
 

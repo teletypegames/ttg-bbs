@@ -17,7 +17,7 @@ module UI
   module Modern
     HELP = 'F2 search · F3 random game · F10 menu: years, genres, companies, tips'
 
-    APP = BBS::Application.define do
+    APP = Rubbs::Modern::Application.define do
       theme :synchronet
       helpers { include Helpers }
 
@@ -32,7 +32,7 @@ module UI
       status { "#{catalog.count} games" }
 
       desktop do
-        art  BBS::BlockFont.half_blocks('COMMODEX'), top: 0
+        art  Rubbs::Common::Text::BlockFont.half_blocks('COMMODEX'), top: 0
         line "─── #{Wording::TAGLINE} ───", top: 4
         line HELP, bottom: 0
         on_show { search }

@@ -12,10 +12,10 @@ require_relative '../lib/domain'
 path    = ARGV.first || File.expand_path('../config/catalog.json.gz', __dir__)
 records = begin
   WikidataRepository.new.records
-rescue BBS::HTTP::Error => e
+rescue Rubbs::Common::Web::HTTP::Error => e
   abort "Wikidata did not answer (#{e.message}); nothing written"
 end
 abort 'Wikidata answered no games; nothing written' if records.empty?
 
-BBS::Snapshot.write(path, { 'license' => CatalogService::LICENSE, 'games' => records }, Time.now.utc, source: CatalogService::SOURCE)
+Rubbs::Common::Storage::Snapshot.write(path, { 'license' => CatalogService::LICENSE, 'games' => records }, Time.now.utc, source: CatalogService::SOURCE)
 puts "#{records.size} games written to #{path}"

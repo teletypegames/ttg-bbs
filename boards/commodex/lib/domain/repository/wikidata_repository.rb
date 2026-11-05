@@ -6,14 +6,14 @@ require 'uri'
 # every item on the platform Commodore 64 (P400 = Q99775) that is a video
 # game (P31/P279* Q7889). One query for the items, their labels and English
 # Wikipedia articles, then one per property, merged here into the records of
-# the catalog file, with rubbs' BBS::Wikidata (a deadline, a body cap, a
-# pause before each query). Any failed query raises (BBS::HTTP::Error, or
+# the catalog file, with rubbs' Rubbs::Common::Web::Wikidata (a deadline, a body cap, a
+# pause before each query). Any failed query raises (Rubbs::Common::Web::HTTP::Error, or
 # Error for an error status or an answer that is no JSON),
 # so a refresh never leaves a half catalog. The names are cleaned of control
 # characters.
 class WikidataRepository
   # Wikidata answered an error status or no JSON.
-  Error = BBS::Wikidata::Error
+  Error = Rubbs::Common::Web::Wikidata::Error
 
   USER_AGENT   = 'CommodexBBS/0.1 (Commodex BBS, Teletype Games telnet BBS; https://teletypegames.org; ' \
                  'https://git.teletypegames.org/bbs/commodex-bbs)'
@@ -50,7 +50,7 @@ class WikidataRepository
 
   C64 = 'Q99775'
 
-  def initialize(pause: 1, client: BBS::Wikidata.new(user_agent: USER_AGENT, pause: pause))
+  def initialize(pause: 1, client: Rubbs::Common::Web::Wikidata.new(user_agent: USER_AGENT, pause: pause))
     @client = client
   end
 
@@ -112,9 +112,9 @@ class WikidataRepository
     key == 'mod' ? name.sub(/ video game\z/, '') : name
   end
 
-  def text(value) = BBS::Text.line(value)
+  def text(value) = Rubbs::Common::Text.line(value)
 
-  def qid(binding) = BBS::Wikidata.qid(binding)
+  def qid(binding) = Rubbs::Common::Web::Wikidata.qid(binding)
 
   def select(query) = @client.select(query)
 end

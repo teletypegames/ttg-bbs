@@ -5,11 +5,11 @@ require 'minitest/autorun'
 require 'minitest/mock'
 require 'json'
 require 'tmpdir'
-require 'bbs'
-require 'bbs/test'
+require 'rubbs'
+require 'rubbs/test'
 require_relative '../lib/domain'
 
-# Answers BBS::HTTP.get with the JSON the block gives for the request's
+# Answers Rubbs::Common::Web::HTTP.get with the JSON the block gives for the request's
 # query parameters, and records the requests.
 class FakeWikipedia
   attr_reader :requests
@@ -24,10 +24,10 @@ class FakeWikipedia
     uri = URI(url)
     @requests << [uri, options]
     params = URI.decode_www_form(uri.query).to_h
-    BBS::HTTP::Response.new(status: @status, body: JSON.generate(@answer.call(params)), headers: {})
+    Rubbs::Common::Web::HTTP::Response.new(status: @status, body: JSON.generate(@answer.call(params)), headers: {})
   end
 
-  def serve(&) = BBS::HTTP.stub(:get, ->(url, **options) { get(url, **options) }, &)
+  def serve(&) = Rubbs::Common::Web::HTTP.stub(:get, ->(url, **options) { get(url, **options) }, &)
 end
 
 # A fresh data directory for each test.

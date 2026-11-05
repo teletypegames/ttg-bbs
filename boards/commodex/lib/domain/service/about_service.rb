@@ -14,8 +14,8 @@ class AboutService
 
     found = @wikipedia.summary(game.article)
     found == :missing ? :no_article : found
-  rescue BBS::HTTP::Error => e
-    BBS.log('wikipedia', "#{game.article}: #{e.message}")
+  rescue Rubbs::Common::Web::HTTP::Error => e
+    Rubbs.log('wikipedia', "#{game.article}: #{e.message}")
     :unavailable
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # The game compendium: search by title, browse by year, genre and company,
-# a random game. It reads the games of the catalog file (a BBS::Snapshot)
+# a random game. It reads the games of the catalog file (a Rubbs::Common::Storage::Snapshot)
 # and builds its indexes once per snapshot. #refresh_if_stale replaces the
 # snapshot from Wikidata when it is older than +ttl+ seconds (CommodexBBS runs
 # it in the background, a failed one again after RETRY_AFTER seconds).
@@ -22,7 +22,7 @@ class CatalogService
   # The catalog file kept whole in memory: the newer of +seed+ and +path+,
   # its records the games.
   def self.snapshot(seed:, path:)
-    BBS::Snapshot.new(seed: seed, path: path, source: SOURCE, meta: { 'license' => LICENSE }) do |records|
+    Rubbs::Common::Storage::Snapshot.new(seed: seed, path: path, source: SOURCE, meta: { 'license' => LICENSE }) do |records|
       names = {}
       Array(records['games']).filter_map { |r| GameModel.from_record(r, names) }.freeze
     end
