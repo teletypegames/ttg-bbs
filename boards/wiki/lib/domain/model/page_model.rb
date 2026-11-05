@@ -21,7 +21,7 @@ class PageModel
     )
   end
 
-  def self.clean(text) = BBS::Text.clean(text.to_s, keep_newlines: false)
+  def self.clean(text) = Rubbs::Common::Text.clean(text.to_s, keep_newlines: false)
   private_class_method :clean
 
   def initialize(route:, title:, updated_at:, tags:, private:)

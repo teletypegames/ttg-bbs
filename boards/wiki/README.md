@@ -14,7 +14,7 @@ modern one; 40 columns, or no answer at all (a C64 behind a WiFi modem speaks
 plain TCP), is taken for a Commodore. `1` picks the modern terminal
 (ANSI/xterm, 256 colours), `2` the C64 (PETSCII), and RETURN takes the pick or
 the guess. Mouse reporting is switched on only after the choice. The question
-is rubbs' `BBS::Terminal`; the faces: `lib/ui/modern.rb`, `lib/ui/petscii*`.
+is rubbs' `Rubbs::Common::Call::Terminal`; the faces: `lib/ui/modern.rb`, `lib/ui/petscii*`.
 
 ## The modern face
 
@@ -40,7 +40,7 @@ Pages marked `*` in the list are private (login-protected on the wiki), for
 the supervisors (see [Supervisors](#supervisors)): **Wiki > Profile** (on a
 C64: P on the top level) to log in with a Teletype Games account, or out again.
 
-The QR code (rubbs' `BBS::QR`, half blocks) is the page's address on the
+The QR code (rubbs' `Rubbs::Common::Text::QR`, half blocks) is the page's address on the
 web, `https://wiki.teletypegames.org<route>`, for a phone to open it with its
 pictures and diagrams; a private page asks for the wiki's login there. It
 takes the room the screen has: on 80×24 a route of up to 22 characters fits,
@@ -53,13 +53,13 @@ Mouse works too (xterm SGR), including wheel scroll in both panes.
 ## The PETSCII face
 
 PETSCII on a 40×25 screen. The same page tree, one level per screen as a
-numbered list, a cursor menu of rubbs (`BBS::Selector`): a page with pages
+numbered list, a cursor menu of rubbs (`Rubbs::Common::Screens::Selector`): a page with pages
 under it is marked `>`, a private one `*`. CRSR moves the bar (left and right
 turn the pages), the number typed lights a page, and RETURN opens it, or goes
 down a level, where line 1 is the page itself; `Q` (or ←) goes back up. Pages are shown a screenful at a time
 (RETURN: more, `Q`: back), with their public address at the end; under the
 last screenful `C` (qr code) shows that address as a QR code (rubbs'
-`BBS::QR`, quadrant blocks) for a phone to open the page on the web. On the top
+`Rubbs::Common::Text::QR`, quadrant blocks) for a phone to open the page on the web. On the top
 level `L` logs in with a Teletype Games account (`O` logs out once in), and `R` re-reads the
 index. A call ends with rubbs' goodbye screen: the time on line, the wiki's web address, the
 Teletype Games address and its QR code.
@@ -81,19 +81,19 @@ Two endpoints on the Grav wiki (templates in
 The page index (`sitemap.json`) is loaded once at server boot and shared by
 every session; **F8 / Wiki > Refresh index** (`R` on the C64) re-reads it for everyone. If the
 wiki is down at boot (a stack deploy recreates grav at the same time), the BBS
-still starts and retries the index in the background (rubbs' `BBS.background`)
+still starts and retries the index in the background (rubbs' `Rubbs.background`)
 until it answers: after 10 seconds, then twice as long each time, at most every
 5 minutes. A caller may refresh twice a minute, the whole board ten times a
-minute (rubbs' `BBS::RateLimit.allow_all?`, counted by the caller's address; a
+minute (rubbs' `Rubbs::Common::Line::RateLimit.allow_all?`, counted by the caller's address; a
 refresh one limit refuses counts in neither), so nobody can hammer Grav with it.
 The repository raises `WikiRepository::Error` (a network or HTTP error, an
-answer that is no JSON); the wiki service logs it and words it for the caller. Page bodies are rendered with `BBS::Markdown` and cached for 5 minutes
-(`WikiRepository::PAGE_TTL`) in a `BBS::Cache` of at most 200 pages and 8 MiB.
+answer that is no JSON); the wiki service logs it and words it for the caller. Page bodies are rendered with `Rubbs::Common::Text::Markdown` and cached for 5 minutes
+(`WikiRepository::PAGE_TTL`) in a `Rubbs::Common::Storage::Cache` of at most 200 pages and 8 MiB.
 
-Requests go through rubbs' `BBS::HTTP` (timeouts, a deadline, a body cap; the wiki is
+Requests go through rubbs' `Rubbs::Common::Web::HTTP` (timeouts, a deadline, a body cap; the wiki is
 on the Docker network, so `public_only: false`) with the board's User-Agent, and every
 text from the wiki (titles, routes, tags, markdown) is cleaned of control characters
-(`BBS::Text.clean`) before it reaches a screen.
+(`Rubbs::Common::Text.clean`) before it reaches a screen.
 
 Resizing the terminal mid-session re-lays-out the whole UI (rubbs re-runs
 each open window's `relayout` on NAWS updates — rubbs rev `db8a97b`+).
@@ -101,7 +101,7 @@ each open window's `relayout` on NAWS updates — rubbs rev `db8a97b`+).
 ### Supervisors
 
 Pages flagged `private` (or sitting under a private ancestor) are for the
-supervisors: the accounts of the network (rubbs' `BBS::Auth`, kept on TTG Gate
+supervisors: the accounts of the network (rubbs' `Rubbs::Common::Auth`, kept on TTG Gate
 BBS, `auth TTG::AUTH, login: :menu`) with the `wiki-supervisor` role. A
 supervisor logs in from the menu, or comes in logged in when dialled from TTG
 Gate BBS; an account without the role is told it is not a supervisor, and the
@@ -160,11 +160,11 @@ telnet localhost 2323
 | `RUBBS_AUTH_SECRET` | — | The secret every board of the network shares, for the accounts on TTG Gate BBS (in `.env` on the server) |
 
 `env-example` lists them all with their defaults. `WikiBBS`
-(`lib/domain/wiki_bbs.rb`) declares the `WIKI_BBS_` ones as `BBS::Domain`
+(`lib/domain/wiki_bbs.rb`) declares the `WIKI_BBS_` ones as `Rubbs::Common::Board::Domain`
 settings; rubbs reads `BBS_PORT`, `BBS_MAX_SESSIONS` and `RUBBS_AUTH_SECRET` itself.
 
 Every log line (the board's and rubbs') starts with `wiki-bbs:` (rubbs'
-`BBS.log`, `log_tag`).
+`Rubbs.log`, `log_tag`).
 
 The image runs the rubbs revision of `Gemfile.lock`, as uid 1000; a new rubbs
 reaches the board with a lock bump (devarea `scripts/bbs-lock-bump.sh`).
@@ -172,7 +172,7 @@ reaches the board with a lock bump (devarea `scripts/bbs-lock-bump.sh`).
 ## Project structure
 
 ```
-bbs.rb                        Entry point: BBS.board with WikiBBS and the two faces
+bbs.rb                        Entry point: Rubbs.board with WikiBBS and the two faces
 Gemfile, Gemfile.lock         rubbs from git; rubocop, minitest and rake in :development
 Rakefile                      rake test
 Dockerfile, .dockerignore     The image
@@ -184,16 +184,16 @@ lib/
   domain.rb                   Requires the domain in dependency order
   domain/
     model/page_model.rb       PageModel: one entry of the page index
-    repository/wiki_repository.rb   WikiRepository: the JSON API over BBS::HTTP, the page cache
+    repository/wiki_repository.rb   WikiRepository: the JSON API over Rubbs::Common::Web::HTTP, the page cache
     service/wiki_service.rb   WikiService: the shared index, private flags, pages as markdown, refreshes
-    wiki_bbs.rb               WikiBBS (BBS::Domain): settings, services, the index loaded in the background
+    wiki_bbs.rb               WikiBBS (Rubbs::Common::Board::Domain): settings, services, the index loaded in the background
   ui/
     wording.rb                UI::Wording: what both faces tell the caller, who is a supervisor
     modern.rb                 UI::Modern::APP: the commands, menus and help of the ANSI face
     modern/helpers.rb         UI::Modern::Helpers: the browser, refresh, the QR code, logging in and out
     modern/browser_window.rb  UI::Modern::BrowserWindow: the page tree and the reader
-    petscii.rb                UI::Petscii (BBS::Petscii::Face): the masthead, the page tree as cursor lists
-test/                         Minitest tests of the domain (no network: BBS::HTTP is stubbed)
+    petscii.rb                UI::Petscii (Rubbs::Petscii::Face): the masthead, the page tree as cursor lists
+test/                         Minitest tests of the domain (no network: Rubbs::Common::Web::HTTP is stubbed)
 ```
 
 ## Tests
@@ -204,7 +204,7 @@ bundle exec rake test
 
 The repository (cleaning, the cache, the token only on private pages and never in an error),
 the index and its refresh limits, and the C64 face: the private pages for the
-`wiki-supervisor` role (`BBS::Test.accounts`), logging in with and without it. CI runs them before a deploy.
+`wiki-supervisor` role (`Rubbs::Test.accounts`), logging in with and without it. CI runs them before a deploy.
 
 ## Licence
 

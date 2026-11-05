@@ -4,8 +4,8 @@ require 'json'
 require 'uri'
 
 # The Grav wiki's JSON API (/custom/sitemap.json, /custom/page.json), over
-# BBS::HTTP on the Docker network, with the page bodies in a bounded
-# BBS::Cache, so browsing the list does not fetch a page again on every
+# Rubbs::Common::Web::HTTP on the Docker network, with the page bodies in a bounded
+# Rubbs::Common::Storage::Cache, so browsing the list does not fetch a page again on every
 # selection change. Every text that comes from the wiki is cleaned of
 # control characters here. A network or HTTP error, or an answer that is not
 # JSON, is raised as WikiRepository::Error: the index loader retries, and the
@@ -27,7 +27,7 @@ class WikiRepository
   def initialize(base_url, token: nil)
     @base_url = base_url.chomp('/')
     @token    = token.to_s
-    @pages    = BBS::Cache.new(ttl: PAGE_TTL, max_entries: PAGE_LIMIT, max_bytes: PAGE_BYTES)
+    @pages    = Rubbs::Common::Storage::Cache.new(ttl: PAGE_TTL, max_entries: PAGE_LIMIT, max_bytes: PAGE_BYTES)
   end
 
   # Every routable page as a PageModel, in the wiki's order, each with its
@@ -42,7 +42,7 @@ class WikiRepository
   def page(route, private: false)
     headers = private && !@token.empty? ? { 'X-Wiki-Token' => @token } : {}
     data = parse_json(@pages.fetch(route) { get('/custom/page.json', headers, route: route) })
-    data.slice('title', 'markdown', 'error').transform_values { |text| BBS::Text.clean(text.to_s) }
+    data.slice('title', 'markdown', 'error').transform_values { |text| Rubbs::Common::Text.clean(text.to_s) }
   end
 
   def clear_cache = @pages.clear
@@ -58,11 +58,11 @@ class WikiRepository
     uri.query = URI.encode_www_form(params) unless params.empty?
     options = { public_only: false }
     options[:headers] = headers unless headers.empty?
-    response = BBS::HTTP.get(uri.to_s, **options)
+    response = Rubbs::Common::Web::HTTP.get(uri.to_s, **options)
     raise Error, "HTTP #{response.status} for #{path}" unless response.ok?
 
-    BBS::Text.utf8(response.body)
-  rescue BBS::HTTP::Error => e
+    Rubbs::Common::Text.utf8(response.body)
+  rescue Rubbs::Common::Web::HTTP::Error => e
     raise Error, "#{path}: #{e.message}"
   end
 

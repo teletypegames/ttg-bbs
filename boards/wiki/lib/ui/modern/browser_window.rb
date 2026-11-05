@@ -5,7 +5,7 @@ module UI
     # The browser: the page tree on the left, the picked page as markdown on
     # the right; a private page stays a notice but for a supervisor.
     module BrowserWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :browser, :master_detail do
         title 'Teletype Games Wiki'

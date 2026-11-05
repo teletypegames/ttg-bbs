@@ -3,7 +3,7 @@
 module UI
   # What both faces tell the caller about the index and the private pages,
   # and who may read those: an account of the network with the
-  # wiki-supervisor role (BBS::Auth, kept on TTG Gate BBS).
+  # wiki-supervisor role (Rubbs::Common::Auth, kept on TTG Gate BBS).
   module Wording
     SUPERVISOR  = 'wiki-supervisor'
     PUBLIC_HOST = 'wiki.teletypegames.org'
@@ -17,7 +17,7 @@ module UI
       web = "The wiki on the web: #{PUBLIC_HOST}."
       return web unless session.respond_to?(:petscii?) && session.petscii? && context[:started_at]
 
-      "On line #{BBS.duration(context[:started_at])}. #{web}"
+      "On line #{Rubbs.duration(context[:started_at])}. #{web}"
     end
 
     # Whether the caller may read the private pages: signed in with the

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require 'bbs/test'
+require 'rubbs/test'
 require_relative '../lib/ui/petscii'
 
 # The C64 face on a line without a socket: the page tree, the private pages
-# for the wiki-supervisor role (the accounts of BBS::Test.accounts) and the
+# for the wiki-supervisor role (the accounts of Rubbs::Test.accounts) and the
 # refresh.
 class PetsciiFaceTest < Minitest::Test
   Board = Struct.new(:wiki) do
@@ -32,12 +32,12 @@ class PetsciiFaceTest < Minitest::Test
     end
   end
 
-  def teardown = BBS.config.auth = nil
+  def teardown = Rubbs.config.auth = nil
 
   # The accounts of the network for the test, the board's login on them.
   def accounts
-    @accounts ||= BBS::Test.accounts(roles: %w[member]).tap do |directory|
-      BBS.config.auth = BBS::Auth::Setup.new(directory: directory, login: :menu, guests: true)
+    @accounts ||= Rubbs::Test.accounts(roles: %w[member]).tap do |directory|
+      Rubbs.config.auth = Rubbs::Common::Auth::Setup.new(directory: directory, login: :menu, guests: true)
     end
   end
 
@@ -48,9 +48,9 @@ class PetsciiFaceTest < Minitest::Test
   end
 
   def call(*keys, refresh: :refreshed, identity: nil)
-    session = BBS::Test::Session.new(keys: [:enter, *keys], petscii: true, identity: identity)
+    session = Rubbs::Test::Session.new(keys: [:enter, *keys], petscii: true, identity: identity)
     UI::Petscii.new(session, {}, Board.new(Wiki.new(refresh))).run
-    BBS::FrameBuffer.plain(session.output).gsub(/\s+/, ' ')
+    Rubbs::Modern::FrameBuffer.plain(session.output).gsub(/\s+/, ' ')
   end
 
   # Down to DOS, then its second line, GMENU (private), and back up: locked,

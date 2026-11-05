@@ -4,11 +4,11 @@ module UI
   module Modern
     # What the caller does on the modern face: the browser, the refresh, the
     # QR code of a page, and the private pages following who is on the line
-    # (Wiki > Profile, BBS::Auth).
+    # (Wiki > Profile, Rubbs::Common::Auth).
     module Helpers
       include Wording
 
-      # The caller's profile (BBS::Auth::Profile) on the bare line; then the
+      # The caller's profile (Rubbs::Common::Auth::Profile) on the bare line; then the
       # browser shows the pages anew, and an account without the
       # wiki-supervisor role is told the private pages stay locked.
       def own_profile

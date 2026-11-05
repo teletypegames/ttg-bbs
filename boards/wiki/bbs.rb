@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'bundler/setup'
-require 'bbs'
+require 'rubbs'
 require 'ttg/common'
 require_relative 'lib/domain'
 require_relative 'lib/ui/modern'
@@ -18,7 +18,7 @@ require_relative 'lib/ui/petscii'
 # TTG Gate BBS. The board asks the wiki for a private page body with its own
 # token (the X-Wiki-Token header, WIKI_BBS_SUPERVISOR_PASSWORD), only for a
 # supervisor and only for private pages (WikiRepository#page).
-BBS.board 'TTG Wiki BBS', WikiBBS, slug: 'wiki-bbs' do
+Rubbs.board 'TTG Wiki BBS', WikiBBS, slug: 'wiki-bbs' do
   preset TTG::PRESET
   auth TTG::AUTH, login: :menu
   modern do |bbs|

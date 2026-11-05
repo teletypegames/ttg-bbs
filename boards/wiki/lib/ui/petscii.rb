@@ -9,7 +9,7 @@ module UI
   # where the first line is the page itself; q goes back up. At the top S
   # unlocks the private pages (marked *) and R re-reads the index. A page
   # comes in screenfuls that wait for RETURN.
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     include Wording
 
     LOGO_COLORS = [CY, CY, LB, LB, BL].freeze
@@ -18,7 +18,7 @@ module UI
 
     masthead do
       gap
-      logo 'TTG WIKI', colors: LOGO_COLORS, glyphs: BBS::BlockFont::WIDE_W
+      logo 'TTG WIKI', colors: LOGO_COLORS, glyphs: Rubbs::Common::Text::BlockFont::WIDE_W
       gap
       line(color: WH) { " ttg wiki bbs#{LG}, the c64 side" }
       line(color: GR) { " #{wiki.pages.size} pages indexed" }
@@ -43,7 +43,7 @@ module UI
         when 'r' then refresh
         else enter(choice, parent)
         end
-      rescue BBS::Abort
+      rescue Rubbs::Common::Line::Abort
         next
       end
     end
@@ -113,7 +113,7 @@ module UI
       pause if qr(wiki_page.public_url)
     end
 
-    # The caller's profile (BBS::Auth::Profile: log in, a new account, the
+    # The caller's profile (Rubbs::Common::Auth::Profile: log in, a new account, the
     # password, log out); an account without the wiki-supervisor role is
     # told the private pages stay locked.
     def own_profile

@@ -14,8 +14,8 @@ class WikiService
 
   def initialize(
     repository,
-    caller_refreshes: BBS::RateLimit.new(limit: CALLER_REFRESHES, per: 60),
-    board_refreshes: BBS::RateLimit.new(limit: BOARD_REFRESHES, per: 60)
+    caller_refreshes: Rubbs::Common::Line::RateLimit.new(limit: CALLER_REFRESHES, per: 60),
+    board_refreshes: Rubbs::Common::Line::RateLimit.new(limit: BOARD_REFRESHES, per: 60)
   )
     @repository       = repository
     @pages            = []
@@ -31,18 +31,19 @@ class WikiService
     @pages = index(@repository.sitemap)
   end
 
-  # A caller's refresh (+caller_key+, BBS::RateLimit.caller_key): forgets the
+  # A caller's refresh (+caller_key+, Rubbs::Common::Line::RateLimit.caller_key): forgets the
   # cached pages and reads the index again. Returns :refreshed, :limited when
   # the caller or the board has refreshed too often this minute, or :failed
   # when the wiki does not answer.
   def refresh(caller_key)
-    return :limited unless BBS::RateLimit.allow_all?([[@caller_refreshes, caller_key], [@board_refreshes, :board]])
+    return :limited unless Rubbs::Common::Line::RateLimit.allow_all?([[@caller_refreshes, caller_key],
+                                                                      [@board_refreshes, :board]])
 
     @repository.clear_cache
     refresh_index!
     :refreshed
   rescue WikiRepository::Error => e
-    BBS.log('refresh', e)
+    Rubbs.log('refresh', e)
     :failed
   end
 
@@ -56,7 +57,7 @@ class WikiService
     else                  "# Not found\n\nNo wiki page at `#{page.route}`."
     end
   rescue WikiRepository::Error => e
-    BBS.log(page.route, e)
+    Rubbs.log(page.route, e)
     "# Error\n\nThe wiki did not answer for `#{page.route}`. Try again in a minute."
   end
 

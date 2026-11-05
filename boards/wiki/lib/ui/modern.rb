@@ -17,7 +17,7 @@ module UI
     KEYS  = ['Up/Down      pick a page', 'Tab          focus the reader', 'PgUp/PgDn    scroll',
              '*            supervisor only'].freeze
 
-    APP = BBS::Application.define do
+    APP = Rubbs::Modern::Application.define do
       theme :nortoncommander
       helpers { include Helpers }
 
