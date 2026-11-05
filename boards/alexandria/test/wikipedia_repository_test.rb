@@ -56,7 +56,7 @@ class WikipediaRepositoryTest < Minitest::Test
 
   def test_an_unknown_language_or_no_answer_raises
     assert_raises(ArgumentError) { wiki.serve { repository.article('Ada', lang: 'xx') } }
-    assert_raises(BBS::HTTP::Error) { FakeWikipedia.new(status: 500) { {} }.serve { repository.search('ada', lang: 'en') } }
+    assert_raises(Rubbs::Common::Web::HTTP::Error) { FakeWikipedia.new(status: 500) { {} }.serve { repository.search('ada', lang: 'en') } }
   end
 
   def test_a_request_names_the_board_and_asks_for_json

@@ -5,7 +5,7 @@ module UI
     # The search results: the titles on the left, the picked one's snippet
     # on the right; Enter opens the article.
     module ResultsWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :results, :master_detail do
         title      { "Search: #{query}" }

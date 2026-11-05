@@ -5,7 +5,7 @@ module UI
     # The desktop's title: the Pharos of Alexandria by the sea, its light
     # turning a quarter at every tick, and the board's name beside it. On a
     # screen too narrow for both only the name is left.
-    class Pharos < BBS::Widget
+    class Pharos < Rubbs::Modern::Widgets::Widget
       HEIGHT = 7
 
       TOWER = ['▄▀▄', '▐☼▌', '▄███▄', '▐█▀█▌', '▄█████▄', '▄██▀▀▀██▄'].freeze

@@ -4,7 +4,7 @@ module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen. A title typed at
   # the prompt is looked up, the results come as a numbered list, and an
   # article as its contents, each section paged a screenful at a time.
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     LOGO_COLORS = [CY, CY, LB, LB, BL].freeze
     LANGUAGES   = { 'en' => 'english', 'hu' => 'magyar', 'de' => 'deutsch' }.freeze
     NO_ANSWER   = 'Wikipedia did not answer. Try again later.'
@@ -25,7 +25,7 @@ module UI
       gap
       art PHAROS
       gap
-      logo 'ALEXANDRIA', colors: LOGO_COLORS, glyphs: BBS::BlockFont::NARROW_I
+      logo 'ALEXANDRIA', colors: LOGO_COLORS, glyphs: Rubbs::Common::Text::BlockFont::NARROW_I
       gap
       line 'wikipedia on your commodore', color: WH
     end
@@ -45,7 +45,7 @@ module UI
         query = ask_title
         next look_up(query) if query
         break if main_menu_choice == :log_off
-      rescue BBS::Abort
+      rescue Rubbs::Common::Line::Abort
         home
       end
     end

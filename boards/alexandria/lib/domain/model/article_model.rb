@@ -16,7 +16,7 @@ ArticleModel = Data.define(:title, :url, :lang, :sections, :redirected_from, :pa
       title:           title,
       url:             line(page['fullurl']),
       lang:            lang,
-      sections:        sections(title, BBS::Text.clean(page['extract'])),
+      sections:        sections(title, Rubbs::Common::Text.clean(page['extract'])),
       redirected_from: data.dig('query', 'redirects', 0, 'from')&.then { |from| line(from) },
       pageid:          page['pageid'].is_a?(Integer) ? page['pageid'] : nil
     )
@@ -28,8 +28,8 @@ ArticleModel = Data.define(:title, :url, :lang, :sections, :redirected_from, :pa
   def short_url = pageid ? "https://#{lang}.wikipedia.org/?curid=#{pageid}" : url
 
   def self.sections(title, extract)
-    BBS::MediaWiki::Extract.sections(title, extract).map { |name, text| SectionModel.new(name, text) }
+    Rubbs::Common::Web::MediaWiki::Extract.sections(title, extract).map { |name, text| SectionModel.new(name, text) }
   end
 
-  def self.line(text) = BBS::Text.line(text)
+  def self.line(text) = Rubbs::Common::Text.line(text)
 end

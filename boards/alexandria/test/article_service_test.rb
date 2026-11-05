@@ -46,7 +46,7 @@ class ArticleServiceTest < Minitest::Test
 
   # Wikipedia that never answers.
   class Silent
-    def article(*, **) = raise(BBS::HTTP::Error, 'Wikipedia answered 503')
+    def article(*, **) = raise(Rubbs::Common::Web::HTTP::Error, 'Wikipedia answered 503')
     alias search article
     alias random_title article
   end
@@ -58,6 +58,6 @@ class ArticleServiceTest < Minitest::Test
       assert_equal [nil, nil], silent.look_up('Ada', lang: 'en')
     end
     assert_equal 3, err.lines.size
-    assert_match(/: wikipedia: random: BBS::HTTP::Error: Wikipedia answered 503/, err)
+    assert_match(/: wikipedia: random: Rubbs::Common::Web::HTTP::Error: Wikipedia answered 503/, err)
   end
 end

@@ -51,8 +51,8 @@ class ArticleService
   # language is not one of the board's.
   def answer(what)
     yield
-  rescue BBS::HTTP::Error, ArgumentError => e
-    BBS.log('wikipedia', "#{what}: #{e.class}: #{e.message}")
+  rescue Rubbs::Common::Web::HTTP::Error, ArgumentError => e
+    Rubbs.log('wikipedia', "#{what}: #{e.class}: #{e.message}")
     nil
   end
 end

@@ -3,7 +3,7 @@
 # The board itself, whatever terminal a caller has: the article service
 # wired to the Wikipedias of ALEXANDRIA_BBS_LANGUAGES.
 class AlexandriaBBS
-  include BBS::Domain
+  include Rubbs::Common::Board::Domain
 
   setting :languages, %w[en hu]
 

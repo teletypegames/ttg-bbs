@@ -16,7 +16,7 @@ module UI
             "The text is Wikipedia's, under CC BY-SA; the address is under each article."
     HELP  = 'F2 search · F3 random article · F4 language · Alt-X log off'
 
-    APP = BBS::Application.define do
+    APP = Rubbs::Modern::Application.define do
       theme :synchronet
       helpers { include Helpers }
       init { context[:lang] ||= articles.languages.first }

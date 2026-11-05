@@ -5,7 +5,7 @@ module UI
     # An article: its sections on the left, the picked one as Markdown on the
     # right, the lead with the title it was redirected from.
     module ArticleWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :article, :master_detail do
         title      { article.title }
