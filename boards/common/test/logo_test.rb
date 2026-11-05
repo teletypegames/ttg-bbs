@@ -17,6 +17,6 @@ class LogoTest < Minitest::Test
   end
 
   def test_the_c64_drawing_fits_the_screen
-    assert TTG::Logo.art(:petscii).petscii.bytesize.positive?
+    assert Rubbs::Petscii::Art.bytes(TTG::Logo.art(:petscii)).bytesize.positive?
   end
 end
