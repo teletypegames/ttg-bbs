@@ -3,7 +3,7 @@
 # The board itself, whatever terminal a caller has: the catalog snapshot kept
 # fresh from Wikidata, and Memory Alpha to read.
 class StarbaseBBS
-  include BBS::Domain
+  include Rubbs::Common::Board::Domain
 
   SOURCE = 'Wikidata, https://www.wikidata.org (CC0 1.0)'
 
@@ -19,6 +19,6 @@ class StarbaseBBS
   private
 
   def snapshot
-    BBS::Snapshot.new(seed: catalog_seed, path: catalog_file, source: SOURCE) { |records| CatalogModel.from_records(records) }
+    Rubbs::Common::Storage::Snapshot.new(seed: catalog_seed, path: catalog_file, source: SOURCE) { |records| CatalogModel.from_records(records) }
   end
 end

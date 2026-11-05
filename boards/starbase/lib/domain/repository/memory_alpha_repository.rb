@@ -3,10 +3,10 @@
 require 'json'
 
 # Memory Alpha's Action API (memory-alpha.fandom.com, CC BY-NC), anonymously,
-# through rubbs' BBS::MediaWiki (three requests a second, all callers
+# through rubbs' Rubbs::Common::Web::MediaWiki (three requests a second, all callers
 # together): a full-text search, an article as plain text, a random title.
-# The answers are kept in a BBS::Cache, bounded in entries and in bytes (of
-# their JSON), for TTL seconds. Failures go up as BBS::HTTP::Error.
+# The answers are kept in a Rubbs::Common::Storage::Cache, bounded in entries and in bytes (of
+# their JSON), for TTL seconds. Failures go up as Rubbs::Common::Web::HTTP::Error.
 class MemoryAlphaRepository
   ENDPOINT     = 'https://memory-alpha.fandom.com/api.php'
   USER_AGENT   = WikidataRepository::USER_AGENT
@@ -16,9 +16,16 @@ class MemoryAlphaRepository
   CACHE_BYTES  = 24 * 1024 * 1024
   SEARCH_LIMIT = 30
 
-  def initialize(client: BBS::MediaWiki.new(endpoint: ENDPOINT, user_agent: USER_AGENT, name: 'Memory Alpha', rate: RATE))
+  def initialize(
+    client: Rubbs::Common::Web::MediaWiki.new(
+      endpoint:   ENDPOINT,
+      user_agent: USER_AGENT,
+      name:       'Memory Alpha',
+      rate:       RATE
+    )
+  )
     @client  = client
-    @answers = BBS::Cache.new(
+    @answers = Rubbs::Common::Storage::Cache.new(
       ttl:         TTL,
       max_entries: CACHE_SIZE,
       max_bytes:   CACHE_BYTES,
@@ -56,7 +63,7 @@ class MemoryAlphaRepository
   # A random article's title, or nil.
   def random_title
     data = @client.get(action: 'query', list: 'random', rnnamespace: 0, rnlimit: 1)
-    data.dig('query', 'random', 0, 'title')&.then { |title| BBS::Text.line(title) }
+    data.dig('query', 'random', 0, 'title')&.then { |title| Rubbs::Common::Text.line(title) }
   end
 
   private

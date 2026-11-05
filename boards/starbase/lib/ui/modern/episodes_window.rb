@@ -6,7 +6,7 @@ module UI
     # the left, the picked one's card on the right; Enter reads its Memory
     # Alpha article.
     module EpisodesWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :episodes, :master_detail do
         empty 'No episodes in the catalog.'

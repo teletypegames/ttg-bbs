@@ -5,7 +5,7 @@ module UI
     # The series and the films: the titles on the left, the picked one's
     # years and counts on the right; Enter opens its episodes.
     module SeriesWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :series, :master_detail do
         title 'Series'

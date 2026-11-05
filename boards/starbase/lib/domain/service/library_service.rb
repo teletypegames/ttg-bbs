@@ -50,8 +50,8 @@ class LibraryService
 
   def answer(what)
     yield
-  rescue BBS::HTTP::Error => e
-    BBS.log('memory-alpha', "#{what}: #{e.class}: #{e.message}")
+  rescue Rubbs::Common::Web::HTTP::Error => e
+    Rubbs.log('memory-alpha', "#{what}: #{e.class}: #{e.message}")
     nil
   end
 end

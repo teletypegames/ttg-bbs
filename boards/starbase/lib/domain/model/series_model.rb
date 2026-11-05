@@ -7,10 +7,10 @@ SeriesModel = Data.define(:id, :title, :start, :finish, :ma) do
   def self.from_record(record)
     new(
       id:     record['id'].to_s,
-      title:  BBS::Text.line(record['t']),
+      title:  Rubbs::Common::Text.line(record['t']),
       start:  record['s']&.to_i,
       finish: record['e']&.to_i,
-      ma:     record['ma']&.then { |title| BBS::Text.line(title) }
+      ma:     record['ma']&.then { |title| Rubbs::Common::Text.line(title) }
     )
   end
 

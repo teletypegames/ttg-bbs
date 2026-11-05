@@ -7,16 +7,16 @@ require 'bundler/setup'
 # catalog file, by default the seed that ships with the board:
 #   bin/refresh-catalog [path]          (default config/catalog.json.gz)
 # The running board refreshes its own copy in data/ by itself.
-require 'bbs'
+require 'rubbs'
 require_relative '../lib/domain'
 
 path    = ARGV.first || File.expand_path('../config/catalog.json.gz', __dir__)
 records = begin
   WikidataRepository.new.records
-rescue BBS::HTTP::Error => e
+rescue Rubbs::Common::Web::HTTP::Error => e
   abort "Wikidata did not answer (#{e.message}); nothing written"
 end
 abort 'Wikidata answered no episodes; nothing written' if records['episodes'].empty?
 
-BBS::Snapshot.write(path, records, Time.now.utc, source: StarbaseBBS::SOURCE)
+Rubbs::Common::Storage::Snapshot.write(path, records, Time.now.utc, source: StarbaseBBS::SOURCE)
 puts "#{records['series'].size} series, #{records['episodes'].size} episodes and films written to #{path}"

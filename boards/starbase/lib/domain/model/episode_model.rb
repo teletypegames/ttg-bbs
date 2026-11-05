@@ -21,7 +21,7 @@ EpisodeModel = Data.define(:id, :title, :series_id, :season, :number, :ordinal, 
     )
   end
 
-  def self.line(text) = BBS::Text.line(text)
+  def self.line(text) = Rubbs::Common::Text.line(text)
 
   def self.names(list) = Array(list).map { |name| line(name) }.reject(&:empty?).freeze
 

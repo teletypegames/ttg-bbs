@@ -3,12 +3,12 @@
 require 'uri'
 
 # The franchise's series, episodes and films from Wikidata (CC0), read with
-# rubbs' BBS::Wikidata: every item that is a Star Trek episode (Q61220733)
+# rubbs' Rubbs::Common::Web::Wikidata: every item that is a Star Trek episode (Q61220733)
 # with the series it is part of (P179), its season (P4908) and numbers, and
 # every film of the franchise (P8345 = Q1092) that is no episode and has a
 # Memory Alpha article. One query for the items, then one each for the
 # dates, the directors and the writers, merged here into the records of the
-# catalog file. Any failed query raises (BBS::HTTP::Error), so a refresh
+# catalog file. Any failed query raises (Rubbs::Common::Web::HTTP::Error), so a refresh
 # never leaves a half catalog.
 #
 # A record has short keys: series { id t s e ma }, episodes { id t se sn n o
@@ -39,7 +39,7 @@ class WikidataRepository
     SELECT ?item ?itemLabel ?ma WHERE { #{FILMS} #{ALPHA} #{LABELS} }
   SPARQL
 
-  def initialize(client: BBS::Wikidata.new(user_agent: USER_AGENT))
+  def initialize(client: Rubbs::Common::Web::Wikidata.new(user_agent: USER_AGENT))
     @client = client
   end
 
@@ -59,7 +59,7 @@ class WikidataRepository
   def items
     @client.select(ITEMS).each_with_object({}) do |row, all|
       record = entry(all, row) or next
-      record['se'] ||= BBS::Wikidata.qid(row['series'])
+      record['se'] ||= Rubbs::Common::Web::Wikidata.qid(row['series'])
       %w[ord o sn sn n n].each_slice(2) { |var, key| record[key] ||= number(row[var]) }
     end
   end
@@ -71,8 +71,8 @@ class WikidataRepository
   # The record of +row+'s item in +all+, made on first sight, with the
   # Memory Alpha title the row brings; nil for an item without a name.
   def entry(all, row)
-    id    = BBS::Wikidata.qid(row['item'])
-    title = BBS::Wikidata.text(row['itemLabel'])
+    id    = Rubbs::Common::Web::Wikidata.qid(row['item'])
+    title = Rubbs::Common::Web::Wikidata.text(row['itemLabel'])
     return nil if id.nil? || title.empty? || title.match?(/\AQ\d+\z/)
 
     record = all[id] ||= { 'id' => id, 't' => title }
@@ -91,7 +91,7 @@ class WikidataRepository
 
   def dates(all, items)
     @client.select("SELECT ?item ?date WHERE { #{items} ?item wdt:P577 ?date . }").each do |row|
-      record = all[BBS::Wikidata.qid(row['item'])]
+      record = all[Rubbs::Common::Web::Wikidata.qid(row['item'])]
       day    = row.dig('date', 'value').to_s[/\A\d{4}-\d\d-\d\d/]
       record['d'] = [record['d'], day].compact.min if record && day
     end
@@ -99,8 +99,8 @@ class WikidataRepository
 
   def people(all, items, key, property)
     @client.select("SELECT ?item ?v ?vLabel WHERE { #{items} ?item wdt:#{property} ?v . #{LABELS} }").each do |row|
-      record = all[BBS::Wikidata.qid(row['item'])]
-      name   = BBS::Wikidata.text(row['vLabel'])
+      record = all[Rubbs::Common::Web::Wikidata.qid(row['item'])]
+      name   = Rubbs::Common::Web::Wikidata.text(row['vLabel'])
       next if record.nil? || name.empty? || name.match?(/\AQ\d+\z/)
 
       list = record[key] ||= []
@@ -151,7 +151,7 @@ class WikidataRepository
     value = binding&.dig('value').to_s
     return nil unless value.start_with?('memory-alpha:')
 
-    BBS::Text.line(URI.decode_www_form_component(value.delete_prefix('memory-alpha:')).tr('_', ' '))
+    Rubbs::Common::Text.line(URI.decode_www_form_component(value.delete_prefix('memory-alpha:')).tr('_', ' '))
   end
 
   # Of two Memory Alpha titles, the one of the episode or film itself, else

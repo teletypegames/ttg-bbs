@@ -19,7 +19,7 @@ module UI
     TAGLINE = 'A Star Trek library: every series, every episode, and Memory Alpha to read.'
     HELP    = 'F2 series · F3 on this day · F4 library computer · F7 random article · Alt-X log off'
 
-    APP = BBS::Application.define do
+    APP = Rubbs::Modern::Application.define do
       theme :synchronet
       helpers { include Helpers }
 
@@ -32,7 +32,7 @@ module UI
       status { "#{catalog.size} episodes" }
 
       desktop do
-        art  BBS::BlockFont.half_blocks('STARBASE'), middle: -7
+        art  Rubbs::Common::Text::BlockFont.half_blocks('STARBASE'), middle: -7
         line TAGLINE, style: :text, middle: -3
         line HELP, middle: -1
         on_show { show(:series) }

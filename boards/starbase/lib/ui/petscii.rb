@@ -6,9 +6,9 @@ module UI
   # The library on a Commodore 64: PETSCII on a 40×25 screen, a cursor menu,
   # the series, their seasons and episodes as numbered lists, an episode's
   # card a page, and Memory Alpha's articles section by section.
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     LOGO_COLORS = [WH, LB, LB, CY, BL].freeze
-    LOGO_INDENT = [(COLS - BBS::BlockFont.width('STARBASE')) / 2, 0].max
+    LOGO_INDENT = [(COLS - Rubbs::Common::Text::BlockFont.width('STARBASE')) / 2, 0].max
     STARS       = "#{DG}  .    *        .     +     .     *   .#{LG}".freeze
     NO_ANSWER   = 'Memory Alpha did not answer. Try again later.'
     QR_COMMAND  = { 'c' => 'qr code' }.freeze
@@ -80,7 +80,7 @@ module UI
       lines = [" #{WH}#{episode.title}#{LG}", '', *Card.episode(episode, series).flat_map { |k, v| row(k, v) }]
       page(heading_of(series), lines, wait: false, room: 2)
       read_episode(episode) if actions(%w[r read], %w[q back]) == 'r'
-    rescue BBS::Abort
+    rescue Rubbs::Common::Line::Abort
       nil
     end
 

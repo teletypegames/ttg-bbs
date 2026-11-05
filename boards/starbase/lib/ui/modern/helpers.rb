@@ -49,7 +49,7 @@ module UI
       def card(rows, width)
         key_width = rows.map { |k, _| k.size }.max.to_i + 2
         rows.flat_map do |key, value|
-          lines = BBS::FrameBuffer.wrap_ansi(value.to_s, [width - key_width - 1, 10].max)
+          lines = Rubbs::Modern::FrameBuffer.wrap_ansi(value.to_s, [width - key_width - 1, 10].max)
           lines.each_with_index.map { |l, i| "#{dim((i.zero? ? key : '').ljust(key_width))}#{l}" }
         end
       end

@@ -11,18 +11,18 @@ ArticleModel = Data.define(:title, :url, :pageid, :sections, :redirected_from) d
     page = data.dig('query', 'pages', 0)
     return nil if page.nil? || page['missing'] || page['invalid'] || page['extract'].to_s.strip.empty?
 
-    title = BBS::Text.line(page['title'])
+    title = Rubbs::Common::Text.line(page['title'])
     new(
       title:           title,
-      url:             BBS::Text.line(page['fullurl']),
+      url:             Rubbs::Common::Text.line(page['fullurl']),
       pageid:          page['pageid'].is_a?(Integer) ? page['pageid'] : nil,
-      sections:        sections(title, BBS::Text.clean(page['extract'])),
-      redirected_from: data.dig('query', 'redirects', 0, 'from')&.then { |from| BBS::Text.line(from) }
+      sections:        sections(title, Rubbs::Common::Text.clean(page['extract'])),
+      redirected_from: data.dig('query', 'redirects', 0, 'from')&.then { |from| Rubbs::Common::Text.line(from) }
     )
   end
 
   def self.sections(title, extract)
-    BBS::MediaWiki::Extract.sections(title, extract, skip: ArticleModel::SKIP).map { |name, text| SectionModel.new(name, text) }
+    Rubbs::Common::Web::MediaWiki::Extract.sections(title, extract, skip: ArticleModel::SKIP).map { |name, text| SectionModel.new(name, text) }
   end
 
   # The shortest address of the article, for a QR code: by its page id

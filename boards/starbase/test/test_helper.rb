@@ -2,7 +2,7 @@
 
 require 'bundler/setup'
 require 'minitest/autorun'
-require 'bbs'
+require 'rubbs'
 require_relative '../lib/domain'
 
 # A catalog snapshot of a few records, without a file.
@@ -43,7 +43,7 @@ module Fixtures
     }
   end
 
-  # A BBS::Snapshot stand-in holding the records.
+  # A Rubbs::Common::Storage::Snapshot stand-in holding the records.
   Snapshot = Struct.new(:value, :generated_at)
 
   def catalog = CatalogService.new(Snapshot.new(CatalogModel.from_records(records), Time.now))

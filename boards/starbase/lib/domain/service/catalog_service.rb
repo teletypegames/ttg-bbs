@@ -10,7 +10,7 @@ class CatalogService
   WEEK  = 7 * 86_400
   CHECK = 3600
 
-  # +snapshot+ is a BBS::Snapshot of CatalogModel.
+  # +snapshot+ is a Rubbs::Common::Storage::Snapshot of CatalogModel.
   def initialize(snapshot, wikidata: nil, ttl: WEEK)
     @snapshot = snapshot
     @wikidata = wikidata

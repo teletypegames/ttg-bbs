@@ -36,7 +36,7 @@ class LibraryServiceTest < Minitest::Test
 
   # Memory Alpha that never answers.
   class Silent
-    def article(*) = raise(BBS::HTTP::Error, 'Memory Alpha answered 503')
+    def article(*) = raise(Rubbs::Common::Web::HTTP::Error, 'Memory Alpha answered 503')
     alias search article
     def random_title = article
   end
@@ -47,6 +47,6 @@ class LibraryServiceTest < Minitest::Test
       assert_nil silent.random
       assert_equal [nil, nil], silent.look_up('Data')
     end
-    assert_match(/memory-alpha: random: BBS::HTTP::Error: Memory Alpha answered 503/, err)
+    assert_match(/memory-alpha: random: Rubbs::Common::Web::HTTP::Error: Memory Alpha answered 503/, err)
   end
 end

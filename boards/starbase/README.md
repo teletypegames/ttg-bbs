@@ -13,7 +13,7 @@ It has two faces on one port, like every board of the network:
   with the picked one's card on the right, the library computer (a search of
   Memory Alpha) in a dialog, and an article with its sections on the left;
 - a **Commodore 64** one in PETSCII, 40×25: cursor menus of rubbs
-  (`BBS::Selector`: CRSR and RETURN, or the key or number), the series, their
+  (`Rubbs::Common::Screens::Selector`: CRSR and RETURN, or the key or number), the series, their
   seasons and episodes as numbered lists, an episode's card a page, an article
   as its contents and each section paged.
 
@@ -23,7 +23,7 @@ with Paramount; the board shows no scripts, transcripts or pictures.
 ## Where the data comes from
 
 - **The catalog** is [Wikidata](https://www.wikidata.org)'s, under CC0, read
-  with rubbs' `BBS::Wikidata`: every item that is a Star Trek episode
+  with rubbs' `Rubbs::Common::Web::Wikidata`: every item that is a Star Trek episode
   (Q61220733) with the series it is part of (P179), its season (P4908) and its
   numbers (P1545 qualifiers), the first date it aired (P577), its directors
   (P57) and screenwriters (P58); every film of the franchise (P8345 = Q1092)
@@ -35,16 +35,16 @@ with Paramount; the board shows no scripts, transcripts or pictures.
   reads Wikidata again in the background when its copy is a week old and keeps
   the new one in `data/`.
 - **The articles** are [Memory Alpha](https://memory-alpha.fandom.com)'s, under
-  CC BY-NC, read on demand from its Action API with rubbs' `BBS::MediaWiki`
+  CC BY-NC, read on demand from its Action API with rubbs' `Rubbs::Common::Web::MediaWiki`
   (three requests a second, all callers together) and kept for half an hour
-  in a `BBS::Cache`: the plain-text extract cut into its sections
-  (`BBS::MediaWiki::Extract`), without the links and references. An episode
+  in a `Rubbs::Common::Storage::Cache`: the plain-text extract cut into its sections
+  (`Rubbs::Common::Web::MediaWiki::Extract`), without the links and references. An episode
   opens the article Wikidata names, else the one of its title, else the first
   search hit for it. A typed title in another case ("data") opens its article
   too.
 
 Every article ends with its address and licence, and both faces can show the
-article's address as a QR code (rubbs' `BBS::QR`), by its page id
+article's address as a QR code (rubbs' `Rubbs::Common::Text::QR`), by its page id
 (`https://memory-alpha.fandom.com/?curid=…`), so it stays short.
 
 ## Using it
@@ -110,7 +110,7 @@ article model, the library's look-up. CI runs them before a deploy.
 ## Logs
 
 Every line on stderr starts with the log tag `starbase-bbs:` (rubbs'
-`BBS.log`): `starbase-bbs: catalog: …`, `starbase-bbs: memory-alpha: …`. The
+`Rubbs.log`): `starbase-bbs: catalog: …`, `starbase-bbs: memory-alpha: …`. The
 repositories let a failure go up; the services (and the refresh thread) log it
 once.
 
@@ -123,7 +123,7 @@ bin/refresh-catalog [path]     # a new seed from Wikidata (in a dev checkout)
 ## Project structure
 
 ```
-bbs.rb                      entry point: BBS.board (rubbs 2.0 DSL)
+bbs.rb                      entry point: Rubbs.board (rubbs 2.0 DSL)
 bin/refresh-catalog         writes the seed catalog from Wikidata
 config/catalog.json.gz      the seed catalog (Wikidata, CC0)
 lib/domain.rb               requires the domain in dependency order
@@ -134,19 +134,19 @@ lib/domain/
   model/section_model.rb    a section of an article
   model/search_result_model.rb  a search hit
   model/catalog_model.rb    the series and episodes of a catalog file
-  repository/wikidata_repository.rb       the SPARQL queries (BBS::Wikidata)
-  repository/memory_alpha_repository.rb   the Action API (BBS::MediaWiki), cached
+  repository/wikidata_repository.rb       the SPARQL queries (Rubbs::Common::Web::Wikidata)
+  repository/memory_alpha_repository.rb   the Action API (Rubbs::Common::Web::MediaWiki), cached
   service/catalog_service.rb              series, seasons, on this day, the refresh
-                                          (the catalog file is a BBS::Snapshot)
+                                          (the catalog file is a Rubbs::Common::Storage::Snapshot)
   service/library_service.rb              look-up, articles, an episode's article
-  starbase_bbs.rb           the composition root (StarbaseBBS, a BBS::Domain)
+  starbase_bbs.rb           the composition root (StarbaseBBS, a Rubbs::Common::Board::Domain)
 lib/ui/
   card.rb                   an episode's and a series' facts, both faces
   modern.rb                 UI::Modern::APP: commands, menus, help, desktop
   modern/helpers.rb         the windows it opens, the library, a card
   modern/series_window.rb, episodes_window.rb, results_window.rb,
-  modern/article_window.rb  one BBS::Part per window
-  petscii.rb                UI::Petscii: the C64 face (a BBS::Petscii::Face)
+  modern/article_window.rb  one Rubbs::Modern::Part per window
+  petscii.rb                UI::Petscii: the C64 face (a Rubbs::Petscii::Face)
 test/                       minitest tests of the domain
 Rakefile                    rake test
 ```
