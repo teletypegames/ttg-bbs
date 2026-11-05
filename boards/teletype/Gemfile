@@ -7,7 +7,7 @@ gem 'ttg-common', git: 'https://git.teletypegames.org/bbs/common.git'
 # Only the one-time import of the CSV files of earlier versions reads CSV.
 gem 'csv'
 gem 'net-ftp'
-gem 'sermo', git: 'https://git.teletypegames.org/bbs/sermo-bbs.git'
+
 
 group :development do
   gem 'minitest', '~> 5.25'

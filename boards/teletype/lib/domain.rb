@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'bbs'
-require 'sermo'
+require_relative 'sermo'
 require 'time'
 
 require_relative 'domain/migrations'
