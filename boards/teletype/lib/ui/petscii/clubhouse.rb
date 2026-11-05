@@ -3,12 +3,12 @@
 module UI
   class Petscii
     # The graphics screens of the C64 face: the clubhouse drawn in the
-    # uppercase/graphics set on a BBS::Petscii::Canvas (raw PETSCII, the
+    # uppercase/graphics set on a Rubbs::Petscii::Canvas (raw PETSCII, the
     # whole screen once, then only what changes), where the menus are the
     # rooms of the club. The reading screens (posts, letters, chat, the
     # Master) stay in the lowercase set of Screen; #text_mode switches back.
     module Clubhouse
-      C = BBS::Petscii::Canvas
+      C = Rubbs::Petscii::Canvas
 
       # The colour of each part of the board on the C64, the one most like
       # its accent on the modern face (UI::Modern::Accent).
@@ -171,7 +171,7 @@ module UI
         # Who is calling and what is going on, under the house.
         def live(canvas, scene, unread)
           mail = unread.positive? ? "  #{unread} NEW LETTER#{'S' unless unread == 1}" : ''
-          canvas.text(HOUSE_ROWS, 1, "HI #{BBS::Petscii.plain(@name).upcase[0, 14]}!", :white)
+          canvas.text(HOUSE_ROWS, 1, "HI #{Rubbs::Petscii.plain(@name).upcase[0, 14]}!", :white)
           inside = "#{scene.inside} INSIDE#{mail}"
           canvas.text(HOUSE_ROWS, 39 - inside.length, inside, unread.positive? ? :light_green : :yellow)
           next_event(canvas, scene.events.first) if scene.events.first
@@ -180,18 +180,18 @@ module UI
         def next_event(canvas, event)
           days  = ((event.date - Time.now) / 86_400).ceil
           when_ = days <= 0 ? 'TODAY' : "IN #{days} DAY#{'S' unless days == 1}"
-          what  = BBS::Petscii.plain(event.name).upcase[0, 38 - 6 - when_.length - 1]
+          what  = Rubbs::Petscii.plain(event.name).upcase[0, 38 - 6 - when_.length - 1]
           canvas.text(HOUSE_ROWS + 1, 1, 'NEXT:', :grey)
           canvas.text(HOUSE_ROWS + 1, 7, "#{what} #{when_}", :cyan)
         end
 
         def menu(canvas, lit, art, smoking)
           items = ROOMS.map do |key, label, section, about|
-            BBS::Selector.item(label, key: key, value: key, color: Clubhouse.color(section), about: about)
+            Rubbs::Common::Screens::Selector.item(label, key: key, value: key, color: Clubhouse.color(section), about: about)
           end
           index = items.index { |i| i.value == lit }
           puffs = 0
-          BBS::Petscii::CanvasMenu.new(
+          Rubbs::Petscii::CanvasMenu.new(
             @session,
             items,
             canvas:  canvas,
@@ -250,7 +250,7 @@ module UI
         def walk
           loop do
             key = @session.readkey
-            raise BBS::Hangup if key.nil?
+            raise Rubbs::Common::Line::Hangup if key.nil?
 
             key = key.downcase if key.is_a?(String)
             return nil if BACK.include?(key)
@@ -411,7 +411,7 @@ module UI
           door = chosen
           n = @scene.in_door(door.title)
           line(15, door.title.upcase, :orange)
-          words = BBS::FrameBuffer.wrap_ansi(BBS::Petscii.plain(door.about.to_s).upcase, 37).first(4)
+          words = Rubbs::Modern::FrameBuffer.wrap_ansi(Rubbs::Petscii.plain(door.about.to_s).upcase, 37).first(4)
           (16..19).each_with_index { |row, i| line(row, words[i].to_s, :light_grey) }
           line(20, n.zero? ? 'NOBODY INSIDE' : "#{n} INSIDE", :grey)
           line(21, door.c64? ? 'RETURN: STEP IN' : 'ON THE MODERN FACE ONLY', door.c64? ? :yellow : :dark_grey)
@@ -454,7 +454,7 @@ module UI
 
         def self.label(canvas, spot, text, color) = canvas.text(2 + spot.row, spot.col, text.center(spot.width), color)
 
-        def self.upper(name) = BBS::Petscii.plain(name).upcase
+        def self.upper(name) = Rubbs::Petscii.plain(name).upcase
       end
 
       # The card of a room, once a call before the room opens: its picture,
@@ -496,7 +496,7 @@ module UI
 
         def self.about(canvas, art, room)
           about = art.hotspot(:about)
-          BBS::FrameBuffer.wrap_ansi(ABOUT.fetch(room), about.width).first(about.height).each_with_index do |l, i|
+          Rubbs::Modern::FrameBuffer.wrap_ansi(ABOUT.fetch(room), about.width).first(about.height).each_with_index do |l, i|
             canvas.text(TOP + about.row + i, about.col, l, :light_grey)
           end
         end
@@ -524,9 +524,9 @@ module UI
         end
 
         def self.thanks(canvas, name, quote)
-          canvas.text(TOP + 14, 1, "THANKS FOR CALLING, #{BBS::Petscii.plain(name).upcase[0, 16]}!", :white)
+          canvas.text(TOP + 14, 1, "THANKS FOR CALLING, #{Rubbs::Petscii.plain(name).upcase[0, 16]}!", :white)
           text, who = quote
-          words = BBS::FrameBuffer.wrap_ansi(BBS::Petscii.plain("\"#{text}\"#{" - #{who}" if who}").upcase, 38)
+          words = Rubbs::Modern::FrameBuffer.wrap_ansi(Rubbs::Petscii.plain("\"#{text}\"#{" - #{who}" if who}").upcase, 38)
           words.first(3).each_with_index { |l, i| canvas.text(TOP + 16 + i, 1, l, :grey) }
         end
 

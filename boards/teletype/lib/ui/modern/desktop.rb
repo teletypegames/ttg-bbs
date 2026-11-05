@@ -42,7 +42,7 @@ module UI
     # running along the bottom. A terminal smaller than 80×23 leaves the
     # house out. The application gives it its Data on start and every few
     # seconds after, and steps the smoke and the wall once a second.
-    class Dashboard < BBS::Widget
+    class Dashboard < Rubbs::Modern::Widgets::Widget
       Data = Struct.new(:name, :registered, :caller_number, :node, :scene, keyword_init: true)
 
       W = "\e[0;38;5;231;48;5;16m"
@@ -129,7 +129,7 @@ module UI
       end
 
       def house_scene(art)
-        s = BBS::Widgets::Scene.new(art: art)
+        s = Rubbs::Modern::Widgets::Scene.new(art: art)
         (1..WINDOWS).each { |n| s.fill(:"node_#{n}") { |spot| window(art, spot, n) } }
         light_up(s, art)
         s.fill(:flag)   { |spot| flag(art, spot) if scene.mail.positive? }
@@ -183,7 +183,7 @@ module UI
         node = @data.node ? " · node #{@data.node}" : ''
         ["#{T}Welcome, #{Y}#{@data.name}#{T}#{node}", "#{D}the Teletype BBS clubhouse"].each_with_index do |line, i|
           frame.move(tx, y + i)
-          frame.write_ansi(BBS::FrameBuffer.clip_ansi(line, x + width - tx), base_sgr: T)
+          frame.write_ansi(Rubbs::Modern::FrameBuffer.clip_ansi(line, x + width - tx), base_sgr: T)
         end
       end
 
@@ -225,7 +225,7 @@ module UI
         )
         lines.first(box.height - 2).each_with_index do |line, i|
           frame.move(box.x + 2, box.y + 1 + i)
-          frame.write_ansi(BBS::FrameBuffer.clip_ansi(line, box.width - 4), base_sgr: T)
+          frame.write_ansi(Rubbs::Modern::FrameBuffer.clip_ansi(line, box.width - 4), base_sgr: T)
         end
       end
 

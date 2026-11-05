@@ -17,7 +17,7 @@ module UI
       reserved:    'This name is reserved for the sysop.',
       taken:       'This name is already registered.',
       look_alike:  'This name looks too much like a registered one.',
-      too_short:   "At least #{BBS::Auth::Directory::MIN_PASSWORD} characters.",
+      too_short:   "At least #{Rubbs::Common::Auth::Directory::MIN_PASSWORD} characters.",
       mismatch:    'The two passwords differ.',
       busy:        'The board is busy. Try again in a moment.',
       unavailable: 'Registering is not possible right now. Try again later.'

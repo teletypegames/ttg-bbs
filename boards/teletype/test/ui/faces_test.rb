@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../test_helper'
-require 'bbs/test'
+require 'rubbs/test'
 require 'ttg/common'
 require_relative '../../lib/ui/logo'
 require_relative '../../lib/ui/arts'
@@ -25,20 +25,20 @@ class FacesTest < Minitest::Test
 
   def setup
     @dir = Dir.mktmpdir('teletype-faces')
-    BBS.config.env_prefix = 'TELETYPE_BBS_'
+    Rubbs.config.env_prefix = 'TELETYPE_BBS_'
     ENV['TELETYPE_BBS_DB'] = File.join(@dir, 'teletype.sqlite3')
     @bbs = TeletypeBBS.new
     site = SiteService.new(Offline.new)
     @bbs.define_singleton_method(:site) { site }
-    BBS.config.board = @bbs
+    Rubbs.config.board = @bbs
     @context = { session_id: 's1', call_started: Time.now }
-    @kali = BBS::Auth::Identity.guest('Kali')
+    @kali = Rubbs::Common::Auth::Identity.guest('Kali')
     @bbs.start_call('s1', @kali, listed: true)
   end
 
   def teardown
     ENV.delete('TELETYPE_BBS_DB')
-    BBS.config.board = nil
+    Rubbs.config.board = nil
     FileUtils.rm_rf(@dir)
     super
   end
@@ -65,7 +65,7 @@ class FacesTest < Minitest::Test
   }.freeze
 
   def test_every_window_of_the_desktop_opens_and_draws
-    session = BBS::Test::Session.new(identity: @kali)
+    session = Rubbs::Test::Session.new(identity: @kali)
     app = UI::Modern::APP.build(session: session, session_id: 's1', context: @context)
     WINDOWS.each do |name, extras|
       window = app.show(name, **extras)
@@ -78,15 +78,15 @@ class FacesTest < Minitest::Test
   end
 
   def test_a_window_title_wears_its_section
-    app = UI::Modern::APP.build(session: BBS::Test::Session.new(identity: @kali), session_id: 's1', context: @context)
+    app = UI::Modern::APP.build(session: Rubbs::Test::Session.new(identity: @kali), session_id: 's1', context: @context)
     window = app.show(:messages)
     assert_equal '✉ Message Boards', window.title
     assert_equal UI::Modern::Accent::STYLES[:messages][:window_border], window.accent[:window_border]
   end
 
   def test_a_c64_call_runs_from_the_menu_to_the_goodbye
-    identity = BBS::Auth::Identity.guest('KALI')
-    session = BBS::Test::Session.new(keys: ['y', :enter, 'q', 'y'], petscii: true, identity: identity)
+    identity = Rubbs::Common::Auth::Identity.guest('KALI')
+    session = Rubbs::Test::Session.new(keys: ['y', :enter, 'q', 'y'], petscii: true, identity: identity)
     UI::Petscii.new(session, @context, @bbs).run
     assert_match(/thanks for calling, kali/i, session.output.scrub)
   end
@@ -97,7 +97,7 @@ class FacesTest < Minitest::Test
   end
 
   def test_a_signed_in_caller_goes_on_the_node_list
-    session = BBS::Test::Session.new(identity: account('Tasi', :sysop).with(source: :token))
+    session = Rubbs::Test::Session.new(identity: account('Tasi', :sysop).with(source: :token))
     assert_nil enter(session)
     assert_equal 'Tasi', @bbs.online.node('s2').name
     assert @bbs.online.node('s2').sysop
@@ -105,13 +105,13 @@ class FacesTest < Minitest::Test
   end
 
   def test_a_guest_comes_in_as_anonymous
-    assert_nil enter(BBS::Test::Session.new(identity: BBS::Auth::Identity.guest))
+    assert_nil enter(Rubbs::Test::Session.new(identity: Rubbs::Common::Auth::Identity.guest))
     assert_equal 'Anonymous', @bbs.online.node('s2').name
     refute @bbs.online.node('s2').sysop
   end
 
   def test_a_scanner_is_not_listed
-    assert_nil enter(BBS::Test::Session.new(identity: BBS::Auth::Identity.guest), listed: false)
+    assert_nil enter(Rubbs::Test::Session.new(identity: Rubbs::Common::Auth::Identity.guest), listed: false)
     assert_nil @bbs.online.node('s2')
   end
 
@@ -123,18 +123,18 @@ class FacesTest < Minitest::Test
 
   def test_the_sysop_items_are_for_the_sysop_role_only
     member = UI::Modern::APP.build(
-      session:    BBS::Test::Session.new(identity: account('Kali')),
+      session:    Rubbs::Test::Session.new(identity: account('Kali')),
       session_id: 's1',
       context:    @context
     )
     refute member.sysop?
     sysop = UI::Modern::APP.build(
-      session:    BBS::Test::Session.new(identity: account('Tasi', :sysop)),
+      session:    Rubbs::Test::Session.new(identity: account('Tasi', :sysop)),
       session_id: 's1',
       context:    @context
     )
     assert sysop.sysop?
-    c64 = UI::Petscii.new(BBS::Test::Session.new(petscii: true, identity: account('Ada', :sysop)), @context, @bbs)
+    c64 = UI::Petscii.new(Rubbs::Test::Session.new(petscii: true, identity: account('Ada', :sysop)), @context, @bbs)
     assert c64.sysop?
   end
 end

@@ -2,7 +2,7 @@
 
 module UI
   module Modern
-    # The methods the desktop (a BBS::Application) gets besides its own:
+    # The methods the desktop (a Rubbs::Modern::Application) gets besides its own:
     # what the menus, the status keys and the windows' buttons do.
     module Helpers
       # The rows of the screen the town map's window cannot have: the
@@ -184,7 +184,7 @@ module UI
           scene:         @scene
         )
       rescue StandardError => e
-        BBS.log('dashboard', e)
+        Rubbs.log('dashboard', e)
       end
 
       # Once a second: what the caller is doing, the room card; the

@@ -17,7 +17,7 @@ module UI
                  ['u', 'user listing', 'every registered name'], ['t', 'the team', 'the people of teletype games'],
                  ['q', 'back', 'to the main menu']]
         @people = menu(
-          items.map { |k, label, about| BBS::Selector.item(label, key: k, value: k, about: about) },
+          items.map { |k, label, about| Rubbs::Common::Screens::Selector.item(label, key: k, value: k, about: about) },
           index: items.index { |k, _| k == @people },
           back:  'q',
           hint:  'crsr: choose  return: open'
@@ -220,7 +220,7 @@ module UI
     end
 
     def register_result(result)
-      unless result.is_a?(BBS::Auth::Identity)
+      unless result.is_a?(Rubbs::Common::Auth::Identity)
         return "#{RD}#{Wording::REGISTER.fetch(result, Wording::REGISTER[:unavailable])}#{LG}"
       end
 

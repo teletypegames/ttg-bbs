@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 # The schema of the board's one SQLite file (data/teletype.sqlite3), one
-# step per version, counted in PRAGMA user_version (BBS::Database.migrate):
+# step per version, counted in PRAGMA user_version (Rubbs::Common::Storage::Database.migrate):
 # a step is never changed or reordered, a change of the schema is a new
 # step at the end. Besides these tables the file holds rubbs'
-# rate_limit_events, which BBS::RateLimit makes itself. Step 2 keeps the
-# members (MemberModel) once the accounts moved to the network (BBS::Auth);
+# rate_limit_events, which Rubbs::Common::Line::RateLimit makes itself. Step 2 keeps the
+# members (MemberModel) once the accounts moved to the network (Rubbs::Common::Auth);
 # the accounts table stays as it was, for TTG Gate BBS to import.
 MIGRATIONS = [
   <<~SQL,

@@ -3,7 +3,7 @@
 module UI
   class Petscii
     # Leaving the clubhouse: its lamps going out (Clubhouse::Leaving), or
-    # for the menu of text the C64's goodbye (BBS::Goodbye) with the
+    # for the menu of text the C64's goodbye (Rubbs::Common::Call::Goodbye) with the
     # caller's number and time on line, a quote, and where to find us.
     module Leaving
       def self.play(face)
@@ -18,7 +18,7 @@ module UI
       end
 
       def self.goodbye(screen, name, seconds, caller_number, quote)
-        BBS::Goodbye.petscii(screen, bar: "thanks for calling, #{name}") do |s|
+        Rubbs::Common::Call::Goodbye.petscii(screen, bar: "thanks for calling, #{name}") do |s|
           minutes = (seconds / 60).to_i
           s.puts " #{GR}caller ##{caller_number}, on line #{minutes.positive? ? "#{minutes}m" : "#{seconds.to_i}s"}#{LG}"
           s.puts

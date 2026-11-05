@@ -67,7 +67,7 @@ Copy `env-example` to `.env`:
 | Variable | Default | Description |
 |---|---|---|
 | `BBS_PORT` | `2323` | TCP port to listen on |
-| `RUBBS_AUTH_SECRET` | empty | The secret every board of the network shares (rubbs `BBS::Auth`): the accounts are asked of TTG Gate BBS on the `interstack` network, and a caller handed on by the gate comes in signed in. In `.env` on the server, never in the repository |
+| `RUBBS_AUTH_SECRET` | empty | The secret every board of the network shares (rubbs `Rubbs::Common::Auth`): the accounts are asked of TTG Gate BBS on the `interstack` network, and a caller handed on by the gate comes in signed in. In `.env` on the server, never in the repository |
 | `TELETYPE_BBS_DISCORD_WEBHOOK` | empty | Discord webhook for new board posts and sysop broadcasts; empty = off |
 | `TELETYPE_BBS_IRC_SERVER` | `irc.libera.chat` | IRC server of the read-only channel window (TLS); empty = off |
 | `TELETYPE_BBS_IRC_PORT` | `6697` | Its TLS port |
@@ -84,8 +84,8 @@ Copy `env-example` to `.env`:
 ## Log
 
 Every line on stderr (`docker logs teletype-bbs`) starts with the log tag
-`teletype-bbs:` (rubbs' `BBS.log`) and what it is about: `irc` (the
-connection to the channel, which runs as a `BBS.background` thread:
+`teletype-bbs:` (rubbs' `Rubbs.log`) and what it is about: `irc` (the
+connection to the channel, which runs as a `Rubbs.background` thread:
 reconnecting after a drop in 5 seconds, after errors with a pause doubled up
 to five minutes), `catalog`, `site events`, `site members`, `dev log`, `ftp`
 (a remote source failed: the repository raised, the service logged it and
@@ -99,7 +99,7 @@ A call starts with one question, before the name: which terminal is calling.
 The board guesses first: it waits up to 1.5 seconds for the telnet answers, and
 a terminal that reports a window wider than 40 columns is a modern one; 40
 columns, or no answer at all (a C64 behind a WiFi modem speaks plain TCP), is
-taken for a Commodore. The question is rubbs' `BBS::Terminal`, plain ASCII in
+taken for a Commodore. The question is rubbs' `Rubbs::Common::Call::Terminal`, plain ASCII in
 capitals, readable on both: `1` (or `M`) picks the modern face (ANSI/xterm, 256
 colours), `2` (or `C`) the C64 (PETSCII), and RETURN takes the pick, or the
 guess when nothing is picked.
@@ -192,9 +192,9 @@ statusbar while it is highlighted.
 - **Hall of Fame** (People) — the trophy case: a gold, a silver and a bronze cup for the first three of the top callers, the top posters and the TTG Trivia high scores, the names on the plates, the places after them under the case with fading bars (the old top lists under 80 columns). **User Listing** has the registered names with their calls, last call and location; **Your Stats** the caller's own numbers.
 - **Dev Log** — the public activity of every organisation on git.teletypegames.org (pushes with their commit messages, tags, releases, new repositories), newest first, read anonymously from the Gitea API, so private repositories never show.
 - **Team** — the members of teletypegames.org with their mottos.
-- **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `BBS::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
+- **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `Rubbs::Common::Call::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
 - **BBS Network** (Board > BBS Network, Help > Where are the games, files, wiki?, N on the C64) — the town map on the clubhouse wall: every board of the network a building in its bbsweb colour around the clubhouse (the town gate of TTG Gate BBS, the archive of the wiki, the great library of Alexandria, the news kiosk of Feedia, the printing press of the blog, the warehouse of WarpEngine, the scriptorium, the game shop of Commodex, the gallery of Pixelia, the dark alley of the Impostor, and on the fourth row of the town the starbase of Starbase BBS and the cave of HackerCave BBS). The arrows walk from building to building; under the map what the chosen one carries and how to walk over. On a screen shorter than the town the map scrolls to the chosen building (rubbs' `FrameBuffer#clip`). The list of the boards, with bbsweb and archive.teletypegames.org, is a bulletin. This board has no gateway doors: a caller goes to another board by calling it, or through TTG Gate BBS.
-- **Registered names** — the accounts are the network's (rubbs `BBS::Auth`, kept on TTG Gate BBS, asked through `TTG::AUTH`): one name and password on every board. The splash (rubbs' `BBS::Splash`, from `TTG::PRESET`) asks *Login | Register | Guest* and logs the caller in through rubbs' profile; a guest comes in as Anonymous, and a caller who dialled the board from the gate signed in walks past the question. A guest can also register later (You > Register…, S then R on the C64): the account is made on the gate. The limits on wrong passwords and the look-alike names (a Cyrillic а for an a, an l or a 1 for an i: `BBS::Auth::Names.skeleton`) are the gate's. `UI::Login` then puts the call on the board on both faces (a modern terminal that never reported its size is a scanner and is not listed). A caller who came in signed in is a member of the board (the `members` table: User Listing, *member since*, the spelling mail is addressed to). Profiles belong to registered names only. When the gate does not answer, a name comes in as a guest.
+- **Registered names** — the accounts are the network's (rubbs `Rubbs::Common::Auth`, kept on TTG Gate BBS, asked through `TTG::AUTH`): one name and password on every board. The splash (rubbs' `Rubbs::Common::Call::Splash`, from `TTG::PRESET`) asks *Login | Register | Guest* and logs the caller in through rubbs' profile; a guest comes in as Anonymous, and a caller who dialled the board from the gate signed in walks past the question. A guest can also register later (You > Register…, S then R on the C64): the account is made on the gate. The limits on wrong passwords and the look-alike names (a Cyrillic а for an a, an l or a 1 for an i: `Rubbs::Common::Auth::Names.skeleton`) are the gate's. `UI::Login` then puts the call on the board on both faces (a modern terminal that never reported its size is a scanner and is not listed). A caller who came in signed in is a member of the board (the `members` table: User Listing, *member since*, the spelling mail is addressed to). Profiles belong to registered names only. When the gate does not answer, a name comes in as a guest.
 - **Sysop console** — stats + broadcast, for an account with the **sysop** role (the domain checks it again for the broadcast).
 - **Feedback for the sysop** — a guest (a name without a password) may leave three letters a day, from a name and from a line, and all the guests together thirty.
 - **Discord feed** — new board posts and sysop broadcasts go to `TELETYPE_BBS_DISCORD_WEBHOOK`, mentions disabled.
@@ -208,18 +208,18 @@ statusbar while it is highlighted.
 The board as the C64 boards had it (`lib/ui/petscii`), on a C64 terminal program
 (CCGMS, StrikeTerm, SyncTERM in C64 mode), in two character sets. The
 **pictures** are drawn in the uppercase/graphics set on rubbs'
-`BBS::Petscii::Canvas`, raw PETSCII, the whole screen once and then only what
+`Rubbs::Petscii::Canvas`, raw PETSCII, the whole screen once and then only what
 changes: the main menu, the town map, the games
 room, the trophy case, the room cards and leaving. The **reading screens**
 (posts, letters, the chat, bulletins, the Master) stay in the lowercase set of
-`BBS::Petscii::Screen`; the board switches to it (`0x0e`) before each.
+`Rubbs::Petscii::Screen`; the board switches to it (`0x0e`) before each.
 
 The main menu is the clubhouse (`UI::Petscii::Clubhouse::MainMenu`): the house
 of the time of day, lit from the same scene as the modern face (a reversed
 yellow window for each node, the caller's white, the door, the smoke puffing
 while the live chat talks, the mailbox flag and the number of letters), who is
 calling and what comes next, and the rooms as a cursor menu on the picture
-(`BBS::Petscii::CanvasMenu`), each in the colour of its part of the board:
+(`Rubbs::Petscii::CanvasMenu`), each in the colour of its part of the board:
 
 ```
  TTG BBS CLUBHOUSE         NODE 2  21:47
@@ -269,9 +269,9 @@ Lists are numbered cursor menus: CRSR or the number typed lights one, RETURN
 opens it, CRSR left and right turn the pages, `Q` or `←` (RUN/STOP too) goes
 back. The keys under a post, a letter or the wall are a row the cursor moves
 along, their letters working as well. Long texts stop at every
-screenful. Every line is typed in a field of rubbs (`BBS::Field`: the cursor
+screenful. Every line is typed in a field of rubbs (`Rubbs::Common::Screens::Field`: the cursor
 keys move in it, DEL deletes, RETURN ends it, RUN/STOP or `←` goes back);
-posts and letters are written in its full-screen editor (`BBS::Editor`):
+posts and letters are written in its full-screen editor (`Rubbs::Common::Screens::Editor`):
 RUN/STOP or `←`, then `S` sends them, `Q` drops them. In
 the live chat the others' lines show up above the one being typed. Bulletins
 are the same Markdown, rendered 38 columns wide. Mail rings when it arrives
@@ -308,7 +308,7 @@ outside world, and the town map is static.
 | Help > Ask the TTG Master | the bar (T) | — |
 | Log off | leaving (Q) | the lamps go out, the coat ticket with the time on line |
 
-**The pictures** are `BBS::Art` YAML (rubbs 0.30): a grid of characters, a
+**The pictures** are `Rubbs::Common::Art` YAML (rubbs 0.30): a grid of characters, a
 grid of palette letters, optional backgrounds (cp437) or reversed cells
 (PETSCII), and hotspots, the cells the board fills from its data. Each is drawn
 twice, separately for each machine, under `lib/content/art/`: `modern/` in code
@@ -326,7 +326,7 @@ uppercase/graphics set, 40 wide. `UI::Arts` loads and keeps them.
 | the room cards | `card_{cork,mailbox,sofa,notice,workshop,guestbook}.yml` 80×5 | the same, 40×6 |
 | leaving | `leaving.yml` 80×14 + `leaving_out_1..4.yml` | `leaving.yml` 40×13 + `leaving_out_1..4.yml` |
 
-The time of day and the layers come from `BBS::Season` (Budapest): snow from
+The time of day and the layers come from `Rubbs::Common::Season` (Budapest): snow from
 December to February, pumpkins on 24–31 October, fireworks on 31 December and
 New Year's night, bunting on the days of a game jam (an event of the site with
 *jam* in its name, `SiteService#jam`). A layer is drawn for each time of day,
@@ -372,7 +372,7 @@ lib/
                                        reader of the environment
   domain/teletype_doors.rb             the doors (DoorModel), in menu order
   domain/migrations.rb                 the schema of the SQLite file (MIGRATIONS)
-  domain/model/                        a BBS::Model (Sequel) for each table, its
+  domain/model/                        a Rubbs::Common::Storage::Model (Sequel) for each table, its
                                        queries as class methods:
     member_model.rb                    the members: callers who came in signed in
     account_model.rb                   the board's own accounts of before (read by the gate's import)
@@ -393,7 +393,7 @@ lib/
     ftp_repository.rb                  anonymous FTP: the file sizes of a folder
     gitea_repository.rb                public activity of the Gitea organisations
     network_repository.rb              the town map's boards (content/network.yml)
-    http_json.rb                       JSON GET (BBS::HTTP) + BBS::Cache
+    http_json.rb                       JSON GET (Rubbs::Common::Web::HTTP) + Rubbs::Common::Storage::Cache
   domain/service/
     online_service.rb, board_service.rb, games_service.rb,
     chat_service.rb, irc_relay.rb, last_callers_service.rb,
@@ -401,7 +401,7 @@ lib/
     oneliner_service.rb, warp_sizes.rb, dev_log_service.rb,
     discord_notifier.rb, mail_service.rb, voting_service.rb,
     tagline_service.rb, network_service.rb
-    throttle.rb                        a limit by name and by line (BBS::RateLimit,
+    throttle.rb                        a limit by name and by line (Rubbs::Common::Line::RateLimit,
                                        kept in the database)
     remote.rb                          a failed remote source: logged, an empty answer
     tls_connect.rb                     TLS with a deadline (the IRC relay)
@@ -414,7 +414,7 @@ lib/
   doors/trivia.rb                      TTG Trivia
   content/                             polls.yml, trivia.yml, taglines.yml,
                                        bulletins/*.md, network.yml (the town map)
-  content/art/modern/, content/art/c64/ the clubhouse pictures (BBS::Art YAML)
+  content/art/modern/, content/art/c64/ the clubhouse pictures (Rubbs::Common::Art YAML)
   characters/                          Ra and the TTG Master: personas, riddles,
                                        the Master's knowledge (modern and C64),
                                        eval questions, the shared model client
@@ -424,9 +424,9 @@ lib/
   ui/modern.rb                         the modern face: the Application (rubbs 2.0 DSL)
   ui/modern/helpers.rb                 the desktop's own methods (menus, buttons, tick)
   ui/modern/section.rb                 a part of the board: its windows' colour and sign
-  ui/modern/windows/                   the windows, a BBS::Part per part of the board
+  ui/modern/windows/                   the windows, a Rubbs::Modern::Part per part of the board
   ui/modern/menus.rb                   the commands (F-keys) and the menubar
-  ui/logo.rb                           the board's logo (TTG BBS, BBS::BlockFont) for both faces
+  ui/logo.rb                           the board's logo (TTG BBS, Rubbs::Common::Text::BlockFont) for both faces
   ui/modern/desktop.rb                 the dashboard (the clubhouse from the street),
                                        the colours and icons of the menus
   ui/modern/rooms.rb                   picture windows: the town map, the games room
@@ -437,7 +437,7 @@ lib/
                                        dev log, the Master's quick questions
   ui/modern/classic_formatters.rb      nodes, mail, voting,
                                        bulletins, hall of fame
-  ui/petscii.rb                        the PETSCII face (BBS::Petscii::Face): the main menu
+  ui/petscii.rb                        the PETSCII face (Rubbs::Petscii::Face): the main menu
   ui/petscii/leaving.rb                its goodbye
   ui/petscii/clubhouse.rb              its pictures: the main menu, the town map,
                                        the games room, trophies, cards, leaving
@@ -448,7 +448,7 @@ lib/
   ui/petscii/people.rb
 bin/persona-eval                       count a character's slips over many runs
 test/                                  minitest: the domain, the start of a call, BASIC,
-                                       both faces on BBS::Test::Session
+                                       both faces on Rubbs::Test::Session
 Rakefile                               bundle exec rake test
 bin/c64-bytes                          the bytes of the C64 pictures on the line
 data/
@@ -457,7 +457,7 @@ data/
 
 ## Doors
 
-A door is one entry of `TeletypeBBS#doors` (`lib/domain/teletype_doors.rb`), a `BBS::Door`:
+A door is one entry of `TeletypeBBS#doors` (`lib/domain/teletype_doors.rb`), a `Rubbs::Common::Call::Door`:
 its name, the program, the label with its hotkey, the narrowest screen it
 draws for, optionally the same door drawn for 40 columns, and three texts:
 `tag` (a few words for the C64's list), `hint` (the statusbar line of its menu
@@ -468,7 +468,7 @@ lists them by itself under the Door Lobby; the PETSCII face offers the ones of
 
 Only the programs that live here are doors: SERMO, the Commodore 64 and
 Plus/4, Chat of Ra and TTG Trivia. The other boards of the network are no
-doors here (no `BBS::Gateway`): TTG Gate BBS dials them.
+doors here (no `Rubbs::Common::Line::Gateway`): TTG Gate BBS dials them.
 
 ```ruby
 DoorModel.new(:c64, Commodore.os(Commodore::C64, games: games, sizes: sizes),
@@ -477,7 +477,7 @@ DoorModel.new(:c64, Commodore.os(Commodore::C64, games: games, sizes: sizes),
               about: 'A Commodore 64 at its READY. prompt, with a small BASIC V2. …'),
 ```
 
-The program is a `BBS::FakeOS` definition, a `BBS::Flow` or a callable `(session, context)`.
+The program is a `Rubbs::Common::FakeOS` definition, a `Rubbs::Common::Call::Flow` or a callable `(session, context)`.
 rubbs runs it on a clean screen and rebuilds the BBS when it returns, with the
 same context, so the caller's session survives the trip.
 
@@ -531,7 +531,7 @@ The board needs `RUBBS_AUTH_SECRET`, the secret every board shares, in its `.env
 ## Characters
 
 Ra and the TTG Master talk through the shared model service (infra/llm,
-Qwen3.5 0.8B), with rubbs' `BBS::AI`. A model this small is good at a short
+Qwen3.5 0.8B), with rubbs' `Rubbs::Common::AI`. A model this small is good at a short
 reply in a voice and bad at facts, so the code keeps the facts:
 
 - **Personas** — `lib/characters/ra.yml` and `master.yml`: the system prompt,
@@ -590,7 +590,7 @@ Everything the callers leave is in one SQLite file, `data/teletype.sqlite3`
 (WAL mode). Its schema is
 `lib/domain/migrations.rb` (the steps are counted in `PRAGMA user_version`, so
 a step is never changed, only added), declared in `TeletypeBBS` with rubbs'
-`database` and read and written through a `BBS::Model` (Sequel) for each
+`database` and read and written through a `Rubbs::Common::Storage::Model` (Sequel) for each
 table in `lib/domain/model`, whose class methods are the queries: the
 caller numbers, a name's calls, the top callers and posters and the trivia
 hall of fame are aggregates, not loops over the whole history. The server's
@@ -609,7 +609,7 @@ bundle exec rake test
 ```
 
 Minitest, no network: the start of a call on a throwaway directory of accounts
-(`BBS::Test.accounts`: a caller signed in at the gate, a guest, a scanner),
+(`Rubbs::Test.accounts`: a caller signed in at the gate, a guest, a scanner),
 stepping through a door, registration, the sysop role, the rate limits of posts, mail, chat
 and oneliners, the sysop's broadcast, the SQL statistics, and the BASIC
 interpreter of the Commodore doors. CI runs them with RuboCop before a deploy.

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'bbs'
+require 'rubbs'
 require_relative 'commodore/basic'
 
 # The Commodore doors: a C64 and a Plus/4 at their READY. prompt, with a
@@ -50,7 +50,7 @@ module Commodore
   # A FakeOS definition for +machine+. +games+ is the catalog (GamesService),
   # +sizes+ the WarpSizes, for the size of each program on the disk.
   def self.os(machine, games:, sizes:)
-    BBS::FakeOS.define do
+    Rubbs::Common::FakeOS.define do
       name   machine.platform
       prompt ''
       colors machine.colors
@@ -188,7 +188,7 @@ module Commodore
 
     def print_line(text) = %(PRINT "#{text.delete('"')}")
 
-    def wrap(text) = BBS::FrameBuffer.wrap_ansi(text.to_s.tr('"', "'"), WIDTH - 2)
+    def wrap(text) = Rubbs::Modern::FrameBuffer.wrap_ansi(text.to_s.tr('"', "'"), WIDTH - 2)
 
     # ── the screen, 40 columns wide ────────────────────────────────────────
 
@@ -231,7 +231,7 @@ module Commodore
     def key_pressed?
       key = @io.session.readkey(timeout: 0)
       key != :idle
-    rescue *BBS::LINE_DROPPED
+    rescue *Rubbs::Common::Line::LINE_DROPPED
       true
     end
   end

@@ -73,7 +73,7 @@ def scene(at)
     guestbook: [],
     events:    [Event.new('Underwater Sun Rising - Implementation day', at + (30 * 86_400))],
     oneliners: [],
-    season:    BBS::Season.now(at: at, jam: Date.new(2027, 1, 8)..Date.new(2027, 1, 10))
+    season:    Rubbs::Common::Season.now(at: at, jam: Date.new(2027, 1, 8)..Date.new(2027, 1, 10))
   )
 end
 
@@ -100,7 +100,7 @@ worst = DAYS.map do |label, day|
     line = Stub::Line.new(['q'])
     Clubhouse::MainMenu.new(Stub::Board.new(scene(at)), line, ctx).run(unread: 12)
     keep('menu', line.out.first) if label == 'no layer' && hour == 12
-    "#{BBS::Season.now(at: at).time_of_day} #{line.sizes.first}"
+    "#{Rubbs::Common::Season.now(at: at).time_of_day} #{line.sizes.first}"
   end
   puts "  #{label.ljust(16)} #{sizes.join('  ')}"
   sizes.map { |s| s.split.last.to_i }.max
@@ -111,7 +111,7 @@ at   = Time.new(2026, 11, 1, 12)
 line = Stub::Line.new([:down, :down, :right, :up, :left, 'q'])
 Clubhouse::MainMenu.new(Stub::Board.new(scene(at)), line, ctx).run(unread: 0)
 puts "  a move of the bar: #{line.sizes.drop(1).join(', ')}"
-canvas = BBS::Petscii::Canvas.new
+canvas = Rubbs::Petscii::Canvas.new
 art = Clubhouse.house(canvas, scene(at), node: 1, status: '')
 puffs = (1..4).map do |i|
   before = canvas.dup

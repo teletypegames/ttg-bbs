@@ -16,10 +16,10 @@ class SiteRepository
     @cache = HttpJson::Cache.new(ttl: TTL)
   end
 
-  # The events of the site. Raises BBS::HTTP::Error when the site fails.
+  # The events of the site. Raises Rubbs::Common::Web::HTTP::Error when the site fails.
   def events = @cache.fetch(:events) { HttpJson.get("#{API_URL}/events").filter_map { |e| event(e) } }
 
-  # The team. Raises BBS::HTTP::Error when the site fails.
+  # The team. Raises Rubbs::Common::Web::HTTP::Error when the site fails.
   def members
     @cache.fetch(:members) do
       HttpJson.get("#{API_URL}/members").map { |m| Member.new(m['nick'].to_s, m['realNick'].to_s, m['motto'].to_s) }

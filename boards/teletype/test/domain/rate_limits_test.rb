@@ -6,7 +6,7 @@ class RateLimitsTest < Minitest::Test
   include DatabaseCase
 
   def members
-    MemberModel.remember(BBS::Auth::Identity.new(id: 1, name: 'Kali'))
+    MemberModel.remember(Rubbs::Common::Auth::Identity.new(id: 1, name: 'Kali'))
     MemberService.new(directory: -> {})
   end
 

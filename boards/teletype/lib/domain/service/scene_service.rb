@@ -32,7 +32,7 @@ class SceneService
       guestbook: @last_callers.recent(3),
       events:    @site.upcoming_events(2),
       oneliners: @oneliners.recent(8),
-      season:    BBS::Season.now(at: at, jam: @site.jam(at.to_date))
+      season:    Rubbs::Common::Season.now(at: at, jam: @site.jam(at.to_date))
     )
   end
 

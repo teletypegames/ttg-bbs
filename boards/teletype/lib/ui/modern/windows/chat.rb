@@ -73,7 +73,7 @@ module UI
             Thread.new do
               master_says(replies, master.answer(question, context), width)
             rescue StandardError => e
-              BBS.log('TTG Master', e)
+              Rubbs.log('TTG Master', e)
             ensure
               context[:master_busy] = false
             end

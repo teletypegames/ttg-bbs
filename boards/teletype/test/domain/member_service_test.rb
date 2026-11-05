@@ -10,7 +10,7 @@ class MemberServiceTest < Minitest::Test
   def setup
     super
     accounts
-    @members = MemberService.new(directory: -> { BBS.config.auth&.directory })
+    @members = MemberService.new(directory: -> { Rubbs.config.auth&.directory })
   end
 
   def test_a_blank_or_malformed_name_is_anonymous

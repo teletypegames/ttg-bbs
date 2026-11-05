@@ -7,7 +7,7 @@
 # work on one instance of it, so a C64 caller and an ANSI caller see the same
 # nodes, boards, mail and chat.
 class TeletypeBBS
-  include BBS::Domain
+  include Rubbs::Common::Board::Domain
 
   STARTED_AT    = Time.now
   CONTENT_DIR   = File.expand_path('../content', __dir__)
@@ -94,16 +94,16 @@ class TeletypeBBS
 
   def llm = @llm ||= TeletypeBBS.llm(ENV)
 
-  # The accounts of the network (a BBS::Auth::Directory or Remote, from
+  # The accounts of the network (a Rubbs::Common::Auth::Directory or Remote, from
   # the board's +auth+), nil when the board has none.
-  def directory = BBS.config.auth&.directory
+  def directory = Rubbs.config.auth&.directory
 
-  # Whether +identity+ (a BBS::Auth::Identity) is a signed-in sysop.
+  # Whether +identity+ (a Rubbs::Common::Auth::Identity) is a signed-in sysop.
   def sysop?(identity) = identity.signed_in? && identity.role?(:sysop)
 
   # ── a call ────────────────────────────────────────────────────────────
 
-  # The caller of +identity+ (a BBS::Auth::Identity) is on the board: a
+  # The caller of +identity+ (a Rubbs::Common::Auth::Identity) is on the board: a
   # member when signed in, a node and a place among the last callers when
   # +listed+ (a scanner looks around unlisted), and the live chat.
   def start_call(session_id, identity, listed:)
@@ -123,7 +123,7 @@ class TeletypeBBS
     last_callers.finish(session_id)
   end
 
-  # The node of +session_id+ is behind +door+ (a BBS::Door) now: the games
+  # The node of +session_id+ is behind +door+ (a Rubbs::Common::Call::Door) now: the games
   # room's lamps and the Door Lobby count it.
   def enter_door(session_id, door, suffix = nil)
     online.activity(session_id, ["Door: #{door.label.delete('&')}", suffix].compact.join(' '))
@@ -174,7 +174,7 @@ class TeletypeBBS
   def sysop_broadcast(name, text, sysop:)
     return :forbidden unless sysop
 
-    line = BBS::Text.line(text)
+    line = Rubbs::Common::Text.line(text)
     return :empty if line.empty?
 
     chat.broadcast("[SYSOP] #{name}", line)
@@ -188,7 +188,7 @@ class TeletypeBBS
   def user_rows
     stats = last_callers.all_stats
     rows = members.names.map do |name|
-      [name, stats[BBS::Auth::Names.key(name)], profile.find(name)&.location, online.online?(name)]
+      [name, stats[Rubbs::Common::Auth::Names.key(name)], profile.find(name)&.location, online.online?(name)]
     end
     rows.sort_by { |_, st, _, _| -(st&.calls || 0) }
   end

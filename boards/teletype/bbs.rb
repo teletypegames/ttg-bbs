@@ -14,7 +14,7 @@ require_relative 'lib/ui/petscii'
 # BBS), and a caller handed on by the gate signed in walks past it; each
 # face closes with its lamps going out: that is its goodbye. A modern
 # terminal that never reported its size is a scanner, not listed.
-BBS.board 'Teletype BBS', TeletypeBBS do
+Rubbs.board 'Teletype BBS', TeletypeBBS do
   preset  TTG::PRESET
   auth    TTG::AUTH, login: :menu
   goodbye false

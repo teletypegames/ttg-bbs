@@ -20,7 +20,7 @@ class MailService
     @members  = members
     @throttle = Throttle.new(limit: 1, per: COOLDOWN, store: store, name: 'letter')
     @guest    = Throttle.new(limit: GUEST_DAILY, per: DAY, store: store, name: 'guest letter')
-    @guests   = BBS::RateLimit.new(limit: GUESTS_DAILY, per: DAY, store: store, name: store && 'guest letters')
+    @guests   = Rubbs::Common::Line::RateLimit.new(limit: GUESTS_DAILY, per: DAY, store: store, name: store && 'guest letters')
   end
 
   def boxes(username, sysop: false) = sysop ? [username, SYSOP] : [username]
@@ -44,7 +44,7 @@ class MailService
   # :ok, :anonymous, :unknown, :guest, :empty, :too_fast or :daily_limit.
   def send_letter(from, to, subject, body, registered:, caller_key:)
     target = recipient(to)
-    text   = BBS::Text.clean(body).strip
+    text   = Rubbs::Common::Text.clean(body).strip
     problem = problem(from, target, text, registered)
     return problem if problem
     return :too_fast unless @throttle.allow?(from, caller_key)
@@ -64,10 +64,12 @@ class MailService
     :empty if text.empty?
   end
 
-  def guest_may_write?(from, caller_key) = BBS::RateLimit.allow_all?([*@guest.checks(from, caller_key), [@guests, :guests]])
+  def guest_may_write?(from, caller_key)
+    Rubbs::Common::Line::RateLimit.allow_all?([*@guest.checks(from, caller_key), [@guests, :guests]])
+  end
 
   def title(subject)
-    text = BBS::Text.line(subject)
+    text = Rubbs::Common::Text.line(subject)
     text.empty? ? '(no subject)' : text[0, SUBJECT_MAX]
   end
 end

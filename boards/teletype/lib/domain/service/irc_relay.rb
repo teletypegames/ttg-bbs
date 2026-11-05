@@ -4,7 +4,7 @@ require_relative 'chat_service'
 require_relative 'tls_connect'
 
 # Listens on one IRC channel for the board under a fixed nick, read only: it
-# never speaks there. A BBS.background thread keeps the connection (TLS, PING
+# never speaks there. A Rubbs.background thread keeps the connection (TLS, PING
 # when the server is silent, reconnect with a growing pause) and puts every
 # channel message into a ChatService hub, so a session subscribes and drains
 # it like the Live Chat. With TELETYPE_BBS_IRC_PASSWORD the nick logs in with SASL.
@@ -35,7 +35,7 @@ class IrcRelay
   def enabled? = !@server.empty?
 
   def start
-    @thread ||= BBS.background('irc', every: RETRY, retry_after: RETRY, max_retry: MAX_RETRY) { session } if enabled?
+    @thread ||= Rubbs.background('irc', every: RETRY, retry_after: RETRY, max_retry: MAX_RETRY) { session } if enabled?
     self
   end
 
@@ -51,21 +51,21 @@ class IrcRelay
   # out: nothing from the channel reaches a terminal as an escape sequence.
   def self.clean(text)
     plain = text.to_s.gsub(/\x03(\d{1,2}(,\d{1,2})?)?/, '').gsub(/\x04(\h{6}(,\h{6})?)?/, '')
-    BBS::Text.line(plain)
+    Rubbs::Common::Text.line(plain)
   end
 
   private
 
   # One connection, until it drops. An error after STABLE seconds on line
   # is logged here and taken as a drop, so the next pause is short again;
-  # an earlier one goes to BBS.background, whose pause grows.
+  # an earlier one goes to Rubbs.background, whose pause grows.
   def session
     started = monotonic
     connection
   rescue StandardError => e
     raise if monotonic - started < STABLE
 
-    BBS.log('irc', e)
+    Rubbs.log('irc', e)
   ensure
     lost
   end
@@ -150,7 +150,7 @@ class IrcRelay
   end
 
   def sasl_failed(command)
-    BBS.log('irc', "SASL login failed (#{command})")
+    Rubbs.log('irc', "SASL login failed (#{command})")
     send_line('CAP END')
   end
 

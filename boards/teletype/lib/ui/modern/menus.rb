@@ -11,7 +11,7 @@ module UI
               'and the art have boards of their own: Board > BBS Network. Lost? F1 asks the TTG Master.'
       NETWORK = 'The town map: our other boards, the games and files, the wiki, the blog, the art'
 
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       command(
         :master,

@@ -18,7 +18,7 @@ class VotingService
       Poll.new(p['id'], p['title'] || p['question'], p['question'], options_for(p['options']))
     end
   rescue StandardError => e
-    BBS.log('polls', e)
+    Rubbs.log('polls', e)
     []
   end
 

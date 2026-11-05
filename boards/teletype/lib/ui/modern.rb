@@ -21,14 +21,14 @@ module UI
   # The board on a modern terminal (ANSI colours, UTF-8, a mouse): a
   # desktop of windows under a menubar, the clubhouse from the street on it.
   module Modern
-    APP = BBS::Application.define do
+    APP = Rubbs::Modern::Application.define do
       theme :neumanntronics
       helpers { include Helpers }
       init { count_mail }
       on_tick { tick }
       status(clock: :before) { status_text }
       doors { board.doors }
-      on_door { |door, context| BBS.config.board.enter_door(context[:session_id], door) }
+      on_door { |door, context| Rubbs.config.board.enter_door(context[:session_id], door) }
 
       desktop do
         widget(fill: true) { Dashboard.new }

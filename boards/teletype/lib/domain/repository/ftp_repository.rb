@@ -20,7 +20,7 @@ class FtpRepository
     @cache.fetch([:sizes, path]) do
       Net::FTP.open(@host, passive: true, open_timeout: 10, read_timeout: 15) do |ftp|
         ftp.login
-        ftp.mlsd(path).select { |e| e.facts['type'] == 'file' }.to_h { |e| [BBS::Text.clean(e.pathname), e.facts['size'].to_i] }
+        ftp.mlsd(path).select { |e| e.facts['type'] == 'file' }.to_h { |e| [Rubbs::Common::Text.clean(e.pathname), e.facts['size'].to_i] }
       end
     end
   end

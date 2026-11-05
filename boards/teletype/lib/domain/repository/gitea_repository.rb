@@ -24,7 +24,7 @@ class GiteaRepository
   end
 
   # The activities of every organisation, each feed read in a thread of
-  # its own. Raises BBS::HTTP::Error when the server fails.
+  # its own. Raises Rubbs::Common::Web::HTTP::Error when the server fails.
   def activities = @cache.fetch(:activities) { organisations.map { |org| Thread.new { feed(org) } }.flat_map(&:value) }
 
   def repo_url(repo) = "#{BASE_URL}/#{repo}"

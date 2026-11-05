@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# The board's members. The accounts are the network's (BBS::Auth, kept on
+# The board's members. The accounts are the network's (Rubbs::Common::Auth, kept on
 # TTG Gate BBS; the splash logs the caller in): +directory+ answers the
-# BBS::Auth::Directory (or Remote) of the board, nil when it has none. The
+# Rubbs::Common::Auth::Directory (or Remote) of the board, nil when it has none. The
 # callers who came in signed in are the board's members (MemberModel); a
 # blank or malformed name is ANONYMOUS.
 class MemberService
@@ -13,13 +13,13 @@ class MemberService
   end
 
   # +raw+ as a caller's name: trimmed, inner spaces single; ANONYMOUS when
-  # it is not one an account may have (BBS::Auth::Names.clean).
-  def self.normalize_name(raw) = BBS::Auth::Names.clean(raw) || ANONYMOUS
+  # it is not one an account may have (Rubbs::Common::Auth::Names.clean).
+  def self.normalize_name(raw) = Rubbs::Common::Auth::Names.clean(raw) || ANONYMOUS
 
   def names            = MemberModel.names
   def created_at(name) = MemberModel.named(name)&.created_at
 
-  # Remembers a signed-in +identity+ (a BBS::Auth::Identity) as a member.
+  # Remembers a signed-in +identity+ (a Rubbs::Common::Auth::Identity) as a member.
   def remember(identity)
     MemberModel.remember(identity) if identity.signed_in?
   end
@@ -33,13 +33,13 @@ class MemberService
   end
 
   # A new account of +name+ with +password+ (said twice): its
-  # BBS::Auth::Identity, remembered as a member, or why not (:anonymous and
-  # the answers of BBS::Auth::Directory#register, or :unavailable).
+  # Rubbs::Common::Auth::Identity, remembered as a member, or why not (:anonymous and
+  # the answers of Rubbs::Common::Auth::Directory#register, or :unavailable).
   def register(name, password, confirm)
     return :anonymous if name.to_s.casecmp?(ANONYMOUS)
 
     result = directory&.register(name, password, confirm) || :unavailable
-    remember(result) if result.is_a?(BBS::Auth::Identity)
+    remember(result) if result.is_a?(Rubbs::Common::Auth::Identity)
     result
   end
 

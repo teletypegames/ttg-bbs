@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'bbs'
+require 'rubbs'
 require 'time'
 require_relative 'oracle'
 
@@ -19,9 +19,9 @@ module Sermo
   # the `on_unknown` hook to Sermo::Oracle (the conversational core).
   #
   # This whole OS is data: to add another character-mode OS later (an earlier
-  # Sermo line, a DOS/NT terminal, …), write a new BBS::FakeOS.define block in
+  # Sermo line, a DOS/NT terminal, …), write a new Rubbs::Common::FakeOS.define block in
   # its own file — no engine changes needed.
-  OS = BBS::FakeOS.define do
+  OS = Rubbs::Common::FakeOS.define do
     name   'SERMO'
     prompt '> '
 
@@ -158,7 +158,7 @@ module Sermo
     # word-wrapped to the caller's terminal under the prefix.
     on_unknown do |input, io|
       io.newline
-      out = BBS::AI::Typewriter.new(io, prefix: 'ACP: ', style: :dim)
+      out = Rubbs::Common::AI::Typewriter.new(io, prefix: 'ACP: ', style: :dim)
       Sermo::Oracle.answer(input, io.ctx) { |piece| out.write(piece) }
       out.finish
     end

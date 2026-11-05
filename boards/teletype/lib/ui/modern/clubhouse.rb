@@ -46,7 +46,7 @@ module UI
         end
 
         def self.plain(session, seconds, caller_number)
-          BBS::Goodbye.modern(
+          Rubbs::Common::Call::Goodbye.modern(
             session,
             title: 'the Teletype BBS',
             note:  "Caller ##{Formatters.number(caller_number)}, " \

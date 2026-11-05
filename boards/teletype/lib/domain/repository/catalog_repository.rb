@@ -15,7 +15,7 @@ class CatalogRepository
     @cache = HttpJson::Cache.new(ttl: TTL)
   end
 
-  # Every game of the catalog. Raises BBS::HTTP::Error (or the error of a
+  # Every game of the catalog. Raises Rubbs::Common::Web::HTTP::Error (or the error of a
   # broken answer) when the site fails.
   def fetch = @cache.fetch(:all) { pages }
 

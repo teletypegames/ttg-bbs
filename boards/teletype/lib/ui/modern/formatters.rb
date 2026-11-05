@@ -82,7 +82,7 @@ module UI
         # Commit messages without their trailers (Co-Authored-By and the like).
         def self.message_lines(message, width)
           body = message.lines.grep_v(/\A[\w-]+-By: /).join.rstrip
-          body.split("\n").flat_map { |l| l.strip.empty? ? [''] : BBS::FrameBuffer.wrap_ansi(l, width - 6).map { |w| "    #{w}" } }
+          body.split("\n").flat_map { |l| l.strip.empty? ? [''] : Rubbs::Modern::FrameBuffer.wrap_ansi(l, width - 6).map { |w| "    #{w}" } }
         end
 
         def self.detail(activity, width, commit_url:, release_url:, repo_url:)
@@ -119,7 +119,7 @@ module UI
         def self.lines(who, text, cols, you: false)
           color = you ? "\e[1;36m" : "\e[1;33m"
           width = [cols - 14, 20].max
-          BBS::FrameBuffer.wrap_ansi("#{color}#{who}\e[0m: #{text}", width).map { |l| "  #{l}" } + ['']
+          Rubbs::Modern::FrameBuffer.wrap_ansi("#{color}#{who}\e[0m: #{text}", width).map { |l| "  #{l}" } + ['']
         end
       end
 
@@ -142,7 +142,7 @@ module UI
           return ['  (team list unavailable)'] if members.empty?
 
           members.flat_map do |m|
-            motto = BBS::FrameBuffer.wrap_ansi(m.motto, width).map { |l| "    #{l}" }
+            motto = Rubbs::Modern::FrameBuffer.wrap_ansi(m.motto, width).map { |l| "    #{l}" }
             ["  \e[1;33m#{m.nick}\e[0m  \e[2;37m#{m.real_nick}\e[0m", *motto, :spacer]
           end
         end
@@ -161,7 +161,7 @@ module UI
           [
             "  \e[0;38;5;16;48;5;209m#{bar}\e[0m",
             '',
-            *BBS::FrameBuffer.wrap_ansi(door.about.to_s, inner).map { |l| "  #{l}" },
+            *Rubbs::Modern::FrameBuffer.wrap_ansi(door.about.to_s, inner).map { |l| "  #{l}" },
             '',
             "  \e[2;37mscreen\e[0m   #{screen}",
             "  \e[2;37minside\e[0m   #{inside.zero? ? 'nobody right now' : "#{inside} caller#{'s' if inside != 1}"}",
@@ -220,9 +220,13 @@ module UI
         def self.message(msg, number, inner)
           stamp = msg.timestamp.to_s
           left  = "\e[0;38;5;78m##{number}\e[0m \e[1;33m#{msg.username}\e[0m"
-          pad   = [inner - BBS::FrameBuffer.visible_width(left) - stamp.length, 1].max
+          pad   = [inner - Rubbs::Modern::FrameBuffer.visible_width(left) - stamp.length, 1].max
           ["#{left}#{' ' * pad}\e[2;37m#{stamp}\e[0m",
-           *msg.text.to_s.split("\n").flat_map { |text| BBS::FrameBuffer.wrap_ansi(text, inner - 2).map { |l| "  #{l}" } }]
+           *msg.text.to_s.split("\n").flat_map { |text|
+             Rubbs::Modern::FrameBuffer.wrap_ansi(text, inner - 2).map { |l|
+               "  #{l}"
+             }
+           }]
         end
       end
 

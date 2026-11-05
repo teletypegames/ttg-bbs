@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'bbs'
+require 'rubbs'
 
 module Sermo
   # The ACP's conversational core — SERMO's second (analog-cognitive)
@@ -19,16 +19,16 @@ module Sermo
   # The thinking is done by a small local model behind an OpenAI-compatible
   # chat endpoint (llama.cpp's llama-server), named by SERMO_LLM_URL, with
   # SERMO_LLM_MODEL when the endpoint serves more than one model and
-  # SERMO_LLM_API_KEY when it asks for a key; rubbs' BBS::AI does the
+  # SERMO_LLM_API_KEY when it asks for a key; rubbs' Rubbs::Common::AI does the
   # talking. Without the model, or when it fails, the ACP falls back to the
   # canned replies.
   module Oracle
     PERSONA_PATH = ENV.fetch('SERMO_ACP_PERSONA', File.join(__dir__, 'acp.yml'))
-    PERSONA      = BBS::AI::Persona.load(PERSONA_PATH)
+    PERSONA      = Rubbs::Common::AI::Persona.load(PERSONA_PATH)
 
-    CHAT = BBS::AI::Chat.new(
+    CHAT = Rubbs::Common::AI::Chat.new(
       persona: PERSONA,
-      client:  BBS::AI::Client.new(
+      client:  Rubbs::Common::AI::Client.new(
         url:     ENV.fetch('SERMO_LLM_URL', ''),
         model:   ENV['SERMO_LLM_MODEL'],
         api_key: ENV['SERMO_LLM_API_KEY']

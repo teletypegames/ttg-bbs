@@ -6,7 +6,7 @@
 # (the mailbox flag) and new posts (notes on the cork board), how many sit
 # in each door (the lamps of the games room) and on the sofa (the live
 # chat), the last names in the guestbook, what is coming up, the wall, and
-# the time of day and season (BBS::Season) the pictures are drawn for.
+# the time of day and season (Rubbs::Common::Season) the pictures are drawn for.
 SceneModel = Struct.new(
   :nodes,
   :smoking,

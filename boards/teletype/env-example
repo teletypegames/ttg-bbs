@@ -17,6 +17,6 @@ SERMO_LLM_API_KEY=
 # The key of the BBS's own characters (Ra, the TTG Master); empty = SERMO's key.
 TELETYPE_BBS_LLM_API_KEY=
 
-# The accounts of the network (BBS::Auth, on TTG Gate BBS): the secret every board shares
+# The accounts of the network (Rubbs::Common::Auth, on TTG Gate BBS): the secret every board shares
 # (in .env on the server, never here); sysops are the accounts with the sysop role
 RUBBS_AUTH_SECRET=

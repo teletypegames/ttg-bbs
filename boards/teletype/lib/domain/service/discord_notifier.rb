@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'bbs/discord_webhook'
+require 'rubbs/common/web/discord_webhook'
 
 # Posts board messages and sysop broadcasts to a Discord webhook through
-# BBS::DiscordWebhook: in the background, so a slow webhook never stalls a
+# Rubbs::Common::Web::DiscordWebhook: in the background, so a slow webhook never stalls a
 # telnet session; nothing without a webhook URL; mentions off, so a caller
 # cannot ping @everyone from the BBS; and at most 20 posts in ten minutes,
 # however many callers post: the rest stay on the board only, so a crowd
@@ -12,7 +12,7 @@ class DiscordNotifier
   LIMIT = 300
 
   def initialize(webhook)
-    @hook = BBS::DiscordWebhook.new(webhook, label: 'Discord')
+    @hook = Rubbs::Common::Web::DiscordWebhook.new(webhook, label: 'Discord')
   end
 
   def enabled? = @hook.enabled?
@@ -36,9 +36,9 @@ class DiscordNotifier
 
   private
 
-  def clip(text) = escape(BBS::DiscordWebhook.clip(text, LIMIT))
+  def clip(text) = escape(Rubbs::Common::Web::DiscordWebhook.clip(text, LIMIT))
 
-  def escape(text) = BBS::DiscordWebhook.escape(text)
+  def escape(text) = Rubbs::Common::Web::DiscordWebhook.escape(text)
 
   def notify(content) = @hook.post(content)
 end

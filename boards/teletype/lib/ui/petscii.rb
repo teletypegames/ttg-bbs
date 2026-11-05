@@ -8,7 +8,7 @@ module UI
   # It works on the same TeletypeBBS as the modern face. A call: the logon
   # scans, the main menu (the clubhouse, or a menu of text) and what its
   # keys open, then leaving the clubhouse.
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     # Two rows of two sections, each with its colour: the keys of a section
     # and its bar wear it, so the eye finds the group first. Each item:
     # its key, its label and the line about it under the menu.
@@ -184,7 +184,7 @@ module UI
       left, right = MENU.transpose.map { |sections| sections.map { |section| section_cells(*section) } }
       rows = left.zip(right).map { |l, r| [l.size, r.size].max }
       [left, right].flat_map do |column|
-        column.each_with_index.flat_map { |cells, i| cells + Array.new(rows[i] - cells.size) { BBS::Selector.heading } }
+        column.each_with_index.flat_map { |cells, i| cells + Array.new(rows[i] - cells.size) { Rubbs::Common::Screens::Selector.heading } }
       end
     end
 
@@ -195,7 +195,7 @@ module UI
 
     # A section's name on a band of its colour.
     def band(title, color)
-      BBS::Selector.heading("#{color}#{RV} #{title} #{RO}#{DG} #{'─' * (MENU_WIDTH / 2)}")
+      Rubbs::Common::Screens::Selector.heading("#{color}#{RV} #{title} #{RO}#{DG} #{'─' * (MENU_WIDTH / 2)}")
     end
 
     def item(key, label, about, color)
@@ -203,7 +203,7 @@ module UI
         label = "#{label} #{GN}#{@unread}#{LG}"
         about = "#{@unread} new letter#{'s' unless @unread == 1}: #{about}"
       end
-      BBS::Selector.item(label, key: key, value: key, about: about, color: color)
+      Rubbs::Common::Screens::Selector.item(label, key: key, value: key, about: about, color: color)
     end
 
     # Who is calling and what is happening, over the menu: the caller and

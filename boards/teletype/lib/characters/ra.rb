@@ -7,12 +7,12 @@ require_relative 'llm'
 # riddles of the pyramid, which the code asks and checks, so a right answer
 # is always right.
 module Ra
-  PERSONA = BBS::AI::Persona.load(File.join(__dir__, 'ra.yml'))
+  PERSONA = Rubbs::Common::AI::Persona.load(File.join(__dir__, 'ra.yml'))
   RIDDLES = YAML.safe_load_file(File.join(__dir__, 'ra_riddles.yml')).freeze
   BLESSINGS = 3
 
   # Ra's voice: the model of +client+ (Characters.client) in Ra's persona.
-  def self.chat(client) = BBS::AI::Chat.new(persona: PERSONA, client: client, key: :ra_history, history: 2)
+  def self.chat(client) = Rubbs::Common::AI::Chat.new(persona: PERSONA, client: client, key: :ra_history, history: 2)
 
   GAME_WORDS = /\b(game|play|download|commodore|c64|plus.?4|version|catalog)\b/i
 

@@ -2,10 +2,10 @@
 
 module UI
   module Modern
-    # A room of the clubhouse as a window: a picture (BBS::Art) with places
+    # A room of the clubhouse as a window: a picture (Rubbs::Common::Art) with places
     # on it to choose with the arrows or the mouse, and a few lines about
     # the chosen one under it. The town map and the games room.
-    class PictureWindow < BBS::Window
+    class PictureWindow < Rubbs::Modern::Window
       # Opens +view+ (a PictureView) in a window titled +title+, in the
       # colour and with the sign of its +section+ of the board, in the
       # middle of +app+.
@@ -30,7 +30,7 @@ module UI
 
     # The picture and its places. A subclass gives #places (anything), the
     # #width and #height it draws in, #draw and #activate.
-    class PictureView < BBS::Widget
+    class PictureView < Rubbs::Modern::Widgets::Widget
       MOVES = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] }.freeze
 
       def initialize(**kw)
@@ -137,7 +137,7 @@ module UI
         @boards.each do |b|
           bx, by = at(b)
           @icons[b.id].draw(frame, x: x + bx, y: y + by)
-          color = BBS::Art.color(b.accent).ansi
+          color = Rubbs::Common::Art.color(b.accent).ansi
           sgr = b.equal?(chosen) ? "\e[0;1;38;5;16;48;5;#{color}m" : "\e[0;38;5;#{color}m"
           write(frame, x + bx - 3, y + by + 4, b.name.center(LABEL), sgr)
         end
@@ -145,7 +145,7 @@ module UI
 
       def info(frame, x, y)
         b     = chosen
-        color = BBS::Art.color(b.accent).ansi
+        color = Rubbs::Common::Art.color(b.accent).ansi
         write(frame, x, y, "#{b.name} · #{b.building}".ljust(width), "\e[0;1;38;5;#{color}m")
         write(frame, x, y + 1, b.about.ljust(width), "\e[0;38;5;252m")
         write(
@@ -241,7 +241,7 @@ module UI
 
       def info(frame, x, y)
         door = chosen
-        BBS::FrameBuffer.wrap_ansi(door.about.to_s, width).first(2).each_with_index do |line, i|
+        Rubbs::Modern::FrameBuffer.wrap_ansi(door.about.to_s, width).first(2).each_with_index do |line, i|
           write(frame, x, y + i, line.ljust(width), "\e[0;38;5;252m")
         end
         n = inside(door)

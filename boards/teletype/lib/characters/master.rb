@@ -16,11 +16,11 @@ class TtgMaster
     end.freeze
   end
 
-  PERSONA   = BBS::AI::Persona.load(File.join(__dir__, 'master.yml'))
+  PERSONA   = Rubbs::Common::AI::Persona.load(File.join(__dir__, 'master.yml'))
   KNOWLEDGE = knowledge('master_knowledge.yml')
   # The same sysop on the C64 board, where the way around is single keys.
   C64 = {
-    persona:   BBS::AI::Persona.load(File.join(__dir__, 'master_c64.yml')),
+    persona:   Rubbs::Common::AI::Persona.load(File.join(__dir__, 'master_c64.yml')),
     knowledge: knowledge('master_knowledge_c64.yml')
   }.freeze
   MAX_FACTS = 2
@@ -49,7 +49,7 @@ class TtgMaster
     @persona   = persona
     @knowledge = knowledge
     @catalog   = catalog
-    @chat      = BBS::AI::Chat.new(persona: persona, client: client, key: :master_history, history: 0)
+    @chat      = Rubbs::Common::AI::Chat.new(persona: persona, client: client, key: :master_history, history: 0)
   end
 
   MENU_PATH = %r{\b[A-Z][\w/-]*(?: [A-Z][\w/-]*)* > [A-Z0-9][\w/…-]*(?: [A-Z0-9][\w/…-]*)*}

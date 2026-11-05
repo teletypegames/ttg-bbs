@@ -31,7 +31,7 @@ module UI
         "#{seconds / 3600}h #{(seconds % 3600) / 60}m"
       end
 
-      def self.wrap(text, width) = BBS::FrameBuffer.wrap_ansi(text.to_s, [width, 10].max)
+      def self.wrap(text, width) = Rubbs::Modern::FrameBuffer.wrap_ansi(text.to_s, [width, 10].max)
 
       module Taglines
         # A quote of TaglineService, [text, who].

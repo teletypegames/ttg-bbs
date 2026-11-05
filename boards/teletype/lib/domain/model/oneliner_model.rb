@@ -3,7 +3,7 @@
 require 'time'
 
 # A line on the oneliners wall: one short line per caller, newest last.
-class OnelinerModel < BBS::Model
+class OnelinerModel < Rubbs::Common::Storage::Model
   table :oneliners
 
   def self.append(username, text) = create(timestamp: Time.now.iso8601, username: username, text: text)

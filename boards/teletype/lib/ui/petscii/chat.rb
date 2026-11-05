@@ -70,7 +70,7 @@ module UI
     end
 
     def chat_type(char, typed, prompt)
-      return typed if typed.length >= COLS - 4 - BBS::FrameBuffer.visible_width(prompt)
+      return typed if typed.length >= COLS - 4 - Rubbs::Modern::FrameBuffer.visible_width(prompt)
 
       write char
       typed + char

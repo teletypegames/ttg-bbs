@@ -24,7 +24,7 @@ module UI
             errors Wording::REGISTER
             on_submit do |values|
               result = members.register(caller_name, values[:password], values[:confirm])
-              next result unless result.is_a?(BBS::Auth::Identity)
+              next result unless result.is_a?(Rubbs::Common::Auth::Identity)
 
               session.identity = result
               message("#{result.name} is yours now.", title: 'Registered')

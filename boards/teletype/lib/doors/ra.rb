@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'bbs'
+require 'rubbs'
 require_relative '../characters/ra'
 
 # Chat of Ra: the caller is the worker sealed in the pyramid, and the sun
@@ -25,7 +25,7 @@ module Ra
           'GAME: the game of this story. EXIT: back to the BBS.'].freeze
 
   def self.os(games:, chat:)
-    BBS::FakeOS.define do
+    Rubbs::Common::FakeOS.define do
       name   'CHAT OF RA'
       prompt '☼ '
       colors text:   :yellow,
@@ -85,13 +85,13 @@ module Ra
 
   def self.talk(io, input, games, chat)
     io.newline
-    out = BBS::AI::Typewriter.new(io, prefix: 'RA: ', style: :bright)
+    out = Rubbs::Common::AI::Typewriter.new(io, prefix: 'RA: ', style: :bright)
     Ra.reply(input, io.ctx, games, chat) { |piece| out.write(piece) }
     out.finish
   end
 
   def self.speak(io, text)
-    out = BBS::AI::Typewriter.new(io, prefix: 'RA: ', style: :bright)
+    out = Rubbs::Common::AI::Typewriter.new(io, prefix: 'RA: ', style: :bright)
     out.write(text)
     out.finish
   end

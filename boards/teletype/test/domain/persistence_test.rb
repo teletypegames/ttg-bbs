@@ -20,8 +20,8 @@ class PersistenceTest < Minitest::Test
   end
 
   def test_a_failing_site_is_logged_and_shows_nothing
-    site = SiteService.new(Object.new.tap { |repo| def repo.members = raise(BBS::HTTP::Error, 'down') })
+    site = SiteService.new(Object.new.tap { |repo| def repo.members = raise(Rubbs::Common::Web::HTTP::Error, 'down') })
     _, err = capture_io { assert_empty site.members }
-    assert_match(/site members: BBS::HTTP::Error: down/, err)
+    assert_match(/site members: Rubbs::Common::Web::HTTP::Error: down/, err)
   end
 end

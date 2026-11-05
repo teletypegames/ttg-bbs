@@ -53,7 +53,7 @@ class BoardService
 
   # :ok, :empty, :unknown (no such board) or :too_fast.
   def post(board_id, username, text, caller_key:)
-    body = BBS::Text.clean(text).strip
+    body = Rubbs::Common::Text.clean(text).strip
     return :empty if body.empty?
     return :unknown unless board(board_id)
     return :too_fast unless @throttle.allow?(username, caller_key)

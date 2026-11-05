@@ -9,7 +9,7 @@ class TeletypeBBSTest < Minitest::Test
 
   def setup
     @dir = Dir.mktmpdir('teletype-bbs')
-    BBS.config.env_prefix = 'TELETYPE_BBS_'
+    Rubbs.config.env_prefix = 'TELETYPE_BBS_'
     ENV['TELETYPE_BBS_DB'] = File.join(@dir, 'teletype.sqlite3')
     @bbs = TeletypeBBS.new
   end
@@ -31,7 +31,7 @@ class TeletypeBBSTest < Minitest::Test
   def test_the_sysop_role_makes_a_sysop
     assert @bbs.sysop?(account('Tasi', :sysop))
     refute @bbs.sysop?(account('Kali'))
-    refute @bbs.sysop?(BBS::Auth::Identity.guest('Tasi'))
+    refute @bbs.sysop?(Rubbs::Common::Auth::Identity.guest('Tasi'))
   end
 
   def test_a_paged_sysop_is_on_line_with_the_role

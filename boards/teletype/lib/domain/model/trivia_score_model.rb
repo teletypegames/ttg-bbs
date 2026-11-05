@@ -3,14 +3,14 @@
 require 'time'
 
 # A finished game of TTG Trivia, for its hall of fame.
-class TriviaScoreModel < BBS::Model
+class TriviaScoreModel < Rubbs::Common::Storage::Model
   table :trivia_scores
 
   def self.add(username, points, correct)
     create(
       timestamp: Time.now.iso8601,
       username:  username,
-      user_key:  BBS::Auth::Names.key(username),
+      user_key:  Rubbs::Common::Auth::Names.key(username),
       points:    points,
       correct:   correct
     )

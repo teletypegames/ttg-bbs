@@ -2,11 +2,11 @@
 
 module UI
   module Modern
-    # A BBS::Part whose windows belong to a part of the board: the ones
+    # A Rubbs::Modern::Part whose windows belong to a part of the board: the ones
     # declared in <tt>section :messages do … end</tt> wear its colour on
     # their frame (Accent) and its sign before their title (Icon).
     module Section
-      include BBS::Part
+      include Rubbs::Modern::Part
 
       def section(name)
         @section = name
@@ -25,7 +25,7 @@ module UI
         end
       end
 
-      # The accent and the title sign of +section+ on the BBS::WindowSpec +spec+.
+      # The accent and the title sign of +section+ on the Rubbs::Modern::WindowSpec +spec+.
       def self.dress(spec, section)
         sign = Icon::SIGNS.fetch(section)
         spec.accent Accent::STYLES.fetch(section)

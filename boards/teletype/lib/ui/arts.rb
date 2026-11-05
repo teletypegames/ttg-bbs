@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  # The pictures of the clubhouse (BBS::Art YAML under lib/content/art),
+  # The pictures of the clubhouse (Rubbs::Common::Art YAML under lib/content/art),
   # one folder for each face: modern (code page 437, 256 colours) and c64
   # (the uppercase/graphics set). An art is read once, with each set of
   # layers stacked once, and kept.
@@ -16,11 +16,11 @@ module UI
     def self.load(face, name, layers = [])
       key = [face, name.to_s, layers.map(&:to_s)]
       @mutex.synchronize do
-        @cache[key] ||= BBS::Art.load(File.join(DIR, face.to_s, "#{name}.yml")).with(*layers)
+        @cache[key] ||= Rubbs::Common::Art.load(File.join(DIR, face.to_s, "#{name}.yml")).with(*layers)
       end
     end
 
-    # The clubhouse from the street for +season+ (a BBS::Season): the
+    # The clubhouse from the street for +season+ (a Rubbs::Common::Season): the
     # picture of its time of day (house_<time>) with the layers of its
     # season drawn for that time (snow_<time>, pumpkin_<time>, …).
     def self.house(face, season)
