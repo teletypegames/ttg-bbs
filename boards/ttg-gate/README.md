@@ -70,7 +70,7 @@ row flashes, the HANDSHAKE bar fills the hint bar, the line goes to the board.
 
 The screen goes out as raw PETSCII (`Session#write_raw`), past the encoder of
 rubbs, which speaks the lowercase set. Each change is drawn on a new
-`UI::Petscii::Canvas` (rubbs' `BBS::Petscii::Canvas`) and only the cells that
+`UI::Petscii::Canvas` (rubbs' `Rubbs::Petscii::Canvas`) and only the cells that
 differ from what the C64 shows go out, row by row (`UI::Petscii::Diff`), or the
 whole screen when that is shorter: a first screen is 0.95-1.15 KB, a step in a
 list 200-360 bytes, the focus moving between the sub-menu and a list about 150.
@@ -121,7 +121,7 @@ telnet localhost 2323      # directly (BBS_PORT)
 
 `env-example` lists them all.
 
-Every log line starts with the process's tag (rubbs' `BBS.log`, `log_tag`):
+Every log line starts with the process's tag (rubbs' `Rubbs.log`, `log_tag`):
 `ttg-gate-bbs:` for the gate, `ttg-gate-bbs-prober:` for the prober and the
 import, which run in the prober's container; then what it is about (`dial`,
 `probe`, `import`, `geoip`, `metrics` …). Our own boards are on the host
@@ -174,7 +174,7 @@ which has none, is taken for a C64.
 ## Accounts and the sysop's console
 
 The accounts of the network live here (`data/accounts.sqlite3`, rubbs
-`BBS::Auth`): the other boards ask the gate's accounts API on the `interstack`
+`Rubbs::Common::Auth`): the other boards ask the gate's accounts API on the `interstack`
 network (`http://ttg-gate-bbs:8090/auth`, signed with `RUBBS_AUTH_SECRET`), and a
 caller signed in here is signed in on the board the gate dials. The **PROFILE**
 tab (or `P`) opens the caller's profile (log in, make an account, change the
@@ -183,9 +183,9 @@ password).
 A caller with the `sysop` role finds **SysOp** in the profile, on either face:
 the **console**. It is the gate's own (`lib/ui/sysop.rb`, `lib/ui/modern/sysop/`,
 `lib/ui/petscii/sysop/`); rubbs only lends the place in the profile's menu
-(`BBS::Auth::Profile.extra`).
+(`Rubbs::Common::Auth::Profile.extra`).
 
-It looks and moves like the gate itself (both are rubbs' `BBS::Kit`): three
+It looks and moves like the gate itself (both are rubbs' kit, `Rubbs::Petscii::Kit` and `Rubbs::Modern::Kit`): three
 tabs, **CALLS**, **ACCOUNTS** and **LOG**, a row an item with the chosen one's
 details under the list, and the steps on the list.
 
@@ -272,12 +272,12 @@ PETSCII), and the SSH, web-only and dial-up entries are left out. The country of
 [DB-IP](https://db-ip.com)'s IP to Country Lite database (CC BY 4.0: "IP
 Geolocation by DB-IP"), our own copy downloaded monthly into `data/geoip/`.
 
-Every list is downloaded over https through `BBS::HTTP` (at most 32 MB, five
+Every list is downloaded over https through `Rubbs::Common::Web::HTTP` (at most 32 MB, five
 redirects, each to an http or https host on the public internet only) into a
 temporary file, not the memory (`to:`); from a zip only its directory and the
 member are read, and the member is inflated 64 KB at a time and stops at 16 MB;
 the DB-IP file is inflated line by line from its file, and every text field is
-cleaned of control and bidi characters (`BBS::Text.clean`) before it is stored,
+cleaned of control and bidi characters (`Rubbs::Common::Text.clean`) before it is stored,
 so a list cannot point the importer at the Docker network, fill the prober's
 memory, or draw on a caller's screen.
 
@@ -449,7 +449,7 @@ Only a board of the catalog can be dialled, by its page: there is no free
 (`Discovery::DialService`):
 
 - **Only the public internet.** The board's name is resolved once; every
-  address must be public (`BBS::Address.public?`: no private, loopback,
+  address must be public (`Rubbs::Common::Line::Address.public?`: no private, loopback,
   link-local, CGNAT, documentation, multicast or reserved range) and the port no
   well-known port of another service (`Address::SERVICE_PORTS`). The line goes
   to that address, never to the name again.
@@ -466,7 +466,7 @@ Only a board of the catalog can be dialled, by its page: there is no free
 - On the modern face a board made for a C64 only (PETSCII and no other
   encoding seen) asks first: it would be noise there. The C64 face dials
   PETSCII boards as they are, and plain ASCII ones (the `ascii` tag, no
-  `petscii`) through rubbs' translation (`BBS::Gateway` `translate:`, an
+  `petscii`) through rubbs' translation (`Rubbs::Common::Line::Gateway` `translate:`, an
   `AsciiBridge`): the board's text comes down as PETSCII in the C64's letter
   case, ANSI colours as C64 colours, CP437 line drawing as PETSCII glyphs, and
   the C64's keys go up as an ANSI terminal's; the board sees an `ANSI` terminal
@@ -556,23 +556,23 @@ lib/
   domain/service/directory_service.rb  the boards a caller can dial
   domain/ttg_gate_bbs.rb               the composition root (TTGGateBBS)
   ui/modern.rb                         the modern face: Own Servers | Global Discovery
-  ui/modern/style.rb                   the gate's look on rubbs' BBS::Kit::Modern: the logo, the tabs, the state marks
+  ui/modern/style.rb                   the gate's look on rubbs' Rubbs::Modern::Kit: the logo, the tabs, the state marks
   ui/modern/own_servers.rb             the dialing menu of our own boards on an ANSI terminal
   ui/modern/discovery/                 Global Discovery: home, menus, lists, the board page, search, sources
   ui/sysop.rb                          the sysop's console: its place in the profile, the steps both faces share
   ui/modern/sysop/                     the console on a modern terminal: its tabs, calls, accounts, the log
   ui/petscii/sysop/                    the console on a C64: its frame, calls, accounts, the log
   ui/petscii.rb                        the PETSCII face: the call, its node number, goodbye
-  ui/petscii/gate.rb                   one C64 call: rubbs' BBS::Kit::Petscii::Frame with the gate's places
+  ui/petscii/gate.rb                   one C64 call: rubbs' Rubbs::Petscii::Kit::Frame with the gate's places
   ui/petscii/gate/                     its places (Places), its calls (Dialing) and its find line (Input)
-  ui/petscii/chrome.rb                 the gate's BBS::Kit::Petscii::Chrome: the tabs, the sub-menu, the hotkeys
+  ui/petscii/chrome.rb                 the gate's Rubbs::Petscii::Kit::Chrome: the tabs, the sub-menu, the hotkeys
   ui/petscii/layout.rb                 Canvas and Layout of rubbs' kit (the 40×25 grid and its drawing helpers)
   ui/petscii/views/                    Own Servers, a list of boards, a menu, a board's page, Sources, text pages
   ui/colors.rb                         a board's accent on either face
-  ui/dial.rb                           hands the line to a board (BBS::Gateway), by the dial rules for the catalog
+  ui/dial.rb                           hands the line to a board (Rubbs::Common::Line::Gateway), by the dial rules for the catalog
   domain/discovery.rb                  requires Global Discovery
   domain/discovery/root.rb             its composition root (Discovery::Root)
-  domain/discovery/model/              a BBS::Model a table of the catalog (boards, sources, board_sources, probes,
+  domain/discovery/model/              a Rubbs::Common::Storage::Model a table of the catalog (boards, sources, board_sources, probes,
                                        board_state, tags, boards_fts, meta, dials, dial_refusals) and of the DB-IP file,
                                        their queries; a source record, a probe result, a listing, a board page, a search
   domain/discovery/parser/             one parser a list format

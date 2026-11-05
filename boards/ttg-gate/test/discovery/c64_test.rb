@@ -2,8 +2,8 @@
 
 require_relative 'test_helper'
 require_relative 'face_fixtures'
-require 'bbs'
-require 'bbs/test'
+require 'rubbs'
+require 'rubbs/test'
 require_relative '../../lib/domain'
 require_relative '../../lib/ui/petscii'
 
@@ -37,7 +37,7 @@ module Discovery
 
     def gate(keys: [], listings: nil)
       listings ||= Array.new(20) { |i| listing(format('Board %02d', i), %w[online flaky down unknown][i % 4]) }
-      @line = BBS::Test::Session.new(keys: keys, petscii: true)
+      @line = Rubbs::Test::Session.new(keys: keys, petscii: true)
       browse = Browse.new(listings, listings.to_h { |l| [l.id, page_of(l)] })
       UI::Petscii::Gate.new(@line, boards: own_boards, browse: browse, dials: nil)
     end

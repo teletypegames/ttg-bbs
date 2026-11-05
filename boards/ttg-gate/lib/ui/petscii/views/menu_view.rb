@@ -6,8 +6,8 @@ module UI
   module Petscii
     module Views
       # A menu in the content area: Browse and its axes (Software, Country,
-      # Network); rubbs' BBS::Kit::Petscii::MenuView.
-      MenuView = BBS::Kit::Petscii::MenuView
+      # Network); rubbs' Rubbs::Petscii::Kit::MenuView.
+      MenuView = Rubbs::Petscii::Kit::MenuView
     end
   end
 end

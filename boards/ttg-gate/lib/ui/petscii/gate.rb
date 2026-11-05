@@ -14,7 +14,7 @@ require_relative 'gate/input'
 
 module UI
   module Petscii
-    # One C64 call of the gate: rubbs' BBS::Kit::Petscii::Frame in the
+    # One C64 call of the gate: rubbs' Rubbs::Petscii::Kit::Frame in the
     # gate's Chrome. Our own boards on the OWN tab, Global Discovery's lists,
     # menus and pages on GLOBAL (its sub-menu under the tabs), the caller's
     # profile on PROFILE. CRSR up from the top of a list goes to the
@@ -22,7 +22,7 @@ module UI
     # cursor goes, PROFILE opens on RETURN, CRSR down goes back. A yellow
     # sign opens its place from anywhere (a view's own keys first: B on a
     # board's page is its banner). ← or RUN/STOP goes back, Q hangs up.
-    class Gate < BBS::Kit::Petscii::Frame
+    class Gate < Rubbs::Petscii::Kit::Frame
       include Places
       include Dialing
       include Input

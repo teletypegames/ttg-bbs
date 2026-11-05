@@ -3,7 +3,7 @@
 module Discovery
   # An IPv6 range of the country lookup file (GeoipRepository): its first
   # and last address as 16 bytes and its country code.
-  class GeoipV6Model < BBS::Model
+  class GeoipV6Model < Rubbs::Common::Storage::Model
     table :v6, database: :geoip
 
     # The country code of the range +address+ (16 bytes, binary) is in, or

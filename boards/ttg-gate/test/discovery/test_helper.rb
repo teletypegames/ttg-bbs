@@ -2,7 +2,7 @@
 
 require 'minitest/autorun'
 require 'tmpdir'
-require 'bbs/test'
+require 'rubbs/test'
 require_relative '../../lib/domain/discovery'
 
 module Discovery
@@ -31,11 +31,11 @@ module Discovery
 
     def config = @config ||= ConfigRepository.new(CONFIG)
 
-    # A catalog of its own (BBS::Test.database, the models bound to it), and
+    # A catalog of its own (Rubbs::Test.database, the models bound to it), and
     # a temporary folder for the other files, removed after the test.
     def database
       @tmp = Dir.mktmpdir('discovery-test')
-      @db  = BBS::Test.database(DISCOVERY_MIGRATIONS, name: Root::DATABASE)
+      @db  = Rubbs::Test.database(DISCOVERY_MIGRATIONS, name: Root::DATABASE)
       @db.transaction_mode = :immediate
       @db
     end

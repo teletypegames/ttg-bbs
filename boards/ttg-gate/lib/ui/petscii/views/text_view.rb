@@ -6,9 +6,9 @@ module UI
   module Petscii
     module Views
       # A page of text in the content area: the help, a message, or a question
-      # before a dial (BBS::Kit::Petscii::TextView, with the gate's hint
+      # before a dial (Rubbs::Petscii::Kit::TextView, with the gate's hint
       # bar).
-      class TextView < BBS::Kit::Petscii::TextView
+      class TextView < Rubbs::Petscii::Kit::TextView
         # The keys on the hint bar by default: back, and the two tabs.
         HINT = [['←', true], [' Back  ', false], ['O', true], [' Own  ', false], ['D', true], [' Discover', false]].freeze
 

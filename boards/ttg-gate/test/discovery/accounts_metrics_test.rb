@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'test_helper'
-require 'bbs/test'
+require 'rubbs/test'
 require_relative '../../lib/domain/service/accounts_metrics'
 
 # The accounts in numbers, as the textfile collector reads them.
@@ -19,7 +19,7 @@ class AccountsMetricsTest < Minitest::Test
   def test_the_file_is_written_whole
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'accounts.prom')
-      capture_io { BBS::Test.accounts.tap { |a| a.register('Ada', 'secret1') }.then { |a| AccountsMetrics.new(a, path).write } }
+      capture_io { Rubbs::Test.accounts.tap { |a| a.register('Ada', 'secret1') }.then { |a| AccountsMetrics.new(a, path).write } }
       assert_includes File.read(path), "ttg_bbs_accounts 1\n"
       refute File.exist?("#{path}.tmp")
     end

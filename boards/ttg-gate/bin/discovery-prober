@@ -13,7 +13,7 @@ require 'bundler/setup'
 require 'optparse'
 require_relative '../lib/domain/discovery'
 
-BBS.configure { |config| config.log_tag = 'ttg-gate-bbs-prober' }
+Rubbs.configure { |config| config.log_tag = 'ttg-gate-bbs-prober' }
 limit = nil
 concurrency = Discovery::ProberService::CONCURRENCY
 OptionParser.new do |o|
@@ -23,6 +23,6 @@ end.parse!
 
 stop = false
 %w[TERM INT].each { |signal| trap(signal) { stop = true } }
-BBS.log('prober', "starting, #{concurrency} at once#{", #{limit} calls" if limit}")
+Rubbs.log('prober', "starting, #{concurrency} at once#{", #{limit} calls" if limit}")
 Discovery::Root.new.prober(concurrency: concurrency).run(stop: -> { stop }, limit: limit)
-BBS.log('prober', 'stopped')
+Rubbs.log('prober', 'stopped')

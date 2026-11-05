@@ -36,10 +36,10 @@ module Discovery
       nil
     end
 
-    # Whether +ip+ is an address on the public internet: BBS::Address.public?,
+    # Whether +ip+ is an address on the public internet: Rubbs::Common::Line::Address.public?,
     # whose ranges hold every one this board blocked before, and the
     # documentation ranges besides.
-    def public?(ip) = BBS::Address.public?(ip)
+    def public?(ip) = Rubbs::Common::Line::Address.public?(ip)
 
     # Whether the Gate may call +ips+ (what a name resolved to) on +port+:
     # there is an address, every one is public, and the port is one.
@@ -54,11 +54,11 @@ module Discovery
       false
     end
 
-    # A field of a source: no control or bidi characters (BBS::Text.clean),
+    # A field of a source: no control or bidi characters (Rubbs::Common::Text.clean),
     # whitespace runs one space, trimmed, Unicode NFC; nil when empty. A
     # third-party list must not move the cursor or recolour a caller's screen.
     def text(value)
-      text = BBS::Text.clean(value).unicode_normalize(:nfc).gsub(/[[:space:]]+/, ' ').strip
+      text = Rubbs::Common::Text.clean(value).unicode_normalize(:nfc).gsub(/[[:space:]]+/, ' ').strip
       text.empty? ? nil : text
     end
   end

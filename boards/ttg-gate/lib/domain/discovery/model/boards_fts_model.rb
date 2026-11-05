@@ -3,7 +3,7 @@
 module Discovery
   # The full-text index of the boards (FTS5), a row a board by its id
   # (rowid): its name, sysop, location, software and host.
-  class BoardsFtsModel < BBS::Model
+  class BoardsFtsModel < Rubbs::Common::Storage::Model
     table :boards_fts, database: :discovery
 
     # Writes the row of board +board_id+: the name, sysop, location, the

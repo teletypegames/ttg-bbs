@@ -24,7 +24,7 @@ module UI
 
         def tab = :calls
 
-        def calls = BBS.calls
+        def calls = Rubbs.calls
 
         def body
           list = calls
@@ -37,7 +37,7 @@ module UI
         def row(call, lit)
           bg = lit ? SELECTED : ''
           "#{lit ? "#{bg}#{look.accent}▸" : ' '}#{bg} #{call.caller_name ? BOLD : DIM}#{fit(who(call), 24)}#{RESET}#{bg}  " \
-            "#{TEXT}#{fit(call.caller_ip.to_s, 18)}  #{DIM}#{fit(BBS.duration(call.started_at).to_s, 8)}" \
+            "#{TEXT}#{fit(call.caller_ip.to_s, 18)}  #{DIM}#{fit(Rubbs.duration(call.started_at).to_s, 8)}" \
             "#{fit(call.place.to_s, [width - 56, 0].max)}#{RESET}"
         end
 

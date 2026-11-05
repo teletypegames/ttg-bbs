@@ -5,7 +5,7 @@ require 'json'
 module Discovery
   # A board as one source lists it: the fields of its record (JSON), and
   # whether the source's last import still had it (+active+).
-  class BoardSourceModel < BBS::Model
+  class BoardSourceModel < Rubbs::Common::Storage::Model
     table :board_sources, database: :discovery
 
     # The rows of board +board_id+ as Hashes, +fields+ parsed (String keys).

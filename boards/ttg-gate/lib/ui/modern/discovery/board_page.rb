@@ -102,7 +102,7 @@ module UI
         end
 
         def tag_lines
-          tags = BBS::FrameBuffer.wrap_ansi(shown_tags.join(' · '), width - LABEL)
+          tags = Rubbs::Modern::FrameBuffer.wrap_ansi(shown_tags.join(' · '), width - LABEL)
           tags.first(2).each_with_index.map { |t, i| "#{DIM}#{fit(i.zero? ? 'Tags' : '', LABEL)}#{TEXT}#{t}#{RESET}" }
         end
 

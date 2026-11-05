@@ -3,7 +3,7 @@
 module UI
   module Petscii
     module Sysop
-      # The gate's last log lines (BBS::Log.recent), the newest at the
+      # The gate's last log lines (Rubbs::Common::Log.recent), the newest at the
       # bottom, a row each cut at the edge; redrawn every two seconds. CRSR
       # scrolls back, F keeps the warnings and errors, / the lines with a
       # word.
@@ -55,7 +55,7 @@ module UI
         private
 
         def entries
-          list = BBS::Log.recent
+          list = Rubbs::Common::Log.recent
           list = list.reject { |e| %i[debug info].include?(e.level) } if @serious
           list = list.select { |e| text(e).downcase.include?(@query.downcase) } if @query
           list

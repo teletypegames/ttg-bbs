@@ -2,7 +2,7 @@
 
 module UI
   module Modern
-    # The line a screen reads at its bottom (BBS::Kit::Modern::Prompt).
-    Prompt = BBS::Kit::Modern::Prompt
+    # The line a screen reads at its bottom (Rubbs::Modern::Kit::Prompt).
+    Prompt = Rubbs::Modern::Kit::Prompt
   end
 end

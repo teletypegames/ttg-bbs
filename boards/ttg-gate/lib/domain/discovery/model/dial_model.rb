@@ -3,7 +3,7 @@
 module Discovery
   # A dial of the Gate that went: its result, the seconds it was connected
   # and the bytes the board sent through the Gate (DialHistoryService).
-  class DialModel < BBS::Model
+  class DialModel < Rubbs::Common::Storage::Model
     table :dials, database: :discovery
 
     # The dials since +from+: [how many, their seconds on the line, the

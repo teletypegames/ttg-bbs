@@ -3,23 +3,23 @@
 module UI
   module Petscii
     # The sysop's console (UI::Sysop) on a Commodore 64, opened from SysOp
-    # in the caller's profile: a BBS::Kit::Petscii::Frame like the gate's
+    # in the caller's profile: a Rubbs::Petscii::Kit::Frame like the gate's
     # own screens, its tabs CALLS, ACCOUNTS and LOG. ← or RUN/STOP on the
     # first screen goes back to the profile.
     module Sysop
       # The console's frame: the tabs and their letters.
-      CHROME = BBS::Kit::Petscii::Chrome.new(
+      CHROME = Rubbs::Petscii::Kit::Chrome.new(
         title:   'SYSOP',
         places:  [[:calls, 'CALLS'], [:accounts, 'ACCOUNTS'], [:log, 'LOG']],
         hotkeys: { 'c' => :calls, 'a' => :accounts, 'l' => :log }
       )
 
       # Runs the console for the C64 caller on +session+ with +accounts+
-      # (the gate's BBS::Auth::Directory). Returns +nil+.
+      # (the gate's Rubbs::Common::Auth::Directory). Returns +nil+.
       def self.run(session, accounts) = Console.new(session, accounts).run
 
       # The runner of the console's tabs.
-      class Console < BBS::Kit::Petscii::Frame
+      class Console < Rubbs::Petscii::Kit::Frame
         # What a caller without the role sees.
         REFUSED = Views::TextView.new(
           'NO ENTRY',
@@ -44,7 +44,7 @@ module UI
         # Under the tabs: the calls and the accounts in numbers.
         def top_line(canvas)
           stats = @accounts.statistics
-          chrome.line(canvas, [[BBS.calls.size.to_s, Canvas::WHITE], [' on  ', Canvas::GREY],
+          chrome.line(canvas, [[Rubbs.calls.size.to_s, Canvas::WHITE], [' on  ', Canvas::GREY],
                                [stats[:accounts].to_s, Canvas::WHITE], [' accounts  ', Canvas::GREY],
                                [stats[:seen_day].to_s, Canvas::WHITE], [' today', Canvas::GREY]])
         end

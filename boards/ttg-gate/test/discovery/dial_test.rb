@@ -151,7 +151,7 @@ module Discovery
       assert_equal PUBLIC, call.ip
     end
 
-    # A stand-in for BBS::Gateway that keeps what it was built with.
+    # A stand-in for Rubbs::Common::Line::Gateway that keeps what it was built with.
     class Gateway
       attr_reader :options
 
@@ -168,7 +168,7 @@ module Discovery
         idle:     90,
         resolver: ->(_) { [PUBLIC] }
       )
-      BBS::Gateway.stub(:new, ->(**options) { gateway = Gateway.new(**options) }) do
+      Rubbs::Common::Line::Gateway.stub(:new, ->(**options) { gateway = Gateway.new(**options) }) do
         UI.dial_catalog(Object.new, dials, 'a', board, face: :modern)
       end
       assert_equal [PUBLIC, 23, 90], gateway.options.values_at(:host, :port, :idle)

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # The schemas of the board's SQLite files, each step counted in
-# PRAGMA user_version (BBS::Database.migrate).
+# PRAGMA user_version (Rubbs::Common::Storage::Database.migrate).
 #
 # Global Discovery's catalog (data/discovery.sqlite3) was made before it was
 # versioned: its tables were made on every open (CREATE ... IF NOT EXISTS)

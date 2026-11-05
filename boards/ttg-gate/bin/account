@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 # The accounts of the network from the server shell (they live here; see
-# BBS::Auth and TTG::Auth::ROLES):
+# Rubbs::Common::Auth and TTG::Auth::ROLES):
 #
 #   docker exec -it ttg-gate-bbs bin/account list
 #   docker exec -it ttg-gate-bbs bin/account password NAME     # sets it, makes the account when there is none
@@ -39,7 +39,7 @@ def accounts = @accounts ||= TTGGateBBS.new.tap(&:databases).accounts
 
 def import(options)
   bloggers = import_blog(Sequel.sqlite(options.fetch(:blog), readonly: true))
-  sysops   = options[:sysops].to_s.split(',').map { |name| BBS::Auth::Names.key(name) }
+  sysops   = options[:sysops].to_s.split(',').map { |name| Rubbs::Common::Auth::Names.key(name) }
   Sequel.sqlite(options.fetch(:teletype), readonly: true)[:accounts].order(:created_at).each do |row|
     import_member(row, sysops, bloggers)
   end
@@ -51,13 +51,13 @@ def import_blog(blog)
     accounts.import(user[:name], user[:password_digest], roles: %w[blogger member], id: user[:id], created_at: user[:created_at])
     puts "blog      #{user[:name]} (#{user[:id]})"
   end
-  blog[:users].select_map(:name).map { |name| BBS::Auth::Names.key(name) }
+  blog[:users].select_map(:name).map { |name| Rubbs::Common::Auth::Names.key(name) }
 end
 
 # One account of Teletype BBS.
 def import_member(row, sysops, bloggers)
   roles  = sysops.include?(row[:name_key]) ? %w[member sysop] : %w[member]
-  digest = BBS::Auth::Password.from_hex(row[:salt], row[:digest], iterations: 100_000)
+  digest = Rubbs::Common::Auth::Password.from_hex(row[:salt], row[:digest], iterations: 100_000)
   found  = accounts.import(row[:name], digest, roles: roles, created_at: row[:created_at])
   note   = bloggers.include?(row[:name_key]) ? '  (both: the blog account and password stay)' : ''
   puts "teletype  #{found.name} #{roles.join(',')}#{note}"

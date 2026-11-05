@@ -2,7 +2,7 @@
 
 module Discovery
   # A tag of a board (TagService): what a search and Browse find it by.
-  class TagModel < BBS::Model
+  class TagModel < Rubbs::Common::Storage::Model
     table :tags, database: :discovery
 
     # The tag of a board a source says is a PETSCII board.

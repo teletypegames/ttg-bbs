@@ -6,7 +6,7 @@ module UI
   # The sysop's console of the gate, on either face: the calls on the gate
   # (and hanging one up), the accounts of the network (roles, bans, a new
   # password) and the gate's log. It is the gate's own: rubbs only lends the
-  # place in the caller's profile (BBS::Auth::Profile.extra), where a caller
+  # place in the caller's profile (Rubbs::Common::Auth::Profile.extra), where a caller
   # with the +sysop+ role finds SysOp.
   module Sysop
     # The role that opens the console.
@@ -17,14 +17,14 @@ module UI
 
     # The calls on the gate of the account +name+.
     def self.calls_of(name)
-      key = BBS::Auth::Names.key(name)
-      BBS.calls.select { |call| call.caller_name && BBS::Auth::Names.key(call.caller_name) == key }
+      key = Rubbs::Common::Auth::Names.key(name)
+      Rubbs.calls.select { |call| call.caller_name && Rubbs::Common::Auth::Names.key(call.caller_name) == key }
     end
 
     # Hangs up +call+ for the sysop +by+, with a log line.
     def self.hang_up(call, by:)
       call.hang_up
-      BBS.log('sysop', 'hung up', by: by, user: call.caller_name, ip: call.caller_ip.to_s)
+      Rubbs.log('sysop', 'hung up', by: by, user: call.caller_name, ip: call.caller_ip.to_s)
     end
 
     # Hangs up the calls on the gate of the account +name+; how many.
@@ -41,18 +41,18 @@ module UI
     def self.new_password(accounts, name, by:)
       password = SecureRandom.alphanumeric(12)
       accounts.set_password(name, password)
-      BBS.log('sysop', 'new password', by: by, user: name)
+      Rubbs.log('sysop', 'new password', by: by, user: name)
       password
     end
 
     # Whether +sysop+ is about to act on their own account +name+ (no ban,
     # no taking their own sysop role).
-    def self.own?(name, sysop) = BBS::Auth::Names.key(name) == BBS::Auth::Names.key(sysop)
+    def self.own?(name, sysop) = Rubbs::Common::Auth::Names.key(name) == Rubbs::Common::Auth::Names.key(sysop)
 
     # Puts SysOp in the profile of every sysop of the gate: the console of
     # their face (UI::Modern::Sysop, UI::Petscii::Sysop) on +accounts+.
     def self.offer(accounts)
-      BBS::Auth::Profile.extra(:sysop, 'SysOp', hotkey: 's', if: ->(session) { allowed?(session) }) do |session|
+      Rubbs::Common::Auth::Profile.extra(:sysop, 'SysOp', hotkey: 's', if: ->(session) { allowed?(session) }) do |session|
         session.petscii? ? Petscii::Sysop.run(session, accounts) : Modern::Sysop.run(session, accounts)
       end
     end

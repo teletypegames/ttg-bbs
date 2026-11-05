@@ -2,12 +2,12 @@
 
 module UI
   module Modern
-    # The tabs of the modern face, rubbs' BBS::Kit::Modern::Tabs in the
+    # The tabs of the modern face, rubbs' Rubbs::Modern::Kit::Tabs in the
     # gate's look: our own boards and Global Discovery, each keeping its
     # place while the other is shown, and the caller's profile
-    # (BBS::Auth::Profile, with SysOp for a sysop), which takes the screen
+    # (Rubbs::Common::Auth::Profile, with SysOp for a sysop), which takes the screen
     # and brings the caller back to the tab they left.
-    class Gate < BBS::Kit::Modern::Tabs
+    class Gate < Rubbs::Modern::Kit::Tabs
       def initialize(session, bbs)
         super(
           session,
@@ -16,7 +16,7 @@ module UI
             own:       OwnServers.new(bbs.directory.boards),
             discovery: Discovery::Home.new(Discovery::Context.new(session: session, browse: bbs.browse, dials: bbs.dials))
           },
-          actions: { profile: ->(tabs) { tabs.hand_over { BBS::Auth::Profile.run(tabs.session) } } }
+          actions: { profile: ->(tabs) { tabs.hand_over { Rubbs::Common::Auth::Profile.run(tabs.session) } } }
         )
       end
 

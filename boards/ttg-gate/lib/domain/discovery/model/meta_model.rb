@@ -4,7 +4,7 @@ module Discovery
   # A value of the catalog by its key: when the first import ran
   # (started_at), the last one, and the running totals of the pruned dial
   # refusals.
-  class MetaModel < BBS::Model
+  class MetaModel < Rubbs::Common::Storage::Model
     table :meta, database: :discovery
 
     # The value of +key+ (a String), or nil.

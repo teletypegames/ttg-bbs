@@ -4,7 +4,7 @@ module Discovery
   # What the calls of a board add up to (StateRules, BannerAnalyzer, the
   # country), the row the Gate reads: its state and next call, where it
   # answered, its last banners and what the C64-style call found.
-  class BoardStateModel < BBS::Model
+  class BoardStateModel < Rubbs::Common::Storage::Model
     table :board_state, database: :discovery
 
     # The states of a board.

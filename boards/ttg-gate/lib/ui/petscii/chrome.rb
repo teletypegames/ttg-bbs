@@ -4,13 +4,13 @@ require_relative 'layout'
 
 module UI
   module Petscii
-    # The frame of the gate's C64 screens, rubbs' BBS::Kit::Petscii::Chrome
+    # The frame of the gate's C64 screens, rubbs' Rubbs::Petscii::Kit::Chrome
     # set up for the gate: the menu bar (TTG GATE, then OWN, GLOBAL and
     # PROFILE), Global Discovery's sub-menu under it, the hotkeys, and the
     # line under the tabs on Own Servers.
     module Chrome
       # The gate's chrome.
-      KIT = BBS::Kit::Petscii::Chrome.new(
+      KIT = Rubbs::Petscii::Kit::Chrome.new(
         title:    'TTG GATE',
         places:   [[:own, 'OWN'], [:discover, 'GLOBAL'], [:account, 'PROFILE']],
         menu:     [[:search, '/Find', 0], [:browse, 'Browse', 0], [:new, 'New', 0], [:random, 'Random', 0],
@@ -53,13 +53,13 @@ module UI
                           [' dials  ', Canvas::GREY], ['H', Canvas::YELLOW], [' Help', Canvas::GREY]])
       end
 
-      # The menu bar (BBS::Kit::Petscii::Chrome#bar).
+      # The menu bar (Rubbs::Petscii::Kit::Chrome#bar).
       def bar(canvas, active:, cursor: nil) = KIT.bar(canvas, active: active, cursor: cursor)
 
-      # The sub-menu (BBS::Kit::Petscii::Chrome#menu_bar).
+      # The sub-menu (Rubbs::Petscii::Kit::Chrome#menu_bar).
       def menu(canvas, lit:, focused:) = KIT.menu_bar(canvas, lit: lit, focused: focused)
 
-      # The hint bar (BBS::Kit::Petscii::Chrome#hint).
+      # The hint bar (Rubbs::Petscii::Kit::Chrome#hint).
       def hint(canvas, parts) = KIT.hint(canvas, parts)
     end
   end

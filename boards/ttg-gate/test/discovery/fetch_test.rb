@@ -52,16 +52,16 @@ module Discovery
       get = lambda do |url, to:, **|
         files << [url, to.class]
         to.write(archive)
-        BBS::HTTP::Response.new(status: 200, body: nil, headers: {})
+        Rubbs::Common::Web::HTTP::Response.new(status: 200, body: nil, headers: {})
       end
-      assert_equal 'nodes', BBS::HTTP.stub(:get, get) { SourceFetcher.new.fetch(source) }
+      assert_equal 'nodes', Rubbs::Common::Web::HTTP.stub(:get, get) { SourceFetcher.new.fetch(source) }
       assert_equal [['https://fsxnet.nz/fsxnet.zip', File]], files
       assert_equal 'nodes', ZipReader.read(StringIO.new(archive), /\AFSXNET/)
     end
 
     def test_an_answer_over_the_cap_is_a_fetch_error
-      get = ->(url, **) { raise BBS::HTTP::TooLarge, "GET #{url}: the body is over 33554432 bytes" }
-      error = assert_raises(SourceFetcher::FetchError) { BBS::HTTP.stub(:get, get) { SourceFetcher.new.get(URI('https://x.example/l')) } }
+      get = ->(url, **) { raise Rubbs::Common::Web::HTTP::TooLarge, "GET #{url}: the body is over 33554432 bytes" }
+      error = assert_raises(SourceFetcher::FetchError) { Rubbs::Common::Web::HTTP.stub(:get, get) { SourceFetcher.new.get(URI('https://x.example/l')) } }
       assert_match(/over 33554432 bytes/, error.message)
     end
 

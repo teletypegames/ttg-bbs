@@ -4,7 +4,7 @@ module Discovery
   # The composition root of Global Discovery: reads the environment, opens
   # the catalog (migrated by DISCOVERY_MIGRATIONS, its models bound) and
   # builds the repositories and services once, for the bin/discovery-*
-  # commands and the Gate, which do not share a BBS::Domain.
+  # commands and the Gate, which do not share a Rubbs::Common::Board::Domain.
   #
   # [TTG_GATE_BBS_DATA]              the data folder (data/)
   # [TTG_GATE_BBS_DISCOVERY_DB]      the catalog (data/discovery.sqlite3)
@@ -45,9 +45,9 @@ module Discovery
     # lock at once (BEGIN IMMEDIATE): the importer, the prober and the Gate
     # write the one file.
     def self.open(path)
-      db = BBS::Database.open(path, DISCOVERY_MIGRATIONS)
+      db = Rubbs::Common::Storage::Database.open(path, DISCOVERY_MIGRATIONS)
       db.transaction_mode = :immediate
-      BBS::Model.bind(DATABASE => db)
+      Rubbs::Common::Storage::Model.bind(DATABASE => db)
       db
     end
 
@@ -105,12 +105,12 @@ module Discovery
 
     # Logs +message+ and posts it to the Discord webhook, when there is one.
     def alert(message)
-      BBS.log('import', message)
+      Rubbs.log('import', message)
       return if @webhook.empty?
 
-      require 'bbs/discord_webhook'
-      hook = BBS::DiscordWebhook.new(@webhook, relay_max: nil, embeds: false)
-      hook.post(BBS::DiscordWebhook.escape(message))&.join
+      require 'rubbs/common/web/discord_webhook'
+      hook = Rubbs::Common::Web::DiscordWebhook.new(@webhook, relay_max: nil, embeds: false)
+      hook.post(Rubbs::Common::Web::DiscordWebhook.escape(message))&.join
     end
 
     private
@@ -131,10 +131,10 @@ module Discovery
       number = Integer(value, 10)
       return number if number.positive?
 
-      BBS.log('config', "#{key}=#{value} is not positive, #{default} it is")
+      Rubbs.log('config', "#{key}=#{value} is not positive, #{default} it is")
       default
     rescue ArgumentError
-      BBS.log('config', "#{key}=#{value} is not a number, #{default} it is")
+      Rubbs.log('config', "#{key}=#{value} is not a number, #{default} it is")
       default
     end
   end

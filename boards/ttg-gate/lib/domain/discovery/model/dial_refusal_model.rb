@@ -3,7 +3,7 @@
 module Discovery
   # A dial the Gate refused: when, why, which board, which face; nothing of
   # the caller (DialHistoryService).
-  class DialRefusalModel < BBS::Model
+  class DialRefusalModel < Rubbs::Common::Storage::Model
     table :dial_refusals, database: :discovery
 
     # The refusals before +time+ a reason and face: { [reason, face] => n }.

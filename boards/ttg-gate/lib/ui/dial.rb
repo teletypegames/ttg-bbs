@@ -10,7 +10,13 @@ module UI
   # who is calling (the face picked here, the caller's address): our board
   # skips its terminal question and logo, and counts the real caller.
   def self.dial(session, board)
-    BBS::Gateway.new(host: board.host, port: board.port, name: board.name, public_only: false, forward: true).call(session)
+    Rubbs::Common::Line::Gateway.new(
+      host:        board.host,
+      port:        board.port,
+      name:        board.name,
+      public_only: false,
+      forward:     true
+    ).call(session)
   end
 
   # Dials +board+ of Global Discovery (a Discovery::ListingModel) by the rules
@@ -21,7 +27,7 @@ module UI
   # else the dial's Call. Raises IOError when the caller hangs up meanwhile.
   def self.dial_catalog(session, dials, caller, board, face:)
     dials.dial(caller, board, face: face) do |call|
-      gateway = BBS::Gateway.new(
+      gateway = Rubbs::Common::Line::Gateway.new(
         host:            call.ip,
         port:            board.port,
         name:            board.title,
@@ -35,6 +41,6 @@ module UI
 
   # The key a caller's dials are counted by (Discovery::DialService.caller_key).
   def self.caller_key(session)
-    ::Discovery::DialService.caller_key(BBS::RateLimit.peer(session), session.session_id)
+    ::Discovery::DialService.caller_key(Rubbs::Common::Line::RateLimit.peer(session), session.session_id)
   end
 end

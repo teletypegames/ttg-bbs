@@ -3,7 +3,7 @@
 module Discovery
   # A source list in the catalog: its config (a SourceConfigModel) and how
   # its last fetch, parse and import went.
-  class SourceModel < BBS::Model
+  class SourceModel < Rubbs::Common::Storage::Model
     table :sources, database: :discovery
 
     # The columns a source's config gives.

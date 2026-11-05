@@ -13,10 +13,10 @@ class SysopTest < Minitest::Test
   end
 
   def setup
-    @accounts = BBS::Test.accounts(roles: ['member'])
+    @accounts = Rubbs::Test.accounts(roles: ['member'])
     UI::Sysop.offer(@accounts)
-    @auth = BBS.config.auth
-    BBS.config.auth = BBS::Auth::Setup.new(directory: @accounts, login: :menu, guests: true)
+    @auth = Rubbs.config.auth
+    Rubbs.config.auth = Rubbs::Common::Auth::Setup.new(directory: @accounts, login: :menu, guests: true)
     capture_io do
       @accounts.register('Tasi', 'secret1')
       @accounts.register('Spammer', 'secret1')
@@ -25,13 +25,13 @@ class SysopTest < Minitest::Test
   end
 
   def teardown
-    BBS::Auth::Profile.clear_extras
-    BBS.config.auth = @auth
+    Rubbs::Common::Auth::Profile.clear_extras
+    Rubbs.config.auth = @auth
   end
 
   def gate(keys, roles: ['sysop'])
-    identity = BBS::Auth::Identity.new(id: 1, name: 'Tasi', roles: roles, source: :login)
-    @line = BBS::Test::Session.new(keys: keys, identity: identity, cols: 100, rows: 30)
+    identity = Rubbs::Common::Auth::Identity.new(id: 1, name: 'Tasi', roles: roles, source: :login)
+    @line = Rubbs::Test::Session.new(keys: keys, identity: identity, cols: 100, rows: 30)
     UI::Modern::Gate.new(@line, Bbs.new(Directory.new(boards), nil, nil, @accounts))
   end
 
@@ -58,7 +58,7 @@ class SysopTest < Minitest::Test
 
   def test_a_sysop_cannot_ban_themselves_or_drop_their_sysop_role
     g = gate(['p', 's', :tab, :down, 'b', 'r', *'sysop'.chars, :enter])
-    capture_io { assert_raises(BBS::Hangup) { g.run } }
+    capture_io { assert_raises(Rubbs::Common::Line::Hangup) { g.run } }
     assert_includes @line.output, 'You cannot ban yourself.'
     assert_includes shown, 'Your own sysop role stays.'
     assert_includes @accounts.entry('tasi').roles, 'sysop'
@@ -68,7 +68,7 @@ class SysopTest < Minitest::Test
   def test_the_calls_and_a_hang_up
     own   = Call.new('test', 'Tasi', '10.0.0.1', 'telnet', :modern, Time.now - 60, nil)
     other = Call.new('x', nil, '203.0.113.7', 'bbs-web', :petscii, Time.now - 600, '› Feedia BBS')
-    BBS.stub(:calls, [own, other]) do
+    Rubbs.stub(:calls, [own, other]) do
       capture_io { assert_nil gate(['p', 's', 'h', :down, 'h', 'y', 'q', 'b', 'q']).run }
     end
     assert other.hung
@@ -86,9 +86,9 @@ class SysopTest < Minitest::Test
   end
 
   def test_the_log
-    capture_io { BBS.log('auth', 'login', name: 'Tasi') }
+    capture_io { Rubbs.log('auth', 'login', name: 'Tasi') }
     g = gate(['p', 's', :left])
-    capture_io { assert_raises(BBS::Hangup) { g.run } }
+    capture_io { assert_raises(Rubbs::Common::Line::Hangup) { g.run } }
     assert_includes shown, 'SYSOP › LOG'
     assert_includes shown, 'auth: login name=Tasi'
   end

@@ -17,7 +17,7 @@ module UI
         key('h', 'H') { guarded { hang_up(selected) } }
 
         def initialize(_accounts)
-          super(BBS.calls, per_page: PER_PAGE)
+          super(Rubbs.calls, per_page: PER_PAGE)
         end
 
         def section = :calls
@@ -27,7 +27,7 @@ module UI
         def take(call) = guarded { hang_up(call) }
 
         def draw(canvas)
-          reload_items(BBS.calls)
+          reload_items(Rubbs.calls)
           Layout.band(canvas, 'CALLS', [items.size, page_mark].reject { |s| s.to_s.empty? }.join('  '), Canvas::YELLOW)
           on_page.each_with_index do |call, slot|
             list_row(
@@ -35,7 +35,7 @@ module UI
               Layout.row(1 + slot),
               slot,
               who(call),
-              BBS.duration(call.started_at).to_s,
+              Rubbs.duration(call.started_at).to_s,
               name_color: call.caller_name ? Canvas::WHITE : Canvas::GREY
             )
           end

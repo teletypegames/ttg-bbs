@@ -5,7 +5,7 @@ require 'tempfile'
 require 'uri'
 
 module Discovery
-  # Downloads a source list over HTTP(S) through BBS::HTTP: at most
+  # Downloads a source list over HTTP(S) through Rubbs::Common::Web::HTTP: at most
   # MAX_BYTES within DEADLINE seconds, following up to five redirects to
   # http or https hosts on the public internet only (a list cannot point the
   # importer at the Docker network); from a .zip the member of the source's
@@ -41,7 +41,7 @@ module Discovery
     # list of up to MAX_BYTES never sits in the memory whole as it comes in.
     def download(uri)
       Tempfile.create('ttg-gate-bbs-source', binmode: true) do |file|
-        response = BBS::HTTP.get(
+        response = Rubbs::Common::Web::HTTP.get(
           uri.to_s,
           open_timeout: TIMEOUT,
           read_timeout: TIMEOUT,
@@ -56,7 +56,7 @@ module Discovery
         file.rewind
         yield file
       end
-    rescue BBS::HTTP::Error => e
+    rescue Rubbs::Common::Web::HTTP::Error => e
       raise FetchError, e.message
     end
 

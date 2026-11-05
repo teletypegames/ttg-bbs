@@ -37,7 +37,7 @@ module UI
           end
         end
 
-        def wrap(text) = BBS::FrameBuffer.wrap_ansi(text, width)
+        def wrap(text) = Rubbs::Modern::FrameBuffer.wrap_ansi(text, width)
       end
     end
   end

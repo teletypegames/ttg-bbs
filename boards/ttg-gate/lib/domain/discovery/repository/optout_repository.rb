@@ -39,7 +39,7 @@ module Discovery
       @mtime = mtime
       true
     rescue SystemCallError, Psych::Exception => e
-      BBS.log('optout', "cannot read #{@path}: #{e.message}")
+      Rubbs.log('optout', "cannot read #{@path}: #{e.message}")
       false
     end
   end

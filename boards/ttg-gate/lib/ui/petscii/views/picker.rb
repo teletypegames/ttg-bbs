@@ -5,10 +5,10 @@ require_relative '../layout'
 module UI
   module Petscii
     module Views
-      # A view in the content area (BBS::Kit::Petscii::View).
-      View = BBS::Kit::Petscii::View
-      # A list with a lit item, a page at a time (BBS::Kit::Petscii::Picker).
-      Picker = BBS::Kit::Petscii::Picker
+      # A view in the content area (Rubbs::Petscii::Kit::View).
+      View = Rubbs::Petscii::Kit::View
+      # A list with a lit item, a page at a time (Rubbs::Petscii::Kit::Picker).
+      Picker = Rubbs::Petscii::Kit::Picker
     end
   end
 end

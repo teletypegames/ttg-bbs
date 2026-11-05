@@ -3,17 +3,17 @@
 module UI
   module Modern
     module Sysop
-      # The gate's last log lines (BBS::Log.recent), the newest at the
+      # The gate's last log lines (Rubbs::Common::Log.recent), the newest at the
       # bottom, redrawn every two seconds: logins, bans, dials and errors.
       # The arrows scroll back, F shows warnings and errors only, / keeps
       # the lines that have a word, END comes back to the newest.
       class LogView < View
         LEVEL_COLORS = {
-          debug: BBS::Kit::Modern::Palette::DIM,
-          info:  BBS::Kit::Modern::Palette::TEXT,
-          warn:  BBS::Kit::Modern::Palette::YELLOW,
-          error: BBS::Kit::Modern::Palette::RED,
-          fatal: BBS::Kit::Modern::Palette::RED
+          debug: Rubbs::Modern::Kit::Palette::DIM,
+          info:  Rubbs::Modern::Kit::Palette::TEXT,
+          warn:  Rubbs::Modern::Kit::Palette::YELLOW,
+          error: Rubbs::Modern::Kit::Palette::RED,
+          fatal: Rubbs::Modern::Kit::Palette::RED
         }.freeze
 
         every(2) { redraw }
@@ -36,7 +36,7 @@ module UI
         private
 
         def entries
-          list = BBS::Log.recent
+          list = Rubbs::Common::Log.recent
           list = list.reject { |e| %i[debug info].include?(e.level) } if @serious
           list = list.select { |e| line_text(e).downcase.include?(@query.downcase) } if @query
           list

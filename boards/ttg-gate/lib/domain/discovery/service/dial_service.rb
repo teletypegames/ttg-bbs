@@ -39,7 +39,7 @@ module Discovery
     IDLE       = 600
     LIMITS     = { window: WINDOW, per_caller: PER_CALLER, per_host: PER_HOST, idle: IDLE }.freeze
     # Where a dial's line goes by default: the board's log.
-    LOG = ->(line) { BBS.log('dial', line) }
+    LOG = ->(line) { Rubbs.log('dial', line) }
     # Seconds to wait for a board to accept the call: as long as a probe.
     CONNECT_TIMEOUT = TelnetProbe::CONNECT_TIMEOUT
 
@@ -51,7 +51,7 @@ module Discovery
     Refusal = Data.define(:reason, :wait)
 
     # One dial in progress: the caller's line hands the gateway's report to
-    # it (BBS::Gateway::Report: connected, error, address, connect_seconds,
+    # it (Rubbs::Common::Line::Gateway::Report: connected, error, address, connect_seconds,
     # received, hung_up).
     class Call
       attr_accessor :report, :ended_at
@@ -107,13 +107,13 @@ module Discovery
       write_live
     end
 
-    # The key a caller is counted by: its IP address (BBS::RateLimit's
+    # The key a caller is counted by: its IP address (Rubbs::Common::Line::RateLimit's
     # rule), an IPv6 one by its /64, which one machine usually holds whole;
     # a line from a local address (bbsweb on the same host carries all its
     # callers from one) counts by its session.
     def self.caller_key(ip, session_id)
-      addr = BBS::Address.parse(ip)
-      return "line:#{session_id}" if addr.nil? || BBS::Address.local?(addr)
+      addr = Rubbs::Common::Line::Address.parse(ip)
+      return "line:#{session_id}" if addr.nil? || Rubbs::Common::Line::Address.local?(addr)
 
       addr.ipv6? ? "#{addr.mask(64)}/64" : addr.to_s
     end

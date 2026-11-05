@@ -39,7 +39,7 @@ module Discovery
     C64_CONCURRENCY    = 2
     C64_BACKLOG        = 4
     # Where a call's line goes by default: the prober's log.
-    LOG = ->(line) { BBS.log('probe', line) }
+    LOG = ->(line) { Rubbs.log('probe', line) }
 
     # [probe]   TelnetProbe (anything with #call(host, port, c64:))
     # [tags]    TagService         [aliases] AliasService

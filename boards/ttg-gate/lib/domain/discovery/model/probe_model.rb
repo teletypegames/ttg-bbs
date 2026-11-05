@@ -5,7 +5,7 @@ require 'json'
 module Discovery
   # One call of a board, kept: a scheduled probe, a C64-style one or a dial
   # of the Gate, its result, timing, address and banner.
-  class ProbeModel < BBS::Model
+  class ProbeModel < Rubbs::Common::Storage::Model
     table :probes, database: :discovery
 
     # A banner is kept with its probe this long; then only the newest one of a

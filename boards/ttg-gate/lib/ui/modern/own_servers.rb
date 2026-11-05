@@ -59,7 +59,7 @@ module UI
 
       def detail(board, lines)
         color = Colors.ansi256(board.rgb)
-        body  = BBS::FrameBuffer.wrap_ansi(board.summary, width).first(lines)
+        body  = Rubbs::Modern::FrameBuffer.wrap_ansi(board.summary, width).first(lines)
         ["#{color}#{BOLD}#{board.name}#{RESET}  #{DIM}#{board.address}#{RESET}", *body.map { |l| "#{TEXT}#{l}#{RESET}" }]
       end
 

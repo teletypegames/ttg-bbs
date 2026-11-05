@@ -6,7 +6,7 @@ module Discovery
   # A telnet endpoint of the catalog, one a host:port: the fields its
   # sources gave (resolved by their priority), where each came from, and
   # whether it is delisted, hidden (opt-out) or an alias of another board.
-  class BoardModel < BBS::Model
+  class BoardModel < Rubbs::Common::Storage::Model
     table :boards, database: :discovery
 
     # The boards a Gate list may show: no alias, not hidden.

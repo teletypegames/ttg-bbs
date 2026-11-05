@@ -4,7 +4,7 @@
 # The importer and the prober run as their own processes (bin/discovery-*);
 # the Gate reads the catalog (BrowseService) and records its dials
 # (DialService).
-require 'bbs'
+require 'rubbs'
 require_relative 'migrations'
 
 %w[

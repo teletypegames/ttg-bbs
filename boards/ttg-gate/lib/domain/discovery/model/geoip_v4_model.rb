@@ -3,7 +3,7 @@
 module Discovery
   # An IPv4 range of the country lookup file (GeoipRepository): its first
   # and last address as numbers and its country code.
-  class GeoipV4Model < BBS::Model
+  class GeoipV4Model < Rubbs::Common::Storage::Model
     table :v4, database: :geoip
 
     # The country code of the range +address+ (a number) is in, or nil.

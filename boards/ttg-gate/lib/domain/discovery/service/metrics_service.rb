@@ -39,7 +39,7 @@ module Discovery
       File.write(tmp, text(now, in_flight: in_flight))
       File.rename(tmp, @path)
     rescue SystemCallError => e
-      BBS.log('metrics', e.message)
+      Rubbs.log('metrics', e.message)
     end
 
     def text(now, in_flight: 0)

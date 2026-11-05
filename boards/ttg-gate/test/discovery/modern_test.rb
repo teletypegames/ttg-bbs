@@ -3,7 +3,7 @@
 require_relative 'test_helper'
 require_relative 'face_fixtures'
 require_relative '../../lib/domain'
-require 'bbs/test'
+require 'rubbs/test'
 require_relative '../../lib/ui/modern'
 
 module Discovery
@@ -21,7 +21,7 @@ module Discovery
       def initialize(session) = @session = session
     end
 
-    def session(keys = []) = BBS::Test::Session.new(keys: keys)
+    def session(keys = []) = Rubbs::Test::Session.new(keys: keys)
 
     def screen = Screen.new(session)
 
@@ -51,7 +51,7 @@ module Discovery
       assert_nil gate(['q']).run
       assert_includes @line.output, 'OWN SERVERS'
       g = gate([:tab])
-      assert_raises(BBS::Hangup) { g.run }
+      assert_raises(Rubbs::Common::Line::Hangup) { g.run }
       assert_instance_of UI::Modern::Discovery::Home, g.page
       assert_includes @line.output, 'Global Discovery is resting'
       assert_nil gate([:tab, :tab, :down, 'Q']).run
@@ -63,7 +63,7 @@ module Discovery
         assert_nil gate(%w[2 q]).run
       end
       assert_equal [boards[1].name], dialled
-      assert_includes @line.output, BBS::Pages::MODERN_RESTORE
+      assert_includes @line.output, Rubbs::Common::Screens::Pages::MODERN_RESTORE
     end
 
     def test_the_selector_of_rubbs_is_not_shadowed
@@ -80,7 +80,7 @@ module Discovery
     # banner, back to the list and back home.
     def test_discovery_searches_lists_and_opens_a_board
       g = discovery([:tab, '/', 's', 'y', :backspace, 'x', :enter, :down, :enter, 'b', ' ', 'q', :page_down])
-      assert_raises(BBS::Hangup) { g.run }
+      assert_raises(Rubbs::Common::Line::Hangup) { g.run }
       assert_includes Terminal.new.feed(@line.output).to_s, 'page 2/2'
       @line.keys.push('q', 'q')
       assert_nil g.run

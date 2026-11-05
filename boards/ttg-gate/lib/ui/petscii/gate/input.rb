@@ -2,16 +2,16 @@
 
 module UI
   module Petscii
-    class Gate < BBS::Kit::Petscii::Frame
+    class Gate < Rubbs::Petscii::Kit::Frame
       # What the gate reads besides a view's keys: the search line on the
       # hint row, and a key over a notice.
       module Input
         private
 
         # The search: the input line in place of the hint bar, then its list.
-        # The caller's profile (BBS::Auth::Profile, the look of TTG::PRESET)
+        # The caller's profile (Rubbs::Common::Auth::Profile, the look of TTG::PRESET)
         # on the bare line, then back.
-        def account = hand_over { BBS::Auth::Profile.run(session) }
+        def account = hand_over { Rubbs::Common::Auth::Profile.run(session) }
 
         def search
           text = input

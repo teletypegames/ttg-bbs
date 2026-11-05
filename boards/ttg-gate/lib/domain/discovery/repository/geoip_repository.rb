@@ -68,7 +68,7 @@ module Discovery
 
         return @fetcher.download(URI(format(URL, month: m))) { |file| install(m, file) }
       rescue SourceFetcher::FetchError => e
-        BBS.log('geoip', "DB-IP #{m}: #{e.message}")
+        Rubbs.log('geoip', "DB-IP #{m}: #{e.message}")
       end
       current
     end
@@ -96,7 +96,7 @@ module Discovery
       return unless File.exist?(path)
 
       @db = Sequel.sqlite(path, readonly: true)
-      BBS::Model.bind(geoip: @db)
+      Rubbs::Common::Storage::Model.bind(geoip: @db)
       @db
     end
 
@@ -110,7 +110,7 @@ module Discovery
 
     def build(path, month, gzip)
       db = Sequel.sqlite(path)
-      BBS::Database.migrate(db, GEOIP_MIGRATIONS)
+      Rubbs::Common::Storage::Database.migrate(db, GEOIP_MIGRATIONS)
       db.transaction do
         insert_ranges(db, gzip)
         GeoipMetaModel.made_of(db, month)

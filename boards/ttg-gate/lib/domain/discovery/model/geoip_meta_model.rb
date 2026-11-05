@@ -3,7 +3,7 @@
 module Discovery
   # A value of the country lookup file (GeoipRepository): the month of DB-IP
   # it was made of.
-  class GeoipMetaModel < BBS::Model
+  class GeoipMetaModel < Rubbs::Common::Storage::Model
     table :meta, database: :geoip
 
     # The month of the lookup file in use ("2026-11"), or nil.

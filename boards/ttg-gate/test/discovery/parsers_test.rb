@@ -147,7 +147,7 @@ module Discovery
       assert_equal 'ok?', Address.text("ok?\xFF".b)
     end
 
-    # Every range the board blocked before it asked BBS::Address: the rule
+    # Every range the board blocked before it asked Rubbs::Common::Line::Address: the rule
     # may only grow stricter.
     OLD_NON_PUBLIC = %w[
       0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 127.0.0.0/8 169.254.0.0/16 172.16.0.0/12 192.0.0.0/24

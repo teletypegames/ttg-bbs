@@ -123,7 +123,7 @@ module Discovery
     def c64? = petscii? || ascii?
 
     # Whether a C64's call goes through the gate's translation (an ASCII
-    # board without PETSCII; BBS::Gateway::AsciiBridge).
+    # board without PETSCII; Rubbs::Common::Line::Gateway::AsciiBridge).
     def translated_for_c64? = ascii? && !petscii?
 
     # A board for a Commodore only: PETSCII, and no other encoding seen.
