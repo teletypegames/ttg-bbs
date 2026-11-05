@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # The calls to the debrief terminal, one row a call, in a SQLite file
-# (BBS::Store, the impostor gem's sessions store). The board kept them in a
-# CSV file before: when data/sessions.csv sits beside the database, BBS::Store
+# (Rubbs::Common::Storage::Store, the impostor gem's sessions store). The board kept them in a
+# CSV file before: when data/sessions.csv sits beside the database, Rubbs::Common::Storage::Store
 # imports it once (setting its broken lines aside in sessions.csv.rejected)
 # and renames it to sessions.csv.imported.
 class SessionRepository

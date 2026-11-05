@@ -3,7 +3,7 @@
 require 'bundler/setup'
 require 'minitest/autorun'
 require 'tmpdir'
-require 'bbs'
+require 'rubbs'
 require_relative '../lib/domain'
 
 # A board on a fresh data directory, removed after each test.

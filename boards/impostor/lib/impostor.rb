@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'bbs'
+require 'rubbs'
 require_relative 'impostor/code_generator'
 
 # The debrief terminal of Definitely not an Impostor as a rubbs flow, with
@@ -18,18 +18,18 @@ module Impostor
   # GET request, a TLS handshake on the wrong port) is no player.
   NAME = /\A[A-Z]{1,#{CodeGenerator::NAME_LEN}}\z/
 
-  def self.sessions_store(path) = BBS::Store.new(path: path, headers: SESSION_HEADERS)
+  def self.sessions_store(path) = Rubbs::Common::Storage::Store.new(path: path, headers: SESSION_HEADERS)
 
   # Whether +name+ is a player name (NAME).
   def self.name?(name) = NAME.match?(name.to_s)
 
   # The flow both faces share; +screens_dir+ holds the face's welcome and
   # congrats screens, +sessions+ keeps what the caller types (anything with
-  # BBS::Store's +upsert+).
+  # Rubbs::Common::Storage::Store's +upsert+).
   def self.debrief(sessions:, screens_dir:)
     identify = identification(sessions)
     options  = debrief_menu(sessions)
-    BBS::Flow.define(screens_dir: screens_dir) do
+    Rubbs::Common::Call::Flow.define(screens_dir: screens_dir) do
       instance_exec(&identify)
       confirm 'Norman, is that you?', denied: 'Very well. Goodbye.' do
         screen :congrats

@@ -11,6 +11,6 @@ Gem::Specification.new do |s|
   s.files    = Dir['lib/impostor.rb', 'lib/impostor/**/*.rb', 'screens/**/*.erb']
   s.require_paths = ['lib']
   s.required_ruby_version = '>= 3.1'
-  s.add_dependency 'bbs', '>= 0.16.1'
+  s.add_dependency 'rubbs', '>= 3.0'
   s.metadata['rubygems_mfa_required'] = 'true'
 end

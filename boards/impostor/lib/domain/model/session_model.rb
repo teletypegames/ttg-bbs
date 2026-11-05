@@ -28,15 +28,15 @@ class SessionModel < Data.define(:session_id, :timestamp, :player_name, :code, :
   def self.player?(**raw) = !raw.key?(:player_name) || fields(**raw.slice(:player_name)).key?(:player_name)
 
   def self.field(name, value)
-    text = BBS::Text.utf8(value).strip
-    text = BBS::Text.clean(text, keep_newlines: false).strip unless name == :email
+    text = Rubbs::Common::Text.utf8(value).strip
+    text = Rubbs::Common::Text.clean(text, keep_newlines: false).strip unless name == :email
     [name, text[0, LIMITS[name]]] if SHAPES.fetch(name, ANY).call(text)
   end
   private_class_method :field
 
   # Whether +text+ is an address the board keeps: printable characters
   # only (no control or bidirectional character), one @ and a dotted domain.
-  def self.email?(text) = text.length <= LIMITS[:email] && !text.match?(BBS::Text::CONTROLS) && text.match?(EMAIL)
+  def self.email?(text) = text.length <= LIMITS[:email] && !text.match?(Rubbs::Common::Text::CONTROLS) && text.match?(EMAIL)
 
   # A model from a row of the sessions store (column name => value).
   def self.from_row(row) = new(**members.to_h { |name| [name, row[name.to_s]] })

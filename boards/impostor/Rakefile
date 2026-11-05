@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'bbs/rake'
+require 'rubbs/rake'
 require 'ttg/rake'
 
-BBS::Rake.board(faces: false)
+Rubbs::Rake.board(faces: false)

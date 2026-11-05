@@ -70,6 +70,6 @@ class SessionServiceTest < Minitest::Test
 
   def test_the_gem_flow_takes_the_service_as_its_store
     flow = Impostor::Modern.flow(sessions: service)
-    assert_kind_of BBS::Flow, flow
+    assert_kind_of Rubbs::Common::Call::Flow, flow
   end
 end
