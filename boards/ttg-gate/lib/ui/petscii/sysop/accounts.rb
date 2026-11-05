@@ -47,7 +47,7 @@ module UI
           name = Layout.plain(entry.name)[0, 28].ljust(29)
           mark = entry.banned? ? '*' : ' '
           if slot == @index
-            canvas.text(row, 0, "#{mark}#{name} #{roles(entry)}".ljust(Layout::WIDTH), Canvas::CYAN, rvs: true)
+            canvas.text(row, 0, "#{mark}#{name} #{roles(entry)}".ljust(Layout::EDGE), Canvas::CYAN, rvs: true)
           else
             Layout.runs(canvas, row, 0, [[mark, Canvas::LIGHT_RED], [name, entry.banned? ? Canvas::GREY : Canvas::WHITE],
                                          [" #{roles(entry)}", Canvas::YELLOW]])

@@ -30,7 +30,7 @@ module UI
           Layout.band(canvas, 'CONSOLE', '', Canvas::YELLOW)
           ITEMS.each_with_index { |item, i| row(canvas, Layout.row(2 + (i * 2)), item, i) }
           stats = @accounts.statistics
-          Layout.rule(canvas, Layout.row(9))
+          rule(canvas, Layout.row(9))
           lines = ["#{BBS.calls.size} on the gate", "#{stats[:accounts]} accounts",
                    "#{stats[:seen_day]} logged in today", "#{stats[:new_week]} new this week"]
           lines.each_with_index { |l, i| canvas.text(Layout.row(11 + i), 1, l, Canvas::LIGHT_GREY) }
@@ -41,7 +41,7 @@ module UI
         def row(canvas, row, item, slot)
           (_, label, note) = item
           if slot == @index
-            canvas.text(row, 0, " #{slot + 1}  #{label.ljust(9)} #{note}".ljust(Layout::WIDTH), Canvas::CYAN, rvs: true)
+            canvas.text(row, 0, " #{slot + 1}  #{label.ljust(9)} #{note}".ljust(Layout::EDGE), Canvas::CYAN, rvs: true)
           else
             Layout.runs(canvas, row, 1, [[(slot + 1).to_s, Canvas::YELLOW], ["  #{label.ljust(9)} ", Canvas::WHITE],
                                          [note, Canvas::GREY]])

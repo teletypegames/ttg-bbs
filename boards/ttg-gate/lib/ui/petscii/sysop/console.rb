@@ -28,7 +28,7 @@ module UI
 
         def draw(canvas)
           name = Layout.plain(session.identity.name.to_s)[0, 20]
-          canvas.text(Layout::BAR_ROW, 0, ' ' * Layout::WIDTH, BAR, rvs: true)
+          canvas.text(Layout::BAR_ROW, 0, ' ' * Layout::EDGE, BAR, rvs: true)
           canvas.text(Layout::BAR_ROW, 1, 'TTG GATE  SYSOP', BAR, rvs: true)
           canvas.text(Layout::BAR_ROW, Layout::EDGE - name.length, name, BAR, rvs: true)
           allowed = UI::Sysop.allowed?(session)
@@ -83,6 +83,10 @@ module UI
         def tell(*lines)
           show(Views::TextView.new('SYSOP', lines, color: Canvas::YELLOW, hint: [['Press a key', false]]))
         end
+
+        # A thin rule across the content, short of the last column (a C64
+        # would wrap there and link the row to the next).
+        def rule(canvas, row) = canvas.text(row, 0, '─' * Layout::EDGE, Canvas::DARK_GREY)
 
         def when_text(iso) = iso ? Time.parse(iso).localtime.strftime('%Y-%m-%d %H:%M') : 'never'
 

@@ -45,7 +45,7 @@ module UI
           name = Layout.plain(who(call))[0, 30].ljust(31)
           time = BBS.duration(call.started_at).to_s.rjust(7)
           if slot == @index
-            canvas.text(row, 0, " #{name}#{time}".ljust(Layout::WIDTH), Canvas::CYAN, rvs: true)
+            canvas.text(row, 0, " #{name}#{time}".ljust(Layout::EDGE), Canvas::CYAN, rvs: true)
           else
             Layout.runs(canvas, row, 1, [[name, call.caller_name ? Canvas::WHITE : Canvas::GREY], [time, Canvas::CYAN]])
           end
@@ -53,7 +53,7 @@ module UI
 
         def detail(canvas, call)
           top = 2 + PER_PAGE
-          Layout.rule(canvas, Layout.row(top))
+          rule(canvas, Layout.row(top))
           return canvas.text(Layout.row(top + 1), 1, 'Nobody else is on.', Canvas::GREY) unless call
 
           [['From', call.caller_ip.to_s], ['Via', call.call_via.to_s], ['Face', call.face.to_s],
