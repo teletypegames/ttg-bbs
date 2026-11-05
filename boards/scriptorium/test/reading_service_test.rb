@@ -65,8 +65,9 @@ class ReadingServiceTest < Minitest::Test
   end
 
   def test_tells_why_a_book_does_not_open
-    assert_equal :too_big, service(BBS::HTTP::TooLarge.new('GET https://m/x: the body is over 1000 bytes')).open(book)
-    _, err = capture_io { assert_equal :unavailable, service(BBS::HTTP::Error.new('GET https://m/x: answered 404')).open(book) }
+    assert_equal :too_big,
+                 service(Rubbs::Common::Web::HTTP::TooLarge.new('GET https://m/x: the body is over 1000 bytes')).open(book)
+    _, err = capture_io { assert_equal :unavailable, service(Rubbs::Common::Web::HTTP::Error.new('GET https://m/x: answered 404')).open(book) }
     assert_match(%r{: gutenberg: book 2701: GET https://m/x: answered 404}, err)
     assert_equal :empty, service('').open(book)
     assert_equal 0, ReadModel.count_of(2701)

@@ -76,7 +76,7 @@ class LibraryService
 
   # Downloads and imports the catalog when it is stale (or when +force+).
   # Returns :fresh, :busy (an import is running) or :updated. Raises when
-  # the mirror or the import fails (BBS::HTTP::Error, SystemCallError,
+  # the mirror or the import fails (Rubbs::Common::Web::HTTP::Error, SystemCallError,
   # CSV or database errors); the old catalog stays then.
   def refresh(force: false)
     return :fresh unless force || stale?
@@ -95,7 +95,7 @@ class LibraryService
     started = Time.now
     @gutenberg.download_catalog(@catalog_file)
     n = CatalogBuilder.new.build(@catalog_file)
-    BBS.log('catalog', format('imported, %<n>d books in %<s>.1f s', n: n, s: Time.now - started))
+    Rubbs.log('catalog', format('imported, %<n>d books in %<s>.1f s', n: n, s: Time.now - started))
     GC.start
     :updated
   ensure

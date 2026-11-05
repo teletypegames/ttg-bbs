@@ -30,7 +30,7 @@ class ScriptoriumBBSTest < Minitest::Test
     assert_equal 1, ReadModel.count_of(11)
   end
 
-  # What BBS.board does but the background work: the databases opened, the
+  # What Rubbs.board does but the background work: the databases opened, the
   # services made.
   def boot(bbs)
     @booted = [*@booted, *bbs.databases.values]

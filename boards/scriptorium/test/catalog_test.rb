@@ -60,7 +60,7 @@ class CatalogTest < Minitest::Test
   end
 
   def test_callers_read_the_old_catalog_while_the_new_one_is_built
-    reader = BBS::Database.open(path('catalog.sqlite3'))
+    reader = Rubbs::Common::Storage::Database.open(path('catalog.sqlite3'))
     during = BookModel.rebuild { |_fts| reader[:books].where(id: 84).get(:title) }
     assert_equal 'Frankenstein', during
     refute BookModel.ready?

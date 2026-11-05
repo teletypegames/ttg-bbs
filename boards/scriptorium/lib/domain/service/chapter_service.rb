@@ -77,7 +77,7 @@ class ChapterService
     text.delete_prefix!("\uFEFF")
     text.gsub!(/\r\n?/, "\n")
     text.tr!("\t", ' ')
-    text.gsub!(BBS::Text::CONTROLS, '')
+    text.gsub!(Rubbs::Common::Text::CONTROLS, '')
     text.gsub!(/^ +$/, '')
     body!(text)
   end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UI
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     # The reader of the C64 face: a book's chapter in pages of ROWS lines.
     # RETURN turns the page (and at the end of a chapter goes on to the
     # next one), B goes back a page, N and P change the chapter, Q goes back

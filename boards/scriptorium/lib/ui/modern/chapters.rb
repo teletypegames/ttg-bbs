@@ -28,7 +28,7 @@ module UI
       def chapter_lines(bookmark, width)
         bookmark.paragraphs ||= (reading.chapter(bookmark.text, bookmark.number) || UNREADABLE).split("\n\n")
         bookmark.paragraphs.each_with_index.flat_map do |para, i|
-          lines = para.split("\n").flat_map { |line| BBS::FrameBuffer.wrap_ansi(line, width) }
+          lines = para.split("\n").flat_map { |line| Rubbs::Modern::FrameBuffer.wrap_ansi(line, width) }
           i.zero? ? lines.map { |l| bright(l) } : ['', *lines]
         end
       end

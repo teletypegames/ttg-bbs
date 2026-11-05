@@ -24,7 +24,7 @@ class TextCacheRepository
     touch(path) if text
     text
   rescue JSON::ParserError, SystemCallError => e
-    BBS.log('text cache', "#{path}: #{e.class}: #{e.message}")
+    Rubbs.log('text cache', "#{path}: #{e.class}: #{e.message}")
     nil
   end
 
@@ -41,7 +41,7 @@ class TextCacheRepository
     evict
     model
   rescue SystemCallError => e
-    BBS.log('text cache', "#{@dir}: #{e.class}: #{e.message}")
+    Rubbs.log('text cache', "#{@dir}: #{e.class}: #{e.message}")
     nil
   end
 
@@ -50,10 +50,10 @@ class TextCacheRepository
   def read(id, chapter)
     File.open(text_path(id), 'rb') do |f|
       f.seek(chapter.offset)
-      BBS::Text.clean(f.read(chapter.length))
+      Rubbs::Common::Text.clean(f.read(chapter.length))
     end
   rescue SystemCallError => e
-    BBS.log('text cache', "#{text_path(id)}: #{e.class}: #{e.message}")
+    Rubbs.log('text cache', "#{text_path(id)}: #{e.class}: #{e.message}")
     nil
   end
 
@@ -86,7 +86,7 @@ class TextCacheRepository
       end
     end
   rescue SystemCallError => e
-    BBS.log('text cache', "#{@dir}: #{e.class}: #{e.message}")
+    Rubbs.log('text cache', "#{@dir}: #{e.class}: #{e.message}")
   end
 
   # Every cached book as [last read, index file, text file, bytes].

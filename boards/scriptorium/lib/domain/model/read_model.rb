@@ -4,7 +4,7 @@ require 'time'
 
 # One time a book was opened on the board (a row of the reads table of
 # data/scriptorium.sqlite3); the class counts them.
-class ReadModel < BBS::Model
+class ReadModel < Rubbs::Common::Storage::Model
   table :reads
 
   # Counts a read of book +book_id+ at +at+.

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'bbs'
+require 'rubbs'
 require 'domain'
 require 'minitest/autorun'
 require 'tmpdir'
@@ -13,8 +13,8 @@ module TempDir
   def setup
     super
     @dir = Dir.mktmpdir('scriptorium-test')
-    @databases = DATABASES.transform_values { |file, migrations| BBS::Database.open(path(file), migrations) }
-    BBS::Model.bind(@databases)
+    @databases = DATABASES.transform_values { |file, migrations| Rubbs::Common::Storage::Database.open(path(file), migrations) }
+    Rubbs::Common::Storage::Model.bind(@databases)
   end
 
   def teardown

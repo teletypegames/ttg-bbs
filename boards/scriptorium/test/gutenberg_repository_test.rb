@@ -14,7 +14,7 @@ class GutenbergRepositoryTest < Minitest::Test
     )
   end
 
-  def answer(status, body = '') = BBS::HTTP::Response.new(status: status, body: body.b, headers: {})
+  def answer(status, body = '') = Rubbs::Common::Web::HTTP::Response.new(status: status, body: body.b, headers: {})
 
   def with_http(result, &)
     asked = []
@@ -24,9 +24,9 @@ class GutenbergRepositoryTest < Minitest::Test
       return result unless options[:to] && result.ok?
 
       options[:to].write(result.body)
-      BBS::HTTP::Response.new(status: result.status, body: nil, headers: {})
+      Rubbs::Common::Web::HTTP::Response.new(status: result.status, body: nil, headers: {})
     end
-    BBS::HTTP.stub(:get, get) { capture_io(&) }
+    Rubbs::Common::Web::HTTP.stub(:get, get) { capture_io(&) }
     asked
   end
 
@@ -41,11 +41,11 @@ class GutenbergRepositoryTest < Minitest::Test
   end
 
   def test_a_failing_mirror_raises
-    error = assert_raises(BBS::HTTP::Error) { with_http(answer(404)) { @gutenberg.text(1, max_bytes: 100) } }
+    error = assert_raises(Rubbs::Common::Web::HTTP::Error) { with_http(answer(404)) { @gutenberg.text(1, max_bytes: 100) } }
     assert_equal 'GET https://mirror.example/cache/epub/1/pg1.txt: answered 404', error.message
 
-    big = BBS::HTTP::TooLarge.new('GET https://mirror.example/x: the body is over 100 bytes')
-    assert_raises(BBS::HTTP::TooLarge) { with_http(big) { @gutenberg.text(1, max_bytes: 100) } }
+    big = Rubbs::Common::Web::HTTP::TooLarge.new('GET https://mirror.example/x: the body is over 100 bytes')
+    assert_raises(Rubbs::Common::Web::HTTP::TooLarge) { with_http(big) { @gutenberg.text(1, max_bytes: 100) } }
   end
 
   def test_streams_the_catalog_into_its_file
@@ -54,7 +54,7 @@ class GutenbergRepositoryTest < Minitest::Test
 
     assert_equal 'gz', File.read(file)
     assert_kind_of File, asked.first[1][:to]
-    assert_raises(BBS::HTTP::Error) { with_http(answer(500)) { @gutenberg.download_catalog(path('other.gz')) } }
+    assert_raises(Rubbs::Common::Web::HTTP::Error) { with_http(answer(500)) { @gutenberg.download_catalog(path('other.gz')) } }
     refute_path_exists path('other.gz')
     refute_path_exists path('other.gz.part')
   end

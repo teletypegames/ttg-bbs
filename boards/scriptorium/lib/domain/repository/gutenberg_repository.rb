@@ -2,11 +2,11 @@
 
 require 'fileutils'
 
-# Project Gutenberg over HTTP (BBS::HTTP: a deadline, a cap on the body,
+# Project Gutenberg over HTTP (Rubbs::Common::Web::HTTP: a deadline, a cap on the body,
 # redirects to public http(s) addresses only, the board's User-Agent): the
 # catalog file and the plain text of a book, from the mirror the board is
-# given. A dead mirror raises BBS::HTTP::Error, a body over the cap its
-# subclass BBS::HTTP::TooLarge.
+# given. A dead mirror raises Rubbs::Common::Web::HTTP::Error, a body over the cap its
+# subclass Rubbs::Common::Web::HTTP::TooLarge.
 class GutenbergRepository
   # The catalog file is about 6 MB.
   CATALOG_MAX = 32 * 1024 * 1024
@@ -27,7 +27,7 @@ class GutenbergRepository
   def text_url(id) = "#{@mirror}/cache/epub/#{Integer(id)}/pg#{Integer(id)}.txt"
 
   # Saves the catalog file at +path+, streamed into a temporary file next
-  # to it, so the download never sits in memory. Raises BBS::HTTP::Error or
+  # to it, so the download never sits in memory. Raises Rubbs::Common::Web::HTTP::Error or
   # SystemCallError; +path+ is then left as it was.
   def download_catalog(path)
     FileUtils.mkdir_p(File.dirname(path))
@@ -39,17 +39,17 @@ class GutenbergRepository
     FileUtils.rm_f("#{path}.part")
   end
 
-  # The bytes of book +id+'s plain text. Raises BBS::HTTP::TooLarge when it
+  # The bytes of book +id+'s plain text. Raises Rubbs::Common::Web::HTTP::TooLarge when it
   # is longer than +max_bytes+.
   def text(id, max_bytes:) = get(text_url(id), max_bytes: max_bytes, deadline: TEXT_DEADLINE).body
 
   private
 
   # The Response of a successful GET of +url+; an error status raises
-  # BBS::HTTP::Error.
+  # Rubbs::Common::Web::HTTP::Error.
   def get(url, **)
-    response = BBS::HTTP.get(url, read_timeout: READ_TIMEOUT, **)
-    raise BBS::HTTP::Error, "GET #{url}: answered #{response.status}" unless response.ok?
+    response = Rubbs::Common::Web::HTTP.get(url, read_timeout: READ_TIMEOUT, **)
+    raise Rubbs::Common::Web::HTTP::Error, "GET #{url}: answered #{response.status}" unless response.ok?
 
     response
   end

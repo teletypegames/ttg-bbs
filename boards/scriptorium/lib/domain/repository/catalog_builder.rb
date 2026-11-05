@@ -56,5 +56,5 @@ class CatalogBuilder
     end
   end
 
-  def clean(text, keep_newlines: false) = BBS::Text.clean(text, keep_newlines: keep_newlines)
+  def clean(text, keep_newlines: false) = Rubbs::Common::Text.clean(text, keep_newlines: keep_newlines)
 end

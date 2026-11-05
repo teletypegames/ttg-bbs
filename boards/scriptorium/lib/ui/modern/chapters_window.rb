@@ -5,7 +5,7 @@ module UI
     # The chapters of an open book on the left, the start of the one picked
     # on the right; Enter reads it in the reader.
     module ChaptersWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :chapters, :master_detail do
         title      { book.short_title }

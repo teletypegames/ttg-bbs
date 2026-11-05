@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # The schemas of the board's two SQLite files, one step per version
-# (BBS::Database.migrate, counted in PRAGMA user_version).
+# (Rubbs::Common::Storage::Database.migrate, counted in PRAGMA user_version).
 
 # data/scriptorium.sqlite3: the reads (ReadModel).
 MIGRATIONS = [<<~SQL].freeze

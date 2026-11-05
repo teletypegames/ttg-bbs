@@ -20,7 +20,7 @@ It has two faces on one port, like every board of the network:
 
 Both faces show a book's Project Gutenberg page,
 `https://www.gutenberg.org/ebooks/<number>`, as a QR code (rubbs'
-`BBS::QR`), so a phone or an e-reader takes the whole book (EPUB, Kindle)
+`Rubbs::Common::Text::QR`), so a phone or an e-reader takes the whole book (EPUB, Kindle)
 from there: the **QR code** button of the books and the chapters windows on
 the modern face (half blocks, in a window as big as the screen allows), and
 `c` (qr code) under a book's record on the C64 (quadrant blocks, in the middle
@@ -42,11 +42,11 @@ of the screen).
 ### The catalog
 
 Project Gutenberg's own catalog, `pg_catalog.csv.gz` (about 5.6 MB), is
-streamed into `data/` (`BBS::HTTP.get(url, to: file)`: the download never sits
+streamed into `data/` (`Rubbs::Common::Web::HTTP.get(url, to: file)`: the download never sits
 in memory) and its `Text` rows imported into SQLite
 (`data/catalog.sqlite3`, about 33 MB) with an FTS5 index of titles and authors
 (an indexed `LIKE` where the SQLite has no FTS5). The import runs in a
-background thread (rubbs' `BBS.background`) at start when there is no catalog or it is older than
+background thread (rubbs' `Rubbs.background`) at start when there is no catalog or it is older than
 `SCRIPTORIUM_BBS_CATALOG_TTL` days, and the thread looks again every hour; a
 failed import is logged and tried again after five minutes, then less and less
 often, at most hourly. It builds the tables anew in one transaction
@@ -58,7 +58,7 @@ and search is a query.
 ### The texts
 
 A book is fetched when someone first opens it:
-`<mirror>/cache/epub/<N>/pg<N>.txt`, through `BBS::HTTP` (a 60-second
+`<mirror>/cache/epub/<N>/pg<N>.txt`, through `Rubbs::Common::Web::HTTP` (a 60-second
 deadline, the size cap below, redirects to public http(s) addresses only)
 with a User-Agent that names the board.
 The board takes off the Project Gutenberg header and footer (`*** START OF …`,
@@ -74,7 +74,7 @@ and a book without headings in sections of about 16 KB ("Part 1/23").
 The cleaned text and its chapter index are cached in `data/texts/` (at most
 `SCRIPTORIUM_BBS_CACHE_MB`, the books read least recently go first). A chapter is
 read from the file when it is shown: no session keeps a whole book. A text
-longer than `SCRIPTORIUM_BBS_BOOK_MAX` is refused (`BBS::HTTP::TooLarge`, as soon
+longer than `SCRIPTORIUM_BBS_BOOK_MAX` is refused (`Rubbs::Common::Web::HTTP::TooLarge`, as soon
 as the mirror's Content-Length says so). Callers opening the same
 book wait for one fetch, and at most two books are fetched and cut at once
 (a caller waits a minute at most for a turn); the text is cleaned in place
@@ -118,7 +118,7 @@ a read) is imported into the `reads` table on the first start, one
 transaction, an unreadable line skipped, and renamed `reads.jsonl.imported`;
 the log says `scriptorium-bbs: reads: imported N reads from reads.jsonl (M skipped)`.
 
-Every log line starts with the log tag `scriptorium-bbs:` (rubbs' `BBS.log`):
+Every log line starts with the log tag `scriptorium-bbs:` (rubbs' `Rubbs.log`):
 `catalog refresh`, `catalog`, `gutenberg`, `text cache`, `reads`. The Gutenberg
 repository lets a failure go up; the services (and the refresh thread) log it
 once.
@@ -134,16 +134,16 @@ bundle exec rubocop
 The tests cover the domain: the reads and their legacy import, cleaning and
 cutting a text, the reading service (one fetch per book, a few at once), the
 text cache, the catalog import and search, and the Gutenberg repository
-against a stubbed `BBS::HTTP`. CI runs both before a deploy.
+against a stubbed `Rubbs::Common::Web::HTTP`. CI runs both before a deploy.
 
 ## Project structure
 
 ```
-bbs.rb                      entry point: BBS.configure + BBS::Terminal.flow
+bbs.rb                      entry point: Rubbs.configure + Rubbs::Common::Call::Terminal.flow
 config/classics.yml         the Classics shelf: ebook numbers, titles, authors
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
-  migrations.rb             the schemas of the two SQLite files (BBS::Database), the catalog's
+  migrations.rb             the schemas of the two SQLite files (Rubbs::Common::Storage::Database), the catalog's
   model/book_model.rb       a book of the catalog (books): search, rebuild
   model/bookshelf_model.rb  a Project Gutenberg bookshelf (shelves)
   model/shelf_book_model.rb a book on a bookshelf (shelf_books)
@@ -151,7 +151,7 @@ lib/domain/
   model/shelf_model.rb      a bookshelf, or the Classics shelf
   model/chapter_model.rb    a chapter: its title and byte range in the cached text
   model/text_model.rb       a book ready to read: its chapter index
-  repository/gutenberg_repository.rb    Project Gutenberg over BBS::HTTP: the catalog file, a plain text
+  repository/gutenberg_repository.rb    Project Gutenberg over Rubbs::Common::Web::HTTP: the catalog file, a plain text
   repository/catalog_builder.rb         the catalog built anew from pg_catalog.csv.gz, through the models
   repository/classics_repository.rb     config/classics.yml
   repository/legacy_reads.rb            the one-time import of an older data/reads.jsonl
@@ -161,7 +161,7 @@ lib/domain/
   service/reading_service.rb            opening a book (fetch, cut, cache) and its chapters
   scriptorium_bbs.rb        the composition root (ScriptoriumBBS)
 lib/ui/
-  logo.rb                   SCRIPTORIUM in blocks (BBS::BlockFont), both faces
+  logo.rb                   SCRIPTORIUM in blocks (Rubbs::Common::Text::BlockFont), both faces
   modern.rb                 UI::Modern: the rubbs Application, put together from:
   modern/library.rb         the helpers: shelves, search, opening a book
   modern/desktop.rb         the logo, the tagline, the statusbar
@@ -173,7 +173,7 @@ lib/ui/
   modern/reader_window.rb   the reader window
   petscii.rb                UI::Petscii: the C64 board
   petscii/reader.rb         the C64 reader: 38-column pages
-  petscii/screen.rb         the 40×25 screen: rubbs' BBS::Petscii::Screen
+  petscii/screen.rb         the 40×25 screen: rubbs' Rubbs::Petscii::Screen
 rake test                    runs the tests
 test/                       the domain tests (minitest)
 ```

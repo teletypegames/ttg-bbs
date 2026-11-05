@@ -16,7 +16,7 @@ class ClassicsRepository
       )
     end.freeze
   rescue SystemCallError, Psych::Exception, KeyError, ArgumentError, NoMethodError => e
-    BBS.log('classics', "#{path}: #{e.class}: #{e.message}")
+    Rubbs.log('classics', "#{path}: #{e.class}: #{e.message}")
     @books = [].freeze
   end
 

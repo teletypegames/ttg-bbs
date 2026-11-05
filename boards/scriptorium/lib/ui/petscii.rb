@@ -7,7 +7,7 @@ module UI
   # the shelves and the books as numbered lists, a book's record on a page,
   # its chapters as a numbered list, and the reader: 38-column pages that
   # wait for RETURN, N and P for the next and the previous chapter.
-  class Petscii < BBS::Petscii::Face
+  class Petscii < Rubbs::Petscii::Face
     LOGO_COLORS = [WH, WH, YE, YE, CY].freeze
     PREPARING   = 'The catalog is being prepared: it is downloaded from Project Gutenberg and indexed. ' \
                   'Try again in a minute. The classics shelf is open meanwhile.'

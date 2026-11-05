@@ -6,7 +6,7 @@
 # kept fresh in the background: looked at every CHECK_EVERY seconds, a
 # failed refresh tried again after RETRY_AFTER (doubled up to CHECK_EVERY).
 class ScriptoriumBBS
-  include BBS::Domain
+  include Rubbs::Common::Board::Domain
 
   CHECK_EVERY = 3600
   RETRY_AFTER = 300

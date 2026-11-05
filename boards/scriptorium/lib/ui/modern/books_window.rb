@@ -5,7 +5,7 @@ module UI
     # A list of books (a shelf, a search, the most read) on the left, the
     # record of the one picked on the right; Enter opens it.
     module BooksWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :books, :master_detail do
         title      { heading }

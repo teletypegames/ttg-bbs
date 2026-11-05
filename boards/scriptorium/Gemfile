@@ -2,8 +2,8 @@
 
 source 'https://rubygems.org'
 
-gem 'bbs', git: 'https://git.teletypegames.org/engines/rubbs.git'
 gem 'csv', '~> 3.3'
+gem 'rubbs', git: 'https://git.teletypegames.org/engines/rubbs.git'
 gem 'sqlite3', '~> 2.1'
 gem 'ttg-common', git: 'https://git.teletypegames.org/bbs/common.git'
 

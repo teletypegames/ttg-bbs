@@ -26,7 +26,7 @@ module UI
     KEYS    = ['← →          the previous / next chapter in the reader'].freeze
     TAGLINE = '─── the classic literature vault · books from Project Gutenberg ───'
 
-    APP = BBS::Application.define do
+    APP = Rubbs::Modern::Application.define do
       theme :synchronet
       helpers { include Library, BookCard, Chapters }
 

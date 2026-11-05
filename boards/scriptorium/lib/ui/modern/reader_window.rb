@@ -6,7 +6,7 @@ module UI
     # line under it that says where the reader is ("Chapter 3/42 · page
     # 2/9"), Prev and Next (and ← →) for the previous and the next chapter.
     module ReaderWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       window :reader, :reader do
         title     { bookmark.book.short_title }

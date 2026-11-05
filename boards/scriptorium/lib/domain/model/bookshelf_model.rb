@@ -2,7 +2,7 @@
 
 # A Project Gutenberg bookshelf of the catalog (a row of the shelves table
 # of data/catalog.sqlite3): its name and how many books stand on it.
-class BookshelfModel < BBS::Model
+class BookshelfModel < Rubbs::Common::Storage::Model
   table :shelves, database: :catalog
 
   # The bookshelves as ShelfModel, the older named ones first, then the

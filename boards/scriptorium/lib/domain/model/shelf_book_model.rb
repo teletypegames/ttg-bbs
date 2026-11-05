@@ -2,7 +2,7 @@
 
 # A book on a Project Gutenberg bookshelf (a row of the shelf_books table of
 # data/catalog.sqlite3).
-class ShelfBookModel < BBS::Model
+class ShelfBookModel < Rubbs::Common::Storage::Model
   table :shelf_books, database: :catalog
 
   # The first +limit+ books of bookshelf +shelf_id+, lowest numbers first:

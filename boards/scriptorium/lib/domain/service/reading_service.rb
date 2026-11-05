@@ -3,7 +3,7 @@
 # Reading a book: its text fetched from Project Gutenberg once, cleaned and
 # cut into chapters (ChapterService), then kept in the text cache; a
 # chapter is read from there when it is shown. Callers opening the same
-# book wait for one fetch (a BBS::Cache single flight), and at most
+# book wait for one fetch (a Rubbs::Common::Storage::Cache single flight), and at most
 # FETCHES books are fetched and cut at once, so a few callers opening big
 # books together do not run the board out of memory; a caller waits for
 # a turn no longer than WAIT seconds.
@@ -19,7 +19,7 @@ class ReadingService
     @cache     = cache
     @chapters  = chapters
     @max_bytes = max_bytes
-    @opening   = BBS::Cache.new(ttl: REMEMBER, max_entries: 64)
+    @opening   = Rubbs::Common::Storage::Cache.new(ttl: REMEMBER, max_entries: 64)
     @turns     = SizedQueue.new(FETCHES)
     FETCHES.times { @turns << :turn }
   end
@@ -80,10 +80,10 @@ class ReadingService
     return :empty if cuts.empty?
 
     @cache.store(id, clean, cuts) || :unavailable
-  rescue BBS::HTTP::TooLarge
+  rescue Rubbs::Common::Web::HTTP::TooLarge
     :too_big
-  rescue BBS::HTTP::Error => e
-    BBS.log('gutenberg', "book #{id}: #{e.message}")
+  rescue Rubbs::Common::Web::HTTP::Error => e
+    Rubbs.log('gutenberg', "book #{id}: #{e.message}")
     :unavailable
   end
 end

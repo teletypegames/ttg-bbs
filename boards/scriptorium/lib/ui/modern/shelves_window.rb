@@ -5,7 +5,7 @@ module UI
     # The bookshelves of Project Gutenberg (and the Classics) on the left,
     # what a shelf is on the right; Enter opens its books.
     module ShelvesWindow
-      extend BBS::Part
+      extend Rubbs::Modern::Part
 
       KINDS = {
         classics:  "The board's own shelf of well-known books.",

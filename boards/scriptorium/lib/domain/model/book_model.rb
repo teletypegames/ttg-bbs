@@ -8,7 +8,7 @@
 # The class methods are the catalog's queries: a book, the books of a list,
 # the search, and its rebuild. Until the first import the table is empty and
 # they find nothing.
-class BookModel < BBS::Model
+class BookModel < Rubbs::Common::Storage::Model
   table :books, database: :catalog
 
   # The columns a BookModel is read with.
@@ -92,7 +92,7 @@ class BookModel < BBS::Model
   def self.guard(fallback)
     yield
   rescue Sequel::DatabaseError => e
-    BBS.log('catalog', "#{e.class}: #{e.message}")
+    Rubbs.log('catalog', "#{e.class}: #{e.message}")
     fallback
   end
 
