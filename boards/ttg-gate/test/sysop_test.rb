@@ -48,16 +48,16 @@ class SysopTest < Minitest::Test
   end
 
   def test_a_sysop_bans_an_account
-    keys = ['p', 's', '2', '/', *'spam'.chars, :enter, :enter, 'b', *'ads'.chars, :enter, 'y', 'q', 'q', 'q', 'b', 'q']
+    keys = ['p', 's', :tab, '/', *'spam'.chars, :enter, 'b', *'ads'.chars, :enter, 'y', 'q', 'b', 'q']
     capture_io { assert_nil gate(keys).run }
     entry = @accounts.entry('spammer')
     assert_equal [true, 'Tasi', 'ads'], [entry.banned?, entry.banned_by, entry.ban_reason]
-    assert_includes @line.output, 'SYSOP › ACCOUNTS › Spammer'
+    assert_includes @line.output, 'SYSOP › ACCOUNTS'
     capture_io { assert_equal :banned, @accounts.log_in('spammer', 'secret1', caller_key: 'line:1') }
   end
 
   def test_a_sysop_cannot_ban_themselves_or_drop_their_sysop_role
-    g = gate(['p', 's', '2', :down, :enter, 'b', 'r', *'sysop'.chars, :enter])
+    g = gate(['p', 's', :tab, :down, 'b', 'r', *'sysop'.chars, :enter])
     capture_io { assert_raises(BBS::Hangup) { g.run } }
     assert_includes @line.output, 'You cannot ban yourself.'
     assert_includes shown, 'Your own sysop role stays.'
@@ -69,7 +69,7 @@ class SysopTest < Minitest::Test
     own   = Call.new('test', 'Tasi', '10.0.0.1', 'telnet', :modern, Time.now - 60, nil)
     other = Call.new('x', nil, '203.0.113.7', 'bbs-web', :petscii, Time.now - 600, '› Feedia BBS')
     BBS.stub(:calls, [own, other]) do
-      capture_io { assert_nil gate(['p', 's', '1', 'h', :down, 'h', 'y', 'q', 'q', 'b', 'q']).run }
+      capture_io { assert_nil gate(['p', 's', 'h', :down, 'h', 'y', 'q', 'b', 'q']).run }
     end
     assert other.hung
     refute own.hung
@@ -87,7 +87,7 @@ class SysopTest < Minitest::Test
 
   def test_the_log
     capture_io { BBS.log('auth', 'login', name: 'Tasi') }
-    g = gate(%w[p s 3])
+    g = gate(['p', 's', :left])
     capture_io { assert_raises(BBS::Hangup) { g.run } }
     assert_includes shown, 'SYSOP › LOG'
     assert_includes shown, 'auth: login name=Tasi'

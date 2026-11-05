@@ -26,7 +26,7 @@ module UI
 
         def take(board) = @on_dial.call(board)
 
-        def hint = pages_count > 1 ? HINT[0, 4] + [['+/-', true], [' Page', false]] : HINT
+        def hint = pages_count > 1 ? HINT[0, 3] + [[' Dial  ', false], ['+/-', true], [' Page', false]] : HINT
 
         def draw(canvas)
           Layout.band(canvas, 'OWN SERVERS', page_mark, Canvas::YELLOW)

@@ -2,7 +2,7 @@
 
 module UI
   module Petscii
-    class Gate < BBS::Pages
+    class Gate < BBS::Kit::Petscii::Frame
       # The places of the gate: our own boards, Help, and the lists, menus
       # and pages of Global Discovery, each a view for the Gate's stack.
       module Places

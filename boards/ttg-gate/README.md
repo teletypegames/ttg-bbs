@@ -185,25 +185,30 @@ the **console**. It is the gate's own (`lib/ui/sysop.rb`, `lib/ui/modern/sysop/`
 `lib/ui/petscii/sysop/`); rubbs only lends the place in the profile's menu
 (`BBS::Auth::Profile.extra`).
 
+It looks and moves like the gate itself (both are rubbs' `BBS::Kit`): three
+tabs, **CALLS**, **ACCOUNTS** and **LOG**, a row an item with the chosen one's
+details under the list, and the steps on the list.
+
 - **Calls:** who is on the gate now (an account or a guest), their address,
-  where the call came from (`telnet`, `bbs-web`), the face, how long, and where
-  they are (`› Feedia BBS` while the gate carries them there). Redrawn every two
-  seconds; RETURN or `H` hangs the chosen call up.
+  how long, and under the list where the call came from (`telnet`,
+  `bbs-web`), the face and where they are (`› Feedia BBS` while the gate
+  carries them there). Redrawn every two seconds; RETURN or `H` hangs the
+  chosen call up.
 - **Accounts:** every account of the network with its roles and last login, a
-  ✖ for a banned one; `/` searches names and roles (`blogger` lists the
-  bloggers). On an account: `G` grants a role, `R` revokes one, `B` bans it (with
-  a reason; its calls on the gate are hung up) or lifts the ban, `N` gives it a
-  new random password to pass on, `H` hangs up its calls. A banned account's
-  right password gets *This account is closed.* on every board. A sysop cannot
-  ban themselves or take their own sysop role.
+  ✖ (a red `*` on a C64) for a banned one, the chosen one's roles, dates, calls
+  on the gate and ban under the list; `/` finds names and roles (`blogger`
+  lists the bloggers). `G` grants a role, `R` revokes one, `B` bans the account
+  (with a reason; its calls on the gate are hung up) or lifts the ban, `N` gives
+  it a new random password to pass on, `H` hangs up its calls. A banned
+  account's right password gets *This account is closed.* on every board. A
+  sysop cannot ban themselves or take their own sysop role.
 - **Log:** the gate's last 500 log lines, the newest at the bottom (logins,
   wrong passwords, bans, dials, errors); `F` keeps the warnings and errors, `/`
   the lines with a word.
 
-On a C64 the same three parts fit 40 columns: a row a call (who, how long) with
-the lit one's address, way in, face and place under it; a row an account (a red
-`*` for a banned one, its roles as letters: M member, S sysop, B blogger, W wiki);
-the log a line an entry, cut at the edge. `←` or RUN/STOP goes back.
+On a modern terminal TAB and the arrows go round the tabs, `Q` goes back to the
+profile; on a C64 CRSR up reaches the tabs (`C`, `A`, `L` open them from
+anywhere), `←` or RUN/STOP goes back.
 
 Every step of the console is a log line with the sysop's name (`sysop: hung up
 by=…`, `auth: ban … by=…`). Only the gate's own calls are listed: a caller who
@@ -551,21 +556,18 @@ lib/
   domain/service/directory_service.rb  the boards a caller can dial
   domain/ttg_gate_bbs.rb               the composition root (TTGGateBBS)
   ui/modern.rb                         the modern face: Own Servers | Global Discovery
-  ui/modern/style.rb                   its palette, the logo and the chooser
+  ui/modern/style.rb                   the gate's look on rubbs' BBS::Kit::Modern: the logo, the tabs, the state marks
   ui/modern/own_servers.rb             the dialing menu of our own boards on an ANSI terminal
   ui/modern/discovery/                 Global Discovery: home, menus, lists, the board page, search, sources
   ui/sysop.rb                          the sysop's console: its place in the profile, the steps both faces share
-  ui/modern/sysop/                     the console on a modern terminal: home, calls, accounts, an account, the log
-  ui/petscii/sysop/                    the console on a C64, the same on 40×25
+  ui/modern/sysop/                     the console on a modern terminal: its tabs, calls, accounts, the log
+  ui/petscii/sysop/                    the console on a C64: its frame, calls, accounts, the log
   ui/petscii.rb                        the PETSCII face: the call, its node number, goodbye
-  ui/petscii/gate.rb                   one C64 call: the frame, the tabs, the sub-menu focus, the keys
+  ui/petscii/gate.rb                   one C64 call: rubbs' BBS::Kit::Petscii::Frame with the gate's places
   ui/petscii/gate/                     its places (Places), its calls (Dialing) and its find line (Input)
-  ui/petscii/chrome.rb                 the header, the tabs, the sub-menu and the hint bar
-  ui/petscii/layout.rb                 the 40×25 grid of the frame and the drawing helpers
-  ui/petscii/diff.rb                   the changed cells as PETSCII, row by row
+  ui/petscii/chrome.rb                 the gate's BBS::Kit::Petscii::Chrome: the tabs, the sub-menu, the hotkeys
+  ui/petscii/layout.rb                 Canvas and Layout of rubbs' kit (the 40×25 grid and its drawing helpers)
   ui/petscii/views/                    Own Servers, a list of boards, a menu, a board's page, Sources, text pages
-  ui/petscii/canvas.rb                 UI::Petscii::Canvas = rubbs' BBS::Petscii::Canvas (40×25, raw PETSCII)
-  ui/petscii/screen.rb                 the C64 line of one call: raw out, keys in
   ui/colors.rb                         a board's accent on either face
   ui/dial.rb                           hands the line to a board (BBS::Gateway), by the dial rules for the catalog
   domain/discovery.rb                  requires Global Discovery

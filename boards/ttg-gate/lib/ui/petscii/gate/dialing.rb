@@ -2,7 +2,7 @@
 
 module UI
   module Petscii
-    class Gate < BBS::Pages
+    class Gate < BBS::Kit::Petscii::Frame
       # The calls of the gate: our own boards with a little show, the
       # catalog's by the dial rules, and a stored PETSCII banner.
       module Dialing

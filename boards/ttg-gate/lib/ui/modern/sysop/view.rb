@@ -3,31 +3,32 @@
 module UI
   module Modern
     # The sysop's console (UI::Sysop) on a modern terminal, opened from
-    # SysOp in the caller's profile: pages of its own runner (Console),
-    # until Q on its first screen goes back to the profile.
+    # SysOp in the caller's profile: rubbs' BBS::Kit::Modern::Tabs like the
+    # gate's own, its tabs CALLS, ACCOUNTS and LOG. TAB or the arrows go
+    # round them, Q goes back to the profile.
     module Sysop
+      # The console's look: its tabs, its top line, yellow for the sysop.
+      LOOK = BBS::Kit::Modern::Look.new(
+        tabs:   { calls: 'CALLS', accounts: 'ACCOUNTS', log: 'LOG' },
+        crumb:  'SYSOP',
+        accent: BBS::Kit::Modern::Palette::YELLOW
+      )
+
       # Runs the console for the caller on +session+ with +accounts+ (the
       # gate's BBS::Auth::Directory). Returns +nil+.
-      def self.run(session, accounts) = Console.new(session).run(Home.new(accounts))
-
-      # The runner of the console's pages, its line read at the bottom of
-      # the screen.
-      class Console < BBS::Pages
-        include Style
-        include Prompt
-
-        def initialize(session) = super(session, face: :modern)
-
-        def draw(frame)
-          super
-          prompt(frame) if line
-        end
+      def self.run(session, accounts)
+        sides = { calls: Calls.new(accounts), accounts: Accounts.new(accounts), log: LogView.new(accounts) }
+        BBS::Kit::Modern::Tabs.new(session, look: LOOK, sides: sides).run
       end
 
-      # A screen of the console: the top line (SYSOP › where), the body,
+      # A tab of the console: the logo-less masthead with the tabs, the body,
       # the hints at the bottom. Without the role it shows nothing but that,
       # and every action checks the role again (a logout meanwhile).
       class View < Screen
+        key(:tab, :right) { pages.switch }
+        key(:left) { pages.switch(-1) }
+        key(:escape, 'q', 'Q') { quit }
+
         def initialize(accounts)
           super()
           @accounts = accounts
@@ -36,31 +37,26 @@ module UI
         def lines
           return refused unless UI::Sysop.allowed?(session)
 
-          body = self.body
+          body = [*masthead(tab), *self.body]
           body.fill('', body.size...(rows - 3))
           body.push(rule, "#{DIM}#{fit(hints, width)}#{RESET}")
         end
 
         private
 
+        def tab = nil
+
         def body = []
 
-        def hints = 'Q back'
+        def hints = 'TAB next tab   Q back'
 
         def sysop = session.identity.name
 
-        def refused = [header('NO ENTRY'), rule, '', "#{RED}The console is for a sysop.#{RESET}", '', "#{DIM}Q back#{RESET}"]
-
-        # The top line: where the console is, and +right+.
-        def header(path, right = '')
-          right = plain(right)
-          left  = fit("SYSOP › #{path}", width - right.length - 1).rstrip
-          "#{YELLOW}#{BOLD}#{left}#{RESET}#{' ' * [width - left.length - right.length, 1].max}#{DIM}#{right}#{RESET}"
-        end
+        def refused = [crumbs('NO ENTRY'), rule, '', "#{RED}The console is for a sysop.#{RESET}", '', "#{DIM}Q back#{RESET}"]
 
         # Runs the block when the caller is still a sysop.
         def guarded
-          return back unless UI::Sysop.allowed?(session)
+          return quit unless UI::Sysop.allowed?(session)
 
           yield
         end
@@ -82,9 +78,11 @@ module UI
           list[first, size].to_a.each_with_index.map { |item, i| yield(item, first + i == index) }
         end
 
-        def per_page = [rows - 7, 3].max
+        def per_page = [rows - 16, 3].max
 
         def when_text(iso) = iso ? Time.parse(iso).localtime.strftime('%Y-%m-%d %H:%M') : 'never'
+
+        def fact(label, value) = "#{DIM}#{label.ljust(13)}#{RESET}#{TEXT}#{plain(value)}#{RESET}"
       end
     end
   end

@@ -4,7 +4,7 @@ require_relative 'colors'
 require_relative 'dial'
 require_relative 'petscii/gate'
 require_relative 'sysop'
-%w[console home calls accounts account log_view].each { |f| require_relative "petscii/sysop/#{f}" }
+%w[console calls accounts log_view].each { |f| require_relative "petscii/sysop/#{f}" }
 
 module UI
   # TTG Gate BBS on a Commodore 64: raw PETSCII in the lower/upper set, the

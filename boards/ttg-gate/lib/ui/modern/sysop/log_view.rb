@@ -8,18 +8,23 @@ module UI
       # The arrows scroll back, F shows warnings and errors only, / keeps
       # the lines that have a word, END comes back to the newest.
       class LogView < View
-        LEVEL_COLORS = { debug: Style::DIM, info: Style::TEXT, warn: Style::YELLOW, error: Style::RED, fatal: Style::RED }.freeze
+        LEVEL_COLORS = {
+          debug: BBS::Kit::Modern::Palette::DIM,
+          info:  BBS::Kit::Modern::Palette::TEXT,
+          warn:  BBS::Kit::Modern::Palette::YELLOW,
+          error: BBS::Kit::Modern::Palette::RED,
+          fatal: BBS::Kit::Modern::Palette::RED
+        }.freeze
 
         every(2) { redraw }
 
         key(:up) { @back = (@back + 1).clamp(0, most) }
         key(:down) { @back = [@back - 1, 0].max }
-        key(:page_up, :left) { @back = (@back + per_page).clamp(0, most) }
-        key(:page_down, :right) { @back = [@back - per_page, 0].max }
+        key(:page_up) { @back = (@back + per_page).clamp(0, most) }
+        key(:page_down) { @back = [@back - per_page, 0].max }
         key(:end) { @back = 0 }
         key('f', 'F') { @serious = !@serious }
         key('/') { search }
-        key(:escape, 'q', 'Q') { back }
 
         def initialize(accounts)
           super
@@ -47,7 +52,7 @@ module UI
           right << "“#{@query}”" if @query
           right << "#{@back} back" if @back.positive?
           right = right.join('  ·  ')
-          [header('LOG', right), rule, *shown.map { |e| row(e) }]
+          [crumbs('LOG', right), *shown.map { |e| row(e) }]
         end
 
         def row(entry)
@@ -60,7 +65,11 @@ module UI
           "#{entry.tag}: #{entry.message} #{facts}".strip
         end
 
-        def hints = '↑↓ ←→ scroll   END newest   F warnings only   / search   Q back'
+        def hints = '↑↓ PgUp PgDn scroll   END newest   F warnings only   / search   TAB next   Q back'
+
+        def tab = :log
+
+        def per_page = [rows - 8, 3].max
 
         def search
           text = read_line('Search:', text: @query.to_s, max: 40, hint: 'A word of the lines: login ban door …')

@@ -3,17 +3,17 @@
 module UI
   module Modern
     module Sysop
-      # The calls on the gate now, the earliest first: who (a guest, or the
-      # account), from where, through what, which face, how long, and where
-      # (› a board while the gate carries them there). Redrawn every two
-      # seconds; RETURN or H hangs the chosen call up (not the sysop's own).
+      # The calls on the gate now, the earliest first, a row each like the
+      # gate's own boards: who (a guest, or the account), from where, for
+      # how long; under the list the chosen call's way in, face and place.
+      # Redrawn every two seconds; RETURN or H hangs the chosen call up (not
+      # the sysop's own).
       class Calls < View
         every(2) { redraw }
 
         key(:up) { @index = [@index - 1, 0].max }
         key(:down) { @index = (@index + 1).clamp(0, [calls.size - 1, 0].max) }
         key(:enter, 'h', 'H') { guarded { hang_up(calls[@index]) } }
-        key(:escape, 'q', 'Q') { back }
 
         def initialize(accounts)
           super
@@ -22,26 +22,23 @@ module UI
 
         private
 
+        def tab = :calls
+
         def calls = BBS.calls
 
         def body
           list = calls
           @index = @index.clamp(0, [list.size - 1, 0].max)
-          [header('CALLS', "#{list.size} on the gate"), rule, heading,
-           *window(list, @index, per_page) { |call, lit| row(call, lit) }, *(@notice ? ['', @notice] : [])]
-        end
-
-        def heading
-          columns = [fit('WHO', 16), fit('FROM', 16), fit('VIA', 12), fit('FACE', 8), fit('FOR', 8), 'WHERE']
-          "#{DIM}  #{columns.join(' ')}#{RESET}"
+          rows = list.empty? ? ["#{DIM}Nobody is on.#{RESET}"] : window(list, @index, per_page) { |call, lit| row(call, lit) }
+          [crumbs('CALLS', "#{list.size} on the gate"), *rows, '', rule, *detail(list[@index]),
+           *(@notice ? ['', @notice] : [])]
         end
 
         def row(call, lit)
-          rest = width - (2 + 17 + 17 + 13 + 9 + 9)
-          "#{lit ? "#{SELECTED}#{GREEN}▸ " : '  '}#{call.caller_name ? BOLD : DIM}#{fit(who(call), 16)}#{RESET}" \
-            "#{SELECTED if lit} #{TEXT}#{fit(call.caller_ip.to_s, 16)} #{fit(call.call_via, 12)} " \
-            "#{fit(call.face.to_s, 8)} #{fit(BBS.duration(call.started_at), 8)} " \
-            "#{GREEN}#{fit(call.place.to_s, rest)}#{RESET}"
+          bg = lit ? SELECTED : ''
+          "#{lit ? "#{bg}#{look.accent}▸" : ' '}#{bg} #{call.caller_name ? BOLD : DIM}#{fit(who(call), 24)}#{RESET}#{bg}  " \
+            "#{TEXT}#{fit(call.caller_ip.to_s, 18)}  #{DIM}#{fit(BBS.duration(call.started_at).to_s, 8)}" \
+            "#{fit(call.place.to_s, [width - 56, 0].max)}#{RESET}"
         end
 
         def who(call)
@@ -49,7 +46,13 @@ module UI
           call.session_id == session.session_id ? "#{name} (you)" : name
         end
 
-        def hints = '↑↓ choose   RETURN or H hang up   Q back'
+        def detail(call)
+          return [] unless call
+
+          [fact('Via', call.call_via.to_s), fact('Face', call.face.to_s), fact('Where', call.place.to_s)]
+        end
+
+        def hints = '↑↓ choose   RETURN or H hang up   TAB next tab   Q back'
 
         def hang_up(call)
           return unless call
@@ -59,7 +62,7 @@ module UI
           return unless yes?("Hang up #{who} (#{call.caller_ip})?")
 
           UI::Sysop.hang_up(call, by: sysop)
-          @notice = "#{GREEN}#{plain(who)} hung up.#{RESET}"
+          @notice = "#{look.accent}#{plain(who)} hung up.#{RESET}"
         end
       end
     end

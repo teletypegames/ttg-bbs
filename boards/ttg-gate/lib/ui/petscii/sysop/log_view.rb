@@ -37,6 +37,8 @@ module UI
           @query   = nil
         end
 
+        def section = :log
+
         def hint = HINT
 
         def draw(canvas)
