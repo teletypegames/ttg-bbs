@@ -41,6 +41,8 @@ Copy `env-example` to `.env`:
 | `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2326) |
 | `BBS_MAX_SESSIONS` | `100` | Callers at once (compose sets 50) |
 | `ALEXANDRIA_BBS_LANGUAGES` | `en,hu` | The Wikipedias a caller can switch between, by their language code; the first one is the default |
+| `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | The network's Central (TTG Gate BBS), where feedback and the wall live |
+| `RUBBS_AUTH_SECRET` | — | The secret every board of the network shares, for the Central (in `.env` on the server) |
 
 ## Interface
 
@@ -87,12 +89,14 @@ right, the article's address under it. `QR code` shows the article as a QR
 code (rubbs' `Rubbs::Common::Text::QR`) for a phone, with the pictures and tables a terminal
 cannot show. The code holds the short address by the page id,
 `https://<lang>.wikipedia.org/?curid=<id>`, so it fits whatever the title.
+**Wiki > The wall** opens the board's wall; **Wiki > Write to the librarians** sends the sysops
+a message, about the article open.
 
 ### The C64 face
 
 The Pharos, the ALEXANDRIA logo and a prompt: type a title and RETURN. RETURN alone opens
 the menu: `S` back to the search, `R` random article, `L` the next language,
-`Q` log off. Results and sections are numbered lists. The menu and the lists
+`W` the wall, `F` write to the librarians, `Q` log off. Results and sections are numbered lists. The menu and the lists
 are cursor menus of rubbs (`Rubbs::Common::Screens::Selector`): CRSR moves the bar, RETURN takes
 the lit item, and the letters (or the number typed, in a list) work as well;
 CRSR left and right turn the pages of a list, `Q` or `←` (RUN/STOP too) goes
@@ -101,6 +105,13 @@ screenful. Accented letters come as their nearest ASCII (the PETSCII line of
 rubbs). `C` shows the article's QR code (the same short address, quadrant
 blocks): in the list of sections, or under the last page of an article
 without sections.
+
+### Feedback and the wall
+
+The wall (callers write and answer each other) and the feedback to the sysops are ttg-common's
+`TTG::Wall` and `TTG::Feedback`: they live on TTG Gate BBS, the network's Central, which the
+board asks on the `interstack` network (`central TTG::CENTRAL`, `RUBBS_AUTH_SECRET`). The board
+says them its own way in `lib/content/wall.yml` and `lib/content/feedback.yml`.
 
 ## Project structure
 

@@ -10,6 +10,7 @@ require_relative 'lib/ui/petscii'
 # the desktop, a Commodore 64 the PETSCII screens.
 Rubbs.board 'Alexandria BBS', AlexandriaBBS do
   preset  TTG::PRESET
+  central TTG::CENTRAL
   modern  UI::Modern::APP
   petscii UI::Petscii
   goodbye 'Articles from wikipedia.org, under CC BY-SA.'

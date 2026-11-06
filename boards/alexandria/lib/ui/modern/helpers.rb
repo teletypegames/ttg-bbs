@@ -3,7 +3,7 @@
 module UI
   module Modern
     # What the caller does on the modern face: search, read, a random
-    # article, another Wikipedia.
+    # article, another Wikipedia, the network's feedback and wall.
     module Helpers
       LANGUAGES = { 'en' => 'English', 'hu' => 'Magyar', 'de' => 'Deutsch' }.freeze
       NO_ANSWER = 'Wikipedia did not answer. Try again later.'
@@ -41,6 +41,16 @@ module UI
         refresh_status
         message("Searching #{lang}.wikipedia.org (#{language_name}) from now on.", title: 'Language')
       end
+
+      # The network's feedback (ttg-common TTG::Feedback), about the article
+      # open, if any.
+      def feedback
+        article = window(:article)&.title
+        with_line { TTG::Feedback.open(@session, context: article && "#{article} (#{lang}.wikipedia.org)") }
+      end
+
+      # The board's wall (TTG::Wall).
+      def wall = with_line { TTG::Wall.open(@session) }
     end
   end
 end

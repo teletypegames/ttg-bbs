@@ -3,7 +3,8 @@
 module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen. A title typed at
   # the prompt is looked up, the results come as a numbered list, and an
-  # article as its contents, each section paged a screenful at a time.
+  # article as its contents, each section paged a screenful at a time. The
+  # menu has the network's wall and feedback (ttg-common).
   class Petscii < Rubbs::Petscii::Face
     LOGO_COLORS = [CY, CY, LB, LB, BL].freeze
     LANGUAGES   = { 'en' => 'english', 'hu' => 'magyar', 'de' => 'deutsch' }.freeze
@@ -34,6 +35,8 @@ module UI
       item 's', 'search a title', 'back to the prompt'
       item('r', 'random article', 'wherever the wiki takes you') { read(articles.random(lang: lang)) }
       item('l', -> { "language: #{WH}#{language_name}#{LG}" }, 'the next wikipedia') { next_language }
+      item('w', 'the wall', 'talk with the other readers') { TTG::Wall.open(@session) }
+      item('f', 'write to the librarians', 'a wrong page, an idea, a thank you') { TTG::Feedback.open(@session) }
       log_off 'hang up. see you!'
     end
 

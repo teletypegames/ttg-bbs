@@ -8,7 +8,7 @@ require_relative 'modern/article_window'
 module UI
   # The board on a modern terminal (ANSI colours, UTF-8, a mouse): the
   # Pharos on the desktop, the search in a dialog, the results and the
-  # article in two-pane windows.
+  # article in two-pane windows, the network's feedback and wall (ttg-common).
   module Modern
     ABOUT = 'Alexandria BBS — Wikipedia on a telnet line, from Teletype Games, powered by rubbs. ' \
             'Type a title: the article of that title opens at once, otherwise the search results. ' \
@@ -24,7 +24,9 @@ module UI
       command(:search,   'Search…',        key: 'F2') { search }
       command(:random,   'Random article', key: 'F3', hint: 'Random') { random }
       command(:language, 'Language…',      key: 'F4') { switch_language }
-      menu 'Wiki', :search, :random, :language, :separator, :log_off
+      command(:wall,     'The wall…', hint: 'Wall') { wall }
+      command(:feedback, 'Write to the librarians…', hint: 'Feedback') { feedback }
+      menu 'Wiki', :search, :random, :language, :separator, :wall, :feedback, :separator, :log_off
       help about: ABOUT
 
       status { "#{lang}.wikipedia.org" }

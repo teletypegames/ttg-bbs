@@ -7,3 +7,8 @@ BBS_MAX_SESSIONS=50
 
 # The Wikipedias a caller can switch between (F4 / L), the first one is the default.
 ALEXANDRIA_BBS_LANGUAGES=en,hu
+
+# The network's Central (TTG Gate BBS): feedback and the wall live there. The secret is every board's,
+# in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=
