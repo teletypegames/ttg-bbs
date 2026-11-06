@@ -1,0 +1,32 @@
+# Where the gate dials the boards; their ports are in config/boards.yml.
+TTG_GATE_BBS_GATEWAY_HOST=host.docker.internal
+# The address shown with every board in the menu.
+TTG_GATE_BBS_PUBLIC_HOST=teletypegames.org
+# The boards list.
+TTG_GATE_BBS_BOARDS=config/boards.yml
+# rubbs: the port inside the container, callers at once, idle seconds.
+BBS_PORT=2323
+BBS_MAX_SESSIONS=50
+# Global Discovery: where the import alerts go (a refused or failed source list), an ops alert; empty: off.
+TTG_GATE_BBS_OPS_WEBHOOK=
+# Feedback of every board (ttg-common TTG::Feedback): the Discord line that feedback came (board, kind, sender,
+# never the text). Discord is for these two only.
+TTG_GATE_BBS_FEEDBACK_WEBHOOK=
+# Global Discovery: the data folder, the catalog and the opt-out list.
+TTG_GATE_BBS_DATA=data
+TTG_GATE_BBS_DISCOVERY_DB=data/discovery.sqlite3
+TTG_GATE_BBS_DISCOVERY_OPTOUT=config/discovery-optout.yml
+# The Gate's dial limits for the catalog's boards: the window in seconds, the dials one caller
+# may make in it, the lines to one address at once, the seconds a silent relayed line lasts.
+TTG_GATE_BBS_DIAL_WINDOW=600
+TTG_GATE_BBS_DIAL_PER_CALLER=10
+TTG_GATE_BBS_DIAL_PER_HOST=3
+TTG_GATE_BBS_DIAL_IDLE=600
+# The network's Central (Rubbs::Common::Central): the gate keeps the accounts (Rubbs::Common::Auth) and
+# the network's services and serves them to the other boards on the interstack network; 0 turns the
+# port off. The secret is the same on every board (openssl rand -hex 32), in .env on the server, never here.
+TTG_GATE_BBS_ACCOUNTS_DB=data/accounts.sqlite3
+TTG_GATE_BBS_CENTRAL_PORT=8090
+RUBBS_AUTH_SECRET=
+# The accounts in numbers for Grafana (VPS: BBS – Users), copied by the server's cron.
+TTG_GATE_BBS_ACCOUNTS_METRICS=data/accounts-metrics.prom

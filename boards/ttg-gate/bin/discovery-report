@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# The catalog of Global Discovery in numbers: boards a source and their
+# overlap, states, probes and the commonest tags.
+
+require 'bundler/setup'
+require_relative '../lib/domain/discovery'
+
+puts Discovery::Root.new.report.text

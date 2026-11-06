@@ -1,0 +1,18 @@
+;A Synthetic FTN nodelist for the tests of Global Discovery -- Day number 305 : 00000
+;A Made up: no real node, host or person.
+;
+Zone,1,North_Zone,Somewhere,Zone_Coordinator,-Unpublished-,300,CM,INA:zone1.example.org,IBN,ITN
+Host,100,Example_Net,Springfield,Net_Host,-Unpublished-,300,CM,INA:net100.example.org,IBN
+,1,Plain_ITN_BBS,Springfield_IL,Ann_Sysop,-Unpublished-,300,CM,INA:plain.example.org,IBN,ITN
+,2,Port_ITN_BBS,Shelbyville,Bob_Sysop,-Unpublished-,300,CM,INA:port.example.org,IBN,ITN:2323
+,3,Host_ITN_BBS,Capital_City,Cy_Sysop,-Unpublished-,300,CM,INA:mail.example.org,IBN,ITN:bbs.example.org
+,4,Full_ITN_BBS,Ogdenville,Di_Sysop,-Unpublished-,300,CM,IBN,ITN:full.example.org:6400
+,5,No_Telnet_BBS,North_Haverbrook,Ed_Sysop,-Unpublished-,300,CM,INA:binkp.example.org,IBN
+Down,6,Down_BBS,Brockway,Fy_Sysop,-Unpublished-,300,CM,INA:down.example.org,ITN
+Pvt,7,named.example.org,Nowhere,Gu_Sysop,-Unpublished-,300,CM,ITN:2300
+Hold,8,Caf‚_BBS,Paris,Hu_Sysop,-Unpublished-,300,CM,INA:cafe.example.org,ITN
+,9,Duplicate_BBS,Springfield,Ann_Sysop,-Unpublished-,300,CM,INA:plain.example.org,ITN
+Zone,2,South_Zone,Elsewhere,Zone_Two,-Unpublished-,300,CM,INA:zone2.example.org,IBN
+Region,24,A_Region,Elsewhere,Region_Coord,-Unpublished-,300,CM
+,10,Region_BBS,Elsewhere,Iv_Sysop,-Unpublished-,300,CM,INA:region.example.org,ITN:23
+

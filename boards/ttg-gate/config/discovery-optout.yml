@@ -1,0 +1,11 @@
+# Sysops who asked to be left out of Global Discovery. An entry is a host name or an IP
+# address; it matches every port of it. The prober reads the file again when it changes, the
+# importer on every run.
+#
+# [hide]       never probed and never shown
+# [no_preview] listed and probed, but its banner is never shown
+#
+# A request goes to the wiki page services/ttg-gate-bbs; add the entry and push.
+
+hide: []
+no_preview: []

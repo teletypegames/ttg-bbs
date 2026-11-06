@@ -1,0 +1,125 @@
+# The lists Global Discovery imports (bin/discovery-import, daily). Only lists a program can
+# download and read; nothing is scanned. Measured on 2026-11-01 (phase 0 of TTG_DISCOVERY.md).
+#
+# [id]          the source's technical name; the src:<id> tag
+# [name]        shown on the Sources screen
+# [url]         where it is downloaded from
+# [format]      the parser: nodelist, sbl_html, syncterm_lst, cbbs_json or tbg_zip
+# [link]        a page that links the list: the first link matching this regular expression
+# [member]      in a .zip download, the file to read (a regular expression)
+# [network]     an FTN nodelist: the net:<network> tag of its nodes
+# [licence]     what we may do with it
+# [attribution] the credit shown with every board it brings
+# [enabled]     false keeps a source in the file but out of the import
+#
+# The counts are of 2026-11-01; the catalog keeps the telnet endpoints (host:port) of a list.
+
+# A field two sources disagree on is taken from the earlier source of this list; the other
+# value stays in board_source. CBBS > nodelist > SBL > TBG > SyncTERM: the CBBS Outpost lists only
+# Commodore boards, and its entries are kept by their sysops, so for a board it names its
+# software and location are the best we have (and the nodelists still give the FTN address,
+# which it has not); the banner's software is shown over all of them. The Telnet BBS Guide is
+# the largest list, but it is edited by hand, monthly, and an entry may not have changed for
+# years, while the nodelists and the SBL are rebuilt daily or weekly from what their boards
+# say; it still has more than SyncTERM (location, software, website), an export of the SBL.
+priority: [cbbs, fidonet, fsxnet, micronet, sbl, tbg, syncterm]
+
+sources:
+  - id: fidonet
+    name: "FidoNet nodelist"
+    # The Z2DAILY, the whole FidoNet nodelist (zones 1-4) compiled daily at 2:2/0; NodelistDB
+    # keeps the archive and redirects /download/latest to the newest one. Uncompressed text.
+    url: "https://nodelist.fidonet.cc/download/latest"
+    format: nodelist
+    network: fidonet
+    licence: >-
+      A compilation, all rights reserved except use and distribution inside FidoNet. We read the
+      listed facts of a node (name, place, sysop, address, flags) and never republish the file.
+    attribution: "FidoNet nodelist (Z2DAILY), via NodelistDB, nodelist.fidonet.cc"
+    # 2026-11-01, day 305: 1254 nodes, 136 with ITN (telnet), 95 telnet endpoints (host:port).
+    enabled: true
+
+  - id: fsxnet
+    name: "fsxNet nodelist"
+    # The fsxNet info pack, rebuilt weekly; the nodelist is FSXNET.<day> inside.
+    url: "https://fsxnet.nz/fsxnet.zip"
+    format: nodelist
+    member: '\AFSXNET\.\d{3}\z'
+    network: fsxnet
+    licence: >-
+      "All Rights Reserved | Copyright 2015-2026" in the nodelist, published for the network's
+      members and visitors. We read the listed facts of a node only, never republish the file.
+    attribution: "fsxNet nodelist, fsxnet.nz"
+    # 2026-11-01 (FSXNET.303): 351 nodes, 38 with ITN, 38 telnet endpoints.
+    enabled: true
+
+  - id: micronet
+    name: "Micronet nodelist"
+    # Rebuilt every Friday morning by the Micronet coordinator (Outpost BBS).
+    url: "https://minftn.outpostbbs.net/MICRONET.ZIP"
+    format: nodelist
+    member: '\AMICRONET\.\d{3}\z'
+    network: micronet
+    licence: >-
+      "(C)2000-current Sean Dennis and the members of Micronet" in the nodelist, published for
+      download on the network's page. We read the listed facts of a node only.
+    attribution: "Micronet nodelist, minftn.outpostbbs.net"
+    # 2026-11-01 (MICRONET.303): 110 nodes, 30 with ITN, 14 telnet endpoints.
+    enabled: true
+
+  - id: sbl
+    name: "Synchronet BBS List"
+    # The SBL exported from Vertrauen as HTML, daily: name, since, sysops, location, services,
+    # networks and the last verification (the software line). The richest form of the SBL.
+    url: "https://www.synchro.net/sbbslist.html"
+    format: sbl_html
+    licence: "Meant to be shared; credit is enough (D8)."
+    attribution: "Synchronet BBS List, exported from Vertrauen, synchro.net"
+    # 2026-11-01: 226 systems, 235 telnet endpoints.
+    enabled: true
+
+  - id: syncterm
+    name: "SyncTERM BBS list"
+    # SyncTERM's built-in system list: SyncTERM has no list of its own in its source
+    # (src/syncterm/getlist.ftp fetches vert.synchro.net/Synchronet/syncterm.lst), it is this
+    # export of the SBL in SyncTERM's ini format. It adds ScreenMode (C64, C128), the one
+    # machine-readable PETSCII mark of the two.
+    url: "https://synchro.net/syncterm.lst"
+    format: syncterm_lst
+    licence: "Meant to be shared; credit is enough (D8)."
+    attribution: "SyncTERM BBS list (SBL export), synchro.net"
+    # 2026-11-01: 463 entries, 248 telnet, 243 telnet endpoints (232 also in the SBL).
+    enabled: true
+
+  - id: tbg
+    name: "Telnet BBS Guide"
+    # The "official" monthly list (IBBSmmyy.ZIP), the one meant for distribution, linked from
+    # the download page under a name that changes each month; the daily one is for personal use
+    # only and never read. From the zip the full listing (the facts) and the EtherTerm phonebook
+    # (the names as written) are read; the e-mail and the descriptions are never stored, a
+    # description only says whether it names PETSCII (TbgZipParser).
+    url: "https://www.telnetbbsguide.com/lists/download-list/"
+    link: '/bbslist/ibbs\d{4}\.zip\z'
+    format: tbg_zip
+    licence: >-
+      "Please distribute this list everywhere you see fit" in the list; used with the Guide's
+      permission (2026-11-01, TBG_PERMISSION_REQUEST.md): the facts of a board only, with credit.
+    attribution: "Telnet BBS Guide (telnetbbsguide.com), used with permission"
+    # 2026-11-01 (IBBS1126.ZIP): 1074 telnet entries, 1060 telnet endpoints.
+    enabled: true
+
+  - id: cbbs
+    name: "CBBS Outpost (commodorebbs.com)"
+    # The site's own public JSON of its list (no key), one request a day with our User-Agent.
+    # Only the facts are read: name, address, port, location, software, hardware, website and
+    # the entry's update time. The sysop, the e-mail, the owner, the screenshot, the comment and
+    # the site's online flag are never stored (CbbsJsonParser).
+    url: "https://www.commodorebbs.com/api/bbs"
+    format: cbbs_json
+    licence: >-
+      The facts of a board only (name, address, port, software, location), with credit and a
+      link, no personal data; taken down on request (CBBS_OUTPOST_PERMISSION_REQUEST.md, sent as
+      a courtesy notice). Every board it lists is claims:petscii, never petscii by itself.
+    attribution: "CBBS Outpost (commodorebbs.com)"
+    # 2026-11-01: 209 entries.
+    enabled: true

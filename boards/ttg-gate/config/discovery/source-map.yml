@@ -1,0 +1,38 @@
+# The one way a field of a source list becomes a tag. The lists' free-text categories and
+# comments are never tags themselves; a rule here maps a value onto the closed vocabulary of
+# TTG_DISCOVERY.md §6.2. This is code-level config, not curation: it names no board.
+#
+# A rule: the source, the field (a hint the parser keeps: screen_mode, service, comment,
+# networks, platform, mentions; or a field of the record, like software), a regular expression
+# (case-insensitive; a list field matches when any of its values does) and the tag.
+
+# An encoding a source names is a claim, not a measurement: the tag is claims:<tag> (searchable,
+# never shown). The encoding tags themselves (ansi, petscii, …) come only from the banners of our
+# calls; claims:petscii makes the prober call the board a second time as a C64 would (no telnet),
+# and only a PETSCII banner of a call gives the tag petscii.
+encoding:
+  - { source: cbbs, field: platform, pattern: '\Acommodore\z', tag: petscii }
+  - { source: syncterm, field: screen_mode, pattern: '\A(?:C64|C128-40col|C128-80col)\z', tag: petscii }
+  - { source: syncterm, field: screen_mode, pattern: '\AAtari', tag: atascii }
+  - { source: syncterm, field: service, pattern: '\bpetscii\b', tag: petscii }
+  - { source: syncterm, field: service, pattern: '\batascii\b', tag: atascii }
+  - { source: sbl, field: comment, pattern: '\bpetscii\b', tag: petscii }
+  - { source: sbl, field: comment, pattern: '\batascii\b', tag: atascii }
+  # The Telnet BBS Guide: a description naming PETSCII, or a Commodore BBS program (C-Net is
+  # left out, the list's C-Net boards are Amiga ones).
+  - { source: tbg, field: mentions, pattern: '\APETSCII\z', tag: petscii }
+  - { source: tbg, field: software, pattern: '\A(?:image\s*bbs|color\s*64|c[-*]?\s*base|commodore|petscii\s*bbs|centipede|zelch|vic-bbs)', tag: petscii }
+
+# The networks a source names for a board (the SBL's Networks column), onto net:<network>.
+# An FTN nodelist gives its own network (sources.yml: network) to every node it lists.
+network:
+  - { source: sbl, field: networks, pattern: '\Afido-?net\z', tag: fidonet }
+  - { source: sbl, field: networks, pattern: '\Afsx-?net\z', tag: fsxnet }
+  - { source: sbl, field: networks, pattern: '\Amicronet\z', tag: micronet }
+  - { source: sbl, field: networks, pattern: '\Aamiga-?net\z', tag: amiganet }
+  - { source: sbl, field: networks, pattern: '\Aagora-?net\z', tag: agoranet }
+  - { source: sbl, field: networks, pattern: '\Ahobby-?net\z', tag: hobbynet }
+  - { source: sbl, field: networks, pattern: '\Atqw-?net\z', tag: tqwnet }
+  - { source: sbl, field: networks, pattern: '\Aarak-?net\z', tag: araknet }
+  - { source: sbl, field: networks, pattern: '\Aretro-?net\z', tag: retronet }
+  - { source: sbl, field: networks, pattern: '\Adove-?net\z', tag: dovenet }

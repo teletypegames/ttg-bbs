@@ -1,0 +1,13 @@
+# The house rules come from ttg-common (lib/ttg/board/rubocop.yml, kept in step with
+# rake ttg:sync); only this board's own exceptions follow.
+inherit_gem:
+  ttg-common: lib/ttg/board/rubocop.yml
+
+# This board's minitest suite is old and long: a test is one scenario read top
+# to bottom, its assertions in a row; cutting it into helpers hides what it checks.
+Metrics/MethodLength:
+  Exclude: ["test/**/*"]
+Metrics/AbcSize:
+  Exclude: ["test/**/*"]
+Metrics/ClassLength:
+  Exclude: ["test/**/*"]

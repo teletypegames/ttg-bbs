@@ -1,0 +1,31 @@
+; Synthetic SyncTERM list for the tests of Global Discovery: no real system.
+
+[Example One]
+	ConnectionType=ssh
+	Address=one.example.org
+	Port=22
+
+[Example One               telnet]
+	ConnectionType=telnet
+	Address=one.example.org
+	Port=23
+	Comment=The main line
+
+[Example One           PETSCII-40]
+	ConnectionType=Telnet
+	Address=one.example.org
+	Port=64
+	ScreenMode=C64
+	NoStatus=true
+
+[Port In Address]
+	ConnectionType=telnet
+	Address=two.example.org:6502
+
+[Default Port]
+	ConnectionType=telnet
+	Address=three.example.org
+
+[A Modem]
+	ConnectionType=modem
+	Address=555-1234
