@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen. The masthead is the post office from the
   # street — its sign, the windows of the sorting room, the door and the red pillar box, whose flag
