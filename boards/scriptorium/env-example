@@ -1,0 +1,35 @@
+# Every environment variable of Scriptorium BBS, with its default. The board
+# has no secrets.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=50
+
+# Project Gutenberg: the mirror the plain texts come from, and the catalog
+SCRIPTORIUM_BBS_MIRROR=https://www.gutenberg.org
+SCRIPTORIUM_BBS_CATALOG_URL=https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv.gz
+# Days the imported catalog is kept before it is downloaded and imported again
+SCRIPTORIUM_BBS_CATALOG_TTL=7
+
+# The board's own Classics shelf
+SCRIPTORIUM_BBS_CLASSICS=config/classics.yml
+
+# The board's own data in SQLite: the books opened (the "most read" list).
+# A data/reads.jsonl of an older board is imported on the first start and
+# renamed reads.jsonl.imported.
+SCRIPTORIUM_BBS_DB=data/scriptorium.sqlite3
+
+# The catalog in SQLite (a cache, rebuilt from the download), and where its
+# download waits for the import
+SCRIPTORIUM_BBS_CATALOG_DB=data/catalog.sqlite3
+SCRIPTORIUM_BBS_CATALOG_FILE=data/pg_catalog.csv.gz
+# The cleaned texts and their chapter indexes, and the most this folder takes, in MB
+SCRIPTORIUM_BBS_TEXTS=data/texts
+SCRIPTORIUM_BBS_CACHE_MB=300
+# The longest plain text the board fetches, in bytes
+SCRIPTORIUM_BBS_BOOK_MAX=8388608
+
+# The network's Central (TTG Gate BBS): feedback and the wall live there. The secret is every board's,
+# in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

@@ -1,0 +1,39 @@
+# The Classics shelf of Scriptorium BBS: well-known Project Gutenberg
+# ebooks by number. The title and the author stand here so the shelf works
+# before the catalog is imported; once it is, the catalog's record is shown.
+- { id: 1342, title: "Pride and Prejudice", author: "Jane Austen" }
+- { id: 84,   title: "Frankenstein; Or, The Modern Prometheus", author: "Mary Wollstonecraft Shelley" }
+- { id: 2701, title: "Moby Dick; Or, The Whale", author: "Herman Melville" }
+- { id: 11,   title: "Alice's Adventures in Wonderland", author: "Lewis Carroll" }
+- { id: 1661, title: "The Adventures of Sherlock Holmes", author: "Arthur Conan Doyle" }
+- { id: 345,  title: "Dracula", author: "Bram Stoker" }
+- { id: 98,   title: "A Tale of Two Cities", author: "Charles Dickens" }
+- { id: 46,   title: "A Christmas Carol", author: "Charles Dickens" }
+- { id: 2600, title: "War and Peace", author: "Leo Tolstoy" }
+- { id: 996,  title: "Don Quixote", author: "Miguel de Cervantes Saavedra" }
+- { id: 1727, title: "The Odyssey", author: "Homer" }
+- { id: 2199, title: "The Iliad", author: "Homer" }
+- { id: 1184, title: "The Count of Monte Cristo", author: "Alexandre Dumas" }
+- { id: 1260, title: "Jane Eyre: An Autobiography", author: "Charlotte Brontë" }
+- { id: 768,  title: "Wuthering Heights", author: "Emily Brontë" }
+- { id: 174,  title: "The Picture of Dorian Gray", author: "Oscar Wilde" }
+- { id: 43,   title: "The Strange Case of Dr. Jekyll and Mr. Hyde", author: "Robert Louis Stevenson" }
+- { id: 120,  title: "Treasure Island", author: "Robert Louis Stevenson" }
+- { id: 76,   title: "Adventures of Huckleberry Finn", author: "Mark Twain" }
+- { id: 74,   title: "The Adventures of Tom Sawyer", author: "Mark Twain" }
+- { id: 1400, title: "Great Expectations", author: "Charles Dickens" }
+- { id: 36,   title: "The War of the Worlds", author: "H. G. Wells" }
+- { id: 35,   title: "The Time Machine", author: "H. G. Wells" }
+- { id: 164,  title: "Twenty Thousand Leagues under the Sea", author: "Jules Verne" }
+- { id: 103,  title: "Around the World in Eighty Days", author: "Jules Verne" }
+- { id: 2554, title: "Crime and Punishment", author: "Fyodor Dostoyevsky" }
+- { id: 1080, title: "A Modest Proposal", author: "Jonathan Swift" }
+- { id: 829,  title: "Gulliver's Travels", author: "Jonathan Swift" }
+- { id: 521,  title: "The Life and Adventures of Robinson Crusoe", author: "Daniel Defoe" }
+- { id: 1513, title: "Romeo and Juliet", author: "William Shakespeare" }
+- { id: 1041, title: "Shakespeare's Sonnets", author: "William Shakespeare" }
+- { id: 1998, title: "Thus Spake Zarathustra", author: "Friedrich Nietzsche" }
+- { id: 5200, title: "Metamorphosis", author: "Franz Kafka" }
+- { id: 1952, title: "The Yellow Wallpaper", author: "Charlotte Perkins Gilman" }
+- { id: 219,  title: "Heart of Darkness", author: "Joseph Conrad" }
+- { id: 1232, title: "The Prince", author: "Niccolò Machiavelli" }
