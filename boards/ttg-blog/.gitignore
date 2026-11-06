@@ -1,0 +1,6 @@
+.env
+.claude
+.ruby-lsp
+tmp
+vendor
+data

@@ -1,0 +1,22 @@
+# Every environment variable of TTG Blog BBS, with its default. On the server the
+# secrets go in .env beside compose.yaml, never in the repository.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=50
+
+# The SQLite database and the category list
+TTG_BLOG_BBS_DB=data/ttgblog.sqlite3
+TTG_BLOG_BBS_CATEGORIES=config/categories.yml
+
+# The read API for teletypegames.org; 0 turns it off
+TTG_BLOG_BBS_HTTP_PORT=8080
+
+# Seconds between the autosaves of a draft while an editor writes
+TTG_BLOG_BBS_AUTOSAVE_SECONDS=15
+
+TTG_BLOG_BBS_SITE_URL=https://teletypegames.org
+
+# The accounts of the network (Rubbs::Common::Auth, on TTG Gate BBS): the secret every board shares
+# (in .env on the server, never here); editors are the accounts with the blogger role
+RUBBS_AUTH_SECRET=
