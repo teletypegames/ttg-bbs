@@ -3,17 +3,11 @@
 module UI
   # The reader on a Commodore 64: PETSCII on a 40×25 screen. A one-key menu,
   # the feeds and their items as numbered lists, an item paged a screenful at
-  # a time, and the messages to the admins typed line by line.
+  # a time, and the network's feedback and wall (ttg-common).
   class Petscii < Rubbs::Petscii::Face
     LOGO_COLORS = [YE, YE, OR, OR, DR].freeze
     ISSUE       = 'vol. i  no. 2327'
     NO_TEXT     = '*(no text in the feed)*'
-    ANSWERS     = {
-      ok:      'Sent to the admins. Thank you!',
-      limited: 'That is all the messages the admins can take for now. Thank you!',
-      bad_url: 'That is not an http:// or https:// address.',
-      failed:  'The message could not be saved. Try again later.'
-    }.freeze
 
     title('FEEDIA BBS') { feeds_note }
 
@@ -36,8 +30,9 @@ module UI
 
     main_menu do
       item('f', 'feeds', -> { "#{feeds.list.size} papers to read" }) { feed_list }
-      item('s', 'suggest a feed to the admins', 'an address for the list') { suggest }
-      item('w', 'write to the admins', 'a bug, an idea, a word of thanks') { feedback }
+      item('w', 'the wall', 'talk about the news') { wall }
+      item('s', 'suggest a feed', 'an address for the list') { suggest }
+      item('e', 'write to the editors', 'a bug, an idea, a word of thanks') { feedback }
       log_off 'hang up. see you!'
     end
 
@@ -97,46 +92,10 @@ module UI
       ['', " #{GR}read it all at:#{LG}", *item.link.scan(/.{1,37}/).map { |w| " #{CY}#{w}#{LG}" }]
     end
 
-    def can_send?
-      return true if inbox.open?(caller_key)
+    def suggest = TTG::Feedback.open(@session, kind: :feed)
 
-      report(:limited, ANSWERS)
-      false
-    end
+    def feedback = TTG::Feedback.open(@session, kind: :feedback)
 
-    def suggest
-      return unless can_send?
-
-      title('SUGGEST A FEED', feeds_note)
-      url = prompt(
-        'address',
-        hint: 'The admins look at every address before it goes on the list. Return alone: back.',
-        max:  InboxService::MAX_FIELD
-      )
-      return unless url
-      return report(:bad_url, ANSWERS) unless InboxService.url?(url)
-
-      name = prompt('its name', max: InboxService::MAX_FIELD).to_s
-      from = prompt('your name', max: InboxService::MAX_FIELD).to_s
-      note = prompt('why', max: InboxService::MAX_TEXT).to_s
-      report(inbox.suggest(caller: caller_key, url: url, name: name, from: from, note: note), ANSWERS)
-    end
-
-    def feedback
-      return unless can_send?
-
-      title('WRITE TO THE ADMINS', feeds_note)
-      from = prompt(
-        'your name',
-        hint: 'A bug, an idea, a word of thanks. Your name, then the message in the editor: ' \
-              'stop or ← and S sends it, Q goes back.',
-        max:  InboxService::MAX_FIELD
-      ).to_s
-      text = edit(title: 'WRITE TO THE ADMINS', max: InboxService::MAX_TEXT).to_s
-      title('WRITE TO THE ADMINS')
-      return if text.strip.empty?
-
-      report(inbox.feedback(caller: caller_key, text: text, from: from), ANSWERS)
-    end
+    def wall = TTG::Wall.open(@session)
   end
 end

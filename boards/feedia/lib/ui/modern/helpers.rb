@@ -3,13 +3,9 @@
 module UI
   module Modern
     # What the caller does on the modern face: the feeds opened in windows,
-    # a story's QR code, the messages to the admins.
+    # a story's QR code, the network's feedback and wall (ttg-common).
     module Helpers
       NO_TEXT = '*(no text in the feed)*'
-      ANSWERS = {
-        ok:      'Sent to the admins. Thank you!',
-        limited: 'That is all the messages the admins can take for now. Thank you!'
-      }.freeze
 
       def feed_list = show(:feeds)
 
@@ -48,19 +44,15 @@ module UI
         qr(item.link, title: 'Scan the address')
       end
 
-      def suggest = can_send? && show(:suggest)
+      # A feed to suggest, to the network's feedback (TTG::Feedback, the
+      # +feed+ kind of lib/content/feedback.yml).
+      def suggest = with_line { TTG::Feedback.open(@session, kind: :feed) }
 
-      def feedback = can_send? && show(:feedback)
+      # Anything else for the editors.
+      def feedback = with_line { TTG::Feedback.open(@session, kind: :feedback) }
 
-      def can_send?
-        return true if inbox.open?(caller_key)
-
-        answer(:limited)
-        false
-      end
-
-      # Tells the caller what the inbox answered; returns the answer.
-      def answer(result) = report(result, ANSWERS, title: 'Admins')
+      # The board's wall (TTG::Wall).
+      def wall = with_line { TTG::Wall.open(@session) }
     end
   end
 end

@@ -4,18 +4,16 @@ require_relative 'logo'
 require_relative 'modern/helpers'
 require_relative 'modern/feeds_window'
 require_relative 'modern/channel_window'
-require_relative 'modern/suggest_window'
-require_relative 'modern/feedback_window'
 
 module UI
   # The reader on a modern terminal (ANSI colours, UTF-8, a mouse): a
   # newspaper's masthead on the desktop, the feeds in a two-pane window, a
-  # feed's items with the one picked on the right, and two forms that write
-  # to the admins.
+  # feed's items with the one picked on the right, and the network's
+  # feedback and wall (ttg-common TTG::Feedback, TTG::Wall).
   module Modern
     ABOUT = 'Feedia BBS — an RSS reader on a telnet line, from Teletype Games, powered by rubbs. ' \
             'Pick a feed, then an item: its text opens on the right, its links numbered under it. ' \
-            'A feed missing from the list? Suggest it in the Admins menu.'
+            'A feed missing from the list? Suggest it in the Editors menu. Talk about the news on the Wall.'
     TAGLINE = '─── All the news that fits in 80 columns ───'
 
     APP = Rubbs::Modern::Application.define do
@@ -24,9 +22,10 @@ module UI
 
       command(:feeds,    'Feed list',       key: 'F2', hint: 'Feeds') { feed_list }
       command(:suggest,  'Suggest a feed…', key: 'F7', hint: 'Suggest') { suggest }
-      command(:feedback, 'Send &feedback…', key: 'F8', hint: 'Feedback') { feedback }
-      menu 'Feeds', :feeds, :separator, :log_off
-      menu 'Admins', :suggest, :feedback
+      command(:feedback, 'Write to the &editors…', key: 'F8', hint: 'Editors') { feedback }
+      command(:wall,     'The &wall…', hint: 'Wall') { wall }
+      menu 'Feeds', :feeds, :wall, :separator, :log_off
+      menu 'Editors', :suggest, :feedback
       help about: ABOUT
 
       status { "#{feeds.list.size} feeds" }
@@ -43,7 +42,7 @@ module UI
         on_show { feed_list }
       end
 
-      parts FeedsWindow, ChannelWindow, SuggestWindow, FeedbackWindow
+      parts FeedsWindow, ChannelWindow
     end
   end
 end

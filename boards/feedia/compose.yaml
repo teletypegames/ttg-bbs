@@ -13,7 +13,16 @@ services:
       - TZ=Europe/Budapest
       # Callers at once: each costs up to ~1.7 MB on top of ~30 MB, sized to mem_limit.
       - BBS_MAX_SESSIONS=50
-      - FEEDIA_BBS_DISCORD_WEBHOOK=${FEEDIA_BBS_DISCORD_WEBHOOK:-}
+      # The network's Central (TTG Gate BBS): feedback and the wall; the secret every board shares.
+      - RUBBS_AUTH_SECRET=${RUBBS_AUTH_SECRET:-}
+    networks:
+      - default
+      - interstack
     restart: unless-stopped
     # rubbs tells the callers and gives them BBS_SHUTDOWN_SECONDS (20 s, Dockerfile) to leave.
     stop_grace_period: 30s
+
+# The Central is asked on the interstack network as http://ttg-gate-bbs:8090.
+networks:
+  interstack:
+    external: true

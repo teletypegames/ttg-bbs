@@ -57,8 +57,9 @@ Copy `env-example` to `.env`:
 | `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2327) |
 | `BBS_MAX_SESSIONS` | `100` | Callers at once (compose sets 50) |
 | `FEEDIA_BBS_FEEDS` | `config/feeds.yml` | The feed list |
-| `FEEDIA_BBS_DB` | `data/feedia.sqlite3` | The board's SQLite database: suggestions and feedback (compose mounts `./data`) |
-| `FEEDIA_BBS_DISCORD_WEBHOOK` | — | Suggestions and feedback ring this Discord webhook too |
+| `FEEDIA_BBS_DB` | `data/feedia.sqlite3` | The board's SQLite database: the admins' inbox of before the network's feedback (compose mounts `./data`) |
+| `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | The network's Central (TTG Gate BBS), where feedback and the wall live |
+| `RUBBS_AUTH_SECRET` | — | The secret every board of the network shares (in `.env` on the server) |
 
 ## Interface
 
@@ -119,30 +120,23 @@ address as a QR code (rubbs' `Rubbs::Common::Text::QR`, quadrant blocks, up to a
 characters) in the middle of the screen, for a phone to open what the C64
 cannot.
 
-## The admins' inbox
+## The editors' box and the wall
 
-A suggestion (the feed's address, its name, why, who) or a feedback (the text,
-who) is a row of the `messages` table in `data/feedia.sqlite3`, and a message
-on the Discord webhook when there is one (mentions off, links not unfurled).
-The newest 1000 are kept. A caller (by IP address) can send five messages an
-hour, all callers together thirty; both limits are checked at once
-(`Rubbs::Common::Line::RateLimit.allow_all?`), so a message the board refuses costs the caller
-nothing. The `data/inbox.jsonl` of earlier versions
-is taken in on the first start and renamed `inbox.jsonl.imported`. Feedia
-never fetches a suggested address itself: an admin looks at
-it and, if it stays, adds it to `config/feeds.yml`. To read the inbox on the
-server:
+What callers send the editors is the network's feedback (ttg-common `TTG::Feedback`, kept on TTG Gate
+BBS): **Suggest a feed** (the `feed` kind: the address, its name, why) and **Something else**, in the
+words of `lib/content/feedback.yml`. The sysops read it on the gate's console (SysOp › FEEDBACK); Discord
+only hears that something came. Feedia never fetches a suggested address itself: an editor looks at it
+and, if it stays, adds it to `config/feeds.yml`.
 
-```bash
-docker exec feedia-bbs bin/inbox        # the newest 20
-docker exec feedia-bbs bin/inbox 100
-```
+The **Wall** (ttg-common `TTG::Wall`, `lib/content/wall.yml`) is where readers talk about the news.
+
+The board's own inbox of before (the `messages` table in `data/feedia.sqlite3`) is handed over to the
+network's feedback once, by a background job (`inbox export`), and kept here marked (`exported_at`).
 
 ## Project structure
 
 ```
 bbs.rb                          entry point: the board, the terminal question, then a face
-bin/inbox                       the admins' look at the inbox
 rake test                        the domain's tests (minitest, no network)
 config/feeds.yml                the feed list
 lib/
@@ -153,20 +147,18 @@ lib/
     model/feed_model.rb         one feed of the list
     model/channel_model.rb      what a feed said: title, link, description, items
     model/item_model.rb         one item: title, link, date, author, Markdown
-    model/message_model.rb      the messages table (Rubbs::Common::Storage::Model): a suggestion or feedback
+    model/message_model.rb      the inbox of before (Rubbs::Common::Storage::Model), handed over to TTG::Feedback
     model/feed_xml.rb           RSS/RDF/Atom → a channel and its items
     model/html_text.rb          an item's HTML → Markdown, numbered links
     repository/feed_list_repository.rb  config/feeds.yml
     repository/feed_repository.rb       fetching a feed (Rubbs::Common::Web::HTTP), the cache (Rubbs::Common::Storage::Cache)
-    repository/legacy_inbox.rb          the one-time import of inbox.jsonl
-    repository/discord_repository.rb    the admins' Discord webhook, rate-limited
     service/feed_service.rb     the feed list, reading a feed
-    service/inbox_service.rb    suggestions and feedback: checks, limits, the inbox, Discord
   ui/logo.rb                    FEEDIA in half blocks for the modern masthead
   ui/modern.rb                  the modern face: the Application from the parts below
-  ui/modern/                    one module a window (feeds, channel, suggest, feedback),
+  ui/modern/                    one module a window (feeds, channel),
                                 the menubar, the masthead, the helpers
-  ui/petscii.rb                 the PETSCII face: logo, menu, lists, pages, messages
+  ui/petscii.rb                 the PETSCII face: logo, menu, lists, pages
+lib/content/                    feedback.yml and wall.yml: the board's words for ttg-common's screens
   ui/petscii/screen.rb          the 40×25 screen: rubbs' Rubbs::Petscii::Screen
 test/                           the domain's tests
 ```
@@ -175,14 +167,14 @@ test/                           the domain's tests
 
 Every line on stderr starts with the log tag `feedia-bbs:` (rubbs' `Rubbs.log`):
 `feedia-bbs: feed: <name>: …` for a feed that did not answer or sent no feed,
-`feedia-bbs: inbox: …`, `feedia-bbs: Inbox: Discord: …`. The repositories let a
+`feedia-bbs: inbox export: …`. The repositories let a
 failure go up; the services log it once and the faces say "did not answer".
 
 ## Tests
 
 ```bash
 bundle exec rake test              # all of them
-bundle exec rake test inbox        # the files whose name has the word
+bundle exec rake test message      # the files whose name has the word
 ```
 
 ## Deploy

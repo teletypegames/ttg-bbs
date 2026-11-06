@@ -1,0 +1,17 @@
+# What Feedia's feedback screen says (ttg-common TTG::Feedback, TTG::Narrative): the defaults of
+# ttg-common with these over them. A key ttg-common does not know stops the board at boot.
+title: Write to the editors
+intro: Feedia reads the feeds its callers ask for. Know a good one? Suggest it here, or tell the editors anything else.
+kinds:
+  feed:
+    label: Suggest a feed
+    intro: The address of an RSS or Atom feed and a line on why it is worth reading. The editors look at every one before it goes on the list.
+    link: { label: 'Feed address (http…)', required: true }
+    subject: { label: Its name }
+    body: { label: Why this one?, max: 300 }
+    thanks: Thank you! The editors look at every suggestion.
+  feedback:
+    label: Something else
+    intro: A bug, an idea, a word of thanks.
+petscii:
+  intro: KNOW A GOOD FEED? SUGGEST IT, OR WRITE TO THE EDITORS.

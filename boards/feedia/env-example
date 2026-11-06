@@ -5,9 +5,10 @@
 BBS_PORT=2323
 BBS_MAX_SESSIONS=50
 
-# The feed list, and the board's database (the admins' inbox)
+# The feed list, and the board's database (the admins' inbox of before the network's feedback)
 FEEDIA_BBS_FEEDS=config/feeds.yml
 FEEDIA_BBS_DB=data/feedia.sqlite3
 
-# Suggestions and feedback ring this Discord webhook too; without it they are only kept in the database.
-FEEDIA_BBS_DISCORD_WEBHOOK=
+# The network's Central (TTG Gate BBS): feedback and the wall live there. The secret is every board's.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

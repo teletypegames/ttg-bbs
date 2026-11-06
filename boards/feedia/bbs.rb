@@ -10,6 +10,7 @@ require_relative 'lib/ui/petscii'
 # gets the modern desktop, a Commodore 64 the PETSCII screens.
 Rubbs.board 'Feedia BBS', FeediaBBS do
   preset  TTG::PRESET
+  central TTG::CENTRAL
   modern  UI::Modern::APP
   petscii UI::Petscii
   goodbye "The stories are their publishers'."

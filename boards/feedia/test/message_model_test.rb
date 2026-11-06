@@ -1,57 +1,44 @@
 # frozen_string_literal: true
 
-require 'test_helper'
-require 'json'
+require_relative 'test_helper'
+require 'ttg/common'
 
+# The inbox of before the network's feedback, handed over to it once.
 class MessageModelTest < Minitest::Test
   include TmpDir
 
   def setup
     super
-    $stderr = StringIO.new
+    Rubbs::Test.auth_secret
+    @server = Rubbs::Common::Central::Server.new(services: [TTG::Feedback::Service], data: path('central'))
+    Rubbs.config.central = Rubbs::Common::Central::Link.new(server: @server)
+    MessageModel.create(kind: 'suggestion', at: '2026-10-01T10:00:00Z', sender: 'Joe', name: 'Lobsters', url: 'https://lobste.rs/rss')
+    MessageModel.create(kind: 'feedback', at: '2026-10-02T10:00:00Z', sender: nil, text: 'Lovely board')
   end
 
   def teardown
-    $stderr = STDERR
+    Rubbs.config.central = nil
+    @server.stop
+    Rubbs.config.auth_secrets = []
     super
   end
 
-  def note(text) = MessageModel.from_h(kind: 'feedback', at: '2026-11-01T10:00:00+01:00', from: 'Ada', text: text)
-
-  def test_append_and_last
-    assert MessageModel.append(note('one'))
-    assert MessageModel.append(note('two'))
-    assert_equal %w[two one], MessageModel.last(10).map(&:text)
-    assert_equal %w[Ada Ada], [MessageModel.last(1).first.from, MessageModel.last(1).first.sender]
+  def test_a_suggestion_is_a_feed
+    feed = MessageModel.first.to_feedback
+    assert_equal ['feed', 'Joe', 'Lobsters', 'https://lobste.rs/rss', 'read'],
+                 feed.values_at(:kind, :name, :subject, :link, :state)
   end
 
-  def test_only_the_newest_are_kept
-    5.times { |i| MessageModel.append(note(i.to_s), keep: 3) }
-    assert_equal %w[4 3 2], MessageModel.last(10).map(&:text)
+  def test_the_inbox_is_handed_over_once
+    capture_io { assert_equal 2, FeediaBBS.allocate.export_inbox }
+    assert_equal 0, FeediaBBS.allocate.export_inbox
+    kinds = @server.services['/feedback'].store.list[:items].map { |item| [item[:kind], item[:board]] }
+    assert_equal [%w[feedback bbs], %w[feed bbs]], kinds
   end
 
-  def test_the_old_inbox_is_imported_once
-    legacy = path('inbox.jsonl')
-    File.write(legacy, [
-      JSON.generate(kind: 'suggestion', at: '2026-10-27T10:00:00+01:00', from: 'Bob', name: 'X', url: 'https://x.example/rss'),
-      '{"kind":"feedback","at":"2026-10-28T1',
-      JSON.generate(kind: 'spam', at: 'now'),
-      '',
-      JSON.generate(kind: 'feedback', at: '2026-10-29T10:00:00+01:00', text: "hi\e[2J")
-    ].join("\n"))
-    assert_equal [2, 2], LegacyInbox.new(legacy).import
-    assert_equal ['hi[2J', nil], MessageModel.last(10).map(&:text)
-    assert_equal %w[https://x.example/rss Bob], MessageModel.last(10).last.values.values_at(:url, :sender)
-    refute File.exist?(legacy)
-    assert File.exist?("#{legacy}.imported")
-    assert_match(/imported 2 messages from inbox.jsonl \(2 skipped\)/, $stderr.string)
-  end
-
-  def test_no_import_into_a_full_inbox
-    MessageModel.append(note('kept'))
-    File.write(path('inbox.jsonl'), JSON.generate(kind: 'feedback', at: 'x', text: 'old'))
-    assert_nil LegacyInbox.new(path('inbox.jsonl')).import
-    assert_equal 1, MessageModel.count
-    assert File.exist?(path('inbox.jsonl'))
+  def test_nothing_is_lost_when_the_central_is_away
+    Rubbs.config.central = nil
+    assert_raises(RuntimeError) { capture_io { FeediaBBS.allocate.export_inbox } }
+    assert_equal 2, MessageModel.unexported(10).size
   end
 end
