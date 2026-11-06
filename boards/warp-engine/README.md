@@ -27,6 +27,13 @@ XMODEM fills its last block up with SUB bytes, so the received file can be
 longer by up to 127 (XMODEM) or 1023 (XMODEM-1K) bytes. A Commodore program
 loads all the same.
 
+**Files > The engine room wall** (`W` on the C64) is the board's wall, where callers write and
+answer each other; **Files > Write to the sysops** (`F` on the C64) sends the sysops a message,
+about the title picked on a shelf. Both are ttg-common's (`TTG::Wall`, `TTG::Feedback`) and live
+on TTG Gate BBS, the network's Central, asked on the `interstack` network
+(`central TTG::CENTRAL`); `lib/content/wall.yml` and `lib/content/feedback.yml` say them the
+board's way.
+
 ## Running
 
 **Docker Compose:**
@@ -43,7 +50,7 @@ BBS_PORT=2329 bundle exec ruby bbs.rb
 ```
 
 Then `telnet localhost 2329`. Every environment variable is in `env-example`
-with its default. The board has no secrets.
+with its default. Its only secret is `RUBBS_AUTH_SECRET`, the one every board shares.
 
 | Variable | Default | |
 |---|---|---|
@@ -52,6 +59,8 @@ with its default. The board has no secrets.
 | `WARP_ENGINE_BBS_INDEX_TTL` | `300` | seconds a shelf's `INDEX.TXT` is kept |
 | `WARP_ENGINE_BBS_DOWNLOAD_MAX` | `1048576` | the largest file sent, in bytes |
 | `WARP_ENGINE_BBS_DB` | `data/warp-engine.sqlite3` | the board's SQLite database: the downloads that went through |
+| `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | the network's Central (TTG Gate BBS): feedback and the wall |
+| `RUBBS_AUTH_SECRET` | — | the secret every board shares, for the Central (in `.env` on the server) |
 
 The download log feeds the download count shown with each title. `data/` is a
 volume. The log was `data/downloads.jsonl` (one JSON line a download) before

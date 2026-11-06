@@ -8,7 +8,8 @@ require_relative 'modern/titles_window'
 module UI
   # The board on a modern terminal (ANSI colours, UTF-8, a mouse): the shelves
   # in a two-pane window, a shelf's titles with the one picked on the right,
-  # and its download by ZMODEM, XMODEM-1K or XMODEM.
+  # its download by ZMODEM, XMODEM-1K or XMODEM, and the network's feedback
+  # and wall (ttg-common).
   module Modern
     ABOUT = 'WarpEngine BBS — the file area of Teletype Games on a telnet line, powered by rubbs. ' \
             'The shelves are the folders the WarpEngine of teletypegames.org keeps for machines without ' \
@@ -23,8 +24,10 @@ module UI
       theme :synchronet
       helpers { include Helpers }
 
-      command(:shelves, 'Shelves', key: 'F2') { show(:shelves) }
-      menu 'Files', :shelves, :separator, :log_off
+      command(:shelves,  'Shelves', key: 'F2') { show(:shelves) }
+      command(:wall,     'The engine room wall…', hint: 'Wall') { wall }
+      command(:feedback, 'Write to the sysops…', hint: 'Feedback') { feedback }
+      menu 'Files', :shelves, :separator, :wall, :feedback, :separator, :log_off
       help about: ABOUT, downloads: DOWNLOADS, keys: ['Enter        on a title: ZMODEM']
       status { "#{catalog.shelves.size} shelves" }
 

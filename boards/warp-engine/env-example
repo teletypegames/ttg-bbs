@@ -16,3 +16,8 @@ WARP_ENGINE_BBS_DOWNLOAD_MAX=1048576
 # The board's database: the downloads that went through. A data/downloads.jsonl
 # next to it (the log before SQLite) is imported on the first start.
 WARP_ENGINE_BBS_DB=data/warp-engine.sqlite3
+
+# The network's Central (TTG Gate BBS): feedback and the wall live there. The secret is every board's,
+# in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

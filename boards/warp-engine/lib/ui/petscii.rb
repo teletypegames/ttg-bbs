@@ -6,7 +6,7 @@ module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor menu of
   # the shelves, their titles as numbered lists, a title on a page of its own,
   # and its download by XMODEM-1K or XMODEM, the protocols a C64 terminal
-  # knows.
+  # knows; the network's wall and feedback (ttg-common).
   class Petscii < Rubbs::Petscii::Face
     LOGO_COLORS   = [LB, LB, CY, CY, WH].freeze
     PROTOCOL_KEYS = { '1' => :xmodem_1k, 'x' => :xmodem }.freeze
@@ -41,6 +41,8 @@ module UI
         item((i + 1).to_s, name, "#{name} titles to download") { open_shelf(shelf) }
       end
       item('h', 'how to download', 'protocols, terminals, file names') { page('HOW TO DOWNLOAD', HELP) }
+      item('w', 'the engine room wall', 'tell the others what you loaded') { TTG::Wall.open(@session) }
+      item('f', 'write to the sysops', 'a file that will not load, a bug') { TTG::Feedback.open(@session) }
       log_off
     end
 

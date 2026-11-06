@@ -3,7 +3,7 @@
 module UI
   module Modern
     # What the caller does on the modern face: open a shelf, read it again,
-    # take a title home.
+    # take a title home, the network's feedback and wall.
     module Helpers
       def open_shelf(shelf)
         show(:titles, shelf: shelf, titles: read_shelf(shelf))
@@ -32,6 +32,18 @@ module UI
          "#{paint(:label, 'On a Commodore:')} LOAD\"#{title.disk_name}\",8,1, RUN",
          "#{paint(:label, 'Over HTTP:')} #{catalog.url(title)}"]
       end
+
+      # The network's feedback (ttg-common TTG::Feedback), about the title
+      # picked on a shelf, if any.
+      def feedback
+        shelf = window(:titles)
+        title = shelf&.selected
+        about = title && "#{shelf.title}: #{title.title} v#{title.version} (#{title.file})"
+        with_line { TTG::Feedback.open(@session, context: about) }
+      end
+
+      # The board's wall (TTG::Wall).
+      def wall = with_line { TTG::Wall.open(@session) }
 
       private
 

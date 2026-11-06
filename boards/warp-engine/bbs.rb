@@ -11,6 +11,7 @@ require_relative 'lib/ui/petscii'
 # the PETSCII screens with XMODEM.
 Rubbs.board 'WarpEngine BBS', WarpEngineBBS, slug: 'warp-engine-bbs' do
   preset  TTG::PRESET
+  central TTG::CENTRAL
   modern  UI::Modern::APP
   petscii UI::Petscii
   goodbye color: Rubbs::Petscii::Colors::LB
