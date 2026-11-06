@@ -105,11 +105,16 @@ module TTG
       board.fail('.woodpecker.yaml', 'differs from the ttg-common template: rake ttg:sync') unless text == wanted
     end
 
-    Rubbs::Common::Board::Check.rule(:ttg_auth, 'a board with accounts lists RUBBS_AUTH_SECRET in env-example') do |board|
-      next unless board.read('bbs.rb').to_s.match?(/^\s*auth\b/)
+    Rubbs::Common::Board::Check.rule(
+      :ttg_auth,
+      'a board with accounts or a Central lists RUBBS_AUTH_SECRET in env-example'
+    ) do |board|
+      next unless board.read('bbs.rb').to_s.match?(/^\s*(auth|central)\b/)
 
       example = board.read('env-example').to_s
-      board.fail('env-example', 'no RUBBS_AUTH_SECRET (the board has auth)') unless example.match?(/^#?\s*RUBBS_AUTH_SECRET=/)
+      unless example.match?(/^#?\s*RUBBS_AUTH_SECRET=/)
+        board.fail('env-example', 'no RUBBS_AUTH_SECRET (the board has auth or central)')
+      end
     end
 
     Rubbs::Common::Board::Check.rule(:ttg_env, 'env-example lists every setting of the domain') do |board|
