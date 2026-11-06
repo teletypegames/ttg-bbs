@@ -14,8 +14,8 @@ It has two faces on one port, like every board of the network:
   is new; under it two columns, **Your post** (the newest letters, a ★ for a new one) and **On the
   wall** (the newest notes). A menubar: Mail (Mailbox F2, The wall F3, Write to the sysops F7), You
   (Profile); each screen on the whole line;
-- a **Commodore 64** one in PETSCII, 40×25: the post office drawn in the C64's own blocks and colours
-  over a line about the pillar box (*flag up! 2 new letters*), then a cursor menu — `M` mailbox, `W`
+- a **Commodore 64** one in PETSCII, 40×25: **TTG MAIL** in reversed blocks, red going to white, over
+  a line about the pillar box (*flag up! 2 new letters*), then a cursor menu — `M` mailbox, `W`
   the wall, `F` write to the sysops, `P` profile.
 
 A letter is read on its **sheet**: a frame with the network's red stamp in the corner, the writer,
@@ -80,7 +80,7 @@ lib/ui/
   modern.rb                    UI::Modern::APP: the rubbs Application, its desktop
   modern/post_office.rb        UI::Modern::PostOffice: the post office scene, filled from the desk
   modern/helpers.rb            the desk, the columns under it, the screens on the line
-  petscii.rb                   UI::Petscii < Rubbs::Petscii::Face: the C64 board, its post office
+  petscii.rb                   UI::Petscii < Rubbs::Petscii::Face: the C64 board, the TTG MAIL lettering
 test/                          the board's words load; the mailbox summary
 ```
 

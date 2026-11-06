@@ -1,26 +1,21 @@
 # frozen_string_literal: true
 
 module UI
-  # The board on a Commodore 64: PETSCII on a 40×25 screen. The masthead is the post office from the
-  # street — its sign, the windows of the sorting room, the door and the red pillar box, whose flag
-  # is up when the caller has new letters —, then a cursor menu: the mailbox (ttg-common
-  # TTG::PrivateMessage), the wall, a word to the sysops, the profile.
+  # The board on a Commodore 64: PETSCII on a 40×25 screen. The masthead is TTG MAIL in reversed
+  # blocks (rubbs' BlockFont) over the line of the pillar box (the flag is up when the caller has new
+  # letters), then a cursor menu: the mailbox (ttg-common TTG::PrivateMessage), the wall, a word to
+  # the sysops, the profile.
   class Petscii < Rubbs::Petscii::Face
-    # The post office, a line a row, in the C64's colours (38 columns).
-    POST_OFFICE = [
-      "#{DG}  *        .         *        .     *",
-      "#{OR}   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄",
-      "#{OR}   █#{YE} TTG POST OFFICE #{OR}█#{LG}  ▄█▄",
-      "#{OR}   █#{LG}┌──┐ #{OR}▄▄▄▄▄▄ #{LG}┌──┐#{OR} █#{LG}   │  #{RD}▄██▄",
-      "#{OR}   █#{LG}│#{CY}▒▒#{LG}│ #{OR}█#{WH} TO #{OR}█ #{LG}│#{CY}▒▒#{LG}│#{OR} █#{LG}   │  #{RD}████",
-      "#{OR}   █#{LG}└──┘ #{OR}█ #{WH}o  #{OR}█ #{LG}└──┘#{OR} █#{LG}   │  #{RD}█#{WH}TG#{RD}█",
-      "#{GR}  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀"
-    ].freeze
+    # The colours of the five rows of the TTG MAIL lettering, the red of the pillar box going to white.
+    LOGO_COLORS = [RD, RD, OR, YE, WH].freeze
 
     title('TTG MAIL BBS') { signed_in? ? identity.name.to_s.downcase : 'guest' }
 
     masthead do
-      art POST_OFFICE
+      gap
+      logo 'TTG MAIL', colors: LOGO_COLORS, indent: 5
+      gap
+      line 'letters between the accounts', color: LG, indent: 6
       line(color: YE, indent: 2) { pillar_box }
     end
 
