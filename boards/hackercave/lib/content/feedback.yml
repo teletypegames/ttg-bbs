@@ -1,0 +1,5 @@
+# What HackerCave's feedback screen says (ttg-common TTG::Feedback, TTG::Narrative).
+title: Ping the sysops
+intro: An RFC that will not open, a figure cut wrong, a bug, an idea? Send it up the wire; the sysops read every packet.
+petscii:
+  intro: A BROKEN RFC, A BUG? SEND IT UP THE WIRE.

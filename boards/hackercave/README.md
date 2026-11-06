@@ -91,6 +91,15 @@ a day), the lexicon by letter, a search, a random entry, and the chapters; an
 entry's `{links}` are coloured and listed with Alt-L (`l`). Every entry is
 credited "Jargon File 4.4.7 (public domain)".
 
+### The wall and the feedback
+
+**RFC > The cave wall** (`w` on the C64) is the board's wall, where callers write and answer
+each other; **RFC > Ping the sysops** (`p` on the C64) sends the sysops a message, about the RFC
+in the reader or the one picked in a list. Both are ttg-common's (`TTG::Wall`, `TTG::Feedback`)
+and live on TTG Gate BBS, the network's Central, asked on the `interstack` network
+(`central TTG::CENTRAL`); `lib/content/wall.yml` and `lib/content/feedback.yml` say them the
+cave's way.
+
 ### The texts
 
 An RFC is fetched when someone first opens it,
@@ -142,7 +151,7 @@ BBS_PORT=2334 bundle exec ruby bbs.rb
 ```
 
 Then `telnet localhost 2334`. Every environment variable is in `env-example`
-with its default. The board has no secrets.
+with its default. Its only secret is `RUBBS_AUTH_SECRET`, the one every board shares.
 
 | Variable | Default | |
 |---|---|---|
@@ -159,6 +168,8 @@ with its default. The board has no secrets.
 | `HACKERCAVE_BBS_MIRROR_TTL` | `1` | days between two syncs |
 | `HACKERCAVE_BBS_FULLTEXT_DB` | `data/fulltext.sqlite3` | the full-text index |
 | `HACKERCAVE_BBS_JARGON_DB` | `data/jargon.sqlite3` | the Jargon File, built from `config/jargon` |
+| `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | the network's Central (TTG Gate BBS): feedback and the wall |
+| `RUBBS_AUTH_SECRET` | — | the secret every board shares, for the Central (in `.env` on the server) |
 
 `data/` is a volume. Every log line starts with the log tag `hackercave-bbs:`
 (rubbs' `Rubbs.log`): `index refresh`, `index`, `rfc-editor`, `texts`, `shelves`,

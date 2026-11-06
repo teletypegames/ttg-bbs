@@ -12,6 +12,7 @@ require_relative 'lib/ui/petscii'
 # columns.
 Rubbs.board 'HackerCave BBS', HackerCaveBBS do
   preset  TTG::PRESET
+  central TTG::CENTRAL
   modern  UI::Modern::APP
   petscii UI::Petscii
   goodbye 'The RFCs are the work of the IETF and the RFC Editor.'

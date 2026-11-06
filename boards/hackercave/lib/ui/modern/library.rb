@@ -4,7 +4,7 @@ module UI
   module Modern
     # The helpers of the modern face: the library's shelves and lists opened
     # in windows, the searches, opening an RFC, its links, its errata, the
-    # RFCs it names and its QR code.
+    # RFCs it names and its QR code, the network's feedback and wall.
     module Library
       NOT_READY = 'The index is being prepared: it is downloaded from the RFC Editor and indexed. Try again in a ' \
                   'minute. The Classics, Telnet and April 1st shelves are open meanwhile.'
@@ -129,6 +129,17 @@ module UI
 
       # The RFC's page at the RFC Editor as a QR code, for a phone.
       def show_qr(rfc) = qr(rfc.link, title: "#{rfc.name} on your phone")
+
+      # The network's feedback (ttg-common TTG::Feedback), about the RFC in
+      # the reader, else the one picked in a list, if any.
+      def feedback
+        rfc = window(:rfcs)&.selected&.rfc
+        about = window(:reader)&.title || (rfc && "#{rfc.name}: #{rfc.title}")
+        with_line { TTG::Feedback.open(@session, context: about) }
+      end
+
+      # The board's wall (TTG::Wall).
+      def wall = with_line { TTG::Wall.open(@session) }
 
       def preparing = message(NOT_READY, title: 'Index', width: 60)
 

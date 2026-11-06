@@ -35,3 +35,8 @@ HACKERCAVE_BBS_FULLTEXT_DB=data/fulltext.sqlite3
 
 # The Jargon File in SQLite, built from config/jargon/jarg447.txt
 HACKERCAVE_BBS_JARGON_DB=data/jargon.sqlite3
+
+# The network's Central (TTG Gate BBS): feedback and the wall live there. The secret is every board's,
+# in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

@@ -6,7 +6,8 @@ module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor menu,
   # the shelves and their RFCs as numbered lists, an RFC's record on a page
   # with its links and errata (Records), the reader with the RFC reflowed to
-  # 38 columns (Reader), and the Jargon File (JargonRoom).
+  # 38 columns (Reader), the Jargon File (JargonRoom), and the network's
+  # wall and feedback (ttg-common).
   class Petscii < Rubbs::Petscii::Face
     LOGO_COLORS = [GN, GN, GN, GN, GN].freeze
 
@@ -31,8 +32,6 @@ module UI
       logo Logo::WORD, colors: LOGO_COLORS, indent: 0
       rule
       line "the hacker's reading room", color: WH
-      line 'every rfc, from 1969 to today', color: GR
-      rule
     end
 
     main_menu(above: -> { " #{GR}#{index_line}#{LG}" }) do
@@ -44,6 +43,8 @@ module UI
       item('6', 'search the text', 'words in every line of every rfc') { search_text }
       item('j', 'the jargon file', 'the lexicon of hacker slang') { jargon_room }
       item('7', 'most read on this board', 'what the callers here read') { most_read }
+      item('w', 'the cave wall', 'leave a line for the next hacker') { TTG::Wall.open(@session) }
+      item('p', 'ping the sysops', 'a broken rfc, a bug, an idea') { TTG::Feedback.open(@session) }
       item('a', 'about', 'the board, the rfcs, the keys') { page('ABOUT', ABOUT) }
       log_off 'hang up. see you!'
     end

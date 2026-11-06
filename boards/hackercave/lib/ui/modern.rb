@@ -15,7 +15,8 @@ module UI
   # The board on a modern terminal (ANSI colours, UTF-8, a mouse): a desktop
   # under a menubar, the shelves and their RFCs in two-pane windows with an
   # RFC's record on the right, a search box, an RFC's links, and a reader
-  # window that shows the RFC as it was published.
+  # window that shows the RFC as it was published, and the network's
+  # feedback and wall (ttg-common).
   module Modern
     ABOUT = 'HackerCave BBS — the hacker\'s reading room of Teletype Games, powered by rubbs. Every RFC, the ' \
             'documents the Internet is made of, from RFC 1 of 1969 to the newest, as the RFC Editor published ' \
@@ -50,6 +51,8 @@ module UI
       command(:iens, '&IENs') { iens }
       command(:most_read, '&Most read', key: 'F7') { most_read }
       command(:newest, '&Newest', key: 'F8', hint: false) { newest }
+      command(:wall, 'The cave &wall…', hint: 'Wall') { wall }
+      command(:feedback, '&Ping the sysops…', hint: 'Feedback') { feedback }
       menu 'RFC',
            :classics,
            :telnet,
@@ -60,6 +63,9 @@ module UI
            :iens,
            :most_read,
            :newest,
+           :separator,
+           :wall,
+           :feedback,
            :separator,
            :log_off
       menu 'Jargon' do
