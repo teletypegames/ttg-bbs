@@ -111,7 +111,7 @@ module TTG
       # A service on the Central's +context+.
       def initialize(context)
         super
-        @store = Store.new(database)
+        @store = Store.new(database, context.accounts)
       end
 
       # The Store.

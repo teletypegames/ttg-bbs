@@ -152,9 +152,12 @@ class WallTest < Minitest::Test
   def test_every_board_on_the_gate
     quietly do
       TTG::Wall.walls.call(:post, ada, text: 'here')
-      TTG::Wall.walls.call(:import, nil, rows: [{ board: 'feedia-bbs', name: 'Old', text: 'from before' }])
+      TTG::Wall.walls.call(:import, nil, rows: [{ board: 'feedia-bbs', name: 'Old', text: 'from before' },
+                                                { board: 'feedia-bbs', name: 'ada', text: 'mine' }])
       assert_equal 1, TTG::Wall.lines(10).size
-      assert_equal(%w[test-bbs feedia-bbs], TTG::Wall.lines(10, board: nil).map { |n| n['board'] })
+      every = TTG::Wall.lines(10, board: nil)
+      assert_equal(%w[test-bbs feedia-bbs feedia-bbs], every.map { |n| n['board'] })
+      assert_equal([['Old', true], ['Ada', false]], every.last(2).map { |n| n.values_at('name', 'guest') })
     end
   end
 end

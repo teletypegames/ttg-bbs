@@ -6,7 +6,7 @@
 #   require 'ttg/common'
 Gem::Specification.new do |s|
   s.name     = 'ttg-common'
-  s.version  = '0.10.0'
+  s.version  = '0.10.1'
   s.summary  = 'The shared parts of the Teletype Games BBS boards, on rubbs'
   s.authors  = ['Teletype Games']
   s.license  = 'MIT'

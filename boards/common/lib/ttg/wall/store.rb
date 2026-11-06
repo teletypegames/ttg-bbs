@@ -29,9 +29,12 @@ module TTG
       # Days a caller_key is kept.
       KEEP_DAYS = 90
 
-      # A store in the Sequel::Database +db+ (MIGRATIONS applied).
-      def initialize(db)
-        @db = db
+      # A store in the Sequel::Database +db+ (MIGRATIONS applied), with
+      # +accounts+ (the Central's Rubbs::Common::Auth::Directory, or +nil+) to
+      # tie an imported note to the account of its name.
+      def initialize(db, accounts = nil)
+        @db       = db
+        @accounts = accounts
       end
 
       # A note of +actor+ (a Rubbs::Common::Central::Actor) on the wall of
@@ -109,25 +112,28 @@ module TTG
       end
 
       # Brings in notes from before the wall (a board's oneliners, posts):
-      # rows of +board+, +name+, +text+, +created_at+, optionally
-      # +account_id+. The length is kept. Returns the count.
+      # rows of +board+, +name+, +text+, +created_at+. A name that is an
+      # account's is that account's note (with its name as the account
+      # writes it), any other a guest's. The length is kept. Returns the count.
       def import(rows)
-        rows.each do |row|
-          row = row.transform_keys(&:to_sym)
-          @db[:wall].insert(
-            created_at: row[:created_at].to_s.empty? ? now : row[:created_at].to_s,
-            board:      row[:board].to_s,
-            account_id: row[:account_id],
-            name:       Rubbs::Common::Text.line(row[:name])[0, 40],
-            guest:      row[:account_id] ? 0 : 1,
-            text:       Rubbs::Common::Text.clean(row[:text]).strip,
-            sysop:      0
-          )
-        end
+        rows.each { |row| @db[:wall].insert(imported(row.transform_keys(&:to_sym))) }
         rows.size
       end
 
       private
+
+      def imported(row)
+        account = @accounts&.find(row[:name].to_s)
+        {
+          created_at: row[:created_at].to_s.empty? ? now : row[:created_at].to_s,
+          board:      row[:board].to_s,
+          account_id: account&.id,
+          name:       (account&.name || Rubbs::Common::Text.line(row[:name]))[0, 40],
+          guest:      account ? 0 : 1,
+          sysop:      account&.role?(:sysop) ? 1 : 0,
+          text:       Rubbs::Common::Text.clean(row[:text]).strip
+        }
+      end
 
       def visible = @db[:wall].where(hidden_at: nil)
 
