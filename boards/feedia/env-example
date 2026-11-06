@@ -1,7 +1,7 @@
 # Every environment variable of Feedia BBS, with its default. On the server the
 # secret (the webhook) goes in .env beside compose.yaml, never in the repository.
 
-# rubbs
+# rubbs (in TTG BBS the supervisor sets both from boards.yml: port 2327, 50 callers)
 BBS_PORT=2323
 BBS_MAX_SESSIONS=50
 
