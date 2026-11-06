@@ -12,6 +12,10 @@ Metrics/BlockLength:
     - "test/**/*"
     - "*.gemspec"
 
+Metrics/AbcSize:
+  Exclude:
+    - "test/**/*"
+
 # The gem is installed from git, not pushed to rubygems.org.
 Gemspec/RequireMFA:
   Enabled: false

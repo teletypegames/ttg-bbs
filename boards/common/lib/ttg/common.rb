@@ -15,3 +15,11 @@ require_relative 'logo'
 require_relative 'preset'
 require_relative 'central'
 require_relative 'auth'
+require_relative 'narrative'
+require_relative 'screen'
+require_relative 'feedback'
+require_relative 'wall'
+require_relative 'private_message'
+require_relative 'places'
+
+TTG::Places.offer
