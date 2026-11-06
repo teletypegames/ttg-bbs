@@ -11,6 +11,7 @@ require_relative 'lib/ui'
 # the debrief ends, the board says goodbye under it and hangs up.
 Rubbs.board 'Impostor BBS', ImpostorBBS do
   preset  TTG::PRESET
+  central TTG::CENTRAL
   modern  { |bbs| flow Impostor::Modern.flow(sessions: bbs.debriefs) }
   petscii { |bbs| flow Impostor::Petscii.flow(sessions: bbs.debriefs) }
   goodbye(**UI::GOODBYE)

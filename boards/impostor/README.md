@@ -4,9 +4,9 @@ A telnet-accessible BBS (Bulletin Board System) server that serves as the post-g
 
 ## How it works
 
-When a player connects, the server asks for their player name and their personal code. The code is decrypted using a salt-based algorithm and checked against the name. A correct code unlocks a short identity confirmation sequence, followed by a congratulations screen and an interactive post-game menu for leaving feedback and signing up for updates.
+When a player connects, the server asks for their player name and their personal code. The code is decrypted using a salt-based algorithm and checked against the name. A correct code unlocks a short identity confirmation sequence, followed by a congratulations screen and an interactive post-game menu: feedback on the game (the network's feedback box, ttg-common `TTG::Feedback`, kept on TTG Gate BBS and read on its sysop console), the survivors' wall (ttg-common `TTG::Wall`, a word for the next player) and signing up for updates. What the two screens say is in `lib/content/feedback.yml` and `lib/content/wall.yml`.
 
-Every session — successful or not — is recorded in `data/sessions.sqlite3` with a unique session ID, timestamp, player name, and code. Feedback and email are added to the same row as the conversation progresses.
+Every session — successful or not — is recorded in `data/sessions.sqlite3` with a unique session ID, timestamp, player name, and code. The email is added to the same row as the conversation goes on. The `feedback` column holds what players wrote before the network's feedback box; it is handed over to it once at boot (`feedback export`, then a `sessions.sqlite3.feedback-exported` marker beside the database).
 
 ## Two terminals
 

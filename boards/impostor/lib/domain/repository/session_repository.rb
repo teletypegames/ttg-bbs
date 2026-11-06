@@ -20,6 +20,9 @@ class SessionRepository
   # Adds the row of +session_id+ or updates it with +fields+.
   def save(session_id, fields) = @store.upsert(session_id: session_id, **fields)
 
+  # Every row, oldest first (Hashes of the store's headers).
+  def all = @store.all
+
   # The SessionModel of +session_id+, or +nil+.
   def find(session_id) = @store.find(session_id)&.then { |row| SessionModel.from_row(row) }
 end

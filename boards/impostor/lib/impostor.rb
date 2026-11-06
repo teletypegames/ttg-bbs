@@ -54,14 +54,17 @@ module Impostor
     end
   end
 
-  # The menu after the debrief: feedback, the update list, exit.
+  # The menu after the debrief: feedback (the network's, ttg-common
+  # TTG::Feedback, the +debrief+ kind), the survivors' wall (TTG::Wall), the
+  # update list, exit.
   def self.debrief_menu(sessions)
     proc do
       menu '>', loop: true do
         option 'Leave feedback' do
-          ask :feedback, prompt: 'Feedback'
-          persist :feedback, store: sessions
-          say 'Feedback recorded. Thank you.', style: :success
+          call { TTG::Feedback.open(session, kind: :debrief, context: "Player #{context[:player_name]}") }
+        end
+        option "The survivors' wall" do
+          call { TTG::Wall.open(session) }
         end
         option 'Subscribe to updates' do
           ask :email, prompt: 'Email address', validate: :email

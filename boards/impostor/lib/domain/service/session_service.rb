@@ -22,4 +22,21 @@ class SessionService
 
   # The SessionModel of the call +session_id+, or +nil+.
   def find(session_id) = @repository.find(session_id)
+
+  # The feedback the board kept before the network's, as rows of
+  # TTG::Feedback's import: the +debrief+ kind, the player's name, read
+  # already.
+  def feedback_rows
+    @repository.all.reject { |row| row['feedback'].to_s.strip.empty? }.map do |row|
+      {
+        kind:       'debrief',
+        name:       row['player_name'],
+        subject:    '',
+        body:       row['feedback'],
+        context:    "Player #{row['player_name']}",
+        created_at: row['timestamp'],
+        state:      'read'
+      }
+    end
+  end
 end

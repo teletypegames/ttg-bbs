@@ -16,6 +16,16 @@ class SessionServiceTest < Minitest::Test
     refute_nil call.timestamp
   end
 
+  def test_the_feedback_of_before_goes_to_the_network
+    service.upsert(session_id: 's1', player_name: 'NOR', code: '2J5GFN')
+    service.upsert(session_id: 's1', feedback: 'Great puzzle!')
+    service.upsert(session_id: 's2', player_name: 'ADA', code: 'X')
+    rows = service.feedback_rows
+    assert_equal 1, rows.size
+    row = rows.first
+    assert_equal ['debrief', 'NOR', 'Great puzzle!', 'read'], row.values_at(:kind, :name, :body, :state)
+  end
+
   def test_an_invalid_email_does_not_touch_the_call
     service.upsert(session_id: 's1', player_name: 'NOR', email: 'norman@example.com')
     service.upsert(session_id: 's1', email: 'nope')
