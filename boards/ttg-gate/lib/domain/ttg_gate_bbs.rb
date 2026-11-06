@@ -18,7 +18,9 @@ class TTGGateBBS
 
   service(:accounts) { Rubbs::Common::Auth::Directory.new(store: databases[:auth], roles: TTG::Auth::NEW) }
 
-  background('accounts metrics', every: 120) { AccountsMetrics.new(accounts, accounts_metrics).write }
+  background('accounts metrics', every: 120) do
+    AccountsMetrics.new(accounts, accounts_metrics, services: Rubbs.config.central&.server&.services).write
+  end
 
   service(:directory) { DirectoryService.new(BoardRepository.new(boards, host: gateway_host, public_host: public_host)) }
   service(:browse)    { discovery&.browse }

@@ -16,6 +16,18 @@ class AccountsMetricsTest < Minitest::Test
     assert_equal 4, text.scan('# TYPE').size
   end
 
+  def test_the_feedback_and_the_walls
+    feedback = Struct.new(:statistics).new({ states: { 'new' => 2 }, boards: { %w[feedia-bbs feed] => 2 } })
+    wall     = Struct.new(:statistics).new({ notes: { ['teletype-bbs', true] => 1 }, hidden: 3 })
+    services = { '/feedback' => Struct.new(:store).new(feedback), '/wall' => Struct.new(:store).new(wall) }
+    text     = AccountsMetrics.new(nil, nil, services: services).text({ accounts: 0, roles: {} })
+    assert_includes text, %(ttg_bbs_feedback{state="new"} 2\n)
+    assert_includes text, %(ttg_bbs_feedback{state="done"} 0\n)
+    assert_includes text, %(ttg_bbs_feedback_by_board{board="feedia-bbs",kind="feed"} 2\n)
+    assert_includes text, %(ttg_bbs_wall_notes{board="teletype-bbs",writer="guest"} 1\n)
+    assert_includes text, "ttg_bbs_wall_hidden 3\n"
+  end
+
   def test_the_file_is_written_whole
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'accounts.prom')

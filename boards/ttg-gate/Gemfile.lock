@@ -1,8 +1,8 @@
 GIT
   remote: https://git.teletypegames.org/bbs/common.git
-  revision: 351704d03014ecfa349e5f3368dbbb2c6ecf4526
+  revision: ddd78431f6d5a3d8b95e04ab2efa8fc9ce272b38
   specs:
-    ttg-common (0.10.1)
+    ttg-common (0.10.2)
       rubbs (>= 3.2)
 
 GIT
