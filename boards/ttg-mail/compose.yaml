@@ -1,0 +1,17 @@
+services:
+  ttg-mail-bbs:
+    mem_limit: 160m
+    cpus: 1.0
+    pids_limit: 256
+    build: .
+    container_name: ttg-mail-bbs
+    ports:
+      - "2335:2323"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TZ=Europe/Budapest
+      - BBS_MAX_SESSIONS=50
+    restart: unless-stopped
+    # rubbs tells the callers and gives them BBS_SHUTDOWN_SECONDS (20 s, Dockerfile) to leave.
+    stop_grace_period: 30s

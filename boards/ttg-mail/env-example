@@ -1,0 +1,9 @@
+# Every environment variable of TTG Mail BBS, with its default. Secrets go in .env on the
+# server, never here.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=100
+
+# The notices shown on the board
+TTG_MAIL_BBS_NOTICES=config/notices.yml
