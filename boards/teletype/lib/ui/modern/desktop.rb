@@ -35,11 +35,11 @@ module UI
 
     # The desktop: the clubhouse from the street (UI::Arts.house), lit
     # from the board's SceneModel: a window for each node taken, the door
-    # and the lamp when anyone is in, smoke from the chimney while the live
-    # chat talks, the mailbox flag and count for the caller's letters. Under
-    # it two boards, who is inside (with the guestbook) and the notice board
-    # (what is coming up, the new notes, the mail), and the graffiti wall
-    # running along the bottom. A terminal smaller than 80×23 leaves the
+    # and the lamp when anyone is in, smoke from the chimney while the wall
+    # has a fresh note, the mailbox flag and count for a sysop's new
+    # feedback. Under it two boards, who is inside (with the guestbook) and
+    # the notice board (what is coming up, a sysop's new feedback), and the
+    # graffiti wall (the newest notes of the wall) running along the bottom. A terminal smaller than 80×23 leaves the
     # house out. The application gives it its Data on start and every few
     # seconds after, and steps the smoke and the wall once a second.
     class Dashboard < Rubbs::Modern::Widgets::Widget
@@ -52,6 +52,8 @@ module UI
       G = "\e[0;38;5;78;48;5;16m"
 
       TICKER_STEP = 2
+      # The most of a note the graffiti wall runs.
+      NOTE = 120
       # The width the house and the boards are drawn in.
       WIDTH = 80
       # The rows of the house.
@@ -249,14 +251,12 @@ module UI
         "#{D}guestbook: #{T}#{guests.empty? ? '(empty)' : guests.join(' · ')}"
       end
 
-      # What is coming up, with a bar that fills as the day nears, then the
-      # new notes on the cork board and the caller's letters.
+      # What is coming up, with a bar that fills as the day nears, then for
+      # a sysop the new feedback.
       def notice_lines
         lines = scene.events.map { |e| event_line(e) }
         lines = ["#{D}(nothing scheduled yet)"] if lines.empty?
-        lines << notes_line
-        lines << "#{Y}✉ #{scene.mail} unread letter#{'s' unless scene.mail == 1}#{D} · F7 opens the mailbox" if
-          scene.mail.positive?
+        lines << "#{Y}✉ #{scene.mail} new feedback#{D} · read it on TTG Gate BBS" if scene.mail.positive?
         lines
       end
 
@@ -267,14 +267,14 @@ module UI
         "#{W}#{event.name[0, @inner - 12].ljust(@inner - 11)}#{Y}#{'▓' * bar}#{D}#{'░' * (3 - bar)} #{T}#{left.rjust(7)}"
       end
 
-      def notes_line
-        notes = scene.notes
-        return "#{D}no new notes on the cork board" if notes.zero?
-
-        "#{G}#{notes} new note#{'s' unless notes == 1} #{D}on the cork board (F2)"
+      # The newest notes of the wall in one line, each cut at NOTE.
+      def graffiti
+        text = scene.wall.map { |note| "#{note['name']}: #{note['text'].to_s.gsub(/\s+/, ' ')[0, NOTE]}" }.join('  ···  ')
+        text.empty? ? '(the wall is bare: Messages > The Wall, F2)' : text
       end
 
-      # The graffiti wall (the oneliners) as one line running from right to left.
+      # The graffiti wall (the newest notes of the wall) as one line running
+      # from right to left.
       def ticker(frame, x, y, width)
         return if width < 20
 
@@ -282,8 +282,7 @@ module UI
         frame.move(x, y)
         frame.write_ansi(label, base_sgr: T)
         room = width - 13
-        text = scene.oneliners.map { |o| "#{o.username}: #{o.text}" }.join('  ···  ')
-        text = '(the wall is bare: Messages > Oneliners)' if text.empty?
+        text = graffiti
         line = if text.length <= room
                  text
                else

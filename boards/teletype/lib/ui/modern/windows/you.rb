@@ -52,13 +52,12 @@ module UI
                 caller_name,
                 registered:    registered?,
                 session_id:    session_id,
-                caller_number: context[:caller_number],
-                sysop:         sysop?
+                caller_number: context[:caller_number]
               ))
             end
           end
 
-          # The board at a glance and the broadcast.
+          # The board at a glance.
           window :sysop_console, :info do
             title  'Sysop Console'
             width  70
@@ -66,19 +65,13 @@ module UI
             scroll true
             body do
               Formatters::Sysop.console_body(
-                username:         caller_name,
-                online_count:     online.count,
-                total_messages:   boards.total_count,
-                chat_subscribers: chat.subscriber_count,
-                online_users:     online.user_list,
-                recent_callers:   last_callers.recent(5)
+                username:       caller_name,
+                online_count:   online.count,
+                new_feedback:   feedback.new_count(Rubbs::Common::Central::Actor.of(session)),
+                online_users:   online.user_list,
+                recent_callers: last_callers.recent(5)
               )
             end
-            button('Broadcast', align: :left) do
-              sysop_broadcast
-              keep
-            end
-            button 'Close', cancel: true
           end
         end
       end

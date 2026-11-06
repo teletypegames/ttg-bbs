@@ -12,7 +12,7 @@ module UI
           window :system_info, :info do
             title 'System Info'
             width 60
-            height 15
+            height 12
             body { [{ kv: system_rows, label_width: 15 }] }
           end
 
@@ -41,11 +41,8 @@ module UI
           def system_rows
             [['Nodes in use', online.count.to_s],
              ['Calls',        "#{last_callers.total_calls} (#{last_callers.calls_today} today)"],
-             ['Messages',     boards.total_count.to_s],
-             ['Boards',       boards.boards.size.to_s],
              ['Wiki',         'https://wiki.teletypegames.org'],
              ['Games API',    'https://teletypegames.org'],
-             ['Discord feed', discord.enabled? ? 'on' : 'off'],
              ['Platform',     RUBY_PLATFORM],
              ['Ruby',         RUBY_VERSION],
              ['Uptime',       Formatters::SystemInfo.format_uptime(TeletypeBBS::STARTED_AT)]]

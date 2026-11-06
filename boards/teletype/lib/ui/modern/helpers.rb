@@ -24,46 +24,25 @@ module UI
         "#{"Node #{node.number} │ " if node}#{on}"
       end
 
-      # Mail that arrives during a call rings once, the way it used to.
-      def check_mail
-        return unless registered?
-
-        unread = mail.unread_count(caller_name, sysop: sysop?)
-        known  = context[:mail_seen] || unread
-        context[:mail_seen] = unread
-        return unless unread > known
-
-        session.write("\a")
-        message("New mail! You have #{unread} unread letter#{'s' if unread != 1}: Messages > Mail.", title: 'Mail')
+      # The cork board: the board's wall on the network (ttg-common
+      # TTG::Wall, in the words of lib/content/wall.yml), on the whole screen.
+      def open_wall
+        online.activity(session_id, 'The Wall')
+        with_line { TTG::Wall.open(session) }
       end
 
-      def open_mail
-        return show(:mail) if registered? || sysop?
-
-        message(
-          'Mail belongs to registered names (You > Register…). ' \
-          'Anyone with a name can write to the sysop: Messages > Feedback to the Sysop.',
-          title: 'Mail',
-          width: 60
-        )
+      # The mailbox: a letter to the sysops (ttg-common TTG::Feedback, in the
+      # words of lib/content/feedback.yml), on the whole screen; +kind+
+      # skips the choice.
+      def write_feedback(kind = nil)
+        online.activity(session_id, 'Feedback')
+        with_line { TTG::Feedback.open(session, kind: kind) }
       end
 
-      def write_mail(to: '', subject: '', on_sent: nil)
-        return message('Call again with a name to write letters.', title: 'Mail') if anonymous?
-
-        show(:compose_mail, to: to, subject: subject, on_sent: on_sent)
-      end
-
+      # The sysop's bell: a page, a kind of feedback.
       def page_sysop
-        return message('The bell has rung already this call. Leave a letter instead.', title: 'Page') if context[:paged]
-
-        context[:paged] = true
         session.write("\a")
-        return message(Formatters::PageSysop.text(true), title: 'Paging the Sysop…', width: 60) if board.page_sysop(caller_name)
-
-        confirm(Formatters::PageSysop.text(false), title: 'Paging the Sysop…') do
-          write_mail(to: MailService::SYSOP, subject: 'Page')
-        end
+        write_feedback(:page)
       end
 
       def vote_on(poll, window = nil)
@@ -84,30 +63,6 @@ module UI
         message("Your vote: #{option}.", title: 'Voting Booth')
       end
 
-      def write_oneliner(window)
-        ask(
-          "Your line on the wall (#{OnelinerService::MAX_LENGTH} characters at most):",
-          title: 'Oneliner',
-          width: 74
-        ) do |text|
-          next unless report(
-            oneliners.add(caller_name, text, caller_key: caller_key),
-            Wording::ONELINER,
-            title: 'Oneliners'
-          ) == :ok
-
-          close_window(window)
-          show(:oneliners)
-        end
-      end
-
-      def open_new_post
-        first = boards.boards.first
-        return message('Select a board first.', title: 'Compose') unless first
-
-        show(:compose_message, message_board: first)
-      end
-
       def open_profile
         return show(:profile) if registered?
 
@@ -123,12 +78,6 @@ module UI
         return message('Call again with a name to register it.', title: 'Register') if anonymous?
 
         show(:register)
-      end
-
-      def sysop_broadcast
-        ask('Sysop broadcast message:', title: 'Broadcast', width: 64) do |text|
-          board.sysop_broadcast(caller_name, text, sysop: sysop?)
-        end
       end
 
       # The town map (the BBS Network); on a terminal under 80 columns the
@@ -174,7 +123,7 @@ module UI
       def dashboard = desktop.widget
 
       def refresh_dashboard
-        @scene = scene.scene(caller_name, registered: registered?, sysop: sysop?)
+        @scene = scene.scene(sysop: sysop?, actor: Rubbs::Common::Central::Actor.of(session))
         @games_room&.scene = @scene
         dashboard.data = Dashboard::Data.new(
           name:          caller_name,
@@ -188,12 +137,11 @@ module UI
       end
 
       # Once a second: what the caller is doing, the room card; the
-      # dashboard every five seconds, the mailbox every ten.
+      # dashboard every five seconds.
       def tick
         top_window_shown
         context[:ticks] = (context[:ticks] || 0) + 1
         refresh_dashboard if (context[:ticks] % 5).zero?
-        check_mail if (context[:ticks] % 10).zero?
       end
 
       # The window on top tells the node's activity and the room card.
@@ -201,11 +149,6 @@ module UI
         top = Icon.strip(top_window&.title)
         online.activity(session_id, top.empty? ? 'At the main menu' : top)
         dashboard.room = Clubhouse::Cards.room(top)
-      end
-
-      # The mailbox as it is at the start, so only new mail rings.
-      def count_mail
-        context[:mail_seen] ||= mail.unread_count(caller_name, sysop: sysop?) if registered?
       end
     end
   end

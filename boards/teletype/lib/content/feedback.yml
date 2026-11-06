@@ -1,0 +1,25 @@
+# What the clubhouse's letters to the sysop say (ttg-common TTG::Feedback, TTG::Narrative): the
+# defaults of ttg-common with these over them. A key ttg-common does not know stops the board at boot.
+title: A letter to the sysop
+intro: Drop a letter in the box by the door. The sysops of the network read every one.
+kinds:
+  feedback:
+    label: Word to the sysop
+    intro: A question, a thank you, anything at all.
+  bug:
+    label: Something is broken
+    intro: What you did, what happened, and what you expected instead.
+  suggestion:
+    label: Idea for the clubhouse
+    intro: A room, a door, a game, a change. Tell the sysops what you would like.
+  page:
+    label: Page the sysop
+    intro: The bell rings for the sysops. Leave a line on what you need; they answer as soon as they are at the keyboard.
+    subject: { 'off': true }
+    body: { label: 'What do you need?', max: 500 }
+    thanks: The bell has rung. A sysop will get back to you.
+    petscii:
+      intro: THE BELL RINGS FOR THE SYSOPS. WHAT DO YOU NEED?
+thanks: Your letter is in the box. Thank you!
+petscii:
+  intro: DROP A LETTER IN THE BOX. THE SYSOPS READ EVERY ONE.

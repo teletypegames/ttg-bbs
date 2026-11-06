@@ -19,8 +19,7 @@ module UI
     # The games room; a C64 door chosen there opens on the text screen.
     def games_room
       doing('Games Room')
-      room = scene.scene(name, registered: registered?, sysop: sysop?)
-      door = Clubhouse::GamesRoom.new(session, board.doors, room).run
+      door = Clubhouse::GamesRoom.new(session, board.doors, the_scene).run
       return unless door
 
       Clubhouse.text_mode(session)
@@ -76,8 +75,6 @@ module UI
       rows = [
         ['nodes in use', online.count.to_s],
         ['calls', "#{last_callers.total_calls} (#{last_callers.calls_today} today)"],
-        ['messages', boards.total_count.to_s],
-        ['boards', boards.boards.size.to_s],
         ['uptime', uptime],
         ['ruby', RUBY_VERSION]
       ]
@@ -102,12 +99,11 @@ module UI
       doing('Sysop Console')
       title('SYSOP CONSOLE')
       puts " #{GR}nodes#{LG}      #{online.count}"
-      puts " #{GR}messages#{LG}   #{boards.total_count}"
-      puts " #{GR}in chat#{LG}    #{chat.subscriber_count}"
+      puts " #{GR}feedback#{LG}   #{feedback.new_count(Rubbs::Common::Central::Actor.of(session))} new"
+      puts " #{GR}           read it on ttg gate bbs#{LG}"
       puts
       online.nodes.each { |n| puts node_line(n) }
-      text = ask("\r\n#{WH}broadcast#{LG} (empty: back)\r\n> ")
-      board.sysop_broadcast(name, text, sysop: sysop?) unless text.empty?
+      pause
     end
 
     def node_line(node)

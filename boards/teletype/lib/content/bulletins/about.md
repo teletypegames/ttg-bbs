@@ -7,9 +7,10 @@ travel too: the pipeline that turns a push into a release, the catalog
 where every title plays in the browser or downloads, and the stores that
 carry it onto a retro box.
 
-**This board** is our telnet clubhouse: the message boards, mail, the
-oneliners wall, the live chat and the doors that live only here (SERMO,
-the Commodore 64 and Plus/4, Chat of Ra, TTG Trivia).
+**This board** is our telnet clubhouse: the cork board where callers
+pin notes and answer each other, a letter box for the sysops, the voting
+booth and the doors that live only here (SERMO, the Commodore 64 and
+Plus/4, Chat of Ra, TTG Trivia).
 
 **The rest of the network** has a board for each kind of thing:
 

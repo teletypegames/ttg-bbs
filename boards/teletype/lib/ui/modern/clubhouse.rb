@@ -76,27 +76,21 @@ module UI
       end
 
       # The room cards: the vignette at the top of the desktop while a
-      # window of that room is open, by the window's title.
+      # window of that room is open, by the window's title. The cork board
+      # and the mailbox open on the whole screen (TTG::Wall, TTG::Feedback),
+      # so their cards wait for a window of theirs.
       module Cards
         ROOMS = {
-          'Message Boards' => :cork,
-          'Post to'        => :cork,
-          'Compose'        => :cork,
-          'Mail'           => :mailbox,
-          'Write a Letter' => :mailbox,
-          'Live Chat'      => :sofa,
-          'IRC'            => :sofa,
-          'Bulletins'      => :notice,
-          'Dev Log'        => :workshop,
-          'Who is Online'  => :guestbook,
-          'Last Callers'   => :guestbook,
-          'User Listing'   => :guestbook,
-          'The Team'       => :guestbook
+          'Bulletins'     => :notice,
+          'Dev Log'       => :workshop,
+          'Who is Online' => :guestbook,
+          'Last Callers'  => :guestbook,
+          'User Listing'  => :guestbook,
+          'The Team'      => :guestbook
         }.freeze
         ABOUT = {
-          cork:      'the message boards: General, Tech, Off-Topic, Sysop. Pin a note.',
-          mailbox:   'a box for every registered name; the sysop reads the one marked Sysop.',
-          sofa:      'sit down and talk: everyone on the lines hears it, C64 callers too.',
+          cork:      'the wall of the clubhouse: pin a note, answer one. C64 callers read it too.',
+          mailbox:   'a letter to the sysop: feedback, a bug, an idea. They read every one.',
           notice:    'the bulletins by the door: the rules, what is coming up, the network.',
           workshop:  'what the team makes down there, push by push, on git.teletypegames.org.',
           guestbook: 'who is inside, who called, who signed it: the callers of the clubhouse.'
@@ -109,13 +103,13 @@ module UI
       end
 
       # The trophy case (People > Hall of Fame): three compartments, a cup
-      # for each of the first three of the top callers, the top posters and
-      # the TTG Trivia players, the names on the plates; under the case the
-      # places from the fourth on, with a bar each.
+      # for each of the first three of the top callers, the names most on
+      # the wall and the TTG Trivia players, the names on the plates; under
+      # the case the places from the fourth on, with a bar each.
       class Trophies < PictureView
-        LISTS = %i[callers posters trivia].freeze
-        TITLES = { callers: 'TOP CALLERS', posters: 'TOP POSTERS', trivia: 'TTG TRIVIA' }.freeze
-        UNITS = { callers: 'calls', posters: 'posts', trivia: 'pts' }.freeze
+        LISTS = %i[callers wall trivia].freeze
+        TITLES = { callers: 'TOP CALLERS', wall: 'MOST ON THE WALL', trivia: 'TTG TRIVIA' }.freeze
+        UNITS = { callers: 'calls', wall: 'notes', trivia: 'pts' }.freeze
         INK = "\e[0;1;38;5;16;48;5;178m"
 
         def initialize(fame:, **kw)

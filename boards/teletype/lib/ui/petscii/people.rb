@@ -71,7 +71,7 @@ module UI
       doing('Hall of Fame')
       best = board.hall_of_fame
       lines = [['top callers', best[:callers]],
-               ['top posters', best[:posters]], ['ttg trivia high scores', best[:trivia]]]
+               ['most on the wall', best[:wall]], ['ttg trivia high scores', best[:trivia]]]
         .flat_map do |heading, rows|
         [" #{WH}#{heading}#{LG}", *(rows.empty? ? [" #{GR}(nobody yet)#{LG}"] : fame_rows(rows)), '']
       end
@@ -153,13 +153,7 @@ module UI
     end
 
     def my_stats
-      s = board.my_stats(
-        name,
-        registered:    registered?,
-        session_id:    session_id,
-        caller_number: context[:caller_number],
-        sysop:         sysop?
-      )
+      s = board.my_stats(name, registered: registered?, session_id: session_id, caller_number: context[:caller_number])
       rows = stat_rows(s) + profile_rows
       rows.flat_map { |k, v| wrap("#{GR}#{k.ljust(13)}#{LG}#{v}", 38).map { |l| " #{l}" } }
     end
@@ -170,11 +164,9 @@ module UI
        ['this call', "caller ##{s[:caller_number]}#{", node #{s[:node].number}" if s[:node]}"],
        ['calls', stats ? stats.calls.to_s : 'this is your first'],
        ['first call', date(stats&.first_call)], ['last call', date(stats&.last_call)],
-       ['posts', s[:posts].to_s], ['votes', s[:ballots].to_s], ['mail', letters(s[:letters])],
+       ['votes', s[:ballots].to_s],
        *([['member since', s[:member_since].to_s[0, 10]]] if s[:member_since])]
     end
-
-    def letters(count) = count.nil? ? 'register to get mail' : "#{count} letter#{'s' if count != 1}"
 
     def profile_rows
       found = registered? ? profile.find(name) : nil

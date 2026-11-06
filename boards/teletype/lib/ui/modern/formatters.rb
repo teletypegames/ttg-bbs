@@ -8,27 +8,17 @@ module UI
       module Bulletin
         BANNER = Logo.half_blocks.map { |l| "  #{l}" }.freeze
 
-        def self.body(
-          username:,
-          registered:,
-          online_count:,
-          total_messages:,
-          recent_callers:,
-          posts:,
-          events:,
-          oneliners:
-        )
+        def self.body(username:, registered:, online_count:, recent_callers:, events:, wall:)
           [
             *BANNER,
             :spacer,
             "Logged in as \e[1;33m#{username}\e[0m#{status(username, registered)}",
-            "Online now: #{online_count}   Messages: #{total_messages}",
+            "Online now: #{online_count}",
             :spacer,
             { text: 'Lost? Press F1: the TTG Master, the sysop, answers your questions.', style: :accent },
-            *section('New on the boards:', posts.map { |b, m| Posts.line(b, m) }, '  (nothing posted yet — Messages > Boards)'),
             *section('Coming up:', events.map { |e| Events.line(e) }, '  (nothing scheduled)'),
             *section('Last callers:', recent_callers.map { |c| caller_line(c) }, '  (none yet)'),
-            *section('Oneliners:', Oneliners.lines(oneliners), '  (the wall is empty — Messages > Oneliners)')
+            *section('On the wall:', Wall.lines(wall), '  (the wall is bare — Messages > The Wall)')
           ]
         end
 
@@ -47,16 +37,13 @@ module UI
         end
       end
 
-      module Oneliners
-        def self.lines(oneliners)
-          oneliners.map { |o| "  \e[1;33m#{o.username}\e[0m: #{o.text}" }
-        end
-
-        def self.body(oneliners)
-          return ['  (nobody has written on the wall yet — be the first)'] if oneliners.empty?
-
-          oneliners.map do |o|
-            "  \e[2;37m#{o.timestamp.to_s[5, 11].sub('T', ' ')}\e[0m  \e[1;33m#{o.username}\e[0m: #{o.text}"
+      # The notes of the wall (TTG::Wall.lines) in the bulletin: the writer
+      # and how the note starts.
+      module Wall
+        def self.lines(notes)
+          notes.map do |note|
+            text = note['text'].to_s.gsub(/\s+/, ' ')
+            "  \e[1;33m#{note['name']}\e[0m: #{text[0, 60]}#{'…' if text.length > 60}"
           end
         end
       end
@@ -129,14 +116,6 @@ module UI
         end
       end
 
-      module Posts
-        # A post in one line: the board, the writer, the start of the text.
-        def self.line(board, message)
-          text = message.text.to_s.gsub(/\s+/, ' ')
-          "  · \e[1;33m#{message.username}\e[0m on #{board.title}: #{text[0, 48]}#{'…' if text.length > 48}"
-        end
-      end
-
       module Team
         def self.body(members, width: 56)
           return ['  (team list unavailable)'] if members.empty?
@@ -200,82 +179,6 @@ module UI
         end
       end
 
-      # A board as a message base: a header line, then each message under its
-      # number, author and date, its text indented, a thin line between.
-      module Board
-        def self.lines(messages, board_title, width)
-          return ["  (no messages on #{board_title} yet — New starts one)"] if messages.empty?
-
-          inner = [width - 3, 10].max
-          head  = " #{board_title} · #{messages.size} message#{'s' if messages.size != 1} "[0, inner].ljust(inner)
-          lines = ["\e[0;38;5;16;48;5;78m#{head}\e[0m", '']
-          messages.each_with_index do |m, i|
-            lines.concat(message(m, i + 1, inner))
-            lines << "\e[2;37m#{'┄' * inner}\e[0m" unless i == messages.size - 1
-          end
-          lines
-        end
-
-        # Message +number+: its author and date, then its text indented.
-        def self.message(msg, number, inner)
-          stamp = msg.timestamp.to_s
-          left  = "\e[0;38;5;78m##{number}\e[0m \e[1;33m#{msg.username}\e[0m"
-          pad   = [inner - Rubbs::Modern::FrameBuffer.visible_width(left) - stamp.length, 1].max
-          ["#{left}#{' ' * pad}\e[2;37m#{stamp}\e[0m",
-           *msg.text.to_s.split("\n").flat_map { |text|
-             Rubbs::Modern::FrameBuffer.wrap_ansi(text, inner - 2).map { |l|
-               "  #{l}"
-             }
-           }]
-        end
-      end
-
-      module Chat
-        def self.line(entry)
-          "  \e[2;37m#{entry.timestamp}\e[0m  \e[1;33m#{entry.username}\e[0m: #{entry.text}"
-        end
-      end
-
-      module Irc
-        NETWORK     = 'Libera.Chat'
-        HOST        = 'irc.libera.chat'
-        WEBCHAT     = 'https://web.libera.chat/'
-        PLACEHOLDER = 'Read only here. To talk, join the channel from an IRC client (see the top).'
-
-        def self.title(irc) = "IRC — #{irc.channel} on #{NETWORK}"
-
-        def self.intro(irc)
-          [
-            "  \e[1;36mA read-only window on #{irc.channel} at #{NETWORK}:\e[0m " \
-            "the board listens there as \e[1;33m#{irc.nick}\e[0m.",
-            "  To talk, join with any IRC client: \e[1;37m#{HOST}\e[0m, port \e[1;37m6697\e[0m (TLS), " \
-            "channel \e[1;37m#{irc.channel}\e[0m",
-            "  or in a browser: \e[1;37m#{WEBCHAT}#{irc.channel}\e[0m",
-            "  #{status(irc)}",
-            ''
-          ]
-        end
-
-        def self.status(irc)
-          return "\e[1;31mNot connected right now, reconnecting…\e[0m" unless irc.joined?
-
-          topic = irc.topic.to_s.empty? ? '' : " · Topic: #{irc.topic}"
-          "\e[2;37m#{irc.member_count} on the channel#{topic}\e[0m"
-        end
-
-        def self.line(entry)
-          if entry.username == IrcRelay::SYSTEM
-            "  \e[2;37m#{entry.timestamp}  * #{entry.text}\e[0m"
-          else
-            "  \e[2;37m#{entry.timestamp}\e[0m  \e[1;36m<#{entry.username}>\e[0m #{entry.text}"
-          end
-        end
-
-        def self.how_to_join(irc)
-          ["  \e[1;33mThe board only reads the channel. Say it on IRC: #{HOST} #{irc.channel}\e[0m"]
-        end
-      end
-
       module Users
         def self.last_callers_list(callers)
           return ['  (no callers recorded yet)'] if callers.empty?
@@ -288,21 +191,13 @@ module UI
       end
 
       module Sysop
-        def self.console_body(
-          username:,
-          online_count:,
-          total_messages:,
-          chat_subscribers:,
-          online_users:,
-          recent_callers:
-        )
+        def self.console_body(username:, online_count:, new_feedback:, online_users:, recent_callers:)
           body = []
           body << "  Sysop: \e[1;33m#{username}\e[0m"
           body << :spacer
           body << '  Stats'
           body << "  · Online users:  #{online_count}"
-          body << "  · Total messages: #{total_messages}"
-          body << "  · Chat subscribers: #{chat_subscribers}"
+          body << "  · New feedback:  #{new_feedback} (read it on the console of TTG Gate BBS)"
           body << :spacer
           body << '  Online users:'
           online_users.each { |u| body << "  · #{u}" }

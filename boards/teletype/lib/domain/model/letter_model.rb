@@ -1,38 +1,33 @@
 # frozen_string_literal: true
 
 require 'time'
-require 'securerandom'
 
-# A letter of the board's mail: between registered names, or a caller's
-# feedback to the sysop (addressed to "Sysop").
+# A letter of the board's mail of before the network's feedback (ttg-common
+# TTG::Feedback), kept as the archive: between registered names, or a
+# caller's feedback to the sysop (addressed to SYSOP), with when it was
+# handed over to the feedback (+exported_at+). The letters between names
+# are never handed over.
 class LetterModel < Rubbs::Common::Storage::Model
   table :mail
   unrestrict_primary_key
 
-  def self.append(from, to, subject, body)
-    create(
-      id:            SecureRandom.hex(6),
-      timestamp:     Time.now.iso8601,
-      sender:        from,
-      recipient:     to,
-      recipient_key: Rubbs::Common::Auth::Names.key(to),
-      subject:       subject,
-      body:          body,
-      read:          0
-    )
+  # The box the sysops read.
+  SYSOP = 'Sysop'
+
+  # The letters to the sysop not handed over yet, oldest first.
+  def self.unexported_to_sysop
+    where(recipient_key: Rubbs::Common::Auth::Names.key(SYSOP), exported_at: nil).order(Sequel.lit('rowid')).all
   end
 
-  # Letters to any of the names, newest first.
-  def self.to(names)
-    where(recipient_key: names.map { |name| Rubbs::Common::Auth::Names.key(name) }).order(Sequel.desc(Sequel.lit('rowid'))).all
+  # The letter as a row of TTG::Feedback's import, read already.
+  def to_feedback
+    {
+      kind:       'feedback',
+      name:       sender,
+      subject:    subject,
+      body:       body,
+      created_at: ExportService.utc(timestamp),
+      state:      'read'
+    }
   end
-
-  def self.mark_read(id) = where(id: id).update(read: 1)
-
-  def self.remove(id) = where(id: id).delete
-
-  def from = sender
-  def to   = recipient
-  def read? = read == 1
-  def time = Time.parse(timestamp)
 end

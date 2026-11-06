@@ -8,7 +8,6 @@ services:
       - ./:/app/
     environment:
       - RUBBS_AUTH_SECRET=${RUBBS_AUTH_SECRET:-}
-      - TELETYPE_BBS_DISCORD_WEBHOOK=${TELETYPE_BBS_DISCORD_WEBHOOK:-}
       - SERMO_LLM_URL=http://acp:8080
     depends_on:
       - acp

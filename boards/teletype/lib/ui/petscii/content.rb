@@ -41,13 +41,12 @@ module UI
 
     def logon_bulletin
       b = board.bulletin(name, registered: registered?)
-      [" #{GR}online now#{LG} #{b[:online_count]}  #{GR}messages#{LG} #{b[:total_messages]}", '',
-       " #{WH}new on the boards#{LG}", *b[:posts].map { |bd, m| post_line(bd, m) }, '',
+      [" #{GR}online now#{LG} #{b[:online_count]}", '',
        " #{WH}coming up#{LG}", *events(2), '',
        " #{WH}last callers#{LG}", *b[:recent_callers].map { |c|
                                     " #{c.username} #{GR}#{c.timestamp[5, 11].sub('T', ' ')}#{LG}"
                                   },
-       '', " #{WH}oneliners#{LG}", *b[:oneliners].map { |o| " #{YE}#{o.username}#{LG}: #{o.text}" }]
+       '', " #{WH}on the wall#{LG}", *b[:wall].map { |note| note_line(note) }]
     end
 
     # The BBS Network: where each kind of thing has its board.
@@ -65,10 +64,9 @@ module UI
                " #{GR}every file on plain http:#{LG}", " #{CY}archive.teletypegames.org#{LG}"]
     end
 
-    # A post in one line: who wrote it, where, and how it starts.
-    def post_line(board, message)
-      text = message.text.to_s.gsub(/\s+/, ' ')[0, 120]
-      " #{YE}#{message.username.to_s[0, 12]}#{LG} #{GR}#{board.title.downcase}#{LG} #{text}"
+    # A note of the wall in one line: who wrote it and how it starts.
+    def note_line(note)
+      " #{YE}#{note['name'].to_s[0, 12]}#{LG}: #{note['text'].to_s.gsub(/\s+/, ' ')[0, 120]}"
     end
 
     def read_dev_log

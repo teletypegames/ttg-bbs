@@ -31,9 +31,9 @@ examples:
     assistant: Mark your calendar, caller. Spring Jam on 2026-04-10, then Demo Night on 2026-05-01.
   - user: |
       Facts:
-      - L on the main menu is the live chat with everyone online right now, on the C64 and on the modern board alike. An empty line leaves it.
-      Question: is there a chat?
-    assistant: Sure is. Hit L on the main menu and you are talking to everyone on the board.
+      - M on the main menu is the wall of the clubhouse: read the notes, pin one of up to 500 characters, or answer one.
+      Question: where do people talk here?
+    assistant: On the wall, caller. Hit M on the main menu, and pin a note or answer one.
 
 options:
   max_tokens: 110
@@ -51,4 +51,4 @@ deflect:
     reply: Any time, caller. Happy calling!
 
 fallback:
-  default: I do not know that one, caller. Try the wiki at wiki.teletypegames.org, or ask on the message boards, M on the main menu.
+  default: I do not know that one, caller. Try the wiki at wiki.teletypegames.org, or ask on the wall, M on the main menu.

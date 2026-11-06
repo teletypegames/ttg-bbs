@@ -6,8 +6,8 @@ module UI
     # items' blocks run on the Application (Helpers).
     module Menus
       ABOUT = 'Teletype BBS — the telnet clubhouse of Teletype Games, powered by rubbs. ' \
-              'Board: the dashboard, bulletins, the dev log, the BBS Network. Messages: boards, mail, oneliners, ' \
-              'live chat, IRC and the voting booth. People, Doors, You. Our games and files, the wiki, the blog ' \
+              'Board: the dashboard, bulletins, the dev log, the BBS Network. Messages: the wall, a letter to the ' \
+              'sysop, the voting booth and the bell. People, Doors, You. Our games and files, the wiki, the blog ' \
               'and the art have boards of their own: Board > BBS Network. Lost? F1 asks the TTG Master.'
       NETWORK = 'The town map: our other boards, the games and files, the wiki, the blog, the art'
 
@@ -20,18 +20,20 @@ module UI
         hint:  'Ask',
         about: 'The sysop answers your questions about the board'
       ) { open_master }
-      command(:boards, '&Boards…', key: 'F2', about: 'The message boards: General, Tech, Off-Topic, Sysop') do
-        show(:messages)
-      end
-      command(:post, '&New Post…', key: 'F3', hint: false, about: 'Write a post on the first board') { open_new_post }
       command(
-        :chat,
-        '&Live Chat',
-        key:   'F4',
-        hint:  'Chat',
-        about: 'Talk with everyone on the lines now, C64 callers too'
-      ) { show(:chat) }
-      command(:mail, '&Mail…', key: 'F7', about: 'Private letters between registered names') { open_mail }
+        :wall,
+        'The &Wall…',
+        key:   'F2',
+        hint:  'Wall',
+        about: 'The cork board of the clubhouse: pin a note, answer one; C64 callers too'
+      ) { open_wall }
+      command(
+        :feedback,
+        '&Feedback…',
+        key:   'F7',
+        hint:  'Feedback',
+        about: 'A letter to the sysop: a word, a bug, an idea'
+      ) { write_feedback }
       command(:log_off, 'Log &off', key: 'Alt-X', hint: 'Bye', about: 'Hang up: +++ ATH0 NO CARRIER') { log_off }
 
       menu 'Board' do
@@ -52,28 +54,18 @@ module UI
       end
 
       menu 'Messages' do
-        command :boards
-        command :post
-        command :mail
-        item('&Oneliners', hint: 'The wall: one line, 64 characters, the newest run along the desktop') do
-          show(:oneliners)
-        end
-        separator
-        command :chat
-        item('&IRC #teletypegames', hint: 'Our channel on Libera.Chat, read only here') { show(:irc) }
+        command :wall
+        command :feedback
         item('&Voting Booth', hint: 'The polls of the board, with the results as bars') { show(:voting) }
         separator
-        item('&Feedback to the Sysop…', hint: 'A letter to the sysops; anyone with a name may write') do
-          write_mail(to: MailService::SYSOP)
-        end
-        item('&Page the Sysop', hint: 'Ring the bell for a sysop, once a call') { page_sysop }
+        item('&Page the Sysop…', hint: 'Ring the bell for the sysops, with a line on what you need') { page_sysop }
       end
 
       menu 'People' do
         item('&Who is Online', hint: 'The nodes: who is on, what they are doing, for how long') { show(:online_users) }
         item('&Last Callers', hint: 'The calls of late, newest first') { show(:last_callers) }
         item('&User Listing', hint: 'The registered names with their calls and where they are from') { show(:user_list) }
-        item('&Hall of Fame', hint: 'The trophy case: top callers, top posters and the TTG Trivia records') do
+        item('&Hall of Fame', hint: 'The trophy case: top callers, the names most on the wall, the TTG Trivia records') do
           open_trophies
         end
         separator
@@ -90,11 +82,11 @@ module UI
       end
 
       menu 'You' do
-        item('Your &Stats', hint: 'Your calls, posts, votes and letters') { show(:my_stats) }
+        item('Your &Stats', hint: 'Your calls and votes') { show(:my_stats) }
         item('&Profile…', hint: 'Your signature, location, homepage and notes') { open_profile }
         item('&Register…', hint: 'Tie the name you called with to a password') { open_register }
         separator
-        item('Sysop &Console', enabled: -> { sysop? }, hint: 'Stats and broadcasts, for the sysops') do
+        item('Sysop &Console', enabled: -> { sysop? }, hint: 'The nodes and the numbers, for the sysops') do
           show(:sysop_console)
         end
       end

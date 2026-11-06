@@ -7,26 +7,22 @@
   fact: 'S on the main menu, then R, registers the name you called with: from then on that name asks for a password. Anonymous cannot register, so call again with a name first.'
 - keys: [profile, signature, location, homepage, note]
   fact: 'S on the main menu, then P, edits your signature, location, homepage and notes. A profile belongs to a registered name, so register first.'
-- keys: [board, message, post, write, forum, general, tech, offtopic, leave a message]
-  fact: 'M on the main menu opens the message boards General, Tech, Off-Topic and Sysop. Pick a board by its number; N there writes a post of up to 1000 characters, an empty line ends it.'
-- keys: [oneliner, wall, line]
-  fact: 'O on the main menu is the wall of one-line messages, 64 characters each; W adds yours (a name is needed, not Anonymous).'
-- keys: [chat, talk, live, people, everyone]
-  fact: 'L on the main menu is the live chat with everyone online right now, on the C64 and on the modern board alike. An empty line leaves it.'
+- keys: [wall, board, message, post, write, forum, note, notes, oneliner, leave a message, chat, talk]
+  fact: 'M on the main menu is the wall of the clubhouse: read the notes, pin one of up to 500 characters, or answer one, on the C64 and on the modern board alike. A guest writes under a name of their own.'
 - keys: [online, who, caller, last, node, nodes]
   fact: 'C on the main menu, then W, lists the nodes: who is on which line now and what they are doing. C, then L, lists the recent calls.'
 - keys: [user list, users, userlist, listing, registered, members list]
   fact: 'C on the main menu, then U, lists the registered names with their calls and last call.'
 - keys: [stats, statistics, my calls, caller number, how many times]
-  fact: 'S on the main menu shows your caller number, your calls, your first and last call, your posts and votes.'
+  fact: 'S on the main menu shows your caller number, your calls, your first and last call and your votes.'
 - keys: [vote, voting, poll, polls, booth, survey, favourite, favorite]
   fact: 'V on the main menu is the Voting Booth: pick a poll by its number, then type the number of your choice. A name is needed to vote, and you can change your vote.'
 - keys: [mail, email, e-mail, letter, private, inbox, message someone, write to, private message]
-  fact: 'E on the main menu is private mail between registered names: write, read, reply, delete. The board rings when a letter arrives during your call.'
-- keys: [feedback, complain, complaint, contact, suggestion, report, bug]
-  fact: 'E on the main menu has feedback to the sysop, a private letter anyone with a name can send.'
+  fact: 'There is no private mail between callers here. E on the main menu drops a letter to the sysop; to talk with the others, pin a note on the wall, M.'
+- keys: [feedback, complain, complaint, contact, suggestion, report, bug, idea]
+  fact: 'E on the main menu is a letter to the sysop: a word, a bug or an idea. Anyone can send one, a guest too; the sysops of the network read every one.'
 - keys: [page, yell, call the sysop, talk to the sysop, sysop online]
-  fact: 'P on the main menu rings the sysop once a call; when the sysop is away, it offers to leave a letter instead.'
+  fact: 'P on the main menu rings the bell for the sysops: leave a line on what you need, and they answer as soon as they are at the keyboard.'
 - keys: [trivia, quiz, question, score, door game, play here]
   fact: 'TTG Trivia is a door game: ten questions about Teletype Games and the old days, 20 seconds each, with a hall of fame. It needs 80 columns, so it is on the modern face of the board: call with a PC terminal and choose 1.'
 - keys: [team, member, members, motto, crew, group]
@@ -45,14 +41,14 @@
   fact: 'Chat of Ra lets you talk to Ra, the sun god of our game Blessing of Ra; it is a door on the modern face of the board, as it needs 80 columns: call with a PC terminal and choose 1.'
 - keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag, switch, window, windows, front]
   fact: 'The cursor keys move the bar of a menu, RETURN opens the lit item, and the letter in front of an item opens it at once. Lists are numbered: the cursor or the number, then RETURN; cursor left and right turn the pages, Q or the arrow-left key goes back. ? on the main menu is the help, and * gives a menu of plain text instead of the pictures.'
-- keys: [sysop, admin, operator, console, broadcast]
-  fact: 'Z on the main menu is the console of the sysops, logged in with their password; it shows the numbers and sends broadcasts to the chat.'
+- keys: [sysop, admin, operator, console]
+  fact: 'Z on the main menu is the console of the sysops, logged in with their password; it shows the nodes and how much new feedback waits.'
 - keys: [teletype, ttg, company, studio, website, site, made, built, created, behind, owner, who made, who built, who run, who is behind]
   fact: 'Teletype Games is the group behind this board. It makes games for retro and modern platforms, from the Commodore 64 and the Plus/4 to TIC-80 and the browser; its home is teletypegames.org, with the catalog, the blog and the events.'
 - keys: [discord]
-  fact: 'New board posts and sysop broadcasts go to the Teletype Games Discord through a feed.'
+  fact: 'A letter to the sysop (E on the main menu) rings the sysops on the Teletype Games Discord: only that it came, never what it says.'
 - keys: [hall, fame, top, best, highscore, high score, most, ranking, toplist]
-  fact: 'H on the main menu is the Hall of Fame: the top callers, the top posters and the TTG Trivia high scores.'
+  fact: 'H on the main menu is the Hall of Fame: the top callers, the names most on the wall and the TTG Trivia high scores.'
 - keys: [bulletins, rules, about, newcomer, new to bbs, what is a bbs]
   fact: 'U on the main menu has the numbered bulletins: the logon bulletin, About Teletype Games, what is coming up, the board rules, New to BBSes? and our BBS network.'
 - keys: [door, doors, program]
@@ -90,13 +86,9 @@
 - keys: [clubhouse, picture, pictures, room, rooms, house, smoke, chimney, mailbox flag, bar, bartender]
   fact: 'The main menu is the clubhouse: the house with a lit window for each caller inside, and its rooms under it, each with its key; T on the main menu, Ask the bar, is the TTG Master.'
 - keys: [cork, cork board]
-  fact: 'M on the main menu is the Cork board: the message boards General, Tech, Off-Topic and Sysop.'
+  fact: 'M on the main menu is the Cork board, the wall of the clubhouse.'
 - keys: [mailbox, mailboxes]
-  fact: 'E on the main menu is the Mailbox: your letters, and feedback to the sysop.'
-- keys: [graffiti, graffiti wall]
-  fact: 'O on the main menu is the Graffiti wall, the oneliners.'
-- keys: [sofa, sofa chat]
-  fact: 'L on the main menu is the Sofa chat, the live chat.'
+  fact: 'E on the main menu is the Mailbox: a letter to the sysop.'
 - keys: [notice board, notice]
   fact: 'U on the main menu is the Notice board, the bulletins.'
 - keys: [workshop]
@@ -104,7 +96,7 @@
 - keys: [guestbook]
   fact: 'C on the main menu is the Guestbook: who is online, the last callers, the users and the team.'
 - keys: [trophy, trophies, cup, cups]
-  fact: 'H on the main menu is the Trophies, the Hall of Fame: the top callers, the top posters and the TTG Trivia high scores.'
+  fact: 'H on the main menu is the Trophies, the Hall of Fame: the top callers, the names most on the wall and the TTG Trivia high scores.'
 - keys: [ballot, ballot box]
   fact: 'V on the main menu is the Ballot box, the voting booth.'
 - keys: [games room, station, stations]

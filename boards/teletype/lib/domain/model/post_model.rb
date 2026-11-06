@@ -1,42 +1,41 @@
 # frozen_string_literal: true
 
-# A post on a message board. Its stamp is month, day and time, the way the
-# boards always showed it.
+require 'time'
+
+# A post of the message boards of before the network's wall (ttg-common
+# TTG::Wall), kept as the archive: its board, its stamp (month, day and
+# time on the board's clock, no year, the way the boards showed it), the
+# writer, the text, and when it was handed over to the wall (+exported_at+).
 class PostModel < Rubbs::Common::Storage::Model
   table :posts
 
-  STAMP = '%m-%d %H:%M'
+  # The title of each board by its id, the prefix of its posts on the wall.
+  BOARDS = { 'general' => 'General', 'tech' => 'Tech', 'offtopic' => 'Off-Topic', 'sysop' => 'Sysop' }.freeze
 
-  # A name's posts with the most first, +except+ left out; a name is shown
-  # the way it last posted.
-  TOP = <<~SQL
-    SELECT username, MAX(id), COUNT(*) AS posts FROM posts WHERE user_key != ?
-    GROUP BY user_key ORDER BY posts DESC, user_key LIMIT ?
-  SQL
-
-  def self.append(board_id, username, text)
-    create(
-      board:     board_id,
-      timestamp: Time.now.strftime(STAMP),
-      username:  username,
-      user_key:  Rubbs::Common::Auth::Names.key(username),
-      text:      text
-    )
+  # Every post with the Time it was written, oldest first: [[post, time], ...].
+  # A stamp has no year, so the years come from the order, back from +now+:
+  # a post stamped later in the year than the one after it is of the year
+  # before.
+  def self.dated(now = Time.now)
+    after = now
+    order(:id).all.reverse.map { |post| [post, after = post.time_before(after)] }.reverse
   end
 
-  # The newest +n+ posts of a board, oldest first.
-  def self.newest(board_id, n) = where(board: board_id).reverse(:id).limit(n).all.reverse
+  # The newest Time of the stamp not after +after+; +after+ itself when the
+  # stamp is not one.
+  def time_before(after)
+    month, day, hour, min = timestamp.to_s.scan(/\d+/).map(&:to_i)
+    return after unless min
 
-  # The newest +n+ posts on the boards +board_ids+, newest first.
-  def self.latest(board_ids, n) = where(board: board_ids).reverse(:id).limit(n).all
+    time = Time.new(after.year, month, day, hour, min)
+    time > after ? Time.new(after.year - 1, month, day, hour, min) : time
+  rescue ArgumentError
+    after
+  end
 
-  # The posts on the boards +board_ids+ (one id or several).
-  def self.count_on(board_ids) = where(board: board_ids).count
-
-  def self.count_by(name) = where(user_key: Rubbs::Common::Auth::Names.key(name)).count
-
-  # [[name, posts], ...] most posts first, +except+ left out.
-  def self.top_posters(n, except:)
-    db.fetch(TOP, Rubbs::Common::Auth::Names.key(except), n).map { |row| [row[:username], row[:posts]] }
+  # The post as a row of TTG::Wall's import, written at +time+: its board's
+  # name before the text.
+  def to_wall(time)
+    { name: username, text: "[#{BOARDS.fetch(board, board)}] #{text}", created_at: time.utc.iso8601 }
   end
 end

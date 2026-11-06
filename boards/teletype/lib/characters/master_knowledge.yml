@@ -8,26 +8,22 @@
   fact: 'You > Register… ties the name you called with to a password; from then on that name asks for it. Anonymous cannot register, so call again with a name first.'
 - keys: [profile, signature, location, homepage, note]
   fact: 'You > Profile… edits your signature, location, homepage and notes. A profile belongs to a registered name, so register first.'
-- keys: [board, message, post, write, forum, general, tech, offtopic, leave a message]
-  fact: 'Messages > Boards… (F2) opens the boards General, Tech, Off-Topic and Sysop. The New button there, or Messages > New Post… (F3), writes a post of up to 1000 characters; Ctrl-Enter sends it.'
-- keys: [oneliner, wall, line]
-  fact: 'Messages > Oneliners is a wall of one-line messages, 64 characters each; Write adds yours (a name is needed, not Anonymous). The newest ones run along the bottom of the Dashboard.'
-- keys: [chat, talk, live, people, everyone]
-  fact: 'Messages > Live Chat (F4) is the live chat with everyone online right now.'
+- keys: [wall, board, message, post, write, forum, note, notes, oneliner, cork, leave a message, chat, talk]
+  fact: 'Messages > The Wall… (F2) is the cork board of the clubhouse: read the notes, pin one of up to 500 characters, or answer one. A guest writes under a name of their own, marked guest. The newest notes run along the bottom of the Dashboard.'
 - keys: [online, who, caller, last, node, nodes]
   fact: 'People > Who is Online lists the nodes: who is on which line now and what they are doing. People > Last Callers lists the recent calls.'
 - keys: [user list, users, userlist, listing, registered, members list]
   fact: 'People > User Listing lists the registered names with their calls and last call.'
 - keys: [stats, statistics, my calls, caller number, how many times]
-  fact: 'You > Your Stats shows your caller number, your calls, your first and last call, your posts and votes.'
+  fact: 'You > Your Stats shows your caller number, your calls, your first and last call and your votes.'
 - keys: [vote, voting, poll, polls, booth, survey, favourite, favorite]
   fact: 'Messages > Voting Booth has the polls of the board, like your favourite Teletype Games title; Enter or Vote, then the number of your choice. A name is needed to vote, and you can change your vote.'
 - keys: [mail, email, e-mail, letter, private, inbox, message someone, write to, private message]
-  fact: 'Messages > Mail… (F7) is private mail between registered names: Write, Reply, Delete. You get a bell when a letter arrives during your call.'
-- keys: [feedback, complain, complaint, contact, suggestion, report, bug]
-  fact: 'Messages > Feedback to the Sysop… writes a private letter to the sysop; anyone with a name can send one.'
+  fact: 'There is no private mail between callers here. Messages > Feedback… (F7) drops a letter to the sysop; to talk with the others, pin a note on Messages > The Wall….'
+- keys: [feedback, complain, complaint, contact, suggestion, report, bug, idea]
+  fact: 'Messages > Feedback… (F7) is a letter to the sysop: a word, a bug or an idea. Anyone can send one, a guest too; the sysops of the network read every one.'
 - keys: [page, yell, call the sysop, talk to the sysop, sysop online]
-  fact: 'Messages > Page the Sysop rings the sysop once a call; when the sysop is away, it offers to leave a letter instead.'
+  fact: 'Messages > Page the Sysop… rings the bell for the sysops: leave a line on what you need, and they answer as soon as they are at the keyboard.'
 - keys: [trivia, quiz, question, score, door game, play here]
   fact: 'Doors > TTG Trivia is a door game: ten questions about Teletype Games and the old days, 20 seconds each, with a hall of fame.'
 - keys: [team, member, members, motto, crew, group]
@@ -45,19 +41,19 @@
 - keys: [ra, riddle, sun, egypt, pyramid, blessing]
   fact: 'Doors > Chat of Ra lets you talk to Ra, the sun god of our game Blessing of Ra. RIDDLE asks a riddle of the pyramid; solve three and he blesses you. EXIT returns to the board.'
 - keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag, switch, window, windows, front]
-  fact: 'Alt and a letter opens a menu, F10 the first one, and the bottom line tells what the highlighted menu item does; Tab moves inside a window, Enter presses the button, Esc closes the window. F2 boards, F3 post, F4 chat, F7 mail, F1 asks me. F5 or Alt-Enter puts a big window on the full screen and back, so does the [↑] on its title bar. Several windows can be open: F6 brings the next one to the front, Shift-F6 the previous one, Alt and its number picks one, and a click on a window brings it forward. Ctrl-F5 moves a window with the arrows and sizes it with Shift and the arrows; with the mouse, drag its title bar or its bottom right corner. The mouse works too.'
-- keys: [sysop, admin, operator, console, broadcast]
-  fact: 'You > Sysop Console is for the sysops of the board, logged in with their password; it shows the numbers and sends broadcasts to the chat.'
+  fact: 'Alt and a letter opens a menu, F10 the first one, and the bottom line tells what the highlighted menu item does; Tab moves inside a window, Enter presses the button, Esc closes the window. F2 the wall, F7 a letter to the sysop, F1 asks me. F5 or Alt-Enter puts a big window on the full screen and back, so does the [↑] on its title bar. Several windows can be open: F6 brings the next one to the front, Shift-F6 the previous one, Alt and its number picks one, and a click on a window brings it forward. Ctrl-F5 moves a window with the arrows and sizes it with Shift and the arrows; with the mouse, drag its title bar or its bottom right corner. The mouse works too.'
+- keys: [sysop, admin, operator, console]
+  fact: 'You > Sysop Console is for the sysops of the board, logged in with their password; it shows the nodes, the last callers and how much new feedback waits.'
 - keys: [teletype, ttg, company, studio, website, site, made, built, created, behind, owner, who made, who built, who run, who is behind]
   fact: 'Teletype Games is the group behind this board. It makes games for retro and modern platforms, from the Commodore 64 and the Plus/4 to TIC-80 and the browser; its home is teletypegames.org, with the catalog, the blog and the events.'
 - keys: [discord]
-  fact: 'New board posts and sysop broadcasts go to the Teletype Games Discord through a feed.'
+  fact: 'A letter to the sysop (Messages > Feedback…) rings the sysops on the Teletype Games Discord: only that it came, never what it says.'
 - keys: [hall, fame, top, best, highscore, high score, most, ranking, toplist, trophy, trophies, cup, cups]
-  fact: 'People > Hall of Fame is the trophy case: a cup each for the first three of the top callers, the top posters and the TTG Trivia high scores, the rest under the case.'
+  fact: 'People > Hall of Fame is the trophy case: a cup each for the first three of the top callers, the names most on the wall and the TTG Trivia high scores, the rest under the case.'
 - keys: [bulletins, rules, about, newcomer, new to bbs, what is a bbs]
   fact: 'Board > Bulletins… has the numbered bulletins: the logon bulletin, About Teletype Games, what is coming up, the board rules, New to BBSes? and our BBS network.'
 - keys: [dashboard, desktop, home, start screen, main screen, overview, what is happening, clubhouse, house, smoke, chimney, mailbox flag]
-  fact: 'Board > Dashboard is the clubhouse from the street: a lit window for each caller inside, smoke from the chimney while the Live Chat talks, the mailbox flag for your unread letters, then who is inside with the guestbook, the notice board with what is coming up and the new notes, and the graffiti wall of the oneliners running along the bottom. It closes every window.'
+  fact: 'Board > Dashboard is the clubhouse from the street: a lit window for each caller inside, smoke from the chimney when a note was pinned on the wall in the last minutes, then who is inside with the guestbook, the notice board with what is coming up, and the graffiti wall of the newest notes running along the bottom. It closes every window.'
 - keys: [door, doors, program, lobby]
   fact: 'Doors > Door Lobby… lists every door with what it is and who is inside; Enter steps in. The doors take over the screen and give it back when you leave them: SERMO, Commodore 64, Commodore Plus/4, Chat of Ra and the TTG Trivia game.'
 - keys: [network, bbs, other, telnet, bbsweb, port, moved, gone]

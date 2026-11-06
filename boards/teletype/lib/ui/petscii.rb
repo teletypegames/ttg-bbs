@@ -13,26 +13,23 @@ module UI
     # and its bar wear it, so the eye finds the group first. Each item:
     # its key, its label and the line about it under the menu.
     MENU = [
-      [['messages', GN, [['m', 'message boards', 'read and post on the boards'],
-                         ['e', 'e-mail', 'your letters; feedback to the sysop'],
-                         ['o', 'oneliners', 'a line on the wall for every caller'],
-                         ['l', 'live chat', 'talk with whoever is on line'],
-                         ['i', 'irc channel', 'the irc channel, from a c64'],
-                         ['p', 'page the sysop', 'call the sysop to a chat']]],
+      [['messages', GN, [['m', 'the wall', 'pin a note, answer one'],
+                         ['e', 'write the sysop', 'a letter: feedback, a bug, an idea'],
+                         ['p', 'page the sysop', 'ring the bell for a sysop']]],
        ['board', CY, [['u', 'bulletins', 'the bulletins of the board'],
                       ['d', 'dev log', 'what we are making, commit by commit'],
                       ['n', 'network', 'our boards: games, wiki, blog, art']]]],
       [['people', PU, [['c', 'callers & users', 'who is on line, who called'],
                        ['v', 'voting booth', 'the polls of the board'],
                        ['s', 'you & your name', 'your stats, profile and registration'],
-                       ['h', 'hall of fame', 'the top callers and posters']]],
+                       ['h', 'hall of fame', 'the top callers and wall writers']]],
        ['more', YE, [['r', 'doors', 'games and programs behind the doors'],
                      ['t', 'ttg master', 'ask the sysop where things are'],
                      ['y', 'system info', 'the numbers of this board'],
                      ['?', 'help', 'how the keys of this board work'],
                      ['q', 'log off', 'hang up. see you on the wire!']]]]
     ].freeze
-    SYSOP = ['z', 'sysop console', 'the nodes, a broadcast: sysops only'].freeze
+    SYSOP = ['z', 'sysop console', 'the nodes and the numbers: sysops only'].freeze
     # The width of the menu: two columns of COLS / 2 less one.
     MENU_WIDTH = COLS - 1
 
@@ -47,9 +44,8 @@ module UI
       '',
       'Long texts stop at every screenful: RETURN shows more, Q leaves.',
       '',
-      'Posts and letters take several lines: an empty line, or a lone dot, ends the text.',
-      '',
-      'In the live chat what the others say shows up above your line. An empty line leaves.',
+      'M is the wall of the clubhouse: read the notes, pin one, answer one. E drops a letter to the sysops, ' \
+      'P rings their bell. Notes and letters are written in the full-screen editor: RUN/STOP, then S sends.',
       '',
       'Our games and files are on the WarpEngine BBS, port 2329: it sends them by XMODEM onto a C64 disk. ' \
       'N, the town map, shows every board of the network.',
@@ -60,11 +56,8 @@ module UI
     ].freeze
 
     ACTIONS = {
-      'm' => :read_boards,
-      'e' => :read_mail,
-      'o' => :wall,
-      'l' => :live_chat,
-      'i' => :listen_irc,
+      'm' => :open_wall,
+      'e' => :write_feedback,
       'p' => :page_sysop,
       'n' => :show_network,
       'u' => :read_bulletins,
@@ -134,23 +127,13 @@ module UI
 
     # The main menu as the clubhouse (Clubhouse::MainMenu); the key taken.
     def clubhouse_menu
-      @unread = registered? ? mail.unread_count(name, sysop: sysop?) : 0
-      ring_for_mail
-      menu = Clubhouse::MainMenu.new(
-        session,
-        scene.scene(name, registered: registered?, sysop: sysop?),
-        node: online.node(session_id)&.number,
-        name: name
-      )
-      @lit = menu.run(lit: @lit, unread: @unread) || @lit
+      menu = Clubhouse::MainMenu.new(session, the_scene, node: online.node(session_id)&.number, name: name)
+      @lit = menu.run(lit: @lit) || @lit
     end
 
-    # New mail since the last look rings once, as on the old boards.
-    def ring_for_mail
-      seen = context[:mail_seen] || @unread
-      context[:mail_seen] = @unread
-      bell if @unread.to_i > seen.to_i
-    end
+    # The clubhouse as this caller sees it: a sysop's mailbox counts the new
+    # feedback.
+    def the_scene = scene.scene(sysop: sysop?, actor: Rubbs::Common::Central::Actor.of(session))
 
     def node_text
       node = online.node(session_id)
@@ -161,7 +144,6 @@ module UI
     # the sections as a cursor menu in two columns. The key of the item
     # taken; nil for ← or RUN/STOP.
     def text_main_menu
-      @unread = registered? ? mail.unread_count(name, sysop: sysop?) : nil
       home
       live_strip
       puts rule_line
@@ -199,29 +181,16 @@ module UI
     end
 
     def item(key, label, about, color)
-      if key == 'e' && @unread.to_i.positive?
-        label = "#{label} #{GN}#{@unread}#{LG}"
-        about = "#{@unread} new letter#{'s' unless @unread == 1}: #{about}"
-      end
       Rubbs::Common::Screens::Selector.item(label, key: key, value: key, about: about, color: color)
     end
 
     # Who is calling and what is happening, over the menu: the caller and
-    # the nodes, the next event and the newest post, one line each. New
-    # mail since the last look rings once, as on the old boards.
+    # the nodes, the next event and the newest note of the wall, one line
+    # each.
     def live_strip
-      puts " #{WH}hi #{name}!#{LG} #{GR}·#{LG} #{YE}#{online.count}#{LG} on line#{new_mail}"
+      puts " #{WH}hi #{name}!#{LG} #{GR}·#{LG} #{YE}#{online.count}#{LG} on line"
       next_event
-      newest_post
-    end
-
-    def new_mail
-      seen = context[:mail_seen] || @unread
-      context[:mail_seen] = @unread
-      return '' unless @unread.to_i.positive?
-
-      bell if seen && @unread > seen
-      " #{GR}·#{LG} #{GN}#{@unread} new mail#{LG}"
+      newest_note
     end
 
     def next_event
@@ -233,12 +202,11 @@ module UI
       puts " #{GR}next:#{LG} #{event.name[0, 38 - 7 - when_.length - 1]} #{CY}#{when_}#{LG}"
     end
 
-    def newest_post
-      _board, post = boards.latest(1).first
-      return unless post
+    def newest_note
+      note = wall.recent(1).first or return
 
-      text = "#{post.username}: #{post.text.to_s.gsub(/\s+/, ' ')}"
-      puts " #{GR}new:#{LG}  #{YE}#{text[0, 38 - 7]}#{LG}"
+      text = "#{note['name']}: #{note['text'].to_s.gsub(/\s+/, ' ')}"
+      puts " #{GR}wall:#{LG} #{YE}#{text[0, 38 - 7]}#{LG}"
     end
 
     def logoff?
@@ -246,20 +214,11 @@ module UI
 
       choose("#{WH}log off now? (y/n)#{LG} ", %w[y n], back: 'n') == 'y'
     end
-
-    # The text written in the full-screen editor under +heading+, at most
-    # +max+ long; empty when the caller quit. The title bar stays.
-    def write_text(heading, max)
-      text = edit(title: heading, max: max).to_s
-      title(heading)
-      text
-    end
   end
 end
 
 require_relative 'petscii/leaving'
 require_relative 'petscii/messages'
-require_relative 'petscii/chat'
 require_relative 'petscii/content'
 require_relative 'petscii/people'
 require_relative 'petscii/more'

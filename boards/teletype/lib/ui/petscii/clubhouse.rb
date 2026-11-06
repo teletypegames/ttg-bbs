@@ -5,7 +5,7 @@ module UI
     # The graphics screens of the C64 face: the clubhouse drawn in the
     # uppercase/graphics set on a Rubbs::Petscii::Canvas (raw PETSCII, the
     # whole screen once, then only what changes), where the menus are the
-    # rooms of the club. The reading screens (posts, letters, chat, the
+    # rooms of the club. The reading screens (the wall, the letters, the
     # Master) stay in the lowercase set of Screen; #text_mode switches back.
     module Clubhouse
       C = Rubbs::Petscii::Canvas
@@ -25,16 +25,13 @@ module UI
       # the key (the old menu's, so Board's actions stay), the name of the
       # room, its part of the board and the line about it.
       ROOMS = [
-        ['m', 'CORK BOARD', :messages, 'READ AND POST ON THE CORK BOARD'],
-        ['e', 'MAILBOX', :messages, 'YOUR LETTERS; WRITE TO THE SYSOP'],
-        ['o', 'GRAFFITI WALL', :messages, 'A LINE ON THE WALL FOR EVERY CALLER'],
-        ['l', 'SOFA CHAT', :messages, 'TALK WITH WHOEVER IS ON LINE'],
-        ['i', 'RADIO (IRC)', :messages, 'THE IRC CHANNEL, READ ONLY'],
-        ['p', 'RING THE BELL', :messages, 'CALL THE SYSOP TO A CHAT'],
+        ['m', 'CORK BOARD', :messages, 'THE WALL: PIN A NOTE, ANSWER ONE'],
+        ['e', 'MAILBOX', :messages, 'DROP A LETTER TO THE SYSOP'],
+        ['p', 'RING THE BELL', :messages, 'PAGE THE SYSOP'],
         ['u', 'NOTICE BOARD', :board, 'BULLETINS: RULES, EVENTS, NEWCOMERS'],
         ['d', 'WORKSHOP', :board, 'WHAT WE ARE MAKING DOWN THERE'],
         ['c', 'GUESTBOOK', :people, 'WHO IS INSIDE, WHO CALLED, THE TEAM'],
-        ['h', 'TROPHIES', :people, 'THE TOP CALLERS, POSTERS, PLAYERS'],
+        ['h', 'TROPHIES', :people, 'THE TOP CALLERS, WRITERS, PLAYERS'],
         ['v', 'BALLOT BOX', :people, 'THE POLLS OF THE BOARD'],
         ['s', 'YOU', :you, 'YOUR STATS, PROFILE AND NAME'],
         ['r', 'GAMES ROOM', :doors, 'C64, PLUS/4 AND THE OTHER DOORS'],
@@ -86,7 +83,8 @@ module UI
         canvas.text(spot.row, spot.col, text.center(spot.width), color, rvs: true)
       end
 
-      # The flag up and the count of the letters on the mailbox.
+      # The flag up and the count on the mailbox: the new feedback, for a
+      # sysop.
       def self.mailbox(canvas, art, mail)
         flag = art.hotspot(:flag)
         canvas.text(flag.row, flag.col, ' ', :red, rvs: true)
@@ -148,7 +146,7 @@ module UI
           @name    = name
         end
 
-        def run(lit: nil, unread: 0)
+        def run(lit: nil)
           scene  = @scene
           canvas = C.new
           art    = Clubhouse.house(
@@ -157,7 +155,7 @@ module UI
             node:   @node,
             status: "#{"NODE #{@node}  " if @node}#{Time.now.strftime('%H:%M')}"
           )
-          live(canvas, scene, unread)
+          live(canvas, scene)
           Clubhouse.box(canvas, MENU_ROW - 1, 1, 38, 11, C::DARK_GREY)
           canvas.text(MENU_ROW + 10, 2, HINT, :dark_grey)
           menu = menu(canvas, lit, art, scene.smoking)
@@ -169,11 +167,10 @@ module UI
         private
 
         # Who is calling and what is going on, under the house.
-        def live(canvas, scene, unread)
-          mail = unread.positive? ? "  #{unread} NEW LETTER#{'S' unless unread == 1}" : ''
+        def live(canvas, scene)
           canvas.text(HOUSE_ROWS, 1, "HI #{Rubbs::Petscii.plain(@name).upcase[0, 14]}!", :white)
-          inside = "#{scene.inside} INSIDE#{mail}"
-          canvas.text(HOUSE_ROWS, 39 - inside.length, inside, unread.positive? ? :light_green : :yellow)
+          inside = "#{scene.inside} INSIDE"
+          canvas.text(HOUSE_ROWS, 39 - inside.length, inside, :yellow)
           next_event(canvas, scene.events.first) if scene.events.first
         end
 
@@ -418,11 +415,11 @@ module UI
         end
       end
 
-      # The trophy case on the C64 (H): a cup for the top caller, the top
-      # poster and the best TTG Trivia player, their names under the cups,
-      # and the places after them in three columns.
+      # The trophy case on the C64 (H): a cup for the top caller, the name
+      # most on the wall and the best TTG Trivia player, their names under
+      # the cups, and the places after them in three columns.
       module Trophies
-        TITLES = { callers: 'CALLERS', posters: 'POSTERS', trivia: 'TRIVIA' }.freeze
+        TITLES = { callers: 'CALLERS', wall: 'THE WALL', trivia: 'TRIVIA' }.freeze
 
         def self.show(session, fame)
           art = Arts.load(:c64, 'trophies')
@@ -461,23 +458,14 @@ module UI
       # its name and what it is; any key goes on.
       module Cards
         ABOUT = {
-          cork:      'THE MESSAGE BOARDS: GENERAL, TECH, OFF-TOPIC, SYSOP',
-          mailbox:   'YOUR LETTERS, AND A BOX FOR THE SYSOP',
-          sofa:      'SIT DOWN AND TALK WITH WHOEVER IS IN',
+          cork:      'THE WALL OF THE CLUBHOUSE: PIN A NOTE, ANSWER ONE',
+          mailbox:   'A LETTER TO THE SYSOP: FEEDBACK, A BUG, AN IDEA',
           notice:    'THE RULES, WHAT IS COMING UP, THE NETWORK',
           workshop:  'WHAT THE TEAM MAKES DOWN THERE',
           guestbook: 'WHO IS INSIDE, WHO CALLED, WHO YOU ARE'
         }.freeze
         # The card of each key of the main menu that opens a reading room.
-        KEYS = {
-          'm' => :cork,
-          'e' => :mailbox,
-          'l' => :sofa,
-          'u' => :notice,
-          'd' => :workshop,
-          'c' => :guestbook,
-          's' => :guestbook
-        }.freeze
+        KEYS = { 'm' => :cork, 'e' => :mailbox, 'u' => :notice, 'd' => :workshop, 'c' => :guestbook, 's' => :guestbook }.freeze
         TOP = 8
 
         # Shows the card of +room+ unless +seen+ (a Set) has it, and adds it.

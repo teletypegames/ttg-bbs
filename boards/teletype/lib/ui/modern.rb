@@ -11,8 +11,7 @@ require_relative 'modern/helpers'
 require_relative 'modern/menus'
 require_relative 'modern/windows/board'
 require_relative 'modern/windows/messages'
-require_relative 'modern/windows/mail'
-require_relative 'modern/windows/chat'
+require_relative 'modern/windows/master'
 require_relative 'modern/windows/people'
 require_relative 'modern/windows/you'
 require_relative 'modern/windows/doors'
@@ -24,7 +23,6 @@ module UI
     APP = Rubbs::Modern::Application.define do
       theme :neumanntronics
       helpers { include Helpers }
-      init { count_mail }
       on_tick { tick }
       status(clock: :before) { status_text }
       doors { board.doors }
@@ -36,7 +34,7 @@ module UI
         button(Formatters::Master::DESKTOP_LABEL, bottom: 1, align: :right, margin: 2) { open_master }
       end
 
-      parts Menus, Windows::Board, Windows::Messages, Windows::Mail, Windows::Chat, Windows::People, Windows::You, Windows::Doors
+      parts Menus, Windows::Board, Windows::Messages, Windows::Master, Windows::People, Windows::You, Windows::Doors
     end
   end
 end

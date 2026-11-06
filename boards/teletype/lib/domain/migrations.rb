@@ -6,7 +6,10 @@
 # step at the end. Besides these tables the file holds rubbs'
 # rate_limit_events, which Rubbs::Common::Line::RateLimit makes itself. Step 2 keeps the
 # members (MemberModel) once the accounts moved to the network (Rubbs::Common::Auth);
-# the accounts table stays as it was, for TTG Gate BBS to import.
+# the accounts table stays as it was, for TTG Gate BBS to import. Step 3
+# marks what the network's wall and feedback were handed (ExportService):
+# the posts, the oneliners and the mail stay as the archive of before them,
+# the last_read table as it was.
 MIGRATIONS = [
   <<~SQL,
     CREATE TABLE accounts (
@@ -51,11 +54,16 @@ MIGRATIONS = [
       read INTEGER NOT NULL DEFAULT 0);
     CREATE INDEX mail_recipient ON mail (recipient_key);
   SQL
-  <<~SQL
+  <<~SQL,
     CREATE TABLE members (
       name_key TEXT PRIMARY KEY, name TEXT NOT NULL, account_id TEXT, created_at TEXT NOT NULL);
 
     INSERT INTO members (name_key, name, created_at)
       SELECT name_key, name, created_at FROM accounts ORDER BY rowid;
+  SQL
+  <<~SQL
+    ALTER TABLE posts ADD COLUMN exported_at TEXT;
+    ALTER TABLE oneliners ADD COLUMN exported_at TEXT;
+    ALTER TABLE mail ADD COLUMN exported_at TEXT;
   SQL
 ].freeze

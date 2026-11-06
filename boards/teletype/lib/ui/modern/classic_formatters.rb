@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # View helpers of the classic BBS parts: the logon and logoff screens,
-# nodes, mail, the voting booth, bulletins and the hall of
+# nodes, the voting booth, bulletins and the hall of
 # fame. Like formatters.rb: data and a width in, lines out.
 module UI
   module Modern
@@ -72,7 +72,7 @@ module UI
       end
 
       module MyStats
-        def self.body(name:, registered:, stats:, node:, caller_number:, posts:, ballots:, letters:, member_since:)
+        def self.body(name:, registered:, stats:, node:, caller_number:, ballots:, member_since:)
           rows = [
             ['Name',        registered ? "#{name} (registered)" : "#{name} (guest)"],
             ['This call',   "caller ##{Formatters.number(caller_number)}#{", node #{node.number}" if node}"],
@@ -80,42 +80,10 @@ module UI
             ['First call',  stats ? stats.first_call.localtime.strftime('%Y-%m-%d %H:%M') : '—'],
             ['Last call',   stats ? stats.last_call.localtime.strftime('%Y-%m-%d %H:%M') : '—'],
             ['Time online', stats ? Formatters.duration(stats.seconds) : '—'],
-            ['Posts',       posts.to_s],
-            ['Votes',       ballots.to_s],
-            ['Mail',        letters.nil? ? 'register to get mail' : "#{letters} letter#{'s' if letters != 1}"]
+            ['Votes',       ballots.to_s]
           ]
           rows << ['Member since', member_since.to_s[0, 10]] if member_since
           [{ kv: rows, label_width: 14 }]
-        end
-      end
-
-      module Mail
-        def self.label(letter)
-          mark = letter.read? ? ' ' : '•'
-          "#{mark} #{letter.time.localtime.strftime('%m-%d')} #{letter.from.to_s[0, 12].ljust(12)} #{letter.subject}"
-        end
-
-        def self.detail(letter, width)
-          [
-            "  #{K}From:#{O}    #{Y}#{letter.from}#{O}",
-            "  #{K}To:#{O}      #{W}#{letter.to}#{O}",
-            "  #{K}Date:#{O}    #{D}#{letter.time.localtime.strftime('%Y-%m-%d %H:%M')}#{O}",
-            "  #{K}Subject:#{O} #{C}#{letter.subject}#{O}",
-            "  #{K}#{'─' * [width - 5, 1].max}#{O}",
-            *letter.body.to_s.split("\n").flat_map { |l|
-              if l.strip.empty?
-                ['']
-              else
-                Formatters.wrap(l, width - 4).map { |w|
-                  "  #{w}"
-                }
-              end
-            }
-          ]
-        end
-
-        def self.empty(registered)
-          registered ? '  (your mailbox is empty)' : '  (register your name to get mail — You > Register…)'
         end
       end
 
@@ -162,9 +130,9 @@ module UI
           lines + ['']
         end
 
-        def self.body(callers:, posters:, trivia:, width:)
+        def self.body(callers:, wall:, trivia:, width:)
           section('Top callers', callers, width, 'calls') +
-            section('Top posters', posters, width, 'posts') +
+            section('Most on the wall', wall, width, 'notes') +
             section('TTG Trivia high scores', trivia, width, 'pts')
         end
       end
@@ -178,17 +146,6 @@ module UI
           { label: ' 5  New to BBSes?',           kind: :file, file: 'newcomers.md' },
           { label: ' 6  Our BBS network',         kind: :network }
         ].freeze
-      end
-
-      module PageSysop
-        def self.text(sysop_online)
-          if sysop_online
-            'The sysop is on line and heard the bell: look for an answer in Live Chat (F4).'
-          else
-            'The sysop is not at the keyboard. The page went to the team, but the surest way is a letter: ' \
-              'leave one now?'
-          end
-        end
       end
     end
   end

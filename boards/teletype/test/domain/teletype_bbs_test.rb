@@ -20,26 +20,10 @@ class TeletypeBBSTest < Minitest::Test
     super
   end
 
-  def test_only_a_signed_in_sysop_broadcasts
-    @bbs.chat.subscribe('s')
-    assert_equal :forbidden, @bbs.sysop_broadcast('Kali', 'hi', sysop: false)
-    assert_equal :empty, @bbs.sysop_broadcast('Tasi', ' ', sysop: true)
-    assert_equal :ok, @bbs.sysop_broadcast('tasi', 'hello', sysop: true)
-    assert_equal ['[SYSOP] tasi', 'hello'], @bbs.chat.drain('s').map { |l| [l.username, l.text] }.last
-  end
-
   def test_the_sysop_role_makes_a_sysop
     assert @bbs.sysop?(account('Tasi', :sysop))
     refute @bbs.sysop?(account('Kali'))
     refute @bbs.sysop?(Rubbs::Common::Auth::Identity.guest('Tasi'))
-  end
-
-  def test_a_paged_sysop_is_on_line_with_the_role
-    @bbs.databases
-    @bbs.start_call('s1', account('Kali'), listed: true)
-    refute @bbs.page_sysop('Zed')
-    @bbs.start_call('s2', account('Tasi', :sysop), listed: true)
-    assert @bbs.page_sysop('Zed')
   end
 
   def board_with_history
@@ -47,19 +31,21 @@ class TeletypeBBSTest < Minitest::Test
     [%w[Kali a], %w[kali b], %w[Zed c], %w[Anonymous d]].each { |name, id| CallModel.record(name, id, 30) }
     accounts
     @bbs.members.register('Kali', 'password', 'password')
-    @bbs.boards.post('general', 'Kali', 'hi', caller_key: 'a')
     @bbs.trivia.add('Zed', 500, 7)
+    notes = [%w[Kali hi], %w[Zed yo], %w[Kali again]].map { |name, text| { 'name' => name, 'text' => text, 'guest' => false } }
+    wall = WallService.new(source: ->(_) { notes + [{ 'name' => 'Guest', 'text' => 'x', 'guest' => true }] })
+    @bbs.define_singleton_method(:wall) { wall }
   end
 
   def test_the_statistics_come_from_sql
     board_with_history
     fame = @bbs.hall_of_fame
     assert_equal [['kali', 2], ['Zed', 1]], fame[:callers]
-    assert_equal [['Kali', 1]], fame[:posters]
+    assert_equal [['Kali', 2], ['Zed', 1]], fame[:wall]
     assert_equal [['Zed', 500]], fame[:trivia]
     name, stats, = @bbs.user_rows.first
     assert_equal ['Kali', 2, 60], [name, stats.calls, stats.seconds]
-    assert_equal 1, @bbs.my_stats('kali', registered: true, session_id: 'x', caller_number: 5, sysop: false)[:posts]
+    assert_equal 5, @bbs.my_stats('kali', registered: true, session_id: 'x', caller_number: 5)[:caller_number]
   end
 
   def test_bulletins_are_read_by_the_domain

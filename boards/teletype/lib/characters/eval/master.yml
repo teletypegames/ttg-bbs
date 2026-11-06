@@ -12,7 +12,7 @@
 - q: which games do you have for the c64?
   expect: [Blessing of Ra, Rabbit Scooter, C64 Demo]
 - q: how do I leave a message?
-  expect: [Messages > Boards, New Post, F3]
+  expect: [Messages > The Wall, F2]
 - q: how do I get out of here?
   expect: [Board > Log off, Alt-X]
 - q: what is SERMO?
@@ -40,7 +40,7 @@
 - q: can I move a window?
   expect: [F6, Ctrl-F5, drag]
 - q: how do I send a private message to someone?
-  expect: [Messages > Mail]
+  expect: [Feedback, The Wall]
 - q: is there a game I can play here?
   expect: [TTG Trivia, Doors]
 - q: where can I vote?

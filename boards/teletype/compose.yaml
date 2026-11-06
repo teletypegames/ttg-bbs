@@ -13,8 +13,6 @@ services:
       - TZ=Europe/Budapest
       # Callers at once: each costs up to ~1.7 MB on top of ~40 MB, sized to mem_limit.
       - BBS_MAX_SESSIONS=60
-      - TELETYPE_BBS_DISCORD_WEBHOOK=${TELETYPE_BBS_DISCORD_WEBHOOK:-}
-      - TELETYPE_BBS_IRC_PASSWORD=${TELETYPE_BBS_IRC_PASSWORD:-}
       - SERMO_LLM_URL=http://llm:8080
       - SERMO_LLM_MODEL=qwen3.5-0.8b
       - SERMO_LLM_API_KEY=${SERMO_LLM_API_KEY:-}

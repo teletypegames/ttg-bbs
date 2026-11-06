@@ -1,5 +1,5 @@
 # The trophy case (Hall of Fame) of the modern face: three compartments, the top callers, the
-# top posters and the TTG Trivia records; a big gold cup for the first, silver and bronze for
+# names most on the wall and the TTG Trivia records; a big gold cup for the first, silver and bronze for
 # the second and third. The names go on the plates (plate_<list>_<place>), the numbers under
 # them (score_<list>_<place>), the titles at the top (title_<list>).
 size: [76, 10]
@@ -51,11 +51,11 @@ hotspots:
   plate_callers_2: [1, 8, 8, 1]
   plate_callers_3: [17, 8, 8, 1]
   score_callers_1: [8, 8, 10, 1]
-  title_posters: [26, 1, 24, 1]
-  plate_posters_1: [33, 7, 10, 1]
-  plate_posters_2: [26, 8, 8, 1]
-  plate_posters_3: [42, 8, 8, 1]
-  score_posters_1: [33, 8, 10, 1]
+  title_wall: [26, 1, 24, 1]
+  plate_wall_1: [33, 7, 10, 1]
+  plate_wall_2: [26, 8, 8, 1]
+  plate_wall_3: [42, 8, 8, 1]
+  score_wall_1: [33, 8, 10, 1]
   title_trivia: [51, 1, 24, 1]
   plate_trivia_1: [58, 7, 10, 1]
   plate_trivia_2: [51, 8, 8, 1]

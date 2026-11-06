@@ -3,47 +3,11 @@
 module UI
   module Modern
     module Windows
-      # The live windows: the chat, the IRC channel and the TTG Master.
-      module Chat
+      # Help > Ask the TTG Master: the sysop who answers callers' questions.
+      module Master
         MASTER_GREETING = 'Hey, caller! I am the sysop of this board. Ask me where things are, what is new, what is coming up.'
 
         extend Section
-
-        section :messages do
-          # Everyone on the lines, C64 callers too. A line too soon after the
-          # last ones is dropped, as it always was.
-          window :chat, :stream do
-            title       'Live Chat'
-            placeholder 'Type a message and press Enter…'
-            lines do
-              chat.drain(session_id)
-              chat.history.map { |line| Formatters::Chat.line(line) }
-            end
-            on_submit do |text|
-              chat.say(caller_name, text, caller_key: caller_key)
-              nil
-            end
-            on_poll { chat.drain(session_id).map { |line| Formatters::Chat.line(line) } }
-          end
-
-          # The IRC channel, read only: the input line only tells how to join.
-          window :irc, :stream do
-            title       { Formatters::Irc.title(irc) }
-            placeholder Formatters::Irc::PLACEHOLDER
-            lines do
-              irc.subscribe(session_id)
-              Formatters::Irc.intro(irc) + irc.history.map { |line| Formatters::Irc.line(line) }
-            end
-            on_submit do
-              context[:irc_hint] = true
-              nil
-            end
-            on_poll do
-              hint = context.delete(:irc_hint) ? Formatters::Irc.how_to_join(irc) : []
-              irc.drain(session_id).map { |line| Formatters::Irc.line(line) } + hint
-            end
-          end
-        end
 
         section :help do
           # The TTG Master answers in a thread of his own and the window

@@ -23,7 +23,8 @@ Board > BBS Network lists every board of ours.
 Commodore 64, the SERMO machine, a sun god. Each one tells how to come
 back.
 
-**Mail.** Registered callers write each other in Messages > Mail. Anyone
-with a name can leave feedback for the sysop.
+**The wall.** Messages > The Wall (F2) is the cork board of the
+clubhouse: read the notes, pin your own, answer one. A word for the
+sysop goes in Messages > Feedback (F7).
 
 Still lost? Press **F1** and ask the TTG Master.

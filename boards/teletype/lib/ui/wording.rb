@@ -3,13 +3,6 @@
 module UI
   # What both faces say to a caller about the domain's answers.
   module Wording
-    # OnelinerService#add's refusals.
-    ONELINER = {
-      anonymous: 'Call again with a name to write on the wall.',
-      too_long:  "At most #{OnelinerService::MAX_LENGTH} characters.",
-      too_fast:  "One line every #{OnelinerService::COOLDOWN} seconds, please."
-    }.freeze
-
     # Why a name could not be registered (MemberService#register).
     REGISTER = {
       anonymous:   'Log in with a name first, not as Anonymous.',

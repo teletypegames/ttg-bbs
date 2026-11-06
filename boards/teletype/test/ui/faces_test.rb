@@ -45,12 +45,7 @@ class FacesTest < Minitest::Test
 
   WINDOWS = {
     system_info:   {},
-    messages:      {},
-    oneliners:     {},
     voting:        {},
-    mail:          {},
-    chat:          {},
-    irc:           {},
     online_users:  {},
     last_callers:  {},
     user_list:     {},
@@ -60,7 +55,6 @@ class FacesTest < Minitest::Test
     my_stats:      {},
     sysop_console: {},
     doors:         {},
-    compose_mail:  { to: 'Sysop', subject: '', on_sent: nil },
     master:        { replies: Queue.new, question: nil }
   }.freeze
 
@@ -73,14 +67,12 @@ class FacesTest < Minitest::Test
       assert_equal name, window.id
       app.close_window(window)
     end
-    app.show(:compose_message, message_board: @bbs.boards.boards.first)
-    app.send(:render_screen)
   end
 
   def test_a_window_title_wears_its_section
     app = UI::Modern::APP.build(session: Rubbs::Test::Session.new(identity: @kali), session_id: 's1', context: @context)
-    window = app.show(:messages)
-    assert_equal '✉ Message Boards', window.title
+    window = app.show(:voting)
+    assert_equal '✉ Voting Booth', window.title
     assert_equal UI::Modern::Accent::STYLES[:messages][:window_border], window.accent[:window_border]
   end
 

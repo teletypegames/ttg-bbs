@@ -18,7 +18,7 @@ clubhouse:
   name: Teletype BBS
   port: 2323
   building: the clubhouse
-  about: this board, the clubhouse - messages, mail, chat and our own doors
+  about: this board, the clubhouse - the wall, the voting booth and our own doors
   accent: '#3cff7a'
   c64: light_green
 boards:

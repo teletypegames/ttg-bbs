@@ -2,12 +2,15 @@
 
 require 'time'
 
-# A line on the oneliners wall: one short line per caller, newest last.
+# A line of the oneliners wall of before the network's wall (ttg-common
+# TTG::Wall), kept as the archive, with when it was handed over to the
+# wall (+exported_at+).
 class OnelinerModel < Rubbs::Common::Storage::Model
   table :oneliners
 
-  def self.append(username, text) = create(timestamp: Time.now.iso8601, username: username, text: text)
+  # The lines not handed over yet, oldest first.
+  def self.unexported = where(exported_at: nil).order(:id).all
 
-  # The newest +n+, newest first.
-  def self.recent(n) = reverse(:id).limit(n).all
+  # The line as a row of TTG::Wall's import.
+  def to_wall = { name: username, text: text, created_at: ExportService.utc(timestamp) }
 end

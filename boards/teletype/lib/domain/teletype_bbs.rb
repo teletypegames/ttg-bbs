@@ -2,10 +2,13 @@
 
 # The board itself, whatever terminal a caller has: its services wired to
 # their stores, its doors, and what a call does across several services
-# (logging on, posting, mail, paging the sysop, the statistics). The modern
-# ANSI interface (lib/ui/modern) and the Commodore 64 one (lib/ui/petscii) both
-# work on one instance of it, so a C64 caller and an ANSI caller see the same
-# nodes, boards, mail and chat.
+# (logging on, the bulletin, the statistics). The modern ANSI interface
+# (lib/ui/modern) and the Commodore 64 one (lib/ui/petscii) both work on one
+# instance of it, so a C64 caller and an ANSI caller see the same nodes and
+# the same wall. What callers write each other and the sysops lives on the
+# network's Central (ttg-common TTG::Wall and TTG::Feedback, on TTG Gate
+# BBS); the posts, oneliners and letters to the sysop of before are handed
+# over to it once (#export).
 class TeletypeBBS
   include Rubbs::Common::Board::Domain
 
@@ -17,38 +20,27 @@ class TeletypeBBS
   path :db, 'data/teletype.sqlite3'
   database :db, MIGRATIONS
   setting :ftp_host, 'ftp.teletypegames.org'
-  setting :discord_webhook, ''
-  setting :irc_server, 'irc.libera.chat', blank: true
-  setting :irc_port, 6697
-  setting :irc_channel, '#teletypegames'
-  setting :irc_nick, 'ttgbbs'
-  setting :irc_password, ''
 
-  # What the callers make: boards, mail, the wall, the chat, the people.
+  # What the callers make here: the nodes, the calls, the people.
   # Each service that keeps something opens the database first (#store),
   # so its models are bound however the board is started.
   service(:online)       { OnlineService.new(OnlineUsersRepository.new) }
-  service(:boards)       { BoardService.new(store: store) }
-  service(:chat)         { ChatService.new }
   service(:last_callers) { store && LastCallersService.new }
   service(:profile)      { store && ProfileService.new }
-  service(:oneliners)    { OnelinerService.new(store: store) }
   service(:members)      { store && MemberService.new(directory: -> { directory }) }
-  service(:mail)      { MailService.new(members: members, store: store) }
-  service(:trivia)    { store && TriviaScoreModel }
-  service(:bulletins) { BulletinRepository.new(BULLETINS_DIR) }
+  service(:trivia)       { store && TriviaScoreModel }
+  service(:bulletins)    { BulletinRepository.new(BULLETINS_DIR) }
 
-  # What comes from elsewhere: the catalog, the site, Gitea, the FTP
-  # server, Discord, IRC, and the content files.
+  # What comes from elsewhere: the wall and the feedback on the network's
+  # Central, the catalog, the site, Gitea, the FTP server, and the content
+  # files.
+  service(:wall)       { WallService.new }
+  service(:feedback)   { FeedbackCounter.new }
   service(:games)      { GamesService.new(CatalogRepository.new) }
   service(:site)       { SiteService.new(SiteRepository.new) }
   service(:dev_log)    { DevLogService.new(GiteaRepository.new) }
   service(:warp_sizes) { WarpSizes.new(FtpRepository.new(ftp_host)) }
-  service(:discord)    { DiscordNotifier.new(discord_webhook) }
-  service(:irc) do
-    IrcRelay.new(server: irc_server, port: irc_port, channel: irc_channel, nick: irc_nick, password: irc_password)
-  end
-  service(:network) { NetworkService.new(NetworkRepository.new(File.join(CONTENT_DIR, 'network.yml'))) }
+  service(:network)    { NetworkService.new(NetworkRepository.new(File.join(CONTENT_DIR, 'network.yml'))) }
   service(:voting) do
     store && VotingService.new(path: File.join(CONTENT_DIR, 'polls.yml'), games: games, doors: DOOR_NAMES)
   end
@@ -60,21 +52,24 @@ class TeletypeBBS
   service(:scene) do
     SceneService.new(
       online:       online,
-      chat:         chat,
-      boards:       boards,
-      mail:         mail,
+      wall:         wall,
+      feedback:     feedback,
       last_callers: last_callers,
       site:         site,
-      oneliners:    oneliners,
       door_titles:  DOOR_NAMES
     )
   end
 
-  # Every service made, and the IRC channel joined.
-  def start
-    super
-    irc.start
-    self
+  # The posts, oneliners and letters to the sysop of before, handed over to
+  # the network's Central once, tried again until it takes them.
+  background('export', max_retry: 3600) { export }
+
+  # Hands over to the network's wall and feedback what is left of before
+  # (ExportService); raises when the Central does not take it. Returns the
+  # counts, <tt>{ wall:, feedback: }</tt>.
+  def export
+    store
+    ExportService.new.call
   end
 
   def doors
@@ -105,21 +100,18 @@ class TeletypeBBS
 
   # The caller of +identity+ (a Rubbs::Common::Auth::Identity) is on the board: a
   # member when signed in, a node and a place among the last callers when
-  # +listed+ (a scanner looks around unlisted), and the live chat.
+  # +listed+ (a scanner looks around unlisted).
   def start_call(session_id, identity, listed:)
     name = identity.name || MemberService::ANONYMOUS
     members.remember(identity)
-    if listed
-      online.add(session_id, name, sysop: sysop?(identity))
-      last_callers.start(name, session_id)
-    end
-    chat.subscribe(session_id)
+    return unless listed
+
+    online.add(session_id, name, sysop: sysop?(identity))
+    last_callers.start(name, session_id)
   end
 
   def end_call(session_id)
     online.remove(session_id)
-    chat.unsubscribe(session_id)
-    irc.unsubscribe(session_id)
     last_callers.finish(session_id)
   end
 
@@ -129,57 +121,17 @@ class TeletypeBBS
     online.activity(session_id, ["Door: #{door.label.delete('&')}", suffix].compact.join(' '))
   end
 
-  # The welcome bulletin's news: the board in numbers, the newest posts,
-  # what is coming up, who called last and the wall.
+  # The welcome bulletin's news: the board in numbers, what is coming up,
+  # who called last and the newest notes of the wall.
   def bulletin(name, registered:)
     {
       username:       name || MemberService::ANONYMOUS,
       registered:     registered,
       online_count:   online.count,
-      total_messages: boards.total_count,
       recent_callers: last_callers.recent(3),
-      posts:          boards.latest(3),
       events:         site.upcoming_events(2),
-      oneliners:      oneliners.recent(5)
+      wall:           wall.recent(5)
     }
-  end
-
-  # ── messages ──────────────────────────────────────────────────────────
-
-  # BoardService#post's answer; a post that went up is told on Discord too.
-  def post_message(board, username, text, caller_key:)
-    result = boards.post(board.id, username, text, caller_key: caller_key)
-    discord.board_post(board.title, username, text) if result == :ok
-    result
-  end
-
-  # MailService#send_letter's answer; feedback for the sysop rings on Discord.
-  def send_letter(from, to, subject, body, registered:, caller_key:)
-    result = mail.send_letter(from, to, subject, body, registered: registered, caller_key: caller_key)
-    discord.feedback(from) if result == :ok && mail.recipient(to) == MailService::SYSOP
-    result
-  end
-
-  # The sysop's bell: the chat and Discord hear it. True when a sysop is on
-  # line to answer.
-  def page_sysop(name)
-    on_line = online.nodes.any?(&:sysop)
-    chat.broadcast('[PAGE]', "#{name} is paging the sysop!")
-    discord.page(name)
-    on_line
-  end
-
-  # A line to every caller and to Discord, from a signed-in sysop only
-  # (+sysop+): :ok, :forbidden or :empty.
-  def sysop_broadcast(name, text, sysop:)
-    return :forbidden unless sysop
-
-    line = Rubbs::Common::Text.line(text)
-    return :empty if line.empty?
-
-    chat.broadcast("[SYSOP] #{name}", line)
-    discord.broadcast(name, line)
-    :ok
   end
 
   # ── the users ─────────────────────────────────────────────────────────
@@ -193,32 +145,30 @@ class TeletypeBBS
     rows.sort_by { |_, st, _, _| -(st&.calls || 0) }
   end
 
-  def my_stats(name, registered:, session_id:, caller_number:, sysop:)
+  def my_stats(name, registered:, session_id:, caller_number:)
     {
       name:          name,
       registered:    registered,
       stats:         last_callers.user_stats(name),
       node:          online.node(session_id),
       caller_number: caller_number || last_callers.caller_number,
-      posts:         boards.posts_by(name),
       ballots:       voting.polls.count { |p| voting.ballot(p, name) },
-      letters:       registered ? mail.inbox(name, sysop: sysop).size : nil,
       member_since:  members.created_at(name)
     }
   end
 
-  # The best of the board: [[name, number], ...] lists, eight each.
+  # The best of the board: [[name, number], ...] lists, eight each; the
+  # wall's are the names with the most of its newest notes.
   def hall_of_fame
     {
       callers: last_callers.top_callers(8),
-      posters: boards.top_posters(8),
+      wall:    wall.top_writers(8),
       trivia:  trivia.best(8).map { |score| [score.username, score.points] }
     }
   end
 
   private
 
-  # The board's database (a Sequel::Database): the rate limits are kept in
-  # it, and opening it binds the models.
+  # The board's database (a Sequel::Database): opening it binds the models.
   def store = databases[:main]
 end

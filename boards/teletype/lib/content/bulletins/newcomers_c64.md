@@ -13,12 +13,12 @@ left and right turn the pages, Q (or the ← key) goes back.
 
 **Files.** Our games and files have a board of their own, the
 WarpEngine BBS on port 2329: it sends them by XMODEM onto a C64 disk,
-CCGMS takes them. Y lists every board of ours.
+CCGMS takes them. N lists every board of ours.
 
 **Doors.** R hands your line to another program: a Commodore 64, the
 SERMO machine, a sun god. Each one tells how to come back.
 
-**Mail.** Registered callers write each other with E. Anyone with a
-name can leave feedback for the sysop.
+**The wall.** M is the cork board of the clubhouse: read the notes, pin
+your own, answer one. A word for the sysop goes in the mailbox, E.
 
 Still lost? Press **T** and ask the TTG Master.
