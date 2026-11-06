@@ -7,8 +7,11 @@ TTG_GATE_BBS_BOARDS=config/boards.yml
 # rubbs: the port inside the container, callers at once, idle seconds.
 BBS_PORT=2323
 BBS_MAX_SESSIONS=50
-# Global Discovery: where the import alerts go (a refused or failed source list); empty: off.
-TTG_GATE_BBS_DISCORD_WEBHOOK=
+# Global Discovery: where the import alerts go (a refused or failed source list), an ops alert; empty: off.
+TTG_GATE_BBS_OPS_WEBHOOK=
+# Feedback of every board (ttg-common TTG::Feedback): the Discord line that feedback came (board, kind, sender,
+# never the text). Discord is for these two only.
+TTG_GATE_BBS_FEEDBACK_WEBHOOK=
 # Global Discovery: the data folder, the catalog and the opt-out list.
 TTG_GATE_BBS_DATA=data
 TTG_GATE_BBS_DISCOVERY_DB=data/discovery.sqlite3

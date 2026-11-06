@@ -5,7 +5,8 @@ require 'securerandom'
 module UI
   # The sysop's console of the gate, on either face: the calls on the gate
   # (and hanging one up), the accounts of the network (roles, bans, a new
-  # password) and the gate's log. It is the gate's own: rubbs only lends the
+  # password), the feedback and the walls of every board (TTG::Feedback,
+  # TTG::Wall) and the gate's log. It is the gate's own: rubbs only lends the
   # place in the caller's profile (Rubbs::Common::Auth::Profile.extra), where a caller
   # with the +sysop+ role finds SysOp.
   module Sysop
@@ -44,6 +45,23 @@ module UI
       Rubbs.log('sysop', 'new password', by: by, user: name)
       password
     end
+
+    # Asks the network's feedback (TTG::Feedback) for +op+ as the sysop on
+    # +session+; the answer (a Hash).
+    def self.feedback(session, op, **fields) = TTG::Feedback.box.call(op, Rubbs::Common::Central::Actor.of(session), **fields)
+
+    # Asks the walls (TTG::Wall) for +op+ as the sysop on +session+; the answer.
+    def self.walls(session, op, **fields) = TTG::Wall.walls.call(op, Rubbs::Common::Central::Actor.of(session), **fields)
+
+    # Who sent a feedback +item+: the name, a guest's marked, or "a guest".
+    def self.sender(item)
+      return 'a guest' if item['name'].to_s.empty?
+
+      item['account_id'] ? item['name'] : "#{item['name']} (guest)"
+    end
+
+    # Who wrote a wall +note+, a guest's marked.
+    def self.writer(note) = note['guest'] ? "#{note['name']} (guest)" : note['name'].to_s
 
     # Whether +sysop+ is about to act on their own account +name+ (no ban,
     # no taking their own sysop role).

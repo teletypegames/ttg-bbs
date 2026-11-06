@@ -4,12 +4,12 @@ module UI
   module Modern
     # The sysop's console (UI::Sysop) on a modern terminal, opened from
     # SysOp in the caller's profile: rubbs' Rubbs::Modern::Kit::Tabs like the
-    # gate's own, its tabs CALLS, ACCOUNTS and LOG. TAB or the arrows go
+    # gate's own, its tabs CALLS, ACCOUNTS, FEEDBACK, WALL and LOG. TAB or the arrows go
     # round them, Q goes back to the profile.
     module Sysop
       # The console's look: its tabs, its top line, yellow for the sysop.
       LOOK = Rubbs::Modern::Kit::Look.new(
-        tabs:   { calls: 'CALLS', accounts: 'ACCOUNTS', log: 'LOG' },
+        tabs:   { calls: 'CALLS', accounts: 'ACCOUNTS', feedback: 'FEEDBACK', wall: 'WALL', log: 'LOG' },
         crumb:  'SYSOP',
         accent: Rubbs::Modern::Kit::Palette::YELLOW
       )
@@ -17,7 +17,13 @@ module UI
       # Runs the console for the caller on +session+ with +accounts+ (the
       # gate's Rubbs::Common::Auth::Directory). Returns +nil+.
       def self.run(session, accounts)
-        sides = { calls: Calls.new(accounts), accounts: Accounts.new(accounts), log: LogView.new(accounts) }
+        sides = {
+          calls:    Calls.new(accounts),
+          accounts: Accounts.new(accounts),
+          feedback: FeedbackTab.new(accounts),
+          wall:     WallTab.new(accounts),
+          log:      LogView.new(accounts)
+        }
         Rubbs::Modern::Kit::Tabs.new(session, look: LOOK, sides: sides).run
       end
 

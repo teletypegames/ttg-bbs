@@ -15,6 +15,8 @@ services:
       - TTG_GATE_BBS_GATEWAY_HOST=host.docker.internal
       - TTG_GATE_BBS_PUBLIC_HOST=teletypegames.org
       - RUBBS_AUTH_SECRET=${RUBBS_AUTH_SECRET:-}
+      # TTG::Feedback's Discord line (that feedback came; the only Discord line of the boards).
+      - TTG_GATE_BBS_FEEDBACK_WEBHOOK=${TTG_GATE_BBS_FEEDBACK_WEBHOOK:-}
     extra_hosts:
       # The boards are dialled on their ports on the host.
       - "host.docker.internal:host-gateway"
@@ -47,7 +49,7 @@ services:
       - ./data:/app/data
     environment:
       - TZ=Europe/Budapest
-      - TTG_GATE_BBS_DISCORD_WEBHOOK=${TTG_GATE_BBS_DISCORD_WEBHOOK:-}
+      - TTG_GATE_BBS_OPS_WEBHOOK=${TTG_GATE_BBS_OPS_WEBHOOK:-${TTG_GATE_BBS_DISCORD_WEBHOOK:-}}
     restart: unless-stopped
 
 networks:

@@ -9,7 +9,9 @@ module Discovery
   # [TTG_GATE_BBS_DATA]              the data folder (data/)
   # [TTG_GATE_BBS_DISCOVERY_DB]      the catalog (data/discovery.sqlite3)
   # [TTG_GATE_BBS_DISCOVERY_OPTOUT]  the opt-out list (config/discovery-optout.yml)
-  # [TTG_GATE_BBS_DISCORD_WEBHOOK]   where import alerts go; empty: nowhere
+  # [TTG_GATE_BBS_OPS_WEBHOOK]       where import alerts go (an ops alert, the only Discord line
+  #                                  besides TTG::Feedback); empty: nowhere. The older name
+  #                                  TTG_GATE_BBS_DISCORD_WEBHOOK is still read
   # [TTG_GATE_BBS_DIAL_WINDOW]       the Gate's dial limits: the window in
   # [TTG_GATE_BBS_DIAL_PER_CALLER]   seconds, the dials a caller in it, the
   # [TTG_GATE_BBS_DIAL_PER_HOST]     lines to one address at once, the
@@ -32,7 +34,7 @@ module Discovery
                                         'TTG_GATE_BBS_DISCOVERY_OPTOUT',
                                         File.join(ROOT, 'config/discovery-optout.yml')
                                       ))
-      @webhook = env['TTG_GATE_BBS_DISCORD_WEBHOOK'].to_s
+      @webhook = (env['TTG_GATE_BBS_OPS_WEBHOOK'] || env['TTG_GATE_BBS_DISCORD_WEBHOOK']).to_s
       @dial_limits = DialService::LIMITS.to_h { |key, default| [key, limit(env, "TTG_GATE_BBS_DIAL_#{key.upcase}", default)] }
       build
     end

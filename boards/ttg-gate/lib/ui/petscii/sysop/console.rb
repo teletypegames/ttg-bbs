@@ -4,14 +4,14 @@ module UI
   module Petscii
     # The sysop's console (UI::Sysop) on a Commodore 64, opened from SysOp
     # in the caller's profile: a Rubbs::Petscii::Kit::Frame like the gate's
-    # own screens, its tabs CALLS, ACCOUNTS and LOG. ← or RUN/STOP on the
+    # own screens, its tabs CALLS, ACCOUNTS, FEEDBACK, WALL and LOG. ← or RUN/STOP on the
     # first screen goes back to the profile.
     module Sysop
       # The console's frame: the tabs and their letters.
       CHROME = Rubbs::Petscii::Kit::Chrome.new(
         title:   'SYSOP',
-        places:  [[:calls, 'CALLS'], [:accounts, 'ACCOUNTS'], [:log, 'LOG']],
-        hotkeys: { 'c' => :calls, 'a' => :accounts, 'l' => :log }
+        places:  [[:calls, 'CALLS'], [:accounts, 'ACCOUNTS'], [:feedback, 'FEEDBACK'], [:wall, 'WALL'], [:log, 'LOG']],
+        hotkeys: { 'c' => :calls, 'a' => :accounts, 'f' => :feedback, 'w' => :wall, 'l' => :log }
       )
 
       # Runs the console for the C64 caller on +session+ with +accounts+
@@ -38,7 +38,13 @@ module UI
 
         def section_view(key)
           @views ||= {}
-          @views[key] ||= { calls: CallsView, accounts: AccountsView, log: LogView }[key]&.new(@accounts)
+          @views[key] ||= {
+            calls:    CallsView,
+            accounts: AccountsView,
+            feedback: FeedbackView,
+            wall:     WallView,
+            log:      LogView
+          }[key]&.new(@accounts)
         end
 
         # Under the tabs: the calls and the accounts in numbers.

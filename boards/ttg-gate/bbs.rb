@@ -12,7 +12,7 @@ Rubbs.board 'TTG Gate BBS', TTGGateBBS do
   preset  TTG::PRESET
   mouse   false
   auth(login: :menu, &:accounts)
-  central serve: lambda(&:central_port)
+  central serve: lambda(&:central_port), services: [TTG::Feedback::Service, TTG::Wall::Service, TTG::PrivateMessage::Service]
   on_start { |gate| UI::Sysop.offer(gate.accounts) }
   modern { |bbs| call { UI::Modern::Gate.new(session, bbs).run } }
   petscii(goodbye: false) { |bbs| call { UI::Petscii.call(session, bbs) } }

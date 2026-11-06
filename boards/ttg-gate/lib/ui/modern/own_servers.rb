@@ -18,6 +18,8 @@ module UI
       key(:left) { pages.switch(-1) }
       key(:escape, 'q', 'Q') { quit }
       key('p', 'P', 'a', 'A') { pages.profile }
+      key('w', 'W') { pages.open_tab(:wall) }
+      key('f', 'F') { pages.open_tab(:feedback) }
       key(/\A[1-9]\z/) do |k|
         board = @boards[k.to_i - 1]
         next unless board
@@ -63,7 +65,9 @@ module UI
         ["#{color}#{BOLD}#{board.name}#{RESET}  #{DIM}#{board.address}#{RESET}", *body.map { |l| "#{TEXT}#{l}#{RESET}" }]
       end
 
-      def hints = "#{DIM}↑↓ choose   RETURN or 1-#{@boards.size} dial   TAB Global Discovery   P profile   Q hang up#{RESET}"
+      def hints
+        "#{DIM}↑↓ choose  RETURN or 1-#{@boards.size} dial  TAB Discovery  W wall  F feedback  P profile  Q hang up#{RESET}"
+      end
     end
   end
 end

@@ -5,8 +5,9 @@ module UI
     # The tabs of the modern face, rubbs' Rubbs::Modern::Kit::Tabs in the
     # gate's look: our own boards and Global Discovery, each keeping its
     # place while the other is shown, and the caller's profile
-    # (Rubbs::Common::Auth::Profile, with SysOp for a sysop), which takes the screen
-    # and brings the caller back to the tab they left.
+    # (Rubbs::Common::Auth::Profile, with SysOp for a sysop), the walls of every
+    # board (TTG::Wall) and the feedback box (TTG::Feedback), which take the
+    # screen and bring the caller back to the tab they left.
     class Gate < Rubbs::Modern::Kit::Tabs
       def initialize(session, bbs)
         super(
@@ -16,7 +17,11 @@ module UI
             own:       OwnServers.new(bbs.directory.boards),
             discovery: Discovery::Home.new(Discovery::Context.new(session: session, browse: bbs.browse, dials: bbs.dials))
           },
-          actions: { profile: ->(tabs) { tabs.hand_over { Rubbs::Common::Auth::Profile.run(tabs.session) } } }
+          actions: {
+            wall:     ->(tabs) { tabs.hand_over { TTG::Wall.open(tabs.session, board: nil) } },
+            feedback: ->(tabs) { tabs.hand_over { TTG::Feedback.open(tabs.session) } },
+            profile:  ->(tabs) { tabs.hand_over { Rubbs::Common::Auth::Profile.run(tabs.session) } }
+          }
         )
       end
 

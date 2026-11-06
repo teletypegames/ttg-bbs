@@ -108,7 +108,8 @@ telnet localhost 2323      # directly (BBS_PORT)
 | `TTG_GATE_BBS_GATEWAY_HOST` | `host.docker.internal` | where the boards are dialled; compose maps it to the host |
 | `TTG_GATE_BBS_PUBLIC_HOST` | `teletypegames.org` | the address shown with every board |
 | `TTG_GATE_BBS_BOARDS` | `config/boards.yml` | the boards list |
-| `TTG_GATE_BBS_DISCORD_WEBHOOK` | empty | Discovery: where import alerts go; empty: off |
+| `TTG_GATE_BBS_OPS_WEBHOOK` | empty | Discovery: where import alerts go (an ops alert; the older `TTG_GATE_BBS_DISCORD_WEBHOOK` is still read); empty: off |
+| `TTG_GATE_BBS_FEEDBACK_WEBHOOK` | empty | The network's feedback (ttg-common `TTG::Feedback`): the Discord line that something came, never what it says; empty: off |
 | `TTG_GATE_BBS_DIAL_WINDOW` | `600` | Discovery: the window of the per-caller dial limit, seconds |
 | `TTG_GATE_BBS_DIAL_PER_CALLER` | `10` | Discovery: the dials one caller may make in the window |
 | `TTG_GATE_BBS_DIAL_PER_HOST` | `3` | Discovery: the lines from the gate to one address at once |
@@ -182,13 +183,19 @@ caller signed in here is signed in on the board the gate dials. The **PROFILE**
 tab (or `P`) opens the caller's profile (log in, make an account, change the
 password).
 
+**Feedback and the walls.** The gate keeps the feedback, the walls and the letters of the network too
+(ttg-common `TTG::Feedback`, `TTG::Wall`, `TTG::PrivateMessage`, services of the Central:
+`data/feedback.sqlite3`, `data/wall.sqlite3`, `data/messages.sqlite3`). On the gate the **WALL** tab
+(or `W` on Own Servers) shows every board's wall together, newest first, and a caller writes on the
+gate's own; **FEEDBACK** (`F`) is the gate's feedback box. On a C64 both are in the profile.
+
 A caller with the `sysop` role finds **SysOp** in the profile, on either face:
 the **console**. It is the gate's own (`lib/ui/sysop.rb`, `lib/ui/modern/sysop/`,
 `lib/ui/petscii/sysop/`); rubbs only lends the place in the profile's menu
 (`Rubbs::Common::Auth::Profile.extra`).
 
 It looks and moves like the gate itself (both are rubbs' kit, `Rubbs::Petscii::Kit` and `Rubbs::Modern::Kit`): three
-tabs, **CALLS**, **ACCOUNTS** and **LOG**, a row an item with the chosen one's
+tabs, **CALLS**, **ACCOUNTS**, **FEEDBACK**, **WALL** and **LOG**, a row an item with the chosen one's
 details under the list, and the steps on the list.
 
 - **Calls:** who is on the gate now (an account or a guest), their address,
@@ -204,12 +211,19 @@ details under the list, and the steps on the list.
   it a new random password to pass on, `H` hangs up its calls. A banned
   account's right password gets *This account is closed.* on every board. A
   sysop cannot ban themselves or take their own sysop role.
+- **Feedback:** what callers sent from every board (ttg-common `TTG::Feedback`), newest first: a dot for
+  a new one, the board, the kind, who, the subject, and the chosen one's context, link and message
+  under the list. RETURN reads it whole (and marks it read), `D` marks it done, `S` spam, `U` new
+  again, `X` deletes it. Discord only says that something came.
+- **Wall:** the notes of every board's wall, hidden ones too (✖, an `x` on a C64): `H` hides the
+  chosen note or shows it again, `B` bars a guest's line from the walls for a day (an account is
+  banned on ACCOUNTS).
 - **Log:** the gate's last 500 log lines, the newest at the bottom (logins,
   wrong passwords, bans, dials, errors); `F` keeps the warnings and errors, `/`
   the lines with a word.
 
 On a modern terminal TAB and the arrows go round the tabs, `Q` goes back to the
-profile; on a C64 CRSR up reaches the tabs (`C`, `A`, `L` open them from
+profile; on a C64 CRSR up reaches the tabs (`C`, `A`, `F`, `W`, `L` open them from
 anywhere), `←` or RUN/STOP goes back.
 
 Every step of the console is a log line with the sysop's name (`sysop: hung up
@@ -297,7 +311,7 @@ Two hosts on the same IP and port are one board with an alias; the same
 name on two addresses is two boards. A board no list names any more is
 **delisted** but still called. If a list loses more than half of its records
 from one day to the next, the import does not apply it, keeps the old records
-and posts an alert to Discord (`TTG_GATE_BBS_DISCORD_WEBHOOK`).
+and posts an alert to Discord (`TTG_GATE_BBS_OPS_WEBHOOK`).
 
 ### How we call a board
 
