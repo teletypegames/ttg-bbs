@@ -1,0 +1,5 @@
+# What Starbase's feedback screen says (ttg-common TTG::Feedback, TTG::Narrative).
+title: Hail the sysops
+intro: A wrong airdate, a missing episode, a fault in the library computer? Open a channel; the sysops read every message.
+petscii:
+  intro: A FAULT, A MISSING EPISODE? OPEN A CHANNEL.
