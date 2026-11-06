@@ -1,0 +1,11 @@
+# Every environment variable of TTG Mail BBS, with its default. Secrets go in .env on the
+# server, never here.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=100
+
+# The network's Central (TTG Gate BBS): the accounts, the letters, the wall and the feedback live
+# there. The secret is every board's, in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=
