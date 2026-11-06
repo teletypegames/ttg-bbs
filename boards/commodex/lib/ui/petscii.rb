@@ -37,6 +37,8 @@ module UI
       item('t', 'games with tips', 'the games callers left tips for') do
         games('GAMES WITH TIPS', tips.games_with_tips, empty: 'no game has a tip yet. be the first!')
       end
+      item('w', 'the wall', 'talk games with the other callers') { TTG::Wall.open(@session) }
+      item('f', 'write to the sysops', 'a wrong game, a missing one, an idea') { TTG::Feedback.open(@session) }
       item('i', 'about commodex bbs', 'where the games come from') do
         page('ABOUT COMMODEX BBS', [Wording::ABOUT, '', Wording::SOURCES])
       end
@@ -127,16 +129,21 @@ module UI
     end
 
     def add_tip(game)
-      title("A TIP: #{game.title.upcase}")
-      say(Wording::TIP_RULES, color: GR)
-      say('An empty tip goes back.', color: GR)
-      puts
-      handle = ask(" #{WH}handle#{LG} (optional)? ", max: TipService::MAX_HANDLE)
+      return alert(Wording::TIP[:account]) unless signed_in?
+
+      tip_heading(game)
       text = edit('', title: "YOUR TIP FOR #{game.title.upcase}", single_line: true, max: TipService::MAX_TEXT)
       title("A TIP: #{game.title.upcase}")
       return alert_nothing_sent if text.to_s.strip.empty?
 
-      report(tips.submit(game, text: text, handle: handle, caller: caller_key), Wording::TIP)
+      report(tips.submit(game, text: text, handle: identity.name.to_s, caller: caller_key), Wording::TIP)
+    end
+
+    def tip_heading(game)
+      title("A TIP: #{game.title.upcase}")
+      say(Wording::TIP_RULES, color: GR)
+      say('An empty tip goes back.', color: GR)
+      puts
     end
 
     def alert_nothing_sent

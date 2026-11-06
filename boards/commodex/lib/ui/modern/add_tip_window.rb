@@ -10,13 +10,12 @@ module UI
       window :add_tip, :form do
         title { "A tip for #{game.title}" }
         width 70
-        hint  "Up to #{TipService::MAX_TEXT} characters; an admin reads it first. Alt-S sends."
-        field :handle, label: 'Your handle', max_length: TipService::MAX_HANDLE, placeholder: 'optional'
+        hint  "Up to #{TipService::MAX_TEXT} characters, under your name; an admin reads it first. Alt-S sends."
         field :text, type: :textarea, rows: 6, max_length: TipService::MAX_TEXT
         submit_label '&Send'
         errors Wording::TIP.except(:ok)
         on_submit do |values|
-          result = tips.submit(game, text: values[:text], handle: values[:handle], caller: caller_key)
+          result = tips.submit(game, text: values[:text], handle: identity.name.to_s, caller: caller_key)
           note(Wording::TIP[:ok], 'Thanks') if result == :ok
           result
         end

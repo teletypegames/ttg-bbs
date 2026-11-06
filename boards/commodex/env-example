@@ -18,5 +18,7 @@ COMMODEX_BBS_WIKIPEDIA_CACHE=200
 COMMODEX_BBS_TIPS_DB=data/tips.sqlite3
 COMMODEX_BBS_TIPS_SEED=config/tips.yml
 
-# A Discord webhook rung for every new tip; empty: off
-COMMODEX_BBS_DISCORD_WEBHOOK=
+# The network's Central (TTG Gate BBS): feedback and the wall live there. The secret is every board's,
+# in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

@@ -13,9 +13,8 @@ class TipService
   BOARD_MAX  = 30
   WINDOW     = 3600
 
-  def initialize(catalog:, notifier: nil, seeds: [])
+  def initialize(catalog:, seeds: [])
     @catalog    = catalog
-    @notifier   = notifier
     @gap        = Rubbs::Common::Line::RateLimit.new(limit: 1, per: GAP)
     @per_caller = Rubbs::Common::Line::RateLimit.new(limit: PER_CALLER, per: WINDOW)
     @board      = Rubbs::Common::Line::RateLimit.new(limit: BOARD_MAX, per: WINDOW)
@@ -29,9 +28,12 @@ class TipService
   # The games that have an approved tip, by title.
   def games_with_tips = TipModel.approved_counts.keys.filter_map { |id| @catalog.find(id) }.sort_by { |g| g.title.downcase }
 
-  # Sends a tip for +game+ from +caller+ (Rubbs::Common::Line::RateLimit.caller_key): :ok,
-  # or why not: :empty, :too_long, :rate_limited, :failed.
+  # Sends a tip for +game+ from +caller+ (Rubbs::Common::Line::RateLimit.caller_key)
+  # written by the account +handle+ (a name of the network; a guest leaves no
+  # tip): :ok, or why not: :account, :empty, :too_long, :rate_limited, :failed.
   def submit(game, text:, caller:, handle: '')
+    return :account if handle.to_s.strip.empty?
+
     text = clean(text)
     return :empty if text.empty?
     return :too_long if text.size > MAX_TEXT
@@ -66,8 +68,7 @@ class TipService
   def allowed?(caller) = Rubbs::Common::Line::RateLimit.allow_all?([[@gap, caller], [@per_caller, caller], [@board, :board]])
 
   def save(game, text, handle)
-    id = TipModel.add(game_id: game.id, handle: handle, text: text)
-    @notifier&.call(TipModel[id], game)
+    TipModel.add(game_id: game.id, handle: handle, text: text)
     :ok
   rescue StandardError => e
     Rubbs.log('tips', "saving a tip: #{e.class}: #{e.message}")

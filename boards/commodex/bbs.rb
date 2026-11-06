@@ -10,6 +10,8 @@ require_relative 'lib/ui/petscii'
 # modern terminal gets the desktop, a Commodore 64 the PETSCII screens.
 Rubbs.board 'Commodex BBS', CommodexBBS do
   preset  TTG::PRESET
+  central TTG::CENTRAL
+  auth    login: :menu
   modern  UI::Modern::APP
   petscii UI::Petscii
   goodbye 'Games from wikidata.org (CC0), stories from wikipedia.org (CC BY-SA).'

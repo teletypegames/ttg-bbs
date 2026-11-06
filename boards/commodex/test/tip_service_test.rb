@@ -12,15 +12,15 @@ class TipServiceTest < Minitest::Test
     def find(id) = GAMES[id]
   end
 
-  def service(seeds: [], notifier: nil)
-    TipService.new(catalog: Catalog.new, seeds: seeds, notifier: notifier)
+  def service(seeds: [])
+    TipService.new(catalog: Catalog.new, seeds: seeds)
   end
 
   def zork = Catalog::GAMES['Q1']
 
   def test_a_tip_waits_for_an_admin
     tips = service
-    assert_equal :ok, tips.submit(zork, text: 'POKE 53280,0', caller: '1.2.3.4')
+    assert_equal :ok, tips.submit(zork, text: 'POKE 53280,0', caller: '1.2.3.4', handle: 'Ada')
     assert_empty tips.tips(zork)
     tips.approve(tips.pending.first.id)
     assert_equal ['POKE 53280,0'], tips.tips(zork).map(&:text)
@@ -35,28 +35,28 @@ class TipServiceTest < Minitest::Test
 
   def test_empty_and_too_long_tips_are_refused
     tips = service
-    assert_equal :empty, tips.submit(zork, text: " \e ", caller: 'k')
-    assert_equal :too_long, tips.submit(zork, text: 'x' * (TipService::MAX_TEXT + 1), caller: 'k')
+    assert_equal :empty, tips.submit(zork, text: " \e ", caller: 'k', handle: 'Ada')
+    assert_equal :too_long, tips.submit(zork, text: 'x' * (TipService::MAX_TEXT + 1), caller: 'k', handle: 'Ada')
   end
 
   def test_a_caller_waits_between_tips_whatever_the_session
     tips = service
-    assert_equal :ok, tips.submit(zork, text: 'one', caller: '1.2.3.4')
-    assert_equal :rate_limited, tips.submit(zork, text: 'two', caller: '1.2.3.4')
-    assert_equal :ok, tips.submit(zork, text: 'two', caller: '5.6.7.8')
+    assert_equal :ok, tips.submit(zork, text: 'one', caller: '1.2.3.4', handle: 'Ada')
+    assert_equal :rate_limited, tips.submit(zork, text: 'two', caller: '1.2.3.4', handle: 'Ada')
+    assert_equal :ok, tips.submit(zork, text: 'two', caller: '5.6.7.8', handle: 'Ada')
   end
 
   def test_a_refused_tip_is_counted_nowhere
     tips = service
-    TipService::BOARD_MAX.times { |n| tips.submit(zork, text: "tip #{n}", caller: "10.0.#{n}.1") }
-    assert_equal :rate_limited, tips.submit(zork, text: 'late', caller: '9.9.9.9')
+    TipService::BOARD_MAX.times { |n| tips.submit(zork, text: "tip #{n}", caller: "10.0.#{n}.1", handle: 'Ada') }
+    assert_equal :rate_limited, tips.submit(zork, text: 'late', caller: '9.9.9.9', handle: 'Ada')
     gap = tips.instance_variable_get(:@gap)
     assert gap.room?('9.9.9.9'), 'the board said no, so the caller has used none of their tips'
   end
 
   def test_the_whole_board_takes_board_max_an_hour
     tips = service
-    results = (TipService::BOARD_MAX + 1).times.map { |n| tips.submit(zork, text: "tip #{n}", caller: "10.0.#{n}.1") }
+    results = (TipService::BOARD_MAX + 1).times.map { |n| tips.submit(zork, text: "tip #{n}", caller: "10.0.#{n}.1", handle: 'Ada') }
     assert_equal [:ok] * TipService::BOARD_MAX, results.first(TipService::BOARD_MAX)
     assert_equal :rate_limited, results.last
   end
@@ -69,9 +69,8 @@ class TipServiceTest < Minitest::Test
     assert_equal 1, tips.count(zork)
   end
 
-  def test_the_admins_hear_of_a_new_tip
-    heard = []
-    service(notifier: ->(tip, game) { heard << [tip.text, game.title] }).submit(zork, text: 'hi', caller: 'k')
-    assert_equal [%w[hi Zork]], heard
+  def test_a_guest_leaves_no_tip
+    assert_equal :account, service.submit(zork, text: 'hi', caller: 'k')
+    assert_equal :account, service.submit(zork, text: 'hi', caller: 'k', handle: '  ')
   end
 end

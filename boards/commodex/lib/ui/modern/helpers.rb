@@ -52,7 +52,17 @@ module UI
 
       def show_tips(game) = show(:tips, game: game, entries: tips.tips(game))
 
-      def add_tip(game) = show(:add_tip, game: game)
+      def add_tip(game)
+        return message(Wording::TIP[:account], title: 'A tip') unless signed_in?
+
+        show(:add_tip, game: game)
+      end
+
+      # Something for the sysops (ttg-common TTG::Feedback), about +game+ when given.
+      def feedback(game = nil) = with_line { TTG::Feedback.open(@session, context: game && "Game: #{game.title}") }
+
+      # The board's wall (ttg-common TTG::Wall).
+      def wall = with_line { TTG::Wall.open(@session) }
 
       def note(text, title) = message(text, title: title, width: 64)
 

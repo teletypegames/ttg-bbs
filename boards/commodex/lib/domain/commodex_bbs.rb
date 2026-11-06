@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # The board itself, whatever terminal a caller has: the catalog kept fresh
-# from Wikidata, the Wikipedia leads, and the tips in SQLite with the admins'
-# Discord rung for a new one. Both faces and the admin scripts (bin/) work on
+# from Wikidata, the Wikipedia leads, and the tips in SQLite, written by
+# accounts of the network and approved by an admin. Both faces and the admin scripts (bin/) work on
 # one instance of it.
 class CommodexBBS
   include Rubbs::Common::Board::Domain
@@ -13,7 +13,6 @@ class CommodexBBS
   setting :wikipedia_cache, 200
   path    :tips_db, 'data/tips.sqlite3'
   path    :tips_seed, 'config/tips.yml'
-  setting :discord_webhook, ''
   database :tips_db, MIGRATIONS
 
   service(:catalog) do
@@ -25,7 +24,7 @@ class CommodexBBS
   end
   service(:about) { AboutService.new(WikipediaRepository.new(cache_size: wikipedia_cache)) }
   service(:tips) do
-    TipService.new(catalog: catalog, seeds: TipSeedRepository.new(tips_seed).all, notifier: notifier)
+    TipService.new(catalog: catalog, seeds: TipSeedRepository.new(tips_seed).all)
   end
 
   # Wikidata read again when the catalog is CATALOG_TTL old; never for a TTL of 0.
@@ -36,8 +35,4 @@ class CommodexBBS
     retry_after: CatalogService::RETRY_AFTER,
     max_retry:   CatalogService::RETRY_AFTER
   ) { catalog.refresh_if_stale }
-
-  private
-
-  def notifier = discord_webhook.empty? ? nil : DiscordNotifier.new(webhook: discord_webhook)
 end

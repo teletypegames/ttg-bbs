@@ -19,6 +19,7 @@ module UI
     # What becomes of a tip a caller sends (TipService#submit).
     TIP = {
       ok:           'Thanks! Your tip waits for an admin, and shows once approved.',
+      account:      'A tip goes under your name: log in or make an account first (your profile).',
       empty:        'Write the tip first.',
       too_long:     "A tip is at most #{TipService::MAX_TEXT} characters.",
       rate_limited: "That is enough tips for now: #{TipService::PER_CALLER} an hour, one every " \

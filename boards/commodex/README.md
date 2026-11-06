@@ -39,12 +39,16 @@ It has two faces on one port, like every board of the network:
   kept in a `Rubbs::Common::Storage::Cache` of 200 leads and 4 MiB.
   It is shown with "Text from Wikipedia, CC BY-SA 4.0" and the article's
   address.
-- **Cheats and tips** are the callers'. A new tip is pending until an admin
-  approves it; only approved tips are shown. A caller may send three tips an
+- **Cheats and tips** are the callers', written under their account of the network (log in from
+  the profile; a guest reads, but leaves no tip). A new tip is pending until an admin
+  approves it (`bin/tips`); only approved tips are shown. A caller may send three tips an
   hour, one every 30 seconds, and the board takes at most 30 an hour; callers
   are counted by address (`Rubbs::Common::Line::RateLimit.caller_key`), so calling again does
   not reset it. The three limits are checked at once
   (`Rubbs::Common::Line::RateLimit.allow_all?`): a refused tip counts in none of them.
+- **The wall and feedback** come from the network (ttg-common `TTG::Wall`, `TTG::Feedback`, kept on
+  TTG Gate BBS): the arcade wall to talk games, and a word to the sysops, in the words of
+  `lib/content/wall.yml` and `lib/content/feedback.yml`.
 
 Everything from Wikidata and Wikipedia, and every tip, is cleaned of control
 characters (`Rubbs::Common::Text.clean`) before it reaches a screen.
@@ -78,7 +82,8 @@ with its default.
 | `COMMODEX_BBS_WIKIPEDIA_CACHE` | `200` | Wikipedia leads kept in memory |
 | `COMMODEX_BBS_TIPS_DB` | `data/tips.sqlite3` | the tips |
 | `COMMODEX_BBS_TIPS_SEED` | `config/tips.yml` | tips shipped with the board, approved from the start |
-| `COMMODEX_BBS_DISCORD_WEBHOOK` | *(empty: off)* | rung for every new tip; a secret, in `.env` on the server |
+| `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | the network's Central (TTG Gate BBS): the accounts, feedback and the wall |
+| `RUBBS_AUTH_SECRET` | — | the secret every board of the network shares, in `.env` on the server |
 
 `data/` is a volume. `data/tips.sqlite3` is the board's database (`database :tips_db,
 MIGRATIONS`, rubbs' `Rubbs::Common::Storage::Model` on Sequel), its schema migrated by version
@@ -99,8 +104,7 @@ deploy.
 ## Logs
 
 Every line on stderr starts with the log tag `commodex-bbs:` (rubbs' `Rubbs.log`):
-`commodex-bbs: catalog refresh: …`, `commodex-bbs: wikipedia: …`,
-`commodex-bbs: Discord: …`. The repositories let a failure go up; the services (and
+`commodex-bbs: catalog refresh: …`, `commodex-bbs: wikipedia: …`. The repositories let a failure go up; the services (and
 the refresh thread) log it once.
 
 ## Admin
@@ -134,7 +138,6 @@ lib/domain/
                                       (the catalog file is a Rubbs::Common::Storage::Snapshot)
   service/about_service.rb            a game's Wikipedia lead
   service/tip_service.rb              tips: submit, limits, approve, reject
-  service/discord_notifier.rb         a new tip on Discord (Rubbs::Common::Web::DiscordWebhook)
   commodex_bbs.rb           the composition root (CommodexBBS, a Rubbs::Common::Board::Domain)
 lib/ui/
   wording.rb                a game's facts and the messages, both faces

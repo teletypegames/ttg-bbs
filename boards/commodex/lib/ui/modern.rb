@@ -27,7 +27,21 @@ module UI
       command(:genres,    'By &genre')   { show(:groups, caption: 'Genres', kind: :genre, groups: catalog.genres) }
       command(:companies, 'By &company') { show(:letters) }
       command(:with_tips, 'With &tips')  { with_tips }
-      menu 'Games', :search, :random, :separator, :years, :genres, :companies, :with_tips, :separator, :log_off
+      command(:wall,      'The &wall…', hint: 'Wall') { wall }
+      command(:feedback,  'Write to the &sysops…') { feedback }
+      menu 'Games',
+           :search,
+           :random,
+           :separator,
+           :years,
+           :genres,
+           :companies,
+           :with_tips,
+           :separator,
+           :wall,
+           :feedback,
+           :separator,
+           :log_off
       help about: Wording::ABOUT, sources: Wording::SOURCES, keys: ['Enter        about the game']
       status { "#{catalog.count} games" }
 
