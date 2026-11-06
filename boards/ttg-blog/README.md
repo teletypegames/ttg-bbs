@@ -58,8 +58,7 @@ and shows its bare id.
 | `TTG_BLOG_BBS_CATEGORIES` | `config/categories.yml` | The category list |
 | `TTG_BLOG_BBS_HTTP_PORT` | `8080` | Port of the read API (`0` turns it off); compose does not publish it |
 | `TTG_BLOG_BBS_AUTOSAVE_SECONDS` | `15` | Seconds between the autosaves of a draft while an editor writes |
-| `TTG_BLOG_BBS_DISCORD_WEBHOOK` | — | A post rings this Discord webhook when first published, with its link on the web (`.env` on the server) |
-| `TTG_BLOG_BBS_SITE_URL` | `https://teletypegames.org` | The site a published post is on, `/blog/SLUG`: the Discord message links to it, the QR code of a post shows it |
+| `TTG_BLOG_BBS_SITE_URL` | `https://teletypegames.org` | The site a published post is on, `/blog/SLUG`: the QR code of a post shows it |
 
 ## Log
 
@@ -85,10 +84,14 @@ in `lib/domain/migrations.rb` (`BlogSchema`) as `migrate` steps (`PRAGMA user_ve
   `updated_at` (UTC, ISO 8601), and for a draft `original_id` and
   `base_updated_at`.
 
+Readers talk on **the wall** (`T`) and write to the editors (`E`): both are the network's (ttg-common
+`TTG::Wall` and `TTG::Feedback`, kept on TTG Gate BBS, in the words of `lib/content/`); the editors
+read the feedback on the gate's sysop console.
+
 A new post is saved **unpublished**: only the editors see it, on the board,
 and the web does not. Publishing is a step of its own: `P` under a post
 publishes it or takes it back. Taking a post back keeps its
-`published_at`, and only the first publishing rings Discord. The posts from
+`published_at`. The posts from
 before the flag stay published.
 
 What an editor writes is a **draft** until it is saved: a row of its own with
@@ -249,7 +252,7 @@ lib/
     service/                   PostService (limits, cleaning, publishing), EditorService
                                (names, passwords, login), LoginGuard (failed tries
                                by name and caller, two derivations at a time),
-                               CategoryService, DiscordNotifier (a new post on Discord)
+                               CategoryService
     ttg_blog_bbs.rb            TTGBlogBBS (Rubbs::Common::Board::Domain): its settings and services
   web/api.rb                   the read API for teletypegames.org
   ui/

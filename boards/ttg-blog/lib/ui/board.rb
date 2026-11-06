@@ -30,6 +30,8 @@ module UI
       item('w', -> { "write a post#{drafts_note}" }, 'it waits unpublished until you publish it', if: -> { user }) do
         compose
       end
+      item('t', 'the wall', 'talk with the other readers') { TTG::Wall.open(session) }
+      item('e', 'write to the editors', 'a correction, an idea, a word') { TTG::Feedback.open(session) }
       item('p', 'profile', -> { signed_in? ? identity.name : 'log in: the editors of the blog' }) { open_profile }
       log_off
     end
