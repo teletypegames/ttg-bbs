@@ -9,8 +9,8 @@ module UI
     # The post office, a line a row, in the C64's colours (38 columns).
     POST_OFFICE = [
       "#{DG}  *        .         *        .     *",
-      "#{OR}   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄",
-      "#{OR}   █#{YE} TTG  POST  OFFICE #{OR}█#{LG}  ▄█▄   ",
+      "#{OR}   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄",
+      "#{OR}   █#{YE} TTG POST OFFICE #{OR}█#{LG}  ▄█▄",
       "#{OR}   █#{LG}┌──┐ #{OR}▄▄▄▄▄▄ #{LG}┌──┐#{OR} █#{LG}   │  #{RD}▄██▄",
       "#{OR}   █#{LG}│#{CY}▒▒#{LG}│ #{OR}█#{WH} TO #{OR}█ #{LG}│#{CY}▒▒#{LG}│#{OR} █#{LG}   │  #{RD}████",
       "#{OR}   █#{LG}└──┘ #{OR}█ #{WH}o  #{OR}█ #{LG}└──┘#{OR} █#{LG}   │  #{RD}█#{WH}TG#{RD}█",
