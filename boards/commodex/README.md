@@ -1,0 +1,156 @@
+# Commodex BBS
+
+The Commodore 64 game compendium on a telnet line: search titles, read about
+them, and trade cheats and tips. A board of the Teletype Games BBS network,
+powered by [rubbs](https://git.teletypegames.org/engines/rubbs).
+
+It has two faces on one port, like every board of the network:
+
+- a **modern** one for ANSI terminals: a desktop under a menubar, the search in
+  a dialog, lists of games with the card of the picked one on the right, the
+  Wikipedia lead in a scrolling window, the tips of a game, and a form for a
+  new tip;
+- a **Commodore 64** one in PETSCII, 40×25: cursor menus of rubbs
+  (`Rubbs::Common::Screens::Selector`: CRSR and RETURN, or the key or number as before) for the
+  main menu, the lists and a game's actions, a page a game, pages that wait
+  for RETURN, a line for the search and an editor line for a tip.
+
+## Where the data comes from
+
+- **The catalog** is [Wikidata](https://www.wikidata.org)'s, under CC0: every
+  item on the platform Commodore 64 (P400 = Q99775) that is a video game
+  (P31/P279\* Q7889), about 2,900 of them. Per game: the QID, the English label
+  (else another language's), the first publication year (P577; the date given
+  for the C64 when there is one, else the earliest), publishers (P123),
+  developers (P178), designers (P287), composers (P86), genres (P136), game
+  modes (P404), series (P179) and the English Wikipedia article.
+  A snapshot ships with the board (`config/catalog.json.gz`, written by
+  `bin/refresh-catalog`). The running board reads Wikidata again when its
+  copy is older than `COMMODEX_BBS_CATALOG_TTL` (a week) and keeps the result in
+  `data/catalog.json.gz`. The refresh runs in rubbs' `Rubbs.background` (the
+  thread `catalog refresh`), which looks at the snapshot's age every hour; a
+  failed refresh (Wikidata down, no games, the file not written) is logged,
+  keeps the previous snapshot and is tried again an hour later. The queries
+  are POSTs through rubbs'
+  `Rubbs::Common::Web::HTTP` (a deadline, a body cap, the board's User-Agent).
+- **About** is the lead of the game's English Wikipedia article, fetched on
+  demand through the Action API's extracts (rubbs' `Rubbs::Common::Web::Wikipedia`, at most
+  5 requests a second for all callers together, as on Alexandria BBS) and
+  kept in a `Rubbs::Common::Storage::Cache` of 200 leads and 4 MiB.
+  It is shown with "Text from Wikipedia, CC BY-SA 4.0" and the article's
+  address.
+- **Cheats and tips** are the callers', written under their account of the network (log in from
+  the profile; a guest reads, but leaves no tip). A new tip is pending until an admin
+  approves it (`bin/tips`); only approved tips are shown. A caller may send three tips an
+  hour, one every 30 seconds, and the board takes at most 30 an hour; callers
+  are counted by address (`Rubbs::Common::Line::RateLimit.caller_key`), so calling again does
+  not reset it. The three limits are checked at once
+  (`Rubbs::Common::Line::RateLimit.allow_all?`): a refused tip counts in none of them.
+- **The wall and feedback** come from the network (ttg-common `TTG::Wall`, `TTG::Feedback`, kept on
+  TTG Gate BBS): the arcade wall to talk games, and a word to the sysops, in the words of
+  `lib/content/wall.yml` and `lib/content/feedback.yml`.
+
+Everything from Wikidata and Wikipedia, and every tip, is cleaned of control
+characters (`Rubbs::Common::Text.clean`) before it reaches a screen.
+
+GameBase64 data is not used: its licence does not allow public use without
+the GB64 Team's permission.
+
+## Running
+
+**Docker Compose:**
+
+```bash
+docker compose up --build
+```
+
+**Directly (Ruby 3.3):**
+
+```bash
+bundle install
+BBS_PORT=2331 bundle exec ruby bbs.rb
+```
+
+Then `telnet localhost 2331`. Every environment variable is in `env-example`
+with its default.
+
+| Variable | Default | |
+|---|---|---|
+| `COMMODEX_BBS_CATALOG_SEED` | `config/catalog.json.gz` | the snapshot shipped with the image |
+| `COMMODEX_BBS_CATALOG` | `data/catalog.json.gz` | the snapshot a refresh writes |
+| `COMMODEX_BBS_CATALOG_TTL` | `604800` | seconds before Wikidata is read again; `0` never |
+| `COMMODEX_BBS_WIKIPEDIA_CACHE` | `200` | Wikipedia leads kept in memory |
+| `COMMODEX_BBS_TIPS_DB` | `data/tips.sqlite3` | the tips |
+| `COMMODEX_BBS_TIPS_SEED` | `config/tips.yml` | tips shipped with the board, approved from the start |
+| `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | the network's Central (TTG Gate BBS): the accounts, feedback and the wall |
+| `RUBBS_AUTH_SECRET` | — | the secret every board of the network shares, in `.env` on the server |
+
+`data/` is a volume. `data/tips.sqlite3` is the board's database (`database :tips_db,
+MIGRATIONS`, rubbs' `Rubbs::Common::Storage::Model` on Sequel), its schema migrated by version
+(`PRAGMA user_version`, `lib/domain/migrations.rb`): version 1 is the schema the board
+created before it had versions, so an older file only gets its version and keeps its tips.
+
+## Tests
+
+```bash
+bundle exec rake test
+```
+
+Minitest, no network (`Rubbs::Common::Web::HTTP` is stubbed): the tips table and its migration from a
+file without a version, the tip rules and limits, the catalog's search, browse and background
+refresh, the game records, the Wikipedia and Wikidata repositories. CI runs them before a
+deploy.
+
+## Logs
+
+Every line on stderr starts with the log tag `commodex-bbs:` (rubbs' `Rubbs.log`):
+`commodex-bbs: catalog refresh: …`, `commodex-bbs: wikipedia: …`. The repositories let a failure go up; the services (and
+the refresh thread) log it once.
+
+## Admin
+
+```bash
+docker exec commodex-bbs bin/tips list           # the pending tips
+docker exec commodex-bbs bin/tips approved       # the approved ones
+docker exec commodex-bbs bin/tips approve ID     # shown from now on
+docker exec commodex-bbs bin/tips reject ID      # never shown
+bin/refresh-catalog [path]                   # a new seed from Wikidata (in a dev checkout)
+```
+
+## Project structure
+
+```
+bbs.rb                      entry point: Rubbs.board (rubbs 2.0 DSL)
+bin/tips                    the admins' tool for the tips
+bin/refresh-catalog         writes the seed catalog from Wikidata
+config/catalog.json.gz      the seed catalog (Wikidata, CC0)
+config/tips.yml             verified tips shipped with the board (empty)
+lib/domain.rb               requires the domain in dependency order
+lib/domain/
+  migrations.rb             the schema of the tips database, one step per version
+  model/game_model.rb       a game: QID, title, year, article, the name lists
+  model/tip_model.rb        the tips table (Rubbs::Common::Storage::Model): a tip, its status, the queries
+  model/summary_model.rb    a Wikipedia lead
+  repository/wikidata_repository.rb   the SPARQL queries (Rubbs::Common::Web::Wikidata)
+  repository/wikipedia_repository.rb  article leads over Rubbs::Common::Web::Wikipedia, cached (Rubbs::Common::Storage::Cache)
+  repository/tip_seed_repository.rb   config/tips.yml
+  service/catalog_service.rb          search, years, genres, companies, the refresh
+                                      (the catalog file is a Rubbs::Common::Storage::Snapshot)
+  service/about_service.rb            a game's Wikipedia lead
+  service/tip_service.rb              tips: submit, limits, approve, reject
+  commodex_bbs.rb           the composition root (CommodexBBS, a Rubbs::Common::Board::Domain)
+lib/ui/
+  wording.rb                a game's facts and the messages, both faces
+  modern.rb                 UI::Modern::APP: commands, menus, help, desktop
+  modern/helpers.rb         search, the lists, a game's card, about, tips
+  modern/games_window.rb, groups_window.rb, letters_window.rb, about_window.rb,
+  modern/tips_window.rb, add_tip_window.rb     one Rubbs::Modern::Part per window
+  petscii.rb                UI::Petscii: the C64 face (a Rubbs::Petscii::Face)
+test/                       minitest tests of the domain
+Rakefile                    rake test
+```
+
+## Licence
+
+MIT, see `LICENSE`. The catalog data is Wikidata's (CC0); the Wikipedia text
+shown on the board is under CC BY-SA 4.0.

@@ -1,0 +1,24 @@
+# Every environment variable of Commodex BBS, with its default. The only
+# secret is the Discord webhook: put it in .env on the server, never here.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=50
+
+# The catalog: the seed that ships with the image, the copy a refresh writes,
+# and the seconds after which the board reads Wikidata again (0: never)
+COMMODEX_BBS_CATALOG_SEED=config/catalog.json.gz
+COMMODEX_BBS_CATALOG=data/catalog.json.gz
+COMMODEX_BBS_CATALOG_TTL=604800
+
+# The Wikipedia leads kept in memory
+COMMODEX_BBS_WIKIPEDIA_CACHE=200
+
+# The tips: the SQLite file, the approved tips shipped with the board
+COMMODEX_BBS_TIPS_DB=data/tips.sqlite3
+COMMODEX_BBS_TIPS_SEED=config/tips.yml
+
+# The network's Central (TTG Gate BBS): feedback and the wall live there. The secret is every board's,
+# in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

@@ -1,0 +1,11 @@
+# Tips the board ships with, approved from the start. Each entry goes in once
+# (by its key), so an admin can still reject it with bin/tips.
+#
+#   - game: Q204105            # the game's Wikidata QID
+#     key: dig-dug-1           # a unique key of the entry
+#     handle: Commodex         # shown as the author
+#     text: The tip itself, one paragraph.
+#
+# Only verified tips go here: a cheat that does not work on the real machine
+# is worse than none. The list starts empty.
+[]
