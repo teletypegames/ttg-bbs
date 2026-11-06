@@ -1,0 +1,9 @@
+# The house rules come from ttg-common (lib/ttg/board/rubocop.yml, kept in step with
+# rake ttg:sync); only this board's own exceptions follow.
+inherit_gem:
+  ttg-common: lib/ttg/board/rubocop.yml
+
+# The impostor gem (impostor.gemspec) still installs on Ruby 3.1 for the
+# boards that mount it as a door; the board itself runs on 3.3.
+Gemspec/RequiredRubyVersion:
+  Enabled: false

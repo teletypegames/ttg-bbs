@@ -1,0 +1,16 @@
+# Every environment variable of Impostor BBS, with its default. The board
+# has no secrets.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=40
+
+# The player sessions: name, code, feedback and email, one row a call, in
+# SQLite. A data/sessions.csv of earlier versions beside it is imported once
+# and renamed to sessions.csv.imported.
+IMPOSTOR_BBS_SESSIONS=data/sessions.sqlite3
+
+# The network's Central (TTG Gate BBS): feedback and the wall live there. The secret is every board's,
+# in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

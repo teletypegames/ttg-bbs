@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Generates the personal access code for a player name.
+#
+# Usage:
+#   IMPOSTOR_BBS_PLAYER_NAME=norman bin/generate_code
+
+require_relative '../lib/impostor/code_generator'
+
+name = ENV['IMPOSTOR_BBS_PLAYER_NAME']
+
+if name.nil? || name.strip.empty?
+  warn 'Error: IMPOSTOR_BBS_PLAYER_NAME environment variable is not set.'
+  warn 'Usage: IMPOSTOR_BBS_PLAYER_NAME=norman bin/generate_code'
+  exit 1
+end
+
+name = name.strip.upcase
+
+if name.length < Impostor::CodeGenerator::NAME_LEN
+  warn "Error: IMPOSTOR_BBS_PLAYER_NAME must be at least #{Impostor::CodeGenerator::NAME_LEN} characters long."
+  exit 1
+end
+
+unless name[0, Impostor::CodeGenerator::NAME_LEN].match?(/\A[A-Z]+\z/)
+  warn "Error: the first #{Impostor::CodeGenerator::NAME_LEN} characters of IMPOSTOR_BBS_PLAYER_NAME must be letters A-Z."
+  exit 1
+end
+
+puts Impostor::CodeGenerator.encrypt(name)

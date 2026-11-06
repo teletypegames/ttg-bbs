@@ -1,0 +1,8 @@
+# What the debrief's feedback screen says (ttg-common TTG::Feedback, TTG::Narrative).
+title: Debrief feedback
+intro: You made it out. Tell the makers of Definitely not an Impostor what you thought of the game.
+kinds:
+  debrief:
+    label: Feedback on the game
+petscii:
+  intro: YOU MADE IT OUT. TELL THE MAKERS WHAT YOU THOUGHT.
