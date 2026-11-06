@@ -100,10 +100,10 @@ module UI
       title('SYSOP CONSOLE')
       puts " #{GR}nodes#{LG}      #{online.count}"
       puts " #{GR}feedback#{LG}   #{feedback.new_count(Rubbs::Common::Central::Actor.of(session))} new"
-      puts " #{GR}           read it on ttg gate bbs#{LG}"
       puts
       online.nodes.each { |n| puts node_line(n) }
-      pause
+      puts
+      TTG::Feedback.desk(session) if actions(['f', 'read the feedback'], %w[q back]) == 'f'
     end
 
     def node_line(node)

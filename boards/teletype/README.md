@@ -168,7 +168,7 @@ statusbar while it is highlighted.
 | **Messages** | The Wall… · Feedback… · Voting Booth · Page the Sysop… |
 | **People** | Who is Online · Last Callers · User Listing · Hall of Fame · Team |
 | **Doors** | Games Room… · Door Lobby… · SERMO · Commodore 64 · Commodore Plus/4 · Chat of Ra · TTG Trivia |
-| **You** | Your Stats · Profile… · Register… · Sysop Console (logged-in sysops only) |
+| **You** | Your Stats · Profile… · Register… · Sysop Console · Sysop Feedback… (the last two for logged-in sysops only) |
 | **Help** | Ask the TTG Master… · What is coming up? · Where do I start? · Where are the games, files, wiki? (the BBS Network) · Which doors are there? · New to BBSes? · Keys · About |
 
 #### Features
@@ -295,7 +295,11 @@ On the modern face they take the whole screen and give the desktop back.
 - **Feedback** (Messages > Feedback…, F7; `E` on the C64, the mailbox) — a
   letter to the sysops of the network, of a kind of `lib/content/feedback.yml`:
   a word, something broken, an idea; a guest may write too, with a name or
-  without. The sysops read it on the console of TTG Gate BBS; Discord hears
+  without. The sysops read it here — You › Sysop Feedback… on a modern
+  terminal, `F` in the C64's Sysop Console, *Feedback desk* in a sysop's
+  profile on any board (ttg-common `TTG::Feedback.desk`: the new ones first,
+  read, done, spam, unread again, delete) — or on the console of TTG Gate
+  BBS; Discord hears
   only that one came (the board, the kind, the sender), never what it says.
   A sysop sees how many are new on the mailbox flag of the house, on the
   notice board and in the Sysop Console (`FeedbackCounter`, at most every 30

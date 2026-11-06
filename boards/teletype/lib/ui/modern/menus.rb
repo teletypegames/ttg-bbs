@@ -89,6 +89,9 @@ module UI
         item('Sysop &Console', enabled: -> { sysop? }, hint: 'The nodes and the numbers, for the sysops') do
           show(:sysop_console)
         end
+        item('Sysop &Feedback…', enabled: -> { sysop? }, hint: 'The feedback of every board: read, done, spam, delete') do
+          with_line { TTG::Feedback.desk(@session) }
+        end
       end
 
       help(about: ABOUT) do

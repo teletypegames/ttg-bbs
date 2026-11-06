@@ -256,7 +256,7 @@ module UI
       def notice_lines
         lines = scene.events.map { |e| event_line(e) }
         lines = ["#{D}(nothing scheduled yet)"] if lines.empty?
-        lines << "#{Y}✉ #{scene.mail} new feedback#{D} · read it on TTG Gate BBS" if scene.mail.positive?
+        lines << "#{Y}✉ #{scene.mail} new feedback#{D} · You › Sysop Feedback…" if scene.mail.positive?
         lines
       end
 

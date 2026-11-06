@@ -197,7 +197,7 @@ module UI
           body << :spacer
           body << '  Stats'
           body << "  · Online users:  #{online_count}"
-          body << "  · New feedback:  #{new_feedback} (read it on the console of TTG Gate BBS)"
+          body << "  · New feedback:  #{new_feedback} (You › Sysop Feedback… reads it)"
           body << :spacer
           body << '  Online users:'
           online_users.each { |u| body << "  · #{u}" }
