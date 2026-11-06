@@ -81,12 +81,8 @@ module TTG
       end
 
       def show(entry)
-        @screen.head(entry['subject'].to_s.empty? ? '…' : entry['subject'])
-        @screen.line(
-          "From #{entry['from_name']} to #{entry['to_name']} · #{when_text(entry['created_at'])} · on #{entry['board']}", :meta
-        )
-        @screen.blank
-        entry['body'].to_s.split("\n").each { |line| @screen.paragraph(line) }
+        @screen.head(say(:title))
+        Stationery.sheet(entry, @screen.cols, petscii: @screen.petscii?).each { |line| @screen.raw(line) }
         @screen.blank
       end
 
@@ -108,6 +104,7 @@ module TTG
           'guest'           => :guest
         }.fetch(result, :unavailable)
         @screen.head(say(:title))
+        @screen.film(Stationery.film(@screen.cols, petscii: @screen.petscii?), Stationery::FRAME) if key == :thanks
         @screen.tell(say(key), key == :thanks ? :good : :bad)
       end
 

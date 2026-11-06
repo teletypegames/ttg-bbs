@@ -55,6 +55,20 @@ module TTG
       @session.write("#{COLORS.fetch(role)}#{text}#{Rubbs::Modern::Ansi::RESET}#{Rubbs::Modern::Ansi::CRLF}")
     end
 
+    # Writes +text+, a line with its own colours, as it is (the C64's
+    # characters on a C64); the caller keeps it within #cols.
+    def raw(text) = @session.write("#{plain(text)}#{Rubbs::Modern::Ansi::RESET}#{Rubbs::Modern::Ansi::CRLF}")
+
+    # Plays +frames+ (lines with their own colours) on one line, each for
+    # +seconds+, the last one left on the screen.
+    def film(frames, seconds)
+      frames.each_with_index do |frame, i|
+        @session.write("\r#{plain(frame)}#{Rubbs::Modern::Ansi::RESET}")
+        sleep(seconds) if seconds.positive? && i < frames.size - 1
+      end
+      blank
+    end
+
     # An empty line.
     def blank = @session.write(Rubbs::Modern::Ansi::CRLF)
 

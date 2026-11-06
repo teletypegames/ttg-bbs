@@ -99,4 +99,5 @@ end
 
 require_relative 'private_message/store'
 require_relative 'private_message/service'
+require_relative 'private_message/stationery'
 require_relative 'private_message/mailbox'

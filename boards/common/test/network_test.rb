@@ -225,6 +225,23 @@ class MailboxTest < Minitest::Test
     assert_equal 1, TTG::PrivateMessage.unread(session_of(account(@ada), []))
   end
 
+  def test_a_letter_on_its_sheet
+    entry = {
+      'from_name'  => 'Ada',
+      'to_name'    => 'Bob',
+      'created_at' => '2026-11-06T13:20:00Z',
+      'board'      => 'ttg-mail-bbs',
+      'subject'    => 'Hello',
+      'body'       => "Hi Bob,\n\n#{'word ' * 30}"
+    }
+    [[80, false], [40, true]].each do |cols, petscii|
+      lines = TTG::PrivateMessage::Stationery.sheet(entry, cols, petscii: petscii).map { |l| l.gsub(/\e\[[0-9;]*m/, '') }
+      assert_equal [cols - 1], lines.map(&:length).uniq, "every line #{cols - 1} wide"
+      assert_match(/TTG MAIL/, lines.last)
+    end
+    assert_includes TTG::PrivateMessage::Stationery.film(80).last, '▐█▌'
+  end
+
   def test_a_guest_has_no_mailbox
     guest = Rubbs::Test::Session.new(keys: ['x'], petscii: true)
     quietly { TTG::PrivateMessage.open(guest) }
