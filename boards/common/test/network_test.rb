@@ -104,6 +104,16 @@ class FeedbackTest < Minitest::Test
     refute_includes posts.first, 'secret words'
   end
 
+  def test_the_box_in_numbers
+    quietly do
+      TTG::Feedback.box.call(:submit, ada, body: 'x', kind: 'bug')
+      TTG::Feedback.box.call(:submit, guest('Joe'), body: 'y')
+    end
+    stats = @server.services['/feedback'].store.statistics
+    assert_equal({ 'new' => 2 }, stats[:states])
+    assert_equal({ %w[test-bbs bug] => 1, %w[test-bbs feedback] => 1 }, stats[:boards])
+  end
+
   def test_an_old_box_is_brought_in
     quietly do
       rows = [{ name: 'Joe', subject: 'Old', body: 'From before', created_at: '2026-10-01T10:00:00Z', kind: 'feed' }]
@@ -147,6 +157,16 @@ class WallTest < Minitest::Test
       assert_equal 'ok', TTG::Wall.walls.call(:bar, ada, id: id, hours: 1)['result']
       assert_equal 'barred', TTG::Wall.walls.call(:post, guest('Other'), text: 'again')['result']
     end
+  end
+
+  def test_the_walls_in_numbers
+    quietly do
+      TTG::Wall.walls.call(:post, ada, text: 'one')
+      TTG::Wall.walls.call(:post, guest('Joe'), text: 'two')
+    end
+    stats = @server.services['/wall'].store.statistics
+    assert_equal({ ['test-bbs', false] => 1, ['test-bbs', true] => 1 }, stats[:notes])
+    assert_equal 0, stats[:hidden]
   end
 
   def test_every_board_on_the_gate

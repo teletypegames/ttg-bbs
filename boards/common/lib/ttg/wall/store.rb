@@ -104,6 +104,13 @@ module TTG
         :ok
       end
 
+      # The walls in numbers, for a dashboard: +notes+ ([board, guest?] =>
+      # visible notes) and +hidden+ (hidden notes).
+      def statistics
+        notes = visible.group_and_count(:board, :guest).to_h { |row| [[row[:board], row[:guest] == 1], row[:count]] }
+        { notes: notes, hidden: @db[:wall].exclude(hidden_at: nil).count }
+      end
+
       # Every note for the sysop, hidden ones too, newest first: +{ notes: }+.
       def moderation(before: nil, limit: 30)
         rows = @db[:wall].reverse(:id).limit(limit.to_i.clamp(1, 100))

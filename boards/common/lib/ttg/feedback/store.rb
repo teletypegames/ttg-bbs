@@ -81,6 +81,15 @@ module TTG
       # Deletes feedback +id+: +:ok+ or +:unknown+.
       def delete(id) = @db[:feedback].where(id: id.to_i).delete.positive? ? :ok : :unknown
 
+      # The feedback in numbers, for a dashboard: +states+ (state => count)
+      # and +boards+ ([board, kind] => count).
+      def statistics
+        {
+          states: counts,
+          boards: @db[:feedback].group_and_count(:board, :kind).to_h { |row| [[row[:board], row[:kind]], row[:count]] }
+        }
+      end
+
       # The counts by state, a Hash of String => Integer.
       def counts = @db[:feedback].group_and_count(:state).to_h { |row| [row[:state], row[:count]] }
 
