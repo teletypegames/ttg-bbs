@@ -3,7 +3,7 @@
 module UI
   module Modern
     # What the caller does on the modern face: the gallery's windows, a piece
-    # or a work on the whole screen, the canvas and saving it to the Wall.
+    # or a work on the whole screen, the canvas and saving it to the Exhibition.
     module Helpers
       NO_ANSWER = '16colo.rs did not answer. Try again later.'
       PIECE     = { too_big: 'This piece is too large for the board.', unavailable: NO_ANSWER }.freeze
@@ -48,18 +48,26 @@ module UI
         window = windows.grep(CanvasWindow).first
         return raise_window(window) if window
 
-        show(CanvasWindow.new(self, canvas: canvas, who: session_id, on_save: -> { save_to_wall }))
+        show(CanvasWindow.new(self, canvas: canvas, who: session_id, on_save: -> { save_to_exhibition }))
       end
 
-      def save_to_wall
-        wait = wall.wait(caller_key)
-        return message(Wording.wait(wait), title: 'The Wall') if wait.positive?
-        return message(Wording.result(:blank_canvas), title: 'The Wall') if canvas.snapshot.empty?
+      def save_to_exhibition
+        return message(Wording::ACCOUNT, title: 'The Exhibition') unless signed_in?
 
-        show(:save_work, handle: context[:handle].to_s)
+        wait = exhibition.wait(caller_key)
+        return message(Wording.wait(wait), title: 'The Exhibition') if wait.positive?
+        return message(Wording.result(:blank_canvas), title: 'The Exhibition') if canvas.snapshot.empty?
+
+        show(:save_work)
       end
 
-      def open_wall = show(:wall, works: wall.all)
+      # The board's wall (ttg-common TTG::Wall): callers talk about the art.
+      def wall = with_line { TTG::Wall.open(@session) }
+
+      # Something for the sysops (ttg-common TTG::Feedback).
+      def feedback = with_line { TTG::Feedback.open(@session) }
+
+      def open_exhibition = show(:exhibition, works: exhibition.all)
     end
   end
 end

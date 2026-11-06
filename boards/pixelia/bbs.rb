@@ -11,6 +11,8 @@ require_relative 'lib/ui/petscii'
 # PETSCII screens. Both paint on one canvas.
 Rubbs.board 'Pixelia BBS', PixeliaBBS do
   preset  TTG::PRESET
+  central TTG::CENTRAL
+  auth    login: :menu
   modern  UI::Modern::APP
   petscii UI::Petscii
   goodbye color: UI::Petscii::PU

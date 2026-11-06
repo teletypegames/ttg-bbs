@@ -2,10 +2,10 @@
 
 require 'time'
 
-# A picture saved from the canvas to the Wall: its id (which sorts by time),
+# A picture saved from the canvas to the Exhibition: its id (which sorts by time),
 # title, the handle of who saved it, when, and the picture itself. The
 # picture is kept as its JSON rows (75 strings) and made a CanvasModel when
-# asked for, so a long Wall stays small in memory.
+# asked for, so a long Exhibition stays small in memory.
 class WorkModel
   attr_reader :id, :title, :handle, :created_at
 

@@ -4,9 +4,9 @@ require 'fileutils'
 require 'json'
 require 'securerandom'
 
-# The works on the Wall, one JSON file each in data/works/ (ID.json, the id
+# The works on the Exhibition, one JSON file each in data/works/ (ID.json, the id
 # sorting by time). The works read are kept in memory by id; a look at the
-# Wall lists the folder only when it changed and reads only the files it
+# Exhibition lists the folder only when it changed and reads only the files it
 # does not know yet, so a save costs one file, and a work removed by the
 # admin script leaves the list at the next look.
 class WorkRepository
@@ -41,7 +41,7 @@ class WorkRepository
     end
     work
   rescue SystemCallError => e
-    Rubbs.log('wall', "#{@dir}: #{e.class}: #{e.message}")
+    Rubbs.log('exhibition', "#{@dir}: #{e.class}: #{e.message}")
     nil
   end
 
@@ -58,7 +58,7 @@ class WorkRepository
       true
     end
   rescue SystemCallError => e
-    Rubbs.log('wall', "#{path}: #{e.class}: #{e.message}")
+    Rubbs.log('exhibition', "#{path}: #{e.class}: #{e.message}")
     false
   end
 
@@ -105,7 +105,7 @@ class WorkRepository
 
   def broken(id, reason)
     @broken << id
-    Rubbs.log('wall', "#{path(id)}: #{reason}")
+    Rubbs.log('exhibition', "#{path(id)}: #{reason}")
   end
 
   def remember(work)

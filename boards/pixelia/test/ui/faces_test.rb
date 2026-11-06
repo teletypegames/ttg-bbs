@@ -5,7 +5,7 @@ require 'rubbs/test'
 require_relative '../../lib/ui/modern'
 require_relative '../../lib/ui/petscii'
 
-# Both faces on a fake line, over a canvas and a Wall in a temporary folder.
+# Both faces on a fake line, over a canvas and a Exhibition in a temporary folder.
 class FacesTest < Minitest::Test
   include TmpDir
 
@@ -18,8 +18,8 @@ class FacesTest < Minitest::Test
                                  archive_dir: File.join(@dir, 'a'),
                                  clear_flag:  File.join(@dir, 'c')
                                ))
-    wall   = WallService.new(WorkRepository.new(File.join(@dir, 'works')), canvas: canvas, cooldown: 0, per_hour: 10)
-    @board = Board.new({ gallery: nil, canvas: canvas, wall: wall })
+    exhibition = ExhibitionService.new(WorkRepository.new(File.join(@dir, 'works')), canvas: canvas, cooldown: 0, per_hour: 10)
+    @board = Board.new({ gallery: nil, canvas: canvas, exhibition: exhibition })
   end
 
   def test_the_c64_menu_logs_off
@@ -27,14 +27,14 @@ class FacesTest < Minitest::Test
     UI::Petscii.new(session, {}, @board).run
 
     assert_includes session.output, 'the petscii & ansi art gallery'
-    assert_includes session.output.gsub(/\e\[[\d;]*m/, ''), 'the wall 0 works'
+    assert_includes session.output.gsub(/\e\[[\d;]*m/, ''), 'the exhibition 0 works'
   end
 
-  def test_the_c64_wall_is_empty_at_first
+  def test_the_c64_exhibition_is_empty_at_first
     session = Rubbs::Test::Session.new(petscii: true, keys: ['3', ' ', 'q'])
     UI::Petscii.new(session, {}, @board).run
 
-    assert_includes session.output, 'nothing on the wall yet'
+    assert_includes session.output, 'nothing on the exhibition yet'
   end
 
   def test_the_desktop_says_who_paints

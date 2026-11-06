@@ -2,18 +2,18 @@
 
 module UI
   class Petscii < Rubbs::Petscii::Face
-    # The Wall on a C64: the works newest first as a numbered cursor list, and a
+    # The Exhibition on a C64: the works newest first as a numbered cursor list, and a
     # work on the whole screen, as it was painted (CRSR down shows its last
     # row).
-    module Wall
+    module Exhibition
       private
 
-      def wall_list
+      def exhibition_list
         each_pick(
-          'THE WALL',
-          -> { wall.all },
-          empty: 'nothing on the wall yet: paint on the canvas and save it.',
-          right: -> { "#{wall.all.size} works" },
+          'THE EXHIBITION',
+          -> { exhibition.all },
+          empty: 'nothing on the exhibition yet: paint on the canvas and save it.',
+          right: -> { "#{exhibition.all.size} works" },
           label: ->(w) { "#{w.title} #{GR}#{w.handle}#{LG}" }
         ) { |work| show_work(work) }
       end

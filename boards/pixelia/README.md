@@ -72,7 +72,7 @@ temporary file of its own and a rename, by a writer thread (rubbs'
 
 - **Modern:** arrows move, typing paints, Enter paints the brush, Backspace and
   Delete rub out, F7/F8 ink, F9 or Ctrl-R reverse, Insert or Ctrl-G glyph mode,
-  Ctrl-S save to the Wall, Ctrl-Z undo. The mouse places the cursor, paints by
+  Ctrl-S save to the Exhibition, Ctrl-Z undo. The mouse places the cursor, paints by
   dragging or with a right click, and picks inks and brushes in the panel.
 - **C64:** CRSR moves, typing paints, DEL rubs out, F3/F4 ink, F5 reverse, F6
   glyph mode; RETURN (or RUN/STOP, ←) opens the command line on the status row
@@ -83,16 +83,24 @@ temporary file of its own and a rename, by a writer thread (rubbs'
   `g` █, `t` ▀, `b` ▄, `y` ▌, `h` ▐, `u` ▒ …). The screen shows 24 canvas rows
   and a status line, and scrolls by one when the cursor goes to the last row.
 
-## The Wall
+## The wall and feedback
 
-The canvas saved under a title (32 characters) and a handle (16), newest first,
+The wall where callers talk about the art, and a word to the sysops, come from the network
+(ttg-common `TTG::Wall` and `TTG::Feedback`, kept on TTG Gate BBS), in the words of
+`lib/content/wall.yml`: the Exhibition menu on a modern terminal, `W` and `F` on a C64.
+
+## The Exhibition
+
+(It was called *the Wall* before the network got its own wall.) The canvas saved under a title
+(32 characters) and the caller's name — their account of the network: a guest paints, but logs in
+(the profile) to hang a work — newest first,
 one JSON file each in `data/works/`. The board keeps the works it has read in
 memory and lists the folder only when it changed, reading just the files it
 does not know, so a save writes one file and reads none, and a work the admin
 script removes is gone at the next look. A broken file is skipped with one
 warning. A caller (counted by address, `Rubbs::Common::Line::RateLimit.caller_key`, so calling
-again does not help) saves at most once in `PIXELIA_BBS_WALL_COOLDOWN`
-seconds, and the board takes at most `PIXELIA_BBS_WALL_PER_HOUR` works an
+again does not help) saves at most once in `PIXELIA_BBS_EXHIBITION_COOLDOWN`
+seconds, and the board takes at most `PIXELIA_BBS_EXHIBITION_PER_HOUR` works an
 hour. Both limits are looked at together and a save counts in both only once
 its file is written, so a refused or failed save costs no turn.
 
@@ -116,7 +124,7 @@ with its default. The board has no secrets.
 
 | Variable | Default | |
 |---|---|---|
-| `PIXELIA_BBS_DATA` | `data` | the canvas, the Wall, the archive and the cache |
+| `PIXELIA_BBS_DATA` | `data` | the canvas, the Exhibition, the archive and the cache |
 | `PIXELIA_BBS_API_URL` | `https://api.16colo.rs` | the 16colo.rs API |
 | `PIXELIA_BBS_SITE_URL` | `https://16colo.rs` | where the raw files are |
 | `PIXELIA_BBS_API_TTL` | `3600` | seconds a listing stays in memory |
@@ -124,8 +132,8 @@ with its default. The board has no secrets.
 | `PIXELIA_BBS_CACHE_MB` | `100` | the disk cache of art files |
 | `PIXELIA_BBS_MAX_ROWS` | `1000` | a piece is cut after this many rows |
 | `PIXELIA_BBS_PAINT_RATE` | `20` | cells a second one caller may paint |
-| `PIXELIA_BBS_WALL_COOLDOWN` | `300` | seconds between two saves of one caller |
-| `PIXELIA_BBS_WALL_PER_HOUR` | `30` | works the whole board takes an hour |
+| `PIXELIA_BBS_EXHIBITION_COOLDOWN` | `300` | seconds between two saves of one caller |
+| `PIXELIA_BBS_EXHIBITION_PER_HOUR` | `30` | works the whole board takes an hour |
 
 `data/` is a volume.
 
@@ -147,7 +155,7 @@ when no board answers, the script clears the file itself. An archive is
 ## Logs
 
 Every line on stderr starts with the log tag `pixelia-bbs:` (rubbs' `Rubbs.log`):
-`16colors`, `canvas`, `canvas writer`, `art cache`, `wall`. The 16colo.rs
+`16colors`, `canvas`, `canvas writer`, `art cache`, `exhibition`. The 16colo.rs
 repository lets a failure go up (`Rubbs::Common::Web::HTTP::Error`, `Rubbs::Common::Web::HTTP::TooLarge` for a
 file over `PIXELIA_BBS_MAX_FILE_KB`); the gallery service logs it once and the faces
 say why the piece does not show.
@@ -156,10 +164,10 @@ say why the piece does not show.
 
 ```bash
 bundle exec rake test            # all of them
-bundle exec rake test wall       # the files whose name has the word
+bundle exec rake test exhibition       # the files whose name has the word
 ```
 
-Minitest, in `test/domain/`: the Wall's rules and limits, the works folder,
+Minitest, in `test/domain/`: the Exhibition's rules and limits, the works folder,
 the canvas file and its archive, the art cache, the 16colo.rs listings and
 files (with `Rubbs::Common::Web::HTTP` stubbed: no network), the SAUCE record and the ANSI
 renderer. CI runs them with RuboCop before a deploy.
@@ -175,7 +183,7 @@ lib/domain/
   model/color_model.rb      the sixteen C64 colours (ANSI and xterm-256 too)
   model/glyph_model.rb      the characters a canvas cell may hold
   model/canvas_model.rb     a 40×25 picture, frozen; its JSON
-  model/work_model.rb       a picture on the Wall
+  model/work_model.rb       a picture on the Exhibition
   model/sauce_model.rb      the SAUCE record of an art file
   model/art_model.rb        a rendered piece: rows of cells, packed
   model/year_model.rb, pack_model.rb, art_file_model.rb   the 16colo.rs listings
@@ -186,7 +194,7 @@ lib/domain/
   service/ansi_render_service.rb            ANSI/ASCII bytes → ArtModel
   service/gallery_service.rb                years, packs, text-art files, a piece
   service/canvas_service.rb                 painting rules, rate limit, undo, who is here
-  service/wall_service.rb                   saving to the Wall, its limits
+  service/exhibition_service.rb                   saving to the Exhibition, its limits
   pixelia_bbs.rb            the board's domain (PixeliaBBS): settings and services
 lib/ui/
   logo.rb                   PIXELIA in blocks (Rubbs::Common::Text::BlockFont), a colour a letter, both faces
@@ -194,8 +202,8 @@ lib/ui/
   wording.rb              what a caller is told about a save, both faces
   modern.rb                 UI::Modern::APP: commands, menus, help, statusbar and desktop
   modern/helpers.rb         what the caller does: opening windows, a piece, the canvas, saving
-  modern/years_window.rb, packs_window.rb, files_window.rb, wall_window.rb   one window each
-  modern/save_window.rb     the form that saves the canvas to the Wall
+  modern/years_window.rb, packs_window.rb, files_window.rb, exhibition_window.rb   one window each
+  modern/save_window.rb     the form that saves the canvas to the Exhibition
   modern/canvas_widget.rb   the canvas's keys and mouse, and its window
   modern/canvas_panel.rb    drawing the canvas and its panel
   modern/viewer.rb          a piece or a work on the whole screen
@@ -205,7 +213,7 @@ lib/ui/
   petscii/canvas_view.rb    the canvas on a C64 screen, sending only what changed
   petscii/canvas.rb         painting on a C64
   petscii/gallery.rb        the 16colo.rs gallery on a C64
-  petscii/wall.rb           the Wall on a C64
+  petscii/exhibition.rb           the Exhibition on a C64
 ```
 
 ## License

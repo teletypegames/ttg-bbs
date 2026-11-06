@@ -3,7 +3,7 @@
 # A 40×25 picture of the canvas, frozen: a character and two C64 colours
 # (ColorModel indexes) per cell. A cell has at most one colour that is not
 # black, the way a C64 shows it: ink on black, or black on ink (reverse).
-# It reads and writes the JSON of data/canvas.json and of a work on the Wall:
+# It reads and writes the JSON of data/canvas.json and of a work on the Exhibition:
 # the rows as strings, the colours as one hex digit a cell.
 class CanvasModel
   COLS = 40

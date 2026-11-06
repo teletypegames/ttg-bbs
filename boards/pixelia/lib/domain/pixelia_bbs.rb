@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # The board itself, whatever terminal a caller has: the ANSI gallery wired to
-# 16colo.rs and the disk cache, the shared canvas and the Wall. Both faces
+# 16colo.rs and the disk cache, the shared canvas and the Exhibition. Both faces
 # (lib/ui/modern, lib/ui/petscii) work on one instance of it, so a C64 and an
 # ANSI terminal paint on the same canvas.
 class PixeliaBBS
@@ -15,8 +15,8 @@ class PixeliaBBS
   setting :cache_mb, 100
   setting :max_rows, 1000
   setting :paint_rate, 20
-  setting :wall_cooldown, 300
-  setting :wall_per_hour, 30
+  setting :exhibition_cooldown, 300
+  setting :exhibition_per_hour, 30
 
   service(:gallery) do
     GalleryService.new(
@@ -31,12 +31,12 @@ class PixeliaBBS
     )
   end
   service(:canvas) { CanvasService.new(canvas_repository, rate: paint_rate) }
-  service(:wall) do
-    WallService.new(
+  service(:exhibition) do
+    ExhibitionService.new(
       WorkRepository.new(File.join(data, 'works')),
       canvas:   canvas,
-      cooldown: wall_cooldown,
-      per_hour: wall_per_hour
+      cooldown: exhibition_cooldown,
+      per_hour: exhibition_per_hour
     )
   end
 

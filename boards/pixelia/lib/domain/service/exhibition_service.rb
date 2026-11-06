@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-# The Wall: the canvas saved as a work under a title and a handle, the works
+# The Exhibition: the canvas saved as a work under a title and a handle, the works
 # newest first, and their removal (the admin script's moderation). A caller
 # (Rubbs::Common::Line::RateLimit.caller_key: an address, not a session, so calling again
 # does not help) saves at most once in +cooldown+ seconds, and the whole
 # board at most +per_hour+ times an hour. Both limits are checked together
-# and a save counts in both only once it is on the wall, so a failed write
+# and a save counts in both only once it is on the exhibition, so a failed write
 # costs no turn.
-class WallService
+class ExhibitionService
   MAX_TITLE  = 32
   MAX_HANDLE = 16
   BOARD      = :board

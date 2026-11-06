@@ -5,7 +5,7 @@
 BBS_PORT=2323
 BBS_MAX_SESSIONS=50
 
-# Where the canvas, the Wall, the canvas archive and the art cache live
+# Where the canvas, the Exhibition, the canvas archive and the art cache live
 PIXELIA_BBS_DATA=data
 
 # 16colo.rs: the API and the site of the raw files
@@ -22,7 +22,12 @@ PIXELIA_BBS_MAX_ROWS=1000
 
 # The canvas: cells a second one caller may paint
 PIXELIA_BBS_PAINT_RATE=20
-# The Wall: seconds between two saves of one caller
-PIXELIA_BBS_WALL_COOLDOWN=300
-# The Wall: works the whole board takes an hour
-PIXELIA_BBS_WALL_PER_HOUR=30
+# The Exhibition: seconds between two saves of one caller
+PIXELIA_BBS_EXHIBITION_COOLDOWN=300
+# The Exhibition: works the whole board takes an hour
+PIXELIA_BBS_EXHIBITION_PER_HOUR=30
+
+# The network's Central (TTG Gate BBS): feedback and the wall live there. The secret is every board's,
+# in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

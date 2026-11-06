@@ -2,14 +2,14 @@
 
 module UI
   module Modern
-    # The Wall: the saved works on the left, the picked one's picture on
+    # The Exhibition: the saved works on the left, the picked one's picture on
     # the right.
-    module WallWindow
+    module ExhibitionWindow
       extend Rubbs::Modern::Part
 
-      window :wall, :master_detail do
-        title 'The Wall'
-        empty 'Nothing on the Wall yet: paint on the canvas and save it.'
+      window :exhibition, :master_detail do
+        title 'The Exhibition'
+        empty 'Nothing on the Exhibition yet: paint on the canvas and save it.'
         list_width { [24, cols - 46].max }
         items      { works }
         label      :title
@@ -18,7 +18,7 @@ module UI
         on_pick    { |work| view_work(work) }
         height(-6)
         action('View') { |work| view_work(work) }
-        action('Reload') { window.replace_items(wall.all) }
+        action('Reload') { window.replace_items(exhibition.all) }
       end
 
       helpers do

@@ -13,7 +13,7 @@ module UI
     # Keys: the arrows move; a typed character paints itself (in glyph mode
     # the letters paint graphics, see GlyphKeys); Enter paints the brush and
     # moves on; Backspace and Delete rub out; F7 and F8 step the ink, F9 or
-    # Ctrl-R reverse, Insert or Ctrl-G glyph mode; Ctrl-S saves to the Wall,
+    # Ctrl-R reverse, Insert or Ctrl-G glyph mode; Ctrl-S saves to the Exhibition,
     # Ctrl-Z or Ctrl-U undoes. Mouse: a click puts the cursor, dragging or a
     # right click paints the brush, a click in the panel picks an ink or a
     # brush.
