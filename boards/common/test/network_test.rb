@@ -207,6 +207,32 @@ class PrivateMessageTest < Minitest::Test
   end
 end
 
+class MailboxTest < Minitest::Test
+  include CentralHelper
+
+  def session_of(identity, keys, petscii: false) = Rubbs::Test::Session.new(keys: keys, identity: identity, petscii: petscii)
+
+  def account(found) = Rubbs::Common::Auth::Identity.new(id: found.id, name: found.name, roles: ['member'])
+
+  def test_write_read_and_reply
+    write = ['w', *'bob'.chars, :enter, *'Hi'.chars, :enter, *'Hello Bob'.chars, :ctrl_s, 'x', 'b']
+    quietly { TTG::PrivateMessage.open(session_of(account(@ada), write)) }
+    bob = session_of(account(@bob), ['1', 'r', :enter, *'Hi Ada'.chars, :ctrl_s, 'x', 'b'])
+    quietly { TTG::PrivateMessage.open(bob) }
+    assert_includes bob.output, 'Hello Bob'
+    letters = @server.services['/messages'].store.inbox(actor(@ada))[:letters]
+    assert_equal(['Re: Hi'], letters.map { |l| l[:subject] })
+    assert_equal 1, TTG::PrivateMessage.unread(session_of(account(@ada), []))
+  end
+
+  def test_a_guest_has_no_mailbox
+    guest = Rubbs::Test::Session.new(keys: ['x'], petscii: true)
+    quietly { TTG::PrivateMessage.open(guest) }
+    assert_includes guest.output.downcase, 'mail is for the accounts'
+    assert_equal 0, TTG::PrivateMessage.unread(guest)
+  end
+end
+
 class ScreensTest < Minitest::Test
   include CentralHelper
 
