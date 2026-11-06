@@ -18,8 +18,8 @@ services:
     extra_hosts:
       # The boards are dialled on their ports on the host.
       - "host.docker.internal:host-gateway"
-    # The accounts API (port 8090) is not published: the other boards ask it on the interstack
-    # network as http://ttg-gate-bbs:8090/auth.
+    # The Central (port 8090: the accounts on /auth and the network's services) is not published:
+    # the other boards ask it on the interstack network as http://ttg-gate-bbs:8090.
     networks:
       - default
       - interstack

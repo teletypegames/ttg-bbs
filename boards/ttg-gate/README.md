@@ -173,9 +173,11 @@ which has none, is taken for a C64.
 
 ## Accounts and the sysop's console
 
-The accounts of the network live here (`data/accounts.sqlite3`, rubbs
-`Rubbs::Common::Auth`): the other boards ask the gate's accounts API on the `interstack`
-network (`http://ttg-gate-bbs:8090/auth`, signed with `RUBBS_AUTH_SECRET`), and a
+The gate is the network's **Central** (rubbs `Rubbs::Common::Central`, `central serve:` in `bbs.rb`):
+the accounts of the network live here (`data/accounts.sqlite3`, rubbs `Rubbs::Common::Auth`),
+and the other boards ask them, with any other service of the network, on the `interstack`
+network (`http://ttg-gate-bbs:8090`, `/auth` for the accounts, every request signed with
+`RUBBS_AUTH_SECRET`; `TTG_GATE_BBS_CENTRAL_PORT`, 0 turns it off), and a
 caller signed in here is signed in on the board the gate dials. The **PROFILE**
 tab (or `P`) opens the caller's profile (log in, make an account, change the
 password).

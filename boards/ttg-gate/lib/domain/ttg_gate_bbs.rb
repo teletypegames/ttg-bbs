@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 # TTG Gate BBS itself: our own boards from config/boards.yml, Global
-# Discovery's catalog, and the accounts of the network (Rubbs::Common::Auth), which
-# live here and are asked by the other boards through the API on
-# +auth_port+. When the catalog cannot be opened, the gate still dials its
+# Discovery's catalog, and the network's Central (Rubbs::Common::Central): the
+# accounts (Rubbs::Common::Auth) live here and the other boards ask them on
+# +central_port+. When the catalog cannot be opened, the gate still dials its
 # own boards and says so on the Discovery side.
 class TTGGateBBS
   include Rubbs::Common::Board::Domain
@@ -13,7 +13,7 @@ class TTGGateBBS
   path     :accounts_metrics, 'data/accounts-metrics.prom'
   setting  :gateway_host, 'host.docker.internal'
   setting  :public_host,  'teletypegames.org'
-  setting  :auth_port,    TTG::Auth::PORT
+  setting  :central_port, TTG::Central::PORT
   database :accounts_db, Rubbs::Common::Auth::MIGRATIONS, name: :auth
 
   service(:accounts) { Rubbs::Common::Auth::Directory.new(store: databases[:auth], roles: TTG::Auth::NEW) }
@@ -23,15 +23,6 @@ class TTGGateBBS
   service(:directory) { DirectoryService.new(BoardRepository.new(boards, host: gateway_host, public_host: public_host)) }
   service(:browse)    { discovery&.browse }
   service(:dials)     { discovery&.dials }
-
-  # Serves the accounts to the other boards (Rubbs::Common::Auth::API) when there is
-  # a port and a secret to sign with. Returns the thread, or +nil+.
-  def serve_accounts
-    return Rubbs.log('auth', 'no RUBBS_AUTH_SECRET: the accounts API is off', level: :warn) if Rubbs.config.auth_secrets.empty?
-    return if auth_port.zero?
-
-    Rubbs::Common::Auth::API.new(accounts, port: auth_port).start
-  end
 
   private
 
