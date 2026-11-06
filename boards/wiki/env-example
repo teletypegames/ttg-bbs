@@ -1,0 +1,28 @@
+# Every environment variable of TTG Wiki BBS, with its default. Copy to .env
+# (used by docker compose) and adjust as needed.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=50
+
+# Idle disconnect, seconds
+WIKI_BBS_IDLE=900
+
+# Where the Grav wiki lives. On the server it is http://wiki-grav on the interstack
+# network (compose.yaml); for local dev against the wiki-pages stack it's
+# http://localhost:9120.
+WIKI_BBS_URL=http://localhost:9120
+# The board's API token for the private wiki pages: sent to the wiki as the
+# X-Wiki-Token header, for a supervisor's private page only. Not a caller
+# password: nobody types it, a supervisor is an account with the
+# wiki-supervisor role. Must match the wiki's SUPERVISOR_PASSWORD
+# (services/wiki-pages .env); on the server it is in this stack's .env.
+# Empty/unset (the default) = private pages stay locked. Avoid double quotes
+# in the value (it is templated into a yaml string).
+WIKI_BBS_SUPERVISOR_PASSWORD=
+
+# The network's Central (TTG Gate BBS): the accounts (Rubbs::Common::Auth), feedback and the wall.
+# The secret every board shares (in .env on the server, never here); supervisors are the accounts
+# with the wiki-supervisor role
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=
