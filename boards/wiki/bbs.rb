@@ -20,7 +20,8 @@ require_relative 'lib/ui/petscii'
 # supervisor and only for private pages (WikiRepository#page).
 Rubbs.board 'TTG Wiki BBS', WikiBBS, slug: 'wiki-bbs' do
   preset TTG::PRESET
-  auth TTG::AUTH, login: :menu
+  central TTG::CENTRAL
+  auth login: :menu
   modern do |bbs|
     big_banner 'TTG WIKI', style: :success
     text(style: :muted) { "Teletype Games wiki over telnet — #{bbs.wiki.pages.size} pages indexed." }

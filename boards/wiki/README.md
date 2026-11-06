@@ -102,7 +102,7 @@ each open window's `relayout` on NAWS updates — rubbs rev `db8a97b`+).
 
 Pages flagged `private` (or sitting under a private ancestor) are for the
 supervisors: the accounts of the network (rubbs' `Rubbs::Common::Auth`, kept on TTG Gate
-BBS, `auth TTG::AUTH, login: :menu`) with the `wiki-supervisor` role. A
+BBS, `central TTG::CENTRAL` and `auth login: :menu`) with the `wiki-supervisor` role. A
 supervisor logs in from the menu, or comes in logged in when dialled from TTG
 Gate BBS; an account without the role is told it is not a supervisor, and the
 private pages stay locked. The gate counts the wrong passwords. A sysop gives
