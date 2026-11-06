@@ -1,0 +1,42 @@
+# Every environment variable of HackerCave BBS, with its default. The board
+# has no secrets.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=50
+
+# The RFC Editor: the index (rfc-index.xml) and the texts come from here
+HACKERCAVE_BBS_SITE=https://www.rfc-editor.org
+# Days the imported index is kept before it is downloaded and imported again
+HACKERCAVE_BBS_INDEX_TTL=1
+
+# The board's own shelves
+HACKERCAVE_BBS_SHELVES=config/shelves.yml
+
+# The board's own data in SQLite: the RFCs opened (the "most read" list)
+HACKERCAVE_BBS_DB=data/hackercave.sqlite3
+
+# The index in SQLite (a cache, rebuilt from the download), and where its
+# download waits for the import
+HACKERCAVE_BBS_INDEX_DB=data/index.sqlite3
+HACKERCAVE_BBS_INDEX_FILE=data/rfc-index.xml
+# The texts of the RFCs, rfc<N>.txt as published (and ien<N>.txt): the mirror, or fetched on the first read
+HACKERCAVE_BBS_TEXTS=data/rfc
+# The errata download waits here for the import
+HACKERCAVE_BBS_ERRATA_FILE=data/errata.json
+
+# The mirror of every RFC's text (rsync, about 540 MB into HACKERCAVE_BBS_TEXTS)
+# and its full-text index; "off" turns both off
+HACKERCAVE_BBS_MIRROR=on
+HACKERCAVE_BBS_MIRROR_SOURCE=rsync://rsync.rfc-editor.org/rfcs-text-only/
+# Days between two syncs
+HACKERCAVE_BBS_MIRROR_TTL=1
+HACKERCAVE_BBS_FULLTEXT_DB=data/fulltext.sqlite3
+
+# The Jargon File in SQLite, built from config/jargon/jarg447.txt
+HACKERCAVE_BBS_JARGON_DB=data/jargon.sqlite3
+
+# The network's Central (TTG Gate BBS): feedback and the wall live there. The secret is every board's,
+# in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

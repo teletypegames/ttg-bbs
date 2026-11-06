@@ -1,0 +1,96 @@
+# The board's own shelves, in the order of the menu. Each RFC has its number,
+# its title (the shelf stands before the index is imported; the index's title
+# wins after) and a note that the lists and the record show.
+
+- name: Classics
+  about: The RFCs the Internet is built on, and a few everyone quotes.
+  rfcs:
+    - { rfc: 1, title: Host Software, note: the first RFC, 7 April 1969 }
+    - { rfc: 675, title: Specification of Internet Transmission Control Program, note: the word "internet" is born }
+    - { rfc: 791, title: Internet Protocol, note: IPv4 }
+    - { rfc: 792, title: Internet Control Message Protocol, note: ICMP; ping }
+    - { rfc: 768, title: User Datagram Protocol, note: UDP in three pages }
+    - { rfc: 793, title: Transmission Control Protocol, note: TCP as it was for 41 years }
+    - { rfc: 9293, title: Transmission Control Protocol (TCP), note: TCP today }
+    - { rfc: 826, title: An Ethernet Address Resolution Protocol, note: ARP }
+    - { rfc: 1034, title: Domain names - concepts and facilities, note: DNS }
+    - { rfc: 1035, title: Domain names - implementation and specification, note: DNS on the wire }
+    - { rfc: 821, title: Simple Mail Transfer Protocol, note: e-mail, 1982 }
+    - { rfc: 5321, title: Simple Mail Transfer Protocol, note: e-mail today }
+    - { rfc: 5322, title: Internet Message Format, note: what an e-mail looks like }
+    - { rfc: 959, title: File Transfer Protocol, note: FTP }
+    - { rfc: 1122, title: Requirements for Internet Hosts - Communication Layers, note: what a host must do }
+    - { rfc: 1918, title: Address Allocation for Private Internets, note: 10.x, 172.16.x, 192.168.x }
+    - { rfc: 1945, title: Hypertext Transfer Protocol -- HTTP/1.0, note: the web, 1996 }
+    - { rfc: 9110, title: HTTP Semantics, note: the web today }
+    - { rfc: 8446, title: The Transport Layer Security (TLS) Protocol Version 1.3, note: TLS 1.3 }
+    - { rfc: 9000, title: "QUIC: A UDP-Based Multiplexed and Secure Transport", note: QUIC, under HTTP/3 }
+    - { rfc: 8200, title: Internet Protocol, Version 6 (IPv6) Specification, note: IPv6 }
+    - { rfc: 3986, title: "Uniform Resource Identifier (URI): Generic Syntax", note: what a URL is }
+    - { rfc: 8259, title: The JavaScript Object Notation (JSON) Data Interchange Format, note: JSON }
+    - { rfc: 3339, title: "Date and Time on the Internet: Timestamps", note: "2026-11-03T14:00:00Z" }
+    - { rfc: 2119, title: Key words for use in RFCs to Indicate Requirement Levels, note: MUST, SHOULD, MAY }
+    - { rfc: 2026, title: The Internet Standards Process -- Revision 3, note: how an RFC becomes a standard }
+    - { rfc: 1958, title: Architectural Principles of the Internet, note: the end-to-end idea }
+    - { rfc: 1855, title: Netiquette Guidelines, note: manners online, 1995 }
+    - { rfc: 1983, title: "Internet Users' Glossary", note: the words of the net }
+
+- name: Telnet
+  about: The protocol this board talks. rubbs, the engine of the board, speaks the ones with a note.
+  rfcs:
+    - { rfc: 854, title: Telnet Protocol Specification, note: the line you are on now }
+    - { rfc: 855, title: Telnet Option Specifications, note: "how options are asked: DO, WILL" }
+    - { rfc: 856, title: Telnet Binary Transmission, note: XMODEM and ZMODEM downloads }
+    - { rfc: 857, title: Telnet Echo Option, note: the board echoes what you type }
+    - { rfc: 858, title: Telnet Suppress Go Ahead Option, note: one key at a time }
+    - { rfc: 859, title: Telnet Status Option }
+    - { rfc: 860, title: Telnet Timing Mark Option }
+    - { rfc: 1073, title: Telnet window size option, note: your window size; modern or C64 }
+    - { rfc: 1091, title: Telnet terminal-type option }
+    - { rfc: 1143, title: The Q Method of Implementing TELNET Option Negotiation }
+    - { rfc: 1184, title: Telnet Linemode Option }
+    - { rfc: 1572, title: Telnet Environment Option, note: the TTG Gate hands you over }
+    - { rfc: 2217, title: Telnet Com Port Control Option }
+
+- name: April 1st
+  about: The RFCs of April Fools' Day, from the randomly-lose option of 1978 on.
+  rfcs:
+    - { rfc: 748, title: Telnet randomly-lose option, note: "1978" }
+    - { rfc: 1097, title: Telnet subliminal-message option, note: "1989" }
+    - { rfc: 1149, title: Standard for the transmission of IP datagrams on avian carriers, note: IP over pigeons }
+    - { rfc: 1217, title: Memo from the Consortium for Slow Commotion Research (CSCR), note: "1991" }
+    - { rfc: 1438, title: Internet Engineering Task Force Statements Of Boredom (SOBs), note: "1993" }
+    - { rfc: 1605, title: SONET to Sonnet Translation, note: "1994" }
+    - { rfc: 1606, title: A Historical Perspective On The Usage Of IP Version 9, note: "1994" }
+    - { rfc: 1607, title: A VIEW FROM THE 21ST CENTURY, note: "1994" }
+    - { rfc: 1925, title: The Twelve Networking Truths, note: everyone quotes it }
+    - { rfc: 1926, title: An Experimental Encapsulation of IP Datagrams on Top of ATM, note: "1996" }
+    - { rfc: 1927, title: Suggested Additional MIME Types for Associating Documents, note: "1996" }
+    - { rfc: 2100, title: The Naming of Hosts, note: a poem }
+    - { rfc: 2321, title: RITA -- The Reliable Internetwork Troubleshooting Agent, note: "1998" }
+    - { rfc: 2322, title: Management of IP numbers by peg-dhcp, note: clothes pegs }
+    - { rfc: 2323, title: IETF Identification and Security Guidelines, note: "1998" }
+    - { rfc: 2324, title: Hyper Text Coffee Pot Control Protocol (HTCPCP/1.0), note: 418 I'm a teapot }
+    - { rfc: 2325, title: Definitions of Managed Objects for Drip-Type Heated Beverage Hardware Devices using SMIv2, note: "1998" }
+    - { rfc: 2549, title: IP over Avian Carriers with Quality of Service, note: pigeons, 2 }
+    - { rfc: 2550, title: Y10K and Beyond, note: "1999" }
+    - { rfc: 2551, title: The Roman Standards Process -- Revision III, note: "1999" }
+    - { rfc: 2795, title: The Infinite Monkey Protocol Suite (IMPS), note: "2000" }
+    - { rfc: 3091, title: Pi Digit Generation Protocol, note: "2001" }
+    - { rfc: 3092, title: Etymology of "Foo", note: foo, bar, foobar }
+    - { rfc: 3251, title: Electricity over IP, note: "2002" }
+    - { rfc: 3514, title: The Security Flag in the IPv4 Header, note: the evil bit }
+    - { rfc: 4041, title: Requirements for Morality Sections in Routing Area Drafts, note: "2005" }
+    - { rfc: 5841, title: TCP Option to Denote Packet Mood, note: "2010" }
+    - { rfc: 6214, title: Adaptation of RFC 1149 for IPv6, note: pigeons, 3 }
+    - { rfc: 6592, title: The Null Packet, note: "2012" }
+    - { rfc: 6919, title: Further Key Words for Use in RFCs to Indicate Requirement Levels, note: MUST (BUT WE KNOW YOU WON'T) }
+    - { rfc: 7168, title: The Hyper Text Coffee Pot Control Protocol for Tea Efflux Appliances (HTCPCP-TEA), note: tea, too }
+    - { rfc: 7511, title: Scenic Routing for IPv6, note: "2015" }
+    - { rfc: 8135, title: Complex Addressing in IPv6, note: "2017" }
+    - { rfc: 8565, title: Hypertext Jeopardy Protocol (HTJP/1.0), note: "2019" }
+    - { rfc: 8774, title: The Quantum Bug, note: "2020" }
+    - { rfc: 8962, title: Establishing the Protocol Police, note: "2021" }
+    - { rfc: 9225, title: Software Defects Considered Harmful, note: "2022" }
+    - { rfc: 9405, title: "AI Sarcasm Detection: Insult Your AI without Offending It", note: "2023" }
+    - { rfc: 9564, title: Faster Than Light Speed Protocol (FLIP), note: "2024" }

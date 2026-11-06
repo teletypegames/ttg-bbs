@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rfc-index xmlns="https://www.rfc-editor.org/rfc-index">
+  <bcp-entry>
+    <doc-id>BCP14</doc-id>
+    <is-also>
+      <doc-id>RFC2119</doc-id>
+    </is-also>
+  </bcp-entry>
+  <std-entry>
+    <doc-id>STD7</doc-id>
+    <title>Transmission Control Protocol</title>
+    <is-also>
+      <doc-id>RFC9293</doc-id>
+    </is-also>
+  </std-entry>
+  <rfc-not-issued-entry>
+    <doc-id>RFC0014</doc-id>
+  </rfc-not-issued-entry>
+  <rfc-entry>
+    <doc-id>RFC0793</doc-id>
+    <title>Transmission Control Protocol</title>
+    <author>
+      <name>J. Postel</name>
+    </author>
+    <date>
+      <month>September</month>
+      <year>1981</year>
+    </date>
+    <format><file-format>TXT</file-format></format>
+    <page-count>91</page-count>
+    <keywords><kw>TCP</kw></keywords>
+    <obsoletes><doc-id>RFC0761</doc-id></obsoletes>
+    <obsoleted-by><doc-id>RFC9293</doc-id></obsoleted-by>
+    <current-status>INTERNET STANDARD</current-status>
+    <publication-status>INTERNET STANDARD</publication-status>
+    <stream>Legacy</stream>
+    <doi>10.17487/RFC0793</doi>
+  </rfc-entry>
+  <rfc-entry>
+    <doc-id>RFC0854</doc-id>
+    <title>Telnet Protocol Specification</title>
+    <author>
+      <name>J. Postel</name>
+    </author>
+    <author>
+      <name>J.K. Reynolds</name>
+      <title>Editor</title>
+    </author>
+    <date>
+      <month>May</month>
+      <year>1983</year>
+    </date>
+    <page-count>15</page-count>
+    <keywords><kw>TELNET</kw></keywords>
+    <abstract><p>This RFC specifies a standard for the ARPA Internet community.</p><p>Hosts on the
+      ARPA Internet are expected to adopt and implement this standard.</p></abstract>
+    <current-status>INTERNET STANDARD</current-status>
+    <publication-status>INTERNET STANDARD</publication-status>
+    <stream>Legacy</stream>
+  </rfc-entry>
+  <rfc-entry>
+    <doc-id>RFC1149</doc-id>
+    <title>Standard for the transmission of IP datagrams on avian carriers</title>
+    <author><name>D. Waitzman</name></author>
+    <date><month>April</month><day>1</day><year>1990</year></date>
+    <page-count>2</page-count>
+    <keywords><kw>avian</kw><kw>carrier</kw></keywords>
+    <updated-by><doc-id>RFC2549</doc-id></updated-by>
+    <current-status>EXPERIMENTAL</current-status>
+    <publication-status>EXPERIMENTAL</publication-status>
+    <stream>INDEPENDENT</stream>
+  </rfc-entry>
+  <rfc-entry>
+    <doc-id>RFC2119</doc-id>
+    <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+    <author><name>S. Bradner</name></author>
+    <date><month>March</month><year>1997</year></date>
+    <page-count>3</page-count>
+    <is-also><doc-id>BCP0014</doc-id></is-also>
+    <current-status>BEST CURRENT PRACTICE</current-status>
+    <publication-status>BEST CURRENT PRACTICE</publication-status>
+    <stream>IETF</stream>
+  </rfc-entry>
+  <rfc-entry>
+    <doc-id>RFC2188</doc-id>
+    <title>AT&amp;T/Neda's Efficient Short Remote Operations (ESRO) Protocol Specification Version 1.2</title>
+    <author><name>M. Banan</name></author>
+    <date><month>September</month><year>1997</year></date>
+    <page-count>57</page-count>
+    <current-status>INFORMATIONAL</current-status>
+    <publication-status>INFORMATIONAL</publication-status>
+    <stream>Legacy</stream>
+  </rfc-entry>
+  <rfc-entry>
+    <doc-id>RFC2549</doc-id>
+    <title>IP over Avian Carriers with Quality of Service</title>
+    <author><name>D. Waitzman</name></author>
+    <date><month>April</month><day>1</day><year>1999</year></date>
+    <page-count>6</page-count>
+    <updates><doc-id>RFC1149</doc-id></updates>
+    <current-status>INFORMATIONAL</current-status>
+    <publication-status>INFORMATIONAL</publication-status>
+    <stream>INDEPENDENT</stream>
+  </rfc-entry>
+  <rfc-entry>
+    <doc-id>RFC9293</doc-id>
+    <title>Transmission Control Protocol (TCP)</title>
+    <author><name>W. Eddy</name><title>Editor</title></author>
+    <date><month>August</month><year>2022</year></date>
+    <page-count>98</page-count>
+    <obsoletes><doc-id>RFC0793</doc-id></obsoletes>
+    <is-also><doc-id>STD0007</doc-id></is-also>
+    <current-status>INTERNET STANDARD</current-status>
+    <publication-status>INTERNET STANDARD</publication-status>
+    <stream>IETF</stream>
+  </rfc-entry>
+</rfc-index>
