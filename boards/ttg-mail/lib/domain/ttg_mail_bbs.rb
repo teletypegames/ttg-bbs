@@ -6,5 +6,5 @@
 class TTGMailBBS
   include Rubbs::Common::Board::Domain
 
-  service(:mail) { MailService.new(-> { TTG::PrivateMessage.mail }) }
+  service(:mail) { MailService.new(-> { TTG::PrivateMessage.mail }, -> { TTG::Wall.walls }) }
 end

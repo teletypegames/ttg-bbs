@@ -1,0 +1,74 @@
+# TTG Mail BBS from the street (modern face): the post office, its sign and the clock, the windows of the
+# sorting room, the door with the caller's name over it, a lamp and the pillar box whose flag goes up for
+# new letters; the sky (a pigeon flies a letter across), the street (the status). Drawn by
+# scratchpad post_office.py; check it with rubbs' art-preview.
+size: [80, 13]
+charset: cp437
+palette:
+  a: 17
+  b: 18
+  c: 52
+  d: 58
+  e: 94
+  f: 117
+  g: 124
+  h: 130
+  i: 160
+  j: 189
+  k: 220
+  l: 223
+  m: 229
+  n: 231
+  o: 236
+  p: 240
+  q: 245
+  r: 250
+chars: |2
+     ·               ·                           ·                  ·          ·  
+                                                                           ○      
+        ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                    
+              ╔══════════════════════════════════╗  ┌───────┐                     
+          ▒   ║  T T G   P O S T   O F F I C E   ║▒ │       │    ▄█▄              
+              ╚══════════════════════════════════╝  └───────┘     │   ▄▄███▄▄     
+          ▒┌──────┐       ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄   ┌──────┐   ▒       │   ███████▌    
+           │▒■▒▒■▒│   ▒     ║            ║    ▒│▒■▒▒■▒│           │   █▀▀▀▀▀█     
+          ▒│■▒▒■▒▒│         ║     °      ║     │■▒▒■▒▒│   ▒       │   █ T G █     
+           └──────┘   ▒     ║ LETTERS    ║    ▒└──────┘           │   ███████     
+          ▒       ▒                               ▒       ▒       │   ███████     
+  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+                                                                                  
+colors: |2
+  nnnjnnnnnnnnnnnnnnnjnnnnnnnnnnnnnnnnnnnnnnnnnnnjnnnnnnnnnnnnnnnnnnjnnnnnnnnnnjnn
+  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnmnnnnnn
+  nnnnnnccccccccccccccccccccccccccccccccccccccccccccccccccccccnnnnnnnnnnnnnnnnnnnn
+  nnnnnneeeeeekkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkeerrrrrrrrrennnnnnnnnnnnnnnnnnnn
+  nnnnnneeheeekkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkherrrrrrrrrennnmmmnnnnnnnnnnnnnn
+  nnnnnneeeeeekkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkeerrrrrrrrrennnnqnnniiiiiiinnnnn
+  nnnnnneehrrrrrrrreeeeeeeddddddddddddddddddeeerrrrrrrreeeheeennnnqnnniiiiiiirnnnn
+  nnnnnneeeffffffffeeeheeeddeddddddddddddeddeehffffffffeeeeeeennnnqnnniggggginnnnn
+  nnnnnneehffffffffeeeeeeeddedddddkddddddeddeeeffffffffeeeheeennnnqnnninnnnninnnnn
+  nnnnnneeerrrrrrrreeeheeeddedlllllllddddeddeehrrrrrrrreeeeeeennnnqnnniiiiiiinnnnn
+  nnnnnneeheeeeeeeheeeeeeeddddddddddddddddddeeeeeeheeeeeeeheeennnnqnnniiiiiiinnnnn
+  pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp
+  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+background: |2
+  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  aaaaaaeeeeeecccccccccccccccccccccccccccccccccccceeccccccccceaaaaaaaaaaaaaaaaaaaa
+  aaaaaaeeeeeecccccccccccccccccccccccccccccccccccceeccccccccceaaaaaaaaaaaaaaaaaaaa
+  aaaaaaeeeeeecccccccccccccccccccccccccccccccccccceeccccccccceaaaaaaaaaaaaaaaaaaaa
+  aaaaaaeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeaaaaaaaaaaaaaaaaaaaa
+  aaaaaaeeeebbbbbbeeeeeeeeddddddddddddddddddeeeebbbbbbeeeeeeeeaaaaaaaaaiiiiiaaaaaa
+  aaaaaaeeeebbbbbbeeeeeeeeddddddddddddddddddeeeebbbbbbeeeeeeeeaaaaaaaaaiiiiiaaaaaa
+  aaaaaaeeeeeeeeeeeeeeeeeeddddddddddddddddddeeeeeeeeeeeeeeeeeeaaaaaaaaaaaaaaaaaaaa
+  aaaaaaeeeeeeeeeeeeeeeeeeddddddddddddddddddeeeeeeeeeeeeeeeeeeaaaaaaaaaaaaaaaaaaaa
+  oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+  oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+hotspots:
+  sky: [0, 1, 66, 1]
+  clock: [51, 4, 7, 1]
+  caller: [25, 6, 16, 1]
+  flag: [75, 5, 3, 2]
+  count: [69, 9, 5, 1]
+  status: [2, 12, 76, 1]

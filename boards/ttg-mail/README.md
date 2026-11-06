@@ -7,10 +7,21 @@ and [ttg-common](https://git.teletypegames.org/bbs/common).
 
 It has two faces on one port, like every board of the network:
 
-- a **modern** one for ANSI terminals: the logo on the desktop, a menubar (Mail: Mailbox F2, The
-  wall F3, Write to the sysops F7; You: Profile), and each screen on the whole line;
-- a **Commodore 64** one in PETSCII, 40×25: a cursor menu — `M` mailbox, `W` the wall, `F` write
-  to the sysops, `P` profile.
+- a **modern** one for ANSI terminals: the desktop is the **post office from the street**
+  (`lib/content/art/post_office.yml`, a rubbs `Scene`): the clock in the sign, *Welcome, name* over the
+  door, the red pillar box whose **flag goes up** and shows the count when there are new letters, a
+  **pigeon** flying a letter across the night sky a step a second, and the street's line saying what
+  is new; under it two columns, **Your post** (the newest letters, a ★ for a new one) and **On the
+  wall** (the newest notes). A menubar: Mail (Mailbox F2, The wall F3, Write to the sysops F7), You
+  (Profile); each screen on the whole line;
+- a **Commodore 64** one in PETSCII, 40×25: the post office drawn in the C64's own blocks and colours
+  over a line about the pillar box (*flag up! 2 new letters*), then a cursor menu — `M` mailbox, `W`
+  the wall, `F` write to the sysops, `P` profile.
+
+A letter is read on its **sheet**: a frame with the network's red stamp in the corner, the writer,
+the reader and the day, the subject and the letter under a rule and the **TTG MAIL postmark** at the
+bottom; a sent one runs into the pillar box in a little film (ttg-common 0.12
+`TTG::PrivateMessage::Stationery`).
 
 ## The mailbox
 
@@ -58,14 +69,18 @@ bbs.rb                         entry point: Rubbs.board (title, domain, preset, 
 lib/domain.rb                  requires the domain in dependency order
 lib/domain/
   model/mailbox_summary_model.rb  a caller's mailbox at a glance: new letters, the Central reachable
-  service/mail_service.rb      the summary from the Central (ttg-common TTG::PrivateMessage)
+  model/desk_model.rb          the post office's desk: the summary, the newest letters and notes
+  service/mail_service.rb      the summary and the desk from the Central (TTG::PrivateMessage, TTG::Wall), kept 20 s
   ttg_mail_bbs.rb              the board's domain (TTGMailBBS, a Rubbs::Common::Board::Domain): no data of its own
 lib/content/mail.yml           the board's words for ttg-common's mailbox
 lib/content/wall.yml           the board's words for ttg-common's wall
+lib/content/art/post_office.yml  the post office of the modern desktop (cp437, 256 colours, hotspots:
+                               sky, clock, caller, flag, count, status)
 lib/ui/
-  logo.rb                      MAIL in rubbs' Rubbs::Common::Text::BlockFont
-  modern.rb                    UI::Modern::APP: the rubbs Application
-  petscii.rb                   UI::Petscii < Rubbs::Petscii::Face: the C64 board
+  modern.rb                    UI::Modern::APP: the rubbs Application, its desktop
+  modern/post_office.rb        UI::Modern::PostOffice: the post office scene, filled from the desk
+  modern/helpers.rb            the desk, the columns under it, the screens on the line
+  petscii.rb                   UI::Petscii < Rubbs::Petscii::Face: the C64 board, its post office
 test/                          the board's words load; the mailbox summary
 ```
 
