@@ -16,7 +16,8 @@ require_relative 'lib/ui/petscii'
 # terminal that never reported its size is a scanner, not listed.
 Rubbs.board 'Teletype BBS', TeletypeBBS do
   preset  TTG::PRESET
-  auth    TTG::AUTH, login: :menu
+  central TTG::CENTRAL
+  auth    login: :menu
   goodbye false
 
   modern do |bbs|
