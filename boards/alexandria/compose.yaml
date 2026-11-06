@@ -1,0 +1,27 @@
+services:
+  alexandria-bbs:
+    mem_limit: 160m
+    cpus: 1.0
+    pids_limit: 256
+    build: .
+    container_name: alexandria-bbs
+    ports:
+      - "2326:2323"
+    environment:
+      - TZ=Europe/Budapest
+      # Callers at once: each costs up to ~1.7 MB (more with long articles) on top of ~25 MB.
+      - BBS_MAX_SESSIONS=50
+      - ALEXANDRIA_BBS_LANGUAGES=${ALEXANDRIA_BBS_LANGUAGES:-en,hu}
+      # The network's Central (TTG Gate BBS): feedback and the wall; the secret every board shares.
+      - RUBBS_AUTH_SECRET=${RUBBS_AUTH_SECRET:-}
+    networks:
+      - default
+      - interstack
+    restart: unless-stopped
+    # rubbs tells the callers and gives them BBS_SHUTDOWN_SECONDS (20 s, Dockerfile) to leave.
+    stop_grace_period: 30s
+
+# The Central is asked on the interstack network as http://ttg-gate-bbs:8090.
+networks:
+  interstack:
+    external: true
