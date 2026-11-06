@@ -14,7 +14,8 @@ require_relative 'lib/web/api'
 # Web::Api serves the posts to teletypegames.org.
 Rubbs.board 'TTG Blog BBS', TTGBlogBBS do
   preset  TTG::PRESET
-  auth    TTG::AUTH, login: :menu
+  central TTG::CENTRAL
+  auth    login: :menu
   modern  UI::Modern
   petscii UI::Petscii
   idle 900
