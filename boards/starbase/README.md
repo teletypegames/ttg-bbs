@@ -66,9 +66,17 @@ episodes, Enter on an episode its article; `Article` opens a series' own.
 | `Alt-X` | Log off |
 
 **C64:** the menu: `S` series and films, `T` on this day, `L` library
-computer, `R` random article, `Q` log off. A series with seasons asks for the
-season first. Under an episode's card `R` reads its article; an article is its
-list of sections, `C` shows its QR code.
+computer, `R` random article, `W` the Promenade wall, `H` hail the sysops,
+`Q` log off. A series with seasons asks for the season first. Under an
+episode's card `R` reads its article; an article is its list of sections, `C`
+shows its QR code.
+
+**Starbase > The Promenade wall** (`W` on the C64) is the board's wall, where callers write and
+answer each other; **Starbase > Hail the sysops** (`H`) sends the sysops a message, about the
+article open or the episode picked. Both are ttg-common's (`TTG::Wall`, `TTG::Feedback`) and
+live on TTG Gate BBS, the network's Central, asked on the `interstack` network
+(`central TTG::CENTRAL`); `lib/content/wall.yml` and `lib/content/feedback.yml` say them the
+board's way.
 
 ## Running
 
@@ -93,8 +101,10 @@ with its default.
 | `STARBASE_BBS_CATALOG_SEED` | `config/catalog.json.gz` | the snapshot shipped with the image |
 | `STARBASE_BBS_CATALOG` | `data/catalog.json.gz` | the snapshot a refresh writes |
 | `STARBASE_BBS_CATALOG_TTL` | `604800` | seconds before Wikidata is read again |
+| `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | the network's Central (TTG Gate BBS): feedback and the wall |
+| `RUBBS_AUTH_SECRET` | — | the secret every board shares, for the Central (in `.env` on the server) |
 
-The board keeps no other data and has no secrets.
+The board keeps no other data; its only secret is `RUBBS_AUTH_SECRET`.
 
 ## Tests
 

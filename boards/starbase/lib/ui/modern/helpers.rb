@@ -3,7 +3,8 @@
 module UI
   module Modern
     # What the caller does on the modern face: a series' episodes, this
-    # day's, the library computer, an article, an episode's article.
+    # day's, the library computer, an article, an episode's article, the
+    # network's feedback and wall.
     module Helpers
       NO_ANSWER = 'Memory Alpha did not answer. Try again later.'
 
@@ -43,6 +44,20 @@ module UI
       end
 
       def random = read(loading('Accessing…', failed: NO_ANSWER) { library.random })
+
+      # The network's feedback (ttg-common TTG::Feedback), about the article
+      # open, else the episode picked, if any.
+      def feedback = with_line { TTG::Feedback.open(@session, context: looking_at) }
+
+      # The board's wall (TTG::Wall).
+      def wall = with_line { TTG::Wall.open(@session) }
+
+      def looking_at
+        return "Memory Alpha: #{window(:article).title}" if window(:article)
+
+        episode, series = window(:episodes)&.selected
+        "#{series.abbreviation} #{episode.label}" if episode
+      end
 
       # +rows+ ([label, value] pairs of UI::Card) as lines, the labels dim in
       # a column of their own.

@@ -5,7 +5,8 @@ require_relative 'card'
 module UI
   # The library on a Commodore 64: PETSCII on a 40×25 screen, a cursor menu,
   # the series, their seasons and episodes as numbered lists, an episode's
-  # card a page, and Memory Alpha's articles section by section.
+  # card a page, Memory Alpha's articles section by section, and the
+  # network's wall and feedback (ttg-common).
   class Petscii < Rubbs::Petscii::Face
     LOGO_COLORS = [WH, LB, LB, CY, BL].freeze
     LOGO_INDENT = [(COLS - Rubbs::Common::Text::BlockFont.width('STARBASE')) / 2, 0].max
@@ -31,6 +32,8 @@ module UI
       item('t', 'on this day', 'first aired on this day') { today }
       item('l', 'library computer', 'search memory alpha') { search }
       item('r', 'random article', 'wherever the archive takes you') { random }
+      item('w', 'the promenade wall', 'notes from the crew') { TTG::Wall.open(@session) }
+      item('h', 'hail the sysops', 'a bug, a missing episode') { TTG::Feedback.open(@session) }
       log_off 'hang up. live long and prosper!'
     end
 

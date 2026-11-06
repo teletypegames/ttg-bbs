@@ -9,3 +9,8 @@ BBS_MAX_SESSIONS=50
 STARBASE_BBS_CATALOG_SEED=config/catalog.json.gz
 STARBASE_BBS_CATALOG=data/catalog.json.gz
 STARBASE_BBS_CATALOG_TTL=604800
+
+# The network's Central (TTG Gate BBS): feedback and the wall live there. The secret is every board's,
+# in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

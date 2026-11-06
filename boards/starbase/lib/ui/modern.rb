@@ -10,7 +10,8 @@ require_relative 'modern/article_window'
 module UI
   # The library on a modern terminal (ANSI colours, UTF-8, a mouse): the
   # series, a series' episodes and the episodes aired on this day in two-pane
-  # windows, Memory Alpha's articles with their sections on the left.
+  # windows, Memory Alpha's articles with their sections on the left, the
+  # network's feedback and wall (ttg-common).
   module Modern
     ABOUT = 'Starbase BBS — a Star Trek library on a telnet line, from Teletype Games, powered by rubbs. ' \
             'Every series and film with its episodes, the day each first aired, its directors and writers ' \
@@ -27,7 +28,9 @@ module UI
       command(:today,  'On this day',       key: 'F3', hint: 'Today') { today }
       command(:search, 'Library computer…', key: 'F4', hint: 'Search') { search }
       command(:random, 'Random article',    key: 'F7', hint: 'Random') { random }
-      menu 'Starbase', :series, :today, :search, :random, :separator, :log_off
+      command(:wall,     'The Promenade wall…', hint: 'Wall') { wall }
+      command(:feedback, 'Hail the sysops…', hint: 'Feedback') { feedback }
+      menu 'Starbase', :series, :today, :search, :random, :separator, :wall, :feedback, :separator, :log_off
       help about: ABOUT
       status { "#{catalog.size} episodes" }
 
