@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Hands the board's inbox of before over to the network's feedback (TTG::Feedback
+# on TTG Gate BBS) now, as the board's background job does at boot, and says
+# how many went and how many are left:
+#   docker exec feedia-bbs bin/inbox-export
+require 'bundler/setup'
+require 'ttg/common'
+require_relative '../lib/domain'
+
+FeediaBBS.root = File.expand_path('..', __dir__)
+Rubbs.config.log_tag = 'feedia-bbs'
+Rubbs.config.central = Rubbs::Common::Central::Link.new(client: TTG::CENTRAL)
+
+bbs = FeediaBBS.new
+bbs.databases
+puts "handed over: #{bbs.export_inbox}"
+puts "left: #{MessageModel.unexported(10_000).size}"
