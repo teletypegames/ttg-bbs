@@ -93,11 +93,7 @@ module TTG
         @screen.tell(say(key), key == :thanks ? :good : :bad)
       end
 
-      def ago(time)
-        Rubbs.duration(Time.parse(time.to_s))
-      rescue ArgumentError
-        ''
-      end
+      def ago(time) = Wall.ago(Time.parse(time.to_s))
     end
   end
 end

@@ -138,6 +138,20 @@ module TTG
       answer['notes'] || []
     end
 
+    # How long ago +time+ was, for a note: minutes and hours in the first two
+    # days (Rubbs.duration), days after that, the date after a year.
+    #
+    #   TTG::Wall.ago(Time.now - 3 * 86_400)   # => "3 days"
+    def self.ago(time, now: Time.now)
+      seconds = now - time
+      return Rubbs.duration(seconds.to_i) if seconds < 2 * 86_400
+      return "#{(seconds / 86_400).floor} days" if seconds < 365 * 86_400
+
+      time.localtime.strftime('%Y-%m-%d')
+    rescue ArgumentError, TypeError
+      ''
+    end
+
     # The +board+ field of a request: none for :here (the asker's own wall).
     def self.board_field(board) = board == :here ? {} : { board: board.to_s }
 

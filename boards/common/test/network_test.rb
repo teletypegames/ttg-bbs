@@ -127,6 +127,13 @@ end
 class WallTest < Minitest::Test
   include CentralHelper
 
+  def test_how_long_ago
+    now = Time.utc(2026, 11, 6, 12)
+    assert_equal '5h 0m', TTG::Wall.ago(now - (5 * 3600), now: now)
+    assert_equal '17 days', TTG::Wall.ago(now - (17 * 86_400), now: now)
+    assert_match(/\A2025-/, TTG::Wall.ago(now - (400 * 86_400), now: now))
+  end
+
   def test_a_conversation
     quietly do
       first = TTG::Wall.walls.call(:post, ada, text: 'Hello wall')['id']
