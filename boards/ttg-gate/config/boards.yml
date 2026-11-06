@@ -118,3 +118,12 @@ boards:
     accent: "#d7ff5f"
     petscii: true
     enabled: true
+
+  - id: ttg-mail-bbs
+    name: "TTG Mail BBS"
+    summary: "The network's mail: letters between the accounts of the Teletype Games BBS network. Open your mailbox, write to anyone with an account, read and answer your letters, block a writer; the post office has a wall too, and a desk for a word to the sysops. On a modern terminal or, in PETSCII, on a Commodore 64."
+    tags: ["mail", "letters", "C64"]
+    port: 2335
+    accent: "#ff5f87"
+    petscii: true
+    enabled: true
