@@ -31,7 +31,7 @@ Each board's README says what it is; its history came with it (`git log -- board
 bundle install
 bundle exec ruby bbs.rb        # every board, on its port of boards.yml
 bin/board feedia               # one board (BBS_BOARDS=feedia)
-ruby boards/feedia/bbs.rb      # one board on its own, BBS_PORT or 2323
+cd boards/feedia && bundle exec ruby bbs.rb   # one board on its own (in its folder: data/), BBS_PORT or 2323
 ```
 
 In Docker: `docker compose up --build`. The boards' code is not in the image: compose mounts

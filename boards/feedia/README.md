@@ -5,8 +5,8 @@ it and shows its items in a form a terminal can read: the title, the date and
 the author, the text wrapped to the screen, its links numbered under it.
 Callers can suggest a new feed or send feedback to the admins. Built on the
 [rubbs](https://git.teletypegames.org/engines/rubbs) gem, like the
-[Teletype BBS](https://git.teletypegames.org/bbs/teletype-bbs) and
-[Alexandria BBS](https://git.teletypegames.org/bbs/alexandria-bbs).
+[Teletype BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/teletype) and
+[Alexandria BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/alexandria).
 
 It has two faces on one port: the **modern** one for ANSI terminals (windows,
 menus, mouse) and a **Commodore 64** one in PETSCII, 40×25, with single-key
@@ -14,7 +14,10 @@ menus.
 
 ## Running
 
-**Docker Compose:**
+The board is `boards/feedia` of [TTG BBS](https://git.teletypegames.org/bbs/ttg-bbs) and runs
+with the other boards in one container. From the repository root:
+
+**Docker Compose** (every board, this one on 2327):
 
 ```bash
 docker compose up --build
@@ -24,14 +27,15 @@ docker compose up --build
 
 ```bash
 bundle install
-ruby bbs.rb
+bin/board feedia                              # this board alone, on 2327 (boards.yml)
+cd boards/feedia && bundle exec ruby bbs.rb   # on BBS_PORT or 2323
 ```
 
 Connect:
 
 ```bash
-telnet localhost 2327      # compose
-telnet localhost 2323      # directly (BBS_PORT)
+telnet localhost 2327      # compose, bin/board
+telnet localhost 2323      # bbs.rb on its own (BBS_PORT)
 ```
 
 ## Configuration
@@ -50,14 +54,15 @@ caller sees them:
 A new feed is a commit to that file: a push to master deploys it. RSS
 0.9x/2.0, RSS 1.0 (RDF) and Atom all work.
 
-Copy `env-example` to `.env`:
+`env-example` lists the variables with their defaults; in Docker the root `compose.yaml` sets the
+ones that differ (a secret from the root `.env`, on the server the stack's `.env`):
 
 | Variable | Default | Description |
 |---|---|---|
-| `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2327) |
-| `BBS_MAX_SESSIONS` | `100` | Callers at once (compose sets 50) |
+| `BBS_PORT` | `2323` | TCP port to listen on (in the container the supervisor sets 2327 from `boards.yml`) |
+| `BBS_MAX_SESSIONS` | `100` | Callers at once (`boards.yml` sets 50) |
 | `FEEDIA_BBS_FEEDS` | `config/feeds.yml` | The feed list |
-| `FEEDIA_BBS_DB` | `data/feedia.sqlite3` | The board's SQLite database: the admins' inbox of before the network's feedback (compose mounts `./data`) |
+| `FEEDIA_BBS_DB` | `data/feedia.sqlite3` | The board's SQLite database: the admins' inbox of before the network's feedback (compose mounts `boards/feedia/data`) |
 | `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | The network's Central (TTG Gate BBS), where feedback and the wall live |
 | `RUBBS_AUTH_SECRET` | — | The secret every board of the network shares (in `.env` on the server) |
 
@@ -132,7 +137,7 @@ The **Wall** (ttg-common `TTG::Wall`, `lib/content/wall.yml`) is where readers t
 
 The board's own inbox of before (the `messages` table in `data/feedia.sqlite3`) is handed over to the
 network's feedback once, by a background job (`inbox export`), and kept here marked (`exported_at`);
-`docker exec feedia-bbs bin/inbox-export` does it at once and says what is left.
+`docker exec -w /app/boards/feedia ttg-bbs bin/inbox-export` does it at once and says what is left.
 
 ## Project structure
 
@@ -170,9 +175,12 @@ test/                           the domain's tests
 Every line on stderr starts with the log tag `feedia-bbs:` (rubbs' `Rubbs.log`):
 `feedia-bbs: feed: <name>: …` for a feed that did not answer or sent no feed,
 `feedia-bbs: inbox export: …`. The repositories let a
-failure go up; the services log it once and the faces say "did not answer".
+failure go up; the services log it once and the faces say "did not answer". In the container
+they are in `docker logs ttg-bbs`, with `"board":"feedia-bbs"`.
 
 ## Tests
+
+In `boards/feedia`:
 
 ```bash
 bundle exec rake test              # all of them
@@ -181,7 +189,8 @@ bundle exec rake test message      # the files whose name has the word
 
 ## Deploy
 
-A push to master deploys from Woodpecker: RuboCop, the tests, a compose check, then
-`ci-deploy feedia-bbs` on the server (infra/host-config), which runs the stack in
-`/srv/stacks/feedia-bbs`; `data/` and `.env` stay. The image runs the rubbs revision of
-`Gemfile.lock`, as uid 1000.
+A push to master of bbs/ttg-bbs deploys every board from Woodpecker: RuboCop, the
+tests, a compose check, then `ci-deploy ttg-bbs` on the server (infra/host-config), which runs
+the stack in `/srv/stacks/ttg-bbs` (container `ttg-bbs`); `boards/feedia/data/` and `.env` stay.
+A change only in `boards/feedia` restarts only this board. The image runs the rubbs revision of
+the root `Gemfile.lock`, as uid 1000.

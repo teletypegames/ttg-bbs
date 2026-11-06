@@ -36,7 +36,10 @@ board's way.
 
 ## Running
 
-**Docker Compose:**
+The board is `boards/warp-engine` of [TTG BBS](https://git.teletypegames.org/bbs/ttg-bbs) and runs
+with the other boards in one container. From the repository root:
+
+**Docker Compose** (every board, this one on 2329):
 
 ```bash
 docker compose up --build
@@ -46,11 +49,13 @@ docker compose up --build
 
 ```bash
 bundle install
-BBS_PORT=2329 bundle exec ruby bbs.rb
+bin/board warp-engine                                            # on 2329 (boards.yml)
+cd boards/warp-engine && BBS_PORT=2329 bundle exec ruby bbs.rb   # or on its own
 ```
 
 Then `telnet localhost 2329`. Every environment variable is in `env-example`
-with its default. Its only secret is `RUBBS_AUTH_SECRET`, the one every board shares.
+with its default; in Docker the root `compose.yaml` sets the ones that differ (a secret from
+the stack's `.env`). Its only secret is `RUBBS_AUTH_SECRET`, the one every board shares.
 
 | Variable | Default | |
 |---|---|---|
@@ -79,7 +84,8 @@ shown. The repository raises `Rubbs::Common::Web::HTTP::Error`; the catalog serv
 and tells the face there is nothing (the rubbs error rule).
 
 Every log line (the board's and rubbs') starts with `warp-engine-bbs:`
-(rubbs' `Rubbs.log`, `log_tag`).
+(rubbs' `Rubbs.log`, `log_tag`). In the container they are in `docker logs ttg-bbs`, with
+`"board":"warp-engine-bbs"`.
 
 ## Project structure
 
@@ -110,7 +116,7 @@ lib/ui/
 
 The domain (the download table and its legacy import, the archive with its
 cache, the index lines, the checked fetch) has minitest tests under `test/`;
-they need no network. CI runs them before a deploy.
+they need no network. CI runs them before a deploy. In `boards/warp-engine`:
 
 ```bash
 bundle exec rake test            # all

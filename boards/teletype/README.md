@@ -14,17 +14,17 @@ answers callers' questions (F1), and the doors that live only here: SERMO, a
 Commodore 64, a Plus/4, Chat of Ra and TTG Trivia.
 
 The wall and the letters to the sysop are the network's, not the board's
-own: they live on [TTG Gate BBS](https://git.teletypegames.org/bbs/ttg-gate-bbs),
+own: they live on [TTG Gate BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/ttg-gate),
 the Central, and ttg-common draws them (`TTG::Wall`, `TTG::Feedback`; see
 *Messages* below).
 
 What another board of the network carries is not repeated here: our games and
-files are on [WarpEngine BBS](https://git.teletypegames.org/bbs/warp-engine-bbs)
-(2329), the wiki on [TTG Wiki BBS](https://git.teletypegames.org/bbs/wiki-bbs)
-(2325), the blog on [TTG Blog BBS](https://git.teletypegames.org/bbs/ttg-blog-bbs)
-(2328), the art on [Pixelia BBS](https://git.teletypegames.org/bbs/pixelia-bbs)
-(2332), the Impostor debrief on [Impostor BBS](https://git.teletypegames.org/bbs/impostor-bbs)
-(2324), and [TTG Gate BBS](https://git.teletypegames.org/bbs/ttg-gate-bbs) (2399)
+files are on [WarpEngine BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/warp-engine)
+(2329), the wiki on [TTG Wiki BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/wiki)
+(2325), the blog on [TTG Blog BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/ttg-blog)
+(2328), the art on [Pixelia BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/pixelia)
+(2332), the Impostor debrief on [Impostor BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/impostor)
+(2324), and [TTG Gate BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/ttg-gate) (2399)
 dials them all. The town map, Board > BBS Network (N on the C64), tells a caller where each
 thing is, and so does the TTG Master.
 
@@ -35,7 +35,10 @@ share the nodes and the wall.
 
 ## Running
 
-**Docker Compose:**
+The board is `boards/teletype` of [TTG BBS](https://git.teletypegames.org/bbs/ttg-bbs) and runs
+with the other boards in one container. From the repository root:
+
+**Docker Compose** (every board, this one on 2323):
 
 ```bash
 docker compose up --build
@@ -45,7 +48,8 @@ docker compose up --build
 
 ```bash
 bundle install
-ruby bbs.rb
+bin/board teletype                              # this board alone (boards.yml)
+cd boards/teletype && bundle exec ruby bbs.rb   # or on its own, on BBS_PORT
 ```
 
 Connect:
@@ -54,35 +58,32 @@ Connect:
 telnet localhost 2323
 ```
 
-Compose starts one container, `teletype-bbs`. The model behind SERMO's
+Compose starts one container for every board, `ttg-bbs`; this board is one process in it. The model behind SERMO's
 Lapis-ACP, Qwen3.5 0.8B, runs in the server's shared model service,
 [infra/llm](https://git.teletypegames.org/infra/llm), reached as
 `http://llm:8080` on the `interstack` network; its key, one of that stack's
-`LLM_API_KEYS`, is `SERMO_LLM_API_KEY` in `.env`. Until the model is up, or
+`LLM_API_KEYS`, is `SERMO_LLM_API_KEY` in the stack's `.env`. Until the model is up, or
 without it, SERMO answers with canned replies.
-
-`docker-compose.dev.yaml` keeps the model next to the BBS: a `teletype-bbs-acp`
-container with llama.cpp's `llama-server` and the same model, no key, no
-`interstack`.
 
 ## Configuration
 
-Copy `env-example` to `.env`:
+`env-example` lists the variables with their defaults; in Docker the root `compose.yaml` sets the
+ones that differ (the keys from the root `.env`, on the server the stack's `.env`):
 
 | Variable | Default | Description |
 |---|---|---|
-| `BBS_PORT` | `2323` | TCP port to listen on |
+| `BBS_PORT` | `2323` | TCP port to listen on (in the container the supervisor sets it from `boards.yml`) |
 | `RUBBS_AUTH_SECRET` | empty | The secret every board of the network shares (rubbs `Rubbs::Common::Auth`): the accounts, the wall and the feedback are asked of TTG Gate BBS, the Central, on the `interstack` network, and a caller handed on by the gate comes in signed in. In `.env` on the server, never in the repository |
 | `TELETYPE_BBS_DB` | `data/teletype.sqlite3` | The board's SQLite database: the members, calls, profiles, votes and TTG Trivia scores, and the posts, oneliners and mail of before the network's wall and feedback, kept as the archive (see *Data*) |
 | `TELETYPE_BBS_FTP_HOST` | `ftp.teletypegames.org` | The FTP server whose `/WARP` sizes give the Commodore doors the blocks of each game (anonymous, passive); the catalog API carries no sizes |
-| `SERMO_LLM_URL` | set by compose | SERMO's model, `http://llm:8080`; empty = canned replies only |
-| `SERMO_LLM_MODEL` | set by compose | the model's name in infra/llm, `qwen3.5-0.8b` |
+| `SERMO_LLM_URL` | set by the root compose.yaml | SERMO's model, `http://llm:8080`; empty = canned replies only |
+| `SERMO_LLM_MODEL` | set by the root compose.yaml | the model's name in infra/llm, `qwen3.5-0.8b` |
 | `SERMO_LLM_API_KEY` | empty | SERMO's key to infra/llm, one of its `LLM_API_KEYS`; without it SERMO gets a 401 and answers with canned replies |
 | `TELETYPE_BBS_LLM_URL`, `TELETYPE_BBS_LLM_MODEL`, `TELETYPE_BBS_LLM_API_KEY` | SERMO's | The model of the BBS's own characters (Ra, the TTG Master); each one unset or empty falls back to its `SERMO_LLM_*` (read by `TeletypeBBS.llm`, the composition root) |
 
 ## Log
 
-Every line on stderr (`docker logs teletype-bbs`) starts with the log tag
+Every line on stderr (`docker logs ttg-bbs`, with `"board":"teletype-bbs"`) starts with the log tag
 `teletype-bbs:` (rubbs' `Rubbs.log`) and what it is about: `export` (the
 posts, oneliners and letters to the sysop of before handed over to the
 network, a `Rubbs.background` job: what went, or why the Central did not take
@@ -185,7 +186,7 @@ statusbar while it is highlighted.
 - **Hall of Fame** (People) — the trophy case: a gold, a silver and a bronze cup for the first three of the top callers, the names most on the wall (the most notes among the newest hundred of the wall, guests left out) and the TTG Trivia high scores, the names on the plates, the places after them under the case with fading bars (the old top lists under 80 columns). **User Listing** has the registered names with their calls, last call and location; **Your Stats** the caller's own numbers.
 - **Dev Log** — the public activity of every organisation on git.teletypegames.org (pushes with their commit messages, tags, releases, new repositories), newest first, read anonymously from the Gitea API, so private repositories never show.
 - **Team** — the members of teletypegames.org with their mottos.
-- **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `Rubbs::Common::Call::Door`). **SERMO** ([sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs), pulled in as the `sermo` gem) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
+- **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `Rubbs::Common::Call::Door`). **SERMO** (`lib/sermo`, merged from [sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs)) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
 - **BBS Network** (Board > BBS Network, Help > Where are the games, files, wiki?, N on the C64) — the town map on the clubhouse wall: every board of the network a building in its bbsweb colour around the clubhouse (the town gate of TTG Gate BBS, the archive of the wiki, the great library of Alexandria, the news kiosk of Feedia, the printing press of the blog, the warehouse of WarpEngine, the scriptorium, the game shop of Commodex, the gallery of Pixelia, the dark alley of the Impostor, and on the fourth row of the town the starbase of Starbase BBS, the cave of HackerCave BBS and the post office of TTG Mail BBS). The arrows walk from building to building; under the map what the chosen one carries and how to walk over. On a screen shorter than the town the map scrolls to the chosen building (rubbs' `FrameBuffer#clip`). The list of the boards, with bbsweb and archive.teletypegames.org, is a bulletin. This board has no gateway doors: a caller goes to another board by calling it, or through TTG Gate BBS.
 - **Registered names** — the accounts are the network's (rubbs `Rubbs::Common::Auth`, kept on TTG Gate BBS, the Central, asked through `central TTG::CENTRAL`): one name and password on every board. The splash (rubbs' `Rubbs::Common::Call::Splash`, from `TTG::PRESET`) asks *Login | Register | Guest* and logs the caller in through rubbs' profile; a guest comes in as Anonymous, and a caller who dialled the board from the gate signed in walks past the question. A guest can also register later (You > Register…, S then R on the C64): the account is made on the gate. The limits on wrong passwords and the look-alike names (a Cyrillic а for an a, an l or a 1 for an i: `Rubbs::Common::Auth::Names.skeleton`) are the gate's. `UI::Login` then puts the call on the board on both faces (a modern terminal that never reported its size is a scanner and is not listed). A caller who came in signed in is a member of the board (the `members` table: User Listing, *member since*). Profiles belong to registered names only. When the gate does not answer, a name comes in as a guest.
 - **Sysop console** — the nodes, the last callers and how much new feedback waits on the Central, for an account with the **sysop** role; the feedback itself is read on the console of TTG Gate BBS.
@@ -391,7 +392,7 @@ has one free plot, `[60, 18]` on the modern map and `[34, 16]` on the C64 one.
 **The C64 line is slow**, so the pictures have budgets: the first screen at most
 1.2 KB, a step of an animation at most 200 bytes, a room card about 300, a
 frame of the lamps going out under 100. `bin/c64-bytes` measures them with a
-worst-case scene (`docker exec teletype-bbs bin/c64-bytes`); with a folder it
+worst-case scene (`docker exec -w /app/boards/teletype ttg-bbs bin/c64-bytes`); with a folder it
 writes the raw PETSCII of each screen too, to replay through a C64's CHROUT in
 VICE. As measured (2026-11-06, thirteen rooms): the main menu 1099–1117 bytes
 at every time of day and season, a move of its bar 146–205, a puff of smoke
@@ -550,13 +551,8 @@ made-up ones, whose motto), the rest come from `lib/content/trivia.yml` (the
 first answer is the right one). A finished game of a named caller goes to
 the `trivia_scores` table; the best ten are its hall of fame.
 
-The `sermo` gem, like rubbs, is pinned to a revision in `Gemfile.lock`. After a change in sermo-bbs:
-
-```bash
-bundle lock --update sermo
-```
-
-then commit and redeploy.
+SERMO's code is in `lib/sermo` (merged from sermo-bbs on 2026-11-05, no longer a gem of its
+own), so a change of it is a change of this board: a push to master restarts only this board.
 
 ### Sysop accounts
 
@@ -564,11 +560,11 @@ The accounts and their roles are kept on TTG Gate BBS; a sysop is an account
 with the **sysop** role, given (or a password reset) on the gate's shell:
 
 ```bash
-docker exec -it ttg-gate-bbs bin/account grant NAME sysop
-docker exec -it ttg-gate-bbs bin/account password NAME
+docker exec -it -w /app/boards/ttg-gate ttg-bbs bin/account grant NAME sysop
+docker exec -it -w /app/boards/ttg-gate ttg-bbs bin/account password NAME
 ```
 
-The board needs `RUBBS_AUTH_SECRET`, the secret every board shares, in its `.env`.
+The board needs `RUBBS_AUTH_SECRET`, the secret every board shares, in the stack's `.env`.
 
 ## Characters
 
@@ -601,8 +597,8 @@ Master a miss (none of the question's `expect` phrases):
 
 ```bash
 TELETYPE_BBS_LLM_URL=http://localhost:8080 bundle exec bin/persona-eval master 3
-docker exec teletype-bbs bin/persona-eval ra 3            # on the server, with infra/llm
-docker exec teletype-bbs bin/persona-eval master_c64 3    # the Master of the C64 face
+docker exec -w /app/boards/teletype ttg-bbs bin/persona-eval ra 3            # on the server, with infra/llm
+docker exec -w /app/boards/teletype ttg-bbs bin/persona-eval master_c64 3    # the Master of the C64 face
 ```
 
 The Master names a menu path only for what is on this board; for what
@@ -626,7 +622,7 @@ a question to the eval.
 ## Data
 
 All persisted state lives under `data/` which is mounted as a volume in Docker
-so it survives container restarts.
+(`/srv/stacks/ttg-bbs/boards/teletype/data` on the server) so it survives container restarts.
 
 Everything the callers leave here is in one SQLite file, `data/teletype.sqlite3`
 (WAL mode); the wall and the letters to the sysop are on the Central (see
@@ -651,6 +647,8 @@ between names never are), and they stay as the archive. Anything else under
 `data/` (such as `archive/`) is left alone.
 
 ## Tests
+
+In `boards/teletype`:
 
 ```bash
 bundle exec rake test

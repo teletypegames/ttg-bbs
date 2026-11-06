@@ -4,9 +4,9 @@ The Teletype Games blog on a telnet line. Readers browse the latest posts or
 the posts of a category and read them paged; the editors log in from the same
 menu and write, edit and delete posts. Built on the
 [rubbs](https://git.teletypegames.org/engines/rubbs) gem, like the
-[Teletype BBS](https://git.teletypegames.org/bbs/teletype-bbs),
-[Alexandria BBS](https://git.teletypegames.org/bbs/alexandria-bbs) and
-[Feedia BBS](https://git.teletypegames.org/bbs/feedia-bbs).
+[Teletype BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/teletype),
+[Alexandria BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/alexandria) and
+[Feedia BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/feedia).
 
 It has two faces on one port, and both are line by line, with no windows: a
 **modern** one for ANSI terminals (up to 80 columns, the caller's window
@@ -16,7 +16,10 @@ are cursor menus of rubbs (`Rubbs::Common::Screens::Selector`), and the front pa
 
 ## Running
 
-**Docker Compose:**
+The board is `boards/ttg-blog` of [TTG BBS](https://git.teletypegames.org/bbs/ttg-bbs) and runs
+with the other boards in one container. From the repository root:
+
+**Docker Compose** (every board, this one on 2328):
 
 ```bash
 docker compose up --build
@@ -26,14 +29,15 @@ docker compose up --build
 
 ```bash
 bundle install
-ruby bbs.rb
+bin/board ttg-blog                              # this board alone, on 2328 (boards.yml)
+cd boards/ttg-blog && bundle exec ruby bbs.rb   # on BBS_PORT or 2323
 ```
 
 Connect:
 
 ```bash
-telnet localhost 2328      # compose
-telnet localhost 2323      # directly (BBS_PORT)
+telnet localhost 2328      # compose, bin/board
+telnet localhost 2323      # bbs.rb on its own (BBS_PORT)
 ```
 
 ## Configuration
@@ -53,16 +57,16 @@ and shows its bare id.
 
 | Variable | Default | Description |
 |---|---|---|
-| `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2328) |
-| `TTG_BLOG_BBS_DB` | `data/ttgblog.sqlite3` | The SQLite database (compose mounts `./data`) |
+| `BBS_PORT` | `2323` | TCP port to listen on (in the container the supervisor sets 2328 from `boards.yml`) |
+| `TTG_BLOG_BBS_DB` | `data/ttgblog.sqlite3` | The SQLite database (compose mounts `boards/ttg-blog/data`) |
 | `TTG_BLOG_BBS_CATEGORIES` | `config/categories.yml` | The category list |
-| `TTG_BLOG_BBS_HTTP_PORT` | `8080` | Port of the read API (`0` turns it off); compose does not publish it |
+| `TTG_BLOG_BBS_HTTP_PORT` | `8080` | Port of the read API (`0` turns it off); the root `compose.yaml` sets 8080 and does not publish it |
 | `TTG_BLOG_BBS_AUTOSAVE_SECONDS` | `15` | Seconds between the autosaves of a draft while an editor writes |
 | `TTG_BLOG_BBS_SITE_URL` | `https://teletypegames.org` | The site a published post is on, `/blog/SLUG`: the QR code of a post shows it |
 
 ## Log
 
-Every line on stderr (`docker logs ttg-blog-bbs`) starts with the log tag
+Every line on stderr (`docker logs ttg-bbs`, with `"board":"ttg-blog-bbs"`) starts with the log tag
 `ttg-blog-bbs:` (rubbs' `Rubbs.log`) and what it is about: `login` (a failed
 login, with the name and the caller), `saving a post`, `on_publish`, `categories`
 (the list could not be read: no post can be written then), `web` (an error of
@@ -125,8 +129,8 @@ in from the menu (`P`, the profile), or come in logged in when they dialled the 
 gate. The accounts and their roles are managed on the gate's shell:
 
 ```bash
-docker exec -it ttg-gate-bbs bin/account grant NAME blogger
-docker exec -it ttg-gate-bbs bin/account password NAME
+docker exec -it -w /app/boards/ttg-gate ttg-bbs bin/account grant NAME blogger
+docker exec -it -w /app/boards/ttg-gate ttg-bbs bin/account password NAME
 ```
 
 A logged-in editor changes their own password on the profile too (through the gate). The limits on wrong passwords are the gate's (by name and by line).
@@ -214,8 +218,8 @@ In the editor:
 
 The posts are the blog of [teletypegames.org](https://teletypegames.org/blog).
 The board serves them read-only over HTTP, beside the telnet line, in the same
-process (`Web::Api`); the container joins the `interstack` network and the
-site's API reads it there as `http://ttg-blog-bbs:8080`. The port is never
+process (`Web::Api`); the `ttg-bbs` container joins the `interstack` network with the alias
+`ttg-blog-bbs`, and the site's API reads it there as `http://ttg-blog-bbs:8080`. The port is never
 published.
 
 | Request | Answer |
@@ -273,6 +277,8 @@ test/                          minitest: the schema and the legacy shapes, the s
 
 ## Tests
 
+In `boards/ttg-blog`:
+
 ```bash
 bundle exec rake test               # all of them
 bundle exec rake test schema        # the files whose name has one of the words
@@ -282,7 +288,8 @@ They need no network: each test works on a database in a temporary folder.
 
 ## Deploy
 
-A push to master deploys from Woodpecker: RuboCop and the tests, a compose check, then
-`ci-deploy ttg-blog-bbs` on the server (infra/host-config), which runs the stack in
-`/srv/stacks/ttg-blog-bbs`; `data/` and `.env` stay. The image runs the rubbs revision of
+A push to master of bbs/ttg-bbs deploys every board from Woodpecker: RuboCop and the tests, a
+compose check, then `ci-deploy ttg-bbs` on the server (infra/host-config), which runs the stack
+in `/srv/stacks/ttg-bbs` (container `ttg-bbs`); `boards/ttg-blog/data/` and `.env` stay. A change
+only in `boards/ttg-blog` restarts only this board. The image runs the rubbs revision of the root
 `Gemfile.lock`, as uid 1000.

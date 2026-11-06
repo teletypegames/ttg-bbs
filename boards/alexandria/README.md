@@ -4,7 +4,7 @@ Wikipedia on a telnet line. Type the title of an article, and Alexandria looks
 it up on wikipedia.org and shows it in a form a terminal can read: the article
 as plain text, cut into its sections, wrapped to the screen. Built on the
 [rubbs](https://git.teletypegames.org/engines/rubbs) gem, like the
-[Teletype BBS](https://git.teletypegames.org/bbs/teletype-bbs).
+[Teletype BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/teletype).
 
 It has two faces on one port: the **modern** one for ANSI terminals (windows,
 menus, mouse) and a **Commodore 64** one in PETSCII, 40×25, with single-key
@@ -12,7 +12,10 @@ menus.
 
 ## Running
 
-**Docker Compose:**
+The board is `boards/alexandria` of [TTG BBS](https://git.teletypegames.org/bbs/ttg-bbs) and
+runs with the other boards in one container. From the repository root:
+
+**Docker Compose** (every board, this one on 2326):
 
 ```bash
 docker compose up --build
@@ -22,24 +25,26 @@ docker compose up --build
 
 ```bash
 bundle install
-ruby bbs.rb
+bin/board alexandria                          # this board alone, on 2326 (boards.yml)
+cd boards/alexandria && bundle exec ruby bbs.rb   # on BBS_PORT or 2323
 ```
 
 Connect:
 
 ```bash
-telnet localhost 2326      # compose
-telnet localhost 2323      # directly (BBS_PORT)
+telnet localhost 2326      # compose, bin/board
+telnet localhost 2323      # bbs.rb on its own (BBS_PORT)
 ```
 
 ## Configuration
 
-Copy `env-example` to `.env`:
+`env-example` lists the variables with their defaults; in Docker the root `compose.yaml` sets the
+ones that differ (a secret from the root `.env`, on the server the stack's `.env`):
 
 | Variable | Default | Description |
 |---|---|---|
-| `BBS_PORT` | `2323` | TCP port to listen on (in the container; compose publishes it on 2326) |
-| `BBS_MAX_SESSIONS` | `100` | Callers at once (compose sets 50) |
+| `BBS_PORT` | `2323` | TCP port to listen on (in the container the supervisor sets 2326 from `boards.yml`) |
+| `BBS_MAX_SESSIONS` | `100` | Callers at once (`boards.yml` sets 50) |
 | `ALEXANDRIA_BBS_LANGUAGES` | `en,hu` | The Wikipedias a caller can switch between, by their language code; the first one is the default |
 | `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | The network's Central (TTG Gate BBS), where feedback and the wall live |
 | `RUBBS_AUTH_SECRET` | — | The secret every board of the network shares, for the Central (in `.env` on the server) |
@@ -140,6 +145,8 @@ Rakefile                      rake test
 
 ## Tests
 
+In `boards/alexandria`:
+
 ```bash
 bundle exec rake test
 ```
@@ -167,9 +174,12 @@ shows its address.
 
 Every line on stderr starts with the log tag `alexandria-bbs:` (rubbs'
 `Rubbs.log`), e.g. `alexandria-bbs: wikipedia: search: Rubbs::Common::Web::HTTP::Error: …`.
+In the container they are in `docker logs ttg-bbs`, with `"board":"alexandria-bbs"`.
 
 ## Deploy
 
-A push to master deploys from Woodpecker: RuboCop, the tests, a compose check, then
-`ci-deploy alexandria-bbs` on the server (infra/host-config), which runs the stack in
-`/srv/stacks/alexandria-bbs`. The image runs the rubbs revision of `Gemfile.lock`, as uid 1000.
+A push to master of bbs/ttg-bbs deploys every board from Woodpecker: RuboCop, the
+tests, a compose check, then `ci-deploy ttg-bbs` on the server (infra/host-config), which runs
+the stack in `/srv/stacks/ttg-bbs` (container `ttg-bbs`). A change only in `boards/alexandria` restarts only
+this board; its data stays in `/srv/stacks/ttg-bbs/boards/alexandria/data`. The image runs the
+rubbs revision of the root `Gemfile.lock`, as uid 1000.

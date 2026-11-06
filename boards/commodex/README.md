@@ -58,7 +58,10 @@ the GB64 Team's permission.
 
 ## Running
 
-**Docker Compose:**
+The board is `boards/commodex` of [TTG BBS](https://git.teletypegames.org/bbs/ttg-bbs) and runs
+with the other boards in one container. From the repository root:
+
+**Docker Compose** (every board, this one on 2331):
 
 ```bash
 docker compose up --build
@@ -68,11 +71,13 @@ docker compose up --build
 
 ```bash
 bundle install
-BBS_PORT=2331 bundle exec ruby bbs.rb
+bin/board commodex                                         # on 2331 (boards.yml)
+cd boards/commodex && BBS_PORT=2331 bundle exec ruby bbs.rb   # or on its own
 ```
 
 Then `telnet localhost 2331`. Every environment variable is in `env-example`
-with its default.
+with its default; in Docker the root `compose.yaml` sets the ones that differ (a secret from
+the stack's `.env`).
 
 | Variable | Default | |
 |---|---|---|
@@ -85,12 +90,14 @@ with its default.
 | `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | the network's Central (TTG Gate BBS): the accounts, feedback and the wall |
 | `RUBBS_AUTH_SECRET` | — | the secret every board of the network shares, in `.env` on the server |
 
-`data/` is a volume. `data/tips.sqlite3` is the board's database (`database :tips_db,
-MIGRATIONS`, rubbs' `Rubbs::Common::Storage::Model` on Sequel), its schema migrated by version
+`data/` is a volume (`/srv/stacks/ttg-bbs/boards/commodex/data` on the server).
+`data/tips.sqlite3` is the board's database (`database :tips_db, MIGRATIONS`, rubbs' `Rubbs::Common::Storage::Model` on Sequel), its schema migrated by version
 (`PRAGMA user_version`, `lib/domain/migrations.rb`): version 1 is the schema the board
 created before it had versions, so an older file only gets its version and keeps its tips.
 
 ## Tests
+
+In `boards/commodex`:
 
 ```bash
 bundle exec rake test
@@ -105,16 +112,17 @@ deploy.
 
 Every line on stderr starts with the log tag `commodex-bbs:` (rubbs' `Rubbs.log`):
 `commodex-bbs: catalog refresh: …`, `commodex-bbs: wikipedia: …`. The repositories let a failure go up; the services (and
-the refresh thread) log it once.
+the refresh thread) log it once. In the container they are in `docker logs ttg-bbs`, with
+`"board":"commodex-bbs"`.
 
 ## Admin
 
 ```bash
-docker exec commodex-bbs bin/tips list           # the pending tips
-docker exec commodex-bbs bin/tips approved       # the approved ones
-docker exec commodex-bbs bin/tips approve ID     # shown from now on
-docker exec commodex-bbs bin/tips reject ID      # never shown
-bin/refresh-catalog [path]                   # a new seed from Wikidata (in a dev checkout)
+docker exec -w /app/boards/commodex ttg-bbs bin/tips list           # the pending tips
+docker exec -w /app/boards/commodex ttg-bbs bin/tips approved       # the approved ones
+docker exec -w /app/boards/commodex ttg-bbs bin/tips approve ID     # shown from now on
+docker exec -w /app/boards/commodex ttg-bbs bin/tips reject ID      # never shown
+bin/refresh-catalog [path]          # a new seed from Wikidata (in boards/commodex of a dev checkout)
 ```
 
 ## Project structure

@@ -3,7 +3,7 @@
 Letters between the accounts of the Teletype Games BBS network, on a telnet line. Log in with
 your account of the network, open your mailbox, write to anyone with an account, read and answer
 your letters. A board of the network, powered by [rubbs](https://git.teletypegames.org/engines/rubbs)
-and [ttg-common](https://git.teletypegames.org/bbs/common).
+and [ttg-common](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/common).
 
 It has two faces on one port, like every board of the network:
 
@@ -45,17 +45,21 @@ office wall (`lib/content/wall.yml`) and a word to the sysops, read on the sysop
 
 ## Running
 
+The board is `boards/ttg-mail` of [TTG BBS](https://git.teletypegames.org/bbs/ttg-bbs) and runs
+with the other boards in one container. From the repository root:
+
 ```bash
-docker compose up --build
+docker compose up --build       # every board, this one on 2335
 ```
 
-or directly (Ruby 3.3): `bundle install && BBS_PORT=2335 bundle exec ruby bbs.rb`, then
-`telnet localhost 2335`. Every environment variable is in `env-example` with its default.
+or directly (Ruby 3.3): `bundle install && bin/board ttg-mail` (on 2335, from `boards.yml`), or on
+its own `cd boards/ttg-mail && BBS_PORT=2335 bundle exec ruby bbs.rb`; then `telnet localhost 2335`.
+Every environment variable is in `env-example` with its default.
 
 | Variable | Default | |
 |---|---|---|
-| `BBS_PORT` | `2323` | the port inside the container (compose publishes it on 2335) |
-| `BBS_MAX_SESSIONS` | `100` | callers at once (compose sets 50) |
+| `BBS_PORT` | `2323` | the port to listen on (in the container the supervisor sets 2335 from `boards.yml`) |
+| `BBS_MAX_SESSIONS` | `100` | callers at once (`boards.yml` sets 50) |
 | `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | the network's Central (TTG Gate BBS) on the interstack network |
 | `RUBBS_AUTH_SECRET` | — | the secret every board of the network shares, in `.env` on the server |
 
@@ -86,8 +90,10 @@ test/                          the board's words load; the mailbox summary
 
 ## Deploy
 
-A push to master deploys from Woodpecker: RuboCop, the tests and `rake bbs:check`, a compose check,
-then `ci-deploy ttg-mail-bbs` on the server (`devarea/procedures/bbs-server-creation.md`).
+A push to master of bbs/ttg-bbs deploys every board from Woodpecker: RuboCop, the tests and
+`rake bbs:check`, a compose check, then `ci-deploy ttg-bbs` on the server, which runs the stack in
+`/srv/stacks/ttg-bbs` (container `ttg-bbs`). A change only in `boards/ttg-mail` restarts only this
+board. Its log lines are in `docker logs ttg-bbs`, with `"board":"ttg-mail-bbs"`.
 
 ## Licence
 

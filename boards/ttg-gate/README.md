@@ -81,7 +81,10 @@ same place, when the board hangs up.
 
 ## Running
 
-**Docker Compose:**
+The board is `boards/ttg-gate` of [TTG BBS](https://git.teletypegames.org/bbs/ttg-bbs) and runs
+with the other boards in one container. From the repository root:
+
+**Docker Compose** (every board, this one on 2399, and the prober):
 
 ```bash
 docker compose up --build
@@ -91,21 +94,22 @@ docker compose up --build
 
 ```bash
 bundle install
-TTG_GATE_BBS_GATEWAY_HOST=teletypegames.org ruby bbs.rb
+TTG_GATE_BBS_GATEWAY_HOST=teletypegames.org bin/board ttg-gate     # on 2399 (boards.yml)
+cd boards/ttg-gate && TTG_GATE_BBS_GATEWAY_HOST=teletypegames.org bundle exec ruby bbs.rb   # on BBS_PORT or 2323
 ```
 
 Connect:
 
 ```bash
-telnet localhost 2399      # compose
-telnet localhost 2323      # directly (BBS_PORT)
+telnet localhost 2399      # compose, bin/board
+telnet localhost 2323      # bbs.rb on its own (BBS_PORT)
 ```
 
 ## Configuration
 
 | Variable | Default | |
 |---|---|---|
-| `TTG_GATE_BBS_GATEWAY_HOST` | `host.docker.internal` | where the boards are dialled; compose maps it to the host |
+| `TTG_GATE_BBS_GATEWAY_HOST` | `host.docker.internal` | where the boards are dialled; the root `compose.yaml` maps it to the host |
 | `TTG_GATE_BBS_PUBLIC_HOST` | `teletypegames.org` | the address shown with every board |
 | `TTG_GATE_BBS_BOARDS` | `config/boards.yml` | the boards list |
 | `TTG_GATE_BBS_OPS_WEBHOOK` | empty | Discovery: where import alerts go (an ops alert; the older `TTG_GATE_BBS_DISCORD_WEBHOOK` is still read); empty: off |
@@ -117,16 +121,18 @@ telnet localhost 2323      # directly (BBS_PORT)
 | `TTG_GATE_BBS_DATA` | `data` | Discovery: the data folder |
 | `TTG_GATE_BBS_DISCOVERY_DB` | `data/discovery.sqlite3` | Discovery: the catalog |
 | `TTG_GATE_BBS_DISCOVERY_OPTOUT` | `config/discovery-optout.yml` | Discovery: the opt-out list |
-| `BBS_PORT` | `2323` | the port inside the container (rubbs) |
-| `BBS_MAX_SESSIONS` | `50` | callers at once (rubbs) |
+| `BBS_PORT` | `2323` | the port to listen on (rubbs); in the container the supervisor sets 2399 from `boards.yml` |
+| `BBS_MAX_SESSIONS` | `50` | callers at once (rubbs; `boards.yml` sets it in the container) |
 
-`env-example` lists them all.
+`env-example` lists them all. In Docker the root `compose.yaml` sets the ones that differ (the
+webhooks and the secret from the stack's `.env`).
 
 Every log line starts with the process's tag (rubbs' `Rubbs.log`, `log_tag`):
 `ttg-gate-bbs:` for the gate, `ttg-gate-bbs-prober:` for the prober and the
 import, which run in the prober's container; then what it is about (`dial`,
-`probe`, `import`, `geoip`, `metrics` …). Our own boards are on the host
-(`host.docker.internal`, a private address), so the gateway to them is the one
+`probe`, `import`, `geoip`, `metrics` …). The gate's lines are in `docker logs ttg-bbs`, with
+`"board":"ttg-gate-bbs"`; the prober's in `docker logs ttg-gate-bbs-prober`. Our own boards are
+on the host (`host.docker.internal`, a private address), so the gateway to them is the one
 that may call a non-public address (`public_only: false`); a board of the
 catalog is dialled by its vetted public address only.
 
@@ -234,11 +240,11 @@ dialled another board directly is that board's.
 import:
 
 ```sh
-docker exec -it ttg-gate-bbs bin/account password NAME     # sets it, makes the account when there is none
-docker exec -it ttg-gate-bbs bin/account grant NAME sysop
-docker exec -it ttg-gate-bbs bin/account ban NAME [REASON]
-docker exec -it ttg-gate-bbs bin/account unban NAME
-docker exec -it ttg-gate-bbs bin/account list
+docker exec -it -w /app/boards/ttg-gate ttg-bbs bin/account password NAME     # sets it, makes the account when there is none
+docker exec -it -w /app/boards/ttg-gate ttg-bbs bin/account grant NAME sysop
+docker exec -it -w /app/boards/ttg-gate ttg-bbs bin/account ban NAME [REASON]
+docker exec -it -w /app/boards/ttg-gate ttg-bbs bin/account unban NAME
+docker exec -it -w /app/boards/ttg-gate ttg-bbs bin/account list
 ```
 
 ## Global Discovery
@@ -529,6 +535,8 @@ from the list.
 
 ### Running it
 
+In `boards/ttg-gate`:
+
 ```bash
 bin/discovery-import            # fetch every list into data/discovery.sqlite3
 bin/discovery-report            # boards a source and their overlap, states, PETSCII measured vs claimed, tags
@@ -536,8 +544,9 @@ bin/discovery-prober --limit 20 # 20 calls, then stop (without --limit: a daemon
 rake test              # the tests (minitest, no network)
 ```
 
-On the server the prober runs as the `ttg-gate-bbs-prober` service of
-`compose.yaml` (128 MB, half a CPU, no port); the import runs daily in its
+On the server the prober runs as the `ttg-gate-bbs-prober` service of the root
+`compose.yaml` (the `ttg-bbs` image, working in `/app/boards/ttg-gate`; 128 MB, half a CPU, no
+port); the import runs daily in its
 container from cron (`docker exec ttg-gate-bbs-prober bin/discovery-import`).
 Both write `data/discovery-metrics.prom` in the Prometheus text format (every
 name starts `ttg_gate_bbs_discovery_`): the boards a state (`boards`), the
@@ -599,10 +608,12 @@ lib/
 
 ## Deploy
 
-A push to master deploys from Woodpecker: RuboCop (the bbs-board template, Metrics on), the Discovery
-tests, a compose check, then
-`ci-deploy ttg-gate-bbs` on the server (infra/host-config), which runs the stack in
-`/srv/stacks/ttg-gate-bbs`. The image runs the rubbs revision of `Gemfile.lock`, as uid 1000.
+A push to master of bbs/ttg-bbs deploys every board from Woodpecker: RuboCop (this folder by its
+own `.rubocop.yml`), the tests, a compose check, then `ci-deploy ttg-bbs` on the server
+(infra/host-config), which runs the stack in `/srv/stacks/ttg-bbs`: the gate in the `ttg-bbs`
+container, the prober in `ttg-gate-bbs-prober`. A change only in `boards/ttg-gate` restarts only
+the gate; its data stays in `/srv/stacks/ttg-bbs/boards/ttg-gate/data`. The image runs the rubbs
+revision of the root `Gemfile.lock`, as uid 1000.
 
 ## License
 

@@ -94,7 +94,10 @@ The texts are public domain in the USA. Each book's page credits it:
 
 ## Running
 
-**Docker Compose:**
+The board is `boards/scriptorium` of [TTG BBS](https://git.teletypegames.org/bbs/ttg-bbs) and runs
+with the other boards in one container. From the repository root:
+
+**Docker Compose** (every board, this one on 2330):
 
 ```bash
 docker compose up --build
@@ -104,11 +107,13 @@ docker compose up --build
 
 ```bash
 bundle install
-BBS_PORT=2330 bundle exec ruby bbs.rb
+bin/board scriptorium                                            # on 2330 (boards.yml)
+cd boards/scriptorium && BBS_PORT=2330 bundle exec ruby bbs.rb   # or on its own
 ```
 
 Then `telnet localhost 2330`. Every environment variable is in `env-example`
-with its default. The board's only secret is the one every board of the network shares,
+with its default; in Docker the root `compose.yaml` sets the ones that differ (a secret from
+the stack's `.env`). The board's only secret is the one every board of the network shares,
 `RUBBS_AUTH_SECRET`.
 
 | Variable | Default | |
@@ -125,17 +130,19 @@ with its default. The board's only secret is the one every board of the network 
 | `SCRIPTORIUM_BBS_BOOK_MAX` | `8388608` | the longest plain text fetched, in bytes |
 | `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | the network's Central (TTG Gate BBS): feedback and the wall |
 | `RUBBS_AUTH_SECRET` | — | the secret every board shares, for the Central (in `.env` on the server) |
-`data/` is a volume. A `data/reads.jsonl` left by an older board (one JSON line
-a read) is imported into the `reads` table on the first start, one
+`data/` is a volume (`/srv/stacks/ttg-bbs/boards/scriptorium/data` on the server). A
+`data/reads.jsonl` left by an older board (one JSON line a read) is imported into the `reads` table on the first start, one
 transaction, an unreadable line skipped, and renamed `reads.jsonl.imported`;
 the log says `scriptorium-bbs: reads: imported N reads from reads.jsonl (M skipped)`.
 
 Every log line starts with the log tag `scriptorium-bbs:` (rubbs' `Rubbs.log`):
 `catalog refresh`, `catalog`, `gutenberg`, `text cache`, `reads`. The Gutenberg
 repository lets a failure go up; the services (and the refresh thread) log it
-once.
+once. In the container they are in `docker logs ttg-bbs`, with `"board":"scriptorium-bbs"`.
 
 ## Tests
+
+In `boards/scriptorium`:
 
 ```bash
 bundle exec rake test            # all of them (minitest, no network)

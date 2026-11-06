@@ -106,7 +106,10 @@ its file is written, so a refused or failed save costs no turn.
 
 ## Running
 
-**Docker Compose:**
+The board is `boards/pixelia` of [TTG BBS](https://git.teletypegames.org/bbs/ttg-bbs) and runs
+with the other boards in one container. From the repository root:
+
+**Docker Compose** (every board, this one on 2332):
 
 ```bash
 docker compose up --build
@@ -116,11 +119,13 @@ docker compose up --build
 
 ```bash
 bundle install
-BBS_PORT=2332 bundle exec ruby bbs.rb
+bin/board pixelia                                            # on 2332 (boards.yml)
+cd boards/pixelia && BBS_PORT=2332 bundle exec ruby bbs.rb   # or on its own
 ```
 
 Then `telnet localhost 2332`. Every environment variable is in `env-example`
-with its default. The board has no secrets.
+with its default; in Docker the root `compose.yaml` sets the ones that differ (a secret from
+the stack's `.env`). The board has no secrets.
 
 | Variable | Default | |
 |---|---|---|
@@ -135,16 +140,16 @@ with its default. The board has no secrets.
 | `PIXELIA_BBS_EXHIBITION_COOLDOWN` | `300` | seconds between two saves of one caller |
 | `PIXELIA_BBS_EXHIBITION_PER_HOUR` | `30` | works the whole board takes an hour |
 
-`data/` is a volume.
+`data/` is a volume (`/srv/stacks/ttg-bbs/boards/pixelia/data` on the server).
 
 ## Administration
 
 ```bash
-docker exec pixelia-bbs bin/works list          # id, date, handle, title, newest first
-docker exec pixelia-bbs bin/works show ID       # a work's characters
-docker exec pixelia-bbs bin/works remove ID     # moderation
-docker exec pixelia-bbs bin/canvas show         # the canvas' characters
-docker exec pixelia-bbs bin/canvas clear        # archive into data/archive/, then blank it
+docker exec -w /app/boards/pixelia ttg-bbs bin/works list          # id, date, handle, title, newest first
+docker exec -w /app/boards/pixelia ttg-bbs bin/works show ID       # a work's characters
+docker exec -w /app/boards/pixelia ttg-bbs bin/works remove ID     # moderation
+docker exec -w /app/boards/pixelia ttg-bbs bin/canvas show         # the canvas' characters
+docker exec -w /app/boards/pixelia ttg-bbs bin/canvas clear        # archive into data/archive/, then blank it
 ```
 
 The running board holds the canvas in memory, so `bin/canvas clear` leaves a
@@ -158,9 +163,12 @@ Every line on stderr starts with the log tag `pixelia-bbs:` (rubbs' `Rubbs.log`)
 `16colors`, `canvas`, `canvas writer`, `art cache`, `exhibition`. The 16colo.rs
 repository lets a failure go up (`Rubbs::Common::Web::HTTP::Error`, `Rubbs::Common::Web::HTTP::TooLarge` for a
 file over `PIXELIA_BBS_MAX_FILE_KB`); the gallery service logs it once and the faces
-say why the piece does not show.
+say why the piece does not show. In the container they are in `docker logs ttg-bbs`, with
+`"board":"pixelia-bbs"`.
 
 ## Tests
+
+In `boards/pixelia`:
 
 ```bash
 bundle exec rake test            # all of them

@@ -80,7 +80,10 @@ board's way.
 
 ## Running
 
-**Docker Compose:**
+The board is `boards/starbase` of [TTG BBS](https://git.teletypegames.org/bbs/ttg-bbs) and runs
+with the other boards in one container. From the repository root:
+
+**Docker Compose** (every board, this one on 2333):
 
 ```bash
 docker compose up --build
@@ -90,11 +93,13 @@ docker compose up --build
 
 ```bash
 bundle install
-BBS_PORT=2333 bundle exec ruby bbs.rb
+bin/board starbase                                            # on 2333 (boards.yml)
+cd boards/starbase && BBS_PORT=2333 bundle exec ruby bbs.rb   # or on its own
 ```
 
 Then `telnet localhost 2333`. Every environment variable is in `env-example`
-with its default.
+with its default; in Docker the root `compose.yaml` sets the ones that differ (a secret from
+the stack's `.env`).
 
 | Variable | Default | |
 |---|---|---|
@@ -107,6 +112,8 @@ with its default.
 The board keeps no other data; its only secret is `RUBBS_AUTH_SECRET`.
 
 ## Tests
+
+In `boards/starbase`:
 
 ```bash
 bundle exec rake test
@@ -122,7 +129,7 @@ article model, the library's look-up. CI runs them before a deploy.
 Every line on stderr starts with the log tag `starbase-bbs:` (rubbs'
 `Rubbs.log`): `starbase-bbs: catalog: …`, `starbase-bbs: memory-alpha: …`. The
 repositories let a failure go up; the services (and the refresh thread) log it
-once.
+once. In the container they are in `docker logs ttg-bbs`, with `"board":"starbase-bbs"`.
 
 ## Admin
 

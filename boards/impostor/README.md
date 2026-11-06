@@ -23,31 +23,39 @@ the caller.
 
 ## Running
 
+The board is `boards/impostor` of [TTG BBS](https://git.teletypegames.org/bbs/ttg-bbs) and runs
+with the other boards in one container. From the repository root:
+
 **With Docker Compose (recommended):**
 
 ```bash
-docker compose up --build
+docker compose up --build       # every board, this one on 2324
 ```
 
 **Directly (requires Ruby 3.x):**
 
 ```bash
 bundle install
-ruby bbs.rb
+bin/board impostor              # this board alone, on 2324 (boards.yml)
 ```
 
 Connect with:
 
 ```bash
-telnet localhost 2323
+telnet localhost 2324
 ```
 
-Docker Compose publishes it on port 2324 (`telnet localhost 2324`), the public port on the server. Run directly,
-the port can be changed via the `BBS_PORT` environment variable. `env-example` lists every
+2324 is also the public port on the server. Run on its own (`cd boards/impostor && bundle exec
+ruby bbs.rb`), it listens on `BBS_PORT`, 2323 by default. `env-example` lists every
 variable with its default: `BBS_PORT`, `BBS_MAX_SESSIONS` and `IMPOSTOR_BBS_SESSIONS`, the sessions database.
-Every log line (the board's and rubbs') starts with `impostor-bbs:` (rubbs' `Rubbs.log`, `log_tag`).
+Every log line (the board's and rubbs') starts with `impostor-bbs:` (rubbs' `Rubbs.log`, `log_tag`);
+in the container they are in `docker logs ttg-bbs`, with `"board":"impostor-bbs"`. A push to master
+of bbs/ttg-bbs deploys it (`ci-deploy ttg-bbs`, stack `/srv/stacks/ttg-bbs`); a change only in
+`boards/impostor` restarts only this board.
 
 ## Tests
+
+In `boards/impostor`:
 
 ```bash
 bundle exec rake test
@@ -69,7 +77,7 @@ The name is trimmed and uppercased (matching how the BBS handles input), and onl
 
 ## Project structure
 
-The repository is two things: the `impostor` gem (`lib/impostor*`, `screens/`), the debrief
+The folder is two things: the `impostor` gem (`lib/impostor*`, `screens/`), the debrief
 terminal with its code check, and the standalone board around it. The board's own domain is
 what a call leaves behind: `SessionModel` holds the rules of each field (no control characters,
 length limits, an email only when it is a valid address), `SessionRepository` keeps the rows,
@@ -79,10 +87,8 @@ rules before it is written.
 ```
 bbs.rb                        Entry point: Rubbs.board with the two faces
 impostor.gemspec              The gem another rubbs BBS mounts as a door (lib/impostor*, screens/)
-Gemfile, Gemfile.lock         rubbs from git; rubocop, minitest and rake in :development
 Rakefile                      rake test
-Dockerfile, .dockerignore, compose.yaml
-.woodpecker.yaml, .rubocop.yml
+.rubocop.yml
 env-example                   Every environment variable, with its default
 bin/
   generate_code               CLI tool: generates a player's code from IMPOSTOR_BBS_PLAYER_NAME
@@ -109,13 +115,13 @@ data/
 
 ## As a door
 
-The same terminal is a door of the [Teletype BBS](https://git.teletypegames.org/bbs/teletype-bbs)
-(Doors > Impostor). It pulls this repository as the `impostor` gem; the flow
+The same terminal is a door of the [Teletype BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/teletype)
+(Doors > Impostor). It pulls this folder as the `impostor` gem; the flow
 carries its own screens (rubbs 0.7.0's `Flow.define(screens_dir:)`), and the
 host BBS gives it a sessions store of its own:
 
 ```ruby
-gem 'impostor', git: 'https://git.teletypegames.org/bbs/impostor-bbs.git'
+gem 'impostor', git: 'https://git.teletypegames.org/bbs/ttg-bbs.git', glob: 'boards/impostor/impostor.gemspec'
 
 require 'impostor'
 sessions = Impostor.sessions_store('data/impostor_sessions.sqlite3')
@@ -141,7 +147,7 @@ Each row is created when the player submits their name and code, then updated in
 
 Earlier versions kept the sessions in `data/sessions.csv`. On the first start (the board opens the database at boot) that file is imported into the database in one transaction and renamed to `data/sessions.csv.imported`; lines that are no CSV row are set aside in `data/sessions.csv.rejected` and the good ones kept (rubbs' `Rubbs::Common::Storage::Store`).
 
-`IMPOSTOR_BBS_SESSIONS` moves the database. When running via Docker Compose the `data/` directory is mounted as a volume so records survive container restarts.
+`IMPOSTOR_BBS_SESSIONS` moves the database. When running via Docker Compose the `data/` directory is mounted as a volume (`/srv/stacks/ttg-bbs/boards/impostor/data` on the server) so records survive container restarts.
 
 ## BBS engine
 

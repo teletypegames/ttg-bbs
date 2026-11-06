@@ -115,7 +115,7 @@ private pages stay locked. The gate counts the wrong passwords. A sysop gives
 the role on the gate:
 
 ```bash
-docker exec -it ttg-gate-bbs bin/account grant NAME wiki-supervisor
+docker exec -it -w /app/boards/ttg-gate ttg-bbs bin/account grant NAME wiki-supervisor
 ```
 
 The board asks the gate on the `interstack` network, signed with
@@ -127,8 +127,8 @@ API refuses private page bodies without a matching token (the `X-Wiki-Token`
 header, or `?token=`). The BBS sends its own `WIKI_BBS_SUPERVISOR_PASSWORD` as
 that token, for a supervisor's private pages only, in the header, so it stays
 out of the wiki's access log. No caller types it: it is the board's API
-credential, and **the two services must share the same value** (the compose
-file wires both from one variable). The older
+credential, and **the two services must share the same value** (the wiki's
+`SUPERVISOR_PASSWORD` in the services/wiki-pages `.env`, this one in the ttg-bbs stack's `.env`). The older
 `updates.json` / `pages.json` endpoints hide private bodies the same way
 (`body=1` only includes them with a valid token).
 
@@ -136,20 +136,34 @@ file wires both from one variable). The older
 
 ### On the server
 
-Its own stack, `/srv/stacks/wiki-bbs` (`ci-deploy wiki-bbs`, a push to master deploys it). It
-reaches the wiki's Grav as `http://wiki-grav` on the `interstack` network, an alias the
-`services/wiki-pages` compose gives Grav. Until 2026-11-01 it lived in that repo as `bbs/`; this
-repository keeps that folder's history.
+The board is `boards/wiki` of [TTG BBS](https://git.teletypegames.org/bbs/ttg-bbs): it runs with
+the other boards in the `ttg-bbs` container of the stack `/srv/stacks/ttg-bbs` (`ci-deploy
+ttg-bbs`; a push to master deploys it, and a change only in `boards/wiki` restarts only this
+board). Its data is `/srv/stacks/ttg-bbs/boards/wiki/data`. It reaches the wiki's Grav as
+`http://wiki-grav` on the `interstack` network, an alias the `services/wiki-pages` compose gives
+Grav. Until 2026-11-01 it lived in that repo as `bbs/`, then in its own repository, bbs/wiki-bbs;
+`boards/wiki` keeps that folder's history.
+
+From the repository root:
 
 ```bash
-docker compose up --build    # needs the interstack network and the wiki-pages stack
+docker compose up --build    # every board; needs the interstack network and the wiki-pages stack
 telnet localhost 2325
 ```
 
 ### Standalone, local dev
 
+From the repository root:
+
 ```bash
-cd bbs
+WIKI_BBS_URL=http://localhost:9120 bin/board wiki    # on 2325 (boards.yml)
+telnet localhost 2325
+```
+
+or on its own:
+
+```bash
+cd boards/wiki
 WIKI_BBS_URL=http://localhost:9120 bundle exec ruby bbs.rb
 telnet localhost 2323
 ```
@@ -158,9 +172,9 @@ telnet localhost 2323
 
 | Var | Default | Purpose |
 |---|---|---|
-| `BBS_PORT` | `2323` | Telnet listen port |
-| `BBS_MAX_SESSIONS` | `100` | Callers at once (the compose file sets 50) |
-| `WIKI_BBS_IDLE` | `900` | Idle disconnect (seconds; the compose file sets 600) |
+| `BBS_PORT` | `2323` | Telnet listen port (in the container the supervisor sets 2325 from `boards.yml`) |
+| `BBS_MAX_SESSIONS` | `100` | Callers at once (`boards.yml` sets 50) |
+| `WIKI_BBS_IDLE` | `900` | Idle disconnect (seconds; the root `compose.yaml` sets 600) |
 | `WIKI_BBS_URL` | `http://localhost:9120` | Grav wiki base URL |
 | `WIKI_BBS_SUPERVISOR_PASSWORD` | — | The board's API token for the private pages (the `X-Wiki-Token` header), not a caller password — must match the grav service's `SUPERVISOR_PASSWORD`; empty = private pages stay locked |
 | `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | The network's Central (TTG Gate BBS): the accounts, feedback and the wall |
@@ -171,21 +185,18 @@ telnet localhost 2323
 settings; rubbs reads `BBS_PORT`, `BBS_MAX_SESSIONS` and `RUBBS_AUTH_SECRET` itself.
 
 Every log line (the board's and rubbs') starts with `wiki-bbs:` (rubbs'
-`Rubbs.log`, `log_tag`).
+`Rubbs.log`, `log_tag`); in the container they are in `docker logs ttg-bbs`, with
+`"board":"wiki-bbs"`.
 
-The image runs the rubbs revision of `Gemfile.lock`, as uid 1000; a new rubbs
-reaches the board with a lock bump (devarea `scripts/bbs-lock-bump.sh`).
+The image runs the rubbs revision of the root `Gemfile.lock`, as uid 1000; a new rubbs
+reaches every board with a bump of that lock, which restarts them all.
 
 ## Project structure
 
 ```
 bbs.rb                        Entry point: Rubbs.board with WikiBBS and the two faces
-Gemfile, Gemfile.lock         rubbs from git; rubocop, minitest and rake in :development
 Rakefile                      rake test
-Dockerfile, .dockerignore     The image
-compose.yaml                  The wiki-bbs service on 2325, on the interstack network
 .rubocop.yml                  The house RuboCop rules
-.woodpecker.yaml              RuboCop, tests, compose check, ci-deploy wiki-bbs
 env-example                   Every environment variable, with its default
 lib/
   domain.rb                   Requires the domain in dependency order
@@ -204,6 +215,8 @@ test/                         Minitest tests of the domain (no network: Rubbs::C
 ```
 
 ## Tests
+
+In `boards/wiki`:
 
 ```bash
 bundle exec rake test
