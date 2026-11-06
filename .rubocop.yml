@@ -1,0 +1,10 @@
+# The root files (bbs.rb, Rakefile, Gemfile) by the boards' house rules; every board and
+# boards/common has its own .rubocop.yml, which RuboCop uses for the files under it.
+inherit_from: boards/common/lib/ttg/board/rubocop.yml
+
+AllCops:
+  Exclude:
+    - "boards/*/data/**/*"
+    - "boards/*/tmp/**/*"
+    - "state/**/*"
+    - "vendor/**/*"

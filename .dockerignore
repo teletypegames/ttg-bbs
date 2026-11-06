@@ -1,0 +1,9 @@
+# Only the core goes into the image; the boards come from the stack's boards/ (compose.yaml).
+*
+!Gemfile
+!Gemfile.lock
+!bbs.rb
+!boards.yml
+!bin/
+!boards/common/ttg-common.gemspec
+!boards/common/lib/

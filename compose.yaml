@@ -1,0 +1,112 @@
+# TTG BBS: every board of the network in one container (Rubbs::MultiRunner, bbs.rb), each in a
+# process of its own, on its own public port (boards.yml). The boards' code is the stack's boards/
+# (read-only), each board's data its boards/<name>/data. A deploy (ci-deploy ttg-bbs) copies boards/
+# in place: a change of one board restarts only that board; a change of the image (Gemfile.lock,
+# boards/common, bbs.rb, boards.yml, this file) restarts them all, in order.
+services:
+  ttg-bbs:
+    mem_limit: 1536m
+    cpus: 3.0
+    pids_limit: 2048
+    build: .
+    image: ttg-bbs
+    container_name: ttg-bbs
+    ports:
+      - "2323:2323"
+      - "2324:2324"
+      - "2325:2325"
+      - "2326:2326"
+      - "2327:2327"
+      - "2328:2328"
+      - "2329:2329"
+      - "2330:2330"
+      - "2331:2331"
+      - "2332:2332"
+      - "2333:2333"
+      - "2334:2334"
+      - "2335:2335"
+      - "2399:2399"
+    volumes:
+      - ./boards:/app/boards:ro
+      - ./state:/app/state
+      - ./boards/teletype/data:/app/boards/teletype/data
+      - ./boards/impostor/data:/app/boards/impostor/data
+      - ./boards/wiki/data:/app/boards/wiki/data
+      - ./boards/alexandria/data:/app/boards/alexandria/data
+      - ./boards/feedia/data:/app/boards/feedia/data
+      - ./boards/ttg-blog/data:/app/boards/ttg-blog/data
+      - ./boards/warp-engine/data:/app/boards/warp-engine/data
+      - ./boards/scriptorium/data:/app/boards/scriptorium/data
+      - ./boards/commodex/data:/app/boards/commodex/data
+      - ./boards/pixelia/data:/app/boards/pixelia/data
+      - ./boards/starbase/data:/app/boards/starbase/data
+      - ./boards/hackercave/data:/app/boards/hackercave/data
+      - ./boards/ttg-mail/data:/app/boards/ttg-mail/data
+      - ./boards/ttg-gate/data:/app/boards/ttg-gate/data
+    environment:
+      - TZ=Europe/Budapest
+      # The network's Central (TTG Gate BBS) and the accounts: the secret every board shares.
+      - RUBBS_AUTH_SECRET=${RUBBS_AUTH_SECRET:-}
+      - ALEXANDRIA_BBS_LANGUAGES=${ALEXANDRIA_BBS_LANGUAGES:-en,hu}
+      - SERMO_LLM_URL=http://llm:8080
+      - SERMO_LLM_MODEL=qwen3.5-0.8b
+      - SERMO_LLM_API_KEY=${SERMO_LLM_API_KEY:-}
+      - TELETYPE_BBS_LLM_API_KEY=${TELETYPE_BBS_LLM_API_KEY:-}
+      # teletypegames.org/blog reads the blog here (http://ttg-blog-bbs:8080 on interstack).
+      - TTG_BLOG_BBS_HTTP_PORT=8080
+      - TTG_GATE_BBS_GATEWAY_HOST=host.docker.internal
+      - TTG_GATE_BBS_PUBLIC_HOST=teletypegames.org
+      - TTG_GATE_BBS_FEEDBACK_WEBHOOK=${TTG_GATE_BBS_FEEDBACK_WEBHOOK:-}
+      - WIKI_BBS_IDLE=600
+      - WIKI_BBS_URL=http://wiki-grav
+      - WIKI_BBS_SUPERVISOR_PASSWORD=${WIKI_BBS_SUPERVISOR_PASSWORD:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      default:
+      interstack:
+        # The boards' old names, asked on interstack (the Central on :8090, the blog's API on :8080).
+        aliases:
+          - teletype-bbs
+          - impostor-bbs
+          - wiki-bbs
+          - alexandria-bbs
+          - feedia-bbs
+          - ttg-blog-bbs
+          - warp-engine-bbs
+          - scriptorium-bbs
+          - commodex-bbs
+          - pixelia-bbs
+          - starbase-bbs
+          - hackercave-bbs
+          - ttg-mail-bbs
+          - ttg-gate-bbs
+    restart: unless-stopped
+    # Every board tells its callers and gives them BBS_SHUTDOWN_SECONDS (20 s, Dockerfile), all at once.
+    stop_grace_period: 40s
+
+  # Global Discovery's prober (TTG Gate BBS), a daemon of its own from the same image.
+  ttg-gate-bbs-prober:
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
+    image: ttg-bbs
+    container_name: ttg-gate-bbs-prober
+    working_dir: /app/boards/ttg-gate
+    command: ["ruby", "bin/discovery-prober"]
+    healthcheck:
+      disable: true
+    labels:
+      org.teletypegames.autoheal: "false"
+    volumes:
+      - ./boards:/app/boards:ro
+      - ./boards/ttg-gate/data:/app/boards/ttg-gate/data
+    environment:
+      - TZ=Europe/Budapest
+      - TTG_GATE_BBS_OPS_WEBHOOK=${TTG_GATE_BBS_OPS_WEBHOOK:-${TTG_GATE_BBS_DISCORD_WEBHOOK:-}}
+    restart: unless-stopped
+
+networks:
+  interstack:
+    name: interstack
+    external: true

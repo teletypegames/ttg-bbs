@@ -12,7 +12,7 @@ require_relative 'lib/web/api'
 # editors (the blogger role) log in from the menu with their Teletype Games
 # account, or come in logged in from TTG Gate BBS. Beside the telnet line,
 # Web::Api serves the posts to teletypegames.org.
-Rubbs.board 'TTG Blog BBS', TTGBlogBBS do
+board = Rubbs.board 'TTG Blog BBS', TTGBlogBBS do
   preset  TTG::PRESET
   central TTG::CENTRAL
   auth    login: :menu
@@ -23,3 +23,5 @@ Rubbs.board 'TTG Blog BBS', TTGBlogBBS do
   goodbye greeting: 'Thanks for reading', color: Rubbs::Petscii::Colors::YE
   on_start { |bbs| Web::Api.new(bbs, port: bbs.http_port).start if bbs.http_port.positive? }
 end
+
+board.run! if Rubbs.main?(__FILE__)

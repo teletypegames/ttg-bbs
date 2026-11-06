@@ -1,0 +1,8 @@
+#!/bin/sh
+# One board on its own, as it runs in the container but without the others:
+#   bin/board feedia            (BBS_PORT from boards.yml unless given)
+set -e
+cd "$(dirname "$0")/.."
+name="$1"
+[ -f "boards/$name/bbs.rb" ] || { echo "usage: bin/board <name> (a folder of boards/)" >&2; exit 2; }
+exec env BBS_BOARDS="$name" bundle exec ruby bbs.rb

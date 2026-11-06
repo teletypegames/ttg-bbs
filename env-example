@@ -1,0 +1,17 @@
+# The environment of TTG BBS on the server: .env beside compose.yaml, never in the repository.
+# Every board's own variables, with their defaults, are in boards/<name>/env-example; those
+# compose.yaml passes from here:
+
+# Shared by every board: the Central (TTG Gate BBS) and the accounts
+RUBBS_AUTH_SECRET=
+
+ALEXANDRIA_BBS_LANGUAGES=en,hu
+SERMO_LLM_API_KEY=
+TELETYPE_BBS_LLM_API_KEY=
+TTG_GATE_BBS_FEEDBACK_WEBHOOK=
+TTG_GATE_BBS_OPS_WEBHOOK=
+WIKI_BBS_SUPERVISOR_PASSWORD=
+
+# rubbs, for the supervisor (bbs.rb): BBS_BOARDS=feedia,wiki starts only those; BBS_PORT and
+# BBS_MAX_SESSIONS of each board come from boards.yml
+BBS_BOARDS=

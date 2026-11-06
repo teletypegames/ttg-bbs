@@ -8,10 +8,12 @@ require_relative 'lib/ui/petscii'
 
 # An RSS reader on a telnet line, two faces on one port: an ANSI terminal
 # gets the modern desktop, a Commodore 64 the PETSCII screens.
-Rubbs.board 'Feedia BBS', FeediaBBS do
+board = Rubbs.board 'Feedia BBS', FeediaBBS do
   preset  TTG::PRESET
   central TTG::CENTRAL
   modern  UI::Modern::APP
   petscii UI::Petscii
   goodbye "The stories are their publishers'."
 end
+
+board.run! if Rubbs.main?(__FILE__)

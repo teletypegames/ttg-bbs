@@ -9,7 +9,7 @@ require_relative 'lib/ui/petscii'
 # The classic literature vault of Teletype Games on a telnet line, two faces
 # on one port: an ANSI terminal gets the modern desktop with a reader
 # window, a Commodore 64 the PETSCII screens with 38-column pages.
-Rubbs.board 'Scriptorium BBS', ScriptoriumBBS do
+board = Rubbs.board 'Scriptorium BBS', ScriptoriumBBS do
   preset  TTG::PRESET
   central TTG::CENTRAL
   modern  UI::Modern::APP
@@ -17,3 +17,5 @@ Rubbs.board 'Scriptorium BBS', ScriptoriumBBS do
   goodbye "The books are Project Gutenberg's gift."
   idle    900
 end
+
+board.run! if Rubbs.main?(__FILE__)

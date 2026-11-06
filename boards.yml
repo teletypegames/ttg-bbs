@@ -1,0 +1,19 @@
+# The boards of TTG BBS (Rubbs::MultiRunner), one entry a folder of boards/:
+#   port          the public telnet port, the same inside the container (compose.yaml publishes it)
+#   max_sessions  callers at once; each costs up to ~1.7 MB on top of ~30-40 MB
+#   memory        the board's own limit: over it twice in a row, the board is restarted in order
+#   enabled       false keeps the board stopped
+teletype:    { port: 2323, max_sessions: 60, memory: 192m }
+impostor:    { port: 2324, max_sessions: 40, memory: 128m }
+wiki:        { port: 2325, max_sessions: 50, memory: 128m }
+alexandria:  { port: 2326, max_sessions: 50, memory: 160m }
+feedia:      { port: 2327, max_sessions: 50, memory: 160m }
+ttg-blog:    { port: 2328, max_sessions: 50, memory: 160m }
+warp-engine: { port: 2329, max_sessions: 50, memory: 160m }
+scriptorium: { port: 2330, max_sessions: 50, memory: 160m }
+commodex:    { port: 2331, max_sessions: 50, memory: 160m }
+pixelia:     { port: 2332, max_sessions: 50, memory: 160m }
+starbase:    { port: 2333, max_sessions: 50, memory: 160m }
+hackercave:  { port: 2334, max_sessions: 50, memory: 256m }
+ttg-mail:    { port: 2335, max_sessions: 50, memory: 160m }
+ttg-gate:    { port: 2399, max_sessions: 50, memory: 160m }

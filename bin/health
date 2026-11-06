@@ -1,0 +1,4 @@
+#!/bin/sh
+# The container's health check: the supervisor wrote its state in the last
+# 90 seconds. Each board's own health is the supervisor's (Rubbs::MultiRunner).
+exec ruby -e 'exit(File.mtime(ARGV[0]) > Time.now - 90)' "${BBS_STATE_DIR:-/app/state}/multi_runner.json"

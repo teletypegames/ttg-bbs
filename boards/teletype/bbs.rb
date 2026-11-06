@@ -14,7 +14,7 @@ require_relative 'lib/ui/petscii'
 # BBS), and a caller handed on by the gate signed in walks past it; each
 # face closes with its lamps going out: that is its goodbye. A modern
 # terminal that never reported its size is a scanner, not listed.
-Rubbs.board 'Teletype BBS', TeletypeBBS do
+board = Rubbs.board 'Teletype BBS', TeletypeBBS do
   preset  TTG::PRESET
   central TTG::CENTRAL
   auth    login: :menu
@@ -33,3 +33,5 @@ Rubbs.board 'Teletype BBS', TeletypeBBS do
 
   on_session_end { |session, bbs| bbs.end_call(session.session_id) }
 end
+
+board.run! if Rubbs.main?(__FILE__)

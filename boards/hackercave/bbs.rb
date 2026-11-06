@@ -10,7 +10,7 @@ require_relative 'lib/ui/petscii'
 # one port: an ANSI terminal gets the modern desktop with the RFCs as
 # published, a Commodore 64 the PETSCII screens with the RFCs reflowed to 38
 # columns.
-Rubbs.board 'HackerCave BBS', HackerCaveBBS do
+board = Rubbs.board 'HackerCave BBS', HackerCaveBBS do
   preset  TTG::PRESET
   central TTG::CENTRAL
   modern  UI::Modern::APP
@@ -18,3 +18,5 @@ Rubbs.board 'HackerCave BBS', HackerCaveBBS do
   goodbye 'The RFCs are the work of the IETF and the RFC Editor.'
   idle 900
 end
+
+board.run! if Rubbs.main?(__FILE__)

@@ -18,7 +18,7 @@ require_relative 'lib/ui/petscii'
 # TTG Gate BBS. The board asks the wiki for a private page body with its own
 # token (the X-Wiki-Token header, WIKI_BBS_SUPERVISOR_PASSWORD), only for a
 # supervisor and only for private pages (WikiRepository#page).
-Rubbs.board 'TTG Wiki BBS', WikiBBS, slug: 'wiki-bbs' do
+board = Rubbs.board 'TTG Wiki BBS', WikiBBS, slug: 'wiki-bbs' do
   preset TTG::PRESET
   central TTG::CENTRAL
   auth login: :menu
@@ -31,3 +31,5 @@ Rubbs.board 'TTG Wiki BBS', WikiBBS, slug: 'wiki-bbs' do
   goodbye { |context, session| UI::Wording.goodbye(context, session) }
   idle(&:idle_seconds)
 end
+
+board.run! if Rubbs.main?(__FILE__)

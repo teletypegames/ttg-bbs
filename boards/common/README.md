@@ -17,15 +17,16 @@ gem 'ttg-common', git: 'https://git.teletypegames.org/bbs/common.git'
 require 'ttg/common'
 ```
 
-The board's `Gemfile.lock` pins a revision; `devarea/scripts/bbs-lock-bump.sh`
-moves every board to the latest rubbs and ttg-common together.
+ttg-common lives in the TTG BBS repository (`bbs/ttg-bbs`, `boards/common`), beside the boards that
+use it: they take it by path from the repository's `Gemfile`, so a change here reaches every board in
+the same commit. The repository's `Gemfile.lock` pins the rubbs revision of all of them.
 
 ## What is in it
 
 | Module | What | Used by |
 |--------|------|---------|
 | `TTG::PRESET` | The `Rubbs::Common::Board::Preset` of every board: the logo splash, teletypegames.org and its QR code on the goodbye, the User-Agent, the small TTG mark over the profile (`Rubbs::Common::Auth::Profile`) | every board (`preset TTG::PRESET`) |
-| `ttg/rake` | `rake ttg:sync` (`TTG::Sync`) writes the shared Dockerfile, .dockerignore and .woodpecker.yaml from `lib/ttg/board/`; `rake ttg:format` formats the code by the shared RuboCop rules (`rubocop -a`); the house rules of `rake bbs:check` (`TTG::Check`): `<slug>-bbs`, those files as synced, `.rubocop.yml` inheriting `lib/ttg/board/rubocop.yml`, compose limits, `stop_grace_period` and one 23xx port (another service built from the board's image, like the gate's prober, turns the image's healthcheck and autoheal label off), the preset, every setting in `env-example` | every board's Rakefile |
+| `ttg/rake` | `rake ttg:format` formats the code by the shared RuboCop rules (`rubocop -a`); the house rules of `rake bbs:check` (`TTG::Check`): `<slug>-bbs` in the folder `boards/<slug without -bbs>`, the board's entry in the repository's `boards.yml` (a 23xx `port`, `max_sessions`, `memory`), `.rubocop.yml` inheriting `lib/ttg/board/rubocop.yml` and an `env-example`, the preset, every setting in `env-example` | every board's Rakefile |
 | `TTG::CENTRAL`, `TTG::Central` | The Central of the network (Rubbs::Common::Central): TTG Gate BBS keeps the accounts and the network's services; `TTG::CENTRAL` is a `Rubbs::Common::Central::Client` on it (`TTG_CENTRAL_URL`, default `http://ttg-gate-bbs:8090`; the older `TTG_AUTH_URL` still read); `rake bbs:check` wants `RUBBS_AUTH_SECRET` in the env-example of a board with `central` or `auth` | every board that asks the gate (`central TTG::CENTRAL`) |
 | `TTG::AUTH`, `TTG::Auth` | The accounts of the network (Rubbs::Common::Auth): they live on TTG Gate BBS; `TTG::AUTH` is a `Rubbs::Common::Auth::Remote` on the Central (`TTG::CENTRAL`, path `/auth`), `TTG::Auth::ROLES` the roles (`member`, `sysop`, `blogger`, `wiki-supervisor`); `rake bbs:check` wants `RUBBS_AUTH_SECRET` in the env-example of a board with `auth` | every board with a login |
 | `TTG::Feedback` | What callers send the sysops from any board (feedback, a bug, an idea, a page, a board's own kind: a feed to add, a game's debrief), a `Rubbs::Common::Central::Service` on the gate (`/feedback`, `data/feedback.sqlite3`): limits for accounts and guests, the sysops' ops (`list`, `read`, `mark`, `delete`, `counts`), `import` of a board's old box. The **only** Discord line of the network: that something came (board, kind, sender), never what it says (`TTG_GATE_BBS_FEEDBACK_WEBHOOK` on the gate). `TTG::Feedback.open(session, narrative:, context:, kind:)` is the screen on either face; `TTG::Feedback.desk(session)` the sysops' desk on either face (every board's feedback, the new ones first: read, done, spam, unread again, delete), in a sysop's profile on every board | every board |
@@ -70,30 +71,15 @@ Rubbs::Rake.board
 `rake bbs:check` (and `rake`, in CI) then also checks the TTG house rules
 (`lib/ttg/check.rb`).
 
-### The shared files: `rake ttg:sync`
+### The shared RuboCop rules
 
-What every board has the same lives in `lib/ttg/board/`, and `rake ttg:sync`
-writes it into the board:
-
-| Template | In the board | Board's own part |
-|---|---|---|
-| `Dockerfile` | `Dockerfile` | packages added to the `apk add` line (kept) |
-| `dockerignore` | `.dockerignore` | — |
-| `woodpecker.yaml.erb` | `.woodpecker.yaml` | the name and the port (from `bbs.rb` and `compose.yaml`) |
-| `rubocop.yml` | inherited, not copied | the board's `.rubocop.yml`: `inherit_gem: { ttg-common: lib/ttg/board/rubocop.yml }` and its own exceptions after it |
+Every board's `.rubocop.yml` inherits `lib/ttg/board/rubocop.yml`
+(`inherit_gem: { ttg-common: lib/ttg/board/rubocop.yml }`) and adds its own exceptions after it.
 
 The shared RuboCop rules are also the formatter: what fits on a line (130) stays on one, a call, definition or hash that
 does not gets one argument, parameter or key a line with the closing bracket on its own line, the keys lined up as a
 table (the same layout rules as rubbs'). `rake ttg:format` applies them; ruby-lsp in the editor formats on save with
 the same rules.
 
-The Dockerfile runs the board with JSON logs (`BBS_LOG_FORMAT=json`), 20
-seconds for its callers when it stops (`BBS_SHUTDOWN_SECONDS=20`; the compose
-service sets `stop_grace_period: 30s`), a `HEALTHCHECK` on rubbs' health probe
-and the `org.teletypegames.autoheal=true` label: the server's `docker-autoheal`
-cron restarts a board that stays unhealthy, and `ci-deploy` waits until a new
-one is healthy (infra/host-config).
-
-A change for every board: edit the template, release ttg-common, then in each
-board bump the lock, `rake ttg:sync`, commit. `rake bbs:check` fails in a board
-whose files differ from its ttg-common's.
+How the boards run (one image, `Rubbs::MultiRunner`, JSON logs, the health probe, the deploy that restarts only the
+boards that changed) is the repository's README.

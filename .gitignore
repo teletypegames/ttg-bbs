@@ -1,0 +1,11 @@
+.env
+.claude
+.ruby-lsp
+.DS_Store
+tmp
+vendor
+state
+boards/*/data/*
+!boards/*/data/.keep
+boards/.revision
+boards/.deploying

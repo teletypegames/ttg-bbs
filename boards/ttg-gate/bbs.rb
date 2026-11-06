@@ -8,7 +8,7 @@ require_relative 'lib/ui/petscii'
 
 # The gate of the Teletype Games boards and of the telnet BBSes of the
 # world: on a modern terminal and on a Commodore 64.
-Rubbs.board 'TTG Gate BBS', TTGGateBBS do
+board = Rubbs.board 'TTG Gate BBS', TTGGateBBS do
   preset  TTG::PRESET
   mouse   false
   auth(login: :menu, &:accounts)
@@ -17,3 +17,5 @@ Rubbs.board 'TTG Gate BBS', TTGGateBBS do
   modern { |bbs| call { UI::Modern::Gate.new(session, bbs).run } }
   petscii(goodbye: false) { |bbs| call { UI::Petscii.call(session, bbs) } }
 end
+
+board.run! if Rubbs.main?(__FILE__)

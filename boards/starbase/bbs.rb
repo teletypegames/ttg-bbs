@@ -8,10 +8,12 @@ require_relative 'lib/ui/petscii'
 
 # A Star Trek library on a telnet line, two faces on one port: a modern
 # terminal gets the desktop, a Commodore 64 the PETSCII screens.
-Rubbs.board 'Starbase BBS', StarbaseBBS do
+board = Rubbs.board 'Starbase BBS', StarbaseBBS do
   preset  TTG::PRESET
   central TTG::CENTRAL
   modern  UI::Modern::APP
   petscii UI::Petscii
   goodbye 'Articles from memory-alpha.fandom.com, under CC BY-NC.'
 end
+
+board.run! if Rubbs.main?(__FILE__)
