@@ -6,9 +6,10 @@ module UI
   # The wiki on a Commodore 64: PETSCII on a 40×25 screen, one level of the
   # page tree per screen as a numbered cursor list, the ones with pages
   # under them marked with >. A number opens the page or goes down a level,
-  # where the first line is the page itself; q goes back up. At the top S
-  # unlocks the private pages (marked *) and R re-reads the index. A page
-  # comes in screenfuls that wait for RETURN.
+  # where the first line is the page itself; q goes back up. At the top P
+  # unlocks the private pages (marked *), R re-reads the index, W opens the
+  # wall. A page comes in screenfuls that wait for RETURN, then F writes to
+  # the sysops about it.
   class Petscii < Rubbs::Petscii::Face
     include Wording
 
@@ -41,6 +42,7 @@ module UI
         when nil then return
         when 'p' then own_profile
         when 'r' then refresh
+        when 'w' then TTG::Wall.open(@session)
         else enter(choice, parent)
         end
       rescue Rubbs::Common::Line::Abort
@@ -55,8 +57,9 @@ module UI
       pick(parent.title.upcase, [parent, *tree[parent.route]]) { |page| label(page, own: page.equal?(parent)) }
     end
 
-    # The commands of the top level: the profile and the refresh.
-    def top = { 'p' => 'profile', 'r' => 'refresh' }
+    # The commands of the top level: the profile (you), the refresh and the
+    # wall (ttg-common), short enough for the hint row.
+    def top = { 'p' => 'you', 'r' => 'refresh', 'w' => 'wall' }
 
     def right = "#{'sv ' if supervisor?}#{wiki.pages.size} pages "
 
@@ -103,7 +106,10 @@ module UI
         wait:    false,
         room:    2
       )
-      show_qr(wiki_page) if actions(['c', 'qr code'], %w[q back]) == 'c'
+      case actions(['c', 'qr code'], %w[f feedback], %w[q back])
+      when 'c' then show_qr(wiki_page)
+      when 'f' then TTG::Feedback.open(@session, context: "#{wiki_page.title} (#{wiki_page.route})")
+      end
     end
 
     # The page's address as a QR code in the middle of the screen, for a

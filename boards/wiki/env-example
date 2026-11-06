@@ -21,6 +21,8 @@ WIKI_BBS_URL=http://localhost:9120
 # in the value (it is templated into a yaml string).
 WIKI_BBS_SUPERVISOR_PASSWORD=
 
-# The accounts of the network (Rubbs::Common::Auth, on TTG Gate BBS): the secret every board shares
-# (in .env on the server, never here); supervisors are the accounts with the wiki-supervisor role
+# The network's Central (TTG Gate BBS): the accounts (Rubbs::Common::Auth), feedback and the wall.
+# The secret every board shares (in .env on the server, never here); supervisors are the accounts
+# with the wiki-supervisor role
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
 RUBBS_AUTH_SECRET=

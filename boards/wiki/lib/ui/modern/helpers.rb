@@ -3,8 +3,9 @@
 module UI
   module Modern
     # What the caller does on the modern face: the browser, the refresh, the
-    # QR code of a page, and the private pages following who is on the line
-    # (Wiki > Profile, Rubbs::Common::Auth).
+    # QR code of a page, the private pages following who is on the line
+    # (Wiki > Profile, Rubbs::Common::Auth), and the network's feedback and
+    # wall (ttg-common).
     module Helpers
       include Wording
 
@@ -45,6 +46,16 @@ module UI
 
         qr(page.public_url, title: 'Scan the page')
       end
+
+      # The network's feedback (ttg-common TTG::Feedback), about the page
+      # picked in the browser, if any.
+      def feedback
+        page = window(:browser)&.selected
+        with_line { TTG::Feedback.open(@session, context: page && "#{page.title} (#{page.route})") }
+      end
+
+      # The board's wall (TTG::Wall).
+      def wall = with_line { TTG::Wall.open(@session) }
     end
   end
 end

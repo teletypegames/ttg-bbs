@@ -63,7 +63,7 @@ class PetsciiFaceTest < Minitest::Test
     assert_includes screen, 'ttg wiki bbs'
     assert_match(/DOS >/, screen)
     assert_includes screen, '3 pages'
-    assert_includes screen, 'profile'
+    assert_includes screen, 'p: you r: refresh w: wall q: back'
   end
 
   def test_a_private_page_stays_locked
@@ -75,7 +75,7 @@ class PetsciiFaceTest < Minitest::Test
   def test_a_supervisor_reads_a_private_page
     screen = call(*READ_PRIVATE, identity: account('tasi', role: 'wiki-supervisor'))
     assert_includes screen, 'Text of /dos/gmenu.'
-    assert_includes screen, 'profile'
+    assert_includes screen, 'C qr code F feedback Q back'
   end
 
   def test_an_account_without_the_role_reads_no_private_page

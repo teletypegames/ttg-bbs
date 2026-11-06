@@ -40,6 +40,12 @@ Pages marked `*` in the list are private (login-protected on the wiki), for
 the supervisors (see [Supervisors](#supervisors)): **Wiki > Profile** (on a
 C64: P on the top level) to log in with a Teletype Games account, or out again.
 
+**Wiki > The wall** (`W` on the C64) is the board's wall, where callers write and answer each
+other; **Wiki > Write to the sysops** (`F` under a page on the C64) sends the sysops a message,
+about the page picked. Both come from ttg-common (`TTG::Wall`, `TTG::Feedback`) and live on TTG
+Gate BBS, the network's Central; the board says them its own way in `lib/content/wall.yml` and
+`lib/content/feedback.yml`.
+
 The QR code (rubbs' `Rubbs::Common::Text::QR`, half blocks) is the page's address on the
 web, `https://wiki.teletypegames.org<route>`, for a phone to open it with its
 pictures and diagrams; a private page asks for the wiki's login there. It
@@ -157,7 +163,8 @@ telnet localhost 2323
 | `WIKI_BBS_IDLE` | `900` | Idle disconnect (seconds; the compose file sets 600) |
 | `WIKI_BBS_URL` | `http://localhost:9120` | Grav wiki base URL |
 | `WIKI_BBS_SUPERVISOR_PASSWORD` | — | The board's API token for the private pages (the `X-Wiki-Token` header), not a caller password — must match the grav service's `SUPERVISOR_PASSWORD`; empty = private pages stay locked |
-| `RUBBS_AUTH_SECRET` | — | The secret every board of the network shares, for the accounts on TTG Gate BBS (in `.env` on the server) |
+| `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | The network's Central (TTG Gate BBS): the accounts, feedback and the wall |
+| `RUBBS_AUTH_SECRET` | — | The secret every board of the network shares, for the Central on TTG Gate BBS (in `.env` on the server) |
 
 `env-example` lists them all with their defaults. `WikiBBS`
 (`lib/domain/wiki_bbs.rb`) declares the `WIKI_BBS_` ones as `Rubbs::Common::Board::Domain`

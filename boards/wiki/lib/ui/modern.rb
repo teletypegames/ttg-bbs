@@ -25,7 +25,9 @@ module UI
       command(:qr,      'Page &QR code',  key: 'F3', hint: 'QR')      { show_qr }
       command(:refresh, '&Refresh index', key: 'F8', hint: 'Refresh') { refresh_pages }
       command(:profile, 'Pro&file…') { own_profile }
-      menu 'Wiki', :profile, :separator, :browse, :qr, :refresh, :separator, :log_off
+      command(:wall,     'The &wall…', hint: 'Wall') { wall }
+      command(:feedback, 'Write to the &sysops…', hint: 'Feedback') { feedback }
+      menu 'Wiki', :profile, :separator, :browse, :qr, :refresh, :separator, :wall, :feedback, :separator, :log_off
       help about: -> { "#{ABOUT}\n\nSource: #{wiki.base_url}\nPages:  #{wiki.pages.size}" }, keys: KEYS
 
       status { "#{'supervisor  ' if supervisor?}#{wiki.pages.size} pages" }
