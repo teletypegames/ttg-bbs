@@ -1,0 +1,21 @@
+# ttg-common keeps the rules it gives the boards.
+inherit_from: lib/ttg/board/rubocop.yml
+
+AllCops:
+  TargetRubyVersion: 3.2
+  Exclude:
+    - "vendor/**/*"
+    - "doc/**/*"
+
+Metrics/BlockLength:
+  Exclude:
+    - "test/**/*"
+    - "*.gemspec"
+
+Metrics/AbcSize:
+  Exclude:
+    - "test/**/*"
+
+# The gem is installed from git, not pushed to rubygems.org.
+Gemspec/RequireMFA:
+  Enabled: false

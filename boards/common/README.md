@@ -1,0 +1,99 @@
+# ttg-common
+
+The shared parts of the Teletype Games BBS boards, on top of
+[rubbs](https://git.teletypegames.org/engines/rubbs) (the `bbs` gem). Something
+goes here when more than one TTG board needs it but it is too TTG-specific for
+rubbs itself: a logo, a house text, a list of the network's boards.
+
+## Using it
+
+```ruby
+# Gemfile
+gem 'bbs', git: 'https://git.teletypegames.org/engines/rubbs.git'
+gem 'ttg-common', git: 'https://git.teletypegames.org/bbs/common.git'
+```
+
+```ruby
+require 'ttg/common'
+```
+
+The board's `Gemfile.lock` pins a revision; `devarea/scripts/bbs-lock-bump.sh`
+moves every board to the latest rubbs and ttg-common together.
+
+## What is in it
+
+| Module | What | Used by |
+|--------|------|---------|
+| `TTG::PRESET` | The `Rubbs::Common::Board::Preset` of every board: the logo splash, teletypegames.org and its QR code on the goodbye, the User-Agent, the small TTG mark over the profile (`Rubbs::Common::Auth::Profile`) | every board (`preset TTG::PRESET`) |
+| `ttg/rake` | `rake ttg:sync` (`TTG::Sync`) writes the shared Dockerfile, .dockerignore and .woodpecker.yaml from `lib/ttg/board/`; `rake ttg:format` formats the code by the shared RuboCop rules (`rubocop -a`); the house rules of `rake bbs:check` (`TTG::Check`): `<slug>-bbs`, those files as synced, `.rubocop.yml` inheriting `lib/ttg/board/rubocop.yml`, compose limits, `stop_grace_period` and one 23xx port (another service built from the board's image, like the gate's prober, turns the image's healthcheck and autoheal label off), the preset, every setting in `env-example` | every board's Rakefile |
+| `TTG::CENTRAL`, `TTG::Central` | The Central of the network (Rubbs::Common::Central): TTG Gate BBS keeps the accounts and the network's services; `TTG::CENTRAL` is a `Rubbs::Common::Central::Client` on it (`TTG_CENTRAL_URL`, default `http://ttg-gate-bbs:8090`; the older `TTG_AUTH_URL` still read); `rake bbs:check` wants `RUBBS_AUTH_SECRET` in the env-example of a board with `central` or `auth` | every board that asks the gate (`central TTG::CENTRAL`) |
+| `TTG::AUTH`, `TTG::Auth` | The accounts of the network (Rubbs::Common::Auth): they live on TTG Gate BBS; `TTG::AUTH` is a `Rubbs::Common::Auth::Remote` on the Central (`TTG::CENTRAL`, path `/auth`), `TTG::Auth::ROLES` the roles (`member`, `sysop`, `blogger`, `wiki-supervisor`); `rake bbs:check` wants `RUBBS_AUTH_SECRET` in the env-example of a board with `auth` | every board with a login |
+| `TTG::Feedback` | What callers send the sysops from any board (feedback, a bug, an idea, a page, a board's own kind: a feed to add, a game's debrief), a `Rubbs::Common::Central::Service` on the gate (`/feedback`, `data/feedback.sqlite3`): limits for accounts and guests, the sysops' ops (`list`, `read`, `mark`, `delete`, `counts`), `import` of a board's old box. The **only** Discord line of the network: that something came (board, kind, sender), never what it says (`TTG_GATE_BBS_FEEDBACK_WEBHOOK` on the gate). `TTG::Feedback.open(session, narrative:, context:, kind:)` is the screen on either face; `TTG::Feedback.desk(session)` the sysops' desk on either face (every board's feedback, the new ones first: read, done, spam, unread again, delete), in a sysop's profile on every board | every board |
+| `TTG::Wall` | The wall of a board, where callers write and answer each other (`/wall`, `data/wall.sqlite3` on the gate): 500 characters a note, an answer names the note it answers (one level), an account under its name, a guest under a name that is no account's and looks like none, marked *(guest)*; limits for both; the sysop hides a note or bars a guest's line for a while. `TTG::Wall.open(session, board:)` (`board: nil`: every board's, the gate), `TTG::Wall.lines(n)` for a board's own screen, `import` of older notes | every board |
+| `TTG::PrivateMessage` | Letters from account to account on the gate (`/messages`, `data/messages.sqlite3`): write, inbox, outbox, read, delete, unread, block; accounts only. `TTG::PrivateMessage.open(session)` is the mailbox on either face (the letters, new ones marked; read, reply, delete, block the writer; write in the full-screen editor; the sent letters), in the words of `lib/content/mail.yml`; `TTG::PrivateMessage.unread(session)` counts the letters not read yet. A letter is read on its sheet (`Stationery`: a frame with the network's red stamp, the writer, the reader, the day, the postmark of TTG MAIL) and a sent one goes into the pillar box in a little film | TTG Mail BBS |
+| `TTG::Narrative` | What the screens of Feedback and the Wall say: their defaults, and the board's own over them (a Hash, or `lib/content/feedback.yml` / `wall.yml`), with shorter C64 texts under `petscii:` and the kinds of feedback, each with its own intro and fields. A key the defaults do not know is an error at boot | the boards that say it their own way |
+| `TTG::Screen`, `TTG::Places` | The line-by-line screen the two draw on, the same on either face; `Places` puts *Feedback* and *The Wall* in every board's profile (`Rubbs::Common::Auth::Profile.extra`) when the board has `central` | every board |
+| `TTG::Logo` | The Teletype Games logo as two `Rubbs::Common::Art` drawings (modern: 66×23 half blocks, 256 colours; C64: 33×23 quarter blocks) and as a `Rubbs::Common::Call::Splash` | every board (all twelve) |
+
+### `TTG::Logo`
+
+```ruby
+Rubbs.board('Teletype BBS', TeletypeBBS) { preset TTG::PRESET; … }   # the splash comes with the preset
+```
+
+After the terminal question the caller gets the logo, centred, with
+PRESS ANY KEY TO CONTINUE under it. `TTG::Logo.art(:modern)` and
+`TTG::Logo.art(:petscii)` are the drawings alone, for a board that places the
+logo itself. The drawings (`lib/ttg/logo/*.yml`) were made from
+`media/LOGOv2/TTG-Logo-Black.png`, the logo halved to 66×46 pixels.
+
+## Adding a part
+
+One module under `TTG` in its own file (`lib/ttg/<part>.rb`, its data beside it
+in `lib/ttg/<part>/`), required from `lib/ttg/common.rb`, with a test and a row
+in the table above. Everything is RDoc-documented (CI fails below 100%).
+
+## Releasing
+
+Bump `ttg-common.gemspec`, commit, tag `vX.Y.Z` (annotated) and push both; CI
+rejects a tag that does not match the gemspec.
+
+### The house rules: `ttg/rake`
+
+```ruby
+# Rakefile of every TTG board
+require 'rubbs/rake'
+require 'ttg/rake'
+Rubbs::Rake.board
+```
+
+`rake bbs:check` (and `rake`, in CI) then also checks the TTG house rules
+(`lib/ttg/check.rb`).
+
+### The shared files: `rake ttg:sync`
+
+What every board has the same lives in `lib/ttg/board/`, and `rake ttg:sync`
+writes it into the board:
+
+| Template | In the board | Board's own part |
+|---|---|---|
+| `Dockerfile` | `Dockerfile` | packages added to the `apk add` line (kept) |
+| `dockerignore` | `.dockerignore` | — |
+| `woodpecker.yaml.erb` | `.woodpecker.yaml` | the name and the port (from `bbs.rb` and `compose.yaml`) |
+| `rubocop.yml` | inherited, not copied | the board's `.rubocop.yml`: `inherit_gem: { ttg-common: lib/ttg/board/rubocop.yml }` and its own exceptions after it |
+
+The shared RuboCop rules are also the formatter: what fits on a line (130) stays on one, a call, definition or hash that
+does not gets one argument, parameter or key a line with the closing bracket on its own line, the keys lined up as a
+table (the same layout rules as rubbs'). `rake ttg:format` applies them; ruby-lsp in the editor formats on save with
+the same rules.
+
+The Dockerfile runs the board with JSON logs (`BBS_LOG_FORMAT=json`), 20
+seconds for its callers when it stops (`BBS_SHUTDOWN_SECONDS=20`; the compose
+service sets `stop_grace_period: 30s`), a `HEALTHCHECK` on rubbs' health probe
+and the `org.teletypegames.autoheal=true` label: the server's `docker-autoheal`
+cron restarts a board that stays unhealthy, and `ci-deploy` waits until a new
+one is healthy (infra/host-config).
+
+A change for every board: edit the template, release ttg-common, then in each
+board bump the lock, `rake ttg:sync`, commit. `rake bbs:check` fails in a board
+whose files differ from its ttg-common's.

@@ -1,0 +1,52 @@
+size: [44, 13]
+charset: cp437
+palette:
+  G: '#7bff30'
+  H: '#51ff00'
+  L: '#a5a5a5'
+  W: '#ffffff'
+  d: '#525252'
+  g: '#008300'
+  l: '#949494'
+chars: |2
+  ▀▀▀▀▀▀▀▀▀▀▀▀▀█ ▀▀▀▀▀▀▀▀▀▀▀▀▀  ▄▀▀▀▀▀▀▀▀▀▀▀▀█
+  ██████████████ ████████████▀ █████████████▄▄
+  ▄ ████████████ ████████████ ██████▀▀▀▀▀█▀█▀ 
+    ▄▀▀█████▀▀▀▀ ▀▀▀██████▀▀▀ █████           
+     ▀ █████▀▀▀     ██████▀▀▀ █████   ██████▄ 
+       █████        ██████    █████   ████████
+       ▀▀▀▀▀        ▀▀▀▀▀▀    ▀▀▀▀▀   ██▀▀▀▀▀▀
+       █████        ██████    █████      █████
+       █████        ██████    █████▄    ▄█████
+       ▀▀▀▀▀        ▀▀▀▀▀▀    ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
+       ▀▀▀▀▀        ▀▀▀▀▀▀      ▀▀▀▀▀▀▀▀▀▀▀▀▀▄
+                                              
+   ████████████▄▄██████████▄▄▄▄██████████████ 
+colors: |2
+  GGGGGGGGGGGGGG.GGGGGGGGGGGGG..gGGGGGGGGGGGGG
+  gggggggggggggG.ggggggggggggH.ggggggggggggggG
+  g.gggggggggggg.gggggggggggg.ggggggggggggggg.
+  ..gggggggggggg.gggggggggggg.ggggg...........
+  ...g.gggggggg.....ggggggggg.ggggg...ggggggg.
+  .....ggggg........gggggg....ggggg...gggggggg
+  .....WWWWW........WWWWWW....WWWWW...WWWWWWWW
+  .....LLLLL........LLLLLL....LLLLL......LLLLL
+  .....LLLLL........LLLLLL....LLLLLL....LLLLLL
+  .....LLLLL........LLLLLL....LLLLLLLLLLLLLLLL
+  .....lllll........llllll......llllllllllllld
+  ............................................
+  .gggggggggggggggggggggggggggggggggggggggggg.
+background: |2
+  ggggggggggggg..ggggggggggggg...gggggggggggg.
+  ............................................
+  ............................................
+  ............................................
+  ............................................
+  ............................................
+  .....LLLLL........LLLLLL....LLLLL.....LLLLLL
+  ............................................
+  ............................................
+  .....lllll........llllll......lllllllllllll.
+  .....ddddd........dddddd.......ddddddddddd..
+  ............................................
+  ............................................
