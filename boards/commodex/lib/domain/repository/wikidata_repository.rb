@@ -16,7 +16,7 @@ class WikidataRepository
   Error = Rubbs::Common::Web::Wikidata::Error
 
   USER_AGENT   = 'CommodexBBS/0.1 (Commodex BBS, Teletype Games telnet BBS; https://teletypegames.org; ' \
-                 'https://git.teletypegames.org/bbs/commodex-bbs)'
+                 'https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/commodex)'
   LANGUAGES    = 'en,mul,de,fr,it,es,nl,sv,pl,hu,ja'
   GAMES        = '?item wdt:P400 wd:Q99775 . ?item wdt:P31/wdt:P279* wd:Q7889 .'
   LABELS       = "SERVICE wikibase:label { bd:serviceParam wikibase:language \"#{LANGUAGES}\". }".freeze

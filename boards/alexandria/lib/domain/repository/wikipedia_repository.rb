@@ -9,7 +9,7 @@ require 'json'
 # Failures go up as Rubbs::Common::Web::HTTP::Error; an unknown language is an
 # ArgumentError.
 class WikipediaRepository
-  USER_AGENT   = 'AlexandriaBBS/0.1 (Alexandria BBS, Teletype Games telnet BBS; https://git.teletypegames.org/bbs/alexandria-bbs)'
+  USER_AGENT   = 'AlexandriaBBS/0.1 (Alexandria BBS, Teletype Games telnet BBS; https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/alexandria)'
   RATE         = 5
   TTL          = 600
   CACHE_SIZE   = 200

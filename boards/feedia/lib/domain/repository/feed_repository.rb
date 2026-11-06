@@ -11,7 +11,7 @@ require 'rubbs/common/storage/cache'
 # body that is no feed (FeedXml::Unreadable) goes up, unless an older copy
 # of the feed is kept: that one is served instead.
 class FeedRepository
-  USER_AGENT = 'FeediaBBS/0.1 (Feedia BBS, Teletype Games telnet RSS reader; https://git.teletypegames.org/bbs/feedia-bbs)'
+  USER_AGENT = 'FeediaBBS/0.1 (Feedia BBS, Teletype Games telnet RSS reader; https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/feedia)'
   ACCEPT     = 'application/rss+xml, application/atom+xml, application/xml;q=0.9, */*;q=0.5'
   TTL        = 600
   MAX_BYTES  = 1024 * 1024

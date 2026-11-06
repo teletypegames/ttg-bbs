@@ -9,7 +9,7 @@ require 'json'
 # failure goes up as Rubbs::Common::Web::HTTP::Error.
 class WikipediaRepository
   USER_AGENT  = 'CommodexBBS/0.1 (Commodex BBS, Teletype Games telnet BBS; https://teletypegames.org; ' \
-                'https://git.teletypegames.org/bbs/commodex-bbs)'
+                'https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/commodex)'
   TTL         = 86_400
   CACHE_BYTES = 4 * 1024 * 1024
   # A lead longer than this many characters is cut at a paragraph.

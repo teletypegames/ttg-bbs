@@ -15,7 +15,7 @@ require 'uri'
 # d dir wr ma }; the films are the episodes of the series "films".
 class WikidataRepository
   USER_AGENT = 'StarbaseBBS/0.1 (Starbase BBS, Teletype Games telnet BBS; https://teletypegames.org; ' \
-               'https://git.teletypegames.org/bbs/starbase-bbs)'
+               'https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/starbase)'
   EPISODES   = '?item wdt:P31 wd:Q61220733 .'
   FILMS      = '?item wdt:P31 wd:Q11424 ; wdt:P8345 wd:Q1092 . FILTER NOT EXISTS { ?item wdt:P31 wd:Q61220733 }'
   LABELS     = 'SERVICE wikibase:label { bd:serviceParam wikibase:language "en,mul". }'
