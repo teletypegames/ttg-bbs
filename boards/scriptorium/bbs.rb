@@ -11,6 +11,7 @@ require_relative 'lib/ui/petscii'
 # window, a Commodore 64 the PETSCII screens with 38-column pages.
 Rubbs.board 'Scriptorium BBS', ScriptoriumBBS do
   preset  TTG::PRESET
+  central TTG::CENTRAL
   modern  UI::Modern::APP
   petscii UI::Petscii
   goodbye "The books are Project Gutenberg's gift."

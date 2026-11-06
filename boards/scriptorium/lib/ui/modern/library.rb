@@ -3,7 +3,8 @@
 module UI
   module Modern
     # What the caller does on the modern face: the library's lists opened
-    # in windows, the search, opening a book, its QR code.
+    # in windows, the search, opening a book, its QR code, the network's
+    # feedback and wall (ttg-common).
     module Library
       PREPARING = 'The catalog is being prepared: it is downloaded from Project Gutenberg ' \
                   'and indexed. Try again in a minute. The Classics shelf is open meanwhile.'
@@ -70,6 +71,13 @@ module UI
       # The book's Project Gutenberg page as a QR code, for a phone or an
       # e-reader to take the whole book.
       def show_qr(book) = qr(book.link, title: "eBook ##{book.id} on your phone")
+
+      # The network's feedback (TTG::Feedback), about the chapter in the
+      # reader, if any.
+      def feedback = with_line { TTG::Feedback.open(@session, context: reading_now) }
+
+      # The board's wall (TTG::Wall).
+      def wall = with_line { TTG::Wall.open(@session) }
     end
   end
 end

@@ -6,7 +6,8 @@ module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor menu,
   # the shelves and the books as numbered lists, a book's record on a page,
   # its chapters as a numbered list, and the reader: 38-column pages that
-  # wait for RETURN, N and P for the next and the previous chapter.
+  # wait for RETURN, N and P for the next and the previous chapter. The
+  # network's wall and feedback (ttg-common) are on the menu.
   class Petscii < Rubbs::Petscii::Face
     LOGO_COLORS = [WH, WH, YE, YE, CY].freeze
     PREPARING   = 'The catalog is being prepared: it is downloaded from Project Gutenberg and indexed. ' \
@@ -38,6 +39,8 @@ module UI
       item('2', 'gutenberg bookshelves', 'the shelves of project gutenberg') { shelves }
       item('3', 'search by title or author', 'words, and lang:fr for one language') { search }
       item('4', 'most read on this board', 'what the callers here read') { most_read }
+      item('w', "the reading room's wall", 'a word with the other readers') { TTG::Wall.open(@session) }
+      item('f', 'write to the scribes', 'a broken chapter, a missing book') { TTG::Feedback.open(@session) }
       item('a', 'about', 'the board, the books, the reader keys') { page('ABOUT', ABOUT) }
       log_off 'hang up. see you!'
     end

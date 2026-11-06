@@ -39,6 +39,15 @@ of the screen).
 - **Most read** — the books opened most often on this board (the `reads`
   table of `data/scriptorium.sqlite3`).
 
+### The wall and the feedback
+
+**Library > The wall** (`w` on the C64) is the reading room's wall, where callers write and
+answer each other; **Library > Write to the scribes** (`f` on the C64) sends the sysops a
+message, about the chapter in the reader when one is open. Both are ttg-common's (`TTG::Wall`,
+`TTG::Feedback`) and live on TTG Gate BBS, the network's Central, asked on the `interstack`
+network (`central TTG::CENTRAL`); `lib/content/wall.yml` and `lib/content/feedback.yml` say
+them the board's way.
+
 ### The catalog
 
 Project Gutenberg's own catalog, `pg_catalog.csv.gz` (about 5.6 MB), is
@@ -99,7 +108,8 @@ BBS_PORT=2330 bundle exec ruby bbs.rb
 ```
 
 Then `telnet localhost 2330`. Every environment variable is in `env-example`
-with its default. The board has no secrets.
+with its default. The board's only secret is the one every board of the network shares,
+`RUBBS_AUTH_SECRET`.
 
 | Variable | Default | |
 |---|---|---|
@@ -113,6 +123,8 @@ with its default. The board has no secrets.
 | `SCRIPTORIUM_BBS_TEXTS` | `data/texts` | the cleaned texts and chapter indexes |
 | `SCRIPTORIUM_BBS_CACHE_MB` | `300` | the most the text cache takes |
 | `SCRIPTORIUM_BBS_BOOK_MAX` | `8388608` | the longest plain text fetched, in bytes |
+| `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | the network's Central (TTG Gate BBS): feedback and the wall |
+| `RUBBS_AUTH_SECRET` | — | the secret every board shares, for the Central (in `.env` on the server) |
 `data/` is a volume. A `data/reads.jsonl` left by an older board (one JSON line
 a read) is imported into the `reads` table on the first start, one
 transaction, an unreadable line skipped, and renamed `reads.jsonl.imported`;

@@ -13,7 +13,8 @@ module UI
   # The board on a modern terminal (ANSI colours, UTF-8, a mouse): the logo
   # on the desktop, the shelves and their books in two-pane windows with a
   # book's record on the right, a search box, a book's chapters with the
-  # start of the one picked, and a reader window.
+  # start of the one picked, a reader window, and the network's feedback and
+  # wall (ttg-common).
   module Modern
     ABOUT = 'Scriptorium BBS — the classic literature vault of Teletype Games, powered by rubbs. ' \
             'Tens of thousands of books from Project Gutenberg (gutenberg.org), cut into chapters for your ' \
@@ -34,7 +35,9 @@ module UI
       command(:search,    'Search…',     key: 'F3') { search }
       command(:shelves,   'Bookshelves', key: 'F4', hint: 'Shelves') { shelf_list }
       command(:most_read, 'Most read',   key: 'F7') { most_read }
-      menu 'Library', :classics, :search, :shelves, :most_read, :separator, :log_off
+      command(:wall,      'The wall…', hint: 'Wall') { wall }
+      command(:feedback,  'Write to the scribes…', hint: 'Feedback') { feedback }
+      menu 'Library', :classics, :search, :shelves, :most_read, :separator, :wall, :feedback, :separator, :log_off
       help about: ABOUT, reading: READING, keys: KEYS
 
       status { library.ready? ? "#{thousands(library.count)} books" : 'preparing the catalog…' }

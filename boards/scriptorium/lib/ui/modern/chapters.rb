@@ -12,7 +12,16 @@ module UI
       # The book, its text and the chapter open in a reader.
       Bookmark = Struct.new(:book, :text, :number, :paragraphs)
 
-      def read(book, text, number) = show(:reader, bookmark: Bookmark.new(book, text, number))
+      def read(book, text, number) = show(:reader, bookmark: context[:bookmark] = Bookmark.new(book, text, number))
+
+      # The book and the chapter in the reader, for the feedback; +nil+
+      # without a reader open.
+      def reading_now
+        bookmark = context[:bookmark]
+        return unless bookmark && window(:reader)
+
+        "#{bookmark.book.short_title}, chapter #{bookmark.number}: #{bookmark.text.chapter(bookmark.number)&.title}"
+      end
 
       def turn(reader, bookmark, step)
         number = bookmark.number + step
