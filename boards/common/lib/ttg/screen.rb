@@ -79,10 +79,14 @@ module TTG
       Rubbs::Common::Screens::Editor.new(@session, text: text, title: plain(title.to_s.upcase), max: max).run
     end
 
-    # A cursor menu of +items+, pairs of [label, value] (the first letter
-    # of the label is its key); the value taken, or +nil+.
+    # A cursor menu of +items+, [label, value] or [label, value, key] (the
+    # key is the label's first letter unless given; +nil+: none); the value
+    # taken, or +nil+.
     def menu(items)
-      items = items.map { |label, value| Rubbs::Common::Screens::Selector.item(plain(label), key: label[0].downcase, value: value) }
+      items = items.map do |label, value, key|
+        key = label[0].downcase if key.nil? && !label.empty?
+        Rubbs::Common::Screens::Selector.item(plain(label), key: key == false ? nil : key, value: value)
+      end
       width = [items.map { |item| item.label.length }.max.to_i + 6, 24].max
       Rubbs::Common::Screens::Selector.new(@session, items, width: [width, cols].min, back: :back).run
     end

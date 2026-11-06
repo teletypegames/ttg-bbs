@@ -210,6 +210,22 @@ class ScreensTest < Minitest::Test
     assert_includes session.output, 'Thank you'
   end
 
+  def test_the_desk_reads_and_marks
+    quietly { TTG::Feedback.box.call(:submit, guest('Joe'), subject: 'Broken', body: 'Chapter 3 is empty') }
+    @accounts.grant('Ada', 'sysop')
+    sysop = Rubbs::Common::Auth::Identity.new(id: @ada.id, name: 'Ada', roles: %w[member sysop])
+    session = Rubbs::Test::Session.new(keys: %w[1 d b], identity: sysop)
+    quietly { TTG::Feedback.desk(session) }
+    assert_includes session.output, 'Chapter 3 is empty'
+    assert_equal 'done', @server.services['/feedback'].store.list[:items].first[:state]
+  end
+
+  def test_the_desk_is_for_the_sysops
+    session = Rubbs::Test::Session.new(keys: ['x'], identity: Rubbs::Common::Auth::Identity.new(id: @bob.id, name: 'Bob'))
+    quietly { TTG::Feedback.desk(session) }
+    assert_includes session.output, 'for the sysops'
+  end
+
   def test_the_wall_on_a_c64
     quietly { TTG::Wall.walls.call(:post, ada, text: 'Hello from Ada') }
     session = Rubbs::Test::Session.new(keys: ['b'], petscii: true)

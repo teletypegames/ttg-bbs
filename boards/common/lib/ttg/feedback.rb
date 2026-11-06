@@ -3,6 +3,7 @@
 require 'rubbs/common/web/discord_webhook'
 require_relative 'feedback/store'
 require_relative 'feedback/screen'
+require_relative 'feedback/desk'
 
 module TTG
   # What callers send the sysops, from any board: feedback, a bug, a
@@ -130,6 +131,18 @@ module TTG
     # looking at, +kind+ to skip the choice of kinds. Returns +nil+.
     def self.open(session, narrative: nil, context: nil, kind: nil)
       Screen.new(session, narrative_of(narrative), context: context).run(kind: kind)
+    end
+
+    # The sysops' desk (Desk) for the caller on +session+: every board's
+    # feedback, read and marked. Returns +nil+.
+    def self.desk(session) = Desk.new(session).run
+
+    # Who sent feedback +entry+ (a Hash of the Central's answer): the name, a
+    # guest's marked, or "a guest".
+    def self.sender(entry)
+      return 'a guest' if entry['name'].to_s.empty?
+
+      entry['account_id'] ? entry['name'] : "#{entry['name']} (guest)"
     end
 
     # +given+ as a TTG::Narrative on DEFAULTS.
