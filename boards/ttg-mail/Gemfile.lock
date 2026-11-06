@@ -7,9 +7,9 @@ GIT
 
 GIT
   remote: https://git.teletypegames.org/engines/rubbs.git
-  revision: c971271647b182e765f680877bf981f73ad9024f
+  revision: d909c25c6962c0abbb6111dab93fa4910d54e2c2
   specs:
-    rubbs (3.3.0)
+    rubbs (3.4.0)
       artii (~> 2.1)
       csv (~> 3.3)
       rqrcode_core (~> 2.1)
