@@ -228,4 +228,4 @@ the index and its refresh limits, and the C64 face: the private pages for the
 
 ## Licence
 
-MIT, see `LICENSE`.
+MIT, see the repository's `LICENSE`.

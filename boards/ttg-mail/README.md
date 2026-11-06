@@ -97,4 +97,4 @@ board. Its log lines are in `docker logs ttg-bbs`, with `"board":"ttg-mail-bbs"`
 
 ## Licence
 
-MIT, see `LICENSE`.
+MIT, see the repository's `LICENSE`.

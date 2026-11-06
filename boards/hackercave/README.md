@@ -258,7 +258,7 @@ test/                       the domain tests (minitest)
 
 ## License
 
-MIT, see `LICENSE`. The RFCs are the IETF's and their authors'; see the
+MIT, see the repository's `LICENSE`. The RFCs are the IETF's and their authors'; see the
 [IETF Trust Legal Provisions](https://trustee.ietf.org/documents/trust-legal-provisions/).
 The IENs carry no notice and are published by the RFC Editor. The Jargon File
 is in the public domain.

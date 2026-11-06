@@ -199,5 +199,5 @@ test/                       the domain tests (minitest)
 
 ## License
 
-MIT, see `LICENSE`. The books are Project Gutenberg's; see
+MIT, see the repository's `LICENSE`. The books are Project Gutenberg's; see
 [gutenberg.org/policy/license](https://www.gutenberg.org/policy/license.html).

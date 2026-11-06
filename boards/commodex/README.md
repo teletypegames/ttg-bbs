@@ -160,5 +160,5 @@ Rakefile                    rake test
 
 ## Licence
 
-MIT, see `LICENSE`. The catalog data is Wikidata's (CC0); the Wikipedia text
+MIT, see the repository's `LICENSE`. The catalog data is Wikidata's (CC0); the Wikipedia text
 shown on the board is under CC BY-SA 4.0.

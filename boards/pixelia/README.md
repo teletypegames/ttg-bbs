@@ -226,5 +226,5 @@ lib/ui/
 
 ## License
 
-MIT, see `LICENSE`. The art in the gallery belongs to its artists and is shown
+MIT, see the repository's `LICENSE`. The art in the gallery belongs to its artists and is shown
 from [16colo.rs](https://16colo.rs).

@@ -115,23 +115,19 @@ data/
 
 ## As a door
 
-The same terminal is a door of the [Teletype BBS](https://git.teletypegames.org/bbs/ttg-bbs/src/branch/master/boards/teletype)
-(Doors > Impostor). It pulls this folder as the `impostor` gem; the flow
-carries its own screens (rubbs 0.7.0's `Flow.define(screens_dir:)`), and the
-host BBS gives it a sessions store of its own:
+The board is also a gem (`impostor.gemspec`): `Impostor::Modern.flow` and `Impostor::Petscii.flow` carry their own
+screens (rubbs' `Flow.define(screens_dir:)`), so another board could open the same terminal as a door with a sessions
+store of its own:
 
 ```ruby
-gem 'impostor', git: 'https://git.teletypegames.org/bbs/ttg-bbs.git', glob: 'boards/impostor/impostor.gemspec'
-
 require 'impostor'
 sessions = Impostor.sessions_store('data/impostor_sessions.sqlite3')
 door :impostor, Impostor::Modern.flow(sessions: sessions), label: '&Impostor'
 # and for a C64 caller: Impostor::Petscii.flow(sessions: sessions)
 ```
 
-When the flow ends, the door asks for ENTER and hands the caller back to the
-BBS. The host's `Gemfile.lock` pins the revision, so a change here reaches the
-door only with a bump there.
+No board does so today: Teletype BBS lists Impostor BBS on its town map and the network list, and callers reach it on
+its own port (2324) or through TTG Gate BBS.
 
 ## Data
 

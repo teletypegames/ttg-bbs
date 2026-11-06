@@ -127,4 +127,4 @@ The downloads are rubbs' `Rubbs::Common::Files::Transfer` (`Rubbs::Common::Files
 
 ## License
 
-MIT, see `LICENSE`.
+MIT, see the repository's `LICENSE`.

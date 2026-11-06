@@ -170,6 +170,6 @@ Rakefile                    rake test
 
 ## Licence
 
-MIT, see `LICENSE`. The catalog data is Wikidata's (CC0); the Memory Alpha
+MIT, see the repository's `LICENSE`. The catalog data is Wikidata's (CC0); the Memory Alpha
 text shown on the board is under CC BY-NC. Star Trek is a trademark of
 Paramount.
