@@ -1,0 +1,54 @@
+# Written by `rake ttg:sync` from ttg-common (lib/ttg/board/woodpecker.yaml.erb): change it there.
+#
+# Every push is linted with RuboCop, runs the tests and rake bbs:check (rake), and compose.yaml is
+# checked. A push to master that changes the server deploys it: the stack runs in
+# /srv/stacks/warp-engine-bbs on the server.
+#
+# The deploy step only asks the server to deploy. Its key (secret deploy_ssh_key) is bound on the
+# server to one fixed command, `ci-deploy warp-engine-bbs` (infra/host-config), which clones master from
+# Gitea itself, checks compose.yaml against a policy (no privileged, no extra capabilities or host
+# namespaces, no docker socket, bind mounts only in the stack, public port 2329 only), copies the
+# server's files into the stack, runs docker compose up -d --build there and waits until the board
+# answers its health probe; data/ stays as it is. The old container stops in order: its callers are
+# told and get BBS_SHUTDOWN_SECONDS to leave.
+when:
+  - event: [push, manual]
+    branch: master
+  - event: pull_request
+
+steps:
+  - name: rubocop
+    image: ruby:3.3-alpine
+    commands:
+      - apk add --no-cache git build-base
+      - bundle install --jobs 4 --quiet
+      - bundle exec rubocop
+
+  - name: test
+    image: ruby:3.3-alpine
+    commands:
+      - apk add --no-cache git build-base
+      - bundle install --jobs 4 --quiet
+      - bundle exec rake
+
+  - name: check
+    image: docker:cli
+    commands:
+      - docker compose -f compose.yaml config --quiet
+
+  - name: deploy
+    image: git.teletypegames.org/build/deploy-ssh@sha256:e1753f7dd575caf5e835ff19cc152faa56478cad76c142ca0f47ad3a3f4a2605
+    depends_on: [rubocop, test, check]
+    environment:
+      DEPLOY_SSH_KEY:
+        from_secret: deploy_ssh_key
+    commands:
+      - mkdir -p -m 700 "$HOME/.ssh"
+      - printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/id_deploy" && chmod 600 "$HOME/.ssh/id_deploy"
+      - echo 'vps.teletype.hu ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPR9RYc98lPw4w6LYlaVAkZTlleO+kE4vyWxEk9x3EDd' > "$HOME/.ssh/known_hosts"
+      - ssh -i "$HOME/.ssh/id_deploy" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes deploy@vps.teletype.hu
+    when:
+      - event: [push, manual]
+        branch: master
+        path:
+          include: [compose.yaml, Dockerfile, .dockerignore, Gemfile, Gemfile.lock, bbs.rb, "bin/**", "config/**", "lib/**", "screens/**"]

@@ -1,0 +1,19 @@
+# The shelves of the archive the board lends from, in the order of its menu.
+# Each is a folder of archive.teletypegames.org that the WarpEngine of
+# teletypegames.org keeps, with an INDEX.TXT in the shelf format
+# (#SHELF 1, file|version|size|crc32|title|author|description).
+#
+# [id]     a short name, unique
+# [name]   shown in the menus
+# [path]   the folder on the archive
+# [about]  a line about the shelf
+
+- id: c64
+  name: Commodore 64
+  path: /C64
+  about: The C64 titles of Teletype Games, as one PRG each. LOAD"NAME",8,1 and RUN.
+
+- id: plus4
+  name: Commodore Plus/4
+  path: /PLUS4
+  about: The Plus/4 titles of Teletype Games, as one PRG each. LOAD"NAME",8,1 and RUN.

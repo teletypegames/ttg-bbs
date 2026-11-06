@@ -1,0 +1,5 @@
+# What WarpEngine BBS's feedback screen says (ttg-common TTG::Feedback, TTG::Narrative).
+title: Write to the sysops
+intro: A file that will not load, a download that broke off, a title missing from a shelf? Tell the sysops; they read every one.
+petscii:
+  intro: A FILE THAT WILL NOT LOAD? TELL THE SYSOPS.

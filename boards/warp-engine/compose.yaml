@@ -1,0 +1,27 @@
+services:
+  warp-engine-bbs:
+    mem_limit: 160m
+    cpus: 1.0
+    pids_limit: 256
+    build: .
+    container_name: warp-engine-bbs
+    ports:
+      - "2329:2323"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TZ=Europe/Budapest
+      - BBS_MAX_SESSIONS=50
+      # The network's Central (TTG Gate BBS): feedback and the wall; the secret every board shares.
+      - RUBBS_AUTH_SECRET=${RUBBS_AUTH_SECRET:-}
+    networks:
+      - default
+      - interstack
+    restart: unless-stopped
+    # rubbs tells the callers and gives them BBS_SHUTDOWN_SECONDS (20 s, Dockerfile) to leave.
+    stop_grace_period: 30s
+
+# The Central is asked on the interstack network as http://ttg-gate-bbs:8090.
+networks:
+  interstack:
+    external: true

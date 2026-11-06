@@ -1,0 +1,23 @@
+# Every environment variable of WarpEngine BBS, with its default. The board
+# has no secrets.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=50
+
+# The archive's plain HTTP and the shelves read from it
+WARP_ENGINE_BBS_ARCHIVE_URL=http://archive.teletypegames.org
+WARP_ENGINE_BBS_SHELVES=config/shelves.yml
+# Seconds a shelf's INDEX.TXT is kept before it is read again
+WARP_ENGINE_BBS_INDEX_TTL=300
+# The largest file the board sends, in bytes
+WARP_ENGINE_BBS_DOWNLOAD_MAX=1048576
+
+# The board's database: the downloads that went through. A data/downloads.jsonl
+# next to it (the log before SQLite) is imported on the first start.
+WARP_ENGINE_BBS_DB=data/warp-engine.sqlite3
+
+# The network's Central (TTG Gate BBS): feedback and the wall live there. The secret is every board's,
+# in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

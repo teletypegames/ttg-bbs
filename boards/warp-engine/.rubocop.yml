@@ -1,0 +1,4 @@
+# The house rules come from ttg-common (lib/ttg/board/rubocop.yml, kept in step with
+# rake ttg:sync); only this board's own exceptions follow.
+inherit_gem:
+  ttg-common: lib/ttg/board/rubocop.yml
