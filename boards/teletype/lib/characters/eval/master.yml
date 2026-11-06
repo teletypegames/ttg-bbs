@@ -40,7 +40,7 @@
 - q: can I move a window?
   expect: [F6, Ctrl-F5, drag]
 - q: how do I send a private message to someone?
-  expect: [Feedback, The Wall]
+  expect: [TTG Mail BBS, '2335']
 - q: is there a game I can play here?
   expect: [TTG Trivia, Doors]
 - q: where can I vote?

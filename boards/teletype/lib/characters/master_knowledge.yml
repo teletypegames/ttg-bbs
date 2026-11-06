@@ -19,7 +19,7 @@
 - keys: [vote, voting, poll, polls, booth, survey, favourite, favorite]
   fact: 'Messages > Voting Booth has the polls of the board, like your favourite Teletype Games title; Enter or Vote, then the number of your choice. A name is needed to vote, and you can change your vote.'
 - keys: [mail, email, e-mail, letter, private, inbox, message someone, write to, private message]
-  fact: 'There is no private mail between callers here. Messages > Feedback… (F7) drops a letter to the sysop; to talk with the others, pin a note on Messages > The Wall….'
+  fact: 'Letters between callers are on the TTG Mail BBS at teletypegames.org:2335: log in with your account of the network, then write to anyone with an account, read and answer your letters, block a writer. It is on TTG Gate BBS (2399) too. Here, Messages > Feedback… (F7) drops a letter to the sysop, and Messages > The Wall… is for talking with the others.'
 - keys: [feedback, complain, complaint, contact, suggestion, report, bug, idea]
   fact: 'Messages > Feedback… (F7) is a letter to the sysop: a word, a bug or an idea. Anyone can send one, a guest too; the sysops of the network read every one.'
 - keys: [page, yell, call the sysop, talk to the sysop, sysop online]
@@ -57,7 +57,7 @@
 - keys: [door, doors, program, lobby]
   fact: 'Doors > Door Lobby… lists every door with what it is and who is inside; Enter steps in. The doors take over the screen and give it back when you leave them: SERMO, Commodore 64, Commodore Plus/4, Chat of Ra and the TTG Trivia game.'
 - keys: [network, bbs, other, telnet, bbsweb, port, moved, gone]
-  fact: 'Board > BBS Network lists our boards and what each carries: the Teletype BBS here at teletypegames.org:2323, the Impostor BBS at 2324, the TTG Wiki BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia BBS (news feeds) at 2327, TTG Blog BBS at 2328, WarpEngine BBS (our games and files) at 2329, Scriptorium BBS (books) at 2330, Commodex BBS (C64 games, cheats) at 2331, Pixelia BBS (art) at 2332, Starbase BBS (Star Trek) at 2333, HackerCave BBS (the RFCs) at 2334, and TTG Gate BBS at 2399 for all of them. Help > Where are the games, files, wiki? opens it too.'
+  fact: 'Board > BBS Network lists our boards and what each carries: the Teletype BBS here at teletypegames.org:2323, the Impostor BBS at 2324, the TTG Wiki BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia BBS (news feeds) at 2327, TTG Blog BBS at 2328, WarpEngine BBS (our games and files) at 2329, Scriptorium BBS (books) at 2330, Commodex BBS (C64 games, cheats) at 2331, Pixelia BBS (art) at 2332, Starbase BBS (Star Trek) at 2333, HackerCave BBS (the RFCs) at 2334, TTG Mail BBS (letters between the accounts) at 2335, and TTG Gate BBS at 2399 for all of them. Help > Where are the games, files, wiki? opens it too.'
 - keys: [game, games, download, downloads, file, files, zmodem, xmodem, prg, warpengine, warp-engine, shelf, catalog, release, releases, library]
   fact: 'Our games and files are on the WarpEngine BBS at teletypegames.org:2329: the Commodore 64 and Plus/4 shelves, a title a page, downloaded by ZMODEM or by XMODEM onto a C64 disk. Every game is on teletypegames.org/catalog too, most of them playable right in a browser.'
 - keys: [ftp, apps, warp, folder, archive, http]

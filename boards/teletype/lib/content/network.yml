@@ -142,3 +142,13 @@ boards:
     accent: '#d7ff5f'
     c64: light_green
     place: { modern: [22, 18], c64: [14, 16] }
+  - id: ttg-mail-bbs
+    name: TTG Mail BBS
+    port: 2335
+    building: the post office
+    about: the network's mail - letters between the accounts
+    short: MAIL
+    words: THE LETTERS
+    accent: '#ff5f87'
+    c64: light_red
+    place: { modern: [41, 18], c64: [24, 16] }

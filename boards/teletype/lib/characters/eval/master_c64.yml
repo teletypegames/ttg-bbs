@@ -39,7 +39,7 @@
 - q: how do the menus work?
   expect: [cursor, RETURN]
 - q: how do I send a private message to someone?
-  expect: [E on the main menu]
+  expect: [TTG Mail BBS, '2335']
 - q: is there a game I can play here?
   expect: [TTG Trivia, R on the main menu]
 - q: where can I vote?
