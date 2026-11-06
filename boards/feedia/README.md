@@ -131,12 +131,14 @@ and, if it stays, adds it to `config/feeds.yml`.
 The **Wall** (ttg-common `TTG::Wall`, `lib/content/wall.yml`) is where readers talk about the news.
 
 The board's own inbox of before (the `messages` table in `data/feedia.sqlite3`) is handed over to the
-network's feedback once, by a background job (`inbox export`), and kept here marked (`exported_at`).
+network's feedback once, by a background job (`inbox export`), and kept here marked (`exported_at`);
+`docker exec feedia-bbs bin/inbox-export` does it at once and says what is left.
 
 ## Project structure
 
 ```
 bbs.rb                          entry point: the board, the terminal question, then a face
+bin/inbox-export                hands the inbox of before over to the network's feedback now
 rake test                        the domain's tests (minitest, no network)
 config/feeds.yml                the feed list
 lib/
