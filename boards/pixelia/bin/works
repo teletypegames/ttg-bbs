@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# The Exhibition's moderation, from the server's shell:
+#   docker exec pixelia-bbs bin/works list         (newest first: id, date, handle, title)
+#   docker exec pixelia-bbs bin/works show ID      (the picture's characters)
+#   docker exec pixelia-bbs bin/works remove ID
+# The board sees a removal at the next look at the Exhibition.
+require 'bundler/setup'
+require_relative '../lib/domain'
+
+exhibition = PixeliaBBS.new.exhibition
+command, id = ARGV
+case command
+when 'list'
+  exhibition.all.each { |w| puts [w.id, w.date, w.handle, w.title].join("\t") }
+when 'show'
+  work = id && exhibition.find(id)
+  abort 'no such work' unless work
+  puts "#{work.title} by #{work.handle}, #{work.date}"
+  canvas = work.canvas
+  CanvasModel::ROWS.times { |y| puts canvas.chars[y * CanvasModel::COLS, CanvasModel::COLS].join }
+when 'remove'
+  abort 'usage: bin/works remove ID' unless id
+  abort 'no such work' unless exhibition.remove(id)
+  puts 'removed'
+else
+  abort 'usage: bin/works list | show ID | remove ID'
+end

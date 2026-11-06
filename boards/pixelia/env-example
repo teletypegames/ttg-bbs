@@ -1,0 +1,33 @@
+# Every environment variable of Pixelia BBS, with its default. The board has
+# no secrets.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=50
+
+# Where the canvas, the Exhibition, the canvas archive and the art cache live
+PIXELIA_BBS_DATA=data
+
+# 16colo.rs: the API and the site of the raw files
+PIXELIA_BBS_API_URL=https://api.16colo.rs
+PIXELIA_BBS_SITE_URL=https://16colo.rs
+# Seconds a year's pack list or a pack's file list is kept in memory
+PIXELIA_BBS_API_TTL=3600
+# The largest art file the board fetches, in KB
+PIXELIA_BBS_MAX_FILE_KB=512
+# The disk cache of fetched art files (data/cache), in MB; the least recently used go first
+PIXELIA_BBS_CACHE_MB=100
+# A piece is cut after this many rows
+PIXELIA_BBS_MAX_ROWS=1000
+
+# The canvas: cells a second one caller may paint
+PIXELIA_BBS_PAINT_RATE=20
+# The Exhibition: seconds between two saves of one caller
+PIXELIA_BBS_EXHIBITION_COOLDOWN=300
+# The Exhibition: works the whole board takes an hour
+PIXELIA_BBS_EXHIBITION_PER_HOUR=30
+
+# The network's Central (TTG Gate BBS): feedback and the wall live there. The secret is every board's,
+# in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

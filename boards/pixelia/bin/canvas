@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# The shared canvas, from the server's shell:
+#   docker exec pixelia-bbs bin/canvas show    (its characters)
+#   docker exec pixelia-bbs bin/canvas clear   (archives it into data/archive/, then blanks it)
+# The running board holds the canvas in memory, so a clear is a request: the
+# script leaves a flag file the board answers within a few seconds. When no
+# board answers, the script clears the file itself.
+require 'fileutils'
+require 'bundler/setup'
+require_relative '../lib/domain'
+
+WAIT = 8
+
+bbs = PixeliaBBS.new
+repository = bbs.canvas_repository
+flag = File.join(File.dirname(repository.path), 'canvas.clear')
+
+case ARGV.first
+when 'show'
+  canvas = repository.snapshot
+  CanvasModel::ROWS.times { |y| puts canvas.chars[y * CanvasModel::COLS, CanvasModel::COLS].join }
+when 'clear'
+  FileUtils.touch(flag)
+  (WAIT * 4).times do
+    break unless File.exist?(flag)
+
+    sleep 0.25
+  end
+  if File.exist?(flag)
+    FileUtils.rm_f(flag)
+    archived = repository.clear
+    abort 'the canvas could not be archived, so it stays' unless archived
+    puts "no board answered; cleared the file, archived as #{archived}"
+  else
+    puts 'cleared by the board; the old canvas is in data/archive/'
+  end
+else
+  abort 'usage: bin/canvas show | clear'
+end
