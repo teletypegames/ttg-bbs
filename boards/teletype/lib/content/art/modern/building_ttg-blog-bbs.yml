@@ -1,0 +1,17 @@
+# ttg-blog-bbs on the town map of the modern face (12×4): its building.
+size: [12, 4]
+charset: cp437
+palette:
+  a: '#5fd7af'
+  k: 238
+  w: 231
+chars: |2
+   ▄▄▄▄▄▄▄▄▄▄ 
+   █ PRESS ░█ 
+   █ ◘◘  ▓▓ █ 
+   ▀▀▀▀▀▀▀▀▀▀ 
+colors: |2
+  .aaaaaaaaaa.
+  .awwwwwwwwa.
+  .akkk..wwka.
+  .aaaaaaaaaa.

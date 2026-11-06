@@ -1,0 +1,15 @@
+# hackercave-bbs on the town map of the C64 face (3×3): its building, a cave with a terminal glowing inside.
+size: [3, 3]
+charset: petscii-upper
+palette:
+  d: light_grey
+  a: light_green
+  k: dark_grey
+chars: |2
+  ◢█◣
+  █▒█
+  ▀ ▀
+colors: |2
+  ddd
+  dad
+  k.k

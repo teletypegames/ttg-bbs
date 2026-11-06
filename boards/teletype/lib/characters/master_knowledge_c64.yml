@@ -1,0 +1,107 @@
+# What the TTG Master knows about the C64 board (lib/ui/petscii): the facts of
+# master_knowledge.yml, with the way around told in the keys of its main
+# menu. Keep the keys the same as Board::MENU in lib/ui/petscii/board.rb; the
+# clubhouse menu (Clubhouse::ROOMS in lib/ui/petscii/clubhouse.rb) has the same
+# keys, each a room of the club, told in the short facts at the end.
+- keys: [register, registration, password, account, signup, keep, reserve]
+  fact: 'S on the main menu, then R, registers the name you called with: from then on that name asks for a password. Anonymous cannot register, so call again with a name first.'
+- keys: [profile, signature, location, homepage, note]
+  fact: 'S on the main menu, then P, edits your signature, location, homepage and notes. A profile belongs to a registered name, so register first.'
+- keys: [wall, board, message, post, write, forum, note, notes, oneliner, leave a message, chat, talk]
+  fact: 'M on the main menu is the wall of the clubhouse: read the notes, pin one of up to 500 characters, or answer one, on the C64 and on the modern board alike. A guest writes under a name of their own.'
+- keys: [online, who, caller, last, node, nodes]
+  fact: 'C on the main menu, then W, lists the nodes: who is on which line now and what they are doing. C, then L, lists the recent calls.'
+- keys: [user list, users, userlist, listing, registered, members list]
+  fact: 'C on the main menu, then U, lists the registered names with their calls and last call.'
+- keys: [stats, statistics, my calls, caller number, how many times]
+  fact: 'S on the main menu shows your caller number, your calls, your first and last call and your votes.'
+- keys: [vote, voting, poll, polls, booth, survey, favourite, favorite]
+  fact: 'V on the main menu is the Voting Booth: pick a poll by its number, then type the number of your choice. A name is needed to vote, and you can change your vote.'
+- keys: [mail, email, e-mail, letter, private, inbox, message someone, write to, private message]
+  fact: 'Letters between callers are on the TTG Mail BBS at teletypegames.org:2335, in PETSCII too: log in with your account of the network, then write to anyone with an account, read and answer your letters. Here, E on the main menu drops a letter to the sysop, and the wall, M, is for talking with the others.'
+- keys: [feedback, complain, complaint, contact, suggestion, report, bug, idea]
+  fact: 'E on the main menu is a letter to the sysop: a word, a bug or an idea. Anyone can send one, a guest too; the sysops of the network read every one.'
+- keys: [page, yell, call the sysop, talk to the sysop, sysop online]
+  fact: 'P on the main menu rings the bell for the sysops: leave a line on what you need, and they answer as soon as they are at the keyboard.'
+- keys: [trivia, quiz, question, score, door game, play here]
+  fact: 'TTG Trivia is a door game: ten questions about Teletype Games and the old days, 20 seconds each, with a hall of fame. It needs 80 columns, so it is on the modern face of the board: call with a PC terminal and choose 1.'
+- keys: [team, member, members, motto, crew, group]
+  fact: 'C on the main menu, then T, lists the members of Teletype Games with their mottos.'
+- keys: [devlog, dev, log, commit, git, gitea, development, source, repository, repo]
+  fact: 'D on the main menu shows what the team pushed, tagged and released lately on git.teletypegames.org, where the source of our projects lives.'
+- keys: [exit, quit, logoff, logout, bye, disconnect, get out, log off, leave the board]
+  fact: 'Q on the main menu ends the call. An idle call is disconnected after 10 minutes.'
+- keys: [system, info, uptime, ruby, version]
+  fact: 'Y on the main menu shows the board''s numbers and its uptime.'
+- keys: [sermo, neumatronic, margittai, acp]
+  fact: 'SERMO is a door on the modern face of the board, a dual machine of the Neumatronic universe; it needs 80 columns, so call with a PC terminal and choose 1.'
+- keys: [commodore, c64, plus4, basic, load, run, emulator, retro]
+  fact: 'Commodore 64 and Commodore Plus/4, the doors under R, start the machine at READY. with a BASIC to type into. LOAD"$",8 and then LIST show our games for it; LOAD"NAME",8 and RUN show one. EXIT returns to the board.'
+- keys: [ra, riddle, sun, egypt, pyramid, blessing]
+  fact: 'Chat of Ra lets you talk to Ra, the sun god of our game Blessing of Ra; it is a door on the modern face of the board, as it needs 80 columns: call with a PC terminal and choose 1.'
+- keys: [key, keys, keyboard, shortcut, mouse, menu, navigate, close, help, fullscreen, full screen, maximize, maximise, zoom, bigger, move, resize, size, drag, switch, window, windows, front]
+  fact: 'The cursor keys move the bar of a menu, RETURN opens the lit item, and the letter in front of an item opens it at once. Lists are numbered: the cursor or the number, then RETURN; cursor left and right turn the pages, Q or the arrow-left key goes back. ? on the main menu is the help, and * gives a menu of plain text instead of the pictures.'
+- keys: [sysop, admin, operator, console]
+  fact: 'Z on the main menu is the console of the sysops, logged in with their password; it shows the nodes and how much new feedback waits.'
+- keys: [teletype, ttg, company, studio, website, site, made, built, created, behind, owner, who made, who built, who run, who is behind]
+  fact: 'Teletype Games is the group behind this board. It makes games for retro and modern platforms, from the Commodore 64 and the Plus/4 to TIC-80 and the browser; its home is teletypegames.org, with the catalog, the blog and the events.'
+- keys: [discord]
+  fact: 'A letter to the sysop (E on the main menu) rings the sysops on the Teletype Games Discord: only that it came, never what it says.'
+- keys: [hall, fame, top, best, highscore, high score, most, ranking, toplist]
+  fact: 'H on the main menu is the Hall of Fame: the top callers, the names most on the wall and the TTG Trivia high scores.'
+- keys: [bulletins, rules, about, newcomer, new to bbs, what is a bbs]
+  fact: 'U on the main menu has the numbered bulletins: the logon bulletin, About Teletype Games, what is coming up, the board rules, New to BBSes? and our BBS network.'
+- keys: [door, doors, program]
+  fact: 'R on the main menu has the doors that fit the 40 columns of a C64: a Commodore 64 and a Commodore Plus/4 with our games on their disks. SERMO, Chat of Ra and TTG Trivia need 80 columns: they are on the modern face of the board.'
+- keys: [network, bbs, other, telnet, bbsweb, port, moved, gone]
+  fact: 'N on the main menu lists our boards and what each carries: the Teletype BBS here at teletypegames.org:2323, the Impostor BBS at 2324, the TTG Wiki BBS at 2325, Alexandria BBS (Wikipedia) at 2326, Feedia BBS (news feeds) at 2327, TTG Blog BBS at 2328, WarpEngine BBS (our games and files) at 2329, Scriptorium BBS (books) at 2330, Commodex BBS (C64 games, cheats) at 2331, Pixelia BBS (art) at 2332, Starbase BBS (Star Trek) at 2333, HackerCave BBS (the RFCs) at 2334, TTG Mail BBS (letters between the accounts) at 2335, and TTG Gate BBS at 2399 for all of them.'
+- keys: [game, games, download, downloads, file, files, zmodem, xmodem, prg, warpengine, warp-engine, shelf, catalog, release, releases, library]
+  fact: 'Our games and files are on the WarpEngine BBS at teletypegames.org:2329: the Commodore 64 and Plus/4 shelves, a title a page, downloaded by XMODEM, which a C64 terminal like CCGMS takes onto its disk, or by ZMODEM. Every game is on teletypegames.org/catalog too.'
+- keys: [ftp, apps, warp, folder, archive, http]
+  fact: 'ftp.teletypegames.org is our FTP server (anonymous, read-only), and the whole tree is on plain HTTP too, at archive.teletypegames.org, for a C64 with a network cartridge or a WiFi modem. The games themselves are on the WarpEngine BBS at teletypegames.org:2329.'
+- keys: [browser, play, web]
+  fact: 'Most of our games play right in a browser from their page on teletypegames.org/catalog. Every board of ours works in a browser too, at bbsweb.teletypegames.org.'
+- keys: [wiki, guide, guides, engine, engines, documentation, docs, howto, howtos, tutorial, dos, dosinst, gmenu, bmagic, ttgwiki, install]
+  fact: 'Our wiki is on the TTG Wiki BBS at teletypegames.org:2325: the platform guides, the engines, the how-tos and the DOS corner with DOSINST, GMENU, BMAGIC and TTGWIKI. On the web it is at wiki.teletypegames.org.'
+- keys: [blog, posts, ttgblog, editor, editors, article]
+  fact: 'Our blog is on the TTG Blog BBS at teletypegames.org:2328, on a C64 too: the latest posts read a screenful at a time. On the web it is at teletypegames.org/blog.'
+- keys: [ansi, ascii, art, gallery, background, picture, graphics, petscii, canvas, draw, paint, pixelia]
+  fact: 'The art is on the Pixelia BBS at teletypegames.org:2332: PETSCII and ANSI art, a 40x25 canvas every caller paints on together, and the Wall of works saved from it.'
+- keys: [star, trek, startrek, starbase, enterprise, episode, episodes, spock, kirk, picard, klingon, vulcan, memory, alpha, tribble, tribbles]
+  fact: 'Star Trek is on the Starbase BBS at teletypegames.org:2333: every series and film with its episodes, the day each first aired, its directors and writers, the episodes that first aired on this day, and the articles of Memory Alpha, the fans'' wiki, to read section by section on the C64 too. It is on TTG Gate BBS (2399) too.'
+- keys: [rfc, rfcs, ietf, ien, protocol, protocols, standard, standards, tcp, hackercave, cave, jargon, slang, kluge]
+  fact: 'The RFCs are on the HackerCave BBS at teletypegames.org:2334: every RFC, the documents the Internet is made of, from RFC 1 of 1969 to today, searched by number, series or words, with what obsoletes what, and the board''s own shelves of classics, telnet and April Fools'' Day RFCs; the full text of every RFC is searchable, and the IENs and the Jargon File (hacker slang) are there too. On the C64 they are reflowed to fit the screen.'
+- keys: [alexandria, wikipedia, encyclopedia]
+  fact: 'Wikipedia is on the Alexandria BBS at teletypegames.org:2326, in PETSCII too: search, and read an article a screenful at a time.'
+- keys: [feedia, rss, news, feed, feeds, headlines]
+  fact: 'The news of the day is on the Feedia BBS at teletypegames.org:2327, an RSS reader board with a C64 face: Hacker News, the retro sites and the Hungarian news as plain text.'
+- keys: [scriptorium, gutenberg, book, books, literature, novel, novels, chapter]
+  fact: 'Books are on the Scriptorium BBS at teletypegames.org:2330: thousands of Project Gutenberg books, searched by title or author and read a chapter at a time.'
+- keys: [commodex, compendium, cheat, cheats, tip, tips, poke, pokes]
+  fact: 'The Commodore 64 game compendium is the Commodex BBS at teletypegames.org:2331: search the titles, read about a game, and read or add cheats and tips.'
+- keys: [impostor, code, debrief, norman]
+  fact: 'The debrief terminal of our game Definitely not an Impostor is the Impostor BBS at teletypegames.org:2324, on a C64 too: type what the game gave you at its end, and tell us how it went.'
+- keys: [gate, ttggate, dial, dialing, '2399', one port, all boards]
+  fact: 'TTG Gate BBS at teletypegames.org:2399 is one port for our whole network: a dialing menu that puts your call through to any of our boards, this one too, and takes it back when that board hangs up. On a C64 it lists the boards that have a C64 face.'
+- keys: [clubhouse, picture, pictures, room, rooms, house, smoke, chimney, mailbox flag, bar, bartender]
+  fact: 'The main menu is the clubhouse: the house with a lit window for each caller inside, and its rooms under it, each with its key; T on the main menu, Ask the bar, is the TTG Master.'
+- keys: [cork, cork board]
+  fact: 'M on the main menu is the Cork board, the wall of the clubhouse.'
+- keys: [mailbox, mailboxes]
+  fact: 'E on the main menu is the Mailbox: a letter to the sysop.'
+- keys: [notice board, notice]
+  fact: 'U on the main menu is the Notice board, the bulletins.'
+- keys: [workshop]
+  fact: 'D on the main menu is the Workshop, the dev log.'
+- keys: [guestbook]
+  fact: 'C on the main menu is the Guestbook: who is online, the last callers, the users and the team.'
+- keys: [trophy, trophies, cup, cups]
+  fact: 'H on the main menu is the Trophies, the Hall of Fame: the top callers, the names most on the wall and the TTG Trivia high scores.'
+- keys: [ballot, ballot box]
+  fact: 'V on the main menu is the Ballot box, the voting booth.'
+- keys: [games room, station, stations]
+  fact: 'R on the main menu is the Games room: the Commodore 64 and the Plus/4 open there; SERMO, Chat of Ra and TTG Trivia are on the modern face.'
+- keys: [town, map, town map, buildings, building]
+  fact: 'N on the main menu is the Town map: our boards as buildings, with the name, two words and the port of each.'
+- keys: [bell, ring the bell]
+  fact: 'P on the main menu is Ring the bell: it pages the sysop.'

@@ -1,0 +1,57 @@
+# Leaving the clubhouse on the C64: four lamps go out one by one (the layers
+# leaving_out_1..4), each a patch under 100 bytes; the coat ticket gets the call (ticket).
+size: [40, 13]
+charset: petscii-upper
+palette:
+  y: yellow
+  g: dark_grey
+  r: red
+  R: light_red
+  b: brown
+  B: blue
+  o: orange
+chars: |2
+      │         │         │         │     
+     ◢█◣       ◢█◣       ◢█◣       ◢█◣    
+    ▒▒▒▒▒     ▒▒▒▒▒     ▒▒▒▒▒     ▒▒▒▒▒   
+                                          
+                                   ▒▒▒▒   
+  ▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄   ▄▄▄▄▄▄▄      ▒▒▒▒   
+   ▀▀▀▀▀▀                                 
+              ▄ ▄       ▄ ▄               
+                                          
+                                          
+                                          
+                                          
+                                          
+colors: |2
+  ....g.........g.........g.........g.....
+  ...yyy.......yyy.......yyy.......yyy....
+  ..yyyyy.....yyyyy.....yyyyy.....yyyyy...
+  ................................rrrrrr..
+  ................................rBBBBr..
+  RRRRRRRR..ooooooo...ooooooo.....rBBBBr..
+  RRRRRRRR.....o.........o........rrrrrr..
+  RRRRRRRR....ooo.......ooo.......rrrrrr..
+  ................................rrrrrr..
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  ........................................
+  ........................................
+  ........................................
+reverse: |2
+  ........................................
+  ........................................
+  ........................................
+  ................................RRRRRR..
+  ................................RRRRRR..
+  ................................RRRRRR..
+  R......R.....R.........R........RRRRRR..
+  RRRRRRRR.....R.........R........RRRRRR..
+  ................................RRRRRR..
+  RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+  ........................................
+  ........................................
+  ........................................
+hotspots:
+  ticket: [1, 11, 38, 2]
+layers: [leaving_out_1, leaving_out_2, leaving_out_3, leaving_out_4]

@@ -1,0 +1,17 @@
+# ttg-gate-bbs on the town map of the modern face (12×4): its building.
+size: [12, 4]
+charset: cp437
+palette:
+  a: '#b48cff'
+  d: 240
+  k: 238
+chars: |2
+   ▄▄      ▄▄ 
+  ▐██▌▄▄▄▄▐██▌
+  ▐██▌▀▀▀▀▐██▌
+  ▐██▌ ▒▒ ▐██▌
+colors: |2
+  .aa......aa.
+  aaaaddddaaaa
+  aaaaddddaaaa
+  aaaa.kk.aaaa

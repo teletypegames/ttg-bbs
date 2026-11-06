@@ -1,0 +1,34 @@
+services:
+  teletype-bbs:
+    mem_limit: 192m
+    cpus: 1.0
+    pids_limit: 256
+    build: .
+    container_name: teletype-bbs
+    ports:
+      - "2323:2323"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TZ=Europe/Budapest
+      # Callers at once: each costs up to ~1.7 MB on top of ~40 MB, sized to mem_limit.
+      - BBS_MAX_SESSIONS=60
+      - SERMO_LLM_URL=http://llm:8080
+      - SERMO_LLM_MODEL=qwen3.5-0.8b
+      - SERMO_LLM_API_KEY=${SERMO_LLM_API_KEY:-}
+      - TELETYPE_BBS_LLM_API_KEY=${TELETYPE_BBS_LLM_API_KEY:-}
+      - RUBBS_AUTH_SECRET=${RUBBS_AUTH_SECRET:-}
+    networks:
+      - default
+      - interstack
+    restart: unless-stopped
+    # rubbs tells the callers and gives them BBS_SHUTDOWN_SECONDS (20 s, Dockerfile) to leave.
+    stop_grace_period: 30s
+    stdin_open: true
+    tty: true
+
+# SERMO's Lapis-ACP thinks with Qwen3.5 0.8B in the shared model service (infra/llm),
+# reached on the interstack network. Without it SERMO answers with its canned replies.
+networks:
+  interstack:
+    external: true

@@ -1,0 +1,86 @@
+# The games room at the back of the clubhouse (modern face): five stations, SERMO, the C64,
+# the Plus/4, Chat of Ra and TTG Trivia. A lamp over each (lamp_<door>) burns when somebody is
+# inside, the count beside it (count_<door>); the chosen station turns its screen on
+# (screen_<door>); its name goes under it (label_<door>).
+size: [76, 12]
+charset: cp437
+palette:
+  k: 240
+  b: 94
+  g: 250
+  e: 187
+  E: 101
+  r: 160
+  G: 245
+  y: 220
+  o: 214
+  p: 176
+  W: 235
+  F: 236
+  f: 94
+  c: 238
+chars: |2
+          │              │              │              │              │       
+         ▄█▄            ▄█▄            ▄█▄            ▄█▄            ▄█▄      
+                                                                              
+      ▄▄▄▄▄▄▄▄▄     ▄▄▄▄▄▄▄▄▄▄▄    ▄▄▄▄▄▄▄▄▄▄▄                   ▄▄▄▄▄▄▄▄▄▄▄  
+      █░░░░░░░█     █░░░░░░░░░█▌   █░░░░░░░░░█▌       ◄▲►        █? ? ? ? ?█  
+      █░░░░░░░█     █░░░░░░░░░█▌   █░░░░░░░░░█▌       ▄█▄        ▀▀▀▀▀█▀▀▀▀▀  
+      ▀▀▀▀█▀▀▀▀     ▀▀▀▀▀▀▀▀▀▀▀    ▀▀▀▀▀▀▀▀▀▀▀       ▄███▄            █   ▄▄  
+    ▄▄▄▄▄▄█▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄▄▄     ▄█████▄     ▄▄▄▄▄▄█▄▄▄██▄ 
+    █           █  █▓▓▓▓▓▓▓▓▓▓▒█  █▓▓▓▓▓▓▓▓ ▒▒█   ▄▄███████▄▄   █           █ 
+  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+                                                                              
+                                                                              
+colors: |2
+  ........c..............c..............c..............c..............c.......
+  .......ccc............ccc............ccc............ccc............ccc......
+  ............................................................................
+  ....kkkkkkkkk.....ggggggggggg....ggggggggggg...................ppppppppppp..
+  ....kccccccck.....gcccccccccgg...gcccccccccgg.......ooo........ppppppppppp..
+  ....kccccccck.....gcccccccccgg...gcccccccccgg.......yoy........ppppppppppp..
+  ....kkkkkkkkk.....ggggggggggg....ggggggggggg.......yyoyy............p...rr..
+  ..bbbbbbbbbbbbb..eeeeeeeeeeeee..kkkkkkkkkkkkk.....yyyoyyy.....bbbbbbbbbbrrb.
+  ..b...........b..eEEEEEEEEEEre..kGGGGGGGG.yyk...bbyyyoyyybb...b...........b.
+  ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+  ............................................................................
+  ............................................................................
+background: |2
+  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+  FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+  FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+hotspots:
+  lamp_sermo: [7, 1, 3, 1]
+  glow_sermo: [6, 2, 5, 1]
+  count_sermo: [11, 1, 3, 1]
+  screen_sermo: [5, 4, 7, 2]
+  label_sermo: [1, 10, 15, 1]
+  lamp_c64: [22, 1, 3, 1]
+  glow_c64: [21, 2, 5, 1]
+  count_c64: [26, 1, 3, 1]
+  screen_c64: [19, 4, 9, 2]
+  label_c64: [16, 10, 15, 1]
+  lamp_plus4: [37, 1, 3, 1]
+  glow_plus4: [36, 2, 5, 1]
+  count_plus4: [41, 1, 3, 1]
+  screen_plus4: [34, 4, 9, 2]
+  label_plus4: [31, 10, 15, 1]
+  lamp_ra: [52, 1, 3, 1]
+  glow_ra: [51, 2, 5, 1]
+  count_ra: [56, 1, 3, 1]
+  screen_ra: [52, 4, 3, 1]
+  label_ra: [46, 10, 15, 1]
+  lamp_trivia: [67, 1, 3, 1]
+  glow_trivia: [66, 2, 5, 1]
+  count_trivia: [71, 1, 3, 1]
+  screen_trivia: [64, 4, 9, 1]
+  label_trivia: [61, 10, 15, 1]

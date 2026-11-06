@@ -1,0 +1,40 @@
+# The Voting Booth. `options: catalog` takes the titles of the game catalog;
+# `options: doors` the doors of the board. A vote is kept by its option's
+# text, so a poll's options may be reordered or added to later.
+- id: favourite
+  title: Favourite TTG game
+  question: Which Teletype Games title is your favourite?
+  options: catalog
+- id: next_machine
+  title: Our next machine
+  question: Which machine should get our next game?
+  options:
+    - Commodore 64
+    - Commodore Plus/4
+    - ZX Spectrum
+    - Amiga
+    - MS-DOS PC
+    - TIC-80
+    - Game Boy
+- id: best_door
+  title: Best door
+  question: Which door of this board do you like best?
+  options: doors
+- id: terminal
+  title: Your terminal
+  question: What did you call this board with?
+  options:
+    - SyncTERM
+    - NetRunner
+    - bbsweb, in the browser
+    - telnet / PuTTY
+    - Qodem
+    - A real retro machine
+- id: first_bbs
+  title: Your first BBS
+  question: When did you first call a BBS?
+  options:
+    - Before 1990
+    - In the nineties
+    - After 2000
+    - This is my first one

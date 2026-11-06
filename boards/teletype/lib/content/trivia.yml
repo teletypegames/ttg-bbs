@@ -1,0 +1,31 @@
+# The fixed questions of the TTG Trivia door, next to the ones it makes
+# from the catalog and the team. The first answer is the right one; the
+# door shuffles them.
+- question: What does BBS stand for?
+  answers: [Bulletin Board System, Basic Binary Server, Big Bright Screen, Byte Buffer Service]
+- question: Which telnet port does the Teletype BBS answer on?
+  answers: ["2323", "23", "8080", "6502"]
+- question: What does SYS 64738 do on a Commodore 64?
+  answers: [Resets the machine, Formats the disk, Plays a sound, Opens the BASIC editor]
+- question: Which processor family do our C64 and Plus/4 games run on?
+  answers: ["6502", Z80, "68000", x86]
+- question: What is CP437?
+  answers: [The character set of the IBM PC, A modem protocol, A Commodore BASIC command, A TIC-80 cartridge format]
+- question: Which protocol sends files from the WarpEngine BBS to your terminal?
+  answers: [ZMODEM, Kermit, HTTP/3, Bluetooth]
+- question: What carries a push to master all the way into our catalog?
+  answers: [The CI pipeline with WarpEngine, A floppy disk by post, The sysop by hand, A Discord bot]
+- question: Which fantasy console runs Definitely not an Impostor?
+  answers: [TIC-80, PICO-8, Game Boy, Atari 2600]
+- question: In Blessing of Ra, where is the hero sealed?
+  answers: [In a pyramid, In a submarine, On the Moon, In an office]
+- question: What runs SERMO in the Doors menu?
+  answers: [A dual machine of the Neumatronic universe, An Amiga 500, A VT100, A Nokia 8110]
+- question: What does READY. on a Commodore screen mean?
+  answers: [BASIC waits for your command, The disk is full, The game is loading, The printer is online]
+- question: Which language are our TIC-80 games written in?
+  answers: [Lua, Rust, COBOL, 6502 assembly]
+- question: Where can you play the board without a telnet client?
+  answers: [bbsweb in the browser, Only on a real modem, In the Discord, Nowhere]
+- question: What did a caller hear before CONNECT in the old days?
+  answers: [The modem's handshake, A fax machine's song, Dial-up music by the sysop, Nothing at all]

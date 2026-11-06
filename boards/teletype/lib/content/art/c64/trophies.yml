@@ -1,0 +1,44 @@
+# The trophy case on the C64: three cups of reversed blocks, for the top caller, the name most
+# on the wall and the best TTG Trivia player; the names under them (plate_<list>), the titles over them.
+size: [40, 9]
+charset: petscii-upper
+palette:
+  y: yellow
+  b: brown
+chars: |2
+  ╭──────────────────────────────────────╮
+  │                                      │
+  │                                      │
+  │   ◥   ◤        ◥   ◤        ◥   ◤    │
+  │    ◥ ◤          ◥ ◤          ◥ ◤     │
+  │                                      │
+  │                                      │
+  │                                      │
+  ╰──────────────────────────────────────╯
+colors: |2
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  b......................................b
+  b...yyyyy........yyyyy........yyyyy....b
+  b...yyyyy........yyyyy........yyyyy....b
+  b....yyy..........yyy..........yyy.....b
+  b.....y............y............y......b
+  b....yyy..........yyy..........yyy.....b
+  b......................................b
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+reverse: |2
+  ........................................
+  ........................................
+  ....RRRRR........RRRRR........RRRRR.....
+  .....RRR..........RRR..........RRR......
+  ......R............R............R.......
+  ......R............R............R.......
+  .....RRR..........RRR..........RRR......
+  ........................................
+  ........................................
+hotspots:
+  title_callers: [1, 1, 12, 1]
+  plate_callers: [1, 7, 12, 1]
+  title_wall: [14, 1, 12, 1]
+  plate_wall: [14, 7, 12, 1]
+  title_trivia: [27, 1, 12, 1]
+  plate_trivia: [27, 7, 12, 1]

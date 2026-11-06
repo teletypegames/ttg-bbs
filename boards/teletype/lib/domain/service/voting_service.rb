@@ -1,0 +1,53 @@
+# frozen_string_literal: true
+
+require 'yaml'
+
+# The Voting Booth: the polls of lib/content/polls.yml, the catalog's games
+# and the board's doors filling the dynamic ones.
+class VotingService
+  Poll = Struct.new(:id, :title, :question, :options)
+
+  def initialize(path:, games:, doors: [])
+    @path  = path
+    @games = games
+    @doors = doors
+  end
+
+  def polls
+    YAML.safe_load_file(@path).map do |p|
+      Poll.new(p['id'], p['title'] || p['question'], p['question'], options_for(p['options']))
+    end
+  rescue StandardError => e
+    Rubbs.log('polls', e)
+    []
+  end
+
+  def ballot(poll, username) = VoteModel.ballot(poll.id, username)
+
+  # [[option, votes], ...] in the poll's order, plus any option that has
+  # votes but left the list (a game renamed).
+  def results(poll)
+    tally = VoteModel.tally(poll.id)
+    (poll.options | tally.keys).map { |o| [o, tally[o] || 0] }
+  end
+
+  def total(poll) = VoteModel.tally(poll.id).values.sum
+
+  def vote(poll, username, option)
+    return :anonymous if username.to_s.casecmp?(MemberService::ANONYMOUS)
+    return :unknown unless poll.options.include?(option)
+
+    VoteModel.cast(poll.id, username, option)
+    :ok
+  end
+
+  private
+
+  def options_for(spec)
+    case spec
+    when 'catalog' then @games.all.select { |g| g.released? && !g.dev_build? }.map(&:title).uniq.sort
+    when 'doors'   then @doors
+    else Array(spec).map(&:to_s)
+    end
+  end
+end

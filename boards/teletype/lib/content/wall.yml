@@ -1,0 +1,8 @@
+# What the clubhouse's wall says (ttg-common TTG::Wall, TTG::Narrative): the defaults of
+# ttg-common with these over them. A key ttg-common does not know stops the board at boot.
+title: The cork board
+intro: Pin a note for the clubhouse, or answer one. C64 callers read it too, and so does every board of the network from the gate.
+empty: The cork board is bare. Pin the first note!
+thanks: Pinned to the cork board.
+petscii:
+  intro: PIN A NOTE FOR THE CLUBHOUSE, OR ANSWER ONE.

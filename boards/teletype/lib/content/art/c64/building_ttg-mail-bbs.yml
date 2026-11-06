@@ -1,0 +1,15 @@
+# ttg-mail-bbs on the town map of the C64 face (3×3): its building, a pillar box with the letter slot.
+size: [3, 3]
+charset: petscii-upper
+palette:
+  a: light_red
+  w: white
+  k: dark_grey
+chars: |2
+  ◢█◣
+  █─█
+   █ 
+colors: |2
+  aaa
+  awa
+  .k.
