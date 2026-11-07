@@ -56,12 +56,12 @@ module Discovery
       assert_operator first.bytesize, :<=, 1300
       assert_equal Canvas::LOWERCASE, first.getbyte(0)
       screen = shown
-      assert_equal 'TTG GATE   OWN   GLOBAL   PROFILE', text_at(screen, 0, 1, 33)
+      assert_equal 'TTG GATE   OWN   GLOBAL   TODAY   YOU', text_at(screen, 0, 1, 37)
       assert((0..38).all? { |c| screen.cell(0, c).rvs })
       assert_equal Chrome::BAR, screen.cell(0, 1).color
       keys = Chrome::PLACES_BAR.map { |place| screen.cell(0, place.col) }
       assert_equal [Chrome::KEY], keys.map(&:color).uniq
-      assert_equal([Chrome::LIT, Chrome::BAR, Chrome::BAR], Chrome::PLACES_BAR.map { |place|
+      assert_equal([Chrome::LIT, Chrome::BAR, Chrome::BAR, Chrome::BAR], Chrome::PLACES_BAR.map { |place|
         screen.cell(0, place.col + 1).color
       })
       assert_equal '10 boards', text_at(screen, 1, 1, 9)
@@ -115,7 +115,7 @@ module Discovery
       g.press(:right)
       assert_equal %i[discover bar], [g.tab, g.focus]
       g.press(:right)
-      assert_equal :discover, g.tab
+      assert_equal :today, g.tab
       assert_equal Chrome::CURSOR, shown.cell(0, Chrome::PLACES_BAR[2].col + 1).color
       g.press(:left)
       g.press(:left)

@@ -10,7 +10,8 @@ ports, the gate only carries the bytes.
 Besides our own boards it is a phone book of the world's other telnet BBSes:
 **Global Discovery**, a searchable catalog that always shows which board
 answered our last call and which did not, and dials any of them (see
-[Global Discovery](#global-discovery)).
+[Global Discovery](#global-discovery)). And it tells what kind of day it is: the
+**Today** tab, the gate's daily page (see [Today](#today)).
 
 It has two faces on one port, like every board of the network: a **modern** one
 for ANSI terminals, after the list of [bbsweb](https://bbsweb.teletypegames.org)
@@ -160,23 +161,52 @@ false` keeps a board off the C64 menu, `enabled: false` off both.
 ## Interface
 
 **Modern:** under the logo the tabs, **Own Servers** | **Global Discovery** |
-**Profile**; TAB or the right arrow goes to the next, the left arrow back, and
+**Today** | **Profile**; TAB or the right arrow goes to the next, the left arrow back, and
 each keeps its place. The profile takes the screen; from it the caller comes back
 to the tab they left. On Own Servers the arrows choose a board, RETURN or its
-number dials it, `Q` or Esc hangs up. The rows show the board's colour bar,
+number dials it, `T` opens Today, `Q` or Esc hangs up. Over the list one line
+tells the day (the date, the name days, Budapest's weather). The rows show the board's colour bar,
 name, tags and port; the description and the full address of the chosen one are
 under the list. Global Discovery is described [below](#the-gate-ui).
 
 **Commodore 64:** the frame and the tabs ([above](#the-c64-face)); CRSR up
 from the top of the list reaches the tabs (on Global Discovery through its
-sub-menu), where CRSR left and right switch OWN and GLOBAL as the cursor goes and
-RETURN opens PROFILE; CRSR down goes back to the list. `D`
+sub-menu), where CRSR left and right switch OWN, GLOBAL and TODAY as the cursor goes and
+RETURN opens YOU (the profile; `Y` or `P`); CRSR down goes back to the list. `D`
 turns to Global Discovery (Browse: All, All PETSCII, All ASCII and the axes), `O` back to our own boards, the number dials, `Q`
 hangs up.
 
 Either way the board asks its own terminal question first: the gate reports the
 caller's window size to it, so a modern terminal is its default, and a C64,
 which has none, is taken for a C64.
+
+## Today
+
+The gate's daily page, a tab on both faces (`T`), after `docs/bbs/DAILY_HERALD.md`:
+
+- **the day:** the date, day of the year and week, the Hungarian name days
+  (`config/herald/namedays.yml`; in a leap year February 24 has none and the
+  names of the 24th-28th come a day later), the holidays
+  (`config/herald/holidays.yml`, the Easter ones worked out), sunrise, sunset and
+  the moon (worked out, Budapest's time);
+- **the weather** now, today and tomorrow in Budapest and, beside it, in the
+  capital of the caller's country (the GeoIP of Global Discovery,
+  `config/herald/capitals.yml`; the address is not kept), from Open-Meteo
+  (CC BY 4.0);
+- **the forint:** EUR, USD, GBP, CHF from the ECB's daily reference rates;
+- **on this day** in history, from the English Wikipedia's feed (CC BY-SA);
+- **earthquakes** of magnitude 4.5 and over in the last day, from the USGS;
+- **the network:** the callers on the gate, our boards, the catalog's boards
+  online and new this week, the board of the day (an online PETSCII board, the
+  same one all day; RETURN opens its page) and the newest note of the walls.
+
+A caller never waits for the web: a background job (`herald`, every ten minutes,
+each source by its own pace) fetches what is due into `data/herald.sqlite3`, and
+the page is made from it. A source that fails keeps its old payload until it is
+too old to show; then its part is left out. `TTG_GATE_BBS_HERALD_FETCH=false`
+stops the fetching. On the modern face the page has two columns and the network
+under them; on a C64 it has four pages (`+`/`-`): TODAY, THE WORLD, ON THIS DAY,
+THE NETWORK.
 
 ## Accounts and the sysop's console
 
@@ -186,7 +216,7 @@ and the other boards ask them, with any other service of the network, on the `in
 network (`http://ttg-gate-bbs:8090`, `/auth` for the accounts, every request signed with
 `RUBBS_AUTH_SECRET`; `TTG_GATE_BBS_CENTRAL_PORT`, 0 turns it off), and a
 caller signed in here is signed in on the board the gate dials. The **PROFILE**
-tab (or `P`) opens the caller's profile (log in, make an account, change the
+tab (**YOU** on a C64; or `P`) opens the caller's profile (log in, make an account, change the
 password).
 
 **Feedback and the walls.** The gate keeps the feedback, the walls and the letters of the network too
@@ -573,16 +603,21 @@ rake test                              the tests (test/: the console on both fac
 config/boards.yml                      the boards of the menu
 config/discovery/                      Discovery: sources, software signatures, source-to-tag rules
 config/discovery-optout.yml            Discovery: the sysops who asked to be left out
+config/herald/                         Today: the name days, the holidays, the capitals of the weather
 lib/
   domain.rb                            requires the domain
-  domain/migrations.rb                 the schemas: DISCOVERY_MIGRATIONS (the catalog), GEOIP_MIGRATIONS
+  domain/migrations.rb                 the schemas: DISCOVERY_MIGRATIONS (the catalog), GEOIP_MIGRATIONS, HERALD_MIGRATIONS
   domain/model/board_model.rb          one board of the list
+  domain/model/herald_model.rb         a row of the Today tab's cache
+  domain/herald.rb, domain/herald/     Today: the calendar, the moon, the sources, the cache, the edition of a caller
   domain/repository/board_repository.rb  config/boards.yml, read once
   domain/service/directory_service.rb  the boards a caller can dial
   domain/ttg_gate_bbs.rb               the composition root (TTGGateBBS)
   ui/modern.rb                         the modern face: Own Servers | Global Discovery
   ui/modern/style.rb                   the gate's look on rubbs' Rubbs::Modern::Kit: the logo, the tabs, the state marks
   ui/modern/own_servers.rb             the dialing menu of our own boards on an ANSI terminal
+  ui/modern/today.rb                   the Today tab on an ANSI terminal
+  ui/today.rb                          what answers a caller's Today page, on either face
   ui/modern/discovery/                 Global Discovery: home, menus, lists, the board page, search, sources
   ui/sysop.rb                          the sysop's console: its place in the profile, the steps both faces share
   ui/modern/sysop/                     the console on a modern terminal: its tabs, calls, accounts, the log
@@ -592,7 +627,7 @@ lib/
   ui/petscii/gate/                     its places (Places), its calls (Dialing) and its find line (Input)
   ui/petscii/chrome.rb                 the gate's Rubbs::Petscii::Kit::Chrome: the tabs, the sub-menu, the hotkeys
   ui/petscii/layout.rb                 Canvas and Layout of rubbs' kit (the 40×25 grid and its drawing helpers)
-  ui/petscii/views/                    Own Servers, a list of boards, a menu, a board's page, Sources, text pages
+  ui/petscii/views/                    Own Servers, a list of boards, a menu, a board's page, Sources, Today, text pages
   ui/colors.rb                         a board's accent on either face
   ui/dial.rb                           hands the line to a board (Rubbs::Common::Line::Gateway), by the dial rules for the catalog
   domain/discovery.rb                  requires Global Discovery

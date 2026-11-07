@@ -8,6 +8,7 @@ require_relative 'views/menu_view'
 require_relative 'views/page_view'
 require_relative 'views/sources_view'
 require_relative 'views/text_view'
+require_relative 'views/today_view'
 require_relative 'gate/places'
 require_relative 'gate/dialing'
 require_relative 'gate/input'
@@ -19,7 +20,8 @@ module UI
     # menus and pages on GLOBAL (its sub-menu under the tabs), the caller's
     # profile on PROFILE. CRSR up from the top of a list goes to the
     # sub-menu and the tabs, left and right switch OWN and GLOBAL as the
-    # cursor goes, PROFILE opens on RETURN, CRSR down goes back. A yellow
+    # cursor goes, TODAY shows the day (UI::Petscii::Views::TodayView), YOU
+    # (the profile) opens on RETURN, CRSR down goes back. A yellow
     # sign opens its place from anywhere (a view's own keys first: B on a
     # board's page is its banner). ← or RUN/STOP goes back, Q hangs up.
     class Gate < Rubbs::Petscii::Kit::Frame
@@ -60,11 +62,13 @@ module UI
       # [boards] our boards with a C64 face (BoardModel)
       # [browse] Discovery::BrowseService, nil without a catalog
       # [dials]  Discovery::DialService
-      def initialize(session, boards:, browse:, dials:)
+      # [today]  answers the caller's Herald::Edition (or +nil+)
+      def initialize(session, boards:, browse:, dials:, today: -> {})
         super(session, chrome: Chrome::KIT, home: :own, input_label: INPUT_LABEL)
         @boards = boards
         @browse = browse
         @dials  = dials
+        @today  = today
       end
 
       # The search and the profile are actions of the bar and the sub-menu,
@@ -73,8 +77,12 @@ module UI
 
       def action(key) = key == :search ? search : account
 
-      # Under the tabs on Own Servers: how many boards, and how.
-      def top_line(canvas) = Chrome.own_line(canvas, @boards.size)
+      # Under the tabs: on Today the day, elsewhere how many boards, and how.
+      def top_line(canvas)
+        return Chrome.today_line(canvas, view.respond_to?(:edition) ? view.edition : nil) if tab == :today
+
+        Chrome.own_line(canvas, @boards.size)
+      end
     end
   end
 end

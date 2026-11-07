@@ -161,3 +161,15 @@ GEOIP_MIGRATIONS = [
     CREATE TABLE v6 (start BLOB PRIMARY KEY, stop BLOB NOT NULL, cc TEXT NOT NULL) WITHOUT ROWID;
   SQL
 ].freeze
+
+# The Today tab's cache (data/herald.sqlite3, HeraldModel): one row a web
+# source of Herald, its last payload and when it came.
+HERALD_MIGRATIONS = [
+  <<~SQL
+    CREATE TABLE herald (
+      source     TEXT PRIMARY KEY,
+      fetched_at INTEGER NOT NULL,
+      payload    TEXT NOT NULL
+    );
+  SQL
+].freeze

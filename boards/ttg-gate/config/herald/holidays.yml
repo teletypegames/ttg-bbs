@@ -1,0 +1,24 @@
+# The days the Today tab names: Hungary's public holidays (public: true) and a few
+# days everyone knows. fixed: by month and day; easter: days after Easter Sunday
+# (Herald::Calendar.easter), for the holidays that move with it.
+fixed:
+  "01-01": { name: "New Year's Day", public: true }
+  "02-14": { name: "Valentine's Day" }
+  "03-08": { name: "International Women's Day" }
+  "03-15": { name: "National Day (HU), 1848", public: true }
+  "05-01": { name: "Labour Day", public: true }
+  "08-20": { name: "St Stephen's Day (HU)", public: true }
+  "10-23": { name: "National Day (HU), 1956", public: true }
+  "10-31": { name: "Halloween" }
+  "11-01": { name: "All Saints' Day", public: true }
+  "12-06": { name: "St Nicholas' Day" }
+  "12-24": { name: "Christmas Eve", public: true }
+  "12-25": { name: "Christmas Day", public: true }
+  "12-26": { name: "Second Day of Christmas", public: true }
+  "12-31": { name: "New Year's Eve" }
+easter:
+  -2: { name: "Good Friday", public: true }
+  0: { name: "Easter Sunday", public: true }
+  1: { name: "Easter Monday", public: true }
+  49: { name: "Whit Sunday", public: true }
+  50: { name: "Whit Monday", public: true }

@@ -12,6 +12,7 @@ module UI
           case key
           when :own then own
           when :help then Views::TextView.help
+          when :today then today
           else
             return resting unless @browse
 
@@ -27,6 +28,16 @@ module UI
           when :random then random
           when :sources then Views::SourcesView.new(@browse.sources, @stats || {})
           end
+        end
+
+        def today
+          edition = begin
+            @today.call
+          rescue StandardError => e
+            Rubbs.log('today', e)
+            nil
+          end
+          Views::TodayView.new(edition, on_open: ->(listing) { push(page_view(listing.id, :today)) if @browse })
         end
 
         def own = @own ||= Views::OwnView.new(@boards, on_dial: method(:dial_own))

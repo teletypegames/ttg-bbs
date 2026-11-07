@@ -19,6 +19,7 @@ module UI
         key('/') { open? ? search : pass }
         key(:tab, :right, 'g', 'G') { pages.switch }
         key(:left) { pages.switch(-1) }
+        key('t', 'T') { pages.open_tab(:today) }
         key(:escape, 'q', 'Q') { quit }
 
         def initialize(ctx)

@@ -79,7 +79,7 @@ class SysopTest < Minitest::Test
   end
 
   def test_the_tabs_go_round_to_the_profile
-    capture_io { assert_nil gate([:tab, :tab, 'b', :left, 'b', 'q']).run }
+    capture_io { assert_nil gate([:tab, :tab, :tab, 'b', :left, 'b', 'q']).run }
     assert_includes @line.output, 'PROFILE'
     assert_includes @line.output, 'Logged in as Tasi'
     assert_includes @line.output, 'SysOp'

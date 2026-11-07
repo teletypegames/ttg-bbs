@@ -6,7 +6,7 @@ module UI
     # of bbsweb: the logo and the chooser, one row a board with its colour
     # bar, and under the list the chosen board's description. The arrows
     # choose, RETURN or the board's number dials, TAB turns to Global
-    # Discovery and on to the profile (left back), P opens the caller's
+    # Discovery and on to Today and the profile (left back), T opens Today, P opens the caller's
     # profile (their account; SysOp in it for a sysop), Q or Esc hangs up.
     class OwnServers < Screen
       NAME = 18
@@ -20,6 +20,7 @@ module UI
       key('p', 'P', 'a', 'A') { pages.profile }
       key('w', 'W') { pages.open_tab(:wall) }
       key('f', 'F') { pages.open_tab(:feedback) }
+      key('t', 'T') { pages.open_tab(:today) }
       key(/\A[1-9]\z/) do |k|
         board = @boards[k.to_i - 1]
         next unless board
@@ -28,14 +29,21 @@ module UI
         dial(board)
       end
 
-      def initialize(boards)
+      # Seconds the line of the day is kept before it is made again.
+      KEEP = 60
+
+      # [boards] our boards (BoardModel)
+      # [today]  answers the Today page (a Herald::Edition) for the line of
+      #          the day over the list, or +nil+
+      def initialize(boards, today: nil)
         super()
         @boards = boards
+        @today  = today
         @index = 0
       end
 
       def lines
-        lines = [*masthead(:own), '']
+        lines = [*masthead(:own), today_line]
         lines.concat(@boards.each_with_index.map { |b, i| row(b, i) })
         room = rows - 1 - lines.size - 5
         lines.push('', rule, *detail(@boards[@index], room.clamp(0, 4)), '', hints)
@@ -44,6 +52,26 @@ module UI
       private
 
       def dial(board) = hand_over { UI.dial(session, board) }
+
+      # The day in one line (Herald::Edition#summary), and T for the rest.
+      def today_line
+        summary = day_summary
+        return '' unless summary
+
+        "#{DIM}#{fit(summary, width - 10).rstrip}  #{YELLOW}T#{DIM} today#{RESET}"
+      end
+
+      def day_summary
+        now = Time.now.to_i
+        if @summary_at.nil? || now - @summary_at >= KEEP
+          @summary_at = now
+          @summary    = @today&.call&.summary
+        end
+        @summary
+      rescue StandardError => e
+        Rubbs.log('today', e)
+        nil
+      end
 
       # One board: its colour bar, number, name, tags and address; the
       # chosen one on a lit background with DIAL at its end.
@@ -66,7 +94,8 @@ module UI
       end
 
       def hints
-        "#{DIM}↑↓ choose  RETURN or 1-#{@boards.size} dial  TAB Discovery  W wall  F feedback  P profile  Q hang up#{RESET}"
+        "#{DIM}↑↓ choose  RETURN or 1-#{@boards.size} dial  TAB Discovery  T today  " \
+          "W wall  F feedback  P profile  Q hang up#{RESET}"
       end
     end
   end

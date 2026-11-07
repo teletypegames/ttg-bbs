@@ -18,10 +18,17 @@ module UI
         '  |_|   |_| \\___|  \\___/_/ \\_\\_| |___|'
       ].freeze
 
-      TABS = { own: 'OWN SERVERS', discovery: 'GLOBAL DISCOVERY', profile: 'PROFILE', wall: 'WALL', feedback: 'FEEDBACK' }.freeze
+      TABS = {
+        own:       'OWN SERVERS',
+        discovery: 'GLOBAL DISCOVERY',
+        today:     'TODAY',
+        profile:   'PROFILE',
+        wall:      'WALL',
+        feedback:  'FEEDBACK'
+      }.freeze
 
       # The gate's look (Rubbs::Modern::Kit::Look).
-      LOOK = Rubbs::Modern::Kit::Look.new(logo: LOGO, tabs: TABS, crumb: 'GLOBAL DISCOVERY')
+      LOOK = Rubbs::Modern::Kit::Look.new(logo: LOGO, tabs: TABS, right: 'TAB', crumb: 'GLOBAL DISCOVERY')
 
       def mark(listing) = "#{STATE_COLORS.fetch(listing.state, TEXT)}#{listing.mark}#{RESET}"
     end
