@@ -22,6 +22,10 @@ module TTG
     BOARDS = File.expand_path('../../..', __dir__)
     # Who had an account before this has the Pioneer badge.
     LAUNCH = Time.utc(2026, 11, 8)
+    # What a guest is told the first time they do something a badge counts
+    # (Rubbs::Common::Badges.guest_hint): an invitation to make an account.
+    GUEST_HINT = 'Callers with an account collect badges on every board of the network, and this would have ' \
+                 'counted. Make one in your profile: a name and a password, nothing more.'
 
     # The boards of the network: the folders beside ttg-common with a
     # <tt>bbs.rb</tt>.
@@ -45,10 +49,11 @@ module TTG
     end
 
     # Loads the network's own badges once, tells the catalog the boards and
-    # puts Badges in the profile.
+    # the guests' invitation, and puts Badges in the profile.
     def self.network
       require_relative 'badges/network'
       Rubbs::Common::Badges.catalog.boards = -> { boards }
+      Rubbs::Common::Badges.guest_hint = GUEST_HINT
       Rubbs::Common::Auth::Profile.extra(:badges, 'Badges', hotkey: 'b', if: SIGNED_IN) { |session| Screen.new(session).run }
     end
 

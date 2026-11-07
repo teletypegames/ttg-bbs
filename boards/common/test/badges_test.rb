@@ -41,6 +41,13 @@ class BadgesTest < Minitest::Test
     assert_operator TTG::Badges.boards.size, :>=, 14
   end
 
+  def test_a_guest_is_invited
+    Rubbs::Common::Badges.isolated { TTG::Badges.network }
+    assert_equal TTG::Badges::GUEST_HINT, Rubbs::Common::Badges.guest_hint
+  ensure
+    Rubbs::Common::Badges.guest_hint = nil
+  end
+
   def test_what_came_before_the_badges
     central(TTG::Wall::Service)
     capture_io { Rubbs.central(TTG::Wall::Service).call(:post, ada, text: 'Hello from before') }

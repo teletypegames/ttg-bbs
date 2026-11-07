@@ -149,6 +149,7 @@ class HeraldTest < Minitest::Test
     assert_includes out, 'EUR 363.90'
     assert_includes out, '2 on the gate'
     assert_includes out, 'Hello!'
+    refute_includes out, 'Ours today'
   end
 
   def test_the_c64_pages

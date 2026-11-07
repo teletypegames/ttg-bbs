@@ -160,12 +160,21 @@ module UI
       def network(net)
         return ["#{DIM}The network is quiet.#{RESET}", '', ''] unless net
 
-        [network_line(net), board_line(net.board_of_day), wall_line(net.walls.last)]
+        [network_line(net), ours_line(net.ours), net.board_of_day ? board_line(net.board_of_day) : wall_line(net.walls.last)]
       end
 
       def network_line(net)
-        words = "#{net.callers} on the gate · #{net.boards} boards · #{net.online} online worldwide · #{net.fresh} new this week"
+        words = "#{net.callers} on the gate · #{net.boards} boards · #{net.online} online worldwide, #{net.fresh} new"
         "#{look.accent}#{BOLD}THE NETWORK#{RESET}  #{TEXT}#{fit(words, width - 13).rstrip}#{RESET}"
+      end
+
+      def ours_line(ours)
+        return '' unless ours
+
+        number, board = ours
+        name = board.name
+        "#{DIM}Ours today  O #{number}#{RESET} #{YELLOW}#{BOLD}#{name}#{RESET}  " \
+          "#{TEXT}#{fit(board.summary, width - name.length - number.to_s.length - 17).rstrip}#{RESET}"
       end
 
       def board_line(board)

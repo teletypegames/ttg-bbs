@@ -95,7 +95,7 @@ module UI
            [[net.boards.to_s, Canvas::WHITE], [' boards of ours', Canvas::GREY]],
            [[net.online.to_s, Canvas::WHITE], [' boards online in the world', Canvas::GREY]],
            [[net.fresh.to_s, Canvas::WHITE], [' new this week', Canvas::GREY]], '',
-           *board(net.board_of_day), *walls(net.walls)]
+           *ours(net.ours), *board(net.board_of_day), *walls(net.walls)]
         end
 
         private
@@ -153,6 +153,13 @@ module UI
             [[[format('%.1f', q.mag), Canvas::LIGHT_RED], [" #{Layout.age(q.time, now).rjust(3)}", Canvas::GREY],
               ["  #{place.first}", Canvas::LIGHT_GREY]], *place.drop(1).map { |l| "          #{l}" }]
           end
+        end
+
+        def ours(ours)
+          return [] unless ours
+
+          number, board = ours
+          [['Ours today', Canvas::CYAN], [[board.name, Canvas::YELLOW], ["  O, #{number}", Canvas::GREY]], '']
         end
 
         def board(listing)

@@ -65,8 +65,18 @@ class TTGGateBBS
       walls:        newest_walls,
       online:       online.size,
       fresh:        browse ? browse.new_this_week.size : 0,
-      board_of_day: board_of_day(online.select(&:petscii?), at)
+      board_of_day: board_of_day(online.select(&:petscii?), at),
+      ours:         ours_of_day(directory.boards, at)
     )
+  end
+
+  # One of our own boards, a different one each day, with its number in
+  # Own Servers: the quieter boards get their turn on the Today page.
+  def ours_of_day(boards, at)
+    return if boards.empty?
+
+    index = (Herald.local(at).to_date.jd * 5) % boards.size
+    [index + 1, boards[index]]
   end
 
   # An online PETSCII board, the same one all day: the day picks it.
