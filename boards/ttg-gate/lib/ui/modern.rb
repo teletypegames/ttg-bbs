@@ -10,6 +10,7 @@ require_relative 'sysop'
 require_relative 'modern/own_servers'
 %w[context menu_view list_view board_page sources home].each { |f| require_relative "modern/discovery/#{f}" }
 require_relative 'modern/today'
+require_relative 'modern/profile_tab'
 require_relative 'modern/gate'
 
 module UI

@@ -18,15 +18,7 @@ module UI
         '  |_|   |_| \\___|  \\___/_/ \\_\\_| |___|'
       ].freeze
 
-      TABS = {
-        own:       'OWN SERVERS',
-        discovery: 'GLOBAL DISCOVERY',
-        today:     'TODAY',
-        profile:   'PROFILE',
-        wall:      'WALL',
-        feedback:  'FEEDBACK',
-        hunt:      'THE HUNT'
-      }.freeze
+      TABS = { own: 'OWN SERVERS', discovery: 'GLOBAL DISCOVERY', today: 'TODAY', profile: 'PROFILE' }.freeze
 
       # The gate's look (Rubbs::Modern::Kit::Look).
       LOOK = Rubbs::Modern::Kit::Look.new(logo: LOGO, tabs: TABS, right: 'TAB', crumb: 'GLOBAL DISCOVERY')

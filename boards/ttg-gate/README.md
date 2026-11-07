@@ -162,8 +162,13 @@ false` keeps a board off the C64 menu, `enabled: false` off both.
 
 **Modern:** under the logo the tabs, **Own Servers** | **Global Discovery** |
 **Today** | **Profile**; TAB or the right arrow goes to the next, the left arrow back, and
-each keeps its place. The profile takes the screen; from it the caller comes back
-to the tab they left. On Own Servers the arrows choose a board, RETURN or its
+each keeps its place, and after Profile TAB comes round to Own Servers. The Profile tab is the
+gate's own (`UI::Modern::ProfileTab`), in the gate's look: who the caller is, their badges and hunt,
+and a list (arrows and RETURN, or an item's letter): log in, make an account, change the password,
+log out, and the places every board adds to the profile (Feedback, the Wall, The Hunt, Badges,
+SysOp). Names and passwords are read on the bottom line, the passwords masked. The Wall (`W`),
+Feedback (`F`) and The Hunt (`H`) are no tabs: they take the screen, and the caller comes back to
+the tab they left. On Own Servers the arrows choose a board, RETURN or its
 number dials it, `T` opens Today, `Q` or Esc hangs up. Over the list one line
 tells the day (the date, the name days, Budapest's weather). The rows show the board's colour bar,
 name, tags and port; the description and the full address of the chosen one are
@@ -231,8 +236,8 @@ and the other boards ask them, with any other service of the network, on the `in
 network (`http://ttg-gate-bbs:8090`, `/auth` for the accounts, every request signed with
 `RUBBS_AUTH_SECRET`; `TTG_GATE_BBS_CENTRAL_PORT`, 0 turns it off), and a
 caller signed in here is signed in on the board the gate dials. The **PROFILE**
-tab (**YOU** on a C64; or `P`) opens the caller's profile (log in, make an account, change the
-password).
+tab (or `P`) is the caller's profile in the gate's look (log in, make an account, change the
+password, log out); on a C64 **YOU** opens the boards' common profile.
 
 **Feedback and the walls.** The gate keeps the feedback, the walls and the letters of the network too
 (ttg-common `TTG::Feedback`, `TTG::Wall`, `TTG::PrivateMessage`, services of the Central:

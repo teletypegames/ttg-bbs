@@ -78,11 +78,33 @@ class SysopTest < Minitest::Test
     assert_includes @line.output, 'a guest hung up.'
   end
 
-  def test_the_tabs_go_round_to_the_profile
-    capture_io { assert_nil gate([:tab, :tab, :tab, 'b', :left, 'b', 'q']).run }
-    assert_includes @line.output, 'PROFILE'
-    assert_includes @line.output, 'Logged in as Tasi'
+  def test_the_tabs_go_round_to_the_profile_and_on
+    capture_io { assert_nil gate([:tab, :tab, :tab, :tab, 'q']).run }
+    assert_includes @line.output, 'Change password'
     assert_includes @line.output, 'SysOp'
+    assert_includes shown, 'RETURN or 1-13 dial'
+  end
+
+  def test_a_guest_logs_in_on_the_profile_tab
+    identity = Rubbs::Common::Auth::Identity.guest
+    keys = ['p', 'l', *'Tasi'.chars, :enter, *'secret1'.chars, :enter, 'q']
+    @line = Rubbs::Test::Session.new(keys: keys, identity: identity, cols: 100, rows: 30)
+    capture_io { UI::Modern::Gate.new(@line, Bbs.new(Directory.new(boards), nil, nil, @accounts)).run }
+    assert_equal 'Tasi', @line.identity.name
+    assert_includes @line.output, 'Name:'
+    assert_includes @line.output, '*'
+    refute_includes @line.output, 'secret1'
+    assert_includes shown, 'Welcome, Tasi.'
+  end
+
+  def test_a_guest_makes_an_account_and_logs_out
+    keys = ['p', 'n', *'Ada'.chars, :enter, *'secret9'.chars, :enter, *'secret9'.chars, :enter, 'l', 'q']
+    @line = Rubbs::Test::Session.new(keys: keys, identity: Rubbs::Common::Auth::Identity.guest, cols: 100, rows: 30)
+    capture_io { UI::Modern::Gate.new(@line, Bbs.new(Directory.new(boards), nil, nil, @accounts)).run }
+    assert_includes @line.output, 'Your account is ready.'
+    refute @line.identity.signed_in?
+    assert_includes shown, 'You are logged out.'
+    capture_io { assert_kind_of Rubbs::Common::Auth::Identity, @accounts.log_in('Ada', 'secret9', caller_key: 'line:2') }
   end
 
   def test_the_log
