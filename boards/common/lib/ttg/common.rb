@@ -21,5 +21,6 @@ require_relative 'feedback'
 require_relative 'wall'
 require_relative 'private_message'
 require_relative 'places'
+require_relative 'badges'
 
 TTG::Places.offer

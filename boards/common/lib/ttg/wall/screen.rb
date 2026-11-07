@@ -89,6 +89,7 @@ module TTG
           DEFAULTS.key?(result.to_s.to_sym) ? result.to_sym : :unavailable
         end
         @guest_name = nil if key == :name_taken
+        @session.achieve(:wall_note) if key == :thanks && @session.respond_to?(:achieve)
         @before = nil
         @screen.tell(say(key), key == :thanks ? :good : :bad)
       end

@@ -42,6 +42,7 @@ class CatalogService
   # Counts a download that went through; a log that cannot be written does
   # not spoil it for the caller.
   def downloaded(title, protocol)
+    Rubbs.achieve(:download, ref: title.key.to_s, protocol: protocol.to_s)
     DownloadModel.add(title.key, version: title.version, protocol: protocol)
   rescue Sequel::DatabaseError => e
     Rubbs.log('downloads', "the download of #{title.key} is not counted: #{e.class}: #{e.message}")

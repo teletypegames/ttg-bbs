@@ -103,6 +103,7 @@ module TTG
           'limited'         => :limited,
           'guest'           => :guest
         }.fetch(result, :unavailable)
+        @session.achieve(:letter) if key == :thanks && @session.respond_to?(:achieve)
         @screen.head(say(:title))
         @screen.film(Stationery.film(@screen.cols, petscii: @screen.petscii?), Stationery::FRAME) if key == :thanks
         @screen.tell(say(key), key == :thanks ? :good : :bad)

@@ -15,6 +15,7 @@ require_relative 'lib/web/api'
 board = Rubbs.board 'TTG Blog BBS', TTGBlogBBS do
   preset  TTG::PRESET
   central TTG::CENTRAL
+  badges  TTG::Badges.load(__dir__)
   auth    login: :menu
   modern  UI::Modern
   petscii UI::Petscii

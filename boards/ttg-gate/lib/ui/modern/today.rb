@@ -36,6 +36,13 @@ module UI
         @ctx    = ctx
       end
 
+      # A caller who opens Today has read the day's page (the Newsreader
+      # badge).
+      def enter
+        super
+        Rubbs.achieve(:today)
+      end
+
       def lines
         page = edition
         lines = [*masthead(:today), '']

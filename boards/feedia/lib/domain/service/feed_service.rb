@@ -14,7 +14,9 @@ class FeedService
   # The ChannelModel of +feed+; nil (logged) when it could not be fetched
   # or read. With +fresh+ the cache is skipped.
   def read(feed, fresh: false)
-    @feeds.read(feed, fresh: fresh)
+    channel = @feeds.read(feed, fresh: fresh)
+    Rubbs.achieve(:feed, ref: feed.name.to_s) if channel
+    channel
   rescue Rubbs::Common::Web::HTTP::Error, FeedXml::Unreadable => e
     Rubbs.log('feed', "#{feed.name}: #{e.class}: #{e.message}")
     nil

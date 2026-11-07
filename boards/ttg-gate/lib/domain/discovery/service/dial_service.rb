@@ -148,6 +148,7 @@ module Discovery
       return refused(refusal, board, face, now) if refusal
 
       write_live
+      Rubbs.achieve(:dial, ref: board.id.to_s)
       call = Call.new(board, now.to_i, face, ip: ips.first)
       begin
         yield call

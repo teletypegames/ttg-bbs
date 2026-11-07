@@ -23,7 +23,11 @@ class ArticleService
 
   # The ArticleModel titled +title+; nil when there is none or Wikipedia did
   # not answer.
-  def article(title, lang:) = answer('article') { @wikipedia.article(title, lang: lang) }
+  def article(title, lang:)
+    found = answer('article') { @wikipedia.article(title, lang: lang) }
+    Rubbs.achieve(:article, lang: lang.to_s, ref: title.to_s) if found
+    found
+  end
 
   # A random article's title, nil when Wikipedia did not answer.
   def random(lang:) = answer('random') { @wikipedia.random_title(lang: lang) }

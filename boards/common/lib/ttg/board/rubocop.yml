@@ -85,7 +85,7 @@ Metrics/ModuleLength:
 Metrics/BlockLength:
   Max: 30
   CountAsOne: [array, hash, heredoc, method_call]
-  AllowedMethods: [define, flow, window, app, describe, it]
+  AllowedMethods: [define, flow, window, app, describe, it, badges]
   Exclude:
     - "test/**/*"
 

@@ -68,6 +68,7 @@ class ReadingService
     return unless seen && !seen.include?(number)
 
     seen << number
+    Rubbs.achieve(:read, kind: number.negative? ? 'ien' : 'rfc', ref: number.abs.to_s)
     ReadModel.add(number)
   end
 

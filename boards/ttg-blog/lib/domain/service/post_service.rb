@@ -62,6 +62,7 @@ class PostService
 
     post = find(id)
     announce(post) if first
+    Rubbs.achieve(:publish, ref: id.to_s) if first
     post
   end
 

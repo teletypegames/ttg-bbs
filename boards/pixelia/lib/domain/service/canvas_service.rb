@@ -50,6 +50,7 @@ class CanvasService
     index  = CanvasModel.index(x, y)
     before = @repository.put(index, *cell)
     remember(who, index, before, cell) if before && before != cell
+    Rubbs.achieve(:paint) if painter(who).undo.size == 1
     :ok
   end
 

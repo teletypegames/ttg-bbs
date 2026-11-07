@@ -88,6 +88,7 @@ module TTG
           'name_taken'   => :name_taken,
           'invalid_name' => :name_taken
         }.fetch(result['result'], :unavailable)
+        @session.achieve(:feedback) if key == :thanks && @session.respond_to?(:achieve)
         @screen.head(text(story, :title))
         @screen.tell(text(story, key), key == :thanks ? :good : :bad)
       end

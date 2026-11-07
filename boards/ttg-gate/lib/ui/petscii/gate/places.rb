@@ -31,6 +31,7 @@ module UI
         end
 
         def today
+          Rubbs.achieve(:today)
           edition = begin
             @today.call
           rescue StandardError => e

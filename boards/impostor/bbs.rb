@@ -12,6 +12,7 @@ require_relative 'lib/ui'
 board = Rubbs.board 'Impostor BBS', ImpostorBBS do
   preset  TTG::PRESET
   central TTG::CENTRAL
+  badges  TTG::Badges.load(__dir__)
   modern  { |bbs| flow Impostor::Modern.flow(sessions: bbs.debriefs) }
   petscii { |bbs| flow Impostor::Petscii.flow(sessions: bbs.debriefs) }
   goodbye(**UI::GOODBYE)

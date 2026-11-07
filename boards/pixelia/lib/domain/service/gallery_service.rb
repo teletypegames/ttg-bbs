@@ -32,7 +32,10 @@ class GalleryService
   def piece(file)
     key  = "#{file.pack}/#{file.name}"
     data = @cache.read(key) || fetch(key, file)
-    data.is_a?(Symbol) ? data : @renderer.render(data)
+    return data if data.is_a?(Symbol)
+
+    Rubbs.achieve(:piece, pack: file.pack.to_s, ref: key)
+    @renderer.render(data)
   end
 
   def site_url = @remote.site_url

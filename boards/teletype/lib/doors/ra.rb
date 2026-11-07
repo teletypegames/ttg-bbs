@@ -104,6 +104,7 @@ module Ra
 
   # A riddle solved: one blessing more, and at BLESSINGS the game.
   def self.solved(io, riddle, games)
+    Rubbs.achieve(:riddle, ref: riddle['answers'].first.to_s)
     io.ctx.delete(:ra_riddle)
     blessings = io.ctx[:ra_blessings] = io.ctx.fetch(:ra_blessings, 0) + 1
     return praise(io, riddle, blessings) if blessings < BLESSINGS || io.ctx[:ra_blessed]

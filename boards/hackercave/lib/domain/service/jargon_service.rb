@@ -40,7 +40,10 @@ class JargonService
 
   def letter(letter) = JargonEntryModel.letter(letter)
 
-  def entry(id) = JargonEntryModel.entry(id)
+  def entry(id)
+    Rubbs.achieve(:read, kind: 'jargon', ref: id.to_s)
+    JargonEntryModel.entry(id)
+  end
 
   # The entries +entry+ links to that the lexicon has.
   def links(entry) = JargonEntryModel.by_headwords(entry.links)

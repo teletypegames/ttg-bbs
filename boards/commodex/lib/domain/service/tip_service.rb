@@ -39,7 +39,9 @@ class TipService
     return :too_long if text.size > MAX_TEXT
     return :rate_limited unless allowed?(caller)
 
-    save(game, text, clean(handle)[0, MAX_HANDLE])
+    saved = save(game, text, clean(handle)[0, MAX_HANDLE])
+    Rubbs.achieve(:tip, ref: game.id.to_s) if saved == :ok
+    saved
   end
 
   def pending(limit = 100) = TipModel.with_status('pending', limit: limit)

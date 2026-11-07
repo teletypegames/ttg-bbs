@@ -21,6 +21,7 @@ require_relative 'lib/ui/petscii'
 board = Rubbs.board 'TTG Wiki BBS', WikiBBS, slug: 'wiki-bbs' do
   preset TTG::PRESET
   central TTG::CENTRAL
+  badges  TTG::Badges.load(__dir__)
   auth login: :menu
   modern do |bbs|
     big_banner 'TTG WIKI', style: :success

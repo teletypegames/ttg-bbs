@@ -17,6 +17,7 @@ require_relative 'lib/ui/petscii'
 board = Rubbs.board 'Teletype BBS', TeletypeBBS do
   preset  TTG::PRESET
   central TTG::CENTRAL
+  badges  TTG::Badges.load(__dir__)
   auth    login: :menu
   goodbye false
 

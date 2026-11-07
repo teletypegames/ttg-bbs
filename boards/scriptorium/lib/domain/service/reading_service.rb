@@ -60,6 +60,7 @@ class ReadingService
     return unless seen && !seen.include?(id)
 
     seen << id
+    Rubbs.achieve(:book, ref: id.to_s)
     ReadModel.add(id)
   end
 

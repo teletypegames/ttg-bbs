@@ -12,6 +12,7 @@ require_relative 'lib/ui/petscii'
 board = Rubbs.board 'Scriptorium BBS', ScriptoriumBBS do
   preset  TTG::PRESET
   central TTG::CENTRAL
+  badges  TTG::Badges.load(__dir__)
   modern  UI::Modern::APP
   petscii UI::Petscii
   goodbye "The books are Project Gutenberg's gift."

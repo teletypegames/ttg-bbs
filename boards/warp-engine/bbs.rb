@@ -12,6 +12,7 @@ require_relative 'lib/ui/petscii'
 board = Rubbs.board 'WarpEngine BBS', WarpEngineBBS, slug: 'warp-engine-bbs' do
   preset  TTG::PRESET
   central TTG::CENTRAL
+  badges  TTG::Badges.load(__dir__)
   modern  UI::Modern::APP
   petscii UI::Petscii
   goodbye color: Rubbs::Petscii::Colors::LB

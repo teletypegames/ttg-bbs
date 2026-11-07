@@ -51,6 +51,7 @@ class WikiService
   # wrong goes to the log; the caller only learns that it did.
   def page_markdown(page)
     data = @repository.page(page.route, private: page.private?)
+    Rubbs.achieve(:page, ref: page.route.to_s) unless data['error']
     case data['error']
     when 'forbidden' then "# Forbidden\n\nThe wiki refused the supervisor access for `#{page.route}`."
     when nil         then "# #{data['title']}\n\n#{data['markdown']}"

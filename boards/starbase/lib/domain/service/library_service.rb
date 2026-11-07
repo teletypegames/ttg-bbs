@@ -20,7 +20,11 @@ class LibraryService
 
   # The ArticleModel titled +title+; nil when there is none or Memory Alpha
   # did not answer.
-  def article(title) = answer('article') { @memory_alpha.article(title) }
+  def article(title)
+    found = answer('article') { @memory_alpha.article(title) }
+    Rubbs.achieve(:article, ref: title.to_s) if found
+    found
+  end
 
   # The article of +episode+: the one Wikidata names, else the one of its
   # title, else the first search hit for it; nil when there is none.

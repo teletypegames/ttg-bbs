@@ -12,6 +12,7 @@ require_relative 'lib/ui/petscii'
 board = Rubbs.board 'TTG Mail BBS', TTGMailBBS do
   preset  TTG::PRESET
   central TTG::CENTRAL
+  badges  TTG::Badges.load(__dir__)
   auth    login: :menu
   modern  UI::Modern::APP
   petscii UI::Petscii
