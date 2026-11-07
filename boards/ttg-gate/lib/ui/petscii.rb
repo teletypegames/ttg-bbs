@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'colors'
+require_relative 'account'
 require_relative 'dial'
 require_relative 'today'
 require_relative 'petscii/gate'

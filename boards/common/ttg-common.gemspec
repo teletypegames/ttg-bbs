@@ -6,13 +6,13 @@
 #   require 'ttg/common'
 Gem::Specification.new do |s|
   s.name     = 'ttg-common'
-  s.version  = '0.16.2'
+  s.version  = '0.16.3'
   s.summary  = 'The shared parts of the Teletype Games BBS boards, on rubbs'
   s.authors  = ['Teletype Games']
   s.license  = 'MIT'
   s.files    = Dir['lib/**/*.{rb,yml}', 'lib/ttg/board/*.yml']
   s.require_paths = ['lib']
   s.required_ruby_version = '>= 3.2'
-  s.add_dependency 'rubbs', '>= 4.6'
+  s.add_dependency 'rubbs', '>= 4.6.1'
   s.metadata['rubygems_mfa_required'] = 'true'
 end

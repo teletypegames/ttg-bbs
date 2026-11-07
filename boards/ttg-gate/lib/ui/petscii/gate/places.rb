@@ -13,6 +13,7 @@ module UI
           when :own then own
           when :help then Views::TextView.help
           when :today then today
+          when :account then Views::ProfileView.new(session)
           else
             return resting unless @browse
 

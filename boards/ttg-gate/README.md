@@ -237,7 +237,8 @@ network (`http://ttg-gate-bbs:8090`, `/auth` for the accounts, every request sig
 `RUBBS_AUTH_SECRET`; `TTG_GATE_BBS_CENTRAL_PORT`, 0 turns it off), and a
 caller signed in here is signed in on the board the gate dials. The **PROFILE**
 tab (or `P`) is the caller's profile in the gate's look (log in, make an account, change the
-password, log out); on a C64 **YOU** opens the boards' common profile.
+password, log out); on a C64 **YOU** is the gate's own profile too (`UI::Petscii::Views::ProfileView`,
+numbered items, the password read as stars on the hint row). Both faces share `UI::Account`.
 
 **Feedback and the walls.** The gate keeps the feedback, the walls and the letters of the network too
 (ttg-common `TTG::Feedback`, `TTG::Wall`, `TTG::PrivateMessage`, services of the Central:

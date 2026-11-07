@@ -55,6 +55,13 @@ module UI
                           [' dials  ', Canvas::GREY], ['H', Canvas::YELLOW], [' Help', Canvas::GREY]])
       end
 
+      # The line under the tabs on YOU: the caller's name, or how to get one.
+      def account_line(canvas, identity)
+        return KIT.line(canvas, [['One account for every board', Canvas::GREY]]) unless identity.signed_in?
+
+        KIT.line(canvas, [['Logged in as ', Canvas::GREY], [Layout.plain(identity.name.to_s)[0, 24], Canvas::WHITE]])
+      end
+
       # The line under the tabs on Today: the date and the name days.
       def today_line(canvas, edition)
         return KIT.line(canvas, [['Today', Canvas::GREY]]) unless edition

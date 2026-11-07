@@ -9,10 +9,6 @@ module UI
         private
 
         # The search: the input line in place of the hint bar, then its list.
-        # The caller's profile (Rubbs::Common::Auth::Profile, the look of TTG::PRESET)
-        # on the bare line, then back.
-        def account = hand_over { Rubbs::Common::Auth::Profile.run(session) }
-
         def search
           text = input
           return if text.nil? || text.empty?

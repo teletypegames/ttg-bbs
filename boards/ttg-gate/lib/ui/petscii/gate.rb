@@ -9,6 +9,7 @@ require_relative 'views/page_view'
 require_relative 'views/sources_view'
 require_relative 'views/text_view'
 require_relative 'views/today_view'
+require_relative 'views/profile_view'
 require_relative 'gate/places'
 require_relative 'gate/dialing'
 require_relative 'gate/input'
@@ -21,7 +22,8 @@ module UI
     # profile on PROFILE. CRSR up from the top of a list goes to the
     # sub-menu and the tabs, left and right switch OWN and GLOBAL as the
     # cursor goes, TODAY shows the day (UI::Petscii::Views::TodayView), YOU
-    # (the profile) opens on RETURN, CRSR down goes back. A yellow
+    # (the profile, UI::Petscii::Views::ProfileView) opens on RETURN, CRSR
+    # down goes back. A yellow
     # sign opens its place from anywhere (a view's own keys first: B on a
     # board's page is its banner). ← or RUN/STOP goes back, Q hangs up.
     class Gate < Rubbs::Petscii::Kit::Frame
@@ -71,15 +73,16 @@ module UI
         @today  = today
       end
 
-      # The search and the profile are actions of the bar and the sub-menu,
-      # not sections.
-      def action?(key) = %i[search account].include?(key)
+      # The search is an action of the sub-menu, not a section.
+      def action?(key) = key == :search
 
-      def action(key) = key == :search ? search : account
+      def action(_key) = search
 
-      # Under the tabs: on Today the day, elsewhere how many boards, and how.
+      # Under the tabs: on Today the day, on YOU who is logged in, elsewhere
+      # how many boards, and how.
       def top_line(canvas)
         return Chrome.today_line(canvas, view.respond_to?(:edition) ? view.edition : nil) if tab == :today
+        return Chrome.account_line(canvas, session.identity) if tab == :account
 
         Chrome.own_line(canvas, @boards.size)
       end

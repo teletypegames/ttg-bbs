@@ -54,7 +54,7 @@ module TTG
       require_relative 'badges/network'
       Rubbs::Common::Badges.catalog.boards = -> { boards }
       Rubbs::Common::Badges.guest_hint = GUEST_HINT
-      Rubbs::Common::Auth::Profile.extra(:badges, 'Badges', hotkey: 'b', if: SIGNED_IN) { |session| Screen.new(session).run }
+      Rubbs::Common::Auth::Profile.extra(:badges, 'Badges', hotkey: 'a', if: SIGNED_IN) { |session| Screen.new(session).run }
     end
 
     # Whether the caller is signed in on a board tied to the Central.
