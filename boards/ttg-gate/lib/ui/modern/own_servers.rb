@@ -21,6 +21,7 @@ module UI
       key('w', 'W') { pages.open_tab(:wall) }
       key('f', 'F') { pages.open_tab(:feedback) }
       key('t', 'T') { pages.open_tab(:today) }
+      key('h', 'H') { pages.open_tab(:hunt) }
       key(/\A[1-9]\z/) do |k|
         board = @boards[k.to_i - 1]
         next unless board
@@ -95,7 +96,7 @@ module UI
 
       def hints
         "#{DIM}↑↓ choose  RETURN or 1-#{@boards.size} dial  TAB Discovery  T today  " \
-          "W wall  F feedback  P profile  Q hang up#{RESET}"
+          "H hunt  W wall  F feedback  P profile  Q hang up#{RESET}"
       end
     end
   end

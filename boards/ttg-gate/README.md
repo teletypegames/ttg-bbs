@@ -208,6 +208,21 @@ stops the fetching. On the modern face the page has two columns and the network
 under them; on a C64 it has four pages (`+`/`-`): TODAY, THE WORLD, ON THIS DAY,
 THE NETWORK.
 
+## The Hunt
+
+The network's weekly treasure hunt (`docs/bbs/NETWORK_HUNT.md`) is kept here, on the Central:
+`Rubbs::Common::Hunt::Service` (`/hunt`, `data/hunt.sqlite3`) with the hunts of
+`content/hunts/<year>/w<week>-<name>.yml` (`content/hunts/README.md` says how to write one). A step
+is solved by an event a board sends anyway for the badges (an RFC read, a book opened, a canvas
+painted …) or by an answer typed on the Hunt page; the notice of a solved step comes back on
+whichever board the caller is. H opens the Hunt from Own Servers and Today (and *The Hunt* in the
+profile on every board); Today shows the hunt of the week under the network.
+
+- `content/` is not code to the supervisor: a pushed hunt is read within a minute, nobody is
+  restarted.
+- `bin/hunt check` (the tests run it too, and play every hunt home), `bin/hunt show FILE`,
+  `bin/hunt new NAME` (the file of the next free week).
+
 ## Accounts and the sysop's console
 
 The gate is the network's **Central** (rubbs `Rubbs::Common::Central`, `central serve:` in `bbs.rb`):

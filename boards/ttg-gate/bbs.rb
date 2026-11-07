@@ -13,7 +13,8 @@ board = Rubbs.board 'TTG Gate BBS', TTGGateBBS do
   mouse false
   auth(login: :menu, &:accounts)
   central serve:    lambda(&:central_port),
-          services: [TTG::Feedback::Service, TTG::Wall::Service, TTG::PrivateMessage::Service, TTG::Badges::Service]
+          services: [TTG::Feedback::Service, TTG::Wall::Service, TTG::PrivateMessage::Service, TTG::Badges::Service,
+                     Rubbs::Common::Hunt::Service]
   badges TTG::Badges.load_all(__dir__)
   on_start { |gate| UI::Sysop.offer(gate.accounts) }
   modern { |bbs| call { UI::Modern::Gate.new(session, bbs).run } }

@@ -1,0 +1,96 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# The hunts of The Hunt (TTG::Hunt, content/hunts) from the shell:
+#
+#   bin/hunt check               what is wrong with the files (the tests run the same)
+#   bin/hunt show FILE           the hunt as a player meets it, step by step
+#   bin/hunt new NAME            the file of the next free week, to fill in
+#
+# A push of content/hunts deploys a hunt; the gate reads it within a minute.
+
+require 'bundler/setup'
+require 'fileutils'
+require_relative '../lib/domain'
+
+GATE = File.expand_path('..', __dir__)
+
+def catalog
+  TTG::Badges.load_all(GATE)
+  Rubbs::Common::Badges.catalog
+end
+
+def local(time) = Rubbs::Common::Season.now(tz: Rubbs::Common::Hunt.time_zone, at: time).time.strftime('%a %F %H:%M')
+
+def part_words(part)
+  case part
+  when Rubbs::Common::Hunt::Find
+    filter = part.filter.map { |k, v| "#{k}=#{Array(v).join('|')}" }.join(' ')
+    "go to #{part.board}, #{part.event} #{filter}".strip
+  when Rubbs::Common::Hunt::Answer then "answer: #{Array(part.value).join(' | ')}"
+  else "#{part.key}: #{part.value.inspect}"
+  end
+end
+
+def show(path)
+  trail, problems = Rubbs::Common::Hunt::Trail.read(path)
+  abort problems.join("\n") unless trail
+
+  puts "#{trail.title}  (#{trail.slug})"
+  puts "open #{local(trail.opens)} - #{local(trail.closes)}" if trail.opens
+  puts trail.intro unless trail.intro.empty?
+  trail.steps.each_with_index { |step, i| show_step(step, i) }
+  puts "\n#{problems.join("\n")}" unless problems.empty?
+end
+
+def show_step(step, index)
+  puts "\n#{index + 1}. #{step.clue.gsub("\n", ' ')}"
+  step.parts.each { |part| puts "   #{part_words(part)}" }
+  puts "   fragment: #{step.fragment}" if step.fragment
+  step.hints.each_with_index { |hint, n| puts "   hint #{n + 1}: #{hint}" }
+end
+
+def next_week
+  taken = Dir.glob(File.join(TTG::Hunt::DIR, '*', 'w*-*.yml')).filter_map { |f| Rubbs::Common::Hunt::Trail.week_of(f) }
+  start = [Time.now, *taken.map { |t| t + 1 }].max
+  date  = Date.new(start.year, start.month, start.day)
+  date += 1 until date.cwday == 1 && taken.none? { |t| t.to_date == date || (t + 3600).to_date == date }
+  date
+end
+
+def create(name)
+  abort 'usage: bin/hunt new NAME' if name.to_s.empty?
+
+  date = next_week
+  path = File.join(TTG::Hunt::DIR, date.cwyear.to_s, "w#{date.cweek}-#{name.downcase.gsub(/[^a-z0-9]+/, '-')}.yml")
+  FileUtils.mkdir_p(File.dirname(path))
+  File.write(path, <<~YAML)
+    title: #{name.split(/[-_ ]/).map(&:capitalize).join(' ')}
+    intro: |
+      What the hunt is about, in a sentence or two.
+
+    steps:
+      - clue: |
+          Where to go, told so that it has to be worked out.
+        find: { board: hackercave, event: read, kind: rfc, ref: '1149' }
+        fragment: WORD
+        hints:
+          - A nudge.
+          - Nearly the answer.
+
+      - clue: |
+          A question about what was found there.
+        answer: ['the answer', 'another spelling']
+  YAML
+  puts path
+end
+
+case ARGV.shift
+when 'check'
+  problems = Rubbs::Common::Hunt::Book.new(TTG::Hunt::DIR).problems(catalog)
+  puts problems.empty? ? "#{Dir.glob(File.join(TTG::Hunt::DIR, '**', '*.yml')).size} hunts, nothing wrong" : problems
+  exit(problems.empty? ? 0 : 1)
+when 'show' then show(ARGV.first || abort('usage: bin/hunt show FILE'))
+when 'new' then create(ARGV.join('-'))
+else abort File.read(__FILE__).lines.grep(/\A#  /).join
+end

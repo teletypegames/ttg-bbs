@@ -3,7 +3,8 @@
 module TTG
   # The places every TTG board offers in the caller's profile
   # (Rubbs::Common::Auth::Profile.extra), the same on every board: Feedback
-  # (TTG::Feedback) and the Wall (TTG::Wall), on a board tied to the Central,
+  # (TTG::Feedback), the Wall (TTG::Wall) and The Hunt (TTG::Hunt), on a board
+  # tied to the Central,
   # and for a sysop the feedback desk (TTG::Feedback::Desk).
   # A board puts them in its own menus too; these are there even before it
   # does.
@@ -17,6 +18,7 @@ module TTG
     def self.offer
       Rubbs::Common::Auth::Profile.extra(:feedback, 'Feedback', hotkey: 'f', if: CENTRAL) { |session| Feedback.open(session) }
       Rubbs::Common::Auth::Profile.extra(:wall, 'The Wall', hotkey: 'w', if: CENTRAL) { |session| Wall.open(session) }
+      Rubbs::Common::Auth::Profile.extra(:hunt, 'The Hunt', hotkey: 'h', if: CENTRAL) { |session| Hunt.open(session) }
       Rubbs::Common::Auth::Profile.extra(:feedback_desk, 'Feedback desk', hotkey: 'd', if: SYSOP) { |session| Feedback.desk(session) }
     end
   end

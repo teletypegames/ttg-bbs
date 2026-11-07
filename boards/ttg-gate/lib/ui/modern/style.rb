@@ -24,7 +24,8 @@ module UI
         today:     'TODAY',
         profile:   'PROFILE',
         wall:      'WALL',
-        feedback:  'FEEDBACK'
+        feedback:  'FEEDBACK',
+        hunt:      'THE HUNT'
       }.freeze
 
       # The gate's look (Rubbs::Modern::Kit::Look).

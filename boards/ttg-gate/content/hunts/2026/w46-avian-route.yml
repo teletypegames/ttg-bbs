@@ -1,0 +1,71 @@
+title: The Avian Route
+intro: |
+  Messages have always found a way: on wings, under the sea, in images,
+  on a wall. Follow one across the network, and bring home what it
+  carried.
+
+steps:
+  - clue: |
+      Before packets flew down copper, a standard let them fly on wings.
+      Find the April document of the Internet that carries datagrams the
+      way grandfather carried letters.
+    find: { board: hackercave, event: read, kind: rfc, ref: '1149' }
+    fragment: PIGEON
+    hints:
+      - It is an April Fools' RFC, and one of the most famous.
+      - HackerCave BBS, the RFC shelf, number 1149.
+
+  - clue: |
+      The standard you just read names a typical MTU. How heavy is it?
+    answer: ['256 mg', '256 milligrams', '256 milligram', '256']
+    hints:
+      - Look for "MTU" in the section on frame format.
+      - It is measured in milligrams.
+
+  - clue: |
+      A submarine took its captain twenty thousand leagues from every
+      postman. Open his story in the network's library.
+    find: { board: scriptorium, event: book, ref: ['164', '2488'] }
+    fragment: OCEAN
+    hints:
+      - Jules Verne wrote it in 1870.
+      - Scriptorium BBS, Twenty Thousand Leagues under the Sea.
+
+  - clue: |
+      The captain of that submarine had a name that means "nobody".
+      What was it?
+    answer: ['Nemo', 'Captain Nemo']
+    hints:
+      - It is Latin for "nobody".
+
+  - clue: |
+      A captain could only be answered in images: "Shaka, when the walls
+      fell." Find the story of that meeting on the starbase.
+    find: { board: starbase, event: article, ref: ['Darmok', 'Darmok (episode)'] }
+    fragment: SHAKA
+    hints:
+      - The Next Generation, season five, episode two.
+      - Starbase BBS, search for Darmok.
+
+  - clue: |
+      Hungary had its own winged postmen. Read about them in Hungarian,
+      in the great library of Alexandria.
+    find: { board: alexandria, event: article, lang: hu, ref: 'Postagalamb' }
+    hints:
+      - Alexandria BBS can read the Hungarian Wikipedia.
+      - The Hungarian word is Postagalamb.
+
+  - clue: |
+      Every messenger leaves a mark. Leave yours where everybody paints
+      together.
+    find: { board: pixelia, event: paint }
+    fragment: TRACE
+    hints:
+      - Pixelia BBS has a shared canvas.
+
+  - clue: |
+      Come back and say what the messengers carried: the first letter of
+      every fragment, in order.
+    answer: ['POST']
+    hints:
+      - Four fragments, four letters.

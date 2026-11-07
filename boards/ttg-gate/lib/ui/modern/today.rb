@@ -23,6 +23,7 @@ module UI
       key('d', 'D', 'g', 'G') { pages.open_tab(:discovery) }
       key('w', 'W') { pages.open_tab(:wall) }
       key('f', 'F') { pages.open_tab(:feedback) }
+      key('h', 'H') { pages.open_tab(:hunt) }
       key('p', 'P', 'a', 'A') { pages.profile }
       key(:escape, 'q', 'Q') { quit }
       key(:enter) { board_of_day }
@@ -49,9 +50,10 @@ module UI
         return lines.push("#{YELLOW}Today's page is not ready yet. Please try again later.#{RESET}") unless page
 
         lines << date_line(page.day)
-        body = rows - 1 - lines.size - 6
+        net  = [*network(page.network), *hunt_line]
+        body = rows - 3 - lines.size - net.size
         lines.concat(columns(left(page), right(page, body), body))
-        lines.push(rule, *network(page.network), "#{DIM}#{fit(SOURCES, width)}#{RESET}", hints)
+        lines.push(rule, *net, "#{DIM}#{fit(SOURCES, width)}#{RESET}", hints)
       end
 
       private
@@ -60,12 +62,27 @@ module UI
         now = Time.now.to_i
         if @made_at.nil? || now - @made_at >= KEEP
           @made_at = now
+          @hunt    = hunt_now
           @edition = @source.call
         end
         @edition
       rescue StandardError => e
         Rubbs.log('today', e)
         nil
+      end
+
+      def hunt_now
+        TTG::Hunt.proxy.trails['season']
+      rescue StandardError
+        nil
+      end
+
+      def hunt_line
+        hunt = @hunt or return []
+        words = "#{hunt['players']} on the trail · #{hunt['finished']} home"
+        title = fit(hunt['title'], 30).rstrip
+        ["#{look.accent}#{BOLD}THE HUNT#{RESET}  #{YELLOW}#{BOLD}#{title}#{RESET}  " \
+         "#{TEXT}#{fit("#{words}  H open", width - title.length - 12).rstrip}#{RESET}"]
       end
 
       def date_line(day)
@@ -200,7 +217,7 @@ module UI
       end
 
       def hints
-        "#{DIM}RETURN board of the day  TAB tabs  W wall  F feedback  P profile  Q hang up#{RESET}"
+        "#{DIM}RETURN board of the day  TAB tabs  H hunt  W wall  F feedback  P profile  Q hang up#{RESET}"
       end
     end
   end

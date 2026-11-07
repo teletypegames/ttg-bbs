@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 # The badges of Commodex BBS (TTG::Badges): the C64 games and their tips.
-# TipService reports :tip.
+# TipService reports :tip, AboutService :game (what Wikipedia says of a game
+# was read; The Hunt can send callers there).
 Rubbs.badges :commodex do
   event :tip, ref: 'the game'
+  event :game, ref: 'the game', title: 'its title'
 
   badge :tipster do
     title  'Tipster'

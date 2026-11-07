@@ -2,11 +2,34 @@
 
 # The badges of the whole network (TTG::Badges): every board counts for
 # them. The events of the Wall, the feedback and the letters come from
-# ttg-common's own screens (TTG::Wall, TTG::Feedback, TTG::PrivateMessage).
+# ttg-common's own screens (TTG::Wall, TTG::Feedback, TTG::PrivateMessage),
+# a finished hunt from the Central's Rubbs::Common::Hunt::Service.
 Rubbs.badges :network do
   event :wall_note
   event :feedback
   event :letter
+  event :hunt_finished, ref: 'the hunt', in_season: 'yes or no', hints: 'hints seen', rank: 'the place on the list'
+
+  badge :hunter do
+    title  'Hunter'
+    hint   'Finish hunts of The Hunt: 1, 5, 20.'
+    emblem '✦', :yellow
+    on(:hunt_finished).distinct(:ref).tiers bronze: 1, silver: 5, gold: 20
+  end
+
+  badge :sharp_eye, secret: true do
+    title  'Sharp Eye'
+    hint   'Finish a hunt in its week without a single hint.'
+    emblem '◎', :cyan
+    on(:hunt_finished, in_season: 'yes', hints: 0).once
+  end
+
+  badge :top_of_the_list, secret: true do
+    title  'Top of the List'
+    hint   'Be number one on the list of a hunt\'s week when you make it home.'
+    emblem '1', :white
+    on(:hunt_finished, in_season: 'yes', rank: 1).once
+  end
 
   badge :first_light do
     title  'First Light'
