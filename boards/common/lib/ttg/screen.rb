@@ -44,9 +44,12 @@ module TTG
     end
 
     # Writes +text+ in the colour of +role+ (COLORS), wrapped to #cols, with
-    # +indent+ spaces before each line.
+    # +indent+ spaces before each line; a line break in +text+ starts a new
+    # line.
     def paragraph(text, role = :text, indent: 0)
-      wrap(text.to_s, cols - indent).each { |part| line("#{' ' * indent}#{part}", role) }
+      text.to_s.split("\n").each do |own|
+        wrap(own, cols - indent).each { |part| line("#{' ' * indent}#{part}", role) }
+      end
     end
 
     # Writes one line in the colour of +role+, cut to #cols.

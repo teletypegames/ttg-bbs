@@ -58,26 +58,36 @@ module TTG
       def show(state)
         trail = state['trail']
         @screen.head("The Hunt: #{trail['title']}", heading(state))
-        @screen.paragraph(trail['intro'], :meta) if state['step'] == 1 && !trail['intro'].to_s.empty?
-        @screen.blank if state['step'] == 1 && !trail['intro'].to_s.empty?
+        intro = state['step'] == 1 && !trail['intro'].to_s.empty?
+        prose(trail['intro'], :meta) if intro
+        @screen.blank if intro
         state['finish'] ? finished(state) : clue(state)
         @screen.blank
       end
 
       def heading(state)
         trail = state['trail']
-        when_ = 'a past week, off the list'
-        when_ = "this week, #{trail['players']} on the trail, #{trail['finished']} home" if trail['season']
+        when_ = "closed on #{day(trail['closes'])}, off the list"
+        when_ = "open until #{day(trail['closes'])} · #{trail['players']} on the trail, #{trail['finished']} home" if trail['season']
         return "Finished · #{when_}" if state['finish']
 
         "Step #{state['step']} of #{state['steps']} · #{when_}"
       end
 
+      def prose(text, role)
+        text.to_s.strip.split(/\n\s*\n/).each_with_index do |part, i|
+          @screen.blank if i.positive?
+          @screen.paragraph(part.split.join(' '), role)
+        end
+      end
+
+      def day(epoch) = Rubbs::Common::Season.now(tz: Rubbs::Common::Hunt.time_zone, at: Time.at(epoch.to_i - 1)).time.strftime('%-d %b')
+
       def clue(state)
-        @screen.paragraph(state['clue'], :text)
+        prose(state['clue'], :text)
         @screen.blank
         fragments(state['fragments'])
-        Array(state['hints']).each_with_index { |text, i| @screen.paragraph("Hint #{i + 1}: #{text}", :meta) }
+        Array(state['hints']).each_with_index { |text, i| prose("Hint #{i + 1}: #{text}", :meta) }
         @screen.line(next_hint(state['next_hint_at']), :meta) if state['next_hint_at']
         @screen.paragraph(state['asks'] ? 'Answer it here.' : 'Go and find it on the network.', :meta) unless state['guest']
         @screen.paragraph(GUEST, :name) if state['guest']
@@ -90,7 +100,7 @@ module TTG
       def finished(state)
         finish = state['finish']
         fragments(state['fragments'])
-        place = finish['rank'] ? ", number #{finish['rank']} this week" : ''
+        place = finish['rank'] ? ", number #{finish['rank']} on the list" : ''
         hints = finish['hints'] == 1 ? '1 hint' : "#{finish['hints']} hints"
         @screen.paragraph("You made it home in #{span(finish['seconds'])}, #{hints}#{place}.", :good)
       end
@@ -105,7 +115,7 @@ module TTG
         days, rest = seconds.divmod(86_400)
         hours, rest = rest.divmod(3600)
         return "#{days} d #{hours} h" if days.positive?
-        return "#{hours} h #{rest / 60} min" if hours.positive?
+        return "#{hours} h#{" #{rest / 60} min" if rest >= 60}" if hours.positive?
 
         "#{[rest / 60, 1].max} min"
       end
@@ -115,7 +125,7 @@ module TTG
         playing = !state['guest'] && !state['finish']
         items << ['Answer', :answer] if playing && state['asks']
         items << ['Hint', :hint] if playing && state['next_hint_at'] && state['next_hint_at'].to_i <= Time.now.to_i
-        items << ['List of the week', :list]
+        items << ['The list', :list, 'l']
         items << ['Past hunts', :past]
         items << ['Back', :back]
       end
@@ -141,7 +151,7 @@ module TTG
       def list(trail)
         rows = proxy.board(hunt: trail['slug'])['board'] or return @screen.tell('The list cannot be reached now.', :bad)
 
-        @screen.head("The Hunt: #{trail['title']}", 'Who made it home in its week: the fewest hints first, then the quickest.')
+        @screen.head("The Hunt: #{trail['title']}", 'Who made it home while it was open: the fewest hints first, then the quickest.')
         @screen.paragraph('Nobody yet.', :meta) if rows.empty?
         rows.each_with_index do |row, i|
           hints = row['hints'] == 1 ? '1 hint' : "#{row['hints']} hints"
@@ -155,7 +165,7 @@ module TTG
         trails = proxy.trails['past'] or return @screen.tell('The Hunt cannot be reached now.', :bad)
         return @screen.tell('There are no past hunts yet.', :meta) if trails.empty?
 
-        @screen.head('Past hunts', 'Every hunt can still be played; the list of its week stays as it was.')
+        @screen.head('Past hunts', 'Every hunt can still be played; its list stays as it was when it closed.')
         choice = @screen.menu(trails.first(9).each_with_index.map { |t, i| ["#{i + 1} #{t['title']}", t['slug'], (i + 1).to_s] })
         @hunt = choice unless choice == :back || choice.nil?
       end

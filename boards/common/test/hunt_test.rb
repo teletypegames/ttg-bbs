@@ -13,7 +13,9 @@ class HuntTest < Minitest::Test
     opens: 2026-01-01 00:00
     closes: 2099-01-01 00:00
     steps:
-      - clue: What is two and two?
+      - clue: |
+          What is two
+          and two?
         answer: ['4', 'four']
         fragment: FOUR
   YAML
@@ -46,6 +48,7 @@ class HuntTest < Minitest::Test
     capture_io { TTG::Hunt.open(line) }
     assert_includes line.output, 'THE HUNT: TEST ROUTE'
     assert_includes line.output, 'What is two and two?'
+    assert_includes line.output, 'open until 31 Dec'
     assert_includes line.output, 'Make one in your profile'
   end
 
@@ -53,7 +56,7 @@ class HuntTest < Minitest::Test
     identity = Rubbs::Common::Auth::Identity.new(id: @ada.id, name: 'Ada', source: :login)
     line = Rubbs::Test::Session.new(keys: ['a', *'four'.chars, :enter, ' ', 'b'], identity: identity)
     capture_io { TTG::Hunt.open(line) }
-    assert_includes line.output, 'Right! The Hunt, Test Route: you made it home! You are number 1 this week.'
+    assert_includes line.output, 'Right! The Hunt, Test Route: you made it home! You are number 1 on the list.'
     assert_includes line.output, 'You made it home in'
     assert_includes line.output, 'Fragments: FOUR'
   end
