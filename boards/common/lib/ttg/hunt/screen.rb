@@ -67,8 +67,9 @@ module TTG
 
       def heading(state)
         trail = state['trail']
-        when_ = "closed on #{day(trail['closes'])}, off the list"
-        when_ = "open until #{day(trail['closes'])} · #{trail['players']} on the trail, #{trail['finished']} home" if trail['season']
+        until_ = day(trail['closes'])
+        when_  = "closed on #{until_}, off the list"
+        when_  = "open until #{until_} · #{trail['players']} on the trail, #{trail['finished']} home" if trail['season']
         return "Finished · #{when_}" if state['finish']
 
         "Step #{state['step']} of #{state['steps']} · #{when_}"
@@ -81,7 +82,9 @@ module TTG
         end
       end
 
-      def day(epoch) = Rubbs::Common::Season.now(tz: Rubbs::Common::Hunt.time_zone, at: Time.at(epoch.to_i - 1)).time.strftime('%-d %b')
+      def day(epoch)
+        Rubbs::Common::Season.now(tz: Rubbs::Common::Hunt.time_zone, at: Time.at(epoch.to_i - 1)).time.strftime('%-d %b')
+      end
 
       def clue(state)
         prose(state['clue'], :text)
@@ -151,7 +154,7 @@ module TTG
       def list(trail)
         rows = proxy.board(hunt: trail['slug'])['board'] or return @screen.tell('The list cannot be reached now.', :bad)
 
-        @screen.head("The Hunt: #{trail['title']}", 'Who made it home while it was open: the fewest hints first, then the quickest.')
+        @screen.head("The Hunt: #{trail['title']}", 'Who made it home while it was open: fewest hints first, then the fastest.')
         @screen.paragraph('Nobody yet.', :meta) if rows.empty?
         rows.each_with_index do |row, i|
           hints = row['hints'] == 1 ? '1 hint' : "#{row['hints']} hints"
