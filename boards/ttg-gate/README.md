@@ -221,8 +221,8 @@ password).
 
 **Feedback and the walls.** The gate keeps the feedback, the walls and the letters of the network too
 (ttg-common `TTG::Feedback`, `TTG::Wall`, `TTG::PrivateMessage`, services of the Central:
-`data/feedback.sqlite3`, `data/wall.sqlite3`, `data/messages.sqlite3`). On the gate the **WALL** tab
-(or `W` on Own Servers) shows every board's wall together, newest first, and a caller writes on the
+`data/feedback.sqlite3`, `data/wall.sqlite3`, `data/messages.sqlite3`). On the gate `W` (on Own Servers
+or Today; there is no Wall tab) shows every board's wall together, newest first, and a caller writes on the
 gate's own; **FEEDBACK** (`F`) is the gate's feedback box. On a C64 both are in the profile.
 
 A caller with the `sysop` role finds **SysOp** in the profile, on either face:
