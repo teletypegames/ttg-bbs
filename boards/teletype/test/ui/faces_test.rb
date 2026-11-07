@@ -69,6 +69,16 @@ class FacesTest < Minitest::Test
     end
   end
 
+  def test_the_town_map_and_the_trophies_draw
+    session = Rubbs::Test::Session.new(identity: @kali, cols: 100, rows: 40)
+    app = UI::Modern::APP.build(session: session, session_id: 's1', context: @context)
+    %i[open_town_map open_trophies].each do |opener|
+      app.send(opener)
+      app.send(:render_screen)
+    end
+    assert_includes session.output, 'Town Map'
+  end
+
   def test_a_window_title_wears_its_section
     app = UI::Modern::APP.build(session: Rubbs::Test::Session.new(identity: @kali), session_id: 's1', context: @context)
     window = app.show(:voting)

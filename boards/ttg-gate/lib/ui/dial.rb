@@ -8,14 +8,17 @@ module UI
   # a private address), so this gateway may call a non-public address; a
   # board of the catalog never goes through it (dial_catalog). It forwards
   # who is calling (the face picked here, the caller's address): our board
-  # skips its terminal question and logo, and counts the real caller.
+  # skips its terminal question and logo, and counts the real caller; a
+  # signed-in caller's key is for the board's id (its technical name), not
+  # one made of its title (TTG Wiki BBS is wiki-bbs, not ttg-wiki-bbs).
   def self.dial(session, board)
     Rubbs::Common::Line::Gateway.new(
       host:        board.host,
       port:        board.port,
       name:        board.name,
       public_only: false,
-      forward:     true
+      forward:     true,
+      audience:    board.id
     ).call(session)
   end
 

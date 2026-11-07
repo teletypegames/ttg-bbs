@@ -133,10 +133,10 @@ module UI
       end
 
       def draw_town(frame, x, y)
-        @town.draw(frame, x: x, y: y)
+        Rubbs::Modern::Art.draw(@town, frame, x: x, y: y)
         @boards.each do |b|
           bx, by = at(b)
-          @icons[b.id].draw(frame, x: x + bx, y: y + by)
+          Rubbs::Modern::Art.draw(@icons[b.id], frame, x: x + bx, y: y + by)
           color = Rubbs::Common::Art.color(b.accent).ansi
           sgr = b.equal?(chosen) ? "\e[0;1;38;5;16;48;5;#{color}m" : "\e[0;38;5;#{color}m"
           write(frame, x + bx - 3, y + by + 4, b.name.center(LABEL), sgr)
