@@ -31,6 +31,15 @@ module Herald
       end
     end
 
+    # How old each source's payload is at +now+: source key => [seconds
+    # since it came (+nil+: never), whether it may still be shown].
+    def ages(now = Time.now)
+      @sources.to_h do |key, source|
+        entry = @store.get(key)
+        [key, [entry && (now.to_i - entry.fetched_at), source.fresh?(entry, now)]]
+      end
+    end
+
     # The Edition at +at+ for a caller of +country+ (an ISO code, lower
     # case, or +nil+), with the +network+ (a Network, or +nil+).
     def edition(country: nil, network: nil, at: Time.now)

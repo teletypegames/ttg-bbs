@@ -28,6 +28,27 @@ class AccountsMetricsTest < Minitest::Test
     assert_includes text, "ttg_bbs_wall_hidden 3\n"
   end
 
+  def test_the_badges_and_the_today_tab
+    stats = {
+      awards:   { %w[tourist] + [''] => 4, %w[regular bronze] => 2 },
+      accounts: 5,
+      events:   { %w[call wiki] => 9 },
+      defined:  { 'network' => 17 }
+    }
+    engine = Struct.new(:statistics).new(stats)
+    herald = Struct.new(:ages).new({ 'weather' => [120, true], 'rates' => [nil, false] })
+    text   = AccountsMetrics.new(nil, nil, services: { '/badges' => Struct.new(:engine).new(engine) }, herald: herald)
+      .text({ accounts: 0, roles: {} })
+    assert_includes text, %(ttg_bbs_badges_awarded{badge="tourist",tier=""} 4\n)
+    assert_includes text, %(ttg_bbs_badges_awarded{badge="regular",tier="bronze"} 2\n)
+    assert_includes text, "ttg_bbs_badges_accounts 5\n"
+    assert_includes text, %(ttg_bbs_badge_events{event="call",board="wiki"} 9\n)
+    assert_includes text, %(ttg_bbs_badges_defined{board="network"} 17\n)
+    assert_includes text, %(ttg_bbs_herald_age_seconds{source="weather"} 120\n)
+    refute_includes text, %(ttg_bbs_herald_age_seconds{source="rates"})
+    assert_includes text, %(ttg_bbs_herald_fresh{source="rates"} 0\n)
+  end
+
   def test_the_file_is_written_whole
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'accounts.prom')
