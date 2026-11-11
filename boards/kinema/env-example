@@ -1,0 +1,19 @@
+# Every environment variable of Kinema BBS, with its default. The board has no secrets of its own.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=50
+
+# The catalog of the best known films (Wikidata, CC0): the seed shipped with the board, the
+# refreshed copy in data/, and how old it may get before the board reads Wikidata again (s; 0: never).
+KINEMA_BBS_CATALOG_SEED=config/catalog.json.gz
+KINEMA_BBS_CATALOG=data/catalog.json.gz
+KINEMA_BBS_CATALOG_TTL=604800
+
+# The callers' ratings and lists
+KINEMA_BBS_RATINGS_DB=data/ratings.sqlite3
+
+# The network's Central (TTG Gate BBS): accounts, feedback and the wall live there. The secret is
+# every board's, in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

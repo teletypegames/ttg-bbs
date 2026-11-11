@@ -1,0 +1,19 @@
+# kinema-bbs on the town map of the modern face (12×4): its building, a picture house with its marquee and red curtains.
+size: [12, 4]
+charset: cp437
+palette:
+  a: '#ffaf00'
+  w: 231
+  r: 160
+  k: 238
+  d: 240
+chars: |2
+   ▄▄▄▄▄▄▄▄▄▄ 
+   █ KINEMA █ 
+   █░░▐██▌░░█ 
+   █▄▄▄▄▄▄▄▄█ 
+colors: |2
+  .aaaaaaaaaa.
+  .a.wwwwww.a.
+  .arrkkkkrra.
+  .dddddddddd.

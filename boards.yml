@@ -17,5 +17,6 @@ pixelia:     { port: 2332, max_sessions: 50, memory: 160m }
 starbase:    { port: 2333, max_sessions: 50, memory: 160m }
 hackercave:  { port: 2334, max_sessions: 50, memory: 256m }
 ttg-mail:    { port: 2335, max_sessions: 50, memory: 160m }
+kinema:      { port: 2337, max_sessions: 50, memory: 192m }
 monitor:     { port: 2336, max_sessions: 10, memory: 192m, private: true }
 ttg-gate:    { port: 2399, max_sessions: 50, memory: 160m }

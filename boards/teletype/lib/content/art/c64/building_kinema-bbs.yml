@@ -1,0 +1,15 @@
+# kinema-bbs on the town map of the C64 face (3×3): its building, a projector with its two reels.
+size: [3, 3]
+charset: petscii-upper
+palette:
+  a: orange
+  w: white
+  k: dark_grey
+chars: |2
+  ●─●
+  █▒█
+  ▀ ▀
+colors: |2
+  awa
+  aka
+  a.a

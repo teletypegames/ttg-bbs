@@ -82,7 +82,7 @@ class SysopTest < Minitest::Test
     capture_io { assert_nil gate([:tab, :tab, :tab, :tab, 'q']).run }
     assert_includes @line.output, 'Change password'
     assert_includes @line.output, 'SysOp'
-    assert_includes shown, 'RETURN or 1-13 dial'
+    assert_includes shown, 'RETURN or 1-14 dial'
   end
 
   def test_a_guest_logs_in_on_the_profile_tab

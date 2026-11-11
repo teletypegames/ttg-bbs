@@ -127,3 +127,12 @@ boards:
     accent: "#ff5f87"
     petscii: true
     enabled: true
+
+  - id: kinema-bbs
+    name: "Kinema BBS"
+    summary: "The film catalog: search any film or anyone who made one, read their pages and the Wikipedia articles in English or Hungarian, the film of the day and the films first released on this day, the best known films by decade and genre. With an account, rate films, write short reviews, keep a watchlist and a list of the films you have seen. On a modern terminal or, in PETSCII, on a Commodore 64."
+    tags: ["films", "cinema", "C64"]
+    port: 2337
+    accent: "#ffaf00"
+    petscii: true
+    enabled: true

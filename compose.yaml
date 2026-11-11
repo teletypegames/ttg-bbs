@@ -25,6 +25,7 @@ services:
       - "2333:2333"
       - "2334:2334"
       - "2335:2335"
+      - "2337:2337"
       - "2399:2399"
     volumes:
       - ./boards:/app/boards:ro
@@ -44,6 +45,7 @@ services:
       - ./boards/ttg-mail/data:/app/boards/ttg-mail/data
       - ./boards/ttg-gate/data:/app/boards/ttg-gate/data
       - ./boards/monitor/data:/app/boards/monitor/data
+      - ./boards/kinema/data:/app/boards/kinema/data
     environment:
       - TZ=Europe/Budapest
       # The network's Central (TTG Gate BBS) and the accounts: the secret every board shares.
@@ -85,6 +87,7 @@ services:
           - starbase-bbs
           - hackercave-bbs
           - ttg-mail-bbs
+          - kinema-bbs
           - ttg-gate-bbs
     restart: unless-stopped
     # Every board tells its callers and gives them BBS_SHUTDOWN_SECONDS (20 s, Dockerfile), all at once.

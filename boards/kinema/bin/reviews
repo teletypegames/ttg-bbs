@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+
+# The admins' look at the reviews callers wrote:
+#   docker exec -w /app/boards/kinema ttg-bbs bin/reviews list        (the pending ones, newest first)
+#   docker exec -w /app/boards/kinema ttg-bbs bin/reviews approved    (the approved ones)
+#   docker exec -w /app/boards/kinema ttg-bbs bin/reviews approve ID  (shown on the board from now on)
+#   docker exec -w /app/boards/kinema ttg-bbs bin/reviews reject ID   (never shown; the stars still count)
+require_relative '../lib/domain'
+
+def show(list)
+  return puts('No reviews.') if list.empty?
+
+  list.each do |r|
+    puts "##{r.id}  #{r.date}  #{r.label} [#{r.film_id}]  #{r.stars}/10 from #{r.handle}  (#{r.review_status})"
+    puts "  #{r.review}"
+    puts
+  end
+end
+
+KinemaBBS.root = File.expand_path('..', __dir__)
+bbs = KinemaBBS.new
+bbs.databases
+ratings = bbs.ratings
+command, id = ARGV
+result = case command
+         when 'list', nil then show(ratings.pending); :listed
+         when 'approved'  then show(ratings.approved_list); :listed
+         when 'approve'   then id ? ratings.approve(id) : :usage
+         when 'reject'    then id ? ratings.reject(id) : :usage
+         else :usage
+         end
+case result
+when :ok then puts "review ##{id} #{command}d"
+when :no_review then abort "no review ##{id}"
+when :usage then abort 'usage: bin/reviews list | approved | approve ID | reject ID'
+end

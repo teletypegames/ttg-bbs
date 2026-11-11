@@ -20,6 +20,7 @@ process of its own and watches them.
 | `boards/starbase` | Starbase BBS | 2333 |
 | `boards/hackercave` | HackerCave BBS | 2334 |
 | `boards/ttg-mail` | TTG Mail BBS | 2335 |
+| `boards/kinema` | Kinema BBS | 2337 |
 | `boards/monitor` | Monitor BBS: Grafana's dashboards, for the `grafana` role only (`private`, not published: the gate's profile dials it) | (2336) |
 | `boards/ttg-gate` | TTG Gate BBS (the gate, the Central) | 2399 |
 | `boards/common` | ttg-common: the TTG parts every board shares (a gem, by path) | — |
