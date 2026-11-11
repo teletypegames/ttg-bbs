@@ -17,6 +17,13 @@ class BadgesTest < Minitest::Test
     @data     = Dir.mktmpdir('ttg-badges')
     @accounts = Rubbs::Test.accounts
     @ada      = @accounts.register('Ada', 'secret1')
+    before_badges(@ada)
+  end
+
+  # Ada called before the badges came: her account is older than LAUNCH.
+  def before_badges(account)
+    at = (TTG::Badges::LAUNCH - 86_400).iso8601
+    Rubbs::Common::Auth::AccountModel.where(id: account.id).update(created_at: at)
   end
 
   def teardown
@@ -55,6 +62,14 @@ class BadgesTest < Minitest::Test
     mine = capture_io { @answer = Rubbs.central(Rubbs::Common::Badges::Service).mine(ada) } && @answer['badges']
     earned = mine.select { |b| b['earned'].any? }.map { |b| b['key'] }
     assert_equal %w[graffiti pioneer], earned.sort
+  end
+
+  def test_a_new_account_is_no_pioneer
+    bob = @accounts.register('Bob', 'secret2')
+    capture_io { central(TTG::Badges::Service) }
+    bobs = Rubbs::Common::Central::Actor.new(id: bob.id, name: 'Bob', caller_key: 'line:2')
+    mine = capture_io { @answer = Rubbs.central(Rubbs::Common::Badges::Service).mine(bobs) } && @answer['badges']
+    assert_empty(mine.select { |b| b['earned'].any? })
   end
 
   def test_the_callers_list
