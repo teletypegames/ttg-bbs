@@ -48,6 +48,12 @@ class BadgesTest < Minitest::Test
     assert_operator TTG::Badges.boards.size, :>=, 14
   end
 
+  def test_a_private_board_counts_for_no_badge
+    refute_includes TTG::Badges.boards, 'monitor'
+    assert TTG::Badges.private?('monitor', { 'monitor' => { 'private' => true } })
+    refute TTG::Badges.private?('feedia', { 'feedia' => { 'port' => 2327 } })
+  end
+
   def test_a_guest_is_invited
     Rubbs::Common::Badges.isolated { TTG::Badges.network }
     assert_equal TTG::Badges::GUEST_HINT, Rubbs::Common::Badges.guest_hint

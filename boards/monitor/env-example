@@ -1,0 +1,16 @@
+# Every environment variable of Monitor BBS, with its default. Secrets go in .env on the
+# server, never here.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=100
+
+# Grafana: its address on the interstack network and a service account's token (the Viewer role
+# is enough). The token is a secret, in .env on the server, never here.
+MONITOR_BBS_GRAFANA_URL=http://grafana:3000
+MONITOR_BBS_GRAFANA_TOKEN=
+
+# The network's Central (TTG Gate BBS): the accounts and their roles. The secret is every board's,
+# in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

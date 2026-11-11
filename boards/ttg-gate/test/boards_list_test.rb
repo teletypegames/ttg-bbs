@@ -10,8 +10,11 @@ class BoardsListTest < Minitest::Test
 
   def ids = YAML.safe_load_file(File.expand_path('../config/boards.yml', __dir__)).fetch('boards').map { |b| b['id'] }
 
+  # Every board but the gate and the private ones (boards.yml: private, Monitor BBS: only the
+  # profile of the accounts with its role dials it).
   def test_every_id_is_a_boards_own_name
-    folders = Dir.glob('*/bbs.rb', base: BOARDS).map { |path| File.dirname(path) } - ['ttg-gate']
+    folders = Dir.glob('*/bbs.rb', base: BOARDS).map { |path| File.dirname(path) }
+    folders = folders.reject { |f| TTG::Badges.private?(f) } - ['ttg-gate']
     assert_equal folders.map { |f| "#{f}-bbs" }.sort, ids.sort
   end
 

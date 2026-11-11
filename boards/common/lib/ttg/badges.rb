@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'time'
+require 'yaml'
 require_relative 'badges/service'
 require_relative 'badges/screen'
 
@@ -27,9 +28,25 @@ module TTG
     GUEST_HINT = 'Callers with an account collect badges on every board of the network, and this would have ' \
                  'counted. Make one in your profile: a name and a password, nothing more.'
 
+    # The boards.yml of the repository the boards are in.
+    SETTINGS = File.expand_path('../boards.yml', BOARDS)
+
     # The boards of the network: the folders beside ttg-common with a
-    # <tt>bbs.rb</tt>.
-    def self.boards = Dir.glob('*/bbs.rb', base: BOARDS).map { |path| File.dirname(path) }.sort
+    # <tt>bbs.rb</tt>, but a private one (<tt>private: true</tt> in
+    # boards.yml: a board only some accounts may call, Monitor BBS), which
+    # no badge counts: Globetrotter would be out of reach for everyone else.
+    def self.boards = Dir.glob('*/bbs.rb', base: BOARDS).map { |path| File.dirname(path) }.reject { |b| private?(b) }.sort
+
+    # Whether the board of the folder +name+ is private in +settings+ (the
+    # boards.yml file's entries; read from SETTINGS by default).
+    def self.private?(name, settings = self.settings) = settings.dig(name, 'private') == true
+
+    # The entries of boards.yml, or none when it cannot be read.
+    def self.settings
+      File.file?(SETTINGS) ? YAML.safe_load_file(SETTINGS) || {} : {}
+    rescue Psych::Exception, SystemCallError
+      {}
+    end
 
     # Loads the network's badges and the board of +dir+'s own
     # (<tt>badges.rb</tt>, if it has one). Returns the board's name in the

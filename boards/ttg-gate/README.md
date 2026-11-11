@@ -287,6 +287,13 @@ Every step of the console is a log line with the sysop's name (`sysop: hung up
 by=…`, `auth: ban … by=…`). Only the gate's own calls are listed: a caller who
 dialled another board directly is that board's.
 
+A caller with the `grafana` role finds **Monitor BBS** (`M`) in the profile, on either face:
+Grafana's dashboards on the line (`boards/monitor`). It is on no list (not Own Servers, not
+bbsweb), and its port is not published: the gate dials it in the same container
+(`TTG_GATE_BBS_MONITOR_HOST`, default `127.0.0.1`, `TTG_GATE_BBS_MONITOR_PORT`, default 2336,
+`lib/ui/monitor.rb`) and hands the caller on signed in; the board checks the role again. The
+role is given like the others (`G` in Accounts, or `bin/account grant NAME grafana`).
+
 `bin/account` does the same from the server's shell, for the first sysop and the
 import:
 

@@ -1,0 +1,18 @@
+# The house rules come from ttg-common (lib/ttg/board/rubocop.yml, kept in step with
+# rake ttg:sync); only this board's own exceptions follow.
+inherit_gem:
+  ttg-common: lib/ttg/board/rubocop.yml
+
+# The Grafana side reads Grafana's own tables as they are (units, reducers, value
+# mappings, transformations, the formats of a variable): one branch a kind of Grafana's,
+# side by side, reads better than the same cut into helpers. The renderer and the
+# chart lay out a box the same way. Their size is still capped, a little higher.
+Metrics/AbcSize:
+  Max: 45
+  Exclude: ["test/**/*"]
+Metrics/CyclomaticComplexity:
+  Max: 20
+Metrics/PerceivedComplexity:
+  Max: 16
+Metrics/ClassLength:
+  Max: 240

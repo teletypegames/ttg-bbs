@@ -20,7 +20,8 @@ module TTG
       'member'          => 'every account: post, write mail, keep a profile',
       'sysop'           => 'runs Teletype BBS, gives and takes roles',
       'blogger'         => 'writes and publishes on TTG Blog BBS',
-      'wiki-supervisor' => 'the supervisor menu of Wiki BBS'
+      'wiki-supervisor' => 'the supervisor menu of Wiki BBS',
+      'grafana'         => "Grafana's dashboards on Monitor BBS, from the profile on the gate"
     }.freeze
     # What a new account gets.
     NEW = %w[member].freeze

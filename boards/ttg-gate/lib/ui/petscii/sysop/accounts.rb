@@ -13,7 +13,7 @@ module UI
 
         PER_PAGE = 10
         # The roles in a row, as letters.
-        SHORT = { 'member' => 'M', 'sysop' => 'S', 'blogger' => 'B', 'wiki-supervisor' => 'W' }.freeze
+        SHORT = { 'member' => 'M', 'sysop' => 'S', 'blogger' => 'B', 'wiki-supervisor' => 'W', 'grafana' => 'G' }.freeze
         HINT = [['G', true], ['rant ', false], ['R', true], ['evoke ', false], ['B', true], ['an ', false], ['N', true],
                 ['ew pw ', false], ['H', true], ['ang up ', false], ['/', true]].freeze
 

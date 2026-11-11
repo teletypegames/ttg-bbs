@@ -43,6 +43,7 @@ services:
       - ./boards/hackercave/data:/app/boards/hackercave/data
       - ./boards/ttg-mail/data:/app/boards/ttg-mail/data
       - ./boards/ttg-gate/data:/app/boards/ttg-gate/data
+      - ./boards/monitor/data:/app/boards/monitor/data
     environment:
       - TZ=Europe/Budapest
       # The network's Central (TTG Gate BBS) and the accounts: the secret every board shares.
@@ -60,6 +61,10 @@ services:
       - WIKI_BBS_IDLE=600
       - WIKI_BBS_URL=http://wiki-grav
       - WIKI_BBS_SUPERVISOR_PASSWORD=${WIKI_BBS_SUPERVISOR_PASSWORD:-}
+      # Monitor BBS (2336) is not published: only the gate dials it, from the profile of the
+      # accounts with the grafana role. It reads Grafana on interstack with a viewer token.
+      - MONITOR_BBS_GRAFANA_URL=http://grafana:3000
+      - MONITOR_BBS_GRAFANA_TOKEN=${MONITOR_BBS_GRAFANA_TOKEN:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

@@ -11,6 +11,8 @@ TELETYPE_BBS_LLM_API_KEY=
 TTG_GATE_BBS_FEEDBACK_WEBHOOK=
 TTG_GATE_BBS_OPS_WEBHOOK=
 WIKI_BBS_SUPERVISOR_PASSWORD=
+# Monitor BBS: a Grafana service account's token (Viewer)
+MONITOR_BBS_GRAFANA_TOKEN=
 
 # rubbs, for the supervisor (bbs.rb): BBS_BOARDS=feedia,wiki starts only those; BBS_PORT and
 # BBS_MAX_SESSIONS of each board come from boards.yml

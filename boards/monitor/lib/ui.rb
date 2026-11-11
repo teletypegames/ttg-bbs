@@ -1,0 +1,15 @@
+# frozen_string_literal: true
+
+require_relative 'ui/paint'
+require_relative 'ui/modern'
+require_relative 'ui/petscii'
+require_relative 'ui/charts'
+require_relative 'ui/render'
+require_relative 'ui/summary'
+require_relative 'ui/loader'
+require_relative 'ui/pages/screen'
+require_relative 'ui/pages/home'
+require_relative 'ui/pages/board'
+require_relative 'ui/pages/panel_page'
+require_relative 'ui/pages/variables_page'
+require_relative 'ui/monitor'

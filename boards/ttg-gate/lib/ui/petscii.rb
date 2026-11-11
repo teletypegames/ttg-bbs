@@ -6,6 +6,7 @@ require_relative 'dial'
 require_relative 'today'
 require_relative 'petscii/gate'
 require_relative 'sysop'
+require_relative 'monitor'
 %w[console calls accounts feedback_view wall_view log_view].each { |f| require_relative "petscii/sysop/#{f}" }
 
 module UI

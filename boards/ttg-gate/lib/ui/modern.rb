@@ -7,6 +7,7 @@ require_relative 'today'
 require_relative 'modern/style'
 require_relative 'modern/prompt'
 require_relative 'sysop'
+require_relative 'monitor'
 %w[view calls accounts feedback_tab wall_tab log_view].each { |f| require_relative "modern/sysop/#{f}" }
 require_relative 'modern/own_servers'
 %w[context menu_view list_view board_page sources home].each { |f| require_relative "modern/discovery/#{f}" }

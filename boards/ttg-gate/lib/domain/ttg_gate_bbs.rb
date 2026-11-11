@@ -15,6 +15,8 @@ class TTGGateBBS
   setting  :gateway_host, 'host.docker.internal'
   setting  :public_host,  'teletypegames.org'
   setting  :central_port, TTG::Central::PORT
+  setting  :monitor_host, '127.0.0.1'
+  setting  :monitor_port, 2336
   path     :herald_db,    'data/herald.sqlite3'
   setting  :herald_fetch, true
   database :accounts_db, Rubbs::Common::Auth::MIGRATIONS, name: :auth

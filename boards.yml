@@ -3,6 +3,7 @@
 #   max_sessions  callers at once; each costs up to ~1.7 MB on top of ~30-40 MB
 #   memory        the board's own limit: over it twice in a row, the board is restarted in order
 #   enabled       false keeps the board stopped
+#   private       true: only some accounts may call it (a role); no badge counts it, no list shows it
 teletype:    { port: 2323, max_sessions: 60, memory: 192m }
 impostor:    { port: 2324, max_sessions: 40, memory: 128m }
 wiki:        { port: 2325, max_sessions: 50, memory: 128m }
@@ -16,4 +17,5 @@ pixelia:     { port: 2332, max_sessions: 50, memory: 160m }
 starbase:    { port: 2333, max_sessions: 50, memory: 160m }
 hackercave:  { port: 2334, max_sessions: 50, memory: 256m }
 ttg-mail:    { port: 2335, max_sessions: 50, memory: 160m }
+monitor:     { port: 2336, max_sessions: 10, memory: 192m, private: true }
 ttg-gate:    { port: 2399, max_sessions: 50, memory: 160m }
