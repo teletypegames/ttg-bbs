@@ -43,7 +43,7 @@ steps:
       - docker compose -f compose.yaml config --quiet
 
   - name: deploy
-    image: git.teletypegames.org/build/deploy-ssh@sha256:e1753f7dd575caf5e835ff19cc152faa56478cad76c142ca0f47ad3a3f4a2605
+    image: git.teletypegames.org/build/deploy-ssh@sha256:04e49560aa41d2351853037a02f8cfc8d1b31e412f712c2740ec226aa0e59291
     depends_on: [rubocop, test, rdoc-common, check]
     environment:
       DEPLOY_SSH_KEY:
