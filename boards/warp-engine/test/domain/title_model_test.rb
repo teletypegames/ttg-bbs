@@ -3,6 +3,12 @@
 require 'test_helper'
 
 class TitleModelTest < Minitest::Test
+  def test_reads_the_description_of_a_version_2_line
+    title = TitleModel.parse("GAME.PRG|1.0|4|0000000a|Game|Me|About it.|tool|GAME.PVW\n", BoardTest::SHELF)
+
+    assert_equal 'About it.', title.description
+  end
+
   def test_parses_an_index_line
     title = TitleModel.parse(BoardTest.line, BoardTest::SHELF)
 

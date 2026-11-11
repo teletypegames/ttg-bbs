@@ -3,13 +3,14 @@
 require 'uri'
 
 # One title of a shelf: a line of its INDEX.TXT,
-# file|version|size|crc32|title|author|description.
+# file|version|size|crc32|title|author|description, and in version 2 of the
+# index |category|preview after it, which the board does not show.
 TitleModel = Data.define(:shelf, :file, :version, :size, :crc32, :title, :author, :description) do
   # The title of +line+ on +shelf+; nil for a comment, a blank or a broken line.
   def self.parse(line, shelf)
     return nil if line.start_with?('#')
 
-    file, version, size, crc32, title, author, description = line.chomp.split('|', members.size - 1)
+    file, version, size, crc32, title, author, description = line.chomp.split('|', -1)
     return nil if description.nil? || file.empty? || !size.match?(/\A\d+\z/) || !crc32.match?(/\A\h{8}\z/)
 
     new(

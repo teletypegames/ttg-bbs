@@ -20,7 +20,7 @@ It has two faces on one port, like every board of the network:
 
 The shelves are the Commodore 64 one (`/C64`) and the Plus/4 one (`/PLUS4`),
 listed in `config/shelves.yml`. Each has an `INDEX.TXT` in the shelf format of
-the WarpEngine (`#SHELF 1`, `file|version|size|crc32|title|author|description`).
+the WarpEngine (`#SHELF 2`, `file|version|size|crc32|title|author|description|category|preview`; the board reads the first seven fields, so a version 1 index reads too).
 A file goes out only when its size and CRC-32 match its index line.
 
 XMODEM fills its last block up with SUB bytes, so the received file can be
