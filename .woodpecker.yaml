@@ -17,21 +17,21 @@ when:
 
 steps:
   - name: rubocop
-    image: ruby:3.3-alpine
+    image: ruby:3.4-alpine
     commands:
       - apk add --no-cache git build-base
       - bundle install --jobs 4 --quiet
       - bundle exec rake rubocop
 
   - name: test
-    image: ruby:3.3-alpine
+    image: ruby:3.4-alpine
     commands:
       - apk add --no-cache git build-base rsync
       - bundle install --jobs 4 --quiet
       - bundle exec rake
 
   - name: rdoc-common
-    image: ruby:3.3
+    image: ruby:3.4
     commands:
       - gem install --no-document rdoc -v 8.1.0
       - cd boards/common && rdoc -C lib | tee /tmp/coverage.txt

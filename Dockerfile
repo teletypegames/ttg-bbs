@@ -2,7 +2,7 @@
 # code is not in it: the stack's boards/ is mounted read-only on /app/boards, so a deploy that
 # changes only a board leaves the image (and the container) as it is, and the supervisor
 # restarts that board alone (Rubbs::MultiRunner, boards/.revision).
-FROM ruby:3.3-alpine
+FROM ruby:3.4-alpine
 
 RUN apk add --no-cache git build-base tzdata rsync
 
