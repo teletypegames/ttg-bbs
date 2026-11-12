@@ -24,7 +24,7 @@ module UI
           session,
           look:    Style::LOOK,
           sides:   {
-            own:       OwnServers.new(bbs.directory.boards, today: today),
+            own:       OwnServers.new(-> { bbs.directory.boards(identity: session.identity) }, today: today),
             discovery: Discovery::Home.new(ctx),
             today:     Today.new(today, ctx: ctx),
             profile:   ProfileTab.new

@@ -21,7 +21,7 @@ module TTG
       'sysop'           => 'runs Teletype BBS, gives and takes roles',
       'blogger'         => 'writes and publishes on TTG Blog BBS',
       'wiki-supervisor' => 'the supervisor menu of Wiki BBS',
-      'grafana'         => "Grafana's dashboards on Monitor BBS, from the profile on the gate"
+      'grafana'         => "Grafana's dashboards on Monitor BBS, on the gate's list of our boards"
     }.freeze
     # What a new account gets.
     NEW = %w[member].freeze

@@ -28,10 +28,9 @@ TTG_GATE_BBS_DIAL_IDLE=600
 TTG_GATE_BBS_ACCOUNTS_DB=data/accounts.sqlite3
 TTG_GATE_BBS_CENTRAL_PORT=8090
 RUBBS_AUTH_SECRET=
-# Monitor BBS (Grafana's dashboards): in the profile of the accounts with the grafana role only. It runs
-# in the same container and is not published, so the gate dials it on its own address.
-TTG_GATE_BBS_MONITOR_HOST=127.0.0.1
-TTG_GATE_BBS_MONITOR_PORT=2336
+# The boards of config/boards.yml with local: true (Monitor BBS) run in the same container and are not
+# published, so the gate dials them on its own address.
+TTG_GATE_BBS_LOCAL_HOST=127.0.0.1
 # The accounts in numbers for Grafana (VPS: BBS – Users), copied by the server's cron.
 TTG_GATE_BBS_ACCOUNTS_METRICS=data/accounts-metrics.prom
 # The Today tab (Herald, DAILY_HERALD.md): the cache of its web sources (Open-Meteo, ECB, Wikipedia,

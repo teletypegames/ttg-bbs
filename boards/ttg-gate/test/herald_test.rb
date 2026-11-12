@@ -140,7 +140,7 @@ class HeraldTest < Minitest::Test
     line = Rubbs::Test::Session.new(keys: %w[t q])
     bbs = Struct.new(:directory, :browse, :dials, :accounts) { define_method(:today) { |**| page } }
     boards = BoardRepository.new(File.join(Herald::ROOT, 'config/boards.yml'), host: 'localhost', public_host: 'example.org').all
-    assert_nil UI::Modern::Gate.new(line, bbs.new(Struct.new(:boards).new(boards), nil, nil, nil)).run
+    assert_nil UI::Modern::Gate.new(line, bbs.new(DirectoryService.new(Struct.new(:all).new(boards)), nil, nil, nil)).run
     out = line.output
     assert_includes out, 'Name day Csenger, Rezső'
     assert_includes out, 'SATURDAY, 7 NOVEMBER 2026'

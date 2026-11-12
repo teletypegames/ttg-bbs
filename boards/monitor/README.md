@@ -7,13 +7,14 @@ the **`grafana`** role, and for no one else. A board of the network, powered by
 
 ## How a caller gets here
 
-- **Only from the profile on TTG Gate BBS.** An account with the `grafana` role finds
-  **Monitor BBS** (`M`) in its profile on the gate, on either face; the gate dials the board and
-  hands the caller on signed in. Nobody else sees the item. The board is on no list: not on the
-  gate's list of our boards, not on bbsweb, not on the town map, and no badge counts it
+- **Only through TTG Gate BBS.** An account signed in with the `grafana` role finds
+  **Monitor BBS** at the end of the gate's Own Servers, on either face (`role: grafana` in the
+  gate's `config/boards.yml`); the gate dials the board and hands the caller on signed in.
+  Nobody else sees the row. It is not on bbsweb or the town map, and no badge counts it
   (`private: true` in `boards.yml`, `TTG::Badges.boards` leaves it out).
 - **The port is not published.** The board listens on 2336 inside the `ttg-bbs` container only;
-  the gate, in the same container, dials `127.0.0.1:2336` (`TTG_GATE_BBS_MONITOR_HOST`/`_PORT`).
+  the gate, in the same container, dials `127.0.0.1:2336` (`local: true` in its list,
+  `TTG_GATE_BBS_LOCAL_HOST`).
 - **The board checks again.** Every call logs in first (`auth login: :call, guests: false`; a call
   from the gate comes signed in), and a caller without the role is told so and the call ends.
 - A sysop gives the role on the gate: Profile › SysOp › Accounts, `G` grant, `grafana`.

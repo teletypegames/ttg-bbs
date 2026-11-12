@@ -17,7 +17,6 @@ board = Rubbs.board 'TTG Gate BBS', TTGGateBBS do
                      Rubbs::Common::Hunt::Service]
   badges TTG::Badges.load_all(__dir__)
   on_start { |gate| UI::Sysop.offer(gate.accounts) }
-  on_start { |gate| UI::Monitor.offer(host: gate.monitor_host, port: gate.monitor_port) }
   modern { |bbs| call { UI::Modern::Gate.new(session, bbs).run } }
   petscii(goodbye: false) { |bbs| call { UI::Petscii.call(session, bbs) } }
 end

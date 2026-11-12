@@ -15,8 +15,7 @@ class TTGGateBBS
   setting  :gateway_host, 'host.docker.internal'
   setting  :public_host,  'teletypegames.org'
   setting  :central_port, TTG::Central::PORT
-  setting  :monitor_host, '127.0.0.1'
-  setting  :monitor_port, 2336
+  setting  :local_host,   '127.0.0.1'
   path     :herald_db,    'data/herald.sqlite3'
   setting  :herald_fetch, true
   database :accounts_db, Rubbs::Common::Auth::MIGRATIONS, name: :auth
@@ -28,7 +27,9 @@ class TTGGateBBS
     AccountsMetrics.new(accounts, accounts_metrics, services: Rubbs.config.central&.server&.services, herald: herald).write
   end
 
-  service(:directory) { DirectoryService.new(BoardRepository.new(boards, host: gateway_host, public_host: public_host)) }
+  service(:directory) do
+    DirectoryService.new(BoardRepository.new(boards, host: gateway_host, public_host: public_host, local_host: local_host))
+  end
   service(:browse)    { discovery&.browse }
   service(:dials)     { discovery&.dials }
   service(:herald)    { Herald::Service.new(store: Herald::Store.new) }

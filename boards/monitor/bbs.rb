@@ -8,8 +8,8 @@ require_relative 'lib/ui'
 # Monitor BBS: Grafana's dashboards on a telnet line, on a modern terminal
 # and on a Commodore 64, for the accounts of the network with the grafana
 # role only. Every caller logs in first (a call handed on by TTG Gate BBS
-# comes signed in); one without the role is turned away. The gate offers
-# it in the profile of those who have the role, and nowhere else.
+# comes signed in); one without the role is turned away. The gate lists it
+# only for those who have the role.
 board = Rubbs.board 'Monitor BBS', MonitorBBS do
   preset  TTG::PRESET
   central TTG::CENTRAL

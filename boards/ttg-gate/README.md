@@ -113,6 +113,7 @@ telnet localhost 2323      # bbs.rb on its own (BBS_PORT)
 | `TTG_GATE_BBS_GATEWAY_HOST` | `host.docker.internal` | where the boards are dialled; the root `compose.yaml` maps it to the host |
 | `TTG_GATE_BBS_PUBLIC_HOST` | `teletypegames.org` | the address shown with every board |
 | `TTG_GATE_BBS_BOARDS` | `config/boards.yml` | the boards list |
+| `TTG_GATE_BBS_LOCAL_HOST` | `127.0.0.1` | where the boards with `local: true` (not published, Monitor BBS) are dialled |
 | `TTG_GATE_BBS_OPS_WEBHOOK` | empty | Discovery: where import alerts go (an ops alert; the older `TTG_GATE_BBS_DISCORD_WEBHOOK` is still read); empty: off |
 | `TTG_GATE_BBS_FEEDBACK_WEBHOOK` | empty | The network's feedback (ttg-common `TTG::Feedback`): the Discord line that something came, never what it says; empty: off |
 | `TTG_GATE_BBS_DIAL_WINDOW` | `600` | Discovery: the window of the per-caller dial limit, seconds |
@@ -156,7 +157,10 @@ boards:
 
 A new board of the network gets an entry here (see the BBS server procedure in
 devarea, `procedures/bbs-server-creation.md`); a push deploys it. `petscii:
-false` keeps a board off the C64 menu, `enabled: false` off both.
+false` keeps a board off the C64 menu, `enabled: false` off both. `role: NAME` shows a board
+only to the accounts signed in with that role (Monitor BBS: `grafana`); every other board is on
+the list for every caller. `local: true` is for a board whose port is not published: the gate
+dials it on `TTG_GATE_BBS_LOCAL_HOST` and shows no address.
 
 ## Interface
 
@@ -287,12 +291,15 @@ Every step of the console is a log line with the sysop's name (`sysop: hung up
 by=…`, `auth: ban … by=…`). Only the gate's own calls are listed: a caller who
 dialled another board directly is that board's.
 
-A caller with the `grafana` role finds **Monitor BBS** (`M`) in the profile, on either face:
-Grafana's dashboards on the line (`boards/monitor`). It is on no list (not Own Servers, not
-bbsweb), and its port is not published: the gate dials it in the same container
-(`TTG_GATE_BBS_MONITOR_HOST`, default `127.0.0.1`, `TTG_GATE_BBS_MONITOR_PORT`, default 2336,
-`lib/ui/monitor.rb`) and hands the caller on signed in; the board checks the role again. The
-role is given like the others (`G` in Accounts, or `bin/account grant NAME grafana`).
+A caller signed in with the `grafana` role finds **Monitor BBS** at the end of Own Servers, on
+either face: Grafana's dashboards on the line (`boards/monitor`). Its entry in `config/boards.yml`
+has `role: grafana` (the list shows it only to those accounts, and asks again on every screen, so
+it appears once the caller logs in on the Profile tab) and `local: true` (its port is not
+published: the gate dials it in the same container, `TTG_GATE_BBS_LOCAL_HOST`, default
+`127.0.0.1`, and shows *through the gate* / `GATE` for its address). The gate hands the caller on
+signed in; the board checks the role again. It is not on bbsweb or the town map, and the Today
+counts leave it out. The role is given like the others (`G` in Accounts, or
+`bin/account grant NAME grafana`).
 
 `bin/account` does the same from the server's shell, for the first sysop and the
 import:

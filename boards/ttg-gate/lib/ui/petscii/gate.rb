@@ -61,13 +61,15 @@ module UI
       }.freeze
 
       # [session] the C64 line
-      # [boards] our boards with a C64 face (BoardModel)
+      # [boards] our boards with a C64 face (BoardModel), or what answers
+      #          them for the caller now (a board of a role shows once they
+      #          sign in with it)
       # [browse] Discovery::BrowseService, nil without a catalog
       # [dials]  Discovery::DialService
       # [today]  answers the caller's Herald::Edition (or +nil+)
       def initialize(session, boards:, browse:, dials:, today: -> {})
         super(session, chrome: Chrome::KIT, home: :own, input_label: INPUT_LABEL)
-        @boards = boards
+        @boards = boards.respond_to?(:call) ? boards : -> { boards }
         @browse = browse
         @dials  = dials
         @today  = today
@@ -84,7 +86,7 @@ module UI
         return Chrome.today_line(canvas, view.respond_to?(:edition) ? view.edition : nil) if tab == :today
         return Chrome.account_line(canvas, session.identity) if tab == :account
 
-        Chrome.own_line(canvas, @boards.size)
+        Chrome.own_line(canvas, @boards.call.size)
       end
     end
   end

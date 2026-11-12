@@ -10,12 +10,34 @@ class BoardsListTest < Minitest::Test
 
   def ids = YAML.safe_load_file(File.expand_path('../config/boards.yml', __dir__)).fetch('boards').map { |b| b['id'] }
 
-  # Every board but the gate and the private ones (boards.yml: private, Monitor BBS: only the
-  # profile of the accounts with its role dials it).
+  def records = YAML.safe_load_file(File.expand_path('../config/boards.yml', __dir__)).fetch('boards')
+
+  # Every board but the gate; the private ones (boards.yml: private) with a
+  # role and not published.
   def test_every_id_is_a_boards_own_name
-    folders = Dir.glob('*/bbs.rb', base: BOARDS).map { |path| File.dirname(path) }
-    folders = folders.reject { |f| TTG::Badges.private?(f) } - ['ttg-gate']
+    folders = Dir.glob('*/bbs.rb', base: BOARDS).map { |path| File.dirname(path) } - ['ttg-gate']
     assert_equal folders.map { |f| "#{f}-bbs" }.sort, ids.sort
+    folders.select { |f| TTG::Badges.private?(f) }.each do |f|
+      record = records.find { |r| r['id'] == "#{f}-bbs" }
+      assert record['role'], "#{f} is private: only a role shows it"
+      assert record['local'], "#{f} is private: its port is not published"
+    end
+  end
+
+  def directory
+    path = File.expand_path('../config/boards.yml', __dir__)
+    DirectoryService.new(BoardRepository.new(path, host: 'gw', public_host: 'example.org'))
+  end
+
+  def identity(*roles) = Rubbs::Common::Auth::Identity.new(id: 1, name: 'Tasi', roles: roles, source: :login)
+
+  def test_monitor_only_for_the_grafana_role
+    refute_includes directory.boards.map(&:id), 'monitor-bbs'
+    refute_includes directory.boards(identity: Rubbs::Common::Auth::Identity.guest).map(&:id), 'monitor-bbs'
+    refute_includes directory.boards(identity: identity('member')).map(&:id), 'monitor-bbs'
+    monitor = directory.boards(petscii: true, identity: identity('member', 'grafana')).find { |b| b.id == 'monitor-bbs' }
+    assert_equal ['127.0.0.1', 2336, 'through the gate'], [monitor.host, monitor.port, monitor.address]
+    assert_equal directory.boards.size + 1, directory.boards(identity: identity('grafana')).size
   end
 
   def test_the_key_goes_to_the_id

@@ -6,7 +6,6 @@ require_relative 'dial'
 require_relative 'today'
 require_relative 'petscii/gate'
 require_relative 'sysop'
-require_relative 'monitor'
 %w[console calls accounts feedback_view wall_view log_view].each { |f| require_relative "petscii/sysop/#{f}" }
 
 module UI
@@ -19,7 +18,7 @@ module UI
     def self.call(session, bbs)
       Gate.new(
         session,
-        boards: bbs.directory.boards(petscii: true),
+        boards: -> { bbs.directory.boards(petscii: true, identity: session.identity) },
         browse: bbs.browse,
         dials:  bbs.dials,
         today:  UI.today(session, bbs)

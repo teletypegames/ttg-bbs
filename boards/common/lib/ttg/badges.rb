@@ -33,7 +33,7 @@ module TTG
 
     # The boards of the network: the folders beside ttg-common with a
     # <tt>bbs.rb</tt>, but a private one (<tt>private: true</tt> in
-    # boards.yml: a board only some accounts may call, Monitor BBS), which
+    # boards.yml: a board only the accounts of a role see, Monitor BBS), which
     # no badge counts: Globetrotter would be out of reach for everyone else.
     def self.boards = Dir.glob('*/bbs.rb', base: BOARDS).map { |path| File.dirname(path) }.reject { |b| private?(b) }.sort
 

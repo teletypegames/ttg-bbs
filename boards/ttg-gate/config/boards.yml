@@ -9,6 +9,9 @@
 # [accent]    the board's colour, #rrggbb
 # [petscii]   true when the board has a C64 face; only those show on the C64
 # [enabled]   false keeps a board in the file but out of the menu
+# [role]      only the accounts with this role see the board (signed in); without it every caller
+# [local]     true when the port is not published: the gate dials it in its own container
+#             (TTG_GATE_BBS_LOCAL_HOST, 127.0.0.1), and the menu shows no address
 
 boards:
   - id: teletype-bbs
@@ -136,3 +139,14 @@ boards:
     accent: "#ffaf00"
     petscii: true
     enabled: true
+
+  - id: monitor-bbs
+    name: "Monitor BBS"
+    summary: "Grafana's dashboards on a telnet line: the network's servers, boards and callers as charts, stats, tables and logs, with the dashboards' variables and time ranges. Only for the accounts with the grafana role. On a modern terminal or, in PETSCII, on a Commodore 64."
+    tags: ["grafana", "dashboards", "C64"]
+    port: 2336
+    accent: "#ff7f3f"
+    petscii: true
+    enabled: true
+    role: grafana
+    local: true

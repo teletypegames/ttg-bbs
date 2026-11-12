@@ -7,7 +7,7 @@ require_relative 'discovery/face_fixtures'
 # accounts (a ban), the calls (a hang-up) and the log.
 class SysopTest < Minitest::Test
   Bbs = Struct.new(:directory, :browse, :dials, :accounts)
-  Directory = Struct.new(:boards)
+  Directory = Struct.new(:all) { def boards(**) = DirectoryService.new(self).boards(**) }
   Call = Struct.new(:session_id, :caller_name, :caller_ip, :call_via, :face, :started_at, :place, :hung) do
     def hang_up = self.hung = true
   end

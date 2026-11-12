@@ -9,10 +9,12 @@ class BoardRepository
   # [path]        the YAML file
   # [host]        where the gate dials the boards
   # [public_host] the address shown to the caller
-  def initialize(path, host:, public_host:)
+  # [local_host]  where the gate dials the boards that are not published
+  def initialize(path, host:, public_host:, local_host: '127.0.0.1')
     @path        = path
     @host        = host
     @public_host = public_host
+    @local_host  = local_host
   end
 
   def all
@@ -24,7 +26,7 @@ class BoardRepository
   def load
     records = YAML.safe_load_file(@path).fetch('boards', [])
     records.filter_map do |record|
-      BoardModel.new(record, host: @host, public_host: @public_host)
+      BoardModel.new(record, host: @host, public_host: @public_host, local_host: @local_host)
     rescue KeyError, ArgumentError, TypeError => e
       Rubbs.log('boards', "skipping a board in #{@path}: #{e.message}")
       nil

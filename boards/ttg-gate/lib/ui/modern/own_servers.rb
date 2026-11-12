@@ -11,9 +11,9 @@ module UI
     class OwnServers < Screen
       NAME = 18
 
-      key(:up)   { @index = (@index - 1) % @boards.size }
-      key(:down) { @index = (@index + 1) % @boards.size }
-      key(:enter) { dial(@boards[@index]) }
+      key(:up)   { @index = (@index - 1) % boards.size }
+      key(:down) { @index = (@index + 1) % boards.size }
+      key(:enter) { dial(boards[@index]) }
       key(:tab, :right, 'g', 'G') { pages.switch }
       key(:left) { pages.switch(-1) }
       key(:escape, 'q', 'Q') { quit }
@@ -23,7 +23,7 @@ module UI
       key('t', 'T') { pages.open_tab(:today) }
       key('h', 'H') { pages.open_tab(:hunt) }
       key(/\A[1-9]\z/) do |k|
-        board = @boards[k.to_i - 1]
+        board = boards[k.to_i - 1]
         next unless board
 
         @index = k.to_i - 1
@@ -33,21 +33,31 @@ module UI
       # Seconds the line of the day is kept before it is made again.
       KEEP = 60
 
-      # [boards] our boards (BoardModel)
+      # [boards] our boards (BoardModel), or what answers them: asked again
+      #          on every screen, so a board of a role shows once the caller
+      #          signs in with it
       # [today]  answers the Today page (a Herald::Edition) for the line of
       #          the day over the list, or +nil+
       def initialize(boards, today: nil)
         super()
-        @boards = boards
+        @source = boards.respond_to?(:call) ? boards : -> { boards }
         @today  = today
         @index = 0
       end
 
+      # The boards the caller sees now, the lit place kept within them.
+      def boards
+        list = @source.call
+        @index = @index.clamp(0, [list.size - 1, 0].max)
+        list
+      end
+
       def lines
+        list  = boards
         lines = [*masthead(:own), today_line]
-        lines.concat(@boards.each_with_index.map { |b, i| row(b, i) })
+        lines.concat(list.each_with_index.map { |b, i| row(b, i) })
         room = rows - 1 - lines.size - 5
-        lines.push('', rule, *detail(@boards[@index], room.clamp(0, 4)), '', hints)
+        lines.push('', rule, *detail(list[@index], room.clamp(0, 4)), '', hints(list.size))
       end
 
       private
@@ -79,7 +89,7 @@ module UI
       def row(board, index)
         color   = Colors.ansi256(board.rgb)
         lit     = index == @index ? SELECTED : ''
-        address = "  #{width >= 90 ? board.address : board.port}"
+        address = "  #{width >= 90 || board.local? ? board.address : board.port}"
         "#{color}▌#{RESET}#{lit} #{DIM}#{format('%2d', index + 1)}  #{color}#{BOLD}#{fit(board.name, NAME)}#{RESET}#{lit}  " \
           "#{DIM}#{fit(board.tags.join(' · '), tags_width(address))}#{address}  " \
           "#{color}#{(lit.empty? ? '' : 'DIAL >').ljust(6)} #{RESET}"
@@ -94,8 +104,8 @@ module UI
         ["#{color}#{BOLD}#{board.name}#{RESET}  #{DIM}#{board.address}#{RESET}", *body.map { |l| "#{TEXT}#{l}#{RESET}" }]
       end
 
-      def hints
-        "#{DIM}↑↓ choose  RETURN or 1-#{@boards.size} dial  TAB Discovery  T today  " \
+      def hints(count)
+        "#{DIM}↑↓ choose  RETURN or 1-#{count} dial  TAB Discovery  T today  " \
           "H hunt  W wall  F feedback  P profile  Q hang up#{RESET}"
       end
     end
