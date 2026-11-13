@@ -120,7 +120,8 @@ class HeraldTest < Minitest::Test
       walls:        [{ 'name' => 'Kati', 'text' => 'Hello!' }],
       online:       400,
       fresh:        3,
-      board_of_day: nil
+      board_of_day: nil,
+      notes:        [['Siliconia BBS', NOTE]]
     )
     Herald::Service.new(store: s).edition(country: 'de', network: network, at: NOON)
   end
@@ -149,6 +150,8 @@ class HeraldTest < Minitest::Test
     assert_includes out, 'EUR 363.90'
     assert_includes out, '2 on the gate'
     assert_includes out, 'Hello!'
+    assert_includes out, 'Machine of the week'
+    assert_includes out, 'Commodore 64 (1982)'
     refute_includes out, 'Ours today'
   end
 
@@ -166,6 +169,38 @@ class HeraldTest < Minitest::Test
     assert_includes texts[1], 'EUR 363.90'
     assert_includes texts[2], '1996 Mars Global Surveyor launched.'
     assert_includes texts[3], '2 on the gate now'
+    assert_includes texts[3], 'Commodore 64 (1982)'
     texts.each { |t| assert(t.lines.all? { |l| l.chomp.length <= 40 }) }
+  end
+
+  NOTE = Herald::Notes::Note.new(
+    board:   'siliconia-bbs',
+    heading: 'Machine of the week',
+    title:   'Commodore 64 (1982)',
+    text:    'home computer · Commodore',
+    until:   Time.utc(2026, 11, 16)
+  )
+
+  def test_the_notes_of_our_boards
+    Dir.mktmpdir do |dir|
+      write = lambda do |board, data|
+        FileUtils.mkdir_p(File.join(dir, board, 'data'))
+        File.write(File.join(dir, board, 'data', 'herald.json'), data)
+      end
+      write.call('siliconia', JSON.generate(
+                                'board'   => 'siliconia-bbs',
+                                'heading' => 'Machine of the week',
+                                'title'   => "C64\e[2J",
+                                'text'    => 'home computer',
+                                'until'   => '2026-11-16T00:00:00Z'
+                              ))
+      write.call(
+        'old',
+        JSON.generate('board' => 'old-bbs', 'heading' => 'Old', 'title' => 'Gone', 'until' => '2026-11-01T00:00:00Z')
+      )
+      write.call('broken', '{')
+      notes = capture_io { @notes = Herald::Notes.new(File.join(dir, '*/data/herald.json')).current(NOON) } && @notes
+      assert_equal([['siliconia-bbs', 'C64[2J']], notes.map { |n| [n.board, n.title] })
+    end
   end
 end

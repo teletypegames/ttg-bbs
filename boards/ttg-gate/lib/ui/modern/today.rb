@@ -177,7 +177,8 @@ module UI
       def network(net)
         return ["#{DIM}The network is quiet.#{RESET}", '', ''] unless net
 
-        [network_line(net), ours_line(net.ours), net.board_of_day ? board_line(net.board_of_day) : wall_line(net.walls.last)]
+        [network_line(net), ours_line(net.ours), *net.notes.map { |name, note| note_line(name, note) },
+         net.board_of_day ? board_line(net.board_of_day) : wall_line(net.walls.last)]
       end
 
       def network_line(net)
@@ -192,6 +193,12 @@ module UI
         name = board.name
         "#{DIM}Ours today  O #{number}#{RESET} #{YELLOW}#{BOLD}#{name}#{RESET}  " \
           "#{TEXT}#{fit(board.summary, width - name.length - number.to_s.length - 17).rstrip}#{RESET}"
+      end
+
+      def note_line(name, note)
+        title = fit(note.title, 30).rstrip
+        "#{DIM}#{note.heading}#{RESET}  #{YELLOW}#{BOLD}#{title}#{RESET}  " \
+          "#{TEXT}#{fit("#{note.text} · #{name}", width - note.heading.length - title.length - 4).rstrip}#{RESET}"
       end
 
       def board_line(board)

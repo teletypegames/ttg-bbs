@@ -72,11 +72,12 @@ module Herald
   # The network now, as the gate sees it: the +callers+ on the gate, our own
   # +boards+, the newest +walls+ notes (Hashes of +name+, +text+), the
   # catalog's boards +online+ and +fresh+ this week, the +board_of_day+ (a
-  # Discovery listing, or +nil+), and +ours+, one of our own boards a day
-  # ([its number in Own Servers, the BoardModel], or +nil+).
-  Network = Data.define(:callers, :boards, :walls, :online, :fresh, :board_of_day, :ours) do
-    # A network; +ours+ may be left out.
-    def initialize(ours: nil, **) = super
+  # Discovery listing, or +nil+), +ours+, one of our own boards a day
+  # ([its number in Own Servers, the BoardModel], or +nil+), and the +notes+ our
+  # boards give the page ([the board's name, a Notes::Note] each).
+  Network = Data.define(:callers, :boards, :walls, :online, :fresh, :board_of_day, :ours, :notes) do
+    # A network; +ours+ and +notes+ may be left out.
+    def initialize(ours: nil, notes: [], **) = super
   end
 
   # The Today tab's page for one caller at one instant: the +day+ (a

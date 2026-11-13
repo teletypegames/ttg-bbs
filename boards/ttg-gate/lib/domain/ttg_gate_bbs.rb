@@ -17,6 +17,7 @@ class TTGGateBBS
   setting  :central_port, TTG::Central::PORT
   setting  :local_host,   '127.0.0.1'
   path     :herald_db,    'data/herald.sqlite3'
+  path     :herald_notes, '../*/data/herald.json'
   setting  :herald_fetch, true
   database :accounts_db, Rubbs::Common::Auth::MIGRATIONS, name: :auth
   database :herald_db,   HERALD_MIGRATIONS, name: :herald
@@ -69,8 +70,15 @@ class TTGGateBBS
       online:       online.size,
       fresh:        browse ? browse.new_this_week.size : 0,
       board_of_day: board_of_day(online.select(&:petscii?), at),
-      ours:         ours_of_day(directory.boards, at)
+      ours:         ours_of_day(directory.boards, at),
+      notes:        board_notes(at)
     )
+  end
+
+  # The notes our boards keep for the Today tab, each with the name of its board.
+  def board_notes(at)
+    names = directory.boards.to_h { |b| [b.id, b.name] }
+    Herald::Notes.new(herald_notes).current(at).filter_map { |n| names[n.board] && [names[n.board], n] }
   end
 
   # One of our own boards, a different one each day, with its number in

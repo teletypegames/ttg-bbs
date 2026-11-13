@@ -95,7 +95,7 @@ module UI
            [[net.boards.to_s, Canvas::WHITE], [' boards of ours', Canvas::GREY]],
            [[net.online.to_s, Canvas::WHITE], [' boards online in the world', Canvas::GREY]],
            [[net.fresh.to_s, Canvas::WHITE], [' new this week', Canvas::GREY]], '',
-           *ours(net.ours), *board(net.board_of_day), *walls(net.walls)]
+           *ours(net.ours), *net.notes.flat_map { |name, note| note(name, note) }, *board(net.board_of_day), *walls(net.walls)]
         end
 
         private
@@ -160,6 +160,11 @@ module UI
 
           number, board = ours
           [['Ours today', Canvas::CYAN], [[board.name, Canvas::YELLOW], ["  O, #{number}", Canvas::GREY]], '']
+        end
+
+        def note(name, note)
+          [[note.heading, Canvas::CYAN], [Layout.plain(note.title)[0, COLS], Canvas::YELLOW],
+           *Layout.wrap(Layout.plain(note.text), COLS, 2).map { |l| [l, Canvas::LIGHT_GREY] }, [name, Canvas::GREY], '']
         end
 
         def board(listing)
