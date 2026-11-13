@@ -140,6 +140,15 @@ boards:
     petscii: true
     enabled: true
 
+  - id: siliconia-bbs
+    name: "Siliconia BBS"
+    summary: "The computer and console museum: every home computer, microcomputer, PC and video game console Wikidata knows, with its maker, years, CPU and memory, its family line, the machines with the same CPU and the Wikipedia story in English or Hungarian; the legends and the Hungarian machines, two machines side by side. With an account, mark the machines you had and write down your memories of them. On a modern terminal or, in PETSCII, on a Commodore 64."
+    tags: ["computers", "consoles", "retro", "C64"]
+    port: 2338
+    accent: "#5fd75f"
+    petscii: true
+    enabled: true
+
   - id: monitor-bbs
     name: "Monitor BBS"
     summary: "Grafana's dashboards on a telnet line: the network's servers, boards and callers as charts, stats, tables and logs, with the dashboards' variables and time ranges. Only for the accounts with the grafana role. On a modern terminal or, in PETSCII, on a Commodore 64."
