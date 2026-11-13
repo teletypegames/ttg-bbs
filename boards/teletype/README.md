@@ -187,7 +187,7 @@ statusbar while it is highlighted.
 - **Dev Log** — the public activity of every organisation on git.teletypegames.org (pushes with their commit messages, tags, releases, new repositories), newest first, read anonymously from the Gitea API, so private repositories never show.
 - **Team** — the members of teletypegames.org with their mottos.
 - **Doors** — full-line programs the BBS hands the telnet line to and takes it back from when they exit (rubbs' `Rubbs::Common::Call::Door`). **SERMO** (`lib/sermo`, merged from [sermo-bbs](https://git.teletypegames.org/bbs/sermo-bbs)) is a dual machine running SERMO, from the Neumatronic universe: type a command, or just talk to it; `EXIT` returns to the BBS. Natural language goes to its Lapis-ACP, the Qwen3.5 0.8B model in the shared `infra/llm` service. See *Doors* below.
-- **BBS Network** (Board > BBS Network, Help > Where are the games, files, wiki?, N on the C64) — the town map on the clubhouse wall: every board of the network a building in its bbsweb colour around the clubhouse (the town gate of TTG Gate BBS, the archive of the wiki, the great library of Alexandria, the news kiosk of Feedia, the printing press of the blog, the warehouse of WarpEngine, the scriptorium, the game shop of Commodex, the gallery of Pixelia, the dark alley of the Impostor, and on the fourth row of the town the starbase of Starbase BBS, the cave of HackerCave BBS, the post office of TTG Mail BBS and the picture house of Kinema BBS). The arrows walk from building to building; under the map what the chosen one carries and how to walk over. On a screen shorter than the town the map scrolls to the chosen building (rubbs' `FrameBuffer#clip`). The list of the boards, with bbsweb and archive.teletypegames.org, is a bulletin. This board has no gateway doors: a caller goes to another board by calling it, or through TTG Gate BBS.
+- **BBS Network** (Board > BBS Network, Help > Where are the games, files, wiki?, N on the C64) — the town map on the clubhouse wall: the river town. The Data Stream comes down from the hills between the great library of Alexandria and the town gate of TTG Gate BBS, runs east under the clubhouse square and down past the cave of HackerCave BBS to the harbour; the main street goes from the gate past the clubhouse, over the bridge, to the pier. Every board of the network is a building in its bbsweb colour along the stream: up the hill the archive of the wiki and the scriptorium, by the square the printing press of the blog, the news kiosk of Feedia, the post office of TTG Mail BBS, the starbase of Starbase BBS, the gallery of Pixelia and the game shop of Commodex, over the bridge the picture house of Kinema BBS and the museum of Siliconia BBS, and down at the harbour the dark alley of the Impostor and the warehouse of WarpEngine. Three fenced free lots wait for the next boards. The arrows walk from building to building; under the map what the chosen one carries and how to walk over. On a screen shorter than the town the map scrolls to the chosen building (rubbs' `FrameBuffer#clip`). The list of the boards, with bbsweb and archive.teletypegames.org, is a bulletin. This board has no gateway doors: a caller goes to another board by calling it, or through TTG Gate BBS.
 - **Registered names** — the accounts are the network's (rubbs `Rubbs::Common::Auth`, kept on TTG Gate BBS, the Central, asked through `central TTG::CENTRAL`): one name and password on every board. The splash (rubbs' `Rubbs::Common::Call::Splash`, from `TTG::PRESET`) asks *Login | Register | Guest* and logs the caller in through rubbs' profile; a guest comes in as Anonymous, and a caller who dialled the board from the gate signed in walks past the question. A guest can also register later (You > Register…, S then R on the C64): the account is made on the gate. The limits on wrong passwords and the look-alike names (a Cyrillic а for an a, an l or a 1 for an i: `Rubbs::Common::Auth::Names.skeleton`) are the gate's. `UI::Login` then puts the call on the board on both faces (a modern terminal that never reported its size is a scanner and is not listed). A caller who came in signed in is a member of the board (the `members` table: User Listing, *member since*). Profiles belong to registered names only. When the gate does not answer, a name comes in as a guest.
 - **Sysop console** — the nodes, the last callers and how much new feedback waits on the Central, for an account with the **sysop** role; the feedback itself is read on the console of TTG Gate BBS.
 - **Last callers** — a call is logged when it ends, and only if the terminal reported its window size (telnet NAWS) and stayed at least 10 seconds. Telnet password-guessing bots never get listed, and neither do they show up as online.
@@ -360,7 +360,7 @@ uppercase/graphics set, 40 wide. `UI::Arts` loads and keeps them.
 | the sign | `logo.yml` 33×8 | `logo.yml` 40×8 |
 | the clubhouse, by time of day | `house_{dawn,day,dusk,night}.yml` 80×12 | `house_*.yml` 40×10 |
 | its season layers | `{snow,pumpkin,fireworks,bunting}_<time>.yml` | the same |
-| the town and its buildings | `town.yml` 76×23, `building_<id>.yml` 12×4 | `town.yml` 40×21, `building_<id>.yml` 3×3 |
+| the town and its buildings | `town.yml` 76×30, `building_<id>.yml` 12×4 | `town.yml` 40×21, `building_<id>.yml` 3×3 |
 | the games room | `games_room.yml` 76×12 | `games_room.yml` 40×11 |
 | the trophy case | `trophies.yml` 76×10 | `trophies.yml` 40×9 |
 | the room cards | `card_{cork,mailbox,notice,workshop,guestbook}.yml` 80×5 (the cork board and the mailbox open on the whole screen, so the desktop shows theirs no more) | the same, 40×6 |
@@ -385,19 +385,24 @@ board with its id, name, port, building, a line about it, a short name and two
 words for the C64, its bbsweb accent colour and C64 colour, and where its
 building stands on each map. It is kept in step by hand with TTG Gate BBS's
 `config/boards.yml` and the bbsweb cards. A new board: a row there, and its two
-buildings, `modern/building_<id>.yml` and `c64/building_<id>.yml`. The town has four
-rows of four plots (the clubhouse takes the middle two of the second); the fourth row
-has one free plot, `[60, 18]` on the modern map and `[34, 16]` on the C64 one.
+buildings, `modern/building_<id>.yml` and `c64/building_<id>.yml`, on one of the free lots.
+The plots stand in five rows along the stream, the clubhouse on the square in the middle
+one; a building's name takes the row under it (18 wide on the modern map, 9 on the C64),
+and the stream and the main street run through the one-column gaps between the names. The
+arrows walk to the nearest building in their direction, wherever it stands. The free lots
+are `[41, 18]`, `[23, 24]`, `[42, 24]` on the modern map and `[23, 12]`, `[14, 16]`,
+`[24, 16]` on the C64 one; a new board takes one and its fence comes out of both
+`town.yml`s.
 
 **The C64 line is slow**, so the pictures have budgets: the first screen at most
 1.2 KB, a step of an animation at most 200 bytes, a room card about 300, a
 frame of the lamps going out under 100. `bin/c64-bytes` measures them with a
 worst-case scene (`docker exec -w /app/boards/teletype ttg-bbs bin/c64-bytes`); with a folder it
 writes the raw PETSCII of each screen too, to replay through a C64's CHROUT in
-VICE. As measured (2026-11-06, thirteen rooms): the main menu 1099–1117 bytes
+VICE. As measured (2026-11-06, thirteen rooms; the town map 2026-11-13): the main menu 1099–1117 bytes
 at every time of day and season, a move of its bar 146–205, a puff of smoke
-about 60; the town map 1183 (four rows of the town since 2026-11-03), a step
-171–239; the games room 770, a step 230–333 (it rewrites the station's
+about 60; the town map 1164 (the river town since 2026-11-13), a step
+173–227; the games room 770, a step 230–333 (it rewrites the station's
 description); the trophy case 621; a room card 244–275; leaving 584, the lamps
 out 29–78 each.
 

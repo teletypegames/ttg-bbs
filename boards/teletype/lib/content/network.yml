@@ -13,7 +13,13 @@
 # [words]    two words about it for the C64 map
 # [accent]   its bbsweb accent colour; the C64 takes [c64], one of its sixteen like it
 # [place]    the top left of its building on the modern map [col, row], and on the C64 one
-# A new board: a row here and its two buildings.
+# The town is the river town (art/*/town.yml): the plots stand in five rows along the Data Stream,
+# the clubhouse on the square in the middle one. A building takes 12×4 and its name the row under
+# it, 18 wide from col-3 (modern); 3×3 and 9 wide from col-3 (C64). The arrows walk to the nearest
+# building in their direction, wherever the buildings stand.
+# A new board: a row here, its two buildings, and a free lot of the town for its place (the fenced
+# FREE LOT plots, modern [41, 18] [23, 24] [42, 24], C64 [23, 12] [14, 16] [24, 16]); take its fence
+# out of the two town arts.
 clubhouse:
   name: Teletype BBS
   port: 2323
@@ -31,7 +37,7 @@ boards:
     words: ALL BOARDS
     accent: '#b48cff'
     c64: white
-    place: { modern: [3, 0], c64: [4, 1] }
+    place: { modern: [22, 0], c64: [13, 0] }
   - id: wiki-bbs
     name: TTG Wiki BBS
     port: 2325
@@ -41,7 +47,7 @@ boards:
     words: OUR GUIDES
     accent: '#5fb0ff'
     c64: light_blue
-    place: { modern: [22, 0], c64: [14, 1] }
+    place: { modern: [41, 0], c64: [23, 0] }
   - id: alexandria-bbs
     name: Alexandria BBS
     port: 2326
@@ -51,7 +57,7 @@ boards:
     words: WIKIPEDIA
     accent: '#ffd75f'
     c64: yellow
-    place: { modern: [41, 0], c64: [24, 1] }
+    place: { modern: [3, 0], c64: [3, 0] }
   - id: feedia-bbs
     name: Feedia BBS
     port: 2327
@@ -61,7 +67,7 @@ boards:
     words: RSS NEWS
     accent: '#ff9f43'
     c64: orange
-    place: { modern: [60, 0], c64: [34, 1] }
+    place: { modern: [23, 6], c64: [14, 4] }
   - id: ttg-blog-bbs
     name: TTG Blog BBS
     port: 2328
@@ -71,7 +77,7 @@ boards:
     words: OUR BLOG
     accent: '#5fd7af'
     c64: cyan
-    place: { modern: [3, 6], c64: [4, 6] }
+    place: { modern: [4, 6], c64: [4, 4] }
   - id: warp-engine-bbs
     name: WarpEngine BBS
     port: 2329
@@ -81,7 +87,7 @@ boards:
     words: GAMES, FILES
     accent: '#ff87d7'
     c64: light_red
-    place: { modern: [60, 6], c64: [34, 6] }
+    place: { modern: [61, 24], c64: [34, 16] }
   - id: scriptorium-bbs
     name: Scriptorium BBS
     port: 2330
@@ -91,7 +97,7 @@ boards:
     words: OLD BOOKS
     accent: '#d7af87'
     c64: light_grey
-    place: { modern: [3, 12], c64: [4, 11] }
+    place: { modern: [60, 0], c64: [33, 0] }
   - id: commodex-bbs
     name: Commodex BBS
     port: 2331
@@ -101,7 +107,7 @@ boards:
     words: C64 GAMES
     accent: '#8787ff'
     c64: green
-    place: { modern: [22, 12], c64: [14, 11] }
+    place: { modern: [60, 11], c64: [33, 8] }
   - id: pixelia-bbs
     name: Pixelia BBS
     port: 2332
@@ -111,7 +117,7 @@ boards:
     words: TEXT ART
     accent: '#af5fff'
     c64: purple
-    place: { modern: [41, 12], c64: [24, 11] }
+    place: { modern: [3, 11], c64: [3, 8] }
   - id: impostor-bbs
     name: Impostor BBS
     port: 2324
@@ -121,7 +127,7 @@ boards:
     words: THE DEBRIEF
     accent: '#ff5f56'
     c64: red
-    place: { modern: [60, 12], c64: [34, 11] }
+    place: { modern: [4, 24], c64: [4, 16] }
   - id: starbase-bbs
     name: Starbase BBS
     port: 2333
@@ -131,7 +137,7 @@ boards:
     words: STAR TREK
     accent: '#5fd7ff'
     c64: cyan
-    place: { modern: [3, 18], c64: [4, 16] }
+    place: { modern: [61, 6], c64: [34, 4] }
   - id: hackercave-bbs
     name: HackerCave BBS
     port: 2334
@@ -141,7 +147,7 @@ boards:
     words: THE RFCS
     accent: '#d7ff5f'
     c64: light_green
-    place: { modern: [22, 18], c64: [14, 16] }
+    place: { modern: [60, 18], c64: [33, 12] }
   - id: ttg-mail-bbs
     name: TTG Mail BBS
     port: 2335
@@ -151,7 +157,7 @@ boards:
     words: THE LETTERS
     accent: '#ff5f87'
     c64: light_red
-    place: { modern: [41, 18], c64: [24, 16] }
+    place: { modern: [42, 6], c64: [24, 4] }
   - id: kinema-bbs
     name: Kinema BBS
     port: 2337
@@ -161,4 +167,14 @@ boards:
     words: THE FILMS
     accent: '#ffaf00'
     c64: orange
-    place: { modern: [60, 18], c64: [34, 16] }
+    place: { modern: [3, 18], c64: [3, 12] }
+  - id: siliconia-bbs
+    name: Siliconia BBS
+    port: 2338
+    building: the museum of machines
+    about: every computer and console from Wikidata - mark the ones you had
+    short: SILICON
+    words: THE MACHINES
+    accent: '#5fd75f'
+    c64: light_green
+    place: { modern: [22, 18], c64: [13, 12] }

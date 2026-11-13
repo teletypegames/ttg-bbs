@@ -1,0 +1,16 @@
+# siliconia-bbs on the town map of the C64 face (3×3): its building, a museum with a pediment,
+# a lit screen between its columns, and its steps.
+size: [3, 3]
+charset: petscii-upper
+palette:
+  a: light_green
+  w: white
+  g: green
+chars: |2
+  ╱▔╲
+  ▌●▐
+  ▀▀▀
+colors: |2
+  aaa
+  wgw
+  aaa

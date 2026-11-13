@@ -106,6 +106,6 @@
 - keys: [games room, station, stations]
   fact: 'R on the main menu is the Games room: the Commodore 64 and the Plus/4 open there; SERMO, Chat of Ra and TTG Trivia are on the modern face.'
 - keys: [town, map, town map, buildings, building]
-  fact: 'N on the main menu is the Town map: our boards as buildings, with the name, two words and the port of each.'
+  fact: 'N on the main menu is the Town map: a river town, our boards as buildings along the stream, with the name, two words and the port of each.'
 - keys: [bell, ring the bell]
   fact: 'P on the main menu is Ring the bell: it pages the sysop.'

@@ -1,5 +1,8 @@
-# The town map on the clubhouse wall (C64 face): the streets and the clubhouse. The buildings
-# of the other boards (building_<id>.yml, 3×3) go where lib/content/network.yml puts them.
+# The town map on the clubhouse wall (C64 face): the river town. The Data Stream comes down
+# from the hills between the library and the gate, runs east under the square and down to the
+# harbour; the main street goes from the gate past the clubhouse, over the bridge, to the pier.
+# The buildings of the boards (building_<id>.yml, 3×3) stand where lib/content/network.yml
+# puts them; the FREE LOT fences are the plots left for the next boards.
 size: [40, 21]
 charset: petscii-upper
 palette:
@@ -9,50 +12,52 @@ palette:
   b: brown
   y: yellow
   l: light_green
+  w: blue
+  k: dark_grey
 chars: |2
-  ╭──────────────────────────────────────╮
-  │ ♣       │         │         │      ♣ │
-  │         │         │         │        │
-  │         │         │         │        │
-  │         │         │         │        │
-  │─────────┼─────────┼─────────┼────────│
-  │         │      ◢███◣        │        │
-  │         │                   │        │
-  │         │                   │        │
-  │         │    YOU ARE HERE   │        │
-  │─────────┼─────────┼─────────┼────────│
-  │         │         │         │        │
-  │         │         │         │        │
-  │         │         │         │        │
-  │         │         │         │        │
-  │─────────┼─────────┼─────────┼────────│
-  │         │         │         │        │
-  │         │         │         │        │
-  │         │         │         │        │
-  │ ♣       │         │         │      ♣ │
-  ╰──────────────────────────────────────╯
+  ♣       ▒▒         │       ♣          ♣ 
+   ♣      ▒▒ ♣       │                 ♣  
+  ♣       ▒▒         │                    
+           ▒         │                    
+           ▒▒         │                   
+    ♣      ▒▒         │                   
+           ▒▒         │                   
+            ▒         │                   
+            ▒▒     ◢███◣                  
+         ♣  ▒▒   ♣       ♣  ♣         ♣ ♣ 
+            ▒▒  YOU ARE HERE              
+            ▒▒▒▒▒▒▒▒▒  ▒▒▒▒▒▒▒▒▒          
+                     │         ▒▒         
+          ♣          │   ┬─┬   ▒▒      ♣  
+                     │   │ │   ▒▒         
+                     │ FREE LOT▒          
+                      │        ▒▒         
+   ♣         ♣  ┬─┬   │   ┬─┬♣  ▒▒      ♣ 
+                │ │   │   │ │   ▒▒        
+              FREE LOT│ FREE LOT▒         
+  ▒▒▒▒▒▒●▒▒▒▒▒▒▒▒▒▒▒▒▒│▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 colors: |2
-  ssssssssssssssssssssssssssssssssssssssss
-  s.g.......s.........s.........s......g.s
-  s.........s.........s.........s........s
-  s.........s.........s.........s........s
-  s.........s.........s.........s........s
-  ssssssssssssssssssssssssssssssssssssssss
-  s.........s......rrrrr........s........s
-  s.........s......by.yb........s........s
-  s.........s......by..b........s........s
-  s.........s....llllllllllll...s........s
-  ssssssssssssssssssssssssssssssssssssssss
-  s.........s.........s.........s........s
-  s.........s.........s.........s........s
-  s.........s.........s.........s........s
-  s.........s.........s.........s........s
-  ssssssssssssssssssssssssssssssssssssssss
-  s.........s.........s.........s........s
-  s.........s.........s.........s........s
-  s.........s.........s.........s........s
-  s.g.......s.........s.........s......g.s
-  ssssssssssssssssssssssssssssssssssssssss
+  g.......ww.........s.......g..........g.
+  .g......ww.g.......s.................g..
+  g.......ww.........s....................
+  .........w.........s....................
+  .........ww.........s...................
+  ..g......ww.........s...................
+  .........ww.........s...................
+  ..........w.........s...................
+  ..........ww.....rrrrr..................
+  .......g..ww...g.by.yb.g..g.........g.g.
+  ..........ww..lll.lll.llll..............
+  ..........wwwwwwwwwbbwwwwwwwww..........
+  ...................s.........ww.........
+  ........g..........s...kkk...ww......g..
+  ...................s...k.k...ww.........
+  ...................s.kkkk.kkkw..........
+  ....................s........ww.........
+  .g.........g..kkk...s...kkkg..ww......g.
+  ..............k.k...s...k.k...ww........
+  ............kkkk.kkks.kkkk.kkkw.........
+  wwwwwwywwwwwwwwwwwwwbwwwwwwwwwwwwwwwwwww
 reverse: |2
   ........................................
   ........................................
@@ -61,11 +66,11 @@ reverse: |2
   ........................................
   ........................................
   ........................................
+  ........................................
+  ........................................
   .................RR.RR..................
-  .................RR..R..................
   ........................................
-  ........................................
-  ........................................
+  ...................RR...................
   ........................................
   ........................................
   ........................................
