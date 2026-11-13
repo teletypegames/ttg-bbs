@@ -57,7 +57,7 @@ In Docker: `docker compose up --build`. The boards' code is not in the image: co
 - every board's log line goes out with its name (`"board":"feedia-bbs"`), so Loki and Grafana see
   each board as before;
 - `state/multi_runner.json`: every board's pid, health, callers, memory, restarts and revision,
-  read by the server's metrics (`vps-textfile-metrics`); the container's health check is its age.
+  read by the server's metrics (`ttgvps metrics textfile`); the container's health check is its age.
 
 ## Deploy
 

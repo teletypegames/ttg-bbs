@@ -3,8 +3,8 @@
 
 # The daily import of Global Discovery: fetches the enabled sources of
 # config/discovery/sources.yml and lays them over data/discovery.sqlite3.
-# On the server the cron-job wrapper runs it once a day in the prober's
-# container. Exits 1 when a source failed or was refused (the old records of
+# On the server `ttgvps --scheduled bbs discovery-import` runs it once a day
+# in the prober's container. Exits 1 when a source failed or was refused (the old records of
 # that source stay).
 #
 #   bin/discovery-import                      every enabled source
