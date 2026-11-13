@@ -26,6 +26,7 @@ services:
       - "2334:2334"
       - "2335:2335"
       - "2337:2337"
+      - "2338:2338"
       - "2399:2399"
     volumes:
       - ./boards:/app/boards:ro
@@ -43,6 +44,7 @@ services:
       - ./boards/starbase/data:/app/boards/starbase/data
       - ./boards/hackercave/data:/app/boards/hackercave/data
       - ./boards/ttg-mail/data:/app/boards/ttg-mail/data
+      - ./boards/siliconia/data:/app/boards/siliconia/data
       - ./boards/ttg-gate/data:/app/boards/ttg-gate/data
       - ./boards/monitor/data:/app/boards/monitor/data
       - ./boards/kinema/data:/app/boards/kinema/data

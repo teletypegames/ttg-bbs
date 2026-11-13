@@ -1,0 +1,11 @@
+# The notices of the board, in the order of the menus. Replace them with the board's own data.
+- id: welcome
+  title: Welcome
+  body: >-
+    This is Siliconia BBS, a board of the Teletype Games BBS network. Its domain is a list of
+    notices in config/notices.yml; replace it with what the board is about.
+- id: network
+  title: The network
+  body: >-
+    Every board of the network answers both a modern ANSI terminal and a Commodore 64 in PETSCII,
+    on one port. TTG Gate BBS on teletypegames.org:2399 dials all of them.

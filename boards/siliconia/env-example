@@ -1,0 +1,14 @@
+# Every environment variable of Siliconia BBS, with its default. Secrets go in the stack's .env on the
+# server, never here.
+
+# rubbs
+BBS_PORT=2323
+BBS_MAX_SESSIONS=50
+
+# The notices shown on the board
+SILICONIA_BBS_NOTICES=config/notices.yml
+
+# The network's Central (TTG Gate BBS): feedback and the wall live there. The secret is every board's,
+# in .env on the server, never here.
+TTG_CENTRAL_URL=http://ttg-gate-bbs:8090
+RUBBS_AUTH_SECRET=

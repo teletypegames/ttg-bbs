@@ -22,6 +22,7 @@ process of its own and watches them.
 | `boards/ttg-mail` | TTG Mail BBS | 2335 |
 | `boards/kinema` | Kinema BBS | 2337 |
 | `boards/monitor` | Monitor BBS: Grafana's dashboards, for the `grafana` role only (`private`, not published: on the gate's list for that role only) | (2336) |
+| `boards/siliconia` | Siliconia BBS | 2338 |
 | `boards/ttg-gate` | TTG Gate BBS (the gate, the Central) | 2399 |
 | `boards/common` | ttg-common: the TTG parts every board shares (a gem, by path) | — |
 
