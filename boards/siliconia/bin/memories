@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+
+# The admins' look at the memories callers wrote:
+#   docker exec -w /app/boards/siliconia ttg-bbs bin/memories list          (the pending ones)
+#   docker exec -w /app/boards/siliconia ttg-bbs bin/memories approved      (the approved ones)
+#   docker exec -w /app/boards/siliconia ttg-bbs bin/memories approve ID    (shown from now on)
+#   docker exec -w /app/boards/siliconia ttg-bbs bin/memories reject ID     (never shown)
+require_relative '../lib/domain'
+
+def show(memories, list)
+  return puts('No memories.') if list.empty?
+
+  list.each do |m|
+    machine = memories.machine_of(m)
+    puts "##{m.id}  #{m.date}  #{machine ? machine.label : m.machine_id} [#{m.machine_id}]  from #{m.handle}  (#{m.status})"
+    puts "  #{m.text}"
+    puts
+  end
+end
+
+SiliconiaBBS.root = File.expand_path('..', __dir__)
+bbs = SiliconiaBBS.new
+bbs.databases
+memories = bbs.memories
+command, id = ARGV
+result = case command
+         when 'list', nil then show(memories, memories.pending); :listed
+         when 'approved'  then show(memories, memories.approved_list); :listed
+         when 'approve'   then id ? memories.approve(id) : :usage
+         when 'reject'    then id ? memories.reject(id) : :usage
+         else :usage
+         end
+case result
+when :ok then puts "memory ##{id} #{command}d"
+when :no_memory then abort "no memory ##{id}"
+when :usage then abort 'usage: bin/memories list | approved | approve ID | reject ID'
+end
