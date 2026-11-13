@@ -2,6 +2,7 @@
 
 require_relative 'logo'
 require_relative 'wording'
+require_relative 'picture'
 require_relative 'modern/helpers'
 require_relative 'modern/windows'
 
@@ -11,7 +12,7 @@ module UI
   # its buttons, the Wikipedia leads, the family line, the memories and their form, the marks, two
   # machines side by side, and the network's wall and feedback (ttg-common).
   module Modern
-    HELP = 'F2 search · F3 random · F4 legends · F10 menu: kinds, decades, makers, CPUs, mine'
+    HELP = 'F2 search · F3 random · F4 legends · F5 machine of the week · F10 menu'
 
     APP = Rubbs::Modern::Application.define do
       theme :synchronet
@@ -20,6 +21,7 @@ module UI
       command(:search,    'Search…', key: 'F2') { search }
       command(:random,    'Random machine', key: 'F3', hint: 'Random') { random }
       command(:legends,   '&Legends', key: 'F4', hint: 'Legends') { list('Legends', catalog.legends) }
+      command(:week, 'Machine of the &week', key: 'F5', hint: 'Week') { machine_of_the_week }
       command(:hungarian, '&Hungarian machines') { list('Hungarian machines', catalog.hungarian) }
       command(:kinds,     'By &kind')    { open_groups(:kind) }
       command(:decades,   'By &decade')  { open_groups(:decade) }
@@ -39,6 +41,7 @@ module UI
       menu 'Museum',
            :search,
            :random,
+           :week,
            :separator,
            :legends,
            :hungarian,
@@ -69,6 +72,7 @@ module UI
             Windows::LettersWindow,
             Windows::MachineWindow,
             Windows::AboutWindow,
+            Windows::PhotoWindow,
             Windows::CompareWindow,
             Windows::MemoriesWindow,
             Windows::AddMemoryWindow,

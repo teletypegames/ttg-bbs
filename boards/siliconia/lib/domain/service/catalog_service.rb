@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'digest'
+
 # The museum's catalog: search by name, maker and CPU, browse by kind, decade, maker and CPU, the
 # Legends and the Hungarian machines, a machine's family and its CPU's other machines, the most
 # viewed. It reads the machines of the catalog file (a Rubbs::Common::Storage::Snapshot) and
@@ -22,7 +24,7 @@ class CatalogService
   # Seconds before a failed refresh is tried again.
   RETRY_AFTER = 3600
 
-  Index = Data.define(:machines, :by_id, :names, :others, :kinds, :decades, :makers, :cpus)
+  Index = Data.define(:machines, :by_id, :names, :others, :kinds, :decades, :makers, :cpus, :weekly)
 
   # The catalog file kept whole in memory: the newer of +seed+ and +path+, its records the
   # machines, in the order of the lists.
@@ -97,6 +99,18 @@ class CatalogService
   def hungarian = machines.select(&:hungarian?)
 
   def random = machines.reject(&:sparse?).sample || machines.sample
+
+  # The machine of the week of +at+, the same for everyone all ISO week: one of the machines with
+  # an English article, a year and a maker, picked by the week.
+  def machine_of_the_week(at = Time.now)
+    known = index.weekly
+    return nil if known.empty?
+
+    known[Digest::SHA256.hexdigest(week(at)).to_i(16) % known.size]
+  end
+
+  # The ISO week of +at+, 2026-W46.
+  def week(at = Time.now) = at.strftime('%G-W%V')
 
   def predecessors(machine) = machine.predecessors.filter_map { |id| find(id) }
 
@@ -180,11 +194,13 @@ class CatalogService
     )
   end
 
-  # The folded names, and makers and CPUs, of the machines, for the search.
+  # The folded names, and makers and CPUs, of the machines, for the search; the machines the
+  # machine of the week is picked from.
   def searched(machines)
     {
       names:  machines.map { |m| [m.name, m.name_hu].compact.map { |n| MachineModel.fold(n) } },
-      others: machines.map { |m| MachineModel.fold((m.makers + m.cpus).join(' ')) }
+      others: machines.map { |m| MachineModel.fold((m.makers + m.cpus).join(' ')) },
+      weekly: machines.select { |m| m.article && m.year && m.makers.any? }.sort_by(&:id).freeze
     }
   end
 

@@ -32,7 +32,14 @@ class WikidataRepositoryTest < Minitest::Test
 
   def names
     wiki = 'https://en.wikipedia.org/wiki/Atari_2600'
-    [{ 'item' => item('Q1'), 'itemLabel' => { 'value' => 'Atari 2600' }, 'en' => { 'value' => wiki } },
+    img  = 'http://commons.wikimedia.org/wiki/Special:FilePath/Atari%202600%2B.jpg'
+    atari = {
+      'item'      => item('Q1'),
+      'itemLabel' => { 'value' => 'Atari 2600' },
+      'en'        => { 'value' => wiki },
+      'img'       => { 'value' => img }
+    }
+    [atari,
      { 'item' => item('Q4'), 'itemLabel' => { 'value' => 'Q4' } },
      { 'item' => item('Q5'), 'itemLabel' => { 'value' => '7800' }, 'hu' => { 'value' => 'Atari 7800' } }]
   end
@@ -55,6 +62,7 @@ class WikidataRepositoryTest < Minitest::Test
     assert_equal ['Q1', 'Atari 2600', 'console', 1977, 'Atari 2600'], atari.values_at('id', 't', 'k', 'y', 'w')
     assert_equal [['Atari'], ['128 B'], 500, ['Q5']], atari.values_at('mak', 'mem', 'g', 'suc')
     refute atari.key?('pre')
+    assert_equal 'Atari 2600+.jpg', atari['img']
     assert_equal ['Q5', 'Atari 7800'], seventy.values_at('id', 'h')
   end
 

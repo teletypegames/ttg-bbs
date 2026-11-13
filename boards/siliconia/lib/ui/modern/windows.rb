@@ -60,7 +60,8 @@ module UI
       end
 
       # A machine's page: its facts, the callers' marks and memories; the buttons read its
-      # Wikipedia stories, show its family and its CPU's other machines, its memories, and mark it.
+      # Wikipedia stories and its photo, show its family and its CPU's other machines, its memories,
+      # and mark it.
       module MachineWindow
         extend Rubbs::Modern::Part
 
@@ -69,12 +70,13 @@ module UI
           max_width 90
           lines     { |width| machine_lines(machine, width) }
           where     { machine.wikipedia_url || machine.wikidata_url }
-          action('&Wiki')      { read_about(machine, 'en') }
-          action('&Magyar')    { read_about(machine, 'hu') }
-          action('&Family')    { family(machine) }
-          action('Same &CPU')  { same_cpu(machine) }
-          action('M&emories')  { show_memories(machine) }
-          action('M&ine…')     { mine(machine) }
+          action('&Wiki')     { read_about(machine, 'en') }
+          action('&HU')       { read_about(machine, 'hu') }
+          action('&Photo')    { photo(machine) }
+          action('&Family')   { family(machine) }
+          action('&CPU')      { same_cpu(machine) }
+          action('M&emories') { show_memories(machine) }
+          action('M&ine')     { mine(machine) }
         end
       end
 
@@ -89,6 +91,20 @@ module UI
           title       { "#{machine.name} (#{summary.language})" }
           width       { about_width }
           body        { about_body(summary) }
+        end
+      end
+
+      # A machine's photo from Commons, in characters, with its author and licence.
+      module PhotoWindow
+        extend Rubbs::Modern::Part
+
+        window :photo, :info do
+          maximizable true
+          scroll      true
+          height(-4)
+          title       { "Photo: #{machine.name}" }
+          width       { about_width }
+          body        { photo_body(picture) }
         end
       end
 

@@ -109,9 +109,10 @@ class WikidataRepository
   # language is left out.
   def names(values, kinds, machines)
     select(<<~SPARQL).each do |row|
-      SELECT ?item ?itemLabel ?hu ?en ?huwiki WHERE {
+      SELECT ?item ?itemLabel ?hu ?en ?huwiki ?img WHERE {
         #{values}
         OPTIONAL { ?item rdfs:label ?hu . FILTER(LANG(?hu) = "hu") }
+        OPTIONAL { ?item wdt:P18 ?img . }
         OPTIONAL { ?en schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> . }
         OPTIONAL { ?huwiki schema:about ?item ; schema:isPartOf <https://hu.wikipedia.org/> . }
         #{LABELS}
@@ -136,6 +137,7 @@ class WikidataRepository
     machine['h'] ||= hu unless hu.empty? || hu == machine['t']
     machine['w'] ||= article(row['en'])
     machine['hw'] ||= article(row['huwiki'])
+    machine['img'] ||= file(row['img'])
     machine.compact!
   end
 
@@ -240,6 +242,12 @@ class WikidataRepository
   def article(binding)
     url = binding&.dig('value')
     url && text('value' => URI.decode_www_form_component(url.split('/wiki/', 2).last).tr('_', ' '))
+  end
+
+  # The Commons file name of an image binding (…/Special:FilePath/Name.jpg).
+  def file(binding)
+    url = binding&.dig('value')
+    url && text('value' => URI.decode_uri_component(url.split('/Special:FilePath/', 2).last.to_s))
   end
 
   def number(value)

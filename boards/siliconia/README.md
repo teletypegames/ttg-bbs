@@ -9,12 +9,13 @@ of them. A board of the Teletype Games BBS network, powered by
 It has two faces on one port, like every board of the network:
 
 - a **modern** one for ANSI terminals: a desktop under a menubar, the shelves as lists with the
-  picked machine's card on the right, a machine's page in a reader with its buttons (Wiki, Magyar,
-  Family, Same CPU, Memories, Mine), the Wikipedia lead in a scrolling window, two machines side by
-  side, the memories and their form;
+  picked machine's card on the right, a machine's page in a reader with its buttons (Wiki, HU,
+  Photo, Family, CPU, Memories, Mine), the Wikipedia lead in a scrolling window, the photo in half
+  blocks, two machines side by side (Museum > Compare two), the memories and their form;
 - a **Commodore 64** one in PETSCII, 40×25: cursor menus, numbered lists, a page a machine with
-  its actions on one row and the rest under "more", the Wikipedia lead and the memories as pages,
-  a line for a search, a comparison and a memory.
+  its actions on one row (wiki, photo, more) and the rest under "more", the Wikipedia lead and the
+  memories as pages, the photo on a screen of its own, a line for a search, a comparison and a
+  memory.
 
 ## Where the data comes from
 
@@ -43,6 +44,21 @@ It has two faces on one port, like every board of the network:
 - **The stories** are the leads of the English and Hungarian Wikipedia articles, fetched on demand
   through rubbs' `Rubbs::Common::Web::Wikipedia` (5 requests a second for all callers) and kept in
   a `Rubbs::Common::Storage::Cache`, shown with "Text from Wikipedia, CC BY-SA 4.0" and the address.
+- **The photos** are the files Wikidata names for a machine (P18, about 1,700 machines) on
+  [Wikimedia Commons](https://commons.wikimedia.org), shown only under a free licence (public
+  domain, CC0, CC BY, CC BY-SA, by Commons' `LicenseShortName`), always with the author and the
+  licence under the picture. The licence and author come from the Action API's `extmetadata`, the
+  picture from a 250-pixel thumbnail. ImageMagick (`magick`, in the image) floods a plain backdrop
+  black from the corners, trims it and fits the photo into 72×44 pixels for the modern face (upper
+  half blocks in two xterm-256 colours a cell) and 38×40 for the C64 (twice as high, the colours
+  stronger, then each cell a full block, an upper or a lower half in the nearest of the sixteen
+  colours). A drawn picture, a refused licence or a missing file is kept as one JSON a machine in
+  `data/pictures/`, so Commons is asked once a machine. A character copy of a CC BY-SA photo is
+  under CC BY-SA too.
+- **The machine of the week** is one of the machines with an English article, a year and a maker,
+  picked by the ISO week (SHA-256 of `2026-W46`), the same for everyone all week (F5, `E` on the
+  C64). The board writes it hourly, when the week turns, to `data/herald.json` for the Daily Herald
+  of TTG Gate BBS (the Today tab).
 - **The marks** ("I had one", "I grew up on it") are the callers', under their account of the
   network; the machines most callers grew up on are a shelf of their own.
 - **The memories** are the callers' too: pending until an admin approves them (`bin/memories`).
@@ -79,6 +95,8 @@ Then `telnet localhost 2338`. Every environment variable is in `env-example` wit
 | `SILICONIA_BBS_LEGENDS` | `config/legends.yml` | the Legends shelf |
 | `SILICONIA_BBS_WIKIPEDIA_CACHE` | `200` | Wikipedia leads kept in memory |
 | `SILICONIA_BBS_DB` | `data/siliconia.sqlite3` | the marks, memories and views |
+| `SILICONIA_BBS_PICTURES` | `data/pictures` | the photos drawn, one JSON a machine |
+| `SILICONIA_BBS_HERALD` | `data/herald.json` | the machine of the week, for the gate's Daily Herald |
 | `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | the network's Central (TTG Gate BBS) |
 | `RUBBS_AUTH_SECRET` | — | the secret every board of the network shares, in `.env` on the server |
 
@@ -122,25 +140,32 @@ lib/domain/
   model/memory_model.rb     the memories table
   model/view_model.rb       the views table (most viewed)
   model/summary_model.rb    a Wikipedia lead
+  model/picture_model.rb    a photo: its credit and its pixels for each face
   repository/wikidata_repository.rb   the SPARQL queries (Rubbs::Common::Web::Wikidata)
   repository/wikipedia_repository.rb  English and Hungarian leads, cached
   repository/legend_repository.rb     config/legends.yml
+  repository/commons_repository.rb    a Commons file's licence, author, thumbnail
+  repository/pixel_repository.rb      ImageMagick: a photo into small pixels
   service/catalog_service.rb          search, shelves, family, same CPU, views, the refresh
   service/about_service.rb            a machine's Wikipedia lead
   service/collection_service.rb       the callers' marks
   service/memory_service.rb           memories: submit, limits, approve, reject
+  service/picture_service.rb          the photos: free licences only, kept on disk
+  service/herald_service.rb           the machine of the week for the Daily Herald
   siliconia_bbs.rb          the composition root (SiliconiaBBS, a Rubbs::Common::Board::Domain)
 lib/ui/
   logo.rb                   the board's word in rubbs' block font
   wording.rb                a machine's facts and the messages, both faces
+  picture.rb                a photo in characters: half blocks, xterm-256 and C64 colours
   modern.rb                 UI::Modern::APP: commands, menus, help, desktop
   modern/helpers.rb         the shelves, a machine's page, stories, family, marks, compare
   modern/windows.rb         one Rubbs::Modern::Part per window
   petscii.rb                UI::Petscii: the C64 face (a Rubbs::Petscii::Face)
+  petscii/photo.rb          the photo on a C64 screen of its own
 test/                       minitest tests of the domain and both faces
 ```
 
 ## Licence
 
 MIT, see the repository's `LICENSE`. The catalog data is Wikidata's (CC0); the Wikipedia text
-shown on the board is under CC BY-SA 4.0.
+shown on the board is under CC BY-SA 4.0; each photo is under its own licence, named under it.

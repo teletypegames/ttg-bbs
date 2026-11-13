@@ -4,7 +4,7 @@
 # restarts that board alone (Rubbs::MultiRunner, boards/.revision).
 FROM ruby:3.4-alpine
 
-RUN apk add --no-cache git build-base tzdata rsync
+RUN apk add --no-cache git build-base tzdata rsync imagemagick imagemagick-jpeg
 
 WORKDIR /app
 

@@ -92,6 +92,14 @@ module UI
       end
     end
 
+    def self.picture(result)
+      case result
+      when :no_image then 'Wikidata names no photo of this machine.'
+      when :not_free then 'Its photo is not under a free licence, so it is not shown here.'
+      else 'Wikimedia Commons did not answer. Try again later.'
+      end
+    end
+
     def self.decade(decade) = "#{decade}s"
 
     def self.search(result, query)

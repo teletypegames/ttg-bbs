@@ -20,6 +20,12 @@ SILICONIA_BBS_WIKIPEDIA_CACHE=200
 # The callers' marks, memories and views
 SILICONIA_BBS_DB=data/siliconia.sqlite3
 
+# The Commons photos made small for both faces, one JSON a machine
+SILICONIA_BBS_PICTURES=data/pictures
+
+# The machine of the week, read by TTG Gate BBS's Daily Herald
+SILICONIA_BBS_HERALD=data/herald.json
+
 # The network's Central (TTG Gate BBS): accounts, feedback and the wall live there. The secret is
 # every board's, in .env on the server, never here.
 TTG_CENTRAL_URL=http://ttg-gate-bbs:8090

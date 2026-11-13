@@ -14,6 +14,7 @@ MachineModel = Data.define(
   :ended,
   :article,
   :article_hu,
+  :image,
   :makers,
   :cpus,
   :systems,
@@ -41,7 +42,8 @@ MachineModel = Data.define(
       name_hu:    text(record['h']),
       kind:       MachineModel::KINDS.key?(record['k']) ? -record['k'] : 'pc',
       article:    text(record['w']),
-      article_hu: text(record['hw'])
+      article_hu: text(record['hw']),
+      image:      text(record['img'])
     }
   end
 

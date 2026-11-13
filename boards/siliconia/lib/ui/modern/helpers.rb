@@ -95,6 +95,29 @@ module UI
         show(:about, machine: machine, summary: found)
       end
 
+      def photo(machine)
+        found = loading('Asking Wikimedia Commons…') { pictures.picture(machine) }
+        return note(Wording.picture(found), 'Photo') if found.is_a?(Symbol)
+
+        show(:photo, machine: machine, picture: found)
+      end
+
+      def machine_of_the_week
+        machine = catalog.machine_of_the_week
+        return note('No machine this week.', 'Machine of the week') unless machine
+
+        open_machine(machine)
+      end
+
+      # The photo in half blocks, centred, its credit under it.
+      def photo_body(picture)
+        inner = about_width - 5
+        pad   = ' ' * [(inner - picture.modern.width) / 2, 0].max
+        [*Picture.modern_lines(picture.modern).map { |l| pad + l }, '',
+         *wrap("Photo: #{picture.credit}", inner).map { |l| dim(l) },
+         *[picture.license_url, picture.page].reject { |u| u.to_s.empty? }.map { |u| dim(u) }]
+      end
+
       def family(machine)
         line = catalog.family(machine)
         return note('Wikidata knows no machine before or after it.', 'Family') if line.size == 1

@@ -2,6 +2,8 @@
 
 require_relative 'logo'
 require_relative 'wording'
+require_relative 'picture'
+require_relative 'petscii/photo'
 
 module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor main menu, the shelves and the
@@ -9,6 +11,8 @@ module UI
   # and the rest in a menu under "more", the Wikipedia leads and the memories as pages that wait
   # for RETURN, and a line for a search, a comparison and a memory.
   class Petscii < Rubbs::Petscii::Face
+    include Photo
+
     LOGO_COLORS = [GN, GN, CY, CY, WH].freeze
     BOARD       = "#{DG} ::::::::::::::::::::::::::::::::::::::#{LG}".freeze
 
@@ -31,6 +35,9 @@ module UI
       item('b', 'browse', 'kinds, decades, makers, cpus') { browse }
       item('h', 'hungarian machines', 'tvc, primo, ht-1080z…') { machines('HUNGARIAN MACHINES', catalog.hungarian) }
       item('r', 'random machine', 'whatever is on the next stand') { machine(catalog.random) }
+      item('e', 'machine of the week', -> { catalog.machine_of_the_week&.name.to_s[0, 30] }) do
+        machine(catalog.machine_of_the_week)
+      end
       item('t', 'top lists', 'most viewed, the network\'s') { tops }
       item('m', 'my machines', 'the ones you had') { my_machines }
       item('w', 'the wall', 'talk machines with the others') { TTG::Wall.open(@session) }
@@ -145,9 +152,9 @@ module UI
       catalog.viewed(machine)
       loop do
         page('MACHINE', machine_lines(machine), right: machine.id, wait: false, room: 2)
-        case actions(%w[w wiki], %w[f family], %w[m more], %w[q back])
+        case actions(%w[w wiki], %w[p photo], %w[m more], %w[q back])
         when 'w' then read_about(machine, 'en')
-        when 'f' then family(machine)
+        when 'p' then photo(machine)
         when 'm' then more(machine)
         else return
         end
@@ -169,6 +176,7 @@ module UI
     def more(machine)
       case menu(more_items(machine), back: nil)
       when 'h' then read_about(machine, 'hu')
+      when 'f' then family(machine)
       when 'c' then same_cpu(machine)
       when 'e' then show_memories(machine)
       when 'a' then add_memory(machine)
@@ -180,9 +188,12 @@ module UI
 
     def more_items(machine)
       on = ->(kind) { collection.marked?(identity, machine, kind) ? 'unmark' : 'mark' }
-      [['h', 'wikipedia in hungarian'], ['c', 'machines with its cpu'], ['e', 'memories of it'], ['a', 'write a memory'],
+      [['h', 'wikipedia in hungarian'], ['f', 'its family line'], ['c', 'machines with its cpu'], ['e', 'memories of it'],
+       ['a', 'write a memory'],
        ['o', "#{on.call('owned')}: i had one"], ['g', "#{on.call('grew_up')}: i grew up on it"],
-       ['v', 'compare with another']].map { |key, label| Rubbs::Common::Screens::Selector.item(label, key: key, value: key) }
+       ['v', 'compare with another']].map { |key, label|
+        Rubbs::Common::Screens::Selector.item(label, key: key, value: key)
+      }
     end
 
     def read_about(machine, language)
