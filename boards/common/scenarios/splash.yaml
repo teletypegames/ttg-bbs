@@ -1,0 +1,7 @@
+title: Past the TTG splash
+description: Waits for the Teletype Games logo and goes on as a guest (space).
+include_only: true
+steps:
+  - wait: /press (any key|space)/i
+  - pause: 2
+  - key: space

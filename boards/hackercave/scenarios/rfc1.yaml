@@ -1,0 +1,19 @@
+title: HackerCave – RFC 1
+description: The hacker's reading room; the very first RFC, as it was published in 1969.
+steps:
+  - include: common/face-ansi
+  - include: common/splash
+  - wait: { text: "Classics", timeout: 20 }
+  - caption: { text: "HackerCave BBS: every RFC, as it was published", for: 3 }
+  - pause: 3
+  - mark: Classics
+  - key: enter
+  - wait: "Network Working Group"
+  - mark: RFC 1
+  - pause: 3
+  - key: pgdn
+  - pause: 2.5
+  - key: pgdn
+  - pause: 2.5
+  - shot: rfc1
+  - end: hangup

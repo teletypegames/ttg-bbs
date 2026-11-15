@@ -1,0 +1,13 @@
+title: TTG Gate – logged in
+description: Logs in with the Demo account and opens the profile.
+steps:
+  - include: common/face-ansi
+  - include: ttg-gate/login-demo
+  - wait: "OWN SERVERS"
+  - caption: { text: "One account for the whole network", for: 3 }
+  - pause: 3
+  - key: [tab, tab, tab]
+  - mark: Profile
+  - pause: 4
+  - shot: profile
+  - end: hangup

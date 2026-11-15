@@ -80,3 +80,21 @@ bundle exec rake               # every folder's tests and every board's rake bbs
 bundle exec rake rubocop       # each folder by its own .rubocop.yml
 BOARDS=feedia,common bundle exec rake test
 ```
+
+CI also checks the Director's scenarios (below) with bbs-web's `bin/scenario-check`, from a tagged
+bbs-web release.
+
+## Scenarios (bbs-web's Director)
+
+`boards/<board>/scenarios/*.yaml` are scripted calls for screen recordings: the local-only Director of
+bbs-web (`services/bbs-web`, README: *Director*) types them into its terminal and records them as mp4.
+They live here so a board and its demo change in the same commit. `boards/common/scenarios` holds the
+shared parts (`face-ansi`, `face-c64`, `splash`), `ttg-gate/scenarios/login-demo` logs in as the Demo
+account. A board's `scenarios/` is not its code (rubbs 4.6.2: `Fingerprint::IGNORED`), so a changed
+scenario restarts no board; nothing on the server reads them.
+
+```bash
+cd ../../services/bbs-web
+docker compose -f compose.yaml -f compose.director.yaml up -d --build   # http://localhost:9140
+node tools/director-record/record.mjs siliconia/tour                    # → out/siliconia-tour.mp4
+```

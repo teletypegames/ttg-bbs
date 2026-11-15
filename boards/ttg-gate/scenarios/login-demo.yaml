@@ -1,0 +1,14 @@
+title: Log in as Demo
+description: From the gate's splash, the Demo account (password from DEMO_PASSWORD).
+include_only: true
+steps:
+  - wait: /press space/i
+  - pause: 1.5
+  - type: "l"
+  - wait: "name:"
+  - type: "Demo\r"
+  - wait: "password:"
+  - type: { secret: DEMO_PASSWORD }
+  - key: enter
+  - wait: { text: "badge", timeout: 3, optional: true }
+  - key: { name: enter, if_seen: "badge" }

@@ -1,0 +1,7 @@
+title: C64 face
+description: Answers the terminal question with 2 (PETSCII, 40 columns).
+include_only: true
+steps:
+  - wait: /your terminal/i
+  - pause: 1
+  - type: "2\r"

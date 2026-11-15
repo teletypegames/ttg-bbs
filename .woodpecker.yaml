@@ -37,6 +37,16 @@ steps:
       - cd boards/common && rdoc -C lib | tee /tmp/coverage.txt
       - grep -q '100.00% documented' /tmp/coverage.txt
 
+  # The Director's scenarios (boards/*/scenarios/*.yaml) are checked by bbs-web's own checker,
+  # from a tagged release: every step known, every include there, every board in bbs-web.
+  - name: scenarios
+    image: node:22-alpine
+    commands:
+      - apk add --no-cache git
+      - git clone --quiet --depth 1 --branch v1.1.0 https://git.teletypegames.org/services/bbs-web.git /tmp/bbs-web
+      - cd /tmp/bbs-web/bbsweb && npm ci --omit=dev --no-audit --no-fund --silent && cd -
+      - node /tmp/bbs-web/bbsweb/bin/scenario-check --config /tmp/bbs-web/config/config.json boards
+
   - name: check
     image: docker:cli
     commands:
@@ -44,7 +54,7 @@ steps:
 
   - name: deploy
     image: git.teletypegames.org/build/deploy-ssh@sha256:04e49560aa41d2351853037a02f8cfc8d1b31e412f712c2740ec226aa0e59291
-    depends_on: [rubocop, test, rdoc-common, check]
+    depends_on: [rubocop, test, rdoc-common, scenarios, check]
     environment:
       DEPLOY_SSH_KEY:
         from_secret: deploy_ssh_key

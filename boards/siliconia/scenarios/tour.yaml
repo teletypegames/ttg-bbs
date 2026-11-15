@@ -1,0 +1,25 @@
+title: Siliconia on a C64
+description: The museum of computers and consoles in PETSCII; a search for the Commodore 64.
+machine: c64
+typing: { cps: 7, jitter: 0.3, seed: 64 }
+steps:
+  - include: common/face-c64
+  - include: common/splash
+  - wait: "museum of computers"
+  - caption: { text: "Siliconia BBS on a Commodore 64", for: 3 }
+  - pause: 3
+  - mark: Menu
+  - key: enter
+  - wait: "search?"
+  - pause: 1
+  - type: "commodore 64\r"
+  - wait: { text: "machines", timeout: 20 }
+  - mark: Results
+  - pause: 4
+  - shot: results
+  - key: enter
+  - wait: "cpu"
+  - mark: Commodore 64
+  - pause: 5
+  - shot: machine
+  - end: hangup
