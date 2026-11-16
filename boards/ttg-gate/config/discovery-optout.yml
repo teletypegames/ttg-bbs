@@ -5,7 +5,7 @@
 # [hide]       never probed and never shown
 # [no_preview] listed and probed, but its banner is never shown
 #
-# A request goes to the wiki page services/ttg-gate-bbs; add the entry and push.
+# A request goes to the wiki page services/bbs/ttg-gate-bbs; add the entry and push.
 
 hide: []
 no_preview: []

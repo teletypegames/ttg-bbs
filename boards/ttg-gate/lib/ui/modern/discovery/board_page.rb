@@ -8,7 +8,7 @@ module UI
       # of each, the tags, the lists that name it, the banner (B shows its
       # first screen) and the Dial button (RETURN or D). Q or Esc goes back.
       class BoardPage < Screen
-        WIKI = 'wiki.teletypegames.org/services/ttg-gate-bbs'
+        WIKI = 'wiki.teletypegames.org/services/bbs/ttg-gate-bbs'
         # The width of a field's label.
         LABEL = 13
         # Why a call failed, from our server: the words of a probe's result.
@@ -76,7 +76,7 @@ module UI
           lines = [header, rule, '', *status, '', *fields, *tag_lines]
           lines << "#{DIM}#{fit('Banner', LABEL)}#{TEXT}#{banner_note}#{RESET}"
           lines.fill('', lines.size...(rows - 4))
-          lines.push(rule, dial_line, "#{DIM}#{fit("How we call boards, and opting out: #{WIKI}", width)}#{RESET}")
+          lines.push(rule, dial_line, "#{DIM}#{fit("Calling boards, opting out: #{WIKI}", width)}#{RESET}")
         end
 
         private

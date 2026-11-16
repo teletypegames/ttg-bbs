@@ -19,7 +19,7 @@ module Discovery
     TIMEOUT    = 30
     DEADLINE   = 300
     REDIRECTS  = 5
-    USER_AGENT = 'TTG-Gate-BBS-Discovery/1.0 (+https://wiki.teletypegames.org/services/ttg-gate-bbs)'
+    USER_AGENT = 'TTG-Gate-BBS-Discovery/1.0 (+https://wiki.teletypegames.org/services/bbs/ttg-gate-bbs)'
 
     # The bytes of +source+ (a SourceConfigModel). From a .zip only its member is
     # read into the memory, not the archive.
