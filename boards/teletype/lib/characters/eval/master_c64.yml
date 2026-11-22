@@ -5,9 +5,9 @@
 - q: how do I register my name?
   expect: [S on the main menu]
 - q: where can I find DOS programs?
-  expect: [TTG Wiki BBS, '2325', DOSINST]
+  expect: [TTG Wiki BBS, '2325', WEDOS]
 - q: what's new?
-  expect: [Underwater Sun Rise, C64 Demo, WARP64U, WarpEngine BBS]
+  expect: [Underwater Sun Rise, C64 Demo, WE64, WarpEngine BBS]
 - q: are there any events coming up?
   expect: [Underwater Sun Ris, No events]
 - q: which games do you have for the c64?

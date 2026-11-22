@@ -61,8 +61,8 @@
   fact: 'ftp.teletypegames.org is our FTP server (anonymous, read-only), and the whole tree is on plain HTTP too, at archive.teletypegames.org, for a C64 with a network cartridge or a WiFi modem. The games themselves are on the WarpEngine BBS at teletypegames.org:2329.'
 - keys: [browser, play, web]
   fact: 'Most of our games play right in a browser from their page on teletypegames.org/catalog. Every board of ours works in a browser too, at bbsweb.teletypegames.org.'
-- keys: [wiki, guide, guides, engine, engines, documentation, docs, howto, howtos, tutorial, dos, dosinst, gmenu, bmagic, ttgwiki, install]
-  fact: 'Our wiki is on the TTG Wiki BBS at teletypegames.org:2325: the platform guides, the engines, the how-tos and the DOS corner with DOSINST, GMENU, BMAGIC and TTGWIKI. On the web it is at wiki.teletypegames.org.'
+- keys: [wiki, guide, guides, engine, engines, documentation, docs, howto, howtos, tutorial, dos, wedos, gmenu, bmagic, ttgwiki, install]
+  fact: 'Our wiki is on the TTG Wiki BBS at teletypegames.org:2325: the platform guides, the engines, the how-tos and the DOS corner with WEDOS, GMENU, BMAGIC and TTGWIKI. On the web it is at wiki.teletypegames.org.'
 - keys: [blog, posts, ttgblog, editor, editors, article]
   fact: 'Our blog is on the TTG Blog BBS at teletypegames.org:2328, on a C64 too: the latest posts read a screenful at a time. On the web it is at teletypegames.org/blog.'
 - keys: [ansi, ascii, art, gallery, background, picture, graphics, petscii, canvas, draw, paint, pixelia]

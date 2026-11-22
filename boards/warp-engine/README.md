@@ -5,7 +5,7 @@ The file area of Teletype Games on a telnet line. The WarpEngine of
 without a web browser on the archive's plain HTTP
 (`http://archive.teletypegames.org`); this board lends them out: pick a shelf,
 pick a title, and take it home by ZMODEM or XMODEM. It is the telnet sibling of
-[WARP64U](https://git.teletypegames.org/stores/warp64u), the store that runs on
+[WE64](https://git.teletypegames.org/stores/we-c64), the store that runs on
 the C64 itself.
 
 It has two faces on one port, like every board of the network:
