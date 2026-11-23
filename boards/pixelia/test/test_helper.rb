@@ -27,3 +27,6 @@ def painted_canvas
   fg[0] = 2
   CanvasModel.new(chars, fg, blank.bg)
 end
+
+# The bytes of a TTG Canvas 64 sample in test/fixtures.
+def tcv_fixture(name) = File.binread(File.expand_path("fixtures/#{name}.tcv", __dir__))

@@ -91,18 +91,75 @@ The wall where callers talk about the art, and a word to the sysops, come from t
 
 ## The Exhibition
 
-(It was called *the Wall* before the network got its own wall.) The canvas saved under a title
-(32 characters) and the caller's name — their account of the network: a guest paints, but logs in
-(the profile) to hang a work — newest first,
-one JSON file each in `data/works/`. The board keeps the works it has read in
-memory and lists the folder only when it changed, reading just the files it
-does not know, so a save writes one file and reads none, and a work the admin
-script removes is gone at the next look. A broken file is skipped with one
-warning. A caller (counted by address, `Rubbs::Common::Line::RateLimit.caller_key`, so calling
-again does not help) saves at most once in `PIXELIA_BBS_EXHIBITION_COOLDOWN`
-seconds, and the board takes at most `PIXELIA_BBS_EXHIBITION_PER_HOUR` works an
-hour. Both limits are looked at together and a save counts in both only once
-its file is written, so a refused or failed save costs no turn.
+(It was called *the Wall* before the network got its own wall.) Works under a title (32
+characters) and the caller's name — their account of the network: a guest paints, but logs in
+(the profile) to hang a work — newest first, one JSON file each in `data/works/`. A work is one
+of two kinds:
+
+- a **canvas work**: the canvas as it was saved (`CanvasModel`, the canvas's own JSON under
+  `canvas`);
+- a **PETSCII work**: a picture of [TTG Canvas 64](https://git.teletypegames.org/tools/ttg-canvas-64),
+  uploaded (`PetsciiModel`, under `petscii`): the 40×25 screen codes (reverse in bit 7) and a
+  colour per cell, any of the sixteen on any background, the border and background colour and
+  one of the ROM character sets, upper case / graphics or lower / upper case.
+
+The board keeps the works it has read in memory and lists the folder only when it changed,
+reading just the files it does not know, so a save writes one file and reads none, and a work
+the admin script removes is gone at the next look. A broken file is skipped with one warning.
+A caller (counted by address, `Rubbs::Common::Line::RateLimit.caller_key`, so calling again
+does not help) hangs at most one work in `PIXELIA_BBS_EXHIBITION_COOLDOWN` seconds, and the
+board takes at most `PIXELIA_BBS_EXHIBITION_PER_HOUR` works an hour; saves and uploads count
+together. Both limits are looked at together and a work counts in both only once its file is
+written, so a refused or failed one costs no turn.
+
+### Upload
+
+The Exhibition's **Upload** (the menu and the window's button on a modern terminal, `3` then
+`U` on a C64) takes a `.tcv` file by **XMODEM** from a logged-in caller, from any terminal:
+TTG Gate 64, UltimateTerm, CCGMS, SyncTERM. The board receives with rubbs'
+`Rubbs::Common::Files::Transfer.receive` (checksum, CRC-16 and 1K blocks, as the terminal
+sends), at most `ExhibitionService::MAX_UPLOAD` (5 KiB) bytes, a minute to start; Esc or
+RUN/STOP gives up. Nothing is written before the file is judged (`ExhibitionService#accept`,
+`TcvModel`), the way `FORMAT.md` of TTG Canvas 64 asks: a load address in front is skipped,
+the header checked, exactly 2016 (or 4064) bytes taken and XMODEM's padding after them
+ignored, every colour masked to its low nibble, a newer version refused. Then:
+
+- a **multicolour** picture or one with a **custom character set** is refused as game
+  graphics, which a terminal cannot show;
+- a broken file is refused with the reader's reason (`not a TTG Canvas 64 picture`,
+  `the picture is cut short (2000 of 2016 bytes)` …);
+- an empty one (nothing but the background) is refused too.
+
+A picture taken asks for its title, and the work hangs at once. Every upload is noted for the
+sysops (`UploadNoteService`): a feedback of the board's own kind `upload` on the network's
+feedback box (ttg-common `TTG::Feedback`, on TTG Gate BBS), sent as the uploader. The Central
+posts its Discord line (`TTG_GATE_BBS_FEEDBACK_WEBHOOK`: board, kind, who, never the text) and
+the sysops' desk keeps the title, the work's id and the `bin/works remove` line. A note that
+does not go (the Central away, the uploader's feedback limit) is logged and costs the work
+nothing. The board needs no webhook of its own.
+
+### A PETSCII work on the two faces
+
+- **C64:** exactly as painted, on the C64's own screen in the picture's character set: every
+  screen code, colour and reverse cell (`UI::Petscii::WorkScreen`, a `Rubbs::Petscii::Canvas`);
+  any key goes back. Two things a telnet line cannot carry: the **border and background
+  colour** (no terminal has a code for `$D020`/`$D021`, so the screen stays the terminal's
+  black) and the **last cell** of the screen (printing there scrolls a C64). On a black
+  background, the usual one, the picture is exact. On another background a cell is drawn the
+  closest way a black screen allows: a space, or anything in the background colour, is a
+  reversed space in it; a character in black ink is that character reversed in the background
+  colour (exact); a character in another ink keeps the background around a black character; a
+  reversed character keeps its ink around a black one.
+- **Modern:** in the xterm-256 colours of the C64 palette (`ColorModel`), so every ink and
+  background colour is shown as it is, a reversed cell with ink and background swapped, and on
+  the whole screen in a frame of its border colour (two columns, one row). The shapes are
+  approximated: each screen code is the Unicode character it looks like in its set
+  (`PetsciiGlyphModel`): rubbs' tables (`Rubbs::Petscii::Canvas.look`, `Rubbs::Petscii::Glyphs`)
+  for the letters, signs, lines, blocks, suits and diagonals, and for the graphics they leave out
+  the nearest character every terminal font has (the eighth lines at other heights as `─ │`, the
+  quarter and three-eighth bars as `▎ ▍ ▕ ▂ ▃`, the corner pieces as box corners, the half
+  shades and the lower set's patterns as `▒`). The lower / upper case set shows its letters in
+  both cases. The Exhibition window's preview is the picture without its frame.
 
 ## Running
 
@@ -137,8 +194,8 @@ the stack's `.env`). The board has no secrets.
 | `PIXELIA_BBS_CACHE_MB` | `100` | the disk cache of art files |
 | `PIXELIA_BBS_MAX_ROWS` | `1000` | a piece is cut after this many rows |
 | `PIXELIA_BBS_PAINT_RATE` | `20` | cells a second one caller may paint |
-| `PIXELIA_BBS_EXHIBITION_COOLDOWN` | `300` | seconds between two saves of one caller |
-| `PIXELIA_BBS_EXHIBITION_PER_HOUR` | `30` | works the whole board takes an hour |
+| `PIXELIA_BBS_EXHIBITION_COOLDOWN` | `300` | seconds between two works (saves or uploads) of one caller |
+| `PIXELIA_BBS_EXHIBITION_PER_HOUR` | `30` | works (saves and uploads) the whole board takes an hour |
 
 `data/` is a volume (`/srv/stacks/ttg-bbs/boards/pixelia/data` on the server).
 
@@ -146,7 +203,7 @@ the stack's `.env`). The board has no secrets.
 
 ```bash
 docker exec -w /app/boards/pixelia ttg-bbs bin/works list          # id, date, handle, title, newest first
-docker exec -w /app/boards/pixelia ttg-bbs bin/works show ID       # a work's characters
+docker exec -w /app/boards/pixelia ttg-bbs bin/works show ID       # a work's characters (a PETSCII work's look-alikes)
 docker exec -w /app/boards/pixelia ttg-bbs bin/works remove ID     # moderation
 docker exec -w /app/boards/pixelia ttg-bbs bin/canvas show         # the canvas' characters
 docker exec -w /app/boards/pixelia ttg-bbs bin/canvas clear        # archive into data/archive/, then blank it
@@ -160,7 +217,8 @@ when no board answers, the script clears the file itself. An archive is
 ## Logs
 
 Every line on stderr starts with the log tag `pixelia-bbs:` (rubbs' `Rubbs.log`):
-`16colors`, `canvas`, `canvas writer`, `art cache`, `exhibition`. The 16colo.rs
+`16colors`, `canvas`, `canvas writer`, `art cache`, `exhibition` (an upload's note that did not
+go: `upload note not sent`), `transfer` (an upload: `received`, or how it failed). The 16colo.rs
 repository lets a failure go up (`Rubbs::Common::Web::HTTP::Error`, `Rubbs::Common::Web::HTTP::TooLarge` for a
 file over `PIXELIA_BBS_MAX_FILE_KB`); the gallery service logs it once and the faces
 say why the piece does not show. In the container they are in `docker logs ttg-bbs`, with
@@ -175,23 +233,29 @@ bundle exec rake test            # all of them
 bundle exec rake test exhibition       # the files whose name has the word
 ```
 
-Minitest, in `test/domain/`: the Exhibition's rules and limits, the works folder,
-the canvas file and its archive, the art cache, the 16colo.rs listings and
-files (with `Rubbs::Common::Web::HTTP` stubbed: no network), the SAUCE record and the ANSI
-renderer. CI runs them with RuboCop before a deploy.
+Minitest, in `test/domain/`: the Exhibition's rules and limits (uploads among them), the `.tcv`
+reader and the PETSCII work (with the samples of TTG Canvas 64 in `test/fixtures/`), the
+upload note, the works folder, the canvas file and its archive, the art cache, the 16colo.rs
+listings and files (with `Rubbs::Common::Web::HTTP` stubbed: no network), the SAUCE record and
+the ANSI renderer; in `test/ui/`: both faces, a C64 upload (the XMODEM transfer stubbed; rubbs
+tests the transfer itself) and its refusals, a PETSCII work on both faces. CI runs them with
+RuboCop before a deploy.
 
 ## Project structure
 
 ```
 bbs.rb                      entry point: Rubbs.board (the title, the domain, both faces)
 bin/works, bin/canvas       admin scripts, run with docker exec
-rake test                    the tests (test/domain/*_test.rb)
+rake test                   the tests (test/domain, test/ui; samples in test/fixtures)
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
   model/color_model.rb      the sixteen C64 colours (ANSI and xterm-256 too)
   model/glyph_model.rb      the characters a canvas cell may hold
   model/canvas_model.rb     a 40×25 picture, frozen; its JSON
-  model/work_model.rb       a picture on the Exhibition
+  model/tcv_model.rb        a TTG Canvas 64 file (.tcv), read the safe way
+  model/petscii_model.rb    a PETSCII work: screen codes, colours, border, background, set
+  model/petscii_glyph_model.rb   the Unicode look-alike of a screen code (modern face)
+  model/work_model.rb       a picture on the Exhibition: a canvas or a PETSCII work
   model/sauce_model.rb      the SAUCE record of an art file
   model/art_model.rb        a rendered piece: rows of cells, packed
   model/year_model.rb, pack_model.rb, art_file_model.rb   the 16colo.rs listings
@@ -202,26 +266,29 @@ lib/domain/
   service/ansi_render_service.rb            ANSI/ASCII bytes → ArtModel
   service/gallery_service.rb                years, packs, text-art files, a piece
   service/canvas_service.rb                 painting rules, rate limit, undo, who is here
-  service/exhibition_service.rb                   saving to the Exhibition, its limits
+  service/exhibition_service.rb             saving and uploading to the Exhibition, its limits
+  service/upload_note_service.rb            the sysops' note of an upload (TTG::Feedback)
   pixelia_bbs.rb            the board's domain (PixeliaBBS): settings and services
 lib/ui/
   logo.rb                   PIXELIA in blocks (Rubbs::Common::Text::BlockFont), a colour a letter, both faces
   glyph_keys.rb             glyph mode's keyboard, both faces
-  wording.rb              what a caller is told about a save, both faces
+  wording.rb                what a caller is told about a save or an upload, both faces
   modern.rb                 UI::Modern::APP: commands, menus, help, statusbar and desktop
   modern/helpers.rb         what the caller does: opening windows, a piece, the canvas, saving
   modern/years_window.rb, packs_window.rb, files_window.rb, exhibition_window.rb   one window each
   modern/save_window.rb     the form that saves the canvas to the Exhibition
+  modern/upload_window.rb   the title of an uploaded picture
   modern/canvas_widget.rb   the canvas's keys and mouse, and its window
   modern/canvas_panel.rb    drawing the canvas and its panel
   modern/viewer.rb          a piece or a work on the whole screen
-  modern/art_lines.rb       rows of cells as ANSI lines
+  modern/art_lines.rb       rows of cells as ANSI lines (a PETSCII work framed in its border)
   petscii.rb                UI::Petscii: the C64 face, its masthead and main menu
   petscii/pen.rb            cells in C64 colours and reverse; ANSI cells to C64 ones
   petscii/canvas_view.rb    the canvas on a C64 screen, sending only what changed
   petscii/canvas.rb         painting on a C64
   petscii/gallery.rb        the 16colo.rs gallery on a C64
-  petscii/exhibition.rb           the Exhibition on a C64
+  petscii/exhibition.rb     the Exhibition on a C64: the works, a work, the upload
+  petscii/work_screen.rb    a PETSCII work on the C64's own screen
 ```
 
 ## License

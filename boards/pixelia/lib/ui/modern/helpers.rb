@@ -31,6 +31,8 @@ module UI
       end
 
       def view_work(work)
+        return view_petscii(work) if work.petscii?
+
         picture = work.canvas
         with_line do |session|
           Viewer.run(
@@ -42,6 +44,37 @@ module UI
             ArtLines.canvas(picture, y, x, w)
           end
         end
+      end
+
+      # A PETSCII work on the whole screen, framed in its border colour.
+      def view_petscii(work)
+        picture = work.petscii
+        with_line do |session|
+          Viewer.run(
+            session,
+            width:  ArtLines::FRAMED_COLS,
+            height: ArtLines::FRAMED_ROWS,
+            title:  "#{work.title} · #{work.handle} · #{work.date}"
+          ) do |y, x, w|
+            ArtLines.petscii_framed(picture, y, x, w)
+          end
+        end
+      end
+
+      # A TTG Canvas 64 picture by XMODEM; the form for its title when the
+      # Exhibition takes it.
+      def upload_to_exhibition
+        return message(Wording::ACCOUNT, title: 'The Exhibition') unless signed_in?
+
+        wait = exhibition.wait(caller_key)
+        return message(Wording.wait(wait), title: 'The Exhibition') if wait.positive?
+
+        data = with_line { |session| receive_upload(session) }
+        picture = data.is_a?(String) ? exhibition.accept(data) : nil
+        return show(:upload_work, upload: picture) if picture.is_a?(PetsciiModel)
+
+        text = picture ? Wording.refusal(picture) : Rubbs::Common::Files::Transfer.upload_result(data)
+        message(text, title: 'Upload', width: 64)
       end
 
       def open_canvas
@@ -68,6 +101,15 @@ module UI
       def feedback = with_line { TTG::Feedback.open(@session) }
 
       def open_exhibition = show(:exhibition, works: exhibition.all)
+
+      private
+
+      def receive_upload(session)
+        words = [Wording::UPLOAD, '', Rubbs::Common::Files::Transfer.upload_start(Wording::UPLOAD_WHAT)]
+        lines = words.flat_map { |w| w.empty? ? [''] : Rubbs::Modern::FrameBuffer.wrap_ansi(w, cols - 4) }
+        session.write("\r\n#{lines.map { |l| "  #{l}\r\n" }.join}\r\n")
+        Rubbs::Common::Files::Transfer.receive(session, max_bytes: ExhibitionService::MAX_UPLOAD)
+      end
     end
   end
 end

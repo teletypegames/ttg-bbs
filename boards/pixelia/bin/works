@@ -3,7 +3,7 @@
 
 # The Exhibition's moderation, from the server's shell:
 #   docker exec pixelia-bbs bin/works list         (newest first: id, date, handle, title)
-#   docker exec pixelia-bbs bin/works show ID      (the picture's characters)
+#   docker exec pixelia-bbs bin/works show ID      (the picture's characters; a PETSCII work's look-alikes)
 #   docker exec pixelia-bbs bin/works remove ID
 # The board sees a removal at the next look at the Exhibition.
 require 'bundler/setup'
@@ -17,9 +17,16 @@ when 'list'
 when 'show'
   work = id && exhibition.find(id)
   abort 'no such work' unless work
-  puts "#{work.title} by #{work.handle}, #{work.date}"
-  canvas = work.canvas
-  CanvasModel::ROWS.times { |y| puts canvas.chars[y * CanvasModel::COLS, CanvasModel::COLS].join }
+  puts "#{work.title} by #{work.handle}, #{work.date}#{' (PETSCII)' if work.petscii?}"
+  if work.petscii?
+    picture = work.petscii
+    PetsciiModel::ROWS.times do |y|
+      puts(PetsciiModel::COLS.times.map { |x| PetsciiGlyphModel.look(picture.at(x, y).first, picture.charset) }.join)
+    end
+  else
+    canvas = work.canvas
+    CanvasModel::ROWS.times { |y| puts canvas.chars[y * CanvasModel::COLS, CanvasModel::COLS].join }
+  end
 when 'remove'
   abort 'usage: bin/works remove ID' unless id
   abort 'no such work' unless exhibition.remove(id)

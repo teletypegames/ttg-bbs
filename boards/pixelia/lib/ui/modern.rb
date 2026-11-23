@@ -11,6 +11,7 @@ require_relative 'modern/packs_window'
 require_relative 'modern/files_window'
 require_relative 'modern/exhibition_window'
 require_relative 'modern/save_window'
+require_relative 'modern/upload_window'
 
 module UI
   # The board on a modern terminal (ANSI colours, UTF-8, a mouse): a desktop
@@ -21,7 +22,8 @@ module UI
     ABOUT = 'Pixelia BBS — the PETSCII & ANSI art gallery of Teletype Games, powered by rubbs. The gallery is ' \
             'the 16colo.rs archive of the ANSI scene, read live from its public API. The canvas is one 40×25 ' \
             'picture that every caller paints on, from a Commodore 64 or from here, and both see it the same. ' \
-            'Saved pictures go on the Exhibition.'
+            'Saved pictures go on the Exhibition, and so do the PETSCII pictures of TTG Canvas 64, uploaded by ' \
+            'XMODEM (Exhibition → Upload).'
     CANVAS_KEYS = 'Arrows move · type to paint · Enter paints the brush · Backspace/Delete rub out · F7/F8 ink · ' \
                   'F9 or Ctrl-R reverse (black on the ink: a space is a block of colour) · Insert or Ctrl-G glyph ' \
                   'mode: the letters paint graphics (q w e / a s d / z x c are box corners, g █ t ▀ b ▄ y ▌ h ▐ u ▒) · ' \
@@ -42,11 +44,12 @@ module UI
       command(:canvas, '&Open the canvas', key: 'F3', hint: 'Canvas') { open_canvas }
       command(:save, '&Save to the Exhibition', key: 'Ctrl-S', hint: false) { save_to_exhibition }
       command(:exhibition, 'Show the &Exhibition', key: 'F4', hint: 'Exhibition') { open_exhibition }
+      command(:upload, '&Upload a picture…', hint: false) { upload_to_exhibition }
       menu 'Gallery', :gallery, :separator, :log_off
       menu 'Canvas', :canvas, :save
       command(:wall, 'The &wall…', hint: 'Wall') { wall }
       command(:feedback, 'Write to the &sysops…') { feedback }
-      menu 'Exhibition', :exhibition, :separator, :wall, :feedback
+      menu 'Exhibition', :exhibition, :upload, :separator, :wall, :feedback
       help about: ABOUT, canvas_keys: CANVAS_KEYS
 
       status { "#{canvas.painters} painting" }
@@ -60,7 +63,7 @@ module UI
         line '─── classic 8-bit art and a canvas for your terminal or Commodore 64 ───', bottom: 0
       end
 
-      parts YearsWindow, PacksWindow, FilesWindow, ExhibitionWindow, SaveWindow
+      parts YearsWindow, PacksWindow, FilesWindow, ExhibitionWindow, SaveWindow, UploadWindow
     end
   end
 end

@@ -3,7 +3,8 @@
 # The board itself, whatever terminal a caller has: the ANSI gallery wired to
 # 16colo.rs and the disk cache, the shared canvas and the Exhibition. Both faces
 # (lib/ui/modern, lib/ui/petscii) work on one instance of it, so a C64 and an
-# ANSI terminal paint on the same canvas.
+# ANSI terminal paint on the same canvas. An upload to the Exhibition is
+# noted for the sysops on the network's feedback box (UploadNoteService).
 class PixeliaBBS
   include Rubbs::Common::Board::Domain
 
@@ -36,7 +37,8 @@ class PixeliaBBS
       WorkRepository.new(File.join(data, 'works')),
       canvas:   canvas,
       cooldown: exhibition_cooldown,
-      per_hour: exhibition_per_hour
+      per_hour: exhibition_per_hour,
+      notify:   UploadNoteService.new
     )
   end
 

@@ -7,14 +7,17 @@ class ExhibitionServiceTest < Minitest::Test
 
   Canvas = Struct.new(:snapshot)
 
-  def exhibition(canvas: painted_canvas, cooldown: 300, per_hour: 30)
+  def exhibition(canvas: painted_canvas, cooldown: 300, per_hour: 30, notify: nil)
     ExhibitionService.new(
       WorkRepository.new(File.join(@dir, 'works')),
       canvas:   Canvas.new(canvas),
       cooldown: cooldown,
-      per_hour: per_hour
+      per_hour: per_hour,
+      notify:   notify
     )
   end
+
+  def logo = exhibition.accept(tcv_fixture('ttg-logo'))
 
   def test_saves_a_work_with_clean_title_and_handle
     work = exhibition.save('1.2.3.4', title: "  Sun\e[2J‮set \t  ", handle: "ada​\x07")
@@ -65,5 +68,48 @@ class ExhibitionServiceTest < Minitest::Test
     File.write(File.join(@dir, 'works'), 'a file where the folder should be')
     capture_io { assert_equal :failed, w.save('k', title: 'a', handle: 'b') }
     assert_equal 0, w.wait('k')
+  end
+
+  def test_accepts_hires_pictures_in_either_rom_set
+    assert_kind_of PetsciiModel, logo
+    assert_equal :lower, exhibition.accept(tcv_fixture('charmap')).charset
+    assert_kind_of PetsciiModel, exhibition.accept("\x01\x08".b + tcv_fixture('ttg-logo') + ("\x1A" * 94))
+  end
+
+  def test_refuses_game_graphics
+    assert_equal :game_graphics, exhibition.accept(tcv_fixture('game-tiles')).reason
+    multicolour = tcv_fixture('ttg-logo').tap { |d| d.setbyte(5, 1) }
+    assert_equal :game_graphics, exhibition.accept(multicolour).reason
+  end
+
+  def test_refuses_broken_large_and_blank_files
+    broken = exhibition.accept('hello'.b)
+    assert_equal [:broken, 'not a TTG Canvas 64 picture'], [broken.reason, broken.detail]
+    assert_equal :broken, exhibition.accept(tcv_fixture('ttg-logo') * 3).reason
+
+    blank = tcv_fixture('ttg-logo').tap { |d| 1000.times { |i| d.setbyte(16 + i, 0x20) } }
+    assert_equal :blank, exhibition.accept(blank).reason
+  end
+
+  def test_an_upload_hangs_a_petscii_work_and_notes_it
+    notes = []
+    w = exhibition(notify: ->(work, actor) { notes << [work.id, actor] })
+    work = w.hang('k', title: ' Logo ', handle: 'ada', picture: logo, actor: :ada)
+    assert_kind_of WorkModel, work
+    assert work.petscii?
+    assert_equal 'Logo', work.title
+    assert_equal [[work.id, :ada]], notes
+    assert_equal logo.screen, w.find(work.id).petscii.screen
+  end
+
+  def test_uploads_and_saves_share_the_limits
+    notes = []
+    w = exhibition(notify: ->(work, _) { notes << work })
+    assert_kind_of WorkModel, w.save('k', title: 'a', handle: 'b')
+    assert_equal :too_soon, w.hang('k', title: 'a', handle: 'b', picture: logo)
+    assert_equal :no_title, w.hang('j', title: '', handle: 'b', picture: logo)
+    assert_empty notes
+    assert_kind_of WorkModel, w.hang('j', title: 'a', handle: 'b', picture: logo)
+    assert_equal :too_soon, w.save('j', title: 'a', handle: 'b')
   end
 end

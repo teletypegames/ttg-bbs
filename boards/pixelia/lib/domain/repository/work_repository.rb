@@ -26,14 +26,16 @@ class WorkRepository
 
   def find(id) = @lock.synchronize { refresh && @works[id] }
 
-  # Saves a new work and returns it, or nil when it could not be written.
-  def add(title:, handle:, canvas:, at: Time.now)
+  # Saves a new work, a +canvas+ or a +petscii+ picture, and returns it, or
+  # nil when it could not be written.
+  def add(title:, handle:, canvas: nil, petscii: nil, at: Time.now)
     work = WorkModel.new(
       id:         "#{at.strftime('%Y%m%d-%H%M%S')}-#{SecureRandom.hex(2)}",
       title:      title,
       handle:     handle,
       created_at: at,
-      canvas:     canvas
+      canvas:     canvas,
+      petscii:    petscii
     )
     @lock.synchronize do
       write(work)

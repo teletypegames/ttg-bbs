@@ -58,4 +58,22 @@ class WorkRepositoryTest < Minitest::Test
     refute @repo.remove('../canvas')
     assert_empty @repo.all
   end
+
+  def test_a_petscii_work_is_read_back_by_another_board_and_canvas_works_stay
+    picture = PetsciiModel.from_tcv(TcvModel.parse(tcv_fixture('charmap')))
+    id = @repo.add(title: 'Charmap', handle: 'ada', petscii: picture).id
+    write_work('20261101-010000-aaaa', 'canvas')
+    again = WorkRepository.new(@works)
+    found = again.find(id)
+    assert found.petscii?
+    assert_nil found.canvas
+    shown = found.petscii
+    assert_equal [picture.screen, :lower, 11], [shown.screen, shown.charset, shown.border]
+    assert_canvas_work again.find('20261101-010000-aaaa')
+  end
+
+  def assert_canvas_work(work)
+    refute work.petscii?
+    assert_equal 'A', work.canvas.chars.first
+  end
 end
