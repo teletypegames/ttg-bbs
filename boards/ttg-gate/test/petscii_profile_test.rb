@@ -47,6 +47,14 @@ class PetsciiProfileTest < Minitest::Test
 
   def shown = screens.last.to_s
 
+  def test_a_login_from_the_terminal_that_did_not_go_is_told_once
+    @line = Rubbs::Test::Session.new(keys: [' '], petscii: true)
+    @line.login_notice = 'Wrong name or password.'
+    UI::Petscii::Gate.new(@line, boards: [board], browse: nil, dials: nil).start
+    assert(screens.any? { |s| s.to_s.include?('Wrong name or password.') })
+    assert_nil @line.login_notice
+  end
+
   def test_a_guest_logs_in_on_you
     g = gate([*'Tasi'.chars, :enter, *'secret1'.chars, :enter])
     g.press('y')
