@@ -2,7 +2,7 @@
 
 TTG BBS: every board of the network in one repository, `boards/<name>` each, run by
 rubbs' `Rubbs::MultiRunner` (`bbs.rb`) in one container. README.md has the whole picture.
-The board rules (DSL, faces, names) are the `ruby/rubbs` styleguide of the ttg-styleguide
+The board rules (DSL, faces, names) are the `ruby/rubbs` styleguide of the ttg
 plugin (tools/ttg-marketplace); what follows is this repo's own.
 
 - A board stays self-contained in its folder: `bbs.rb` (`board = Rubbs.board …` and
