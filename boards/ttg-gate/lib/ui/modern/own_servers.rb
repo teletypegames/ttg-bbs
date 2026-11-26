@@ -17,7 +17,8 @@ module UI
       key(:tab, :right, 'g', 'G') { pages.switch }
       key(:left) { pages.switch(-1) }
       key(:escape, 'q', 'Q') { quit }
-      key('p', 'P', 'a', 'A') { pages.profile }
+      key('p', 'P') { pages.trophy }
+      key('a', 'A') { pages.profile }
       key('w', 'W') { pages.open_tab(:wall) }
       key('f', 'F') { pages.open_tab(:feedback) }
       key('t', 'T') { pages.open_tab(:today) }
@@ -106,7 +107,7 @@ module UI
 
       def hints(count)
         "#{DIM}↑↓ choose  RETURN or 1-#{count} dial  TAB Discovery  T today  " \
-          "H hunt  W wall  F feedback  P profile  Q hang up#{RESET}"
+          "H hunt  W wall  F feedback  P trophies  A profile  Q hang up#{RESET}"
       end
     end
   end

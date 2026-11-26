@@ -3,8 +3,8 @@
 module UI
   module Modern
     # The tabs of the modern face, rubbs' Rubbs::Modern::Kit::Tabs in the
-    # gate's look: our own boards, Global Discovery, Today and the caller's
-    # profile (ProfileTab), each keeping its place while another is shown, TAB
+    # gate's look: our own boards, Global Discovery, Today, the Trophy Room
+    # and the caller's profile (ProfileTab), each keeping its place while another is shown, TAB
     # going round them. The walls of every board (TTG::Wall), the feedback box
     # (TTG::Feedback) and The Hunt (TTG::Hunt) are no tabs: W, F and H (or the
     # profile's list) open them, they take the screen and bring the caller
@@ -27,6 +27,7 @@ module UI
             own:       OwnServers.new(-> { bbs.directory.boards(identity: session.identity) }, today: today),
             discovery: Discovery::Home.new(ctx),
             today:     Today.new(today, ctx: ctx),
+            trophy:    TrophyRoom.new(UI.trophies(bbs)),
             profile:   ProfileTab.new
           },
           actions: ACTIONS
@@ -35,6 +36,9 @@ module UI
 
       # The caller's profile, from any tab.
       def profile = open_tab(:profile)
+
+      # The Trophy Room, from any tab.
+      def trophy = open_tab(:trophy)
     end
   end
 end

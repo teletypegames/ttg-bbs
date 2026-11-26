@@ -71,7 +71,7 @@ class PetsciiProfileTest < Minitest::Test
   def test_a_sysop_finds_the_console_and_logs_out
     sysop = Rubbs::Common::Auth::Identity.new(id: 1, name: 'Tasi', roles: %w[member sysop], source: :login)
     g = gate([], identity: sysop)
-    g.press('p')
+    g.press('y')
     assert_includes shown, 'SysOp'
     assert_includes shown, 'member sysop'
     g.press('2')

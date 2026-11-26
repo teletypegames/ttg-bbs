@@ -9,6 +9,7 @@ require_relative 'views/page_view'
 require_relative 'views/sources_view'
 require_relative 'views/text_view'
 require_relative 'views/today_view'
+require_relative 'views/trophy_view'
 require_relative 'views/profile_view'
 require_relative 'gate/places'
 require_relative 'gate/dialing'
@@ -22,7 +23,8 @@ module UI
     # profile on PROFILE. CRSR up from the top of a list goes to the
     # sub-menu and the tabs, left and right switch OWN and GLOBAL as the
     # cursor goes, TODAY shows the day (UI::Petscii::Views::TodayView), YOU
-    # (the profile, UI::Petscii::Views::ProfileView) opens on RETURN, CRSR
+    # (the profile, UI::Petscii::Views::ProfileView) opens on RETURN, TROPHY
+    # shows the Trophy Room (UI::Petscii::Views::TrophyView, P), CRSR
     # down goes back. A yellow
     # sign opens its place from anywhere (a view's own keys first: B on a
     # board's page is its banner). ← or RUN/STOP goes back, Q hangs up.
@@ -67,12 +69,14 @@ module UI
       # [browse] Discovery::BrowseService, nil without a catalog
       # [dials]  Discovery::DialService
       # [today]  answers the caller's Herald::Edition (or +nil+)
-      def initialize(session, boards:, browse:, dials:, today: -> {})
+      # [trophies] answers the Trophies::Room (or +nil+)
+      def initialize(session, boards:, browse:, dials:, today: -> {}, trophies: -> {})
         super(session, chrome: Chrome::KIT, home: :own, input_label: INPUT_LABEL)
         @boards = boards.respond_to?(:call) ? boards : -> { boards }
         @browse = browse
         @dials  = dials
         @today  = today
+        @trophies = trophies
       end
 
       # The first screen; when the login the caller's terminal sent with the
@@ -95,6 +99,7 @@ module UI
       def top_line(canvas)
         return Chrome.today_line(canvas, view.respond_to?(:edition) ? view.edition : nil) if tab == :today
         return Chrome.account_line(canvas, session.identity) if tab == :account
+        return Chrome.trophy_line(canvas, view.respond_to?(:room) ? view.room : nil) if tab == :trophy
 
         Chrome.own_line(canvas, @boards.call.size)
       end

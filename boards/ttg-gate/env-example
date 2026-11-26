@@ -39,3 +39,9 @@ TTG_GATE_BBS_HERALD_DB=data/herald.sqlite3
 TTG_GATE_BBS_HERALD_FETCH=true
 # The notes our boards keep for the Today tab (Siliconia BBS's machine of the week)
 TTG_GATE_BBS_HERALD_NOTES=../*/data/herald.json
+# The Trophy Room (GATE_TROPHY_ROOM.md): its numbers come with the Today tab's sources, every hour, from
+# Grafana's data sources (downloads, Gitea, Authentik, Prometheus) with a viewer token (the one of Monitor
+# BBS; a secret, in .env on the server, never here; empty: only the catalog's numbers) and the catalog.
+TTG_GATE_BBS_GRAFANA_URL=http://grafana:3000
+TTG_GATE_BBS_GRAFANA_TOKEN=
+TTG_GATE_BBS_CATALOG_URL=https://teletypegames.org

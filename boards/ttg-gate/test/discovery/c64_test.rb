@@ -56,12 +56,12 @@ module Discovery
       assert_operator first.bytesize, :<=, 1300
       assert_equal Canvas::LOWERCASE, first.getbyte(0)
       screen = shown
-      assert_equal 'TTG GATE   OWN   GLOBAL   TODAY   YOU', text_at(screen, 0, 1, 37)
+      assert_equal 'TTG  OWN  GLOBAL  TODAY  TROPHY  YOU', text_at(screen, 0, 1, 36)
       assert((0..38).all? { |c| screen.cell(0, c).rvs })
       assert_equal Chrome::BAR, screen.cell(0, 1).color
-      keys = Chrome::PLACES_BAR.map { |place| screen.cell(0, place.col) }
+      keys = Chrome::PLACES_BAR.map { |place| screen.cell(0, place.col + place.hotkey) }
       assert_equal [Chrome::KEY], keys.map(&:color).uniq
-      assert_equal([Chrome::LIT, Chrome::BAR, Chrome::BAR, Chrome::BAR], Chrome::PLACES_BAR.map { |place|
+      assert_equal([Chrome::LIT, Chrome::BAR, Chrome::BAR, Chrome::BAR, Chrome::BAR], Chrome::PLACES_BAR.map { |place|
         screen.cell(0, place.col + 1).color
       })
       assert_equal '10 boards', text_at(screen, 1, 1, 9)
@@ -71,12 +71,14 @@ module Discovery
       assert_equal Canvas::YELLOW, screen.cell(24, 1).color
     end
 
-    def test_global_lights_its_place_and_p_opens_the_profile
+    def test_global_lights_its_place_and_p_opens_the_trophy_room
       g = gate
       g.start
       g.press('g')
       assert_equal([Chrome::BAR, Chrome::LIT], Chrome::PLACES_BAR.first(2).map { |place| shown.cell(0, place.col + 1).color })
-      assert_equal :account, Chrome::HOTKEYS['p']
+      assert_equal :trophy, Chrome::HOTKEYS['p']
+      assert_equal :account, Chrome::HOTKEYS['a']
+      assert_equal :account, Chrome::HOTKEYS['y']
     end
 
     def test_own_servers_lights_a_row_and_a_step_is_a_patch

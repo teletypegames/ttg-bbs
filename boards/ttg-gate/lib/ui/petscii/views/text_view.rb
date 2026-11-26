@@ -16,7 +16,7 @@ module UI
         def self.help
           lines = [
             ['The tabs and the menu', Canvas::WHITE], 'O: Own  D, G: Discovery  T: Today',
-            'Y, P: You (the profile)',
+            'P: Trophy Room  Y, A: You (the profile)',
             'CRSR up at the top of a list: the menu,', 'again: the tabs  CRSR left, right: move',
             'RETURN: open  CRSR down: back', 'A yellow sign opens its place from',
             'anywhere: / Find, B Browse, N New,', 'R Random, S Sources;',

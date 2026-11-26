@@ -76,6 +76,7 @@ module UI
         return take(item) if item
         return pages.open_tab(:own) if key == 'o'
         return pages.open_tab(:today) if key == 't'
+        return pages.trophy if key == 'p'
 
         quit if key == 'q'
       end

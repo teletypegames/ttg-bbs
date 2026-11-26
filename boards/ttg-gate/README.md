@@ -11,7 +11,8 @@ Besides our own boards it is a phone book of the world's other telnet BBSes:
 **Global Discovery**, a searchable catalog that always shows which board
 answered our last call and which did not, and dials any of them (see
 [Global Discovery](#global-discovery)). And it tells what kind of day it is: the
-**Today** tab, the gate's daily page (see [Today](#today)).
+**Today** tab, the gate's daily page (see [Today](#today)). And what we are proud of: the
+**Trophy Room** (see [Trophy Room](#trophy-room)).
 
 It has two faces on one port, like every board of the network: a **modern** one
 for ANSI terminals, after the list of [bbsweb](https://bbsweb.teletypegames.org)
@@ -165,7 +166,7 @@ dials it on `TTG_GATE_BBS_LOCAL_HOST` and shows no address.
 ## Interface
 
 **Modern:** under the logo the tabs, **Own Servers** | **Global Discovery** |
-**Today** | **Profile**; TAB or the right arrow goes to the next, the left arrow back, and
+**Today** | **Trophy Room** | **Profile**; TAB or the right arrow goes to the next, the left arrow back, and
 each keeps its place, and after Profile TAB comes round to Own Servers. The Profile tab is the
 gate's own (`UI::Modern::ProfileTab`), in the gate's look: who the caller is, their badges and hunt,
 and a list (arrows and RETURN, or an item's letter): log in, make an account, change the password,
@@ -173,21 +174,39 @@ log out, and the places every board adds to the profile (Feedback, the Wall, The
 SysOp). Names and passwords are read on the bottom line, the passwords masked. The Wall (`W`),
 Feedback (`F`) and The Hunt (`H`) are no tabs: they take the screen, and the caller comes back to
 the tab they left. On Own Servers the arrows choose a board, RETURN or its
-number dials it, `T` opens Today, `Q` or Esc hangs up. Over the list one line
+number dials it, `T` opens Today, `P` the Trophy Room, `A` the profile, `Q` or Esc hangs up. Over the list one line
 tells the day (the date, the name days, Budapest's weather). The rows show the board's colour bar,
 name, tags and port; the description and the full address of the chosen one are
 under the list. Global Discovery is described [below](#the-gate-ui).
 
 **Commodore 64:** the frame and the tabs ([above](#the-c64-face)); CRSR up
 from the top of the list reaches the tabs (on Global Discovery through its
-sub-menu), where CRSR left and right switch OWN, GLOBAL and TODAY as the cursor goes and
-RETURN opens YOU (the profile; `Y` or `P`); CRSR down goes back to the list. `D`
+sub-menu), where CRSR left and right switch OWN, GLOBAL, TODAY and TROPHY as the cursor goes and
+RETURN opens YOU (the profile; `Y` or `A`); CRSR down goes back to the list. `P` opens the
+Trophy Room from anywhere (TROPHY's P is the lit letter on the bar). The bar is `TTG` and
+two cells between the tabs (rubbs `Chrome` `gap: 2`), so the five fit the 39 cells a C64 prints. `D`
 turns to Global Discovery (Browse: All, All PETSCII, All ASCII and the axes), `O` back to our own boards, the number dials, `Q`
 hangs up.
 
 Either way the board asks its own terminal question first: the gate reports the
 caller's window size to it, so a modern terminal is its default, and a C64,
 which has none, is taken for a C64.
+
+## Trophy Room
+
+One screen of what Teletype Games has done, all time, for anyone, guests too: the five most
+downloaded titles of teletypegames.org with bars (bots left out), the downloads and visitors, the
+released titles of the catalog (of all, with the platforms and categories), the commits of the
+public repositories (no merges, no bots), our BBS boards and accounts, the CI runs and their green
+share, and the team (Authentik's Teletypers group, the candidates apart). Nothing to choose or
+scroll; on a C64 it is drawn for 40 by 25 (`UI::Petscii::Views::TrophyView`) and the 40th column
+stays empty; on a modern terminal two columns (`UI::Modern::TrophyRoom`).
+
+The numbers come with the Today tab's sources, every hour (`Trophies::Source` in the Herald
+cache): from Grafana's data sources (`/api/ds/query` with Monitor BBS's viewer token,
+`TTG_GATE_BBS_GRAFANA_TOKEN`; the queries in `lib/domain/trophies/model/queries.rb`, counted as the
+dashboards count) and the catalog (`/api/software/facets`). A part that fails keeps its last
+numbers; without a token only the catalog's come. A caller never waits for Grafana.
 
 ## Today
 
@@ -240,7 +259,7 @@ and the other boards ask them, with any other service of the network, on the `in
 network (`http://ttg-gate-bbs:8090`, `/auth` for the accounts, every request signed with
 `RUBBS_AUTH_SECRET`; `TTG_GATE_BBS_CENTRAL_PORT`, 0 turns it off), and a
 caller signed in here is signed in on the board the gate dials. The **PROFILE**
-tab (or `P`) is the caller's profile in the gate's look (log in, make an account, change the
+tab (or `A`) is the caller's profile in the gate's look (log in, make an account, change the
 password, log out); on a C64 **YOU** is the gate's own profile too (`UI::Petscii::Views::ProfileView`,
 numbered items, the password read as stars on the hint row). Both faces share `UI::Account`.
 A terminal that keeps its caller's account — TTG Gate 64 with `USER=` and `PASSWORD=` in its
@@ -650,6 +669,7 @@ lib/
   domain/model/board_model.rb          one board of the list
   domain/model/herald_model.rb         a row of the Today tab's cache
   domain/herald.rb, domain/herald/     Today: the calendar, the moon, the sources, the cache, the edition of a caller
+  domain/trophies.rb, domain/trophies/ Trophy Room: Grafana's queries, the source, the room of a caller
   domain/repository/board_repository.rb  config/boards.yml, read once
   domain/service/directory_service.rb  the boards a caller can dial
   domain/ttg_gate_bbs.rb               the composition root (TTGGateBBS)

@@ -40,6 +40,10 @@ module Herald
       end
     end
 
+    # The Store::Entry of the source +key+ (+nil+: never fetched), for a
+    # source whose payload is read outside the Edition (the Trophy Room).
+    def entry(key) = @store.get(key)
+
     # The Edition at +at+ for a caller of +country+ (an ISO code, lower
     # case, or +nil+), with the +network+ (a Network, or +nil+).
     def edition(country: nil, network: nil, at: Time.now)

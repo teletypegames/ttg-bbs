@@ -18,10 +18,11 @@ module UI
     def self.call(session, bbs)
       Gate.new(
         session,
-        boards: -> { bbs.directory.boards(petscii: true, identity: session.identity) },
-        browse: bbs.browse,
-        dials:  bbs.dials,
-        today:  UI.today(session, bbs)
+        boards:   -> { bbs.directory.boards(petscii: true, identity: session.identity) },
+        browse:   bbs.browse,
+        dials:    bbs.dials,
+        today:    UI.today(session, bbs),
+        trophies: UI.trophies(bbs)
       ).run
       goodbye(session)
     end

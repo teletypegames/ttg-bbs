@@ -24,7 +24,8 @@ module UI
       key('w', 'W') { pages.open_tab(:wall) }
       key('f', 'F') { pages.open_tab(:feedback) }
       key('h', 'H') { pages.open_tab(:hunt) }
-      key('p', 'P', 'a', 'A') { pages.profile }
+      key('p', 'P') { pages.trophy }
+      key('a', 'A') { pages.profile }
       key(:escape, 'q', 'Q') { quit }
       key(:enter) { board_of_day }
 
@@ -224,7 +225,7 @@ module UI
       end
 
       def hints
-        "#{DIM}RETURN board of the day  TAB tabs  H hunt  W wall  F feedback  P profile  Q hang up#{RESET}"
+        "#{DIM}RETURN board of the day  TAB tabs  H hunt  W wall  F feedback  P trophies  A profile  Q hang up#{RESET}"
       end
     end
   end

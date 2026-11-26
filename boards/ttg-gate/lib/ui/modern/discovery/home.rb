@@ -20,6 +20,7 @@ module UI
         key(:tab, :right, 'g', 'G') { pages.switch }
         key(:left) { pages.switch(-1) }
         key('t', 'T') { pages.open_tab(:today) }
+        key('p', 'P') { pages.trophy }
         key(:escape, 'q', 'Q') { quit }
 
         def initialize(ctx)

@@ -42,13 +42,13 @@ class SysopTest < Minitest::Test
   def shown = Discovery::FaceFixtures::Terminal.new(100, 30).feed(@line.output).to_s
 
   def test_a_member_has_no_console
-    capture_io { assert_nil gate(%w[p s b q], roles: ['member']).run }
+    capture_io { assert_nil gate(%w[a s b q], roles: ['member']).run }
     refute_includes @line.output, 'SysOp'
     refute_includes @line.output, 'SYSOP ›'
   end
 
   def test_a_sysop_bans_an_account
-    keys = ['p', 's', :tab, '/', *'spam'.chars, :enter, 'b', *'ads'.chars, :enter, 'y', 'q', 'b', 'q']
+    keys = ['a', 's', :tab, '/', *'spam'.chars, :enter, 'b', *'ads'.chars, :enter, 'y', 'q', 'b', 'q']
     capture_io { assert_nil gate(keys).run }
     entry = @accounts.entry('spammer')
     assert_equal [true, 'Tasi', 'ads'], [entry.banned?, entry.banned_by, entry.ban_reason]
@@ -57,7 +57,7 @@ class SysopTest < Minitest::Test
   end
 
   def test_a_sysop_cannot_ban_themselves_or_drop_their_sysop_role
-    g = gate(['p', 's', :tab, :down, 'b', 'r', *'sysop'.chars, :enter])
+    g = gate(['a', 's', :tab, :down, 'b', 'r', *'sysop'.chars, :enter])
     capture_io { assert_raises(Rubbs::Common::Line::Hangup) { g.run } }
     assert_includes @line.output, 'You cannot ban yourself.'
     assert_includes shown, 'Your own sysop role stays.'
@@ -69,7 +69,7 @@ class SysopTest < Minitest::Test
     own   = Call.new('test', 'Tasi', '10.0.0.1', 'telnet', :modern, Time.now - 60, nil)
     other = Call.new('x', nil, '203.0.113.7', 'bbs-web', :petscii, Time.now - 600, '› Feedia BBS')
     Rubbs.stub(:calls, [own, other]) do
-      capture_io { assert_nil gate(['p', 's', 'h', :down, 'h', 'y', 'q', 'b', 'q']).run }
+      capture_io { assert_nil gate(['a', 's', 'h', :down, 'h', 'y', 'q', 'b', 'q']).run }
     end
     assert other.hung
     refute own.hung
@@ -79,7 +79,7 @@ class SysopTest < Minitest::Test
   end
 
   def test_the_tabs_go_round_to_the_profile_and_on
-    capture_io { assert_nil gate([:tab, :tab, :tab, :tab, 'q']).run }
+    capture_io { assert_nil gate([:tab, :tab, :tab, :tab, :tab, 'q']).run }
     assert_includes @line.output, 'Change password'
     assert_includes @line.output, 'SysOp'
     assert_includes shown, 'RETURN or 1-15 dial'
@@ -87,7 +87,7 @@ class SysopTest < Minitest::Test
 
   def test_a_guest_logs_in_on_the_profile_tab
     identity = Rubbs::Common::Auth::Identity.guest
-    keys = ['p', 'l', *'Tasi'.chars, :enter, *'secret1'.chars, :enter, 'q']
+    keys = ['a', 'l', *'Tasi'.chars, :enter, *'secret1'.chars, :enter, 'q']
     @line = Rubbs::Test::Session.new(keys: keys, identity: identity, cols: 100, rows: 30)
     capture_io { UI::Modern::Gate.new(@line, Bbs.new(Directory.new(boards), nil, nil, @accounts)).run }
     assert_equal 'Tasi', @line.identity.name
@@ -98,7 +98,7 @@ class SysopTest < Minitest::Test
   end
 
   def test_a_guest_makes_an_account_and_logs_out
-    keys = ['p', 'n', *'Ada'.chars, :enter, *'secret9'.chars, :enter, *'secret9'.chars, :enter, 'l', 'q']
+    keys = ['a', 'n', *'Ada'.chars, :enter, *'secret9'.chars, :enter, *'secret9'.chars, :enter, 'l', 'q']
     @line = Rubbs::Test::Session.new(keys: keys, identity: Rubbs::Common::Auth::Identity.guest, cols: 100, rows: 30)
     capture_io { UI::Modern::Gate.new(@line, Bbs.new(Directory.new(boards), nil, nil, @accounts)).run }
     assert_includes @line.output, 'Your account is ready.'
@@ -109,7 +109,7 @@ class SysopTest < Minitest::Test
 
   def test_the_log
     capture_io { Rubbs.log('auth', 'login', name: 'Tasi') }
-    g = gate(['p', 's', :left])
+    g = gate(['a', 's', :left])
     capture_io { assert_raises(Rubbs::Common::Line::Hangup) { g.run } }
     assert_includes shown, 'SYSOP › LOG'
     assert_includes shown, 'auth: login name=Tasi'

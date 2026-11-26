@@ -7,6 +7,7 @@ require_relative 'domain/service/directory_service'
 require_relative 'domain/service/accounts_metrics'
 require_relative 'domain/discovery'
 require_relative 'domain/herald'
+require_relative 'domain/trophies'
 require_relative 'domain/ttg_gate_bbs'
 
 TTG::Hunt.serve

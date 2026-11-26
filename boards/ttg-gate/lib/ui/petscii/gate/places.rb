@@ -13,6 +13,7 @@ module UI
           when :own then own
           when :help then Views::TextView.help
           when :today then today
+          when :trophy then trophy
           when :account then Views::ProfileView.new(session)
           else
             return resting unless @browse
@@ -40,6 +41,16 @@ module UI
             nil
           end
           Views::TodayView.new(edition, on_open: ->(listing) { push(page_view(listing.id, :today)) if @browse })
+        end
+
+        def trophy
+          room = begin
+            @trophies.call
+          rescue StandardError => e
+            Rubbs.log('trophies', e)
+            nil
+          end
+          Views::TrophyView.new(room)
         end
 
         def own = @own ||= Views::OwnView.new(@boards, on_dial: method(:dial_own))

@@ -5,20 +5,22 @@ require_relative 'layout'
 module UI
   module Petscii
     # The frame of the gate's C64 screens, rubbs' Rubbs::Petscii::Kit::Chrome
-    # set up for the gate: the menu bar (TTG GATE, then OWN, GLOBAL, TODAY
-    # and YOU, the profile), Global Discovery's sub-menu under it, the hotkeys, and the
+    # set up for the gate: the menu bar (TTG, then OWN, GLOBAL, TODAY,
+    # TROPHY with its P lit, and YOU, the profile; two cells between them,
+    # so the five fit the 39 cells a C64 prints), Global Discovery's sub-menu under it, the hotkeys, and the
     # line under the tabs on Own Servers.
     module Chrome
       # The gate's chrome.
       KIT = Rubbs::Petscii::Kit::Chrome.new(
-        title:    'TTG GATE',
-        places:   [[:own, 'OWN'], [:discover, 'GLOBAL'], [:today, 'TODAY'], [:account, 'YOU']],
+        title:    'TTG',
+        places:   [[:own, 'OWN'], [:discover, 'GLOBAL'], [:today, 'TODAY'], [:trophy, 'TROPHY', 3], [:account, 'YOU']],
+        gap:      2,
         menu:     [[:search, '/Find', 0], [:browse, 'Browse', 0], [:new, 'New', 0], [:random, 'Random', 0],
                    [:sources, 'Sources', 0]],
         menu_tab: :discover,
         under:    { all: :browse, software: :browse, country: :browse, network: :browse },
-        # The places of the bar (O, G, T, Y; D for Discovery, A and P for
-        # the account as before), the axes of Browse (soft_w_are, _c_ountry,
+        # The places of the bar (O, G, T, P for the Trophy Room, Y; D for
+        # Discovery, A for the account as before), the axes of Browse (soft_w_are, _c_ountry,
         # networ_k_), U for the Sources as before, Help and Quit; the
         # sub-menu's signs are added.
         hotkeys:  {
@@ -30,10 +32,10 @@ module UI
           'k' => :network,
           'u' => :sources,
           't' => :today,
+          'p' => :trophy,
           'y' => :account,
           'h' => :help,
           'a' => :account,
-          'p' => :account,
           'q' => :quit
         }
       )
@@ -60,6 +62,14 @@ module UI
         return KIT.line(canvas, [['One account for every board', Canvas::GREY]]) unless identity.signed_in?
 
         KIT.line(canvas, [['Logged in as ', Canvas::GREY], [Layout.plain(identity.name.to_s)[0, 24], Canvas::WHITE]])
+      end
+
+      # The line under the tabs on the Trophy Room: what it is, and when its
+      # numbers came.
+      def trophy_line(canvas, room)
+        return KIT.line(canvas, [['Our proudest numbers', Canvas::GREY]]) unless room&.ready?
+
+        KIT.line(canvas, [['Our proudest numbers, ', Canvas::GREY], ['all time', Canvas::YELLOW]])
       end
 
       # The line under the tabs on Today: the date and the name days.

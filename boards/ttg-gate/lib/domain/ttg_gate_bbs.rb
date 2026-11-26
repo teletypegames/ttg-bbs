@@ -5,7 +5,8 @@
 # accounts (Rubbs::Common::Auth) live here and the other boards ask them on
 # +central_port+. When the catalog cannot be opened, the gate still dials its
 # own boards and says so on the Discovery side. The Today tab (Herald) reads
-# a cache the background fills; #today makes a caller's page of it.
+# a cache the background fills; #today makes a caller's page of it, and
+# #trophies the Trophy Room of the same cache.
 class TTGGateBBS
   include Rubbs::Common::Board::Domain
 
@@ -19,6 +20,9 @@ class TTGGateBBS
   path     :herald_db,    'data/herald.sqlite3'
   path     :herald_notes, '../*/data/herald.json'
   setting  :herald_fetch, true
+  setting  :grafana_url,  'http://grafana:3000'
+  setting  :grafana_token, ''
+  setting  :catalog_url, 'https://teletypegames.org'
   database :accounts_db, Rubbs::Common::Auth::MIGRATIONS, name: :auth
   database :herald_db,   HERALD_MIGRATIONS, name: :herald
 
@@ -33,7 +37,15 @@ class TTGGateBBS
   end
   service(:browse)    { discovery&.browse }
   service(:dials)     { discovery&.dials }
-  service(:herald)    { Herald::Service.new(store: Herald::Store.new) }
+  service(:herald) do
+    store = Herald::Store.new
+    trophies = Trophies::Source.new(
+      grafana: Trophies::Grafana.new(url: grafana_url, token: grafana_token),
+      catalog: catalog_url,
+      store:   store
+    )
+    Herald::Service.new(store: store, sources: [*Herald::Sources::ALL.map(&:new), trophies])
+  end
 
   background('herald', every: 600, if: -> { herald_fetch }) { herald.refresh }
 
@@ -43,6 +55,19 @@ class TTGGateBBS
   # The lock of the network part's count.
   NETWORK_LOCK = Mutex.new
 
+  # Seconds the network's own numbers of the Trophy Room are kept.
+  TROPHIES_TTL = 300
+  # The lock of those numbers.
+  TROPHIES_LOCK = Mutex.new
+
+  # The Trophy Room (a Trophies::Room): the numbers the background fetched,
+  # and our boards and accounts.
+  def trophies(at: Time.now)
+    entry = herald.entry(Trophies::Source::KEY)
+    boards, accounts = own_numbers(at)
+    Trophies::Room.of(entry&.payload, boards: boards, accounts: accounts, updated_at: entry&.fetched_at)
+  end
+
   # The Today tab's page (a Herald::Edition) for the caller from +ip+: the
   # weather of their country's capital beside Budapest's.
   def today(ip: nil, at: Time.now)
@@ -50,6 +75,16 @@ class TTGGateBBS
   end
 
   private
+
+  def own_numbers(at)
+    TROPHIES_LOCK.synchronize do
+      if @own_numbers.nil? || at.to_i - @own_numbers_at >= TROPHIES_TTL
+        @own_numbers_at = at.to_i
+        @own_numbers    = [directory.boards.size, accounts.statistics[:accounts]]
+      end
+      @own_numbers
+    end
+  end
 
   def network(at)
     NETWORK_LOCK.synchronize do
