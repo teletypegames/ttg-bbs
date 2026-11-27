@@ -166,6 +166,7 @@ lib/domain/
   model/book_model.rb       a book of the catalog (books): search, rebuild
   model/bookshelf_model.rb  a Project Gutenberg bookshelf (bookshelves)
   model/bookshelf_book_model.rb a book on a bookshelf (bookshelf_books)
+  model/catalog_meta_model.rb the catalog's own facts: imported_at (meta)
   model/read_model.rb       a read (reads of data/scriptorium.sqlite3) and the counts
   model/selection_model.rb  a bookshelf, or the Classics selection
   model/chapter_model.rb    a chapter: its title and byte range in the cached text

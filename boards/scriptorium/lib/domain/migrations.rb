@@ -10,7 +10,7 @@ MIGRATIONS = [<<~SQL].freeze
 SQL
 
 # The tables of the Project Gutenberg catalog (data/catalog.sqlite3):
-# BookModel, BookshelfModel, BookshelfBookModel, and the full-text index of the
+# BookModel, BookshelfModel, BookshelfBookModel, CatalogMetaModel, and the full-text index of the
 # titles and authors (FTS5; a search column for LIKE where the SQLite has no
 # FTS5). The catalog is not migrated but built whole (CatalogBuilder,
 # BookModel.rebuild): #create makes the tables anew, #index indexes the
