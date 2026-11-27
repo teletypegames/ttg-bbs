@@ -165,7 +165,7 @@ lib/domain/
   migrations.rb             the schemas of the two SQLite files (Rubbs::Common::Storage::Database), the catalog's
   model/book_model.rb       a book of the catalog (books): search, rebuild
   model/bookshelf_model.rb  a Project Gutenberg bookshelf (bookshelves)
-  model/selection_book_model.rb a book on a bookshelf (selection_books)
+  model/bookshelf_book_model.rb a book on a bookshelf (bookshelf_books)
   model/read_model.rb       a read (reads of data/scriptorium.sqlite3) and the counts
   model/selection_model.rb  a bookshelf, or the Classics selection
   model/chapter_model.rb    a chapter: its title and byte range in the cached text
