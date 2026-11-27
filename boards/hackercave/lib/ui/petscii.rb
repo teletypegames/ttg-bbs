@@ -4,7 +4,7 @@ require_relative 'logo'
 
 module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor menu,
-  # the shelves and their RFCs as numbered lists, an RFC's record on a page
+  # the selections and their RFCs as numbered lists, an RFC's record on a page
   # with its links and errata (Records), the reader with the RFC reflowed to
   # 38 columns (Reader), the Jargon File (JargonRoom), and the network's
   # wall and feedback (ttg-common).
@@ -23,7 +23,7 @@ module UI
       "looks in every line of every rfc. reader keys: return more, b back, t contents, f rfcs named, q record.#{LG}"
     ].freeze
     NOT_READY = 'The index is being prepared: it is downloaded from the RFC Editor and indexed. Try again in a ' \
-                'minute. The classics, telnet and april 1st shelves are open meanwhile.'
+                'minute. The classics, telnet and april 1st selections are open meanwhile.'
 
     title('HACKERCAVE BBS') { library.ready? ? "#{library.count} rfcs" : '' }
 
@@ -35,10 +35,10 @@ module UI
     end
 
     main_menu(above: -> { " #{GR}#{index_line}#{LG}" }) do
-      item('1', 'classics', 'the rfcs the internet is built on') { shelf(library.own_shelves[0]) }
-      item('2', 'telnet', 'the protocol of this board') { shelf(library.own_shelves[1]) }
-      item('3', 'april 1st', 'the rfcs of april fools\' day') { shelf(library.own_shelves[2]) }
-      item('4', 'all shelves', 'series, status, decades, iens') { shelves }
+      item('1', 'classics', 'the rfcs the internet is built on') { selection(library.own_selections[0]) }
+      item('2', 'telnet', 'the protocol of this board') { selection(library.own_selections[1]) }
+      item('3', 'april 1st', 'the rfcs of april fools\' day') { selection(library.own_selections[2]) }
+      item('4', 'all selections', 'series, status, decades, iens') { selections }
       item('5', 'search', 'a number, std 7, or words') { search }
       item('6', 'search the text', 'words in every line of every rfc') { search_text }
       item('j', 'the jargon file', 'the lexicon of hacker slang') { jargon_room }
@@ -53,22 +53,22 @@ module UI
 
     def index_line = library.ready? ? "#{library.count} rfcs in the index" : 'the index is being prepared'
 
-    def shelves
+    def selections
       return alert(NOT_READY, color: YE) unless library.ready?
 
-      list = library.shelves
+      list = library.selections
       each_pick(
-        'SHELVES',
+        'SELECTIONS',
         list,
-        right: "#{list.size} shelves",
+        right: "#{list.size} selections",
         label: ->(s) { "#{s.name.downcase} #{GR}#{s.count}#{LG}" }
-      ) { |s| shelf(s) }
+      ) { |s| selection(s) }
     end
 
-    def shelf(shelf)
-      return alert(NOT_READY, color: YE) unless shelf
+    def selection(selection)
+      return alert(NOT_READY, color: YE) unless selection
 
-      entries(shelf.name.upcase[0, 26], library.entries_on(shelf))
+      entries(selection.name.upcase[0, 26], library.entries_on(selection))
     end
 
     def search

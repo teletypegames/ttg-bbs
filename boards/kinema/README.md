@@ -43,7 +43,7 @@ only. Everything comes from open sources.
 
   The answers are kept for six hours in a `Rubbs::Common::Storage::Cache`; the
   Action API is asked at most five times a second, all callers together.
-- **The shelf** is a catalog of the best known films, kept on the board:
+- **The selection** is a catalog of the best known films, kept on the board:
   every film with an article on at least 30 wikis (about 4,100), with its
   English and Hungarian title, the year and day it first came out, its
   directors and genres. It gives the film of the day (one of the 600 best
@@ -73,8 +73,8 @@ only. Everything comes from open sources.
 | `F2` | Search films (English or Hungarian title) |
 | `F3` | Search people |
 | `F4` | Film of the day |
-| `F5` | On this day: the films of the shelf first released on today's date |
-| `F7` | A random film of the shelf |
+| `F5` | On this day: the films of the selection first released on today's date |
+| `F7` | A random film of the selection |
 | `F10` | Menu: Films (decades, genres, top rated, recent reviews) and Mine (watchlist, seen, my ratings, the wall, feedback) |
 | `Alt-W`, `Alt-P`, `Alt-T`, `Alt-L`, `Alt-V` | On a film: Wiki, People, Rate…, Lists…, Reviews |
 | `Alt-M` | In an article: the other language (Magyar/English) |
@@ -114,8 +114,8 @@ with its default.
 
 | Variable | Default | |
 |---|---|---|
-| `KINEMA_BBS_CATALOG_SEED` | `config/catalog.json.gz` | the shelf shipped with the board |
-| `KINEMA_BBS_CATALOG` | `data/catalog.json.gz` | the shelf a refresh writes |
+| `KINEMA_BBS_CATALOG_SEED` | `config/catalog.json.gz` | the selection shipped with the board |
+| `KINEMA_BBS_CATALOG` | `data/catalog.json.gz` | the selection a refresh writes |
 | `KINEMA_BBS_CATALOG_TTL` | `604800` | seconds before Wikidata is read again (0: never) |
 | `KINEMA_BBS_RATINGS_DB` | `data/ratings.sqlite3` | the callers' ratings and lists |
 | `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | the network's Central (TTG Gate BBS) |
@@ -123,7 +123,7 @@ with its default.
 
 ## Tests
 
-In `boards/kinema`: `bundle exec rake test`. Minitest, no network: the shelf
+In `boards/kinema`: `bundle exec rake test`. Minitest, no network: the selection
 (film of the day, release days, decades, genres, the accent-blind title
 search), the Wikidata import (the batches, the earliest release to the day,
 the bare Hungarian titles), a film's page from a recorded `wbgetentities`
@@ -133,7 +133,7 @@ on a fake line.
 ## Logs
 
 Every line starts with `kinema-bbs:` (`Rubbs.log`): `wikidata: …`,
-`wikipedia: …`, `ratings: …`, the refresh of the shelf. In the container they
+`wikipedia: …`, `ratings: …`, the refresh of the selection. In the container they
 are in `docker logs ttg-bbs`, with `"board":"kinema-bbs"`.
 
 ## Admin
@@ -142,7 +142,7 @@ are in `docker logs ttg-bbs`, with `"board":"kinema-bbs"`.
 docker exec -w /app/boards/kinema ttg-bbs bin/reviews list        # the pending reviews
 docker exec -w /app/boards/kinema ttg-bbs bin/reviews approve ID  # show it
 docker exec -w /app/boards/kinema ttg-bbs bin/reviews reject ID   # never show it (the stars count)
-bin/refresh-catalog [path]                                        # a new seed shelf (in a dev checkout)
+bin/refresh-catalog [path]                                        # a new seed selection (in a dev checkout)
 ```
 
 ## Project structure
@@ -150,23 +150,23 @@ bin/refresh-catalog [path]                                        # a new seed s
 ```
 bbs.rb                         entry point: Rubbs.board
 badges.rb                      Cinephile, Critic, Film buff
-bin/refresh-catalog            writes the seed shelf from Wikidata
+bin/refresh-catalog            writes the seed selection from Wikidata
 bin/reviews                    the admins' look at the reviews
-config/catalog.json.gz         the seed shelf (Wikidata, CC0)
+config/catalog.json.gz         the seed selection (Wikidata, CC0)
 lib/domain/
   migrations.rb                the ratings and the lists (SQLite)
-  model/catalog_film_model.rb  a film of the shelf
-  model/catalog_model.rb       the films of a shelf file
+  model/catalog_film_model.rb  a film of the selection
+  model/catalog_model.rb       the films of a selection file
   model/hit_model.rb           a search hit, film or person
   model/film_model.rb          a film's page (and PersonRef)
   model/person_model.rb        a person's page (and CreditModel)
   model/article_model.rb       a Wikipedia article in sections (and SectionModel)
   model/rating_model.rb        an account's rating and review
   model/mark_model.rb          a film on an account's watchlist or seen list
-  repository/catalog_repository.rb    the shelf's SPARQL queries
+  repository/catalog_repository.rb    the selection's SPARQL queries
   repository/wikidata_repository.rb   the live search, film and person pages
   repository/wikipedia_repository.rb  the articles
-  service/catalog_service.rb   the shelf: day, release days, decades, genres, refresh
+  service/catalog_service.rb   the selection: day, release days, decades, genres, refresh
   service/film_service.rb      search, pages and articles, "did not answer" as nil
   service/rating_service.rb    ratings, reviews, lists, the limits
   kinema_bbs.rb                the composition root (a Rubbs::Common::Board::Domain)

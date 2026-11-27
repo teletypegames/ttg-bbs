@@ -76,7 +76,7 @@ module UI
 
     def on_this_day
       list = Rows.films(catalog.on_this_day(Date.today))
-      rows("ON #{Date.today.strftime('%B %-d').upcase}", list, empty: 'no film of the shelf came out on this day.')
+      rows("ON #{Date.today.strftime('%B %-d').upcase}", list, empty: 'none of the selection came out today.')
     end
 
     def groups(heading, list, kind)

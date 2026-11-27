@@ -2,7 +2,7 @@
 
 module UI
   module Modern
-    # What the caller does on the modern face: the searches, the shelves, a machine's page, its
+    # What the caller does on the modern face: the searches, the selections, a machine's page, its
     # stories, family, memories and marks.
     module Helpers
       SHOWN = 40

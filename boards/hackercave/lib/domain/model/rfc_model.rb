@@ -11,8 +11,8 @@ require 'date'
 # table under a negative number: IEN 137 is -137 (#ien?).
 #
 # The class methods are the index's queries: an RFC, the search, the
-# shelves (the statuses, the decades, the newest, the RFCs of a month and
-# the IENs; the IENs are on their own shelf only). Until the first import
+# selections (the statuses, the decades, the newest, the RFCs of a month and
+# the IENs; the IENs are on their own selection only). Until the first import
 # the table is empty and they find nothing.
 class RfcModel < Rubbs::Common::Storage::Model
   table :rfcs, database: :index
@@ -29,7 +29,7 @@ class RfcModel < Rubbs::Common::Storage::Model
 
   def pages = self[:pages].to_i
 
-  # An RFC known only by its number and title (config/shelves.yml), while
+  # An RFC known only by its number and title (config/selections.yml), while
   # the index is not there yet.
   def self.stub(number, title = '')
     load(
@@ -65,7 +65,7 @@ class RfcModel < Rubbs::Common::Storage::Model
   # The number of RFCs issued (IENs not counted), counted once an index.
   def self.issued_count
     counts.fetch(db) do
-      n = guard(0) { shelf.count }
+      n = guard(0) { selection.count }
       n.positive? ? (counts[db] = n) : n
     end
   end
@@ -124,7 +124,7 @@ class RfcModel < Rubbs::Common::Storage::Model
   def self.insert_rows(rows) = dataset.insert_conflict(:replace).import(ROW, rows)
 
   # The issued RFCs, the IENs not.
-  def self.shelf = select(*COLUMNS).where(issued: 1, number: 1..)
+  def self.selection = select(*COLUMNS).where(issued: 1, number: 1..)
 
   # The value of the block, or +fallback+ when the database fails (logged).
   def self.guard(fallback)
@@ -153,24 +153,26 @@ class RfcModel < Rubbs::Common::Storage::Model
   private_class_method :match, :like
 
   # How many RFCs there are of each status, the most first: [[status, n]].
-  def self.statuses = guard([]) { shelf.unordered.group_and_count(:status).reverse(:count).map { |r| [r[:status], r[:count]] } }
+  def self.statuses
+    guard([]) { selection.unordered.group_and_count(:status).reverse(:count).map { |r| [r[:status], r[:count]] } }
+  end
 
   # The RFCs of +status+, the newest first.
-  def self.with_status(status, limit:) = guard([]) { shelf.where(status: status).reverse(:number).limit(limit).all }
+  def self.with_status(status, limit:) = guard([]) { selection.where(status: status).reverse(:number).limit(limit).all }
 
   # How many RFCs each decade has: [[1960, 1], [1970, 700], …].
   def self.decades
     decade = Sequel.lit('(year / 10) * 10')
     guard([]) do
-      shelf.unordered.group_and_count(decade.as(:decade)).order(:decade).map { |r| [r[:decade], r[:count]] }
+      selection.unordered.group_and_count(decade.as(:decade)).order(:decade).map { |r| [r[:decade], r[:count]] }
     end
   end
 
   # The RFCs of the ten years from +decade+, by number.
-  def self.of_decade(decade, limit:) = guard([]) { shelf.where(year: decade..(decade + 9)).order(:number).limit(limit).all }
+  def self.of_decade(decade, limit:) = guard([]) { selection.where(year: decade..(decade + 9)).order(:number).limit(limit).all }
 
   # The +n+ RFCs of the highest numbers.
-  def self.newest(n) = guard([]) { shelf.reverse(:number).limit(n).all }
+  def self.newest(n) = guard([]) { selection.reverse(:number).limit(n).all }
 
   # The RFCs published in +month+ (1-12) of any year, the oldest first.
   def self.of_month(month, limit:) = guard([]) { in_month(month).order(:date, :number).limit(limit).all }
@@ -181,7 +183,7 @@ class RfcModel < Rubbs::Common::Storage::Model
   # The IENs, by number.
   def self.iens = guard([]) { select(*COLUMNS).where(number: ..-1).reverse(:number).all }
 
-  def self.in_month(month) = shelf.where(Sequel.function(:substr, :date, 6, 2) => format('%02d', month))
+  def self.in_month(month) = selection.where(Sequel.function(:substr, :date, 6, 2) => format('%02d', month))
 
   private_class_method :in_month
 

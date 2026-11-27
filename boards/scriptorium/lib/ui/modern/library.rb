@@ -7,21 +7,25 @@ module UI
     # feedback and wall (ttg-common).
     module Library
       PREPARING = 'The catalog is being prepared: it is downloaded from Project Gutenberg ' \
-                  'and indexed. Try again in a minute. The Classics shelf is open meanwhile.'
+                  'and indexed. Try again in a minute. The Classics selection is open meanwhile.'
 
       def thousands(number) = number.to_s.reverse.scan(/\d{1,3}/).join(',').reverse
 
-      def classics = open_books(library.classics_shelf)
+      def classics = open_books(library.classics_selection)
 
-      def shelf_list
+      def selection_list
         return preparing unless library.ready?
 
-        show(:shelves, shelves: library.shelves)
+        show(:selections, selections: library.selections)
       end
 
-      def open_books(shelf)
-        books = library.books_on(shelf)
-        show(:books, books: books, heading: shelf.classics? ? 'Classics' : "#{shelf.label} (#{books.size} of #{shelf.count})")
+      def open_books(selection)
+        books = library.books_on(selection)
+        show(
+          :books,
+          books:   books,
+          heading: selection.classics? ? 'Classics' : "#{selection.label} (#{books.size} of #{selection.count})"
+        )
       end
 
       def most_read

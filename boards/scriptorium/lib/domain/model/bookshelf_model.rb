@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-# A Project Gutenberg bookshelf of the catalog (a row of the shelves table
+# A Project Gutenberg bookshelf of the catalog (a row of the bookshelves table
 # of data/catalog.sqlite3): its name and how many books stand on it.
 class BookshelfModel < Rubbs::Common::Storage::Model
-  table :shelves, database: :catalog
+  table :bookshelves, database: :catalog
 
-  # The bookshelves as ShelfModel, the older named ones first, then the
+  # The bookshelves as SelectionModel, the older named ones first, then the
   # categories.
-  def self.all_shelves
-    shelves = BookModel.guard([]) { order(Sequel.like(:name, 'Category: %'), :name).all }
-    shelves.map { |s| ShelfModel.new(id: s.id, kind: :bookshelf, name: s.name, count: s.books) }
+  def self.all_selections
+    rows = BookModel.guard([]) { order(Sequel.like(:name, 'Category: %'), :name).all }
+    rows.map { |s| SelectionModel.new(id: s.id, kind: :bookshelf, name: s.name, count: s.books) }
   end
 
   # Keeps that book +rows+ ([name, book_id]) stand on the bookshelves of
@@ -17,12 +17,12 @@ class BookshelfModel < Rubbs::Common::Storage::Model
   def self.add_members(rows) = db[:memberships].import(%i[name book_id], rows)
 
   # Makes the bookshelves of the build's MEMBERSHIPS, with their books
-  # (ShelfBookModel), and drops it.
+  # (SelectionBookModel), and drops it.
   def self.gather
     members = db[:memberships]
     dataset.insert(%i[name books], members.group_and_count(:name))
-    on_shelves = members.join(:shelves, name: :name).select(Sequel[:shelves][:id], Sequel[:memberships][:book_id])
-    ShelfBookModel.dataset.insert(%i[shelf_id book_id], on_shelves)
+    on_bookshelves = members.join(:bookshelves, name: :name).select(Sequel[:bookshelves][:id], Sequel[:memberships][:book_id])
+    SelectionBookModel.dataset.insert(%i[selection_id book_id], on_bookshelves)
     db.drop_table(:memberships)
   end
 end

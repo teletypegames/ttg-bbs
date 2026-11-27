@@ -27,7 +27,7 @@ class CatalogServiceTest < Minitest::Test
     assert_equal 'Commodore 64', sample_catalog(@dir).search('64').first.name
   end
 
-  def test_shelves
+  def test_selections
     c = sample_catalog(@dir)
     assert_equal [['console', 1], ['home', 4]], c.kinds
     assert_equal [[1980, 2]], c.decades

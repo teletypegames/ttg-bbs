@@ -48,7 +48,7 @@ module UI
            :log_off
       menu 'Mine', :watch, :seen, :rated, :separator, :wall, :feedback
       help about: Wording::ABOUT, sources: Wording::SOURCES, keys: ['Enter        open the film or person']
-      status { "#{catalog.count} films on the shelf" }
+      status { "#{catalog.count} films in the selection" }
 
       desktop do
         art  Rubbs::Common::Text::BlockFont.half_blocks('KINEMA'), middle: -7

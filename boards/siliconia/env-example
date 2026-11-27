@@ -11,7 +11,7 @@ SILICONIA_BBS_CATALOG_SEED=config/catalog.json.gz
 SILICONIA_BBS_CATALOG=data/catalog.json.gz
 SILICONIA_BBS_CATALOG_TTL=604800
 
-# The Legends shelf, kept by hand
+# The Legends selection, kept by hand
 SILICONIA_BBS_LEGENDS=config/legends.yml
 
 # The Wikipedia leads kept in memory

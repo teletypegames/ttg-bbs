@@ -3,7 +3,7 @@
 module UI
   module Modern
     # A book's record on the right of a list of books: the title, the
-    # authors, the facts, the subjects and the shelves, and the credit.
+    # authors, the facts, the subjects and the bookshelves, and the credit.
     module BookCard
       def book_lines(book)
         [*book_heading(book), '', *book_topics(book), card_credit(book), '', dim('Enter opens the book.')]
@@ -28,7 +28,7 @@ module UI
       def book_topics(book)
         lines = []
         lines << "#{paint(:label, 'Subjects:')} #{book.subject_list.first(6).join('; ')}" unless book.subjects.empty?
-        lines << "#{paint(:label, 'Bookshelves:')} #{book.shelf_names.first(6).join('; ')}" unless book.bookshelves.empty?
+        lines << "#{paint(:label, 'Bookshelves:')} #{book.bookshelf_names.first(6).join('; ')}" unless book.bookshelves.empty?
         lines.empty? ? lines : [*lines, '']
       end
 

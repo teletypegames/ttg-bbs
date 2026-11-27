@@ -10,28 +10,28 @@ MIGRATIONS = [<<~SQL].freeze
 SQL
 
 # The tables of the Project Gutenberg catalog (data/catalog.sqlite3):
-# BookModel, BookshelfModel, ShelfBookModel, and the full-text index of the
+# BookModel, BookshelfModel, SelectionBookModel, and the full-text index of the
 # titles and authors (FTS5; a search column for LIKE where the SQLite has no
 # FTS5). The catalog is not migrated but built whole (CatalogBuilder,
 # BookModel.rebuild): #create makes the tables anew, #index indexes the
-# shelves once they are filled. A build gathers the bookshelves of the books
+# bookshelves once they are filled. A build gathers the bookshelves of the books
 # in a temporary table of its connection, MEMBERSHIPS, gone when it is done.
 module CatalogSchema
   TABLES = [
     'CREATE TABLE books (id INTEGER PRIMARY KEY, title TEXT, authors TEXT, language TEXT, issued TEXT, ' \
     'subjects TEXT, bookshelves TEXT, search TEXT)',
-    'CREATE TABLE shelves (id INTEGER PRIMARY KEY, name TEXT UNIQUE, books INTEGER)',
-    'CREATE TABLE shelf_books (shelf_id INTEGER, book_id INTEGER)'
+    'CREATE TABLE bookshelves (id INTEGER PRIMARY KEY, name TEXT UNIQUE, books INTEGER)',
+    'CREATE TABLE selection_books (selection_id INTEGER, book_id INTEGER)'
   ].freeze
   FTS = "CREATE VIRTUAL TABLE books_fts USING fts5(title, authors, content='books', content_rowid='id', " \
         "tokenize='unicode61 remove_diacritics 2')"
-  INDEX = 'CREATE INDEX shelf_books_shelf ON shelf_books (shelf_id, book_id)'
+  INDEX = 'CREATE INDEX selection_books_selection ON selection_books (selection_id, book_id)'
   MEMBERSHIPS = 'CREATE TEMPORARY TABLE memberships (name TEXT, book_id INTEGER)'
   # The tables to drop, the full-text index before its content.
-  DROP = %i[books_fts shelf_books shelves books].freeze
+  DROP = %i[books_fts selection_books bookshelves books].freeze
 
   # Whether +db+ has the tables of the catalog.
-  def self.current?(db) = (%w[books shelves shelf_books] - db[:sqlite_master].where(type: 'table').select_map(:name)).empty?
+  def self.current?(db) = %i[books bookshelves selection_books].all? { |table| db.table_exists?(table) }
 
   # Drops the tables of +db+ and makes them anew, empty. True when the
   # SQLite has FTS5.
@@ -52,10 +52,24 @@ module CatalogSchema
   def self.index(db) = db.run(INDEX)
 end
 
-# data/catalog.sqlite3: the empty tables of a new file, so the models bind.
-CATALOG_MIGRATIONS = [lambda { |db|
-  next if CatalogSchema.current?(db)
+# data/catalog.sqlite3: the empty tables of a new file, so the models bind;
+# then the tables of a catalog built under the old names (shelves,
+# shelf_books) renamed, their rows kept.
+CATALOG_MIGRATIONS = [
+  lambda { |db|
+    next if CatalogSchema.current?(db)
 
-  CatalogSchema.create(db)
-  CatalogSchema.index(db)
-}].freeze
+    CatalogSchema.create(db)
+    CatalogSchema.index(db)
+  },
+  lambda { |db|
+    next unless db.table_exists?(:shelf_books)
+
+    db.run('DROP INDEX IF EXISTS shelf_books_shelf')
+    db.drop_table?(:bookshelves, :selection_books)
+    db.run('ALTER TABLE shelves RENAME TO bookshelves')
+    db.run('ALTER TABLE shelf_books RENAME TO selection_books')
+    db.run('ALTER TABLE selection_books RENAME COLUMN shelf_id TO selection_id')
+    CatalogSchema.index(db)
+  }
+].freeze

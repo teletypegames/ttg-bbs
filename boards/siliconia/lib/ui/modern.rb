@@ -8,7 +8,7 @@ require_relative 'modern/windows'
 
 module UI
   # The board on a modern terminal (ANSI colours, UTF-8, a mouse): the search in a dialog, the
-  # shelves as lists with the picked machine's card on the right, a machine's page in a reader with
+  # selections as lists with the picked machine's card on the right, a machine's page in a reader with
   # its buttons, the Wikipedia leads, the family line, the memories and their form, the marks, two
   # machines side by side, and the network's wall and feedback (ttg-common).
   module Modern

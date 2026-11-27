@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # The board itself, whatever terminal a caller has: the library (the
-# catalog, the Classics shelf, the reads) and the reading room (the texts,
+# catalog, the Classics selection, the reads) and the reading room (the texts,
 # cut into chapters and cached), wired to Project Gutenberg. The catalog is
 # kept fresh in the background: looked at every CHECK_EVERY seconds, a
 # failed refresh tried again after RETRY_AFTER (doubled up to CHECK_EVERY).

@@ -2,16 +2,16 @@
 
 require 'date'
 
-# The board's library of RFCs: the shelves (the board's own ones of
-# config/shelves.yml, the STD, BCP and FYI series, the statuses, the decades,
+# The board's library of RFCs: the selections (the board's own ones of
+# config/selections.yml, the STD, BCP and FYI series, the statuses, the decades,
 # this month, the newest and the IENs), the search (the index's, and the
 # full text of every RFC through MirrorService), an RFC's record, links and
 # errata, and the RFCs most read here. ImportService keeps the index fresh.
-# Until the first import the board's own shelves still stand, and everything
+# Until the first import the board's own selections still stand, and everything
 # else answers :preparing.
 class LibraryService
   SEARCH_LIMIT = 100
-  SHELF_LIMIT  = 500
+  SELECTION_LIMIT = 500
   NEWEST       = 30
   MIN_WORD     = 2
   MAX_WORDS    = 6
@@ -35,10 +35,10 @@ class LibraryService
     'FYI' => 'For Your Information: the guides of the 1990s for newcomers'
   }.freeze
 
-  # [shelves] the ShelvesRepository of the board's own shelves
+  # [selections] the SelectionsRepository of the board's own selections
   # [mirror]  the MirrorService of the full-text search, or nil
-  def initialize(shelves:, mirror: nil, clock: -> { Time.now })
-    @shelves = shelves
+  def initialize(selections:, mirror: nil, clock: -> { Time.now })
+    @selections = selections
     @mirror  = mirror
     @clock   = clock
   end
@@ -48,35 +48,35 @@ class LibraryService
   # The number of RFCs in the index (0 before the first import).
   def count = RfcModel.issued_count
 
-  # The board's own shelves.
-  def own_shelves
-    @shelves.all.each_with_index.map do |s, i|
-      ShelfModel.new(kind: :curated, key: i, name: s.name, about: s.about, count: s.entries.size)
+  # The board's own selections.
+  def own_selections
+    @selections.all.each_with_index.map do |s, i|
+      SelectionModel.new(kind: :curated, key: i, name: s.name, about: s.about, count: s.entries.size)
     end
   end
 
-  # Every shelf: the board's own ones, then (once the index is there) the
+  # Every selection: the board's own ones, then (once the index is there) the
   # series, the statuses, the decades and the newest.
-  def shelves
-    return own_shelves unless ready?
+  def selections
+    return own_selections unless ready?
 
-    [*own_shelves, *series_shelves, *status_shelves, *decade_shelves, month_shelf,
-     ShelfModel.new(
+    [*own_selections, *series_selections, *status_selections, *decade_selections, month_selection,
+     SelectionModel.new(
        kind:  :newest,
        key:   nil,
        name:  'Newest',
        about: "The #{NEWEST} RFCs of the highest numbers.",
        count: NEWEST
-     ), ien_shelf]
+     ), ien_selection]
   end
 
-  # The RFCs of +shelf+ as EntryModels.
-  def entries_on(shelf)
-    case shelf.kind
-    when :curated then curated(@shelves[shelf.key])
-    when :series then SeriesModel.rfcs(shelf.key).map { |label, rfc| EntryModel.of(rfc, label, :series) }
-    when :month then RfcModel.of_month(shelf.key, limit: SHELF_LIMIT).map { |rfc| EntryModel.of(rfc, rfc.year, :year) }
-    else shelf_rfcs(shelf).map { |rfc| EntryModel.of(rfc) }
+  # The RFCs of +selection+ as EntryModels.
+  def entries_on(selection)
+    case selection.kind
+    when :curated then curated(@selections[selection.key])
+    when :series then SeriesModel.rfcs(selection.key).map { |label, rfc| EntryModel.of(rfc, label, :series) }
+    when :month then RfcModel.of_month(selection.key, limit: SELECTION_LIMIT).map { |rfc| EntryModel.of(rfc, rfc.year, :year) }
+    else selection_rfcs(selection).map { |rfc| EntryModel.of(rfc) }
     end
   end
 
@@ -154,31 +154,31 @@ class LibraryService
 
   private
 
-  def curated(shelf)
-    return [] unless shelf
+  def curated(selection)
+    return [] unless selection
 
-    known = ready? ? RfcModel.rfcs(shelf.entries.map(&:first)).to_h { |r| [r.number, r] } : {}
-    shelf.entries.map { |number, title, note| EntryModel.of(known[number] || RfcModel.stub(number, title), note, :remark) }
+    known = ready? ? RfcModel.rfcs(selection.entries.map(&:first)).to_h { |r| [r.number, r] } : {}
+    selection.entries.map { |number, title, note| EntryModel.of(known[number] || RfcModel.stub(number, title), note, :remark) }
   end
 
-  def shelf_rfcs(shelf)
-    case shelf.kind
-    when :status then RfcModel.with_status(shelf.key, limit: SHELF_LIMIT)
-    when :decade then RfcModel.of_decade(shelf.key, limit: SHELF_LIMIT)
+  def selection_rfcs(selection)
+    case selection.kind
+    when :status then RfcModel.with_status(selection.key, limit: SELECTION_LIMIT)
+    when :decade then RfcModel.of_decade(selection.key, limit: SELECTION_LIMIT)
     when :ien then RfcModel.iens
     else RfcModel.newest(NEWEST)
     end
   end
 
-  def series_shelves
+  def series_selections
     SERIES.map do |kind, about|
-      ShelfModel.new(kind: :series, key: kind, name: kind, about: about, count: SeriesModel.rfcs(kind).size)
+      SelectionModel.new(kind: :series, key: kind, name: kind, about: about, count: SeriesModel.rfcs(kind).size)
     end
   end
 
-  def status_shelves
+  def status_selections
     RfcModel.statuses.map do |status, n|
-      ShelfModel.new(
+      SelectionModel.new(
         kind:  :status,
         key:   status,
         name:  RfcModel.status_label(status),
@@ -188,16 +188,16 @@ class LibraryService
     end
   end
 
-  def decade_shelves
+  def decade_selections
     RfcModel.decades.map do |decade, n|
-      ShelfModel.new(kind: :decade, key: decade, name: "#{decade}s", about: "The RFCs of #{decade}-#{decade + 9}.", count: n)
+      SelectionModel.new(kind: :decade, key: decade, name: "#{decade}s", about: "The RFCs of #{decade}-#{decade + 9}.", count: n)
     end
   end
 
-  def month_shelf
+  def month_selection
     month = @clock.call.month
     name = Date::MONTHNAMES[month]
-    ShelfModel.new(
+    SelectionModel.new(
       kind:  :month,
       key:   month,
       name:  "This month: #{name}",
@@ -206,8 +206,8 @@ class LibraryService
     )
   end
 
-  def ien_shelf
-    ShelfModel.new(
+  def ien_selection
+    SelectionModel.new(
       kind:  :ien,
       key:   nil,
       name:  'IENs',

@@ -16,30 +16,30 @@ class LibraryServiceTest < Minitest::Test
 
   def library(mirror: nil)
     LibraryService.new(
-      shelves: ShelvesRepository.new(File.expand_path('../config/shelves.yml', __dir__)),
-      mirror:  mirror,
-      clock:   -> { Time.new(2026, 4, 1) }
+      selections: SelectionsRepository.new(File.expand_path('../config/selections.yml', __dir__)),
+      mirror:     mirror,
+      clock:      -> { Time.new(2026, 4, 1) }
     )
   end
 
-  def test_before_the_index_only_the_own_shelves_stand
+  def test_before_the_index_only_the_own_selections_stand
     lib = library
-    assert_equal ['Classics', 'Telnet', 'April 1st'], lib.shelves.map(&:name)
+    assert_equal ['Classics', 'Telnet', 'April 1st'], lib.selections.map(&:name)
     assert_equal :preparing, lib.search('telnet')
-    telnet = lib.entries_on(lib.own_shelves[1]).first
+    telnet = lib.entries_on(lib.own_selections[1]).first
     assert_equal [854, 'Telnet Protocol Specification', 'the line you are on now'], [telnet.number, telnet.rfc.title, telnet.note]
   end
 
-  def test_the_shelves_of_the_index
+  def test_the_selections_of_the_index
     index
     lib = library
-    names = lib.shelves.map(&:name)
+    names = lib.selections.map(&:name)
     assert_includes names, 'STD'
     assert_includes names, 'This month: April'
     assert_equal 'IENs', names.last
-    month = lib.shelves.find { |s| s.kind == :month }
+    month = lib.selections.find { |s| s.kind == :month }
     assert_equal([[1149, '1990'], [2549, '1999']], lib.entries_on(month).map { |e| [e.number, e.note] })
-    assert_equal [-1, -4, -7, -137], lib.entries_on(lib.shelves.last).map(&:number)
+    assert_equal [-1, -4, -7, -137], lib.entries_on(lib.selections.last).map(&:number)
   end
 
   def test_search_by_number

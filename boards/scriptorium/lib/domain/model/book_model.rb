@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # One ebook of the catalog: a row of the books table of data/catalog.sqlite3
-# (CatalogSchema), or an entry of the curated shelf while the catalog is not
+# (CatalogSchema), or an entry of the curated selection while the catalog is not
 # there yet (::stub). +authors+ and +bookshelves+ are as the catalog gives
 # them, "; " between the names.
 #
@@ -137,7 +137,7 @@ class BookModel < Rubbs::Common::Storage::Model
   def subject_list = subjects.split('; ').reject(&:empty?)
 
   # The bookshelves of the book, without the "Category: " prefix.
-  def shelf_names = bookshelves.split('; ').reject(&:empty?).map { |s| s.delete_prefix('Category: ') }
+  def bookshelf_names = bookshelves.split('; ').reject(&:empty?).map { |s| s.delete_prefix('Category: ') }
 
   def url = "gutenberg.org/ebooks/#{id}"
 

@@ -2,7 +2,7 @@
 
 module UI
   module Modern
-    # A list of RFCs (a shelf, a search, the links of one, the most read)
+    # A list of RFCs (a selection, a search, the links of one, the most read)
     # on the left, the record of the one picked on the right; Enter reads
     # it.
     module RfcsWindow

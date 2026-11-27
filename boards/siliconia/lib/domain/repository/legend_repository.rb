@@ -2,7 +2,7 @@
 
 require 'yaml'
 
-# The QIDs of the Legends shelf (config/legends.yml). A missing or broken file gives none.
+# The QIDs of the Legends selection (config/legends.yml). A missing or broken file gives none.
 class LegendRepository
   def initialize(path)
     @path = path

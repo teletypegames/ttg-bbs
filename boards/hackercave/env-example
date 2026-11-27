@@ -10,8 +10,8 @@ HACKERCAVE_BBS_SITE=https://www.rfc-editor.org
 # Days the imported index is kept before it is downloaded and imported again
 HACKERCAVE_BBS_INDEX_TTL=1
 
-# The board's own shelves
-HACKERCAVE_BBS_SHELVES=config/shelves.yml
+# The board's own selections
+HACKERCAVE_BBS_SELECTIONS=config/selections.yml
 
 # The board's own data in SQLite: the RFCs opened (the "most read" list)
 HACKERCAVE_BBS_DB=data/hackercave.sqlite3

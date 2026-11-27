@@ -2,7 +2,7 @@
 
 module UI
   module Modern
-    # A list of books (a shelf, a search, the most read) on the left, the
+    # A list of books (a selection, a search, the most read) on the left, the
     # record of the one picked on the right; Enter opens it.
     module BooksWindow
       extend Rubbs::Modern::Part

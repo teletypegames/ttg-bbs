@@ -2,7 +2,7 @@
 
 require 'time'
 
-# How often the page of a machine was opened, for the most-read shelf.
+# How often the page of a machine was opened, for the most-read selection.
 class ViewModel < Rubbs::Common::Storage::Model
   table :views
 

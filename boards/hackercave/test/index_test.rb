@@ -76,7 +76,7 @@ class IndexTest < Minitest::Test
     assert_equal 'rfc-editor.org/ien/ien4.pdf', RfcModel.rfc(-4).url
   end
 
-  def test_iens_are_searched_but_not_on_the_rfc_shelves
+  def test_iens_are_searched_but_not_on_the_rfc_selections
     index
     assert_equal 'Issues in the Interconnection of Datagram Networks', RfcModel.rfc(-1).title
     assert_equal [-137], RfcModel.search(%w[holy wars]).map(&:number)
@@ -104,7 +104,7 @@ class IndexTest < Minitest::Test
     assert_equal 2, RfcModel.month_count(9)
   end
 
-  def test_shelves_of_status_decade_and_newest
+  def test_selections_of_status_decade_and_newest
     index
     assert_equal ['INTERNET STANDARD', 3], RfcModel.statuses.first
     assert_equal [[1980, 2], [1990, 4], [2020, 1]], RfcModel.decades

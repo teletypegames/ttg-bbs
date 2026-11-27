@@ -8,7 +8,7 @@ of them. A board of the Teletype Games BBS network, powered by
 
 It has two faces on one port, like every board of the network:
 
-- a **modern** one for ANSI terminals: a desktop under a menubar, the shelves as lists with the
+- a **modern** one for ANSI terminals: a desktop under a menubar, the selections as lists with the
   picked machine's card on the right, a machine's page in a reader with its buttons (Wiki, HU,
   Photo, Family, CPU, Memories, Mine), the Wikipedia lead in a scrolling window, the photo in half
   blocks, two machines side by side (Museum > Compare two), the memories and their form;
@@ -40,7 +40,7 @@ It has two faces on one port, like every board of the network:
 - **Nothing is guessed.** A fact Wikidata does not have is a dash (the core ones: years, maker,
   CPU, memory) or left out; the page says where to fix it on Wikidata. Machines with no article,
   maker or year come after the others in every list.
-- **The Legends** shelf is the one list kept by hand, `config/legends.yml` (QIDs).
+- **The Legends** selection is the one list kept by hand, `config/legends.yml` (QIDs).
 - **The stories** are the leads of the English and Hungarian Wikipedia articles, fetched on demand
   through rubbs' `Rubbs::Common::Web::Wikipedia` (5 requests a second for all callers) and kept in
   a `Rubbs::Common::Storage::Cache`, shown with "Text from Wikipedia, CC BY-SA 4.0" and the address.
@@ -60,7 +60,7 @@ It has two faces on one port, like every board of the network:
   C64). The board writes it hourly, when the week turns, to `data/herald.json` for the Daily Herald
   of TTG Gate BBS (the Today tab).
 - **The marks** ("I had one", "I grew up on it") are the callers', under their account of the
-  network; the machines most callers grew up on are a shelf of their own.
+  network; the machines most callers grew up on are a selection of their own.
 - **The memories** are the callers' too: pending until an admin approves them (`bin/memories`).
   A caller may send three an hour, one every 30 seconds, and the board takes at most 30 an hour,
   counted by address (`Rubbs::Common::Line::RateLimit.caller_key`).
@@ -92,7 +92,7 @@ Then `telnet localhost 2338`. Every environment variable is in `env-example` wit
 | `SILICONIA_BBS_CATALOG_SEED` | `config/catalog.json.gz` | the snapshot shipped with the board |
 | `SILICONIA_BBS_CATALOG` | `data/catalog.json.gz` | the snapshot a refresh writes |
 | `SILICONIA_BBS_CATALOG_TTL` | `604800` | seconds before Wikidata is read again; `0` never |
-| `SILICONIA_BBS_LEGENDS` | `config/legends.yml` | the Legends shelf |
+| `SILICONIA_BBS_LEGENDS` | `config/legends.yml` | the Legends selection |
 | `SILICONIA_BBS_WIKIPEDIA_CACHE` | `200` | Wikipedia leads kept in memory |
 | `SILICONIA_BBS_DB` | `data/siliconia.sqlite3` | the marks, memories and views |
 | `SILICONIA_BBS_PICTURES` | `data/pictures` | the photos drawn, one JSON a machine |
@@ -109,7 +109,7 @@ BOARDS=siliconia bundle exec rake            # tests and bbs:check, from the rep
 BOARDS=siliconia bundle exec rake rubocop
 ```
 
-Minitest, no network: the Wikidata import (stubbed SPARQL answers), the catalog's search, shelves,
+Minitest, no network: the Wikidata import (stubbed SPARQL answers), the catalog's search, selections,
 family line, views and refresh, the machine records and facts, the marks and the memories, and both
 faces on a fake line.
 
@@ -131,7 +131,7 @@ badges.rb                   Curator, Collector, Nostalgic
 bin/memories                the admins' tool for the memories
 bin/refresh-catalog         writes the seed catalog from Wikidata
 config/catalog.json.gz      the seed catalog (Wikidata, CC0)
-config/legends.yml          the Legends shelf
+config/legends.yml          the Legends selection
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
   migrations.rb             marks, memories, views
@@ -146,7 +146,7 @@ lib/domain/
   repository/legend_repository.rb     config/legends.yml
   repository/commons_repository.rb    a Commons file's licence, author, thumbnail
   repository/pixel_repository.rb      ImageMagick: a photo into small pixels
-  service/catalog_service.rb          search, shelves, family, same CPU, views, the refresh
+  service/catalog_service.rb          search, selections, family, same CPU, views, the refresh
   service/about_service.rb            a machine's Wikipedia lead
   service/collection_service.rb       the callers' marks
   service/memory_service.rb           memories: submit, limits, approve, reject
@@ -158,7 +158,7 @@ lib/ui/
   wording.rb                a machine's facts and the messages, both faces
   picture.rb                a photo in characters: half blocks, xterm-256 and C64 colours
   modern.rb                 UI::Modern::APP: commands, menus, help, desktop
-  modern/helpers.rb         the shelves, a machine's page, stories, family, marks, compare
+  modern/helpers.rb         the selections, a machine's page, stories, family, marks, compare
   modern/windows.rb         one Rubbs::Modern::Part per window
   petscii.rb                UI::Petscii: the C64 face (a Rubbs::Petscii::Face)
   petscii/photo.rb          the photo on a C64 screen of its own

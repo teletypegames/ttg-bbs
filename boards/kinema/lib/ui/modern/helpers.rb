@@ -30,12 +30,12 @@ module UI
 
       def film_of_the_day
         film = catalog.film_of_the_day
-        film ? open_film(film.id) : note('The shelf is empty.', 'Film of the day')
+        film ? open_film(film.id) : note('The selection is empty.', 'Film of the day')
       end
 
       def on_this_day
         list = catalog.on_this_day(Date.today)
-        return note('No film of the shelf was first released on this day.', 'On this day') if list.empty?
+        return note('No film of the selection was first released on this day.', 'On this day') if list.empty?
 
         show(:rows, caption: "First released on #{Date.today.strftime('%B %-d')}", entries: Rows.films(list))
       end
@@ -50,7 +50,7 @@ module UI
 
       def group_card(kind, name, count, width)
         list = films_of(kind, name)
-        [bright(group_name(kind, name)), accent("#{count} films on the shelf, the best known first"), '',
+        [bright(group_name(kind, name)), accent("#{count} films in the selection, the best known first"), '',
          *list.first(SHOWN).map { |f| Rubbs::Modern::FrameBuffer.clip_ansi(f.label, width - 1) },
          *(list.size > SHOWN ? [dim("… and #{list.size - SHOWN} more")] : [])]
       end

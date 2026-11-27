@@ -2,8 +2,8 @@
 
 require 'yaml'
 
-# The board's own shelf of well-known books (config/classics.yml): their
-# ebook numbers, with a title and an author so the shelf stands even before
+# The board's own selection of well-known books (config/classics.yml): their
+# ebook numbers, with a title and an author so the selection stands even before
 # the catalog is imported.
 class ClassicsRepository
   def initialize(path)

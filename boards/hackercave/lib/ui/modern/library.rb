@@ -2,12 +2,12 @@
 
 module UI
   module Modern
-    # The helpers of the modern face: the library's shelves and lists opened
+    # The helpers of the modern face: the library's selections and lists opened
     # in windows, the searches, opening an RFC, its links, its errata, the
     # RFCs it names and its QR code, the network's feedback and wall.
     module Library
       NOT_READY = 'The index is being prepared: it is downloaded from the RFC Editor and indexed. Try again in a ' \
-                  'minute. The Classics, Telnet and April 1st shelves are open meanwhile.'
+                  'minute. The Classics, Telnet and April 1st selections are open meanwhile.'
       NO_MIRROR = 'The full text of every RFC is being mirrored from the RFC Editor and indexed. Try again later; ' \
                   'the search of titles and abstracts (F3) works.'
       TOO_SHORT = 'A word of two letters or more, please.'
@@ -20,27 +20,27 @@ module UI
         "#{library.count.to_s.reverse.scan(/\d{1,3}/).join(',').reverse} RFCs"
       end
 
-      def classics = open_entries(library.own_shelves[0])
+      def classics = open_entries(library.own_selections[0])
 
-      def telnet = open_entries(library.own_shelves[1])
+      def telnet = open_entries(library.own_selections[1])
 
-      def this_month = open_entries(library.shelves.find { |s| s.kind == :month })
+      def this_month = open_entries(library.selections.find { |s| s.kind == :month })
 
-      def iens = open_entries(library.shelves.find { |s| s.kind == :ien })
+      def iens = open_entries(library.selections.find { |s| s.kind == :ien })
 
-      def shelf_list = show(:shelves, shelves: library.shelves)
+      def selection_list = show(:selections, selections: library.selections)
 
       def newest
         return preparing unless library.ready?
 
-        open_entries(library.shelves.find { |s| s.kind == :newest })
+        open_entries(library.selections.find { |s| s.kind == :newest })
       end
 
-      def open_entries(shelf)
-        return preparing if shelf.nil?
+      def open_entries(selection)
+        return preparing if selection.nil?
 
-        entries = library.entries_on(shelf)
-        show(:rfcs, entries: entries, heading: "#{shelf.name} (#{entries.size})")
+        entries = library.entries_on(selection)
+        show(:rfcs, entries: entries, heading: "#{selection.name} (#{entries.size})")
       end
 
       def most_read

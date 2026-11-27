@@ -4,14 +4,14 @@ require_relative 'logo'
 
 module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor menu,
-  # the shelves and the books as numbered lists, a book's record on a page,
+  # the selections and the books as numbered lists, a book's record on a page,
   # its chapters as a numbered list, and the reader: 38-column pages that
   # wait for RETURN, N and P for the next and the previous chapter. The
   # network's wall and feedback (ttg-common) are on the menu.
   class Petscii < Rubbs::Petscii::Face
     LOGO_COLORS = [WH, WH, YE, YE, CY].freeze
     PREPARING   = 'The catalog is being prepared: it is downloaded from Project Gutenberg and indexed. ' \
-                  'Try again in a minute. The classics shelf is open meanwhile.'
+                  'Try again in a minute. The classics selection is open meanwhile.'
     ABOUT = [
       " #{WH}scriptorium bbs#{LG}", '',
       ' The classic literature vault of Teletype Games: tens of thousands of books from Project Gutenberg, ' \
@@ -35,8 +35,8 @@ module UI
     end
 
     main_menu(above: -> { " #{GR}#{catalog_line}#{LG}" }) do
-      item('1', 'the classics shelf', 'the great books, open at once') { classics }
-      item('2', 'gutenberg bookshelves', 'the shelves of project gutenberg') { shelves }
+      item('1', 'the classics selection', 'the great books, open at once') { classics }
+      item('2', 'gutenberg bookshelves', 'the bookshelves of project gutenberg') { bookshelves }
       item('3', 'search by title or author', 'words, and lang:fr for one language') { search }
       item('4', 'most read on this board', 'what the callers here read') { most_read }
       item('w', "the reading room's wall", 'a word with the other readers') { TTG::Wall.open(@session) }
@@ -49,19 +49,19 @@ module UI
 
     def catalog_line = library.ready? ? "#{library.count} books in the catalog" : 'the catalog is being prepared'
 
-    def classics = books('CLASSICS', library.books_on(library.classics_shelf))
+    def classics = books('CLASSICS', library.books_on(library.classics_selection))
 
-    def shelves
+    def bookshelves
       return alert(PREPARING, color: YE) unless library.ready?
 
-      list = library.shelves.drop(1)
+      list = library.selections.drop(1)
       each_pick(
         'BOOKSHELVES',
         list,
-        right: "#{list.size} shelves",
+        right: "#{list.size} bookshelves",
         label: ->(s) { "#{s.label.downcase} #{GR}#{s.count}#{LG}" }
-      ) do |shelf|
-        books(shelf.label.upcase, library.books_on(shelf))
+      ) do |selection|
+        books(selection.label.upcase, library.books_on(selection))
       end
     end
 

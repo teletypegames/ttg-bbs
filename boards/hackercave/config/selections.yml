@@ -1,5 +1,5 @@
-# The board's own shelves, in the order of the menu. Each RFC has its number,
-# its title (the shelf stands before the index is imported; the index's title
+# The board's own selections, in the order of the menu. Each RFC has its number,
+# its title (the selection stands before the index is imported; the index's title
 # wins after) and a note that the lists and the record show.
 
 - name: Classics

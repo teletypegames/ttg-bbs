@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # The board itself, whatever terminal a caller has: the library (the index
-# of the RFC Editor with the IENs and the errata, the board's own shelves,
+# of the RFC Editor with the IENs and the errata, the board's own selections,
 # the reads), the reading room (the texts, fetched once and kept on the
 # disk), the mirror of every RFC's text with its full-text index, and the
 # Jargon File. The index and the mirror are kept fresh in the background.
@@ -24,7 +24,7 @@ class HackerCaveBBS
   setting :mirror_source, MirrorService::SOURCE
   setting :mirror_ttl, 1.0
   path    :db, 'data/hackercave.sqlite3'
-  path    :shelves, 'config/shelves.yml'
+  path    :selections, 'config/selections.yml'
   path    :texts, 'data/rfc'
   path    :index_db, 'data/index.sqlite3'
   path    :index_file, 'data/rfc-index.xml'
@@ -37,7 +37,7 @@ class HackerCaveBBS
   database :fulltext_db, FULLTEXT_MIGRATIONS, name: :fulltext
   database :jargon_db, JARGON_MIGRATIONS, name: :jargon
 
-  service(:library) { LibraryService.new(mirror: mirror_service, shelves: ShelvesRepository.new(shelves)) }
+  service(:library) { LibraryService.new(mirror: mirror_service, selections: SelectionsRepository.new(selections)) }
   service(:reading) { ReadingService.new(texts: text_repository, editor: editor, reflow: ReflowService.new) }
   service(:jargon) { JargonService.new(file: JargonFileRepository.new(File.expand_path(JARGON_SOURCE, self.class.root))) }
 

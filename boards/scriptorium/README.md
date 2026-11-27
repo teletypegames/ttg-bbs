@@ -6,7 +6,7 @@ chapters for your terminal or Commodore 64.
 
 It has two faces on one port, like every board of the network:
 
-- a **modern** one for ANSI terminals: a desktop under a menubar, the shelves
+- a **modern** one for ANSI terminals: a desktop under a menubar, the selections
   and their books in two-pane windows with a book's record on the right, a
   search box, a book's chapters with the start of the one picked, and a
   reader window that wraps the chapter to its width (PgUp/PgDn, Home/End,
@@ -28,10 +28,10 @@ of the screen).
 
 ### The library
 
-- **Classics** — the board's own shelf of well-known books
+- **Classics** — the board's own selection of well-known books
   (`config/classics.yml`). It stands even before the catalog is imported.
 - **Bookshelves** — the bookshelves and categories of Project Gutenberg, from
-  the `Bookshelves` column of its catalog. A shelf lists its first 200 books by
+  the `Bookshelves` column of its catalog. A bookshelf lists its first 200 books by
   ebook number.
 - **Search** — every word of the title or the author, as a word prefix
   (`dick tale`), accents ignored. `lang:fr` (or the Language field of the
@@ -60,8 +60,8 @@ background thread (rubbs' `Rubbs.background`) at start when there is no catalog 
 failed import is logged and tried again after five minutes, then less and less
 often, at most hourly. It builds the tables anew in one transaction
 (`BookModel.rebuild`), so callers keep reading the old catalog meanwhile (WAL),
-and a failed import leaves it as it was. Until the first import is done the Classics shelf is open and the
-rest says the catalog is being prepared. No list is held in Ruby: every shelf
+and a failed import leaves it as it was. Until the first import is done the Classics selection is open and the
+rest says the catalog is being prepared. No list is held in Ruby: every selection
 and search is a query.
 
 ### The texts
@@ -121,7 +121,7 @@ the stack's `.env`). The board's only secret is the one every board of the netwo
 | `SCRIPTORIUM_BBS_MIRROR` | `https://www.gutenberg.org` | where the plain texts come from |
 | `SCRIPTORIUM_BBS_CATALOG_URL` | `<mirror>/cache/epub/feeds/pg_catalog.csv.gz` | the catalog file |
 | `SCRIPTORIUM_BBS_CATALOG_TTL` | `7` | days before the catalog is imported again |
-| `SCRIPTORIUM_BBS_CLASSICS` | `config/classics.yml` | the Classics shelf |
+| `SCRIPTORIUM_BBS_CLASSICS` | `config/classics.yml` | the Classics selection |
 | `SCRIPTORIUM_BBS_DB` | `data/scriptorium.sqlite3` | the board's data: the reads |
 | `SCRIPTORIUM_BBS_CATALOG_DB` | `data/catalog.sqlite3` | the catalog in SQLite (a cache) |
 | `SCRIPTORIUM_BBS_CATALOG_FILE` | `data/pg_catalog.csv.gz` | where the download waits for the import |
@@ -159,15 +159,15 @@ against a stubbed `Rubbs::Common::Web::HTTP`. CI runs both before a deploy.
 
 ```
 bbs.rb                      entry point: Rubbs.configure + Rubbs::Common::Call::Terminal.flow
-config/classics.yml         the Classics shelf: ebook numbers, titles, authors
+config/classics.yml         the Classics selection: ebook numbers, titles, authors
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
   migrations.rb             the schemas of the two SQLite files (Rubbs::Common::Storage::Database), the catalog's
   model/book_model.rb       a book of the catalog (books): search, rebuild
-  model/bookshelf_model.rb  a Project Gutenberg bookshelf (shelves)
-  model/shelf_book_model.rb a book on a bookshelf (shelf_books)
+  model/bookshelf_model.rb  a Project Gutenberg bookshelf (bookshelves)
+  model/selection_book_model.rb a book on a bookshelf (selection_books)
   model/read_model.rb       a read (reads of data/scriptorium.sqlite3) and the counts
-  model/shelf_model.rb      a bookshelf, or the Classics shelf
+  model/selection_model.rb  a bookshelf, or the Classics selection
   model/chapter_model.rb    a chapter: its title and byte range in the cached text
   model/text_model.rb       a book ready to read: its chapter index
   repository/gutenberg_repository.rb    Project Gutenberg over Rubbs::Common::Web::HTTP: the catalog file, a plain text
@@ -176,16 +176,16 @@ lib/domain/
   repository/legacy_reads.rb            the one-time import of an older data/reads.jsonl
   repository/text_cache_repository.rb   data/texts: cleaned texts, chapter indexes, eviction
   service/chapter_service.rb            cleaning a text and cutting it into chapters
-  service/library_service.rb            shelves, search, most read, the catalog refresh
+  service/library_service.rb            selections, search, most read, the catalog refresh
   service/reading_service.rb            opening a book (fetch, cut, cache) and its chapters
   scriptorium_bbs.rb        the composition root (ScriptoriumBBS)
 lib/ui/
   logo.rb                   SCRIPTORIUM in blocks (Rubbs::Common::Text::BlockFont), both faces
   modern.rb                 UI::Modern: the rubbs Application, put together from:
-  modern/library.rb         the helpers: shelves, search, opening a book
+  modern/library.rb         the helpers: selections, search, opening a book
   modern/desktop.rb         the logo, the tagline, the statusbar
   modern/book_card.rb       a book's record beside a list of books
-  modern/shelves_window.rb  the bookshelves window
+  modern/selections_window.rb  the bookshelves window
   modern/books_window.rb    a list of books
   modern/chapters_window.rb a book's chapters
   modern/menu.rb            the menubar, the help texts, the function keys

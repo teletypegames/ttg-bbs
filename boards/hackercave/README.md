@@ -8,7 +8,7 @@ or Commodore 64. A board of the Teletype Games BBS network, powered by
 
 It has two faces on one port, like every board of the network:
 
-- a **modern** one for ANSI terminals: a desktop under a menubar, the shelves
+- a **modern** one for ANSI terminals: a desktop under a menubar, the selections
   and their RFCs in two-pane windows with an RFC's record on the right (its
   authors, date, status and series, a red line when a newer RFC replaced it,
   the RFCs it obsoletes or updates, the abstract), a search box, an RFC's
@@ -17,7 +17,7 @@ It has two faces on one port, like every board of the network:
   each page dim, the headings bright, the RFCs it names coloured, a line that
   says where you are, "RFC 793 · page 3/91 · line 140/5247", and Contents
   (jump to a heading) and References (the RFCs it names);
-- a **Commodore 64** one in PETSCII, 40×25: a cursor menu, the shelves and
+- a **Commodore 64** one in PETSCII, 40×25: a cursor menu, the selections and
   their RFCs as numbered lists, an RFC's record on a page with read, links,
   errata and QR code under it, and a reader with the RFC **reflowed to 38
   columns** (see below), in pages that wait for RETURN, `t` for its contents
@@ -28,10 +28,10 @@ Both faces show an RFC's page at the RFC Editor,
 
 ### The library
 
-- **Classics**, **Telnet** and **April 1st**: the board's own shelves
-  (`config/shelves.yml`), each RFC with a note. Telnet is the protocol this
+- **Classics**, **Telnet** and **April 1st**: the board's own selections
+  (`config/selections.yml`), each RFC with a note. Telnet is the protocol this
   board talks; the notes say which options rubbs speaks (ECHO, SGA, NAWS,
-  BINARY for XMODEM/ZMODEM, NEW-ENVIRON for the TTG Gate). The shelves stand
+  BINARY for XMODEM/ZMODEM, NEW-ENVIRON for the TTG Gate). The selections stand
   even before the index is imported.
 - **STD**, **BCP** and **FYI**: the series of the RFC Editor, each RFC with the
   number it stands for ("STD 7").
@@ -162,7 +162,7 @@ the stack's `.env`). Its only secret is `RUBBS_AUTH_SECRET`, the one every board
 |---|---|---|
 | `HACKERCAVE_BBS_SITE` | `https://www.rfc-editor.org` | where the index and the texts come from |
 | `HACKERCAVE_BBS_INDEX_TTL` | `1` | days before the index is imported again |
-| `HACKERCAVE_BBS_SHELVES` | `config/shelves.yml` | the board's own shelves |
+| `HACKERCAVE_BBS_SELECTIONS` | `config/selections.yml` | the board's own selections |
 | `HACKERCAVE_BBS_DB` | `data/hackercave.sqlite3` | the board's data: the reads |
 | `HACKERCAVE_BBS_INDEX_DB` | `data/index.sqlite3` | the index in SQLite (a cache) |
 | `HACKERCAVE_BBS_INDEX_FILE` | `data/rfc-index.xml` | where the download waits for the import |
@@ -178,7 +178,7 @@ the stack's `.env`). Its only secret is `RUBBS_AUTH_SECRET`, the one every board
 
 `data/` is a volume (`/srv/stacks/ttg-bbs/boards/hackercave/data` on the server). Every log
 line starts with the log tag `hackercave-bbs:` (rubbs' `Rubbs.log`): `index refresh`, `index`,
-`rfc-editor`, `texts`, `shelves`, `mirror`, `fulltext`, `jargon`. In the container they are in
+`rfc-editor`, `texts`, `selections`, `mirror`, `fulltext`, `jargon`. In the container they are in
 `docker logs ttg-bbs`, with `"board":"hackercave-bbs"`.
 
 ## Tests
@@ -193,7 +193,7 @@ bundle exec rubocop
 
 The tests cover the domain: the index import (small `rfc-index.xml`,
 `errata.json`, IEN index and listing in `test/fixtures`), its search,
-relations, series, shelves, IENs and errata, a failed import that keeps the
+relations, series, selections, IENs and errata, a failed import that keeps the
 old index, an older board's index imported anew, the library service
 (number, series, word and text searches, the most read), parsing a text into
 pages, the reflow for 38 columns, the reading service (one fetch per RFC,
@@ -206,12 +206,12 @@ day). CI runs both before a deploy.
 
 ```
 bbs.rb                      entry point: Rubbs.board (rubbs 2.0) with the two faces
-config/shelves.yml          the board's own shelves: Classics, Telnet, April 1st
+config/selections.yml       the board's own selections: Classics, Telnet, April 1st
 config/jargon/jarg447.txt   the Jargon File 4.4.7 (public domain)
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
   migrations.rb             the schemas of the four SQLite files (Rubbs::Common::Storage::Database), the index's and the Jargon File's
-  model/rfc_model.rb        an RFC of the index (rfcs): search, shelves (status, decade, month, newest, IENs), rebuild
+  model/rfc_model.rb        an RFC of the index (rfcs): search, selections (status, decade, month, newest, IENs), rebuild
   model/relation_model.rb   how RFCs are related (relations): obsoletes, updates, see also
   model/series_model.rb     the STD, BCP and FYI series (series)
   model/erratum_model.rb    an erratum of an RFC (errata)
@@ -219,7 +219,7 @@ lib/domain/
   model/doc_model.rb        a text in the full-text index (docs and text_fts of data/fulltext.sqlite3)
   model/jargon_entry_model.rb, jargon_section_model.rb, jargon_meta_model.rb   the Jargon File (data/jargon.sqlite3)
   model/entry_model.rb      an RFC on a list, with a note (remark, series, relation, reads)
-  model/shelf_model.rb      a shelf: own, series, status, decade, newest
+  model/selection_model.rb  a selection: own, series, status, decade, newest
   model/document_model.rb   an RFC's text in lines, and where its pages start
   repository/index_parser.rb          rfc-index.xml read as a stream
   repository/index_builder.rb         the index built anew from rfc-index.xml, through the models
@@ -228,8 +228,8 @@ lib/domain/
   repository/text_repository.rb       data/rfc: the texts as published
   repository/jargon_parser.rb         jarg447.txt read into entries and sections
   repository/jargon_file_repository.rb  config/jargon/jarg447.txt: its digest, parsed
-  repository/shelves_repository.rb    config/shelves.yml
-  service/library_service.rb          shelves, search, links, errata, most read
+  repository/selections_repository.rb config/selections.yml
+  service/library_service.rb          selections, search, links, errata, most read
   service/import_service.rb           the daily import: index, errata, IENs
   service/mirror_service.rb           the rsync mirror and the text search
   service/jargon_service.rb           the Jargon File: letters, search, word of the day
@@ -239,9 +239,9 @@ lib/domain/
 lib/ui/
   logo.rb                   HACKERCAVE in blocks (Rubbs::Common::Text::BlockFont), both faces
   modern.rb                 UI::Modern::APP: commands, menus, help, desktop, put together from:
-  modern/library.rb         the helpers: shelves, search, opening an RFC, links, QR
+  modern/library.rb         the helpers: selections, search, opening an RFC, links, QR
   modern/rfc_card.rb        an RFC's record beside a list
-  modern/shelves_window.rb  the shelves window
+  modern/selections_window.rb  the selections window
   modern/rfcs_window.rb     a list of RFCs
   modern/reader_window.rb   the reader window: the RFC as published
   modern/contents_window.rb the headings of the RFC read, to jump to

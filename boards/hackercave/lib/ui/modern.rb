@@ -4,7 +4,7 @@ require_relative 'logo'
 require_relative 'modern/library'
 require_relative 'modern/rfc_card'
 require_relative 'modern/jargon'
-require_relative 'modern/shelves_window'
+require_relative 'modern/selections_window'
 require_relative 'modern/rfcs_window'
 require_relative 'modern/reader_window'
 require_relative 'modern/contents_window'
@@ -13,7 +13,7 @@ require_relative 'modern/jargon_windows'
 
 module UI
   # The board on a modern terminal (ANSI colours, UTF-8, a mouse): a desktop
-  # under a menubar, the shelves and their RFCs in two-pane windows with an
+  # under a menubar, the selections and their RFCs in two-pane windows with an
   # RFC's record on the right, a search box, an RFC's links, and a reader
   # window that shows the RFC as it was published, and the network's
   # feedback and wall (ttg-common).
@@ -46,7 +46,7 @@ module UI
       command(:telnet, '&Telnet') { telnet }
       command(:search, '&Search…', key: 'F3') { search }
       command(:search_text, 'Search te&xt…', key: 'F9', hint: false) { search_text }
-      command(:shelves, 'S&helves', key: 'F4') { shelf_list }
+      command(:selections, 'Se&lections', key: 'F4') { selection_list }
       command(:this_month, 'This m&onth') { this_month }
       command(:iens, '&IENs') { iens }
       command(:most_read, '&Most read', key: 'F7') { most_read }
@@ -58,7 +58,7 @@ module UI
            :telnet,
            :search,
            :search_text,
-           :shelves,
+           :selections,
            :this_month,
            :iens,
            :most_read,
@@ -85,7 +85,7 @@ module UI
         on_show { classics }
       end
 
-      parts ShelvesWindow, RfcsWindow, ReaderWindow, ContentsWindow, TextWindow, JargonWindows
+      parts SelectionsWindow, RfcsWindow, ReaderWindow, ContentsWindow, TextWindow, JargonWindows
     end
   end
 end

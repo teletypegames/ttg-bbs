@@ -11,7 +11,7 @@ SCRIPTORIUM_BBS_CATALOG_URL=https://www.gutenberg.org/cache/epub/feeds/pg_catalo
 # Days the imported catalog is kept before it is downloaded and imported again
 SCRIPTORIUM_BBS_CATALOG_TTL=7
 
-# The board's own Classics shelf
+# The board's own Classics selection
 SCRIPTORIUM_BBS_CLASSICS=config/classics.yml
 
 # The board's own data in SQLite: the books opened (the "most read" list).

@@ -50,7 +50,7 @@ module UI
        *relation_lines(rfc), *errata_line(rfc), '', *lines(plain(short(rfc.abstract.split("\n\n").first.to_s)))]
     end
 
-    # The title, and the note of a curated shelf or the line a text search
+    # The title, and the note of a curated selection or the line a text search
     # found.
     def card_head(entry)
       [*lines(plain(entry.rfc.title), WH), *(lines(plain(entry.note), CY) if entry.kind == :remark),

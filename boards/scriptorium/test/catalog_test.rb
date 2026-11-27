@@ -40,11 +40,11 @@ class CatalogTest < Minitest::Test
   end
 
   def test_gathers_the_bookshelves
-    novels = BookshelfModel.all_shelves.find { |s| s.label == 'Novels' }
+    novels = BookshelfModel.all_selections.find { |s| s.label == 'Novels' }
 
     assert_equal 2, novels.count
-    assert_equal ['Best Books Ever Listings', 'Category: Novels'], BookshelfModel.all_shelves.map(&:name)
-    assert_equal [84, 1342], ShelfBookModel.books_on(novels.id).map(&:id)
+    assert_equal ['Best Books Ever Listings', 'Category: Novels'], BookshelfModel.all_selections.map(&:name)
+    assert_equal [84, 1342], SelectionBookModel.books_on(novels.id).map(&:id)
     assert_equal [84, 1342], BookModel.books([84, 7, 1342]).map(&:id)
   end
 
@@ -53,7 +53,7 @@ class CatalogTest < Minitest::Test
     capture_io { assert_equal 1, CatalogBuilder.new.build(@csv) }
     assert_equal 1, BookModel.total
     assert_nil BookModel.book(1342)
-    assert_equal ['Category: Novels'], BookshelfModel.all_shelves.map(&:name)
+    assert_equal ['Category: Novels'], BookshelfModel.all_selections.map(&:name)
     File.write(@csv, 'not gzip')
     assert_raises(StandardError) { CatalogBuilder.new.build(@csv) }
     assert_equal [84], BookModel.search(%w[frank]).map(&:id)

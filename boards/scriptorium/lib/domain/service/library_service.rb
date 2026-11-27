@@ -2,14 +2,14 @@
 
 require 'fileutils'
 
-# The board's library: the Classics shelf and the Project Gutenberg
+# The board's library: the Classics selection and the Project Gutenberg
 # bookshelves, a search by title and author, a book's record and the books
 # most read here. It keeps the catalog fresh: #refresh downloads and imports
 # it when it is older than the TTL. Until the first import is done the
-# Classics shelf still stands, and everything else answers :preparing.
+# Classics selection still stands, and everything else answers :preparing.
 class LibraryService
   SEARCH_LIMIT = 100
-  SHELF_LIMIT  = 200
+  SELECTION_LIMIT = 200
   MIN_WORD     = 2
   MAX_WORDS    = 6
 
@@ -29,15 +29,15 @@ class LibraryService
   # The number of books in the catalog (0 before the first import).
   def count = BookModel.total
 
-  def classics_shelf = ShelfModel.new(id: 0, kind: :classics, name: 'Classics', count: @classics.all.size)
+  def classics_selection = SelectionModel.new(id: 0, kind: :classics, name: 'Classics', count: @classics.all.size)
 
-  # The Classics shelf, then the bookshelves of the catalog.
-  def shelves = [classics_shelf, *BookshelfModel.all_shelves]
+  # The Classics selection, then the bookshelves of the catalog.
+  def selections = [classics_selection, *BookshelfModel.all_selections]
 
-  # The books of +shelf+: the curated ones in their order (the catalog's
-  # records where it has them), or the first SHELF_LIMIT of a bookshelf.
-  def books_on(shelf)
-    return ShelfBookModel.books_on(shelf.id, limit: SHELF_LIMIT) unless shelf.classics?
+  # The books of +selection+: the curated ones in their order (the catalog's
+  # records where it has them), or the first SELECTION_LIMIT of a bookshelf.
+  def books_on(selection)
+    return SelectionBookModel.books_on(selection.id, limit: SELECTION_LIMIT) unless selection.classics?
 
     known = BookModel.books(@classics.all.map(&:id)).to_h { |b| [b.id, b] }
     @classics.all.map { |b| known[b.id] || b }

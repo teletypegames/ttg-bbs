@@ -6,7 +6,7 @@ require_relative 'picture'
 require_relative 'petscii/photo'
 
 module UI
-  # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor main menu, the shelves and the
+  # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor main menu, the selections and the
   # machines as numbered cursor lists, a machine on a page of its own with its actions on one row
   # and the rest in a menu under "more", the Wikipedia leads and the memories as pages that wait
   # for RETURN, and a line for a search, a comparison and a memory.
