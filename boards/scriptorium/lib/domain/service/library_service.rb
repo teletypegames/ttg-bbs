@@ -37,7 +37,7 @@ class LibraryService
   # The books of +selection+: the curated ones in their order (the catalog's
   # records where it has them), or the first SELECTION_LIMIT of a bookshelf.
   def books_on(selection)
-    return SelectionBookModel.books_on(selection.id, limit: SELECTION_LIMIT) unless selection.classics?
+    return BookshelfBookModel.books_on(selection.id, limit: SELECTION_LIMIT) unless selection.classics?
 
     known = BookModel.books(@classics.all.map(&:id)).to_h { |b| [b.id, b] }
     @classics.all.map { |b| known[b.id] || b }

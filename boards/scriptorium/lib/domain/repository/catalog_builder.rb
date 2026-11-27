@@ -3,7 +3,7 @@
 require 'csv'
 require 'zlib'
 
-# Builds the catalog (BookModel, BookshelfModel, SelectionBookModel) anew from
+# Builds the catalog (BookModel, BookshelfModel, BookshelfBookModel) anew from
 # Project Gutenberg's pg_catalog.csv.gz: its Text rows as books, the
 # bookshelves they stand on, and the full-text index of titles and authors
 # (FTS5; a search column for LIKE where the SQLite has no FTS5). The rows go

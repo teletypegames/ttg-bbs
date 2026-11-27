@@ -44,7 +44,7 @@ class CatalogTest < Minitest::Test
 
     assert_equal 2, novels.count
     assert_equal ['Best Books Ever Listings', 'Category: Novels'], BookshelfModel.all_selections.map(&:name)
-    assert_equal [84, 1342], SelectionBookModel.books_on(novels.id).map(&:id)
+    assert_equal [84, 1342], BookshelfBookModel.books_on(novels.id).map(&:id)
     assert_equal [84, 1342], BookModel.books([84, 7, 1342]).map(&:id)
   end
 

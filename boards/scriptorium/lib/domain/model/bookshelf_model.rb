@@ -17,12 +17,12 @@ class BookshelfModel < Rubbs::Common::Storage::Model
   def self.add_members(rows) = db[:memberships].import(%i[name book_id], rows)
 
   # Makes the bookshelves of the build's MEMBERSHIPS, with their books
-  # (SelectionBookModel), and drops it.
+  # (BookshelfBookModel), and drops it.
   def self.gather
     members = db[:memberships]
     dataset.insert(%i[name books], members.group_and_count(:name))
     on_bookshelves = members.join(:bookshelves, name: :name).select(Sequel[:bookshelves][:id], Sequel[:memberships][:book_id])
-    SelectionBookModel.dataset.insert(%i[selection_id book_id], on_bookshelves)
+    BookshelfBookModel.dataset.insert(%i[bookshelf_id book_id], on_bookshelves)
     db.drop_table(:memberships)
   end
 end

@@ -3,7 +3,7 @@
 require_relative 'domain/migrations'
 require_relative 'domain/model/book_model'
 require_relative 'domain/model/bookshelf_model'
-require_relative 'domain/model/selection_book_model'
+require_relative 'domain/model/bookshelf_book_model'
 require_relative 'domain/model/read_model'
 require_relative 'domain/model/selection_model'
 require_relative 'domain/model/chapter_model'
