@@ -79,16 +79,6 @@ module UI
         @trophies = trophies
       end
 
-      # The first screen; when the login the caller's terminal sent with the
-      # call (TTG Gate 64's GATE64.CFG) did not go, why, over it until a key.
-      def start(page = section_view(@home))
-        super
-        session.identity
-        why = session.login_notice or return
-        session.login_notice = nil
-        pop_up(notice('LOGIN', [why, 'You are a guest now.']))
-      end
-
       # The search is an action of the sub-menu, not a section.
       def action?(key) = key == :search
 

@@ -11,7 +11,7 @@ require_relative 'lib/ui/petscii'
 board = Rubbs.board 'TTG Gate BBS', TTGGateBBS do
   preset TTG::PRESET
   mouse false
-  auth(login: :menu, line_login: true, &:accounts)
+  auth(login: :menu, terminal_login: true, &:accounts)
   central serve:    lambda(&:central_port),
           services: [TTG::Feedback::Service, TTG::Wall::Service, TTG::PrivateMessage::Service, TTG::Badges::Service,
                      Rubbs::Common::Hunt::Service]

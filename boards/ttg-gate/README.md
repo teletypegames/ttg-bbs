@@ -263,10 +263,10 @@ tab (or `A`) is the caller's profile in the gate's look (log in, make an account
 password, log out); on a C64 **YOU** is the gate's own profile too (`UI::Petscii::Views::ProfileView`,
 numbered items, the password read as stars on the hint row). Both faces share `UI::Account`.
 A terminal that keeps its caller's account — TTG Gate 64 with `USER=` and `PASSWORD=` in its
-`GATE64.CFG` — logs in with the call: the gate has rubbs' `line_login: true`, so the name and
+`GATE64.CFG` — logs in with the call: the gate has rubbs' `terminal_login: true`, so the name and
 password sent as telnet NEW-ENVIRON (`USER`, `RUBBS_PASSWORD`) sign the caller in before the first
 screen, and the boards dialled from here get the caller as from any login. When they do not go, the
-caller is a guest and a LOGIN box over the first screen says why.
+caller is a guest and a LOGIN box over the first screen says why (rubbs shows the notice itself).
 
 **Feedback and the walls.** The gate keeps the feedback, the walls and the letters of the network too
 (ttg-common `TTG::Feedback`, `TTG::Wall`, `TTG::PrivateMessage`, services of the Central:

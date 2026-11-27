@@ -49,10 +49,10 @@ class PetsciiProfileTest < Minitest::Test
 
   def test_a_login_from_the_terminal_that_did_not_go_is_told_once
     @line = Rubbs::Test::Session.new(keys: [' '], petscii: true)
-    @line.login_notice = 'Wrong name or password.'
+    @line.notice("Wrong name or password.\nYou are a guest now.", title: 'Login')
     UI::Petscii::Gate.new(@line, boards: [board], browse: nil, dials: nil).start
-    assert(screens.any? { |s| s.to_s.include?('Wrong name or password.') })
-    assert_nil @line.login_notice
+    assert(screens.any? { |s| s.to_s.include?('LOGIN') && s.to_s.include?('Wrong name or password.') })
+    assert_empty @line.take_notices
   end
 
   def test_a_guest_logs_in_on_you
