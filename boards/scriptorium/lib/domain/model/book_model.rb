@@ -29,10 +29,13 @@ class BookModel < Rubbs::Common::Storage::Model
   # Whether the catalog was imported: it has books.
   def self.ready? = guard(false) { !dataset.empty? }
 
-  # When the catalog was last imported (its file last written), or nil.
+  # When the catalog was last imported (written by ::rebuild into the meta
+  # table), or nil when it never was.
   def self.imported_at
-    path = db.opts[:database].to_s
-    ready? && File.exist?(path) ? File.mtime(path) : nil
+    value = guard(nil) { db[:meta].where(key: 'imported_at').get(:value) }
+    ready? && value ? Time.iso8601(value) : nil
+  rescue ArgumentError
+    nil
   end
 
   # The number of books, counted once a catalog.
@@ -78,7 +81,10 @@ class BookModel < Rubbs::Common::Storage::Model
     value = db.transaction do
       fts = CatalogSchema.create(db)
       db.run(CatalogSchema::MEMBERSHIPS)
-      yield(fts).tap { finish(fts) }
+      yield(fts).tap do
+        finish(fts)
+        db[:meta].insert_conflict(:replace).insert(key: 'imported_at', value: Time.now.utc.iso8601)
+      end
     end
     totals.delete(db)
     db.run('PRAGMA wal_checkpoint(TRUNCATE)')

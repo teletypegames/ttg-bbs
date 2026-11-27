@@ -33,6 +33,10 @@ class CatalogTest < Minitest::Test
     assert_equal 'Jane Austen', book.author
   end
 
+  def test_records_when_it_was_imported
+    assert_in_delta Time.now, BookModel.imported_at, 60
+  end
+
   def test_searches_titles_and_authors_by_word_prefix
     assert_equal [84], BookModel.search(%w[shell]).map(&:id)
     assert_equal [1342], BookModel.search(%w[pride aust], language: 'en').map(&:id)

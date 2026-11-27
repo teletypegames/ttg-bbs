@@ -21,7 +21,7 @@ class CatalogMigrationTest < Minitest::Test
     refute db.table_exists?(:shelf_books)
     assert_equal [{ id: 3, name: 'Category: Novels', books: 1 }], db[:bookshelves].all
     assert_equal [{ bookshelf_id: 3, book_id: 84 }], db[:bookshelf_books].all
-    assert_equal 3, db.fetch('PRAGMA user_version').single_value
+    assert_equal 4, db.fetch('PRAGMA user_version').single_value
   ensure
     close(db) if db
   end
@@ -33,7 +33,8 @@ class CatalogMigrationTest < Minitest::Test
 
     refute db.table_exists?(:selection_books)
     assert_equal [{ bookshelf_id: 3, book_id: 84 }], db[:bookshelf_books].all
-    assert_equal 3, db.fetch('PRAGMA user_version').single_value
+    assert_empty db[:meta].all
+    assert_equal 4, db.fetch('PRAGMA user_version').single_value
   ensure
     close(db) if db
   end
