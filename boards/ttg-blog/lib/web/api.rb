@@ -27,14 +27,19 @@ module Web
       @posts  = bbs.posts
       @server = WEBrick::HTTPServer.new(
         BindAddress: host,
-        Port:        port,
+        DoNotListen: true,
         Logger:      WEBrick::Log.new($stderr, WEBrick::Log::WARN),
         AccessLog:   []
       )
+      # SO_REUSEPORT: the board's next process opens the port while this one still answers (a deploy).
+      @server.listeners << Rubbs::Common::Line::Listener.tcp(host, port)
       @server.mount_proc('/') { |req, res| serve(req, res) }
     end
 
     def start = Rubbs.background('web') { @server.start }
+
+    # Stops answering: the board drains or stops, and the next process answers the port.
+    def stop = @server.shutdown
 
     def self.html(markdown) = Kramdown::Document.new(markdown.to_s, input: 'GFM', hard_wrap: false).to_html
 

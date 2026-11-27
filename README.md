@@ -45,7 +45,9 @@ In Docker: `docker compose up --build`. The boards' code is not in the image: co
 
 - `boards.yml`: per board its `port`, `max_sessions` and `memory` (the supervisor restarts a board
   that stays over it), `enabled: false` to keep it stopped, `private: true` for a board only a
-  role may call (no list shows it, no badge counts it, its port is not in `compose.yaml`).
+  role may call (no list shows it, no badge counts it, its port is not in `compose.yaml`),
+  `drain: false` for a board that must never run twice at once (Pixelia's canvas in memory: a
+  deploy stops it and starts it again).
 - Every board's variables keep their prefix (`FEEDIA_BBS_…`, listed in `boards/<name>/env-example`);
   on the server they are in the stack's `.env` (`env-example` here lists what compose passes on).
 
@@ -57,8 +59,9 @@ In Docker: `docker compose up --build`. The boards' code is not in the image: co
   or stays over its memory is restarted in order (its callers are told);
 - every board's log line goes out with its name (`"board":"feedia-bbs"`), so Loki and Grafana see
   each board as before;
-- `state/multi_runner.json`: every board's pid, health, callers, memory, restarts and revision,
-  read by the server's metrics (`ttgvps metrics textfile`); the container's health check is its age.
+- `state/<colour>/multi_runner.json`: every board's pid, health, callers, memory, restarts,
+  revision and the old processes draining, read by the server's metrics (`ttgvps metrics
+  textfile`); the container's health check is its age.
 
 ## Deploy
 
@@ -68,10 +71,17 @@ A push to master deploys (`.woodpecker.yaml`, `ci-deploy ttg-bbs` in infra/host-
 - the core (`Gemfile*`, `bbs.rb`, `boards.yml`, `compose.yaml`, `Dockerfile`, `bin/`) is copied and
   the image rebuilt; `boards/` is copied **in place** (each `data/` stays), between
   `boards/.deploying` and a new `boards/.revision`;
-- when only boards changed, the image and the container stay: the supervisor sees the new
-  revision and restarts **only the boards whose code changed**, one at a time;
+- no call drops. When only boards changed, the image and the container stay: the supervisor sees
+  the new revision and hands over **only the boards whose code changed**, one at a time: the new
+  process listens beside the old one (`SO_REUSEPORT`), then the old one drains (SIGUSR2): it takes
+  no new call, and its callers go on until they leave (at most `BBS_DRAIN_SECONDS`, 30 minutes);
 - when the core changed (`Gemfile.lock` — a rubbs bump —, `boards/common`, `bbs.rb`, `boards.yml`,
-  `compose.yaml`, `Dockerfile`), the container is recreated and every board restarts in order.
+  `compose.yaml`, `Dockerfile`, the `.env`), the other colour starts: `ttg-bbs-blue` and
+  `ttg-bbs-green` share the network namespace of `ttg-bbs-net` (the public ports and the interstack
+  names, never rebuilt), so the new colour listens beside the old one; once every board of it runs,
+  the old colour drains and its container exits when its last caller has left. The running colour
+  is `/var/lib/ttgvps/slots/ttg-bbs` (`ttgvps stack ps ttg-bbs` shows it). A change of
+  `ttg-bbs-net` itself (a new public port) recreates it, and then every board restarts.
 
 ## Checks
 

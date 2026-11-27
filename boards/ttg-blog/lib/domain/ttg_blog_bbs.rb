@@ -17,6 +17,9 @@ class TTGBlogBBS
   service(:categories) { CategoryService.new(CategoryRepository.new(categories_file)) }
   service(:posts)      { PostService.new(categories: categories) }
 
+  # The read API beside the telnet port (Web::Api), once the board has started it.
+  attr_accessor :api
+
   # Where a published post is on the web.
   def post_url(post) = "#{site_url.chomp('/')}/blog/#{post.slug}"
 end

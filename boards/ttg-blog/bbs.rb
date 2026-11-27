@@ -22,7 +22,9 @@ board = Rubbs.board 'TTG Blog BBS', TTGBlogBBS do
   idle 900
   mouse false
   goodbye greeting: 'Thanks for reading', color: Rubbs::Petscii::Colors::YE
-  on_start { |bbs| Web::Api.new(bbs, port: bbs.http_port).start if bbs.http_port.positive? }
+  on_start { |bbs| bbs.api = Web::Api.new(bbs, port: bbs.http_port).tap(&:start) if bbs.http_port.positive? }
+  on_drain { |bbs| bbs.api&.stop }
+  on_stop { |bbs| bbs.api&.stop }
 end
 
 board.run! if Rubbs.main?(__FILE__)
