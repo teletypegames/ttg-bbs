@@ -15,7 +15,7 @@ steps:
     fragment: PIGEON
     hints:
       - It is an April Fools' RFC, and one of the most famous.
-      - HackerCave BBS, the RFC shelf, number 1149.
+      - HackerCave BBS, the April 1st selection, number 1149.
 
   - clue: |
       The standard you just read names a typical MTU. How heavy is it?
