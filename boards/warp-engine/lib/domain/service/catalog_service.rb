@@ -2,33 +2,33 @@
 
 require 'zlib'
 
-# The board's file area: the shelves, their titles, and a title's bytes for
+# The board's file area: the directories, their titles, and a title's bytes for
 # a download, but only when they are the ones its index line promises.
 class CatalogService
-  def initialize(shelves:, archive:, max_bytes:)
-    @shelves   = shelves
+  def initialize(directories:, archive:, max_bytes:)
+    @directories = directories
     @archive   = archive
     @max_bytes = max_bytes
   end
 
-  def shelves = @shelves.all
+  def directories = @directories.all
 
-  # The titles of +shelf+; nil when the archive does not answer.
-  def titles(shelf, fresh: false)
-    @archive.titles(shelf, fresh: fresh)
+  # The titles of +directory+; nil when the archive does not answer.
+  def titles(directory, fresh: false)
+    @archive.titles(directory, fresh: fresh)
   rescue Rubbs::Common::Web::HTTP::Error => e
     Rubbs.log('archive', e.message)
     nil
   end
 
-  # The archive's address of a shelf or a title.
+  # The archive's address of a directory or a title.
   def url(item) = @archive.url(item.path)
 
   def downloads(title) = DownloadModel.of(title.key)
 
   # The bytes of +title+, or why not: :too_big, :unavailable (the archive
   # did not give them), :changed (not the size or CRC-32 of the index line:
-  # the shelf was updated meanwhile).
+  # the directory was updated meanwhile).
   def fetch(title)
     return :too_big if title.size > @max_bytes
 

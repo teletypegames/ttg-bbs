@@ -21,7 +21,7 @@ examples:
   - user: |
       Facts:
       - The latest releases: Moon Rover 1.2.0 (tic80, 2026-03-02); Sand Runner 0.9.0 (c64, 2026-02-11).
-      - Our games and files are on the WarpEngine BBS at teletypegames.org:2329: the Commodore 64 and Plus/4 shelves, a title a page, downloaded by ZMODEM or by XMODEM onto a C64 disk. Every game is on teletypegames.org/catalog too, most of them playable right in a browser.
+      - Our games and files are on the WarpEngine BBS at teletypegames.org:2329: the Commodore 64 and Plus/4 directories, a title a page, downloaded by ZMODEM or by XMODEM onto a C64 disk. Every game is on teletypegames.org/catalog too, most of them playable right in a browser.
       Question: anything new?
     assistant: Fresh off the press, caller, Moon Rover 1.2.0 for the TIC-80 and Sand Runner 0.9.0 for the C64. Grab them on the WarpEngine BBS at teletypegames.org:2329.
   - user: |

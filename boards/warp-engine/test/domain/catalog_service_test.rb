@@ -11,16 +11,16 @@ class CatalogServiceTest < Minitest::Test
       data ? data[0, max_bytes + 1] : raise(Rubbs::Common::Web::HTTP::Error, 'GET /C64/GAME.PRG: answered 404')
     end
 
-    def titles(_shelf, fresh:)
+    def titles(_directory, fresh:)
       data ? [fresh] : raise(Rubbs::Common::Web::HTTP::Error, 'GET /C64/INDEX.TXT: the deadline passed')
     end
   end
 
   def catalog(data, max_bytes: 100)
-    CatalogService.new(shelves: nil, archive: FakeArchive.new(data), max_bytes: max_bytes)
+    CatalogService.new(directories: nil, archive: FakeArchive.new(data), max_bytes: max_bytes)
   end
 
-  def title = TitleModel.parse(BoardTest.line, SHELF)
+  def title = TitleModel.parse(BoardTest.line, DIRECTORY)
 
   def test_gives_the_bytes_the_index_promises
     assert_equal 'GAME', catalog('GAME').fetch(title)
@@ -34,8 +34,8 @@ class CatalogServiceTest < Minitest::Test
   end
 
   def test_no_titles_when_the_archive_fails
-    assert_nil(quietly { catalog(nil).titles(SHELF) })
-    assert_equal [true], catalog('GAME').titles(SHELF, fresh: true)
+    assert_nil(quietly { catalog(nil).titles(DIRECTORY) })
+    assert_equal [true], catalog('GAME').titles(DIRECTORY, fresh: true)
   end
 
   def test_counts_a_download

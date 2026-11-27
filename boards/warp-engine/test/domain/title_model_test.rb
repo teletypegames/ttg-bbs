@@ -4,13 +4,13 @@ require 'test_helper'
 
 class TitleModelTest < Minitest::Test
   def test_reads_the_description_of_a_version_2_line
-    title = TitleModel.parse("GAME.PRG|1.0|4|0000000a|Game|Me|About it.|tool|GAME.PVW\n", BoardTest::SHELF)
+    title = TitleModel.parse("GAME.PRG|1.0|4|0000000a|Game|Me|About it.|tool|GAME.PVW\n", BoardTest::DIRECTORY)
 
     assert_equal 'About it.', title.description
   end
 
   def test_parses_an_index_line
-    title = TitleModel.parse(BoardTest.line, BoardTest::SHELF)
+    title = TitleModel.parse(BoardTest.line, BoardTest::DIRECTORY)
 
     assert_equal 'GAME.PRG', title.file
     assert_equal 4, title.size
@@ -20,13 +20,13 @@ class TitleModelTest < Minitest::Test
   end
 
   def test_skips_comments_and_broken_lines
-    assert_nil TitleModel.parse("#SHELF 1\n", BoardTest::SHELF)
-    assert_nil TitleModel.parse("GAME.PRG|1.0|big|00000000|Game|Me|About\n", BoardTest::SHELF)
-    assert_nil TitleModel.parse("GAME.PRG|1.0|4\n", BoardTest::SHELF)
+    assert_nil TitleModel.parse("#SHELF 1\n", BoardTest::DIRECTORY)
+    assert_nil TitleModel.parse("GAME.PRG|1.0|big|00000000|Game|Me|About\n", BoardTest::DIRECTORY)
+    assert_nil TitleModel.parse("GAME.PRG|1.0|4\n", BoardTest::DIRECTORY)
   end
 
   def test_encodes_the_file_name_in_its_path
-    title = TitleModel.parse(BoardTest.line(file: 'MY GAME?/../X.PRG'), BoardTest::SHELF)
+    title = TitleModel.parse(BoardTest.line(file: 'MY GAME?/../X.PRG'), BoardTest::DIRECTORY)
 
     assert_equal '/C64/MY%20GAME%3F%2F..%2FX.PRG', title.path
   end

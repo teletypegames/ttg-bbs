@@ -2,19 +2,19 @@
 
 require 'uri'
 
-# One title of a shelf: a line of its INDEX.TXT,
+# One title of a directory: a line of its INDEX.TXT,
 # file|version|size|crc32|title|author|description, and in version 2 of the
 # index |category|preview after it, which the board does not show.
-TitleModel = Data.define(:shelf, :file, :version, :size, :crc32, :title, :author, :description) do
-  # The title of +line+ on +shelf+; nil for a comment, a blank or a broken line.
-  def self.parse(line, shelf)
+TitleModel = Data.define(:directory, :file, :version, :size, :crc32, :title, :author, :description) do
+  # The title of +line+ on +directory+; nil for a comment, a blank or a broken line.
+  def self.parse(line, directory)
     return nil if line.start_with?('#')
 
     file, version, size, crc32, title, author, description = line.chomp.split('|', -1)
     return nil if description.nil? || file.empty? || !size.match?(/\A\d+\z/) || !crc32.match?(/\A\h{8}\z/)
 
     new(
-      shelf:       shelf,
+      directory:   directory,
       file:        file,
       version:     version,
       size:        size.to_i,
@@ -27,13 +27,13 @@ TitleModel = Data.define(:shelf, :file, :version, :size, :crc32, :title, :author
 
   # The file's address on the archive; the name is encoded, so a space,
   # a slash or a question mark in it stays part of the name.
-  def path = "#{shelf.path}/#{URI.encode_uri_component(file)}"
+  def path = "#{directory.path}/#{URI.encode_uri_component(file)}"
 
-  # The description; the shelf cuts it short, and then it ends in an ellipsis.
+  # The description; the directory cuts it short, and then it ends in an ellipsis.
   def about = description.match?(/[.!?)]\z/) ? description : "#{description}…"
 
   # The name the file gets on a Commodore disk: the file name without .PRG.
   def disk_name = file.sub(/\.prg\z/i, '')
 
-  def key = "#{shelf.id}/#{file}"
+  def key = "#{directory.id}/#{file}"
 end

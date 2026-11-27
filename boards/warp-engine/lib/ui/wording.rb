@@ -9,7 +9,7 @@ module UI
     def self.refusal(reason, title)
       case reason
       when :too_big then "#{title.file} is too big for a download on this line."
-      when :changed then "#{title.file} has just been updated on the archive. Read the shelf again and pick it anew."
+      when :changed then "#{title.file} has just been updated on the archive. Read the directory again and pick it anew."
       else NO_ANSWER
       end
     end

@@ -2,15 +2,15 @@
 
 module UI
   module Modern
-    # What the caller does on the modern face: open a shelf, read it again,
+    # What the caller does on the modern face: open a directory, read it again,
     # take a title home, the network's feedback and wall.
     module Helpers
-      def open_shelf(shelf)
-        show(:titles, shelf: shelf, titles: read_shelf(shelf))
+      def open_directory(directory)
+        show(:titles, directory: directory, titles: read_directory(directory))
       end
 
-      def reload_shelf(window, shelf)
-        window.replace_items(read_shelf(shelf, fresh: true))
+      def reload_directory(window, directory)
+        window.replace_items(read_directory(directory, fresh: true))
       end
 
       def download(title, protocol)
@@ -34,11 +34,11 @@ module UI
       end
 
       # The network's feedback (ttg-common TTG::Feedback), about the title
-      # picked on a shelf, if any.
+      # picked in a directory, if any.
       def feedback
-        shelf = window(:titles)
-        title = shelf&.selected
-        about = title && "#{shelf.title}: #{title.title} v#{title.version} (#{title.file})"
+        directory = window(:titles)
+        title = directory&.selected
+        about = title && "#{directory.title}: #{title.title} v#{title.version} (#{title.file})"
         with_line { TTG::Feedback.open(@session, context: about) }
       end
 
@@ -47,8 +47,8 @@ module UI
 
       private
 
-      def read_shelf(shelf, fresh: false)
-        loading("Reading the #{shelf.name} shelf…", failed: Wording::NO_ANSWER) { catalog.titles(shelf, fresh: fresh) }
+      def read_directory(directory, fresh: false)
+        loading("Reading the #{directory.name} directory…", failed: Wording::NO_ANSWER) { catalog.titles(directory, fresh: fresh) }
       end
 
       def transfer(session, title, protocol, data)

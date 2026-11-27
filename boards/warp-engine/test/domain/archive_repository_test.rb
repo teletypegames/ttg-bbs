@@ -21,7 +21,7 @@ class ArchiveRepositoryTest < Minitest::Test
 
   def test_reads_an_index_once_and_cleans_it
     index = "#SHELF 1\n#{BoardTest.line(title: "Ga\e]52;c;evil\ame")}"
-    titles = Rubbs::Common::Web::HTTP.stub(:get, answer(index)) { 2.times.map { @archive.titles(SHELF) } }.last
+    titles = Rubbs::Common::Web::HTTP.stub(:get, answer(index)) { 2.times.map { @archive.titles(DIRECTORY) } }.last
 
     assert_equal ['Ga]52;c;evilme'], titles.map(&:title)
     assert_equal 1, @calls.size
@@ -32,8 +32,8 @@ class ArchiveRepositoryTest < Minitest::Test
     failure = Rubbs::Common::Web::HTTP::Error.new('GET http://archive.example/C64/INDEX.TXT: the deadline passed')
     titles = quietly do
       Rubbs::Common::Web::HTTP.stub(:get, answer(BoardTest.line, failure)) do
-        @archive.titles(SHELF)
-        @archive.titles(SHELF, fresh: true)
+        @archive.titles(DIRECTORY)
+        @archive.titles(DIRECTORY, fresh: true)
       end
     end
 
@@ -44,9 +44,9 @@ class ArchiveRepositoryTest < Minitest::Test
   def test_fresh_replaces_the_kept_index
     newer = BoardTest.line(title: 'Newer')
     titles = Rubbs::Common::Web::HTTP.stub(:get, answer(BoardTest.line, newer)) do
-      @archive.titles(SHELF)
-      @archive.titles(SHELF, fresh: true)
-      @archive.titles(SHELF)
+      @archive.titles(DIRECTORY)
+      @archive.titles(DIRECTORY, fresh: true)
+      @archive.titles(DIRECTORY)
     end
 
     assert_equal ['Newer'], titles.map(&:title)
@@ -55,8 +55,8 @@ class ArchiveRepositoryTest < Minitest::Test
 
   def test_raises_when_the_archive_never_answered
     Rubbs::Common::Web::HTTP.stub(:get, ->(*, **) { response('gone', status: 404) }) do
-      assert_raises(Rubbs::Common::Web::HTTP::Error) { @archive.titles(SHELF) }
-      assert_raises(Rubbs::Common::Web::HTTP::Error) { @archive.titles(SHELF, fresh: true) }
+      assert_raises(Rubbs::Common::Web::HTTP::Error) { @archive.titles(DIRECTORY) }
+      assert_raises(Rubbs::Common::Web::HTTP::Error) { @archive.titles(DIRECTORY, fresh: true) }
     end
   end
 

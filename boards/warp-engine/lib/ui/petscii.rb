@@ -4,7 +4,7 @@ require_relative 'wording'
 
 module UI
   # The board on a Commodore 64: PETSCII on a 40×25 screen. A cursor menu of
-  # the shelves, their titles as numbered lists, a title on a page of its own,
+  # the directories, their titles as numbered lists, a title on a page of its own,
   # and its download by XMODEM-1K or XMODEM, the protocols a C64 terminal
   # knows; the network's wall and feedback (ttg-common).
   class Petscii < Rubbs::Petscii::Face
@@ -17,7 +17,7 @@ module UI
       'novaterm or ultimateterm it is the download or receive menu. It asks for a file name, ' \
       'and saves the file as a program on your disk.', '',
       ' The board waits a minute for your terminal. run/stop gives up.', '',
-      ' Every file is checked against its shelf before it goes. Xmodem fills its last block up, ' \
+      ' Every file is checked against its directory before it goes. Xmodem fills its last block up, ' \
       'so the file on your disk may be a little longer: it loads all the same.'
     ].freeze
 
@@ -36,9 +36,9 @@ module UI
     end
 
     main_menu do
-      each_of(-> { catalog.shelves }) do |shelf, i|
-        name = shelf.name.downcase
-        item((i + 1).to_s, name, "#{name} titles to download") { open_shelf(shelf) }
+      each_of(-> { catalog.directories }) do |directory, i|
+        name = directory.name.downcase
+        item((i + 1).to_s, name, "#{name} titles to download") { open_directory(directory) }
       end
       item('h', 'how to download', 'protocols, terminals, file names') { page('HOW TO DOWNLOAD', HELP) }
       item('w', 'the engine room wall', 'tell the others what you loaded') { TTG::Wall.open(@session) }
@@ -48,27 +48,32 @@ module UI
 
     private
 
-    def open_shelf(shelf)
-      say('reading the shelf…', color: GR)
+    def open_directory(directory)
+      say('reading the directory…', color: GR)
       loop do
-        titles = catalog.titles(shelf) || fail_with(Wording::NO_ANSWER)
-        picked = pick(shelf.name.upcase, titles, empty: 'this shelf is empty right now.', right: "#{titles.size} titles") do |t|
+        titles = catalog.titles(directory) || fail_with(Wording::NO_ANSWER)
+        picked = pick(
+          directory.name.upcase,
+          titles,
+          empty: 'this directory is empty right now.',
+          right: "#{titles.size} titles"
+        ) do |t|
           "#{t.title} #{GR}#{t.version}#{LG}"
         end
         return unless picked
 
-        show_title(shelf, picked)
+        show_title(directory, picked)
       end
     end
 
-    def show_title(shelf, title)
+    def show_title(directory, title)
       count = catalog.downloads(title)
       lines = [*wrap(title.title).map { |l| " #{WH}#{l}#{LG}" },
                " #{CY}v#{title.version}#{LG}  #{title.size} bytes",
                " #{GR}#{title.author.downcase}  #{count} download#{'s' unless count == 1}#{LG}", '',
                *wrap(title.about).map { |l| " #{l}" }, '',
                " #{GR}load\"#{title.disk_name.downcase}\",8,1 and run#{LG}"]
-      page(shelf.name.upcase, lines, wait: false)
+      page(directory.name.upcase, lines, wait: false)
       key = actions(%w[1 xmodem-1k], %w[x xmodem], %w[q back])
       download(title, PROTOCOL_KEYS[key]) if PROTOCOL_KEYS.key?(key)
     end

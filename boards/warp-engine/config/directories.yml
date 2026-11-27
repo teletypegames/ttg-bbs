@@ -1,12 +1,12 @@
-# The shelves of the archive the board lends from, in the order of its menu.
+# The directories of the archive the board lends from, in the order of its menu.
 # Each is a folder of archive.teletypegames.org that the WarpEngine of
-# teletypegames.org keeps, with an INDEX.TXT in the shelf format
+# teletypegames.org keeps, with an INDEX.TXT in the Directory feed format
 # (#SHELF 1, file|version|size|crc32|title|author|description).
 #
 # [id]     a short name, unique
 # [name]   shown in the menus
 # [path]   the folder on the archive
-# [about]  a line about the shelf
+# [about]  a line about the directory
 
 - id: c64
   name: Commodore 64

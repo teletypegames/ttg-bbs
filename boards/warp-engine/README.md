@@ -1,16 +1,16 @@
 # WarpEngine BBS
 
 The file area of Teletype Games on a telnet line. The WarpEngine of
-[teletypegames.org](https://teletypegames.org) keeps shelves for machines
+[teletypegames.org](https://teletypegames.org) keeps directories for machines
 without a web browser on the archive's plain HTTP
-(`http://archive.teletypegames.org`); this board lends them out: pick a shelf,
+(`http://archive.teletypegames.org`); this board lends them out: pick a directory,
 pick a title, and take it home by ZMODEM or XMODEM. It is the telnet sibling of
 [WE64](https://git.teletypegames.org/stores/we-c64), the store that runs on
 the C64 itself.
 
 It has two faces on one port, like every board of the network:
 
-- a **modern** one for ANSI terminals: the shelves and the titles in two-pane
+- a **modern** one for ANSI terminals: the directories and the titles in two-pane
   windows, and a download by **ZMODEM** (SyncTERM, NetRunner, Qodem, the web
   terminal of bbsweb start it by themselves), **XMODEM-1K** or **XMODEM**;
 - a **Commodore 64** one in PETSCII, 40×25: numbered lists, a page a title, and
@@ -18,8 +18,8 @@ It has two faces on one port, like every board of the network:
   (CCGMS, Novaterm, UltimateTerm) knows. The caller starts the download in the
   terminal and names the file; it lands on the disk as a program.
 
-The shelves are the Commodore 64 one (`/C64`) and the Plus/4 one (`/PLUS4`),
-listed in `config/shelves.yml`. Each has an `INDEX.TXT` in the shelf format of
+The directories are the Commodore 64 one (`/C64`) and the Plus/4 one (`/PLUS4`),
+listed in `config/directories.yml`. Each has an `INDEX.TXT` in the Directory feed format of
 the WarpEngine (`#SHELF 2`, `file|version|size|crc32|title|author|description|category|preview`; the board reads the first seven fields, so a version 1 index reads too).
 A file goes out only when its size and CRC-32 match its index line.
 
@@ -29,7 +29,7 @@ loads all the same.
 
 **Files > The engine room wall** (`W` on the C64) is the board's wall, where callers write and
 answer each other; **Files > Write to the sysops** (`F` on the C64) sends the sysops a message,
-about the title picked on a shelf. Both are ttg-common's (`TTG::Wall`, `TTG::Feedback`) and live
+about the title picked in a directory. Both are ttg-common's (`TTG::Wall`, `TTG::Feedback`) and live
 on TTG Gate BBS, the network's Central, asked on the `interstack` network
 (`central TTG::CENTRAL`); `lib/content/wall.yml` and `lib/content/feedback.yml` say them the
 board's way.
@@ -60,8 +60,8 @@ the stack's `.env`). Its only secret is `RUBBS_AUTH_SECRET`, the one every board
 | Variable | Default | |
 |---|---|---|
 | `WARP_ENGINE_BBS_ARCHIVE_URL` | `http://archive.teletypegames.org` | the archive's plain HTTP |
-| `WARP_ENGINE_BBS_SHELVES` | `config/shelves.yml` | the shelves and their folders |
-| `WARP_ENGINE_BBS_INDEX_TTL` | `300` | seconds a shelf's `INDEX.TXT` is kept |
+| `WARP_ENGINE_BBS_DIRECTORIES` | `config/directories.yml` | the directories and their folders |
+| `WARP_ENGINE_BBS_INDEX_TTL` | `300` | seconds a directory's `INDEX.TXT` is kept |
 | `WARP_ENGINE_BBS_DOWNLOAD_MAX` | `1048576` | the largest file sent, in bytes |
 | `WARP_ENGINE_BBS_DB` | `data/warp-engine.sqlite3` | the board's SQLite database: the downloads that went through |
 | `TTG_CENTRAL_URL` | `http://ttg-gate-bbs:8090` | the network's Central (TTG Gate BBS): feedback and the wall |
@@ -75,9 +75,9 @@ and counted), then renamed to `downloads.jsonl.imported`; the log says how many
 rows came over.
 
 The archive is read through rubbs' `Rubbs::Common::Web::HTTP` (a deadline, a byte cap, the
-board's User-Agent, public addresses only); a shelf's index is kept in a
+board's User-Agent, public addresses only); a directory's index is kept in a
 `Rubbs::Common::Storage::Cache` for `WARP_ENGINE_BBS_INDEX_TTL` seconds, so callers opening the
-same shelf at once share one request, and a dead archive gives the last index
+same directory at once share one request, and a dead archive gives the last index
 it sent (Reload reads it anew with `Rubbs::Common::Storage::Cache#refresh`, which keeps the old one
 when the archive fails). Its lines go through `Rubbs::Common::Text.clean` before they are
 shown. The repository raises `Rubbs::Common::Web::HTTP::Error`; the catalog service logs it
@@ -91,24 +91,24 @@ Every log line (the board's and rubbs') starts with `warp-engine-bbs:`
 
 ```
 bbs.rb                      entry point: Rubbs.board (rubbs 2.0 DSL)
-config/shelves.yml          the shelves of the archive
+config/directories.yml      the directories of the archive
 lib/domain.rb               requires the domain in dependency order
 lib/domain/
   migrations.rb             the schema of the database, one step per version
   model/download_model.rb   the downloads table (Rubbs::Common::Storage::Model) and the counts
-  model/shelf_model.rb      a shelf: id, name, folder, about
+  model/directory_model.rb  a directory: id, name, folder, about
   model/title_model.rb      a line of INDEX.TXT
-  repository/shelf_repository.rb     config/shelves.yml
+  repository/directory_repository.rb config/directories.yml
   repository/archive_repository.rb   INDEX.TXT (cached) and the files, over HTTP
   repository/legacy_download_log.rb  the one-time import of data/downloads.jsonl
-  service/catalog_service.rb         shelves, titles, a checked fetch, the log
+  service/catalog_service.rb         directories, titles, a checked fetch, the log
   warp_engine_bbs.rb        the composition root (WarpEngineBBS, a Rubbs::Common::Board::Domain)
 lib/ui/
   wording.rb                why a download cannot go, both faces
   modern.rb                 UI::Modern::APP: commands, menus, help, desktop
-  modern/helpers.rb         its helpers: open a shelf, a download, a title's card
-  modern/shelves_window.rb  the shelves window
-  modern/titles_window.rb   a shelf's titles window and its protocol buttons
+  modern/helpers.rb         its helpers: open a directory, a download, a title's card
+  modern/directories_window.rb  the directories window
+  modern/titles_window.rb   a directory's titles window and its protocol buttons
   petscii.rb                UI::Petscii: the C64 face (a Rubbs::Petscii::Face)
 ```
 

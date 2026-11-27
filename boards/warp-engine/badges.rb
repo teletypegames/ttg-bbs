@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# The badges of WarpEngine BBS (TTG::Badges): the C64 and Plus/4 shelves.
+# The badges of WarpEngine BBS (TTG::Badges): the C64 and Plus/4 directories.
 # CatalogService reports :download.
 Rubbs.badges :'warp-engine' do
   event :download, ref: 'the title', protocol: 'zmodem or xmodem'

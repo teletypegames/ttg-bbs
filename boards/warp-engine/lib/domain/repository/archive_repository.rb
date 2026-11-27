@@ -1,29 +1,29 @@
 # frozen_string_literal: true
 
 # The archive's plain HTTP (archive.teletypegames.org): the INDEX.TXT of a
-# shelf, kept for +ttl+ seconds, and the bytes of a file. A dead archive
+# directory, kept for +ttl+ seconds, and the bytes of a file. A dead archive
 # gives the last index it sent; when there is none, or a file does not
 # come, it raises Rubbs::Common::Web::HTTP::Error.
 class ArchiveRepository
   INDEX = 'INDEX.TXT'
-  # An INDEX.TXT is a line a title; a shelf of thousands fits in this.
+  # An INDEX.TXT is a line a title; a directory of thousands fits in this.
   INDEX_MAX_BYTES = 512 * 1024
-  # The shelves are a handful; each one's titles are kept.
-  SHELVES_KEPT = 32
+  # The directories are a handful; each one's titles are kept.
+  DIRECTORIES_KEPT = 32
 
   attr_reader :base_url
 
   def initialize(base_url, ttl:)
     @base_url = base_url.delete_suffix('/')
-    @titles   = Rubbs::Common::Storage::Cache.new(ttl: ttl, max_entries: SHELVES_KEPT)
+    @titles   = Rubbs::Common::Storage::Cache.new(ttl: ttl, max_entries: DIRECTORIES_KEPT)
   end
 
   def url(path) = "#{@base_url}#{path}"
 
-  # The titles of +shelf+ in the order of its index, read again when
+  # The titles of +directory+ in the order of its index, read again when
   # +fresh+.
-  def titles(shelf, fresh: false)
-    fresh ? reread(shelf) : @titles.fetch(shelf.id) { index(shelf) }
+  def titles(directory, fresh: false)
+    fresh ? reread(directory) : @titles.fetch(directory.id) { index(directory) }
   end
 
   # The bytes of +path+, at most +max_bytes+.
@@ -32,15 +32,15 @@ class ArchiveRepository
   private
 
   # The index read now; when that fails, the one kept (an expired one too).
-  def reread(shelf)
-    @titles.refresh(shelf.id) { index(shelf) }
+  def reread(directory)
+    @titles.refresh(directory.id) { index(directory) }
   rescue Rubbs::Common::Web::HTTP::Error => e
-    @titles.fetch(shelf.id) { raise e }
+    @titles.fetch(directory.id) { raise e }
   end
 
-  def index(shelf)
-    body = Rubbs::Common::Text.clean(get("#{shelf.path}/#{INDEX}", INDEX_MAX_BYTES))
-    body.each_line.filter_map { |line| TitleModel.parse(line, shelf) }.freeze
+  def index(directory)
+    body = Rubbs::Common::Text.clean(get("#{directory.path}/#{INDEX}", INDEX_MAX_BYTES))
+    body.each_line.filter_map { |line| TitleModel.parse(line, directory) }.freeze
   end
 
   def get(path, max_bytes)
