@@ -14,9 +14,13 @@ board = Rubbs.board 'TTG Gate BBS', TTGGateBBS do
   auth(login: :menu, terminal_login: true, &:accounts)
   central serve:    lambda(&:central_port),
           services: [TTG::Feedback::Service, TTG::Wall::Service, TTG::PrivateMessage::Service, TTG::Badges::Service,
-                     Rubbs::Common::Hunt::Service]
+                     Rubbs::Common::Hunt::Service, TTG::Bulletin::Service]
   badges TTG::Badges.load_all(__dir__)
   on_start { |gate| UI::Sysop.offer(gate.accounts) }
+  on_start do |gate|
+    TTG::Bulletin.source = ->(at) { gate.bulletin(at: at) }
+    TTG::Logon.hint = 'T: the whole day on the Today tab.'
+  end
   modern { |bbs| call { UI::Modern::Gate.new(session, bbs).run } }
   petscii(goodbye: false) { |bbs| call { UI::Petscii.call(session, bbs) } }
 end

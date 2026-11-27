@@ -9,6 +9,13 @@ module UI
         show(:titles, directory: directory, titles: read_directory(directory))
       end
 
+      # Opens the Directory another board asked for (TTG::Network: directory:ID); nil when none.
+      def open_place
+        id = TTG::Network.place_of(@session.take_goto, 'directory') or return nil
+        directory = catalog.directories.find { |d| d.id == id } or return nil
+        open_directory(directory)
+      end
+
       def reload_directory(window, directory)
         window.replace_items(read_directory(directory, fresh: true))
       end

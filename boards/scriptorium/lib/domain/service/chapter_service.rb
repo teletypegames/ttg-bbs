@@ -79,7 +79,16 @@ class ChapterService
     text.tr!("\t", ' ')
     text.gsub!(Rubbs::Common::Text::CONTROLS, '')
     text.gsub!(/^ +$/, '')
-    body!(text)
+    unwrap_illustrations!(body!(text))
+  end
+
+  # Gutenberg's picture markers without the pictures: a bare [Illustration] goes, one with a
+  # caption ([Illustration: … ], over lines) leaves its caption, so a chapter heading drawn in a
+  # picture still heads its chapter.
+  def unwrap_illustrations!(text)
+    text.gsub!(/\[Illustration\]/i, '')
+    text.gsub!(/\[Illustration:\s*([^\[\]]*?)\s*\]/mi) { Regexp.last_match(1) }
+    text
   end
 
   def utf8(raw)

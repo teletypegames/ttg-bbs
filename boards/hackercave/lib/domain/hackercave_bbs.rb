@@ -31,6 +31,7 @@ class HackerCaveBBS
   path    :errata_file, 'data/errata.json'
   path    :fulltext_db, 'data/fulltext.sqlite3'
   path    :jargon_db, 'data/jargon.sqlite3'
+  path    :herald_file, 'data/herald.json', env: 'HERALD'
 
   database :db, MIGRATIONS
   database :index_db, INDEX_MIGRATIONS, name: :index
@@ -41,7 +42,10 @@ class HackerCaveBBS
   service(:reading) { ReadingService.new(texts: text_repository, editor: editor, reflow: ReflowService.new) }
   service(:jargon) { JargonService.new(file: JargonFileRepository.new(File.expand_path(JARGON_SOURCE, self.class.root))) }
 
+  service(:herald) { HeraldService.new(jargon: jargon, path: herald_file) }
+
   background('jargon') { jargon.prepare }
+  background('herald', every: CHECK_EVERY) { herald.publish }
   background('index refresh', every: CHECK_EVERY, retry_after: RETRY_AFTER, max_retry: CHECK_EVERY) do
     import.refresh
     mirror_service&.refresh

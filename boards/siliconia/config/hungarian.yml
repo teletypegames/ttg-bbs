@@ -1,0 +1,7 @@
+# Machines of Hungary that Wikidata does not mark so (no country of origin, no maker with one), or
+# does not put under the catalog's roots: the "Hungarian machines" selection takes them too, and the
+# catalog query fetches the ones it would not find ([kind] the catalog's kind: handheld, console,
+# home, micro, pc). Measured 2026-11-27 (#522): Wikidata marked 9 of 11 found; Homelab, HT-2080Z,
+# HT-3080C and PTA-4000 have no item there at all, the Practicomp and the TPA are minicomputers.
+- { id: Q1240320,   kind: home }   # Primo (Microkey), no country of origin on Wikidata
+- { id: Q142172489, kind: home }   # Aircomp 16, a "computer hardware" item, under no root

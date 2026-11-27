@@ -37,11 +37,12 @@ class CatalogService
 
   def self.order(machine) = [machine.sparse? ? 1 : 0, machine.name.downcase, machine.id[1..].to_i]
 
-  def initialize(snapshot, wikidata:, ttl:, legends: [])
-    @snapshot = snapshot
-    @wikidata = wikidata
-    @ttl      = ttl
-    @legends  = legends
+  def initialize(snapshot, wikidata:, ttl:, legends: [], hungarian: [])
+    @snapshot  = snapshot
+    @wikidata  = wikidata
+    @ttl       = ttl
+    @legends   = legends
+    @hungarian = hungarian
     @lock     = Mutex.new
     @index    = nil
   end
@@ -96,7 +97,8 @@ class CatalogService
 
   def legends = @legends.filter_map { |id| find(id) }
 
-  def hungarian = machines.select(&:hungarian?)
+  # The machines of Hungary: Wikidata's (MachineModel#hungarian?) and the ones kept by hand.
+  def hungarian = machines.select { |m| m.hungarian? || @hungarian.include?(m.id) }
 
   def random = machines.reject(&:sparse?).sample || machines.sample
 

@@ -22,7 +22,10 @@ module UI
 
     APP = Rubbs::Modern::Application.define do
       theme :synchronet
-      helpers { include Helpers }
+      helpers do
+        include Helpers
+        include TTG::Network::Modern
+      end
 
       command(:directories, 'Directories', key: 'F2') { show(:directories) }
       command(:wall,     'The engine room wall…', hint: 'Wall') { wall }
@@ -34,10 +37,13 @@ module UI
       desktop do
         art Rubbs::Common::Text::BlockFont.half_blocks('WARP'), top: 0
         line TAGLINE, bottom: 0
-        on_show { show(:directories) }
+        on_show do
+          show(:directories)
+          open_place
+        end
       end
 
-      parts DirectoriesWindow, TitlesWindow
+      parts DirectoriesWindow, TitlesWindow, TTG::Network::Window
     end
   end
 end

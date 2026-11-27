@@ -16,7 +16,10 @@ module UI
 
     APP = Rubbs::Modern::Application.define do
       theme :synchronet
-      helpers { include Helpers }
+      helpers do
+        include Helpers
+        include TTG::Network::Modern
+      end
 
       command(:search,    'Search…', key: 'F2') { search }
       command(:random,    'Random machine', key: 'F3', hint: 'Random') { random }
@@ -64,7 +67,7 @@ module UI
         art  Logo.half_blocks, middle: -7
         line Wording::TAGLINE, style: :text, middle: -3
         line HELP, middle: -1
-        on_show { list('Legends', catalog.legends) }
+        on_show { open_place || list('Legends', catalog.legends) }
       end
 
       parts Windows::MachinesWindow,
@@ -76,7 +79,8 @@ module UI
             Windows::CompareWindow,
             Windows::MemoriesWindow,
             Windows::AddMemoryWindow,
-            Windows::MineWindow
+            Windows::MineWindow,
+            TTG::Network::Window
     end
   end
 end

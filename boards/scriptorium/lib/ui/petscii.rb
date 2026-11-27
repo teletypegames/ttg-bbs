@@ -13,7 +13,7 @@ module UI
     PREPARING   = 'The catalog is being prepared: it is downloaded from Project Gutenberg and indexed. ' \
                   'Try again in a minute. The classics selection is open meanwhile.'
     ABOUT = [
-      " #{WH}scriptorium bbs#{LG}", '',
+      " #{WH}Scriptorium BBS#{LG}", '',
       ' The classic literature vault of Teletype Games: tens of thousands of books from Project Gutenberg, ' \
       'cut into chapters for your terminal.', '',
       ' Pick a book, and the board fetches its plain text from gutenberg.org once, cuts it into chapters and ' \
@@ -84,7 +84,7 @@ module UI
       return alert('Nothing has been read here yet. Be the first!', color: YE) if list.empty?
 
       counts = list.to_h { |b, n| [b.id, n] }
-      books('MOST READ HERE', list.map(&:first), label: ->(b) { "#{GR}#{counts[b.id]}#{LG} #{b.short_title}" })
+      books('MOST READ HERE', list.map(&:first), label: ->(b) { "#{b.short_title} #{GR}#{counts[b.id]}#{LG}" })
     end
 
     def books(heading, list, label: :short_title)
@@ -110,7 +110,7 @@ module UI
     # the credit.
     def record(book)
       subjects = plain(book.subject_list.first(3).join('; '))
-      credit   = "ebook ##{book.id} from project gutenberg, #{book.url} - public domain in the usa."
+      credit   = "eBook ##{book.id} from Project Gutenberg, #{book.url} - public domain in the USA."
       [*lines(plain(book.short_title), WH), *lines(plain("by #{book.author}"), CY),
        " #{GR}#{facts(book)}#{LG}", *(['', *lines(subjects)] unless subjects.empty?), '', *lines(credit, GR)]
     end

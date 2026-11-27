@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 require 'date'
-require 'fileutils'
 require 'time'
-require 'json'
 
 # What the board gives the network's Daily Herald (the Today tab of TTG Gate BBS): the machine of
 # the week, written to +path+ as JSON (board, heading, title, text, until) for the gate to read.
@@ -34,24 +32,9 @@ class HeraldService
   end
 
   # Writes the note of +at+'s week unless the file has it already: :written, :same or :none.
-  def publish(at = Time.now)
-    note = note(at)
-    return :none unless note
-    return :same if current == note
-
-    FileUtils.mkdir_p(File.dirname(@path))
-    File.write("#{@path}.tmp", JSON.generate(note))
-    File.rename("#{@path}.tmp", @path)
-    :written
-  end
+  def publish(at = Time.now) = TTG::HeraldNote.publish(@path, note(at))
 
   private
-
-  def current
-    File.exist?(@path) ? JSON.parse(File.read(@path)) : nil
-  rescue JSON::ParserError
-    nil
-  end
 
   # The Monday after +at+, midnight local time.
   def week_end(at)

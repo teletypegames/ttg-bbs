@@ -40,13 +40,6 @@ module UI
 
     ACCOUNT = 'Your machines go under your name: log in or make an account first (your profile).'
 
-    # Where the network has more of a machine.
-    ELSEWHERE = {
-      'Q99775'   => 'its games on Commodex BBS, downloads on WarpEngine BBS',
-      'Q868568'  => 'downloads on WarpEngine BBS',
-      'Q1115913' => 'downloads on WarpEngine BBS'
-    }.freeze
-
     # The facts of +machine+ as [label, text] pairs: the CORE ones always (a dash when Wikidata has
     # none), the others only when known. +catalog+ names the machines before and after it.
     def self.facts(machine, catalog)
@@ -64,14 +57,15 @@ module UI
 
     def self.history(machine, catalog)
       [['Sold', sold(machine.sold)], ['Games', games(machine.games)], ['Before', catalog.predecessors(machine).map(&:name)],
-       ['After', catalog.successors(machine).map(&:name)], ['Magyarul', machine.name_hu], ['See also', ELSEWHERE[machine.id]]]
+       ['After', catalog.successors(machine).map(&:name)], ['Magyarul', machine.name_hu],
+       ['On the network', TTG::Network.machine_links(machine.id).map(&:first).join(', ')]]
     end
 
     # Two machines side by side: [label, first, second], a dash where one has none.
     def self.compare(first, second, catalog)
       a = facts(first, catalog).to_h
       b = facts(second, catalog).to_h
-      (a.keys | b.keys).reject { |k| k == 'See also' }.map { |k| [k, a.fetch(k, MISSING), b.fetch(k, MISSING)] }
+      (a.keys | b.keys).reject { |k| k == 'On the network' }.map { |k| [k, a.fetch(k, MISSING), b.fetch(k, MISSING)] }
     end
 
     def self.edit_hint(machine) = "Missing or wrong? Edit it on Wikidata: #{machine.id}"

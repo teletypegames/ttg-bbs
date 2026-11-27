@@ -36,7 +36,7 @@ module TTG
 
       # Files feedback from +actor+ (a Rubbs::Common::Central::Actor) sent on
       # +board+: +{ id: }+, or +:empty+, +:bad_link+, +:limited+.
-      def add(actor, board:, subject: '', body: '', kind: 'feedback', link: nil, context: nil)
+      def add(actor, board:, subject: '', body: '', kind: 'feedback', link: nil, context: nil, at: nil)
         body = Rubbs::Common::Text.clean(body).strip[0, MAX[:body]]
         return :empty if body.empty?
 
@@ -45,7 +45,8 @@ module TTG
         return :limited unless allowed?(actor)
 
         row = record(actor, board, kind: kind, subject: subject, body: body, link: link, context: context)
-        id  = @db[:feedback].insert(row)
+        row[:created_at] = written(at) || row[:created_at]
+        id = @db[:feedback].insert(row)
         forget_old_keys
         @notify&.call(row.merge(id: id))
         { id: id }
@@ -105,6 +106,15 @@ module TTG
       end
 
       private
+
+      # +at+ (an ISO 8601 time a board's Outbox kept the feedback at) when it
+      # is past and at most Outbox::KEEP old, in the form of #now; else +nil+.
+      def written(at)
+        time = at && Time.iso8601(at.to_s).utc
+        time.iso8601 if time && time <= Time.now.utc && Time.now.utc - time <= Outbox::KEEP
+      rescue ArgumentError
+        nil
+      end
 
       def record(actor, board, kind:, subject:, body:, link:, context:)
         {

@@ -18,14 +18,14 @@ module UI
   # size, and the Exhibition.
   class Petscii < Rubbs::Petscii::Face
     HELP = [
-      " #{WH}pixelia#{LG} is an art board of teletype games.", '',
-      " #{YE}1#{LG} the ansi gallery: the 16colo.rs archive, year by year, pack by pack. A piece shows 40 " \
+      " #{WH}Pixelia#{LG} is an art board of Teletype Games.", '',
+      " #{YE}1#{LG} The ANSI gallery: the 16colo.rs archive, year by year, pack by pack. A piece shows 40 " \
       'columns at a time: R shows the next 40 columns of a wider one.', '',
-      " #{YE}2#{LG} the canvas: one 40×25 picture that every caller paints on, from a c64 or a modern " \
+      " #{YE}2#{LG} The canvas: one 40×25 picture that every caller paints on, from a C64 or a modern " \
       'terminal, and both see it the same.', '',
-      " #{YE}3#{LG} the exhibition: the pictures saved from the canvas, and the petscii pictures of ttg " \
-      'canvas 64 uploaded by xmodem (U, after you log in).', '',
-      " #{GR}telnet pixelia on a modern terminal for the full-colour 80 column gallery.#{LG}"
+      " #{YE}3#{LG} The Exhibition: the pictures saved from the canvas, and the PETSCII pictures of TTG " \
+      'Canvas 64 uploaded by XMODEM (U, after you log in).', '',
+      " #{GR}Call Pixelia on a modern terminal for the full-colour gallery of 80 columns.#{LG}"
     ].freeze
 
     # PIXELIA in reversed blocks, five rows, a colour a letter.

@@ -5,7 +5,8 @@ module TTG
     # The letters as a service of the Central, on <tt>/messages</tt>, for
     # accounts only. Ops: +write+ (+to+, +subject+, +body+, +reply_to+),
     # +inbox+ and +outbox+ (+before+, +limit+), +read+ and +delete+ (+id+),
-    # +unread+, +block+ and +unblock+ (+name+).
+    # +unread+, +notify+ (the unread letters when a new one came since the
+    # last +notify+), +block+ and +unblock+ (+name+).
     class Service < Rubbs::Common::Central::Service
       path     '/messages'
       database :messages, MIGRATIONS
@@ -18,6 +19,7 @@ module TTG
       op(:read) { |actor, id:, **| account(actor) { store.read(actor, id) } }
       op(:delete) { |actor, id:, **| account(actor) { store.delete(actor, id) } }
       op(:unread) { |actor, **| account(actor) { store.unread(actor) } }
+      op(:notify) { |actor, **| account(actor) { store.notify(actor) } }
       op(:block) { |actor, name:, **| account(actor) { store.block(actor, name) } }
       op(:unblock) { |actor, name:, **| account(actor) { store.block(actor, name, on: false) } }
 

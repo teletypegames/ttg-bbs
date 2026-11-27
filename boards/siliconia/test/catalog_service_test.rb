@@ -37,6 +37,13 @@ class CatalogServiceTest < Minitest::Test
     assert_equal [['Zilog Z80', 2]], c.cpus.first(1)
   end
 
+  def test_a_machine_kept_by_hand_is_hungarian_too
+    assert_equal %w[Q99775 Q832692], sample_catalog(@dir, hungarian: %w[Q99775 Q404]).hungarian.map(&:id)
+    File.write(File.join(@dir, 'hungarian.yml'), "- { id: Q1240320, kind: home }\n- { id: Q1, kind: mainframe }\n- nonsense\n")
+    assert_equal({ 'Q1240320' => 'home' }, HungarianRepository.new(File.join(@dir, 'hungarian.yml')).kinds)
+    assert_empty HungarianRepository.new(File.join(@dir, 'none.yml')).kinds
+  end
+
   def test_the_family_line_and_the_same_cpu
     c = sample_catalog(@dir)
     assert_equal %w[Q918232 Q99775 Q1115919], c.family(c.find('Q99775')).map(&:id)

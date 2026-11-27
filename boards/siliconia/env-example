@@ -13,6 +13,8 @@ SILICONIA_BBS_CATALOG_TTL=604800
 
 # The Legends selection, kept by hand
 SILICONIA_BBS_LEGENDS=config/legends.yml
+# The machines of Hungary kept by hand (Wikidata does not mark them so).
+SILICONIA_BBS_HUNGARIAN=config/hungarian.yml
 
 # The Wikipedia leads kept in memory
 SILICONIA_BBS_WIKIPEDIA_CACHE=200

@@ -16,7 +16,7 @@ module UI
       HEX  = '0123456789abcdef'
 
       HELP = [
-        " #{WH}one canvas, everyone paints on it.#{LG} 40×25, the c64's own screen: it looks the same here and on " \
+        " #{WH}One canvas, everyone paints on it.#{LG} 40×25, the C64's own screen: it looks the same here and on " \
         'a modern terminal.', '',
         " #{YE}crsr#{LG} move  #{YE}home#{LG} top left", " #{YE}a key#{LG} paints it in the ink", " #{YE}del#{LG} rubs out",
         " #{YE}f3/f4#{LG} ink  #{YE}f5#{LG} reverse  #{YE}f6#{LG} glyphs", " #{YE}return#{LG} commands: ink, save …", '',

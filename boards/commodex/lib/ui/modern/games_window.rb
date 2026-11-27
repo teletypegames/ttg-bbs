@@ -20,6 +20,7 @@ module UI
         action('A&bout') { |game| read_about(game) }
         action('&Tips') { |game| show_tips(game) }
         action('A&dd a tip') { |game| add_tip(game) }
+        action('&Network') { |_game| network(TTG::Network.game_links) }
       end
     end
   end

@@ -50,8 +50,10 @@ class WikidataRepository
     'tebibyte' => 'TiB'
   }.freeze
 
-  def initialize(pause: 1, client: Rubbs::Common::Web::Wikidata.new(user_agent: USER_AGENT, pause: pause))
+  # [extra] { QID => kind } of machines to fetch even when they are under no root (HungarianRepository)
+  def initialize(pause: 1, client: Rubbs::Common::Web::Wikidata.new(user_agent: USER_AGENT, pause: pause), extra: {})
     @client = client
+    @extra  = extra
   end
 
   # The records of every machine, sorted by name.
@@ -65,13 +67,14 @@ class WikidataRepository
 
   private
 
-  # { id => kind } of every machine under ROOTS.
+  # { id => kind } of every machine under ROOTS, and the extra ones.
   def machines
     rows   = ROOTS.keys.to_h { |root| [root, select(items_query(root))] }
     supers = rows.values.flatten.filter_map { |row| qid(row['sup']) }.to_set
-    rows.each_with_object({}) do |(root, list), kinds|
+    found = rows.each_with_object({}) do |(root, list), kinds|
       types(list).each { |id, of| kinds[id] ||= ROOTS[root] if machine?(id, of, supers) }
     end
+    @extra.merge(found)
   end
 
   # { id => the QIDs it is an instance of } of the rows of an items query.

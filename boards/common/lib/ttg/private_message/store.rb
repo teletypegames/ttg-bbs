@@ -59,7 +59,19 @@ module TTG
       end
 
       # The unread letters to +actor+: +{ count: }+.
-      def unread(actor) = { count: @db[:messages].where(to_account_id: actor.id, read_at: nil, deleted_by_recipient: 0).count }
+      def unread(actor) = { count: unread_letters(actor).count }
+
+      # What to tell +actor+ of at a sign-in: +{ news: }+, the count of the
+      # unread letters when the newest of them came after the last time,
+      # else 0; that newest is remembered as told.
+      def notify(actor)
+        newest = unread_letters(actor).max(:id) or return { news: 0 }
+        told = @db[:message_notices].where(account_id: actor.id).get(:last_id).to_i
+        return { news: 0 } if newest <= told
+
+        @db[:message_notices].insert_conflict(:replace).insert(account_id: actor.id, last_id: newest)
+        { news: unread_letters(actor).count }
+      end
 
       # +actor+ takes no more letters from +name+ (+:ok+, +:unknown_account+),
       # or, with +on: false+, takes them again.
@@ -116,6 +128,8 @@ module TTG
           Sequel.|({ to_account_id: actor.id, deleted_by_recipient: 0 }, { from_account_id: actor.id, deleted_by_sender: 0 })
         )
       end
+
+      def unread_letters(actor) = @db[:messages].where(to_account_id: actor.id, read_at: nil, deleted_by_recipient: 0)
 
       def ago(seconds) = (Time.now.utc - seconds).iso8601
 

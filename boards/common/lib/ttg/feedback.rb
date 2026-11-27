@@ -4,6 +4,7 @@ require 'rubbs/common/web/discord_webhook'
 require_relative 'feedback/store'
 require_relative 'feedback/screen'
 require_relative 'feedback/desk'
+require_relative 'feedback/outbox'
 
 module TTG
   # What callers send the sysops, from any board: feedback, a bug, a
@@ -60,6 +61,8 @@ module TTG
       limited:     'That is all for now. Please try again later.',
       name_taken:  'That name is an account\'s. Log in, or use another name.',
       unavailable: 'The feedback box cannot be reached now. Please try again later.',
+      queued:      'The feedback box is away for a moment: your message is kept here and goes to the sysops ' \
+                   'as soon as it is back.',
       petscii:     { intro: 'A WORD FOR THE SYSOPS. THEY READ EVERY ONE.' }
     }.freeze
 
@@ -83,7 +86,8 @@ module TTG
 
     # The feedback as a service of the Central, on <tt>/feedback</tt>. Ops:
     #
-    # [submit] +subject+, +body+, +kind+, +link+, +context+; the board is the asker
+    # [submit] +subject+, +body+, +kind+, +link+, +context+, +at+ (when a board's
+    #          Outbox kept it); the board is the asker
     # [list]   (sysop) +state+, +before+, +limit+
     # [read]   (sysop) +id+
     # [mark]   (sysop) +id+, +state+, +note+
@@ -94,8 +98,8 @@ module TTG
       path     '/feedback'
       database :feedback, MIGRATIONS
 
-      op(:submit) do |actor, subject: '', body: '', kind: 'feedback', link: nil, context: nil, **|
-        store.add(actor, board: asker, subject: subject, body: body, kind: kind, link: link, context: context)
+      op(:submit) do |actor, subject: '', body: '', kind: 'feedback', link: nil, context: nil, at: nil, **|
+        store.add(actor, board: asker, subject: subject, body: body, kind: kind, link: link, context: context, at: at)
       end
       op(:list, role: :sysop) { |_, state: nil, before: nil, limit: 30, **|
         store.list(state: state, before: before, limit: limit)
@@ -130,6 +134,7 @@ module TTG
     # <tt>lib/content/feedback.yml</tt>), +context+ what the caller was
     # looking at, +kind+ to skip the choice of kinds. Returns +nil+.
     def self.open(session, narrative: nil, context: nil, kind: nil)
+      Outbox.resume
       Screen.new(session, narrative_of(narrative), context: context).run(kind: kind)
     end
 

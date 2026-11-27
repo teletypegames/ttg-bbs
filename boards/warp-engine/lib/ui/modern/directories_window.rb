@@ -18,6 +18,7 @@ module UI
         on_pick    { |directory| open_directory(directory) }
         height(-8)
         action('Open') { |directory| open_directory(directory) }
+        action('&Machine') { |directory| network(TTG::Network.directory_links(directory.id)) }
       end
     end
   end

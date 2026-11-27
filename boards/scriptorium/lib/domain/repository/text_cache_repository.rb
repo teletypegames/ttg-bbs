@@ -9,6 +9,10 @@ require 'json'
 # +max_bytes+: the books read least recently go first (the index file's
 # mtime is touched on every open).
 class TextCacheRepository
+  # The form of the cleaned text (ChapterService#clean): a book cached in another form is fetched
+  # and cleaned again.
+  FORMAT = 2
+
   def initialize(dir, max_bytes:)
     @dir       = dir
     @max_bytes = max_bytes
@@ -20,7 +24,10 @@ class TextCacheRepository
     path = json_path(id)
     return nil unless File.exist?(path) && File.exist?(text_path(id))
 
-    text = TextModel.from_h(JSON.parse(File.read(path)))
+    data = JSON.parse(File.read(path))
+    return nil unless data['format'] == FORMAT
+
+    text = TextModel.from_h(data)
     touch(path) if text
     text
   rescue JSON::ParserError, SystemCallError => e
@@ -36,7 +43,7 @@ class TextCacheRepository
     @lock.synchronize do
       FileUtils.mkdir_p(@dir)
       write(text_path(id), text)
-      write(json_path(id), JSON.generate(model.to_h))
+      write(json_path(id), JSON.generate(model.to_h.merge('format' => FORMAT)))
     end
     evict
     model

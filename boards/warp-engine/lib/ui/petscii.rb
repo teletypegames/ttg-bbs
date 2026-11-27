@@ -8,6 +8,8 @@ module UI
   # and its download by XMODEM-1K or XMODEM, the protocols a C64 terminal
   # knows; the network's wall and feedback (ttg-common).
   class Petscii < Rubbs::Petscii::Face
+    include TTG::Network::Petscii
+
     LOGO_COLORS   = [LB, LB, CY, CY, WH].freeze
     PROTOCOL_KEYS = { '1' => :xmodem_1k, 'x' => :xmodem }.freeze
 
@@ -46,6 +48,15 @@ module UI
       log_off
     end
 
+    # The Directory another board asked for (TTG::Network: <tt>directory:ID</tt>) first, then the
+    # masthead and the main menu.
+    def run
+      id = TTG::Network.place_of(@session.take_goto, 'directory')
+      directory = id && catalog.directories.find { |d| d.id == id }
+      open_directory(directory) if directory
+      super
+    end
+
     private
 
     def open_directory(directory)
@@ -67,16 +78,25 @@ module UI
     end
 
     def show_title(directory, title)
-      count = catalog.downloads(title)
-      lines = [*wrap(title.title).map { |l| " #{WH}#{l}#{LG}" },
-               " #{CY}v#{title.version}#{LG}  #{title.size} bytes",
-               " #{GR}#{title.author.downcase}  #{count} download#{'s' unless count == 1}#{LG}", '',
-               *wrap(title.about).map { |l| " #{l}" }, '',
-               " #{GR}load\"#{title.disk_name.downcase}\",8,1 and run#{LG}"]
-      page(directory.name.upcase, lines, wait: false)
-      key = actions(%w[1 xmodem-1k], %w[x xmodem], %w[q back])
+      page(directory.name.upcase, title_lines(title), wait: false)
+      key = actions(%w[1 xmodem-1k], %w[x xmodem], *machine_key(directory), %w[q back])
+      return network(TTG::Network.directory_links(directory.id)) if key == 'm'
+
       download(title, PROTOCOL_KEYS[key]) if PROTOCOL_KEYS.key?(key)
     end
+
+    # The page of +title+: its name, version, size, author, downloads, about and how to load it.
+    def title_lines(title)
+      count = catalog.downloads(title)
+      [*wrap(title.title).map { |l| " #{WH}#{l}#{LG}" },
+       " #{CY}v#{title.version}#{LG}  #{title.size} bytes",
+       " #{GR}#{title.author.downcase}  #{count} download#{'s' unless count == 1}#{LG}", '',
+       *wrap(title.about).map { |l| " #{l}" }, '',
+       " #{GR}load\"#{title.disk_name.downcase}\",8,1 and run#{LG}"]
+    end
+
+    # The M key of a title's page when its Directory's machine is on Siliconia BBS.
+    def machine_key(directory) = TTG::Network.reachable(TTG::Network.directory_links(directory.id)).any? ? [%w[m machine]] : []
 
     def download(file, protocol)
       title("DOWNLOAD #{file.disk_name}")

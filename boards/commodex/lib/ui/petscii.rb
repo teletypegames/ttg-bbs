@@ -8,6 +8,8 @@ module UI
   # its actions on one row, the Wikipedia lead and the tips as pages that wait
   # for RETURN, and a line for a search and for a new tip.
   class Petscii < Rubbs::Petscii::Face
+    include TTG::Network::Petscii
+
     LOGO_COLORS = [LB, LB, CY, CY, WH].freeze
     # The letters of the companies side by side, each with its count.
     LETTER_COLUMNS = 6
@@ -101,8 +103,10 @@ module UI
                  *Wording.facts(game).map { |label, text| " #{CY}#{label.downcase}:#{LG} #{text}" },
                  " #{CY}tips:#{LG} #{Wording.tips(count)}"]
         page('GAME', lines, right: game.id, wait: false)
-        case actions(%w[w wiki], %w[t tips], ['a', 'add a tip'], %w[q back])
+        links = TTG::Network.reachable(TTG::Network.game_links)
+        case actions(%w[w wiki], %w[t tips], ['a', 'add a tip'], *([%w[n network]] if links.any?), %w[q back])
         when 'w' then read_about(game)
+        when 'n' then network(links)
         when 't' then show_tips(game, count)
         when 'a' then add_tip(game)
         when 'q' then return

@@ -12,6 +12,7 @@ module UI
   # for RETURN, and a line for a search, a comparison and a memory.
   class Petscii < Rubbs::Petscii::Face
     include Photo
+    include TTG::Network::Petscii
 
     LOGO_COLORS = [GN, GN, CY, CY, WH].freeze
     BOARD       = "#{DG} ::::::::::::::::::::::::::::::::::::::#{LG}".freeze
@@ -47,6 +48,10 @@ module UI
       end
       log_off
     end
+
+    # The machine another board asked for (TTG::Network: <tt>machine:QID</tt>) first, then the
+    # masthead and the main menu.
+    def run = machine(catalog.find(TTG::Network.place_of(@session.take_goto, 'machine'))).then { super() }
 
     private
 
@@ -152,9 +157,11 @@ module UI
       catalog.viewed(machine)
       loop do
         page('MACHINE', machine_lines(machine), right: machine.id, wait: false, room: 2)
-        case actions(%w[w wiki], %w[p photo], %w[m more], %w[q back])
+        links = TTG::Network.reachable(TTG::Network.machine_links(machine.id))
+        case actions(%w[w wiki], %w[p photo], *([%w[n network]] if links.any?), %w[m more], %w[q back])
         when 'w' then read_about(machine, 'en')
         when 'p' then photo(machine)
+        when 'n' then network(links)
         when 'm' then more(machine)
         else return
         end

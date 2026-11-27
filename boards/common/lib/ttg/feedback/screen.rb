@@ -67,21 +67,25 @@ module TTG
       end
 
       def send_it(kind, fields)
-        actor = Rubbs::Common::Central::Actor.of(@session, name: fields[:name])
-        Feedback.box.call(
-          :submit,
-          actor,
+        actor  = Rubbs::Common::Central::Actor.of(@session, name: fields[:name])
+        submit = {
           kind:    kind.to_s,
           subject: fields[:subject].to_s,
           body:    fields[:body].to_s,
           link:    fields[:link],
           context: @context
-        )
+        }
+        answer = Feedback.box.call(:submit, actor, **submit)
+        return answer unless answer['result'] == 'unavailable' && !submit[:body].strip.empty?
+
+        Outbox.keep(actor, submit)
+        { 'result' => 'queued' }
       end
 
       def answer(story, result)
         key = {
           'ok'           => :thanks,
+          'queued'       => :queued,
           'empty'        => :empty,
           'bad_link'     => :bad_link,
           'limited'      => :limited,
@@ -90,7 +94,7 @@ module TTG
         }.fetch(result['result'], :unavailable)
         @session.achieve(:feedback) if key == :thanks && @session.respond_to?(:achieve)
         @screen.head(text(story, :title))
-        @screen.tell(text(story, key), key == :thanks ? :good : :bad)
+        @screen.tell(text(story, key), %i[thanks queued].include?(key) ? :good : :bad)
       end
     end
   end

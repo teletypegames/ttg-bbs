@@ -21,6 +21,13 @@ module Sermo
   # This whole OS is data: to add another character-mode OS later (an earlier
   # Sermo line, a DOS/NT terminal, …), write a new Rubbs::Common::FakeOS.define block in
   # its own file — no engine changes needed.
+  # Today's month and day in 1977, the year the machine lives in (a 29 February, which 1977
+  # had not, is the 28th).
+  def self.today(at = Time.now)
+    day = at.month == 2 && at.day == 29 ? 28 : at.day
+    format('1977-%<month>02d-%<day>02d', month: at.month, day: day)
+  end
+
   OS = Rubbs::Common::FakeOS.define do
     name   'SERMO'
     prompt '> '
@@ -36,34 +43,36 @@ module Sermo
            prompt: { fg: :green, bold: true }
 
     # ── Dual-architecture power-on → SERMO load ─────────────────────────────────
+    # A Kvartet of 1977 (the canon's first desk "dual machine"): a digital terminal and a Lapis
+    # crystal board on the ADI-76 bus, the system on a cassette, the board's trained state on a
+    # Lux plate. Nothing of later years: no Sonus, no Personal Tape, no disk drives, no megabytes.
     boot do
       cls
-      print 'MARGITTAI WORKS — Neumatronic system firmware', delay: 0.3
-      print 'ROM v7.7   (c) 1977-2026   Budapest', newline: 2, delay: 0.3
+      print 'MARGITTAI INSTITUTE — Kvartet firmware', delay: 0.3
+      print 'ROM 1.0   (c) 1977   Budapest', newline: 2, delay: 0.3
 
       # First architecture: the digital, von Neumann side.
       print 'FIRST ARCHITECTURE   (digital)',                           delay: 0.25
-      print '  Core unit ................ Neumann core, dual bus',      delay: 0.2
-      memtest 16_384, step: 4096, delay: 0.05, label: '  Base memory ............. '
+      print '  Core unit ................ Neumann core',                delay: 0.2
+      memtest 32, step: 4, delay: 0.05, label: '  Core memory ............. '
       print '', delay: 0.2
 
       # Second architecture: the ACP, hung off the ADI-76 bus.
       print 'SECOND ARCHITECTURE  (analog — ACP)',                      delay: 0.3
       print '  ADI-76 bus ............... OK',                          delay: 0.25
-      print '  Lapis-ACP card ........... warming up',                  delay: 0.45
-      print '  Sonus resonance .......... stable',                      delay: 0.3
+      print '  Lapis board .............. warming up',                  delay: 0.45
       print '  Vox speech module ........ ready',                       delay: 0.25
-      print '  Netz link ................ terminal mode', newline: 2, delay: 0.4
+      print '  Line ..................... remote terminal', newline: 2, delay: 0.4
 
-      print 'Personal Tape: PERSONA//GUEST', delay: 0.3
-      print 'Local authentication cache loaded  (BVK: disconnected)', newline: 2, delay: 0.5
+      print 'Cassette: SERMO SYSTEM TAPE', delay: 0.3
+      print 'Lux plate: LAPIS, trained state', newline: 2, delay: 0.5
 
       print 'Loading SERMO...', newline: 2, delay: 0.8
 
       cls
       big_banner 'SERMO', font: 'standard'
       print 'SERMO — "the Word"   dual-architecture operating system',   delay: 0.1
-      print 'Margittai Works / Neumatronic · Solus line · 1977-2026',    delay: 0.1
+      print 'Margittai Institute · Kvartet · 1977',                      delay: 0.1
       print ''
     end
 
@@ -77,9 +86,9 @@ module Sermo
 
     # ── Digital side: literal, built-in commands ────────────────────────────────
     command 'ver', help: 'Show the SERMO version' do |_args, io|
-      io.puts 'SERMO — "the Word"'
-      io.puts 'Dual-architecture operating system · Solus line'
-      io.puts 'Margittai Works / Neumatronic · Budapest · 1977-2026'
+      io.puts 'SERMO — "the Word"   version 1.0'
+      io.puts 'Dual-architecture operating system for the Kvartet'
+      io.puts 'Margittai Institute · Budapest · 1977'
     end
 
     command 'cls', 'clear', help: 'Clear the screen' do |_args, io|
@@ -87,7 +96,7 @@ module Sermo
     end
 
     command 'date', help: 'Show the current date' do |_args, io|
-      io.puts Time.now.strftime('Current date: %Y-%m-%d')
+      io.puts "Current date: #{Sermo.today}"
     end
 
     command 'time', help: 'Show the current time' do |_args, io|
@@ -100,31 +109,28 @@ module Sermo
 
     command 'mem', help: 'Memory and ACP status' do |_args, io|
       io.puts 'FIRST ARCHITECTURE   (digital):'
-      io.puts '       655 360 bytes base memory, all free'
-      io.puts '    15 728 640 bytes extended memory'
+      io.puts '    32 768 bytes core memory, 26 624 free'
       io.puts 'SECOND ARCHITECTURE  (ACP):'
-      io.puts '    Lapis resonance cache ............ 98% warm'
-      io.puts '    Sonus quartz ..................... stable'
+      io.puts '    Lapis board ...................... warm'
+      io.puts '    Lux plate ........................ read'
     end
 
-    command 'dir', 'cat', help: 'Catalog of the Personal Tape' do |_args, io|
-      io.puts ' Volume C: is the Personal Tape'
-      io.puts ' Contents of C:\\'
+    command 'dir', 'cat', help: 'Catalog of the cassette' do |_args, io|
+      io.puts ' Cassette: SERMO SYSTEM TAPE, side A'
       io.puts ''
-      io.puts 'SERMO    SYS        54 645  1977-2026'
-      io.puts 'LAPIS    ACP        12 080  1977-2026   (ACP image)'
-      io.puts 'VOX      SYS           512  1977-2026'
-      io.puts 'PERSONA  TAP         8 192  today        (personal tape)'
-      io.puts 'NETZ     LOG           256  today'
-      io.puts '        5 entries       75 685 bytes'
-      io.puts '                   503 312 384 bytes free'
+      io.puts 'SERMO    SYS     6 144  1977'
+      io.puts 'VOX      SYS       512  1977'
+      io.puts "GUEST    DAT       256  #{Sermo.today}"
+      io.puts '        3 files   6 912 bytes, 23 K free on the side'
+      io.puts ''
+      io.puts ' The Lapis board reads its trained state from the Lux plate:'
+      io.puts ' that is the Stone itself, not a file.'
     end
 
     command 'adi', help: 'ADI-76 bus diagnostics' do |_args, io|
       io.puts 'ADI-76 bus — diagnostics'
       io.puts '  Bridge .............. active'
-      io.puts '  Lapis-ACP ........... connected, warm'
-      io.puts '  Sonus resonance ..... stable'
+      io.puts '  Lapis board ......... connected, warm'
       io.puts '  Throughput .......... nominal'
       io.puts ''
       io.puts 'Your natural-language questions reach the ACP over this bus.'

@@ -6,6 +6,7 @@ require 'minitest/mock'
 require 'json'
 require 'tmpdir'
 require 'rubbs'
+require 'ttg/common'
 require 'rubbs/test'
 require_relative '../lib/domain'
 

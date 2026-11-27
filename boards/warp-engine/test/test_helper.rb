@@ -2,6 +2,7 @@
 
 require 'minitest/autorun'
 require 'rubbs'
+require 'ttg/common'
 require 'rubbs/test'
 require 'domain'
 require 'minitest/mock'

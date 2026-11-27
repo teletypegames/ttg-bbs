@@ -10,6 +10,7 @@ class SiliconiaBBS
   path    :catalog_seed, 'config/catalog.json.gz'
   path    :catalog_file, 'data/catalog.json.gz', env: 'CATALOG'
   path    :legends_file, 'config/legends.yml', env: 'LEGENDS'
+  path    :hungarian_file, 'config/hungarian.yml', env: 'HUNGARIAN'
   setting :catalog_ttl, 7 * 86_400
   setting :wikipedia_cache, 200
   path    :db, 'data/siliconia.sqlite3'
@@ -20,9 +21,10 @@ class SiliconiaBBS
   service(:catalog) do
     CatalogService.new(
       CatalogService.snapshot(seed: catalog_seed, path: catalog_file),
-      wikidata: WikidataRepository.new,
-      ttl:      catalog_ttl,
-      legends:  LegendRepository.new(legends_file).ids
+      wikidata:  WikidataRepository.new(extra: HungarianRepository.new(hungarian_file).kinds),
+      ttl:       catalog_ttl,
+      legends:   LegendRepository.new(legends_file).ids,
+      hungarian: HungarianRepository.new(hungarian_file).ids
     )
   end
   service(:about) { AboutService.new(WikipediaRepository.new(cache_size: wikipedia_cache)) }

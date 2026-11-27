@@ -77,6 +77,7 @@ module UI
           action('&CPU')      { same_cpu(machine) }
           action('M&emories') { show_memories(machine) }
           action('M&ine')     { mine(machine) }
+          action('&Network')  { network(TTG::Network.machine_links(machine.id)) }
         end
       end
 

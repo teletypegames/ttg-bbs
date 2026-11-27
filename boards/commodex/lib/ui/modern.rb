@@ -19,7 +19,10 @@ module UI
 
     APP = Rubbs::Modern::Application.define do
       theme :synchronet
-      helpers { include Helpers }
+      helpers do
+        include Helpers
+        include TTG::Network::Modern
+      end
 
       command(:search,    'Search…',     key: 'F2') { search }
       command(:random,    'Random game', key: 'F3', hint: 'Random') { random }
@@ -52,7 +55,7 @@ module UI
         on_show { search }
       end
 
-      parts GamesWindow, GroupsWindow, LettersWindow, AboutWindow, TipsWindow, AddTipWindow
+      parts GamesWindow, GroupsWindow, LettersWindow, AboutWindow, TipsWindow, AddTipWindow, TTG::Network::Window
     end
   end
 end

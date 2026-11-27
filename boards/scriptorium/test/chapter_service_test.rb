@@ -19,6 +19,14 @@ class ChapterServiceTest < Minitest::Test
 
   def wrapped(text) = text.scan(/.{1,70}(?:\s|\z)/).map(&:strip).join("\r\n")
 
+  def test_a_picture_marker_goes_and_its_caption_stays
+    raw = book('CHAPTER I', 'CHAPTER II').sub("CHAPTER I\r\n", "[Illustration]\r\n\r\n[Illustration:\r\n\r\nCHAPTER I.]\r\n")
+    text = @service.clean(raw)
+    refute_match(/Illustration|\]/, text)
+    assert_match(/^CHAPTER I\.$/, text)
+    assert_equal ['CHAPTER I', 'CHAPTER II'], @service.cut(text).map(&:first).first(2)
+  end
+
   def test_clean_takes_off_the_licence_and_joins_the_prose
     text = @service.clean(book('CHAPTER I', 'CHAPTER II'))
 

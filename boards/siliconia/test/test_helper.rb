@@ -6,6 +6,7 @@ require 'minitest/mock'
 require 'json'
 require 'tmpdir'
 require 'rubbs'
+require 'ttg/common'
 require 'rubbs/test'
 require_relative '../lib/domain'
 
@@ -100,13 +101,14 @@ RECORDS = [
 ].freeze
 
 # A catalog of RECORDS written +at+ as the seed, its Legends the VIC-20 and the C64.
-def sample_catalog(dir, wikidata: nil, at: Time.now, ttl: 60)
+def sample_catalog(dir, wikidata: nil, at: Time.now, ttl: 60, hungarian: [])
   seed = File.join(dir, 'seed.json.gz')
   Rubbs::Common::Storage::Snapshot.write(seed, { 'machines' => RECORDS }, at)
   CatalogService.new(
     CatalogService.snapshot(seed: seed, path: File.join(dir, 'catalog.json.gz')),
-    wikidata: wikidata,
-    ttl:      ttl,
-    legends:  %w[Q918232 Q99775 Q404]
+    wikidata:  wikidata,
+    ttl:       ttl,
+    legends:   %w[Q918232 Q99775 Q404],
+    hungarian: hungarian
   )
 end

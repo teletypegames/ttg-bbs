@@ -16,7 +16,7 @@ module TTG
   module PrivateMessage
     # The tables of the letters on the Central.
     MIGRATIONS = [
-      <<~SQL
+      <<~SQL,
         CREATE TABLE messages (
           id                   INTEGER PRIMARY KEY,
           created_at           TEXT NOT NULL,
@@ -38,6 +38,12 @@ module TTG
           account_id INTEGER NOT NULL,
           blocked_id INTEGER NOT NULL,
           PRIMARY KEY (account_id, blocked_id)
+        );
+      SQL
+      <<~SQL
+        CREATE TABLE message_notices (
+          account_id INTEGER PRIMARY KEY,
+          last_id    INTEGER NOT NULL
         );
       SQL
     ].freeze
@@ -86,6 +92,16 @@ module TTG
       return 0 unless session.identity.signed_in?
 
       mail.call(:unread, Rubbs::Common::Central::Actor.of(session))['count'].to_i
+    end
+
+    # The letters to tell the caller on +session+ of when they sign in: the
+    # unread ones when one came since the last time they were told (and they
+    # are told now), else 0. 0 for a guest, and when the Central does not
+    # answer.
+    def self.news(session)
+      return 0 unless session.identity.signed_in?
+
+      mail.call(:notify, Rubbs::Common::Central::Actor.of(session))['news'].to_i
     end
 
     # +given+ as a TTG::Narrative on DEFAULTS.

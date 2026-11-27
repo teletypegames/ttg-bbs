@@ -36,6 +36,12 @@ module UI
 
       def random = open_machine(catalog.random)
 
+      # Opens the machine another board asked for (TTG::Network: machine:QID); nil when none.
+      def open_place
+        machine = catalog.find(TTG::Network.place_of(@session.take_goto, 'machine')) or return nil
+        open_machine(machine)
+      end
+
       def groups_of(kind)
         case kind
         when :kind then ['Kinds', catalog.kinds]

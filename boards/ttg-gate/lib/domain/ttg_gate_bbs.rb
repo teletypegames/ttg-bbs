@@ -74,6 +74,12 @@ class TTGGateBBS
     herald.edition(country: discovery&.geoip&.country(ip), network: network(at), at: at)
   end
 
+  # The network's day in a few lines for the sign-in bulletin (TTG::Bulletin):
+  # the date, the name day and the weather, then our boards' notes.
+  def bulletin(at: Time.now)
+    [herald.edition(at: at).summary, *board_notes(at).map { |_name, note| "#{note.heading}: #{note.title}" }]
+  end
+
   private
 
   def own_numbers(at)

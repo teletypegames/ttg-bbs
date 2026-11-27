@@ -37,10 +37,22 @@ class FacesTest < Minitest::Test
 
   def plain(text) = text.gsub(/\e\[[\d;?]*[A-Za-z]/, '').gsub(/\s+/, ' ')
 
-  def petscii(keys)
-    session = Rubbs::Test::Session.new(petscii: true, keys: keys)
+  def petscii(keys, forwarded: {})
+    session = Rubbs::Test::Session.new(petscii: true, keys: keys, forwarded: forwarded)
     UI::Petscii.new(session, {}, @board).run
     plain(session.output)
+  end
+
+  def test_another_board_opens_a_machine_and_its_network_links_show
+    dir = Dir.mktmpdir
+    File.write(File.join(dir, 'boards.yml'), "commodex: { port: 2331 }\nwarp-engine: { port: 2329 }\n")
+    TTG::Network.settings_file = File.join(dir, 'boards.yml')
+    out = petscii(%w[q] * 8, forwarded: { 'BBS_GOTO' => 'machine:Q99775' })
+    assert_match(/MACHINE.*Commodore 64/i, out)
+    assert_includes out, 'N network'
+  ensure
+    TTG::Network.settings_file = nil
+    FileUtils.rm_rf(dir) if dir
   end
 
   def test_the_c64_legends_and_a_machine_page
