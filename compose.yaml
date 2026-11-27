@@ -58,6 +58,8 @@ services:
       - SERMO_LLM_API_KEY=${SERMO_LLM_API_KEY:-}
       - TELETYPE_BBS_LLM_API_KEY=${TELETYPE_BBS_LLM_API_KEY:-}
       # teletypegames.org/blog reads the blog here (http://ttg-blog-bbs:8080 on interstack).
+      # Scriptorium reads the catalog and the texts from Project Gutenberg's own mirror (www.gutenberg.org answers 503 while it is down).
+      - SCRIPTORIUM_BBS_MIRROR=https://gutenberg.pglaf.org
       - TTG_BLOG_BBS_HTTP_PORT=8080
       - TTG_GATE_BBS_GATEWAY_HOST=host.docker.internal
       - TTG_GATE_BBS_PUBLIC_HOST=teletypegames.org
