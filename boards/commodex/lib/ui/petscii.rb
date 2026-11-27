@@ -104,7 +104,7 @@ module UI
                  " #{CY}tips:#{LG} #{Wording.tips(count)}"]
         page('GAME', lines, right: game.id, wait: false)
         links = TTG::Network.reachable(TTG::Network.game_links)
-        case actions(%w[w wiki], %w[t tips], ['a', 'add a tip'], *([%w[n network]] if links.any?), %w[q back])
+        case actions(%w[w wiki], %w[t tips], %w[a add], *([%w[n net]] if links.any?), %w[q back])
         when 'w' then read_about(game)
         when 'n' then network(links)
         when 't' then show_tips(game, count)

@@ -47,9 +47,10 @@ class FacesTest < Minitest::Test
     dir = Dir.mktmpdir
     File.write(File.join(dir, 'boards.yml'), "commodex: { port: 2331 }\nwarp-engine: { port: 2329 }\n")
     TTG::Network.settings_file = File.join(dir, 'boards.yml')
-    out = petscii(%w[q] * 8, forwarded: { 'BBS_GOTO' => 'machine:Q99775' })
+    out = petscii(['m', *%w[q] * 8], forwarded: { 'BBS_GOTO' => 'machine:Q99775' })
     assert_match(/MACHINE.*Commodore 64/i, out)
-    assert_includes out, 'N network'
+    assert_includes out, 'Q back'
+    assert_includes out, 'on the network'
   ensure
     TTG::Network.settings_file = nil
     FileUtils.rm_rf(dir) if dir

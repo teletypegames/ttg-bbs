@@ -157,11 +157,9 @@ module UI
       catalog.viewed(machine)
       loop do
         page('MACHINE', machine_lines(machine), right: machine.id, wait: false, room: 2)
-        links = TTG::Network.reachable(TTG::Network.machine_links(machine.id))
-        case actions(%w[w wiki], %w[p photo], *([%w[n network]] if links.any?), %w[m more], %w[q back])
+        case actions(%w[w wiki], %w[p photo], %w[m more], %w[q back])
         when 'w' then read_about(machine, 'en')
         when 'p' then photo(machine)
-        when 'n' then network(links)
         when 'm' then more(machine)
         else return
         end
@@ -190,6 +188,7 @@ module UI
       when 'o' then mark(machine, 'owned')
       when 'g' then mark(machine, 'grew_up')
       when 'v' then compare(machine)
+      when 'n' then network(TTG::Network.machine_links(machine.id))
       end
     end
 
@@ -198,7 +197,8 @@ module UI
       [['h', 'wikipedia in hungarian'], ['f', 'its family line'], ['c', 'machines with its cpu'], ['e', 'memories of it'],
        ['a', 'write a memory'],
        ['o', "#{on.call('owned')}: i had one"], ['g', "#{on.call('grew_up')}: i grew up on it"],
-       ['v', 'compare with another']].map { |key, label|
+       ['v', 'compare with another'],
+       *([['n', 'on the network']] if TTG::Network.reachable(TTG::Network.machine_links(machine.id)).any?)].map { |key, label|
         Rubbs::Common::Screens::Selector.item(label, key: key, value: key)
       }
     end

@@ -96,7 +96,7 @@ module UI
     end
 
     # The M key of a title's page when its Directory's machine is on Siliconia BBS.
-    def machine_key(directory) = TTG::Network.reachable(TTG::Network.directory_links(directory.id)).any? ? [%w[m machine]] : []
+    def machine_key(directory) = TTG::Network.reachable(TTG::Network.directory_links(directory.id)).any? ? [%w[m net]] : []
 
     def download(file, protocol)
       title("DOWNLOAD #{file.disk_name}")
