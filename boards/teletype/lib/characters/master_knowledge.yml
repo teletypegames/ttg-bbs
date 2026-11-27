@@ -19,7 +19,7 @@
 - keys: [vote, voting, poll, polls, booth, survey, favourite, favorite]
   fact: 'Messages > Voting Booth has the polls of the board, like your favourite Teletype Games title; Enter or Vote, then the number of your choice. A name is needed to vote, and you can change your vote.'
 - keys: [mail, email, e-mail, letter, private, inbox, message someone, write to, private message]
-  fact: 'Letters between callers are on the TTG Mail BBS at teletypegames.org:2335: log in with your account of the network, then write to anyone with an account, read and answer your letters, block a writer. It is on TTG Gate BBS (2399) too, and on every board in your account's profile (M: Mail); a new letter is told when you log in. Here, Messages > Feedback… (F7) drops a letter to the sysop, and Messages > The Wall… is for talking with the others.'
+  fact: 'Letters between callers are on the TTG Mail BBS at teletypegames.org:2335: log in with your account of the network, then write to anyone with an account, read and answer your letters, block a writer. It is on TTG Gate BBS (2399) too, and on every board in the profile of your account (M: Mail); a new letter is told when you log in. Here, Messages > Feedback… (F7) drops a letter to the sysop, and Messages > The Wall… is for talking with the others.'
 - keys: [feedback, complain, complaint, contact, suggestion, report, bug, idea]
   fact: 'Messages > Feedback… (F7) is a letter to the sysop: a word, a bug or an idea. Anyone can send one, a guest too; the sysops of the network read every one.'
 - keys: [page, yell, call the sysop, talk to the sysop, sysop online]
